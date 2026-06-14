@@ -136,7 +136,7 @@ export default async function Home() {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base sm:leading-7">
                 Probable starters, form, matchup context, and last night&apos;s best pitching lines.
               </p>
-              <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:mt-3 sm:text-sm sm:leading-6">
+              <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:mt-3 sm:text-sm sm:leading-6 lg:mb-[10px]">
                 GS+ scores a single start on a 0-100 scale, with league average around 50.
                 <a href="/methodology" className="ml-[10px] font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology

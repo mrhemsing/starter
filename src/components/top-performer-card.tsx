@@ -102,6 +102,10 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.08)_34%,rgba(0,0,0,0.03)_58%,rgba(0,0,0,0.78)_100%)]" />
             {image.source === "highlight" && image.playUrl ? <PlayAffordance className="right-4 top-4" /> : null}
+            <span className="absolute bottom-3 left-3 z-10 inline-flex min-h-9 items-center rounded border border-white/15 bg-black/65 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200 shadow-[0_10px_28px_rgba(0,0,0,0.48)] backdrop-blur-sm sm:hidden">
+              View start log
+            </span>
+            <MobilePhotoScore score={displayScore} hasCredit={Boolean(image.attribution)} />
             {image.source === "action" && image.attribution ? <CreditLine attribution={image.attribution} className="bottom-3 left-3 right-3" /> : null}
           </div>
           <div className="absolute inset-y-0 left-[18%] hidden w-[38%] bg-[linear-gradient(90deg,#09090b_0%,rgba(9,9,11,0.96)_28%,rgba(9,9,11,0.62)_64%,transparent_100%)] sm:block" />
@@ -140,10 +144,10 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <span className="inline-flex min-h-11 w-full items-center justify-center rounded border border-white/10 bg-black/70 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200 shadow-[0_10px_34px_rgba(0,0,0,0.52)] backdrop-blur-sm sm:w-auto sm:justify-self-start">
+          <span className={`${isFullBleed ? "hidden sm:inline-flex" : "inline-flex"} min-h-11 w-full items-center justify-center rounded border border-white/10 bg-black/70 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200 shadow-[0_10px_34px_rgba(0,0,0,0.52)] backdrop-blur-sm sm:w-auto sm:justify-self-start`}>
             View start log
           </span>
-          <div className="top-performer-score relative justify-self-end text-right">
+          <div className={`top-performer-score relative justify-self-end text-right ${isFullBleed ? "hidden sm:block" : ""}`}>
             <div className="absolute -inset-x-8 -inset-y-5 rounded-full bg-[radial-gradient(circle,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.58)_42%,rgba(239,159,39,0.20)_63%,transparent_78%)] blur-sm" aria-hidden="true" />
             <p className="relative font-serif text-8xl font-black leading-none text-amber-300 drop-shadow-[0_0_28px_rgba(239,159,39,0.66)] sm:text-9xl">{displayScore}</p>
             <p className="relative font-mono text-[10px] uppercase tracking-[0.18em] text-amber-100">GS+</p>
@@ -153,6 +157,16 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
       {image?.source === "highlight" && image.playUrl ? <PlayAffordance className="right-4 top-4 hidden sm:grid" /> : null}
       {image?.source === "action" && image.attribution ? <CreditLine attribution={image.attribution} className="bottom-3 left-4 right-4 hidden sm:block" /> : null}
     </a>
+  );
+}
+
+function MobilePhotoScore({ score, hasCredit }: { score: number; hasCredit: boolean }) {
+  return (
+    <div className={`absolute right-3 z-10 text-right sm:hidden ${hasCredit ? "bottom-9" : "bottom-3"}`}>
+      <div className="absolute -inset-x-7 -inset-y-4 rounded-full bg-[radial-gradient(circle,rgba(239,159,39,0.34)_0%,rgba(239,159,39,0.18)_46%,transparent_74%)] blur-md" aria-hidden="true" />
+      <p className="relative font-serif text-7xl font-black leading-[0.82] text-amber-300 drop-shadow-[0_0_24px_rgba(239,159,39,0.66)]">{score}</p>
+      <p className="relative mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-100">GS+</p>
+    </div>
   );
 }
 
