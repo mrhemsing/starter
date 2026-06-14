@@ -310,7 +310,7 @@ function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitch
 
   return (
     <article className="heat-glow-card rounded border border-amber-300/20 bg-[#101014] p-5" style={heatGlowStyle(pitcher, true)} data-form-hero-card>
-      <div className="grid gap-4 sm:grid-cols-[110px_minmax(0,1fr)_auto] sm:items-start">
+      <div className="grid gap-4">
         <PitcherChip
           pitcherId={pitcher.pitcherId}
           name={pitcher.name}
@@ -323,7 +323,7 @@ function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitch
           size="lg"
           loading={rank === 1 ? "eager" : "lazy"}
         />
-        <div className="sm:col-span-2">
+        <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="heat-badge inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.14em] text-amber-200">
               #{rank} · {tierLabel(pitcher.tier)}
