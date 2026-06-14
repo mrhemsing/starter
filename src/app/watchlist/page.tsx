@@ -16,6 +16,14 @@ export const metadata: Metadata = {
   title: "Watchlist",
   description: "Follow MLB starting pitchers and see their current form, next starts, and daily digest events.",
   alternates: { canonical: "/watchlist" },
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
+  },
 };
 
 export default async function WatchlistPage() {

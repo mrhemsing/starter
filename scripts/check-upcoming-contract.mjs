@@ -2,8 +2,9 @@ import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
 import net from "node:net";
 
-const host = "127.0.0.1";
-const date = process.env.THE_BUMP_UPCOMING_CONTRACT_DATE ?? "2026-06-08";
+const host = "localhost";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.frontfive.app").replace(/\/+$/, "");
+const date = process.env.THE_BUMP_UPCOMING_CONTRACT_DATE ?? "2026-06-14";
 const days = process.env.THE_BUMP_UPCOMING_CONTRACT_DAYS ?? "1";
 const windowSize = process.env.THE_BUMP_UPCOMING_CONTRACT_WINDOW ?? "5";
 const siteTimeZone = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
@@ -271,6 +272,24 @@ function gameOrder(day) {
   return day.games.map((game) => game.gamePk).join(",");
 }
 
+function sortGamesByFirstPitch(games) {
+  return [...games].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);
+}
+
+function pregameTeamGames(games, team) {
+  return games.filter((game) => game.status === "pregame" && (game.away === team || game.home === team));
+}
+
+function pregameTeamGamesByFirstPitch(games, team) {
+  return sortGamesByFirstPitch(pregameTeamGames(games, team));
+}
+
+function firstPregameTeam(games, label) {
+  const game = games.find((candidate) => candidate.status === "pregame");
+  assert(game, `${label} should include a pregame matchup for filtered-route coverage`);
+  return game.away;
+}
+
 function formWindowSignature(day) {
   return JSON.stringify(
     day.games.map((game) => ({
@@ -356,33 +375,42 @@ function formatSignedValue(value) {
 }
 
 function assertMetadata(html, route, title, description) {
-  const absoluteUrl = `https://soma4.b-average.com${route}`;
+  const absoluteUrl = absoluteSiteUrl(route);
   const imageUrl = `${absoluteUrl}/opengraph-image`;
+  const escapedTitle = escapeHtmlAttribute(title);
   const escapedDescription = escapeHtmlAttribute(description);
 
   assert(html.includes(`<link rel="canonical" href="${absoluteUrl}"/>`), `${route} should render canonical metadata`);
   assert(
-    html.includes(`<meta name="description" content="${escapedDescription}"/>`) || /<meta name="description" content="[^"]+"/.test(html),
-    `${route} should render description metadata`,
+    html.includes(`<meta name="description" content="${escapedDescription}"/>`),
+    `${route} should render exact description metadata`,
   );
   assert(html.includes(`<meta property="og:url" content="${absoluteUrl}"/>`), `${route} should render Open Graph URL metadata`);
-  assert(html.includes(`<meta property="og:title" content="${title}"/>`), `${route} should render Open Graph title metadata`);
+  assert(html.includes(`<meta property="og:title" content="${escapedTitle}"/>`), `${route} should render Open Graph title metadata`);
   assert(
-    html.includes(`<meta property="og:description" content="${escapedDescription}"/>`) || /<meta property="og:description" content="[^"]+"/.test(html),
-    `${route} should render Open Graph description metadata`,
+    html.includes(`<meta property="og:description" content="${escapedDescription}"/>`),
+    `${route} should render exact Open Graph description metadata`,
   );
   assert(html.includes(`<meta property="og:image" content="${imageUrl}"/>`), `${route} should render Open Graph image metadata`);
   assert(html.includes(`<meta property="og:image:width" content="1200"/>`), `${route} should render Open Graph image width metadata`);
   assert(html.includes(`<meta property="og:image:height" content="630"/>`), `${route} should render Open Graph image height metadata`);
-  assert(html.includes(`<meta property="og:image:alt" content="${title}"/>`), `${route} should render Open Graph image alt metadata`);
+  assert(html.includes(`<meta property="og:image:alt" content="${escapedTitle}"/>`), `${route} should render Open Graph image alt metadata`);
   assert(html.includes(`<meta name="twitter:card" content="summary_large_image"/>`), `${route} should render Twitter large image card metadata`);
-  assert(html.includes(`<meta name="twitter:title" content="${title}"/>`), `${route} should render Twitter title metadata`);
+  assert(html.includes(`<meta name="twitter:title" content="${escapedTitle}"/>`), `${route} should render Twitter title metadata`);
   assert(
-    html.includes(`<meta name="twitter:description" content="${escapedDescription}"/>`) || /<meta name="twitter:description" content="[^"]+"/.test(html),
-    `${route} should render Twitter description metadata`,
+    html.includes(`<meta name="twitter:description" content="${escapedDescription}"/>`),
+    `${route} should render exact Twitter description metadata`,
   );
   assert(html.includes(`<meta name="twitter:image" content="${imageUrl}"/>`), `${route} should render Twitter image metadata`);
-  assert(html.includes(`<meta name="twitter:image:alt" content="${title}"/>`), `${route} should render Twitter image alt metadata`);
+  assert(html.includes(`<meta name="twitter:image:alt" content="${escapedTitle}"/>`), `${route} should render Twitter image alt metadata`);
+}
+
+function assertNoIndexFollow(html, route) {
+  const robotsMatch = html.match(/<meta name="robots" content="([^"]+)"/);
+  assert(robotsMatch, `${route} should render robots metadata`);
+  const directives = robotsMatch[1].split(",").map((directive) => directive.trim().toLowerCase());
+  assert(directives.includes("noindex"), `${route} robots metadata should include noindex`);
+  assert(directives.includes("follow"), `${route} robots metadata should include follow`);
 }
 
 function escapeHtmlAttribute(value) {
@@ -413,7 +441,11 @@ function expectedUpcomingDayDescription(day) {
   const lead = topGame
     ? `Top watch: ${topGame.label} with a ${topGame.gameWatchScore.toFixed(1)} watch score.`
     : "Probable starter watch list will update as starters are named.";
-  return `${day.scheduledGames} MLB games ranked by probable starter form and matchup context for ${formatUpcomingDate(day.date)}. ${lead}`;
+  return `Probable starting pitchers and pitching matchups for ${formatUpcomingDate(day.date)}, ranked by watch score: top arms, pairing quality, and matchup context. ${lead}`;
+}
+
+function expectedUpcomingDayTitle(dateToFormat) {
+  return `MLB Probable Pitchers & Matchups - ${formatUpcomingDate(dateToFormat)}`;
 }
 
 function expectedUpcomingWeekDescription(upcoming) {
@@ -426,6 +458,10 @@ function expectedUpcomingWeekDescription(upcoming) {
     ? `Top watch: ${topGame.label} at ${topGame.gameWatchScore.toFixed(1)}.`
     : "Updates as probable starters are named.";
   return `${games.length} upcoming MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
+}
+
+function expectedUpcomingWeekTitle(startDate) {
+  return `MLB Probable Pitchers - Week of ${formatUpcomingDate(startDate)}`;
 }
 
 async function assertPng(url, label) {
@@ -539,7 +575,7 @@ function starterHeadshotUrl(pitcherId) {
 }
 
 function absoluteSiteUrl(path) {
-  return new URL(path, "https://soma4.b-average.com").toString();
+  return new URL(path, `${siteUrl}/`).toString();
 }
 
 function expectedJsonLdEventStatus(status) {
@@ -1279,6 +1315,7 @@ try {
   assertDateKey(defaultDateUpcoming.range?.start, "default date query range start");
   assert(defaultDateUpcoming.range?.start === defaultDateUpcoming.range?.end, "default date query should return a one-day range");
   assert(Array.isArray(defaultDateUpcoming.days) && defaultDateUpcoming.days.length === 1, "default date query should return one day group");
+  const homeSlateDate = defaultDateUpcoming.range.start;
   const defaultDayTotals = assertDay(defaultDateUpcoming.days[0], defaultDateUpcoming.range.start, { requireCompleteStarter: true });
 
   const defaultTonightResponse = await fetch(`${baseUrl}/api/tonight?window=${encodeURIComponent(windowSize)}`);
@@ -1288,6 +1325,25 @@ try {
   assert(
     dayApiSignature(defaultTonight) === dayApiSignature(defaultDateUpcoming.days[0]),
     "default tonight query should match the default upcoming day payload",
+  );
+
+  const bareDefaultUpcomingResponse = await fetch(`${baseUrl}/api/upcoming`);
+  assert(bareDefaultUpcomingResponse.ok, `/api/upcoming bare default returned HTTP ${bareDefaultUpcomingResponse.status}`);
+  const bareDefaultUpcoming = await bareDefaultUpcomingResponse.json();
+  assert(bareDefaultUpcoming.range?.start === defaultDateUpcoming.range.start, "bare default upcoming query should use the default upcoming slate date");
+  assert(bareDefaultUpcoming.range?.end === defaultDateUpcoming.range.end, "bare default upcoming query should return a one-day range");
+  assert(Array.isArray(bareDefaultUpcoming.days) && bareDefaultUpcoming.days.length === 1, "bare default upcoming query should return one day group");
+  assert(
+    dayApiSignature(bareDefaultUpcoming.days[0]) === dayApiSignature(defaultDateUpcoming.days[0]),
+    "bare default upcoming query should match the default upcoming day payload",
+  );
+
+  const bareDefaultTonightResponse = await fetch(`${baseUrl}/api/tonight`);
+  assert(bareDefaultTonightResponse.ok, `/api/tonight bare default returned HTTP ${bareDefaultTonightResponse.status}`);
+  const bareDefaultTonight = await bareDefaultTonightResponse.json();
+  assert(
+    dayApiSignature(bareDefaultTonight) === dayApiSignature(defaultTonight),
+    "bare default tonight query should match the default tonight day payload",
   );
 
   const invalidTonightDateResponse = await fetch(`${baseUrl}/api/tonight?date=not-a-date&window=${encodeURIComponent(windowSize)}`);
@@ -1394,17 +1450,17 @@ try {
   const dayPage = await fetch(`${baseUrl}/upcoming/${encodeURIComponent(date)}`);
   assert(dayPage.ok, `/upcoming/${date} returned HTTP ${dayPage.status}`);
   const dayHtml = await dayPage.text();
-  assert(dayHtml.includes("Upcoming MLB Starters"), `/upcoming/${date} should render route metadata`);
+  assert(dayHtml.includes(escapeHtmlAttribute(expectedUpcomingDayTitle(date))), `/upcoming/${date} should render route metadata`);
   assertMetadata(
     dayHtml,
     `/upcoming/${date}`,
-    `Upcoming MLB Starters: ${formatUpcomingDate(date)}`,
+    expectedUpcomingDayTitle(date),
     expectedUpcomingDayDescription(upcoming.days[0]),
   );
   assertJsonLd(
     dayHtml,
     `/upcoming/${date}`,
-    `Upcoming MLB Starters: ${formatUpcomingDate(date)}`,
+    expectedUpcomingDayTitle(date),
     expectedUpcomingDayDescription(upcoming.days[0]),
     totals[0].games,
     upcoming.days[0].games,
@@ -1415,13 +1471,104 @@ try {
   assertUpcomingRangeToggle(
     dayHtml,
     `/upcoming/${date}`,
-    defaultDateUpcoming.range.start,
-    defaultDateUpcoming.range.start,
-    [defaultDateUpcoming.range.start, addDays(defaultDateUpcoming.range.start, 1)].includes(date) ? `/upcoming/${date}` : null,
+    homeSlateDate,
+    date,
+    [homeSlateDate, addDays(homeSlateDate, 1)].includes(date) ? `/upcoming/${date}` : null,
   );
   assertUpcomingControls(dayHtml, `/upcoming/${date}`);
   assertNoLegacySlateLinks(dayHtml, `/upcoming/${date}`);
   await assertPng(`${baseUrl}/upcoming/${encodeURIComponent(date)}/opengraph-image`, `/upcoming/${date}/opengraph-image`);
+
+  const filteredDayPage = await fetch(`${baseUrl}/upcoming/${encodeURIComponent(date)}?sort=time`);
+  assert(filteredDayPage.ok, `/upcoming/${date}?sort=time returned HTTP ${filteredDayPage.status}`);
+  const filteredDayHtml = await filteredDayPage.text();
+  assertMetadata(
+    filteredDayHtml,
+    `/upcoming/${date}`,
+    expectedUpcomingDayTitle(date),
+    expectedUpcomingDayDescription(upcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredDayHtml, `/upcoming/${date}?sort=time`);
+  assertRenderedWatchCards(
+    filteredDayHtml,
+    `/upcoming/${date}?sort=time`,
+    sortGamesByFirstPitch(upcoming.days[0].games),
+    `on ${formatUpcomingDate(date)}`,
+    "must-watch",
+    upcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(filteredDayHtml, `/upcoming/${date}?sort=time`, "Week view", `/upcoming/week/${date}`, `View week of ${formatUpcomingDate(date)}`);
+  assertNoLegacySlateLinks(filteredDayHtml, `/upcoming/${date}?sort=time`);
+
+  const dayFilterTeam = firstPregameTeam(upcoming.days[0].games, `/upcoming/${date}`);
+  const filteredPregameTeamDayPath = `/upcoming/${encodeURIComponent(date)}?pregame=1&team=${encodeURIComponent(dayFilterTeam)}`;
+  const filteredPregameTeamDayPage = await fetch(`${baseUrl}${filteredPregameTeamDayPath}`);
+  assert(filteredPregameTeamDayPage.ok, `/upcoming/${date}?pregame=1&team=${dayFilterTeam} returned HTTP ${filteredPregameTeamDayPage.status}`);
+  const filteredPregameTeamDayHtml = await filteredPregameTeamDayPage.text();
+  assertMetadata(
+    filteredPregameTeamDayHtml,
+    `/upcoming/${date}`,
+    expectedUpcomingDayTitle(date),
+    expectedUpcomingDayDescription(upcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredPregameTeamDayHtml, `/upcoming/${date}?pregame=1&team=${dayFilterTeam}`);
+  assertUpcomingControls(
+    filteredPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&team=${dayFilterTeam}`,
+    `Filters / Pregame only / Watch rank / ${dayFilterTeam}`,
+  );
+  assertRenderedWatchCards(
+    filteredPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&team=${dayFilterTeam}`,
+    pregameTeamGames(upcoming.days[0].games, dayFilterTeam),
+    `on ${formatUpcomingDate(date)}`,
+    "must-watch",
+    upcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    filteredPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&team=${dayFilterTeam}`,
+    "Week view",
+    `/upcoming/week/${date}`,
+    `View week of ${formatUpcomingDate(date)}`,
+  );
+  assertNoLegacySlateLinks(filteredPregameTeamDayHtml, `/upcoming/${date}?pregame=1&team=${dayFilterTeam}`);
+
+  const filteredSortedPregameTeamDayPath = `/upcoming/${encodeURIComponent(date)}?pregame=1&sort=time&team=${encodeURIComponent(dayFilterTeam)}`;
+  const filteredSortedPregameTeamDayPage = await fetch(`${baseUrl}${filteredSortedPregameTeamDayPath}`);
+  assert(
+    filteredSortedPregameTeamDayPage.ok,
+    `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam} returned HTTP ${filteredSortedPregameTeamDayPage.status}`,
+  );
+  const filteredSortedPregameTeamDayHtml = await filteredSortedPregameTeamDayPage.text();
+  assertMetadata(
+    filteredSortedPregameTeamDayHtml,
+    `/upcoming/${date}`,
+    expectedUpcomingDayTitle(date),
+    expectedUpcomingDayDescription(upcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredSortedPregameTeamDayHtml, `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam}`);
+  assertUpcomingControls(
+    filteredSortedPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam}`,
+    `Filters / Pregame only / Start time / ${dayFilterTeam}`,
+  );
+  assertRenderedWatchCards(
+    filteredSortedPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam}`,
+    pregameTeamGamesByFirstPitch(upcoming.days[0].games, dayFilterTeam),
+    `on ${formatUpcomingDate(date)}`,
+    "must-watch",
+    upcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    filteredSortedPregameTeamDayHtml,
+    `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam}`,
+    "Week view",
+    `/upcoming/week/${date}`,
+    `View week of ${formatUpcomingDate(date)}`,
+  );
+  assertNoLegacySlateLinks(filteredSortedPregameTeamDayHtml, `/upcoming/${date}?pregame=1&sort=time&team=${dayFilterTeam}`);
 
   const invalidDayPage = await fetch(`${baseUrl}/upcoming/not-a-date`);
   assert(invalidDayPage.ok, "/upcoming/not-a-date returned HTTP " + invalidDayPage.status);
@@ -1429,13 +1576,13 @@ try {
   assertMetadata(
     invalidDayHtml,
     `/upcoming/${defaultDateUpcoming.range.start}`,
-    `Upcoming MLB Starters: ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
   );
   assertJsonLd(
     invalidDayHtml,
     "/upcoming/not-a-date",
-    `Upcoming MLB Starters: ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
     defaultDayTotals.games,
     defaultDateUpcoming.days[0].games,
@@ -1459,7 +1606,7 @@ try {
   assertUpcomingRangeToggle(
     invalidDayHtml,
     "/upcoming/not-a-date",
-    defaultDateUpcoming.range.start,
+    homeSlateDate,
     defaultDateUpcoming.range.start,
     `/upcoming/${defaultDateUpcoming.range.start}`,
   );
@@ -1470,17 +1617,17 @@ try {
   const upcomingIndex = await fetch(`${baseUrl}/upcoming`);
   assert(upcomingIndex.ok, "/upcoming returned HTTP " + upcomingIndex.status);
   const upcomingIndexHtml = await upcomingIndex.text();
-  assert(upcomingIndexHtml.includes("Upcoming MLB Starters"), "/upcoming should render the primary upcoming surface");
+  assert(upcomingIndexHtml.includes("Upcoming"), "/upcoming should render the primary upcoming surface");
   assertMetadata(
     upcomingIndexHtml,
     "/upcoming",
-    `Upcoming MLB Starters: ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
   );
   assertJsonLd(
     upcomingIndexHtml,
     "/upcoming",
-    `Upcoming MLB Starters: ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
     defaultDayTotals.games,
     defaultDateUpcoming.days[0].games,
@@ -1501,27 +1648,125 @@ try {
     `/upcoming/week/${defaultDateUpcoming.range.start}`,
     `View week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
   );
-  assertUpcomingRangeToggle(upcomingIndexHtml, "/upcoming", defaultDateUpcoming.range.start, defaultDateUpcoming.range.start, `/upcoming/${defaultDateUpcoming.range.start}`);
+  assertUpcomingRangeToggle(upcomingIndexHtml, "/upcoming", homeSlateDate, defaultDateUpcoming.range.start, `/upcoming/${defaultDateUpcoming.range.start}`);
   assertUpcomingControls(upcomingIndexHtml, "/upcoming");
   assertNoLegacySlateLinks(upcomingIndexHtml, "/upcoming");
   await assertPng(`${baseUrl}/upcoming/opengraph-image`, "/upcoming/opengraph-image");
+
+  const filteredUpcomingIndex = await fetch(`${baseUrl}/upcoming?sort=time`);
+  assert(filteredUpcomingIndex.ok, "/upcoming?sort=time returned HTTP " + filteredUpcomingIndex.status);
+  const filteredUpcomingIndexHtml = await filteredUpcomingIndex.text();
+  assertMetadata(
+    filteredUpcomingIndexHtml,
+    "/upcoming",
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
+    expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredUpcomingIndexHtml, "/upcoming?sort=time");
+  assertUpcomingControls(filteredUpcomingIndexHtml, "/upcoming?sort=time", "Filters / All statuses / Start time / All teams");
+  assertRenderedWatchCards(
+    filteredUpcomingIndexHtml,
+    "/upcoming?sort=time",
+    sortGamesByFirstPitch(defaultDateUpcoming.days[0].games),
+    `on ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    "must-watch",
+    defaultDateUpcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    filteredUpcomingIndexHtml,
+    "/upcoming?sort=time",
+    "Week view",
+    `/upcoming/week/${defaultDateUpcoming.range.start}`,
+    `View week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+  );
+  assertNoLegacySlateLinks(filteredUpcomingIndexHtml, "/upcoming?sort=time");
+
+  const defaultFilterTeam = firstPregameTeam(defaultDateUpcoming.days[0].games, "/upcoming");
+  const filteredUpcomingIndexTeamPath = `/upcoming?pregame=1&team=${encodeURIComponent(defaultFilterTeam)}`;
+  const filteredUpcomingIndexTeam = await fetch(`${baseUrl}${filteredUpcomingIndexTeamPath}`);
+  assert(filteredUpcomingIndexTeam.ok, `/upcoming?pregame=1&team=${defaultFilterTeam} returned HTTP ${filteredUpcomingIndexTeam.status}`);
+  const filteredUpcomingIndexTeamHtml = await filteredUpcomingIndexTeam.text();
+  assertMetadata(
+    filteredUpcomingIndexTeamHtml,
+    "/upcoming",
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
+    expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredUpcomingIndexTeamHtml, `/upcoming?pregame=1&team=${defaultFilterTeam}`);
+  assertUpcomingControls(
+    filteredUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&team=${defaultFilterTeam}`,
+    `Filters / Pregame only / Watch rank / ${defaultFilterTeam}`,
+  );
+  assertRenderedWatchCards(
+    filteredUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&team=${defaultFilterTeam}`,
+    pregameTeamGames(defaultDateUpcoming.days[0].games, defaultFilterTeam),
+    `on ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    "must-watch",
+    defaultDateUpcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    filteredUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&team=${defaultFilterTeam}`,
+    "Week view",
+    `/upcoming/week/${defaultDateUpcoming.range.start}`,
+    `View week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+  );
+  assertNoLegacySlateLinks(filteredUpcomingIndexTeamHtml, `/upcoming?pregame=1&team=${defaultFilterTeam}`);
+
+  const filteredSortedUpcomingIndexTeamPath = `/upcoming?pregame=1&sort=time&team=${encodeURIComponent(defaultFilterTeam)}`;
+  const filteredSortedUpcomingIndexTeam = await fetch(`${baseUrl}${filteredSortedUpcomingIndexTeamPath}`);
+  assert(
+    filteredSortedUpcomingIndexTeam.ok,
+    `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam} returned HTTP ${filteredSortedUpcomingIndexTeam.status}`,
+  );
+  const filteredSortedUpcomingIndexTeamHtml = await filteredSortedUpcomingIndexTeam.text();
+  assertMetadata(
+    filteredSortedUpcomingIndexTeamHtml,
+    "/upcoming",
+    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
+    expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
+  );
+  assertNoIndexFollow(filteredSortedUpcomingIndexTeamHtml, `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam}`);
+  assertUpcomingControls(
+    filteredSortedUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam}`,
+    `Filters / Pregame only / Start time / ${defaultFilterTeam}`,
+  );
+  assertRenderedWatchCards(
+    filteredSortedUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam}`,
+    pregameTeamGamesByFirstPitch(defaultDateUpcoming.days[0].games, defaultFilterTeam),
+    `on ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+    "must-watch",
+    defaultDateUpcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    filteredSortedUpcomingIndexTeamHtml,
+    `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam}`,
+    "Week view",
+    `/upcoming/week/${defaultDateUpcoming.range.start}`,
+    `View week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+  );
+  assertNoLegacySlateLinks(filteredSortedUpcomingIndexTeamHtml, `/upcoming?pregame=1&sort=time&team=${defaultFilterTeam}`);
 
   if (expectedDays > 1) {
     const weekPage = await fetch(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}`);
     assert(weekPage.ok, `/upcoming/week/${date} returned HTTP ${weekPage.status}`);
     const weekHtml = await weekPage.text();
     const weekGames = upcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
-    assert(weekHtml.includes("Upcoming MLB Starter Watch"), `/upcoming/week/${date} should render route metadata`);
+    assert(weekHtml.includes(escapeHtmlAttribute(expectedUpcomingWeekTitle(date))), `/upcoming/week/${date} should render route metadata`);
     assertMetadata(
       weekHtml,
       `/upcoming/week/${date}`,
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(date)}`,
+      expectedUpcomingWeekTitle(date),
       expectedUpcomingWeekDescription(upcoming),
     );
     assertJsonLd(
       weekHtml,
       `/upcoming/week/${date}`,
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(date)}`,
+      expectedUpcomingWeekTitle(date),
       expectedUpcomingWeekDescription(upcoming),
       gameCount,
       weekGames,
@@ -1546,10 +1791,120 @@ try {
       );
     });
     assertWeekDaySlateLinks(weekHtml, `/upcoming/week/${date}`, upcoming.days);
-    assertUpcomingRangeToggle(weekHtml, `/upcoming/week/${date}`, defaultDateUpcoming.range.start, date, `/upcoming/week/${date}`);
+    assertUpcomingRangeToggle(weekHtml, `/upcoming/week/${date}`, homeSlateDate, date, `/upcoming/week/${date}`);
     assertUpcomingControls(weekHtml, `/upcoming/week/${date}`);
     assertNoLegacySlateLinks(weekHtml, `/upcoming/week/${date}`);
     await assertPng(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}/opengraph-image`, `/upcoming/week/${date}/opengraph-image`);
+
+    const filteredWeekPage = await fetch(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}?sort=time`);
+    assert(filteredWeekPage.ok, `/upcoming/week/${date}?sort=time returned HTTP ${filteredWeekPage.status}`);
+    const filteredWeekHtml = await filteredWeekPage.text();
+    assertMetadata(
+      filteredWeekHtml,
+      `/upcoming/week/${date}`,
+      expectedUpcomingWeekTitle(date),
+      expectedUpcomingWeekDescription(upcoming),
+    );
+    assertNoIndexFollow(filteredWeekHtml, `/upcoming/week/${date}?sort=time`);
+    assertUpcomingControls(filteredWeekHtml, `/upcoming/week/${date}?sort=time`, "Filters / All statuses / Start time / All teams");
+    upcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredWeekHtml,
+        `/upcoming/week/${date}?sort=time day ${day.date}`,
+        sortGamesByFirstPitch(day.games),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredWeekHtml,
+        `/upcoming/week/${date}?sort=time day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(filteredWeekHtml, `/upcoming/week/${date}?sort=time`, upcoming.days);
+    assertNoLegacySlateLinks(filteredWeekHtml, `/upcoming/week/${date}?sort=time`);
+
+    const weekFilterTeam = firstPregameTeam(weekGames, `/upcoming/week/${date}`);
+    const filteredPregameTeamWeekPath = `/upcoming/week/${encodeURIComponent(date)}?pregame=1&team=${encodeURIComponent(weekFilterTeam)}`;
+    const filteredPregameTeamWeekPage = await fetch(`${baseUrl}${filteredPregameTeamWeekPath}`);
+    assert(
+      filteredPregameTeamWeekPage.ok,
+      `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam} returned HTTP ${filteredPregameTeamWeekPage.status}`,
+    );
+    const filteredPregameTeamWeekHtml = await filteredPregameTeamWeekPage.text();
+    assertMetadata(
+      filteredPregameTeamWeekHtml,
+      `/upcoming/week/${date}`,
+      expectedUpcomingWeekTitle(date),
+      expectedUpcomingWeekDescription(upcoming),
+    );
+    assertNoIndexFollow(filteredPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam}`);
+    assertUpcomingControls(
+      filteredPregameTeamWeekHtml,
+      `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam}`,
+      `Filters / Pregame only / Watch rank / ${weekFilterTeam}`,
+    );
+    upcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredPregameTeamWeekHtml,
+        `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam} day ${day.date}`,
+        pregameTeamGames(day.games, weekFilterTeam),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredPregameTeamWeekHtml,
+        `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam} day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(filteredPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam}`, upcoming.days);
+    assertNoLegacySlateLinks(filteredPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&team=${weekFilterTeam}`);
+
+    const filteredSortedPregameTeamWeekPath = `/upcoming/week/${encodeURIComponent(date)}?pregame=1&sort=time&team=${encodeURIComponent(weekFilterTeam)}`;
+    const filteredSortedPregameTeamWeekPage = await fetch(`${baseUrl}${filteredSortedPregameTeamWeekPath}`);
+    assert(
+      filteredSortedPregameTeamWeekPage.ok,
+      `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam} returned HTTP ${filteredSortedPregameTeamWeekPage.status}`,
+    );
+    const filteredSortedPregameTeamWeekHtml = await filteredSortedPregameTeamWeekPage.text();
+    assertMetadata(
+      filteredSortedPregameTeamWeekHtml,
+      `/upcoming/week/${date}`,
+      expectedUpcomingWeekTitle(date),
+      expectedUpcomingWeekDescription(upcoming),
+    );
+    assertNoIndexFollow(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam}`);
+    assertUpcomingControls(
+      filteredSortedPregameTeamWeekHtml,
+      `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam}`,
+      `Filters / Pregame only / Start time / ${weekFilterTeam}`,
+    );
+    upcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredSortedPregameTeamWeekHtml,
+        `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam} day ${day.date}`,
+        pregameTeamGamesByFirstPitch(day.games, weekFilterTeam),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredSortedPregameTeamWeekHtml,
+        `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam} day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam}`, upcoming.days);
+    assertNoLegacySlateLinks(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time&team=${weekFilterTeam}`);
 
     const invalidWeekPage = await fetch(`${baseUrl}/upcoming/week/not-a-date`);
     assert(invalidWeekPage.ok, "/upcoming/week/not-a-date returned HTTP " + invalidWeekPage.status);
@@ -1557,13 +1912,13 @@ try {
     assertMetadata(
       invalidWeekHtml,
       `/upcoming/week/${defaultDateUpcoming.range.start}`,
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
     );
     assertJsonLd(
       invalidWeekHtml,
       "/upcoming/week/not-a-date",
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
       defaultWeekGameCount,
       defaultWeekGames,
@@ -1591,7 +1946,7 @@ try {
     assertUpcomingRangeToggle(
       invalidWeekHtml,
       "/upcoming/week/not-a-date",
-      defaultDateUpcoming.range.start,
+      homeSlateDate,
       defaultDateUpcoming.range.start,
       `/upcoming/week/${defaultDateUpcoming.range.start}`,
     );
@@ -1602,17 +1957,17 @@ try {
     const upcomingWeekIndex = await fetch(`${baseUrl}/upcoming/week`);
     assert(upcomingWeekIndex.ok, "/upcoming/week returned HTTP " + upcomingWeekIndex.status);
     const upcomingWeekIndexHtml = await upcomingWeekIndex.text();
-    assert(upcomingWeekIndexHtml.includes("Upcoming MLB Starter Watch"), "/upcoming/week should render the primary weekly watch surface");
+    assert(upcomingWeekIndexHtml.includes("Upcoming"), "/upcoming/week should render the primary weekly watch surface");
     assertMetadata(
       upcomingWeekIndexHtml,
       "/upcoming/week",
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
     );
     assertJsonLd(
       upcomingWeekIndexHtml,
       "/upcoming/week",
-      `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
       defaultWeekGameCount,
       defaultWeekGames,
@@ -1640,13 +1995,127 @@ try {
     assertUpcomingRangeToggle(
       upcomingWeekIndexHtml,
       "/upcoming/week",
-      defaultDateUpcoming.range.start,
+      homeSlateDate,
       defaultDateUpcoming.range.start,
       `/upcoming/week/${defaultDateUpcoming.range.start}`,
     );
     assertUpcomingControls(upcomingWeekIndexHtml, "/upcoming/week");
     assertNoLegacySlateLinks(upcomingWeekIndexHtml, "/upcoming/week");
     await assertPng(`${baseUrl}/upcoming/week/opengraph-image`, "/upcoming/week/opengraph-image");
+
+    const filteredUpcomingWeekIndex = await fetch(`${baseUrl}/upcoming/week?sort=time`);
+    assert(filteredUpcomingWeekIndex.ok, "/upcoming/week?sort=time returned HTTP " + filteredUpcomingWeekIndex.status);
+    const filteredUpcomingWeekIndexHtml = await filteredUpcomingWeekIndex.text();
+    assertMetadata(
+      filteredUpcomingWeekIndexHtml,
+      "/upcoming/week",
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
+      expectedUpcomingWeekDescription(defaultWeekUpcoming),
+    );
+    assertNoIndexFollow(filteredUpcomingWeekIndexHtml, "/upcoming/week?sort=time");
+    assertUpcomingControls(filteredUpcomingWeekIndexHtml, "/upcoming/week?sort=time", "Filters / All statuses / Start time / All teams");
+    defaultWeekUpcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredUpcomingWeekIndexHtml,
+        `/upcoming/week?sort=time day ${day.date}`,
+        sortGamesByFirstPitch(day.games),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredUpcomingWeekIndexHtml,
+        `/upcoming/week?sort=time day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(filteredUpcomingWeekIndexHtml, "/upcoming/week?sort=time", defaultWeekUpcoming.days);
+    assertNoLegacySlateLinks(filteredUpcomingWeekIndexHtml, "/upcoming/week?sort=time");
+
+    const defaultWeekFilterTeam = firstPregameTeam(defaultWeekGames, "/upcoming/week");
+    const filteredUpcomingWeekIndexTeamPath = `/upcoming/week?pregame=1&team=${encodeURIComponent(defaultWeekFilterTeam)}`;
+    const filteredUpcomingWeekIndexTeam = await fetch(`${baseUrl}${filteredUpcomingWeekIndexTeamPath}`);
+    assert(
+      filteredUpcomingWeekIndexTeam.ok,
+      `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam} returned HTTP ${filteredUpcomingWeekIndexTeam.status}`,
+    );
+    const filteredUpcomingWeekIndexTeamHtml = await filteredUpcomingWeekIndexTeam.text();
+    assertMetadata(
+      filteredUpcomingWeekIndexTeamHtml,
+      "/upcoming/week",
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
+      expectedUpcomingWeekDescription(defaultWeekUpcoming),
+    );
+    assertNoIndexFollow(filteredUpcomingWeekIndexTeamHtml, `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam}`);
+    assertUpcomingControls(
+      filteredUpcomingWeekIndexTeamHtml,
+      `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam}`,
+      `Filters / Pregame only / Watch rank / ${defaultWeekFilterTeam}`,
+    );
+    defaultWeekUpcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredUpcomingWeekIndexTeamHtml,
+        `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam} day ${day.date}`,
+        pregameTeamGames(day.games, defaultWeekFilterTeam),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredUpcomingWeekIndexTeamHtml,
+        `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam} day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(filteredUpcomingWeekIndexTeamHtml, `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam}`, defaultWeekUpcoming.days);
+    assertNoLegacySlateLinks(filteredUpcomingWeekIndexTeamHtml, `/upcoming/week?pregame=1&team=${defaultWeekFilterTeam}`);
+
+    const filteredSortedUpcomingWeekIndexTeamPath = `/upcoming/week?pregame=1&sort=time&team=${encodeURIComponent(defaultWeekFilterTeam)}`;
+    const filteredSortedUpcomingWeekIndexTeam = await fetch(`${baseUrl}${filteredSortedUpcomingWeekIndexTeamPath}`);
+    assert(
+      filteredSortedUpcomingWeekIndexTeam.ok,
+      `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam} returned HTTP ${filteredSortedUpcomingWeekIndexTeam.status}`,
+    );
+    const filteredSortedUpcomingWeekIndexTeamHtml = await filteredSortedUpcomingWeekIndexTeam.text();
+    assertMetadata(
+      filteredSortedUpcomingWeekIndexTeamHtml,
+      "/upcoming/week",
+      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
+      expectedUpcomingWeekDescription(defaultWeekUpcoming),
+    );
+    assertNoIndexFollow(filteredSortedUpcomingWeekIndexTeamHtml, `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam}`);
+    assertUpcomingControls(
+      filteredSortedUpcomingWeekIndexTeamHtml,
+      `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam}`,
+      `Filters / Pregame only / Start time / ${defaultWeekFilterTeam}`,
+    );
+    defaultWeekUpcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        filteredSortedUpcomingWeekIndexTeamHtml,
+        `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam} day ${day.date}`,
+        pregameTeamGamesByFirstPitch(day.games, defaultWeekFilterTeam),
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+      assertPrimarySlateCta(
+        filteredSortedUpcomingWeekIndexTeamHtml,
+        `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam} day ${day.date}`,
+        "Day slate",
+        `/upcoming/${day.date}`,
+        `View day slate for ${formatUpcomingDate(day.date)}`,
+      );
+    });
+    assertWeekDaySlateLinks(
+      filteredSortedUpcomingWeekIndexTeamHtml,
+      `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam}`,
+      defaultWeekUpcoming.days,
+    );
+    assertNoLegacySlateLinks(filteredSortedUpcomingWeekIndexTeamHtml, `/upcoming/week?pregame=1&sort=time&team=${defaultWeekFilterTeam}`);
   }
 
   console.log(`upcoming contract ok: ${upcoming.range.start}..${upcoming.range.end}, days ${upcoming.days.length}, games ${gameCount}, form starters ${okStarterCount}`);

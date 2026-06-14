@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "frontfive.app" }],
+        destination: "https://www.frontfive.app/:path*",
+        statusCode: 301,
+      },
+      {
         source: "/slate/yesterday/:date",
         destination: "/starts/:date",
         statusCode: 301,
@@ -40,6 +46,11 @@ const nextConfig: NextConfig = {
       {
         source: "/form",
         destination: "/heat-check",
+        statusCode: 301,
+      },
+      {
+        source: "/how-it-works",
+        destination: "/methodology",
         statusCode: 301,
       },
     ];

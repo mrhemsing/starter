@@ -6,6 +6,7 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingDatePageProps = {
@@ -19,8 +20,9 @@ type UpcomingDatePageProps = {
   }>;
 };
 
-export async function generateMetadata({ params }: UpcomingDatePageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: UpcomingDatePageProps): Promise<Metadata> {
   const { date } = await params;
+  const query = await searchParams;
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const resolvedDate = upcoming.date;
   const title = upcomingDayTitle(resolvedDate);
@@ -34,6 +36,7 @@ export async function generateMetadata({ params }: UpcomingDatePageProps): Promi
     alternates: {
       canonical: url,
     },
+    robots: query && Object.keys(query).length > 0 ? noIndexFollow() : undefined,
     openGraph: {
       title,
       description,
@@ -63,7 +66,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

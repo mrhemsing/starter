@@ -5,21 +5,21 @@ export const FORM_SITE_TITLE = "Front Five";
 export const FORM_PAGE_TITLE = "Heat Check";
 
 export function formPageTitle(window: number) {
-  return `${FORM_PAGE_TITLE}: MLB starter form over the last ${window}`;
+  return window === 5 ? "MLB Pitcher Heat Check - Who's Hot & Who's Cold" : `MLB Pitcher Heat Check - Last ${window} Starts`;
 }
 
 export function formPageDescription(leaderboard: Pick<FormLeaderboardResponse, "window" | "qualifiedCount" | "heatingCount" | "coolingCount" | "leagueMeanGS">) {
-  return `${leaderboard.qualifiedCount} qualified MLB starters ranked by recent GS+ form over their last ${leaderboard.window} starts. ${leaderboard.heatingCount} rising, ${leaderboard.coolingCount} falling, league mean ${leaderboard.leagueMeanGS.toFixed(1)}.`;
+  return `Every qualified MLB starter ranked by rolling form. See who's heating up and cooling down over their last ${leaderboard.window} starts.`;
 }
 
 export function pitcherFormTitle(form: Pick<FormPitcherResponse, "window" | "summary">) {
-  return `${form.summary.name} Heat Check: ${Math.round(form.summary.rgs)} form`;
+  return `${form.summary.name} - Recent Form, GS+ & Start Log`;
 }
 
 export function pitcherFormDescription(form: Pick<FormPitcherResponse, "window" | "summary" | "leagueMeanGS">) {
   const band = tierOf(Math.round(form.summary.rgs));
   const trend = TREND_STYLES[form.summary.trend].label;
-  return `${form.summary.name} is ${band.label.toLowerCase()} with ${Math.round(form.summary.rgs)} recent GS+ over ${form.summary.windowCount} qualified starts, ${trend.toLowerCase()} against a ${form.leagueMeanGS.toFixed(1)} league mean.`;
+  return `${form.summary.name} (${form.summary.team}) recent starting-pitcher form: last-${form.window} GS+, ${band.label.toLowerCase()} band, ${trend.toLowerCase()} trend, and full game log.`;
 }
 
 export function jsonLdForFormPage(leaderboard: FormLeaderboardResponse) {
@@ -44,15 +44,13 @@ export function jsonLdForFormPage(leaderboard: FormLeaderboardResponse) {
 export function jsonLdForPitcherForm(form: FormPitcherResponse) {
   return {
     "@context": "https://schema.org",
-    "@type": "SportsEvent",
+    "@type": "Person",
     name: pitcherFormTitle(form),
     description: pitcherFormDescription(form),
-    competitor: {
-      "@type": "Person",
-      name: form.summary.name,
-      identifier: form.summary.pitcherId,
-      memberOf: form.summary.team ? { "@type": "SportsTeam", name: form.summary.team } : undefined,
-    },
+    identifier: form.summary.pitcherId,
+    jobTitle: "Baseball pitcher",
+    memberOf: form.summary.team ? { "@type": "SportsTeam", name: form.summary.team } : undefined,
+    url: `/pitchers/${form.summary.pitcherId}/form`,
     additionalProperty: formSummaryProperties(form.summary),
   };
 }

@@ -7,6 +7,7 @@ import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-ser
 import { getDailySlate, getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { startPath } from "@/lib/routes";
+import { formatMonth, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 type BestStartsPageProps = {
@@ -15,10 +16,15 @@ type BestStartsPageProps = {
 
 export async function generateMetadata({ params }: BestStartsPageProps): Promise<Metadata> {
   const { month } = await params;
+  const monthLabel = formatMonth(month);
+  const title = `Best MLB Starts - ${monthLabel}`;
+  const description = `The highest-GS+ starting-pitcher performances of ${monthLabel}, ranked.`;
   return {
-    title: `Best MLB Starts: ${month}`,
-    description: `The best starting pitcher outings in ${month}, ranked by GS+.`,
+    title,
+    description,
     alternates: { canonical: `/best-starts/${month}` },
+    openGraph: websiteOpenGraph(title, description, `/best-starts/${month}`),
+    twitter: largeImageTwitter(title, description),
   };
 }
 

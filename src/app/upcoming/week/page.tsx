@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import { getDefaultSlateDates } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
+import { noIndexFollow } from "@/lib/seo";
 import { upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 import UpcomingWeekPage from "./[startDate]/page";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata(): Promise<Metadata> {
+type UpcomingWeekIndexPageProps = {
+  searchParams?: Promise<{
+    pregame?: string;
+    sort?: string;
+    team?: string;
+  }>;
+};
+
+export async function generateMetadata({ searchParams }: UpcomingWeekIndexPageProps): Promise<Metadata> {
+  const query = await searchParams;
   const { upcomingDate: startDate } = await getDefaultSlateDates();
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const title = upcomingWeekTitle(upcoming.range.start);
@@ -20,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: url,
     },
+    robots: query && Object.keys(query).length > 0 ? noIndexFollow() : undefined,
     openGraph: {
       title,
       description,
@@ -36,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function UpcomingWeekIndexPage() {
+export default async function UpcomingWeekIndexPage({ searchParams }: UpcomingWeekIndexPageProps) {
   const { upcomingDate } = await getDefaultSlateDates();
-  return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} />;
+  return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} searchParams={searchParams} />;
 }

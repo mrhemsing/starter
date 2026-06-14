@@ -13,6 +13,7 @@ import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
+import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { ArsenalPitchSummary, FeaturedStartHighlight, PitcherApiResponse, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
@@ -43,6 +44,7 @@ export async function generateMetadata({ params, searchParams }: PitcherFormPage
     alternates: {
       canonical: url,
     },
+    robots: isDefaultWindow ? undefined : noIndexFollow(),
     openGraph: {
       title,
       description,
@@ -81,7 +83,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>
         <header className="mt-6 grid gap-6 border-b border-white/10 pb-8 md:grid-cols-[1fr_240px]">

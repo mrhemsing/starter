@@ -16,6 +16,7 @@ import { QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { pitcherPath, rankedStartsPath, startPath, startShareImagePath } from "@/lib/routes";
+import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { FeaturedStartHighlight, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
@@ -29,13 +30,21 @@ type StartPageProps = {
   }>;
 };
 
-export async function generateMetadata({ params }: StartPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: StartPageProps): Promise<Metadata> {
   const { id } = await params;
+  const query = await searchParams;
   if (/^\d{4}-\d{2}-\d{2}$/.test(id)) {
+    const starts = (await getDailySlate({ window: "yesterday", date: id })).filter((start) => start.source?.line !== "fixture");
+    const topStart = starts[0];
+    const title = `MLB Starting Pitcher Rankings - ${formatShortDate(id)}`;
+    const description = topStart
+      ? `All ${starts.length} MLB starts on ${formatLongDate(id)} ranked by GS+. ${topStart.pitcher.name} led at ${topStart.gameScorePlus}. Full lines, matchups, and the night's best and worst starts.`
+      : `Every completed MLB start from ${formatLongDate(id)}, ranked by GS+.`;
     return {
-      title: `Ranked Starts: ${id}`,
-      description: `Every completed MLB start from ${id}, ranked by GS+.`,
+      title,
+      description,
       alternates: { canonical: rankedStartsPath(id) },
+      robots: query && Object.keys(query).length > 0 ? noIndexFollow() : undefined,
     };
   }
 
@@ -47,8 +56,8 @@ export async function generateMetadata({ params }: StartPageProps): Promise<Meta
     };
   }
 
-  const title = `${start.pitcher.name}: ${start.gameScorePlus} GS+`;
-  const description = `${start.pitcher.team} vs ${start.opponent} on ${formatMetadataDate(start.date)}: ${formatStartLine(start.line)}.`;
+  const title = `${start.pitcher.name} vs ${start.opponent} - ${formatShortDate(start.date)} (GS+ ${start.gameScorePlus})`;
+  const description = `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`;
   const url = startPath(start.id);
   const image = startShareImagePath(start.id);
 
@@ -79,12 +88,14 @@ export default async function StartPage({ params, searchParams }: StartPageProps
   const start = await getStartDetail(id);
   if (!start) notFound();
   const highlight = await resolveFeaturedStartHighlight(start);
+  const jsonLd = jsonLdForStartDetail(start);
   const lineSourceLabel = getLineSourceLabel(start.source?.line);
   const rankingSourceLabel = getRankingSourceLabel(start.source?.ranking);
   const pitchSourceLabel = getPitchSourceLabel(start.pitchDetailSource);
 
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <section className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
@@ -154,6 +165,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const qualityBandCounts = countQualityBands(starts);
   const pairs = pairedStarts(starts);
   const highlights = await resolveRankedStartHighlights(starts);
+  const jsonLd = jsonLdForRankedStarts(date, starts);
   const visibleStarts = starts
     .filter((start) => band === "all" || qualityBandSlug(qualityTierOf(start.gameScorePlus).label) === band)
     .sort((a, b) => {
@@ -164,13 +176,14 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">MLB Starting Pitcher Rankings / {formatMetadataDate(date)}</h1>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-mono text-sm text-zinc-500">{date} / completed starts recap</p>
@@ -178,7 +191,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 {completionStatusLabel(completionState)}
               </span>
             </div>
-            <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/how-it-works">How rankings work</Link>
+            <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology">How rankings work</Link>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]">
             <Link className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300" href={`/starts/${addDays(date, -1)}`}>Previous day</Link>
@@ -486,6 +499,80 @@ function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort
   if (values.band && values.band !== "all") params.set("band", values.band);
   const query = params.toString();
   return `/starts/${date}${query ? `?${query}` : ""}`;
+}
+
+function jsonLdForRankedStarts(date: string, starts: StartSummary[]) {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+        { "@type": "ListItem", position: 2, name: "Starts", item: absoluteUrl("/starts") },
+        { "@type": "ListItem", position: 3, name: formatLongDate(date), item: absoluteUrl(rankedStartsPath(date)) },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `MLB Starting Pitcher Rankings - ${formatShortDate(date)}`,
+      numberOfItems: starts.length,
+      itemListElement: starts.slice(0, 50).map((start, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: absoluteUrl(startPath(start.id)),
+        name: `${start.pitcher.name} vs ${start.opponent}`,
+        item: {
+          "@type": "SportsEvent",
+          name: `${start.pitcher.name} vs ${start.opponent}`,
+          startDate: start.date,
+          location: { "@type": "Place", name: start.context.parkLabel },
+          performer: { "@type": "Person", name: start.pitcher.name, identifier: start.pitcher.id },
+          additionalProperty: { "@type": "PropertyValue", name: "GS+", value: start.gameScorePlus },
+        },
+      })),
+    },
+  ];
+}
+
+function jsonLdForStartDetail(start: NonNullable<Awaited<ReturnType<typeof getStartDetail>>>) {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+        { "@type": "ListItem", position: 2, name: "Starts", item: absoluteUrl("/starts") },
+        { "@type": "ListItem", position: 3, name: formatLongDate(start.date), item: absoluteUrl(rankedStartsPath(start.date)) },
+        { "@type": "ListItem", position: 4, name: start.pitcher.name, item: absoluteUrl(startPath(start.id)) },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsEvent",
+      name: `${start.pitcher.name} vs ${start.opponent} - ${formatLongDate(start.date)}`,
+      url: absoluteUrl(startPath(start.id)),
+      startDate: start.date,
+      eventStatus: "https://schema.org/EventCompleted",
+      location: { "@type": "Place", name: start.game.venue },
+      competitor: [
+        { "@type": "SportsTeam", name: start.game.awayTeam.name },
+        { "@type": "SportsTeam", name: start.game.homeTeam.name },
+      ],
+      performer: {
+        "@type": "Person",
+        name: start.pitcher.name,
+        identifier: start.pitcher.id,
+        image: start.pitcher.headshotUrl,
+        memberOf: { "@type": "SportsTeam", name: start.pitcher.team },
+      },
+      additionalProperty: [
+        { "@type": "PropertyValue", name: "GS+", value: start.gameScorePlus },
+        { "@type": "PropertyValue", name: "Innings Pitched", value: start.line.inningsPitched },
+        { "@type": "PropertyValue", name: "Strikeouts", value: start.line.strikeouts },
+      ],
+    },
+  ];
 }
 
 function pairedStarts(starts: StartSummary[]) {

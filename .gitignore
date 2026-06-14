@@ -41,6 +41,8 @@ yarn-error.log*
 .next-heartbeat-*.err
 .next-local-*.log
 .next-local-*.err
+.next-seo-*.log
+.next-seo-*.err.log
 .next-responsive-*.log
 .next-responsive-*.err
 .next-live-splits-*.log

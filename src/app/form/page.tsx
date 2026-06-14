@@ -12,6 +12,7 @@ import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-s
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
+import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { FormSummary, HeatBand } from "@/lib/types";
 import type React from "react";
 
@@ -44,6 +45,7 @@ export async function generateHeatCheckMetadata({ searchParams }: FormPageProps)
   const title = formPageTitle(window);
   const description = formPageDescription(leaderboard);
   const hasIndexableWindow = params?.window && window !== 5 && Object.keys(params).every((key) => key === "window");
+  const hasNonCanonicalFilters = Boolean(params && Object.keys(params).some((key) => !(key === "window" && hasIndexableWindow)));
   const url = hasIndexableWindow ? `/heat-check?window=${window}` : "/heat-check";
   const image = `/form/opengraph-image?window=${window}`;
 
@@ -53,6 +55,7 @@ export async function generateHeatCheckMetadata({ searchParams }: FormPageProps)
     alternates: {
       canonical: url,
     },
+    robots: hasNonCanonicalFilters ? noIndexFollow() : undefined,
     openGraph: {
       title,
       description,
@@ -115,7 +118,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

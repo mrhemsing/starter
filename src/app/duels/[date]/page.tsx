@@ -5,6 +5,7 @@ import { PitchingDuelsModule } from "@/components/pitching-duels";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { duelsPath, formatUpcomingDate, rankedStartsPath, upcomingDateHref } from "@/lib/routes";
+import { largeImageTwitter, websiteOpenGraph } from "@/lib/seo";
 
 type DuelsPageProps = {
   params: Promise<{ date: string }>;
@@ -17,10 +18,10 @@ export async function generateMetadata({ params, searchParams }: DuelsPageProps)
   const mode = query?.mode === "settled" ? "settled" : "upcoming";
   const duels = await getPitchingDuels(date, mode);
   const top = duels.bestDuels[0] ?? duels.mismatches[0];
-  const title = `Pitching Duels: ${formatUpcomingDate(date)}`;
+  const title = `Best MLB Pitching Duels - ${formatUpcomingDate(date)}`;
   const description = top
-    ? `${top.label} leads ${formatUpcomingDate(date)} pitching duels with ${top.combinedQuality} combined ${mode === "settled" ? "GS+" : "Form"} and a ${top.gap}-point gap.`
-    : `Pitching duels for ${formatUpcomingDate(date)}, ranked by combined starter quality and matchup gap.`;
+    ? `The best pitching duels and biggest mismatches for ${formatUpcomingDate(date)}. ${top.label} leads with ${top.combinedQuality} combined ${mode === "settled" ? "GS+" : "Form"}.`
+    : `The best pitching duels and biggest mismatches for ${formatUpcomingDate(date)}, scored from both starters' form.`;
   const queryString = mode === "settled" ? "?mode=settled" : "";
 
   return {
@@ -28,16 +29,9 @@ export async function generateMetadata({ params, searchParams }: DuelsPageProps)
     description,
     alternates: { canonical: `${duelsPath(date)}${queryString}` },
     openGraph: {
-      title,
-      description,
-      type: "website",
-      url: `${duelsPath(date)}${queryString}`,
+      ...websiteOpenGraph(title, description, `${duelsPath(date)}${queryString}`),
     },
-    twitter: {
-      card: "summary",
-      title,
-      description,
-    },
+    twitter: largeImageTwitter(title, description),
   };
 }
 

@@ -6,6 +6,7 @@ import { filterAndSortGames, normalizeUpcomingControls, teamsForGames, UpcomingC
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { jsonLdForUpcomingWeek, upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingWeekPageProps = {
@@ -19,8 +20,9 @@ type UpcomingWeekPageProps = {
   }>;
 };
 
-export async function generateMetadata({ params }: UpcomingWeekPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: UpcomingWeekPageProps): Promise<Metadata> {
   const { startDate } = await params;
+  const query = await searchParams;
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const resolvedStartDate = upcoming.range.start;
   const title = upcomingWeekTitle(resolvedStartDate);
@@ -34,6 +36,7 @@ export async function generateMetadata({ params }: UpcomingWeekPageProps): Promi
     alternates: {
       canonical: url,
     },
+    robots: query && Object.keys(query).length > 0 ? noIndexFollow() : undefined,
     openGraph: {
       title,
       description,
@@ -64,7 +67,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

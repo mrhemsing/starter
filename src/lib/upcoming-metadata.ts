@@ -1,21 +1,22 @@
 import type { TonightGame, TonightResponse, UpcomingResponse } from "@/lib/types";
 import { watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { absoluteUrl } from "@/lib/seo";
 
 type StarterWithIdentity = TonightGame["starters"][number] & { name: string; pitcherId: string };
 
 export function upcomingDayTitle(date: string) {
-  return `Upcoming MLB Starters: ${formatUpcomingDate(date)}`;
+  return `MLB Probable Pitchers & Matchups - ${formatUpcomingDate(date)}`;
 }
 
 export function upcomingDayDescription(upcoming: Pick<TonightResponse, "date" | "scheduledGames" | "games">) {
   const topGame = upcoming.games[0];
   const lead = topGame ? `Top watch: ${topGame.label} with a ${topGame.gameWatchScore.toFixed(1)} watch score.` : "Probable starter watch list will update as starters are named.";
-  return `${upcoming.scheduledGames} MLB games ranked by probable starter form and matchup context for ${formatUpcomingDate(upcoming.date)}. ${lead}`;
+  return `Probable starting pitchers and pitching matchups for ${formatUpcomingDate(upcoming.date)}, ranked by watch score: top arms, pairing quality, and matchup context. ${lead}`;
 }
 
 export function upcomingWeekTitle(startDate: string) {
-  return `Upcoming MLB Starter Watch: Week of ${formatUpcomingDate(startDate)}`;
+  return `MLB Probable Pitchers - Week of ${formatUpcomingDate(startDate)}`;
 }
 
 export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range" | "days">) {
@@ -101,8 +102,7 @@ function hasStarterIdentity(starter: TonightGame["starters"][number]): starter i
 }
 
 function absoluteSiteUrl(path: string) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://soma4.b-average.com";
-  return new URL(path, siteUrl).toString();
+  return absoluteUrl(path);
 }
 
 function starterHeadshotUrl(pitcherId: string) {

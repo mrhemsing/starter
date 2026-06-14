@@ -6,6 +6,7 @@ import { ShareStartButton } from "@/components/share-start-button";
 import { SiteNav } from "@/components/site-nav";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
+import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getFormHome } from "@/lib/data/form-service";
@@ -13,10 +14,22 @@ import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getHomeSlateNa
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { formatStartLine } from "@/lib/format";
-import { rankedStartsPath, startPath, upcomingDateHref } from "@/lib/routes";
+import { startPath, upcomingDateHref } from "@/lib/routes";
+import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+const homeTitle = "Front Five: Every MLB start, ranked.";
+const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
+
+export const metadata: Metadata = {
+  title: { absolute: homeTitle },
+  description: homeDescription,
+  alternates: { canonical: "/" },
+  openGraph: websiteOpenGraph(homeTitle, homeDescription, "/"),
+  twitter: largeImageTwitter(homeTitle, homeDescription),
+};
 
 export default async function Home() {
   const today = getHomeSlateDate();
@@ -65,9 +78,25 @@ export default async function Home() {
         detail: `${gamesToday} MLB GAMES SCHEDULED`,
       };
   const heroFocal = topStart ?? null;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Front Five",
+      url: "https://www.frontfive.app/",
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Front Five",
+      url: "https://www.frontfive.app/",
+      description: homeDescription,
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[#08080a]" />
         <div
@@ -109,7 +138,7 @@ export default async function Home() {
               </p>
               <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:mt-3 sm:text-sm sm:leading-6">
                 GS+ scores a single start on a 0-100 scale, with league average around 50.
-                <a href={rankedStartsPath(rankedDate)} className="ml-[10px] font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
+                <a href="/methodology" className="ml-[10px] font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology
                 </a>
               </p>

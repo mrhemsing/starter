@@ -1,5 +1,5 @@
 import { getFormLeaderboard } from "@/lib/data/form-service";
-import { getHomeSlateDate, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
+import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import type { FormSummary, MlbProbablePitcher, MlbScheduleGame, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingResponse, WatchTierKey } from "@/lib/types";
 
@@ -17,7 +17,7 @@ const TONIGHT_CACHE_TTL_MS = 60 * 1000;
 const tonightCache = new Map<string, CachedTonight>();
 
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
-  const date = normalizeDateKey(options.date) ?? getHomeSlateDate();
+  const date = normalizeDateKey(options.date) ?? (await getDefaultSlateDates()).upcomingDate;
   const window = options.window ?? MUSTWATCH_CONFIG.windowDefault;
   const cacheKey = `${date}:${window}`;
   const cached = tonightCache.get(cacheKey);
@@ -65,7 +65,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
 }
 
 export async function getUpcomingMustWatch(options: { date?: string; start?: string; days?: number; window?: 3 | 5 | 10 } = {}): Promise<UpcomingResponse> {
-  const start = normalizeDateKey(options.start ?? options.date) ?? getHomeSlateDate();
+  const start = normalizeDateKey(options.start ?? options.date) ?? (await getDefaultSlateDates()).upcomingDate;
   const days = normalizeUpcomingDays(options.days);
   const dateList = Array.from({ length: days }, (_, index) => addDays(start, index));
   const upcomingDays = await Promise.all(dateList.map((date) => getTonightMustWatch({ date, window: options.window })));
