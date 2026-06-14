@@ -1,0 +1,565 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import type React from "react";
+import { notFound } from "next/navigation";
+import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { PitchChart } from "@/components/pitch-chart";
+import { ScoreComponentList } from "@/components/score-component-list";
+import { ScoreReasonList } from "@/components/score-reason-list";
+import { ShareStartButton } from "@/components/share-start-button";
+import { PitcherChip } from "@/components/pitcher-chip";
+import { SiteNav } from "@/components/site-nav";
+import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
+import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
+import { formatSigned, formatStartLine } from "@/lib/format";
+import { inningsFromIP } from "@/lib/innings";
+import { pitcherPath, rankedStartsPath, startPath, startShareImagePath } from "@/lib/routes";
+import type { FeaturedStartHighlight, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
+
+type StartPageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+  searchParams?: Promise<{
+    band?: string;
+    team?: string;
+    sort?: string;
+  }>;
+};
+
+export async function generateMetadata({ params }: StartPageProps): Promise<Metadata> {
+  const { id } = await params;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(id)) {
+    return {
+      title: `Ranked Starts: ${id}`,
+      description: `Every completed MLB start from ${id}, ranked by GS+.`,
+      alternates: { canonical: rankedStartsPath(id) },
+    };
+  }
+
+  const start = await getStartDetail(id);
+  if (!start) {
+    return {
+      title: "Start Log",
+      description: "Single-start pitch log and GS+ breakdown from The Bump.",
+    };
+  }
+
+  const title = `${start.pitcher.name}: ${start.gameScorePlus} GS+`;
+  const description = `${start.pitcher.team} vs ${start.opponent} on ${formatMetadataDate(start.date)}: ${formatStartLine(start.line)}.`;
+  const url = startPath(start.id);
+  const image = startShareImagePath(start.id);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${start.pitcher.name} start card` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
+export default async function StartPage({ params, searchParams }: StartPageProps) {
+  const { id } = await params;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(id)) return <RankedStartsDate date={id} searchParams={searchParams} />;
+
+  const start = await getStartDetail(id);
+  if (!start) notFound();
+  const highlight = await resolveFeaturedStartHighlight(start);
+  const lineSourceLabel = getLineSourceLabel(start.source?.line);
+  const rankingSourceLabel = getRankingSourceLabel(start.source?.ranking);
+  const pitchSourceLabel = getPitchSourceLabel(start.pitchDetailSource);
+
+  return (
+    <main className="min-h-screen bg-[#08080a] text-zinc-100">
+      <section className="px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
+            The Bump
+          </Link>
+          <div className="mt-6 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
+                {start.game.awayTeam.abbreviation} at {start.game.homeTeam.abbreviation} / {start.game.venue}
+              </p>
+              <h1 className="mt-3 font-serif text-6xl font-black text-zinc-50">{start.pitcher.name}</h1>
+              <p className="mt-3 font-mono text-sm text-zinc-400">{formatStartLine(start.line)}</p>
+              <p className="mt-4 inline-block rounded border border-white/10 px-3 py-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
+                {lineSourceLabel} / {rankingSourceLabel} / {pitchSourceLabel}
+              </p>
+              <div className="mt-4">
+                <ShareStartButton
+                  title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
+                  text={`${start.pitcher.name} ${formatStartLine(start.line)} on The Bump`}
+                  path={startPath(start.id)}
+                />
+              </div>
+            </div>
+            <div className="lg:text-right">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+</p>
+              <p className="font-serif text-7xl font-black leading-none text-amber-300">{start.gameScorePlus}</p>
+              {start.gameScorePlusBreakdown ? (
+                <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
+                  {start.gameScorePlusBreakdown.gradeBand.label} / {start.gameScorePlusBreakdown.gradeBand.percentileLabel}
+                </p>
+              ) : null}
+              <Link href={pitcherPath(start.pitcher.id)} className="mt-4 inline-block font-mono text-xs uppercase tracking-[0.16em] text-zinc-300">
+                Pitcher page
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      {highlight ? (
+        <section className="px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-3">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">MLB highlight</p>
+              <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Watch the start</h2>
+            </div>
+            <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
+          </div>
+        </section>
+      ) : null}
+      <PitchChart start={start} />
+    </main>
+  );
+}
+
+async function RankedStartsDate({ date, searchParams }: { date: string; searchParams?: StartPageProps["searchParams"] }) {
+  const params = await searchParams;
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
+  const [slateStarts, completionState] = await Promise.all([
+    getDailySlate({ window: "yesterday", date }),
+    getRankedSlateCompletionState(date, today),
+  ]);
+  const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
+  const scoreScale = summarizeSlateScoreScale(starts);
+  const sort = isRankedStartSort(params?.sort) ? params?.sort ?? "rank" : "rank";
+  const band = parseQualityBand(params?.band);
+  const qualityBandCounts = countQualityBands(starts);
+  const pairs = pairedStarts(starts);
+  const highlights = await resolveRankedStartHighlights(starts);
+  const visibleStarts = starts
+    .filter((start) => band === "all" || qualityBandSlug(qualityTierOf(start.gameScorePlus).label) === band)
+    .sort((a, b) => {
+      if (sort === "k") return b.line.strikeouts - a.line.strikeouts || a.rank - b.rank;
+      if (sort === "ip") return inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) || a.rank - b.rank;
+      return a.rank - b.rank;
+    });
+
+  return (
+    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-6 border-b border-white/10 pb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">The Bump</Link>
+            <SiteNav active="starts" today={today} rankedDate={rankedDate} />
+          </div>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-mono text-sm text-zinc-500">{date} / completed starts recap</p>
+              <span className="inline-flex min-h-8 items-center rounded border border-amber-300/30 bg-amber-300/10 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200" role="status" aria-label={`Slate completion: ${completionStatusLabel(completionState)}`}>
+                {completionStatusLabel(completionState)}
+              </span>
+            </div>
+            <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/how-it-works">How rankings work</Link>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]">
+            <Link className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300" href={`/starts/${addDays(date, -1)}`}>Previous day</Link>
+            <Link className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300" href={`/starts/${addDays(date, 1)}`}>Next day</Link>
+            <ScaleLegend scoreScale={scoreScale} />
+          </div>
+          {starts.length > 0 ? (
+            <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="ranked-start-controls">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-zinc-500">Sort</span>
+                <ControlLink active={sort === "rank"} href={rankedStartsHref(date, { band, sort: "rank" })}>GS+ rank</ControlLink>
+                <ControlLink active={sort === "k"} href={rankedStartsHref(date, { band, sort: "k" })}>Strikeouts</ControlLink>
+                <ControlLink active={sort === "ip"} href={rankedStartsHref(date, { band, sort: "ip" })}>IP</ControlLink>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-zinc-500">Band</span>
+                <ControlLink active={band === "all"} href={rankedStartsHref(date, { sort })}>All <span className="opacity-60">{starts.length}</span></ControlLink>
+                {QUALITY_BANDS.map((qualityBand) => (
+                  <ControlLink
+                    key={qualityBand.label}
+                    active={band === qualityBandSlug(qualityBand.label)}
+                    href={rankedStartsHref(date, { band: qualityBandSlug(qualityBand.label), sort })}
+                    color={qualityBand.color}
+                  >
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: qualityBand.color }} />
+                    {qualityBand.label}
+                    <span className="opacity-60">{qualityBandCounts.get(qualityBand.label) ?? 0}</span>
+                  </ControlLink>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </header>
+
+        {starts.length === 0 ? (
+          <section className="rounded border border-white/10 bg-[#101014] p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">No completed starts ready</p>
+            <p className="mt-3 text-sm text-zinc-400">Final gamefeed data has not settled for this date yet.</p>
+          </section>
+        ) : (
+          <>
+            <StartsDistributionStrip starts={starts} />
+            {visibleStarts.length > 0 ? (
+              <section className="mt-4 grid gap-3" data-responsive-check="ranked-starts-recap">
+                {visibleStarts.map((start, index) => (
+                  <RankedStartCard key={start.id} start={start} displayRank={index + 1} pairedStart={pairs.get(start.id)} highlight={highlights.get(start.id) ?? null} provisionalLeader={index === 0 && completionState.isPartialToday && band === "all" && sort === "rank"} />
+                ))}
+              </section>
+            ) : (
+              <section className="mt-4 rounded border border-white/10 bg-[#101014] p-6" role="status" data-responsive-check="ranked-starts-empty-band">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">No starts in this band</p>
+                <p className="mt-3 text-sm text-zinc-400">Try another GS+ quality band or return to all starts for this slate.</p>
+                <ControlLink active={false} href={rankedStartsHref(date, { sort })}>Show all starts</ControlLink>
+              </section>
+            )}
+            {completionState.isPartialToday ? (
+              <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
+                <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
+                <Link href={`/upcoming/${date}`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
+                  {completionState.remainingGames} {completionState.remainingGames === 1 ? "game" : "games"} still to come tonight
+                </Link>
+              </section>
+            ) : null}
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function RankedStartCard({ start, displayRank, pairedStart, highlight, provisionalLeader }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean }) {
+  const tier = qualityTierOf(start.gameScorePlus);
+  const tierTextColor = tierDisplayColor(tier);
+  const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;
+
+  return (
+    <article id={start.id} className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-responsive-check="ranked-start-card">
+      <div className="grid grid-cols-[42px_52px_minmax(0,1fr)_auto] gap-3 border-l-4 p-3 sm:grid-cols-[58px_58px_minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:p-4" style={{ borderLeftColor: tier.color }}>
+        <div>
+          <p className="font-serif text-3xl font-bold leading-none text-zinc-500">#{displayRank}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
+          {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
+        </div>
+        <div className="col-span-2 sm:col-span-2">
+          <PitcherChip
+            pitcherId={String(start.pitcher.mlbId)}
+            name={start.pitcher.name}
+            team={`${start.pitcher.team} vs ${start.opponent}`}
+            href={startPath(start.id)}
+            imageWidth={120}
+            size="md"
+          />
+        </div>
+        <div className="col-span-full min-w-0 sm:col-span-1">
+          <p className="font-mono text-sm text-zinc-300">{formatStartLine(start.line)}</p>
+          <p className="mt-1 truncate text-xs text-zinc-500">{contextLabel}</p>
+          {pairedStart ? (
+            <Link href={`#${pairedStart.id}`} className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline">
+              Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
+            </Link>
+          ) : null}
+        </div>
+        <div className="sm:text-right">
+          <p className="font-serif text-4xl font-bold leading-none" style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">GS+</p>
+          {highlight ? (
+            <div className="mt-2 flex justify-end">
+              <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <details className="border-t border-white/10">
+        <summary className="flex cursor-pointer list-none items-center justify-center px-4 py-3 text-zinc-400 marker:text-amber-300" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
+          <span aria-hidden="true" className="font-mono text-lg leading-none text-amber-300">⌄</span>
+        </summary>
+        <div className="grid gap-4 px-4 pb-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]" data-responsive-check="starts-score-breakdown">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Ranking reasons</p>
+            <div className="mt-3">
+              <ScoreReasonList reasons={visibleRankingReasons(start.gameScorePlusBreakdown?.rankingReasons ?? [])} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.16em]">
+              <Link href={startPath(start.id)} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
+              <Link href={pitcherPath(start.pitcher.id)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Pitcher</Link>
+              {pairedStart ? <Link href={`#${pairedStart.id}`} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Same game starter</Link> : null}
+            </div>
+          </div>
+          {start.gameScorePlusBreakdown ? <ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} /> : null}
+        </div>
+      </details>
+    </article>
+  );
+}
+
+async function resolveRankedStartHighlights(starts: StartSummary[]) {
+  const map = new Map<string, FeaturedStartHighlight | null>();
+  const details = await Promise.all(starts.map((start) => getStartDetail(start.id)));
+  const highlights = await Promise.all(details.map((detail) => resolveFeaturedStartHighlight(detail)));
+  starts.forEach((start, index) => map.set(start.id, highlights[index] ?? null));
+  return map;
+}
+
+function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {
+  return (
+    <span className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">
+      Slate range {scoreScale.low}-{scoreScale.high} / Avg {scoreScale.average} / Scale {scoreScale.displayRange}
+    </span>
+  );
+}
+
+function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
+  const width = 760;
+  const height = 360;
+  const pad = { left: 48, right: 28, top: 34, bottom: 44 };
+  const xFor = (score: number) => pad.left + (clamp(score, 0, 100) / 100) * (width - pad.left - pad.right);
+  const maxInnings = Math.max(9, ...starts.map((start) => inningsFromIP(start.line.inningsPitched)));
+  const yFor = (innings: number) => pad.top + ((maxInnings - innings) / maxInnings) * (height - pad.top - pad.bottom);
+  const mean = starts.reduce((sum, start) => sum + start.gameScorePlus, 0) / Math.max(1, starts.length);
+  const points = [...starts]
+    .sort((a, b) => a.gameScorePlus - b.gameScorePlus || inningsFromIP(a.line.inningsPitched) - inningsFromIP(b.line.inningsPitched) || a.pitcher.name.localeCompare(b.pitcher.name))
+    .map((start) => {
+      const seed = stableHash(start.pitcher.id || start.id);
+      const xDodge = ((seed % 5) - 2) * 3.2;
+      const yDodge = ((Math.floor(seed / 5) % 5) - 2) * 3.2;
+      return {
+        start,
+        innings: inningsFromIP(start.line.inningsPitched),
+        x: clamp(xFor(start.gameScorePlus) + xDodge, pad.left + 8, width - pad.right - 8),
+        y: clamp(yFor(inningsFromIP(start.line.inningsPitched)) + yDodge, pad.top + 8, height - pad.bottom - 8),
+      };
+    });
+  const labelIds = new Set(starts.slice(0, 2).map((start) => start.id));
+  const worst = starts.at(-1);
+  if (worst) labelIds.add(worst.id);
+
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="ranked-start-distribution">
+      <div className="mb-2 flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Slate scatter</p>
+          <h2 className="font-serif text-2xl font-bold text-zinc-50">Slate shape</h2>
+        </div>
+        <p className="font-mono text-xs text-zinc-500">Click a point to jump to the row</p>
+      </div>
+      <svg className="h-[320px] w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${starts.length} starts distributed by GS+ and innings pitched`}>
+        <rect x={pad.left} y={pad.top} width={width - pad.left - pad.right} height={height - pad.top - pad.bottom} fill="#0b0b0e" opacity="0.58" />
+        {[20, 40, 60, 80].map((tick) => (
+          <g key={`x-${tick}`}>
+            <line x1={xFor(tick)} x2={xFor(tick)} y1={pad.top} y2={height - pad.bottom} stroke="#27272a" />
+            <text x={xFor(tick)} y={height - 15} textAnchor="middle" fill="#71717a" fontSize="11">{tick}</text>
+          </g>
+        ))}
+        {[0, 3, 6, 9].map((tick) => (
+          <g key={`y-${tick}`}>
+            <line x1={pad.left} x2={width - pad.right} y1={yFor(tick)} y2={yFor(tick)} stroke="#27272a" />
+            <text x={pad.left - 12} y={yFor(tick) + 4} textAnchor="end" fill="#71717a" fontSize="11">{tick}</text>
+          </g>
+        ))}
+        <line x1={pad.left} x2={width - pad.right} y1={height - pad.bottom} y2={height - pad.bottom} stroke="#3f3f46" />
+        <line x1={pad.left} x2={pad.left} y1={pad.top} y2={height - pad.bottom} stroke="#3f3f46" />
+        <line x1={xFor(mean)} x2={xFor(mean)} y1={pad.top} y2={height - pad.bottom} stroke="#a1a1aa" strokeDasharray="4 5" />
+        <line x1={pad.left} x2={width - pad.right} y1={yFor(5)} y2={yFor(5)} stroke="#a1a1aa" strokeDasharray="4 5" opacity="0.85" />
+        <text x={Math.min(width - 122, xFor(mean) + 8)} y={pad.top + 16} fill="#a1a1aa" fontSize="12">avg {mean.toFixed(1)} GS+</text>
+        <text x={width - pad.right - 88} y={yFor(5) - 8} fill="#a1a1aa" fontSize="12">5.0 IP</text>
+        <text x={(pad.left + width - pad.right) / 2} y={height - 4} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace">GS+</text>
+        <text x="14" y={(pad.top + height - pad.bottom) / 2} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" transform={`rotate(-90 14 ${(pad.top + height - pad.bottom) / 2})`}>IP</text>
+        {points.map(({ start, x, y }) => {
+          const band = qualityTierOf(start.gameScorePlus);
+          const shouldLabel = labelIds.has(start.id);
+          const labelX = Math.min(width - 82, Math.max(pad.left + 8, x + (start.rank <= 2 ? 13 : -58)));
+          const labelY = Math.min(height - pad.bottom - 10, Math.max(pad.top + 16, y + (start.rank <= 2 ? -14 : 22)));
+          return (
+            <a key={start.id} href={`#${start.id}`} aria-label={`Jump to ${start.pitcher.name}, GS+ ${start.gameScorePlus}`}>
+              <circle cx={x} cy={y} r={start.rank <= 3 ? 8.8 : 7.2} fill={band.color} stroke="#08080a" strokeWidth="2">
+                <title>{`${start.pitcher.name} / ${formatStartLine(start.line)} / GS+ ${start.gameScorePlus} / ${band.label}`}</title>
+              </circle>
+              {shouldLabel ? (
+                <>
+                  <line x1={x} y1={y} x2={labelX} y2={labelY + 4} stroke={band.color} strokeOpacity="0.65" />
+                  <text x={labelX} y={labelY} fill={band.color} fontSize="11" fontWeight="700">{lastName(start.pitcher.name)}</text>
+                </>
+              ) : null}
+            </a>
+          );
+        })}
+      </svg>
+    </section>
+  );
+}
+
+function ControlLink({ active, href, children, color }: { active: boolean; href: string; children: React.ReactNode; color?: string }) {
+  return (
+    <Link
+      className={`inline-flex min-h-9 items-center gap-2 rounded border px-3 py-1.5 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}
+      href={href}
+      style={active && color ? { borderColor: color, backgroundColor: color } : undefined}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function ExpandedScoreBreakdown({ breakdown }: { breakdown: StartApiGameScorePlusBreakdown }) {
+  const components = visibleScoreComponents(breakdown.components);
+  const earnedTotal = components.reduce((sum, component) => sum + component.value, 0);
+
+  return (
+    <div>
+      <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Additive breakdown</p>
+          <p className="mt-1 font-mono text-xs text-zinc-400">
+            Earned total {formatSigned(earnedTotal)} -&gt; Calibrated GS+ {breakdown.total}
+          </p>
+        </div>
+        <p className="font-mono text-xs text-zinc-500">{breakdown.gradeBand.percentileLabel}</p>
+      </div>
+      <ScoreComponentList components={components} compact />
+    </div>
+  );
+}
+
+function visibleScoreComponents(components: StartApiGameScorePlusBreakdown["components"]) {
+  const hiddenKeys = new Set(["baseline", "calibration", "whiffDelta", "velocityDelta"]);
+  return components.filter((component) => !hiddenKeys.has(component.key));
+}
+
+function visibleRankingReasons(reasons: StartApiGameScorePlusBreakdown["rankingReasons"]) {
+  const hiddenKeys = new Set(["whiffDelta", "velocityDelta"]);
+  return reasons.filter((reason) => !hiddenKeys.has(reason.key));
+}
+
+type RankedStartSort = "rank" | "k" | "ip";
+type QualityBandFilter = "all" | "elite" | "plus" | "solid" | "below" | "poor";
+
+function isRankedStartSort(value: string | undefined): value is RankedStartSort {
+  return value === "rank" || value === "k" || value === "ip";
+}
+
+function parseQualityBand(value: string | undefined): QualityBandFilter {
+  return isQualityBandFilter(value) ? value : "all";
+}
+
+function isQualityBandFilter(value: string | undefined): value is QualityBandFilter {
+  return value === "all" || QUALITY_BANDS.some((band) => qualityBandSlug(band.label) === value);
+}
+
+function qualityBandSlug(label: string): QualityBandFilter {
+  return label.toLowerCase().replace(/\s+/g, "-") as QualityBandFilter;
+}
+
+function countQualityBands(starts: StartSummary[]) {
+  const counts = new Map<string, number>(QUALITY_BANDS.map((band) => [band.label, 0]));
+  for (const start of starts) {
+    const label = qualityTierOf(start.gameScorePlus).label;
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort?: string }) {
+  const params = new URLSearchParams();
+  if (values.sort && values.sort !== "rank") params.set("sort", values.sort);
+  if (values.band && values.band !== "all") params.set("band", values.band);
+  const query = params.toString();
+  return `/starts/${date}${query ? `?${query}` : ""}`;
+}
+
+function pairedStarts(starts: StartSummary[]) {
+  const byGame = new Map<number, StartSummary[]>();
+  for (const start of starts) {
+    const group = byGame.get(start.gamePk) ?? [];
+    group.push(start);
+    byGame.set(start.gamePk, group);
+  }
+
+  const pairs = new Map<string, StartSummary>();
+  for (const group of byGame.values()) {
+    if (group.length < 2) continue;
+    for (const start of group) {
+      const paired = group.find((candidate) => candidate.id !== start.id);
+      if (paired) pairs.set(start.id, paired);
+    }
+  }
+  return pairs;
+}
+
+function getLineSourceLabel(source?: string) {
+  if (source === "archive-gamefeed") return "Archive line";
+  if (source === "live-gamefeed") return "MLB gamefeed line";
+  return "Fixture line fallback";
+}
+
+function getRankingSourceLabel(source?: string) {
+  if (source === "schedule-derived-archive-line") return "Ranked from archive stats";
+  if (source === "schedule-derived-gamefeed-line") return "Ranked from live gamefeed stats";
+  return "Ranked from fixture stats";
+}
+
+function getPitchSourceLabel(source?: string) {
+  if (source === "archive-gamefeed") return "Pitch chart from archive";
+  if (source === "live-gamefeed") return "Pitch chart from MLB gamefeed";
+  return "Pitch chart fixture fallback";
+}
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function completionStatusLabel(state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }) {
+  if (state.isPartialToday) return `Today · ${state.finalGames} of ${state.totalGames} final · updating`;
+  if (state.isToday && state.isFinal) return "Today · final";
+  if (state.isToday) return `Today · ${state.finalGames} of ${state.totalGames} final`;
+  return `${formatMetadataDate(state.date)} · final`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
+}
+
+function stableHash(value: string) {
+  let hash = 0;
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return hash;
+}
+
+function formatMetadataDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function tierDisplayColor(tier: { color: string; textCssVar?: string }) {
+  return tier.textCssVar ? `var(${tier.textCssVar})` : tier.color;
+}

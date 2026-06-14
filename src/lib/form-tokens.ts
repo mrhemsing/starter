@@ -1,0 +1,116 @@
+import type { FormTier, FormTrend, HeatBand } from "@/lib/types";
+
+export type LevelBandToken = HeatBand & {
+  cssVar: string;
+  textCssVar?: string;
+};
+
+export const FORM_CONFIG = {
+  windowDefault: 5 as const,
+  windows: [3, 5, 10] as const,
+  minStartsToQualify: 3,
+  minStartsInWindow: 2,
+  ipFloor: 2.0,
+  heatingDelta: 4,
+  coolingDelta: -4,
+  heatIndexBase: 50,
+  heatIndexRgsWeight: 1.6,
+  heatIndexTrendWeight: 0.7,
+};
+
+export const LEVEL_BANDS: LevelBandToken[] = [
+  { key: "onfire", label: "On fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
+  { key: "hot", label: "Hot", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },
+  { key: "even", label: "Even", min: 43, color: "#888780", cssVar: "--level-even", textCssVar: "--level-even-text", textClass: "text-[var(--level-even-text)]" },
+  { key: "cooling", label: "Cooling", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
+  { key: "ice", label: "Ice cold", min: 0, color: "#378ADD", cssVar: "--level-ice", textClass: "text-[var(--level-ice)]" },
+];
+
+export const QUALITY_BANDS: LevelBandToken[] = [
+  { ...LEVEL_BANDS[0], label: "Elite" },
+  { ...LEVEL_BANDS[1], label: "Plus" },
+  { ...LEVEL_BANDS[2], label: "Solid" },
+  { ...LEVEL_BANDS[3], label: "Below" },
+  { ...LEVEL_BANDS[4], label: "Poor" },
+];
+
+export const HEAT_BANDS = LEVEL_BANDS;
+export const GS_TIERS: Array<HeatBand & { key: FormTier; fillClass: string }> = [
+  { ...LEVEL_BANDS[0], fillClass: "bg-[var(--level-onfire)] text-zinc-950" },
+  { ...LEVEL_BANDS[1], fillClass: "bg-[var(--level-hot)] text-zinc-950" },
+  { ...LEVEL_BANDS[2], fillClass: "bg-[var(--level-even)] text-zinc-950" },
+  { ...LEVEL_BANDS[3], fillClass: "bg-[var(--level-cooling)] text-zinc-950" },
+  { ...LEVEL_BANDS[4], fillClass: "bg-[var(--level-ice)] text-zinc-950" },
+];
+export const FORM_BANDS = LEVEL_BANDS;
+
+export const TREND_STYLES: Record<FormTrend, { label: string; marker: string; className: string }> = {
+  heating: { label: "Rising", marker: "↑", className: "border-teal-300/30 text-teal-300" },
+  steady: { label: "Steady", marker: "→", className: "border-zinc-300/20 text-zinc-300" },
+  cooling: { label: "Falling", marker: "↓", className: "border-rose-300/30 text-rose-300" },
+};
+
+export const FORM_CHART_COLORS = {
+  grid: "#27272a",
+  gridStrong: "#3f3f46",
+  textMuted: "#71717a",
+  leagueReference: "#52525b",
+  neutralLine: "#71717a",
+  neutralPoint: "#a1a1aa",
+  formBandFill: "rgba(239,159,39,0.10)",
+  best: "#EF9F27",
+  worst: "#D85A30",
+  lightText: "#fafafa",
+};
+
+export const HOME_CONFIG = {
+  railSize: 5,
+  showHeadshots: true,
+};
+
+export const MUSTWATCH_CONFIG = {
+  windowDefault: 5 as const,
+  weights: {
+    topArm: 0.5,
+    pairAvg: 0.3,
+    matchup: 0.2,
+  },
+  matchupScoreRange: {
+    min: 0,
+    max: 100,
+  },
+  watchTiers: [
+    { key: "mustwatch", label: "Must-watch", min: 58, color: "#EF9F27" },
+    { key: "worthit", label: "Worth it", min: 48, color: "#378ADD" },
+    { key: "background", label: "Background", min: 0, color: "#888780" },
+  ],
+};
+
+export function tierOf(gs: number) {
+  const displayedValue = Math.round(gs);
+  return LEVEL_BANDS.find((tier) => displayedValue >= tier.min) ?? LEVEL_BANDS[LEVEL_BANDS.length - 1];
+}
+
+export function bandOf(heatIndex: number) {
+  const displayedValue = Math.round(heatIndex);
+  return LEVEL_BANDS.find((band) => displayedValue >= band.min) ?? LEVEL_BANDS[LEVEL_BANDS.length - 1];
+}
+
+export function formBandOf(rgs: number) {
+  return tierOf(rgs);
+}
+
+export function qualityTierOf(gs: number) {
+  const displayedValue = Math.round(gs);
+  return QUALITY_BANDS.find((tier) => displayedValue >= tier.min) ?? QUALITY_BANDS[QUALITY_BANDS.length - 1];
+}
+
+export function watchTierOf(score: number) {
+  return MUSTWATCH_CONFIG.watchTiers.find((tier) => score >= tier.min) ?? MUSTWATCH_CONFIG.watchTiers[MUSTWATCH_CONFIG.watchTiers.length - 1];
+}
+
+export function watchTierForRank(rank: number) {
+  if (rank <= 3) return MUSTWATCH_CONFIG.watchTiers[0];
+  if (rank <= 8) return MUSTWATCH_CONFIG.watchTiers[1];
+  return MUSTWATCH_CONFIG.watchTiers[2];
+}

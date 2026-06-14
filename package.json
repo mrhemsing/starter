@@ -1,0 +1,42 @@
+{
+  "name": "starter",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "archive:mlb-season": "node scripts/archive-mlb-season.mjs",
+    "check:mlb-archive": "node scripts/check-mlb-archive.mjs",
+    "check:form-debug": "node scripts/check-form-debug.mjs",
+    "check:innings": "node --experimental-strip-types scripts/check-innings-helper.mjs",
+    "check:shared-tokens": "node --experimental-strip-types scripts/check-shared-tokens.mjs",
+    "check:decision-tools": "node scripts/check-decision-tools-foundation.mjs",
+    "check:watchlist": "node scripts/check-watchlist.mjs",
+    "check:upcoming-contract": "node scripts/check-upcoming-contract.mjs",
+    "check:publish-prep": "node scripts/check-publish-prep.mjs",
+    "test:contracts": "npm run test:slate-contract && npm run test:start-contract && npm run test:pitcher-contract",
+    "test:fixture-gates": "node scripts/run-fixture-gates.mjs",
+    "test:pitcher-contract": "node scripts/check-pitcher-contract.mjs",
+    "test:responsive": "node scripts/check-responsive-screenshots.mjs",
+    "test:slate-contract": "node scripts/check-slate-contract.mjs",
+    "test:start-contract": "node scripts/check-start-contract.mjs"
+  },
+  "dependencies": {
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "playwright-core": "^1.60.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
