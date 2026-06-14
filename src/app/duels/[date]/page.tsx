@@ -54,7 +54,7 @@ export default async function DuelsPage({ params, searchParams }: DuelsPageProps
       <header className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">The Bump</Link>
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
             <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
           </div>
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Pitching duels</p>

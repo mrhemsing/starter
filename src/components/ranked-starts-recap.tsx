@@ -96,7 +96,7 @@ function SpotlightStart({ start, rank, highlight }: { start: StartDetail; rank: 
             </Link>
             <ShareStartButton
               title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-              text={`${start.pitcher.name} ${formatStartLine(start.line)} on The Bump`}
+              text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
               path={startPath(start.id)}
               className="ml-2 mt-4"
             />

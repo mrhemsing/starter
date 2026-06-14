@@ -72,7 +72,7 @@ export default async function Home() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">The Bump</p>
+              <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Front Five</p>
               <p className="mt-1 font-mono text-xs text-zinc-500">Starting pitcher command center</p>
             </div>
             <SiteNav active="home" today={today} rankedDate={rankedDate} />
@@ -228,7 +228,7 @@ function BestStartCard({ title, start, highlight, badge }: { title: string; star
       <div className="mt-4">
         <ShareStartButton
           title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-          text={`${start.pitcher.name} ${formatStartLine(start.line)} on The Bump`}
+          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
           path={startPath(start.id)}
         />
         {highlight ? (

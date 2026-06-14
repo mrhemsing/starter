@@ -29,7 +29,7 @@ export default async function WatchlistPage() {
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">The Bump</Link>
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
             <SiteNav active="watchlist" today={today} rankedDate={rankedDate} />
           </div>
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Daily ritual</p>

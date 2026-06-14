@@ -12,7 +12,7 @@ type PitcherFormImageProps = {
   }>;
 };
 
-export const alt = "The Bump pitcher form card";
+export const alt = "Front Five pitcher form card";
 export const size = {
   width: 1200,
   height: 630,
@@ -45,7 +45,7 @@ export default async function Image({ params, searchParams }: PitcherFormImagePr
       >
         <div style={{ display: "flex", flex: 1, flexDirection: "column", justifyContent: "space-between" }}>
           <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase" }}>The Bump</div>
+            <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase" }}>Front Five</div>
             <div style={{ color: "#a1a1aa", display: "flex", fontSize: 24 }}>Last {form.window} qualified starts</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

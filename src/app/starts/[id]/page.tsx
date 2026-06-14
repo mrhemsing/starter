@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: StartPageProps): Promise<Meta
   if (!start) {
     return {
       title: "Start Log",
-      description: "Single-start pitch log and GS+ breakdown from The Bump.",
+      description: "Single-start pitch log and GS+ breakdown from Front Five.",
     };
   }
 
@@ -88,7 +88,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
       <section className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
-            The Bump
+            Front Five
           </Link>
           <div className="mt-6 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
@@ -103,7 +103,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
               <div className="mt-4">
                 <ShareStartButton
                   title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-                  text={`${start.pitcher.name} ${formatStartLine(start.line)} on The Bump`}
+                  text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
                   path={startPath(start.id)}
                 />
               </div>
@@ -167,7 +167,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">The Bump</Link>
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>

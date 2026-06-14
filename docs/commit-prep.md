@@ -1,4 +1,4 @@
-# The Bump Commit Prep
+# Front Five Commit Prep
 
 Use this note for the local milestone pass before any commit for `mrhemsing/starter`. This is a local-only checklist; do not push unless Matt asks.
 
@@ -6,7 +6,7 @@ Use this note for the local milestone pass before any commit for `mrhemsing/star
 
 1. Run `git status --short`.
 2. Run `git diff --check` to catch whitespace errors or conflict markers before committing.
-3. Confirm changed files are limited to The Bump app code, tests, scripts, docs, or ignored generated output.
+3. Confirm changed files are limited to Front Five app code, tests, scripts, docs, or ignored generated output.
 4. Confirm `.responsive-screenshots/`, `.next/`, temporary Next logs (`.next-heartbeat-*.log`, `.next-local-*.log`, `.next-responsive-*.log`, `.next-live-splits-*.log`), environment files, and other generated artifacts are not staged.
 5. Review or update `docs/responsive-review.md` after refreshing `.responsive-screenshots/`.
 6. Confirm `package.json` remains `"private": true` so npm publishing stays blocked.
@@ -57,7 +57,7 @@ You can still start the production server manually and run the individual live s
 A local milestone commit should describe the shipped project slice, for example:
 
 ```bash
-git commit -m "Prepare The Bump local publish handoff"
+git commit -m "Prepare Front Five local publish handoff"
 ```
 
 External publishing stays blocked until Matt explicitly asks.

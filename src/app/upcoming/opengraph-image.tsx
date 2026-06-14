@@ -1,7 +1,7 @@
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import Image from "./[date]/opengraph-image";
 
-export const alt = "The Bump upcoming starter watch card";
+export const alt = "Front Five upcoming starter watch card";
 export const size = {
   width: 1200,
   height: 630,
