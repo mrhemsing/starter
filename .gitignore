@@ -32,6 +32,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .next-prod-*.log
+.next-start-*.log
+.next-start-*.err.log
 .next-live-dev.log
 .next-start-contract.log
 .next-start-contract.err

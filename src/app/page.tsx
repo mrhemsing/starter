@@ -9,7 +9,7 @@ import { TopPerformerCard } from "@/components/top-performer-card";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getFormHome } from "@/lib/data/form-service";
-import { getDailySlate, getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { formatStartLine } from "@/lib/format";
@@ -23,14 +23,15 @@ export default async function Home() {
   const slateNavigation = getHomeSlateNavigation(today);
   const yesterday = slateNavigation[0].date;
   const tomorrow = addDays(today, 1);
-  const [todaySlateStarts, yesterdaySlateStarts, formHome, tonight, tomorrowTonight, todayCompletion] = await Promise.all([
-    getDailySlate({ window: "today", date: today }),
-    getDailySlate({ window: "yesterday", date: yesterday }),
+  const [yesterdayArchivedSlateStarts, formHome, tonight, tomorrowTonight, todayCompletion] = await Promise.all([
+    getArchivedSlateStarts(yesterday),
     getFormHome({ window: 5 }),
     getTonightMustWatch({ date: today, window: 5 }),
     getTonightMustWatch({ date: tomorrow, window: 5 }),
     getRankedSlateCompletionState(today, today),
   ]);
+  const todaySlateStarts = todayCompletion.finalGames > 0 ? await getDailySlate({ window: "today", date: today }) : [];
+  const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
   const formHomeWithHighlights = await attachHotHighlights(formHome);
   const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
   const useTodaySlate = todayCompletedSlateStarts.length > 0;
@@ -68,7 +69,28 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
       <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_16%,rgba(253,184,39,0.22),transparent_34%),linear-gradient(135deg,#08080a_0%,#15120c_48%,#211408_100%)]" />
+        <div className="absolute inset-0 bg-[#08080a]" />
+        <div
+          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-[0.44] saturate-[0.92] sm:h-[440px] lg:hidden"
+          style={{
+            backgroundImage: "url('/images/header-baseball-bg.jpg')",
+            backgroundPosition: "right -54px top 82px",
+            backgroundSize: "clamp(360px, 108vw, 520px) auto",
+          }}
+          aria-hidden="true"
+          data-responsive-check="home-header-background-mobile"
+        />
+        <div
+          className="absolute inset-x-0 top-0 hidden h-[380px] bg-no-repeat opacity-100 saturate-[0.92] lg:block"
+          style={{
+            backgroundImage: "url('/images/header-baseball-bg.jpg')",
+            backgroundPosition: "76% 74%",
+            backgroundSize: "min(720px, 115vw) auto",
+          }}
+          aria-hidden="true"
+          data-responsive-check="home-header-background"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div>

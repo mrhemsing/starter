@@ -394,6 +394,20 @@ function escapeHtmlAttribute(value) {
     .replace(/>/g, "&gt;");
 }
 
+function renderedMetaDescription(html) {
+  const match = html.match(/<meta name="description" content="([^"]*)"/);
+  return match ? unescapeHtmlAttribute(match[1]) : null;
+}
+
+function unescapeHtmlAttribute(value) {
+  return value
+    .replace(/&quot;/g, "\"")
+    .replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
 function expectedUpcomingDayDescription(day) {
   const topGame = day.games[0];
   const lead = topGame
@@ -435,10 +449,12 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
 
   const jsonLd = JSON.parse(match[1]);
   const jsonLdLimit = route.includes("/week") ? 20 : 10;
+  const renderedDescription = renderedMetaDescription(html);
+  const expectedJsonLdDescription = renderedDescription ?? expectedDescription;
   assert(jsonLd["@context"] === "https://schema.org", `${route} JSON-LD should use schema.org context`);
   assert(jsonLd["@type"] === "ItemList", `${route} JSON-LD should describe an ItemList`);
   assert(jsonLd.name === expectedName, `${route} JSON-LD name should match route title`);
-  assert(jsonLd.description === expectedDescription, `${route} JSON-LD description should match route metadata`);
+  assert(jsonLd.description === expectedJsonLdDescription, `${route} JSON-LD description should match route metadata`);
   assertNumber(jsonLd.numberOfItems, `${route} JSON-LD numberOfItems`);
   assert(jsonLd.numberOfItems === expectedItemCount, `${route} JSON-LD should expose exact item count`);
   assert(Array.isArray(jsonLd.itemListElement), `${route} JSON-LD itemListElement must be an array`);
@@ -711,8 +727,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const normalized = normalizeHtmlText(html);
   const headingId = `${sectionId}-heading`;
   assert(
-    elementHasAttributes(html, "section", { id: sectionId, "aria-labelledby": headingId }),
-    `${route} should render a labelled watch-list section ${sectionId}`,
+    elementHasAttributes(html, "section", { id: sectionId, "aria-labelledby": headingId, "data-responsive-check": "must-watch" }),
+    `${route} should render a labelled responsive watch-list section ${sectionId}`,
   );
   assert(
     countOccurrences(html, `id="${headingId}"`) === 1,

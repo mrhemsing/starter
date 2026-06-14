@@ -18,7 +18,6 @@ type TopPerformerCardProps = {
 export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel, score, image, isProvisional }: TopPerformerCardProps) {
   const cardRef = useRef<HTMLAnchorElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [scrollShift, setScrollShift] = useState(0);
   const [displayScore, setDisplayScore] = useState(score);
   const isFullBleed = image?.source === "action" || image?.source === "highlight";
 
@@ -35,20 +34,6 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
     const card = cardRef.current;
     if (!card) return;
 
-    let animationFrame = 0;
-    const updateScrollShift = () => {
-      const rect = card.getBoundingClientRect();
-      const viewport = window.innerHeight || 1;
-      const progress = (viewport - rect.top) / (viewport + rect.height);
-      const clamped = Math.max(0, Math.min(1, progress));
-      setScrollShift((clamped - 0.5) * 28);
-    };
-
-    const onScroll = () => {
-      cancelAnimationFrame(animationFrame);
-      animationFrame = requestAnimationFrame(updateScrollShift);
-    };
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
@@ -59,16 +44,10 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
       { threshold: 0.28 },
     );
 
-    updateScrollShift();
     observer.observe(card);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
 
     return () => {
-      cancelAnimationFrame(animationFrame);
       observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
     };
   }, [score]);
 
@@ -99,9 +78,6 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
     return () => cancelAnimationFrame(animationFrame);
   }, [isVisible, score]);
 
-  const imageScale = 1.04 + Math.abs(scrollShift) / 900;
-  const imageStyle = { transform: `translate3d(0, ${scrollShift}px, 0) scale(${imageScale})` };
-  const desktopFullBleedImageStyle = { transform: `translate3d(0, calc(${scrollShift}px - 15%), 0) scale(${imageScale})` };
   const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
 
   return (
@@ -114,32 +90,19 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
     >
       {image && isFullBleed ? (
         <>
-          <div className="relative h-80 overflow-hidden sm:hidden">
+          <div className="top-performer-photo-wrap relative h-80 overflow-hidden sm:absolute sm:inset-y-0 sm:left-[30%] sm:right-[-30%] sm:h-auto">
             <Image
               src={image.imageUrl}
               alt={image.alt}
               fill
-              sizes="100vw"
-              quality={95}
-              unoptimized={image.source === "action"}
-              className="object-cover"
+              sizes="(min-width: 1280px) 900px, (min-width: 640px) 70vw, 100vw"
+              quality={82}
+              className="object-cover object-top opacity-100 transition duration-500 group-hover:scale-[1.015]"
               priority
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.08)_34%,rgba(0,0,0,0.03)_58%,rgba(0,0,0,0.78)_100%)]" />
             {image.source === "highlight" && image.playUrl ? <PlayAffordance className="right-4 top-4" /> : null}
             {image.source === "action" && image.attribution ? <CreditLine attribution={image.attribution} className="bottom-3 left-3 right-3" /> : null}
-          </div>
-          <div className="top-performer-photo-wrap absolute inset-y-0 left-[30%] right-[-30%] hidden sm:block" style={desktopFullBleedImageStyle}>
-            <Image
-              src={image.imageUrl}
-              alt={image.alt}
-              fill
-              sizes="(min-width: 1280px) 1280px, 100vw"
-              quality={95}
-              unoptimized={image.source === "action"}
-              className="object-cover object-top opacity-100 transition duration-500 group-hover:scale-[1.015]"
-              priority
-            />
           </div>
           <div className="absolute inset-y-0 left-[18%] hidden w-[38%] bg-[linear-gradient(90deg,#09090b_0%,rgba(9,9,11,0.96)_28%,rgba(9,9,11,0.62)_64%,transparent_100%)] sm:block" />
           <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.84)_24%,rgba(0,0,0,0.36)_48%,rgba(0,0,0,0.08)_66%,transparent_82%)] sm:block" />
@@ -150,7 +113,7 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(253,184,39,0.32),transparent_34%),linear-gradient(135deg,rgba(0,0,0,0.96)_0%,rgba(33,20,8,0.72)_100%)]" />
           <div className="absolute inset-y-0 right-0 w-[52%] bg-[radial-gradient(circle_at_54%_46%,rgba(253,184,39,0.28),transparent_58%)]" />
           {image ? (
-            <div className="top-performer-photo-wrap absolute bottom-0 right-[-22px] h-[72%] max-h-[320px] w-[54%] sm:right-3 sm:h-[88%] sm:max-h-[430px] sm:w-[46%]" style={imageStyle}>
+            <div className="top-performer-photo-wrap absolute bottom-0 right-[-22px] h-[72%] max-h-[320px] w-[54%] sm:right-3 sm:h-[88%] sm:max-h-[430px] sm:w-[46%]">
               <Image
                 src={image.imageUrl}
                 alt={image.alt}
@@ -203,7 +166,7 @@ function PlayAffordance({ className = "" }: { className?: string }) {
 
 function CreditLine({ attribution, className = "" }: { attribution: string; className?: string }) {
   return (
-    <span className={`absolute rounded bg-black/52 px-2 py-1 text-right font-mono text-[9px] uppercase tracking-[0.08em] text-white/80 shadow-[0_0_18px_rgba(0,0,0,0.82)] ${className}`}>
+    <span className={`absolute text-right font-mono text-[9px] uppercase tracking-[0.08em] text-white/80 ${className}`}>
       {attribution}
     </span>
   );

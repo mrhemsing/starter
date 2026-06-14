@@ -8,9 +8,31 @@ type TonightOptions = {
   window?: 3 | 5 | 10;
 };
 
+type CachedTonight = {
+  expiresAt: number;
+  promise: Promise<TonightResponse>;
+};
+
+const TONIGHT_CACHE_TTL_MS = 60 * 1000;
+const tonightCache = new Map<string, CachedTonight>();
+
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
   const date = normalizeDateKey(options.date) ?? getHomeSlateDate();
   const window = options.window ?? MUSTWATCH_CONFIG.windowDefault;
+  const cacheKey = `${date}:${window}`;
+  const cached = tonightCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = buildTonightMustWatch(date, window);
+  tonightCache.set(cacheKey, {
+    expiresAt: Date.now() + TONIGHT_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
+async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<TonightResponse> {
   const [schedule, probables, leaderboard] = await Promise.all([
     getSlateSchedule({ window: "today", date }),
     getTodayProbables(date),

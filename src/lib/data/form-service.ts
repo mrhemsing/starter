@@ -17,6 +17,15 @@ type PitcherBucket = {
 };
 
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
+const FORM_CACHE_TTL_MS = 60 * 1000;
+
+type CachedValue<T> = {
+  expiresAt: number;
+  promise: Promise<T>;
+};
+
+const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse>>();
+const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {
   const parsed = Number(value ?? FORM_CONFIG.windowDefault);
@@ -24,6 +33,24 @@ export function parseFormWindow(value: number | string | undefined): FormWindow 
 }
 
 export async function getFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
+  const cacheKey = JSON.stringify({
+    season: options.season ?? getHomeSlateDate().slice(0, 4),
+    window: parseFormWindow(options.window),
+    qualifiedOnly: options.qualifiedOnly !== false,
+  });
+  const cached = formLeaderboardCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = buildFormLeaderboard(options);
+  formLeaderboardCache.set(cacheKey, {
+    expiresAt: Date.now() + FORM_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
+async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
   const starts = await getQualifiedFormStarts(season);
@@ -79,6 +106,23 @@ export async function getPitcherFormMap(pitcherIds: string[], options: FormBuild
 }
 
 export async function getFormHome(options: FormBuildOptions = {}): Promise<FormHomeResponse> {
+  const cacheKey = JSON.stringify({
+    season: options.season ?? getHomeSlateDate().slice(0, 4),
+    window: parseFormWindow(options.window),
+  });
+  const cached = formHomeCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = buildFormHome(options);
+  formHomeCache.set(cacheKey, {
+    expiresAt: Date.now() + FORM_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
+async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeResponse> {
   const leaderboard = await getFormLeaderboard({ ...options, qualifiedOnly: true });
   const bands = HEAT_BANDS.reduce((counts, band) => ({ ...counts, [band.key]: 0 }), {} as Record<HeatBandKey, number>);
   const qualified = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");

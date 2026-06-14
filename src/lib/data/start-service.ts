@@ -123,10 +123,10 @@ function addDays(date: string, days: number) {
 export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise<StartSummary[]> {
   if (!params?.date) return demoSlateStarts;
 
-  const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const archivedStarts = await getArchivedSlateStarts(params.date);
   if (archivedStarts.length > 0) return archivedStarts;
 
+  const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = schedule.games
     .flatMap((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source))
@@ -404,13 +404,16 @@ export async function getStartDetail(startId: string) {
   const date = startId.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1];
   if (!date) return null;
 
+  const archivedStart = await getArchivedStartDetailByRouteId(date, startId);
+  if (archivedStart) return archivedStart;
+
   const schedule = await fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = schedule.games.flatMap((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source));
   const matchedStart = scheduledStarts.find((start) => start.id === startId);
   const matchedGame = matchedStart ? schedule.games.find((game) => game.gamePk === matchedStart.gamePk) : undefined;
 
-  if (!matchedStart || !matchedGame) return getArchivedStartDetailByRouteId(date, startId);
+  if (!matchedStart || !matchedGame) return null;
 
   const [archivedPitchDetails, archivePitchDetail, archiveCompletedLine] = await Promise.all([
     readArchivedStartPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId),
@@ -1223,7 +1226,7 @@ function scheduledGameToStarts(
     });
 }
 
-async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
+export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
   const archivedStarts = await readArchivedCompletedStarts(date);
 
   return archivedStarts

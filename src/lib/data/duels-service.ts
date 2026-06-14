@@ -6,8 +6,30 @@ import type { PitchingDuel, PitchingDuelsResponse, StartSummary, TonightGame } f
 const BEST_DUEL_MAX_GAP = 10;
 const MISMATCH_MIN_GAP = 18;
 const BEST_DUEL_MIN_COMBINED_QUALITY = 90;
+const DUELS_CACHE_TTL_MS = 60 * 1000;
+
+type CachedDuels = {
+  expiresAt: number;
+  promise: Promise<PitchingDuelsResponse>;
+};
+
+const duelsCache = new Map<string, CachedDuels>();
 
 export async function getPitchingDuels(date: string, mode: "upcoming" | "settled" = "upcoming"): Promise<PitchingDuelsResponse> {
+  const cacheKey = `${date}:${mode}`;
+  const cached = duelsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = buildPitchingDuels(date, mode);
+  duelsCache.set(cacheKey, {
+    expiresAt: Date.now() + DUELS_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
+async function buildPitchingDuels(date: string, mode: "upcoming" | "settled"): Promise<PitchingDuelsResponse> {
   const duels = mode === "settled" ? await getSettledDuels(date) : await getUpcomingDuels(date);
   const bestDuels = duels.filter(isBestDuelCandidate);
   const mismatches = duels.filter(isMismatchCandidate);

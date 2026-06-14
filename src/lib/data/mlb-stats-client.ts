@@ -4,11 +4,29 @@ import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonPro
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
+const LIVE_SCHEDULE_CACHE_TTL_MS = 60 * 1000;
+const LIVE_GAMEFEED_CACHE_TTL_MS = 60 * 1000;
+const LIVE_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
   signal?: AbortSignal;
 };
+
+type CachedSchedule = {
+  expiresAt: number;
+  promise: Promise<MlbSchedule>;
+};
+
+type CachedValue<T> = {
+  expiresAt: number;
+  promise: Promise<T>;
+};
+
+const scheduleCache = new Map<string, CachedSchedule>();
+const completedPitchingLineCache = new Map<string, CachedValue<MlbCompletedPitchingLine[]>>();
+const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQualityContext>>>();
+const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
 
 type MlbApiTeamNode = {
   team?: {
@@ -234,6 +252,22 @@ type MlbGameFeedPlayEvent = {
 export async function fetchMlbSchedule(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbSchedule> {
   if (!options.fetchLive) return getFixtureSchedule(date);
 
+  const cacheKey = `${date}:live`;
+  const cached = scheduleCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = fetchLiveMlbSchedule(date, options);
+  if (!options.signal) {
+    scheduleCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_SCHEDULE_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbSchedule> {
   const params = new URLSearchParams({
     sportId: "1",
     date,
@@ -275,7 +309,22 @@ export async function getMlbProbablePitchers(date: string, options: MlbScheduleC
 
 export async function fetchMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   if (!options.fetchLive) return [];
+  const cacheKey = `${gamePk}:completed-lines`;
+  const cached = completedPitchingLineCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
 
+  const promise = fetchLiveMlbCompletedPitchingLines(gamePk, options);
+  if (!options.signal) {
+    completedPitchingLineCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_GAMEFEED_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchLiveMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   try {
     const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, {
       cache: "no-store",
@@ -293,7 +342,22 @@ export async function fetchMlbCompletedPitchingLines(gamePk: number, options: Ml
 
 export async function fetchMlbTeamQualityContexts(date: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbTeamQualityContext>> {
   if (!options.fetchLive) return new Map();
+  const cacheKey = `${date}:team-quality`;
+  const cached = teamQualityContextCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
 
+  const promise = fetchLiveMlbTeamQualityContexts(date, options);
+  if (!options.signal) {
+    teamQualityContextCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_CONTEXT_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchLiveMlbTeamQualityContexts(date: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbTeamQualityContext>> {
   const season = date.slice(0, 4);
   const params = new URLSearchParams({
     leagueId: "103,104",
@@ -321,6 +385,22 @@ export async function fetchMlbTeamQualityContexts(date: string, options: MlbSche
 }
 
 async function fetchMlbTeamOffenseContexts(season: string, options: MlbScheduleClientOptions = {}) {
+  const cacheKey = `${season}:team-offense`;
+  const cached = teamOffenseContextCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = fetchLiveMlbTeamOffenseContexts(season, options);
+  if (!options.signal) {
+    teamOffenseContextCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_CONTEXT_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchLiveMlbTeamOffenseContexts(season: string, options: MlbScheduleClientOptions = {}) {
   const params = new URLSearchParams({
     season,
     group: "hitting",

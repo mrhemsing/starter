@@ -4,6 +4,8 @@ import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 import UpcomingWeekPage from "./[startDate]/page";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const startDate = getHomeSlateDate();
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
