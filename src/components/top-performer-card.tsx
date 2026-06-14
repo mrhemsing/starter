@@ -120,6 +120,8 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
               alt={image.alt}
               fill
               sizes="100vw"
+              quality={95}
+              unoptimized={image.source === "action"}
               className="object-cover"
               priority
             />
@@ -132,7 +134,9 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
               src={image.imageUrl}
               alt={image.alt}
               fill
-              sizes="(min-width: 1024px) 640px, 100vw"
+              sizes="(min-width: 1280px) 1280px, 100vw"
+              quality={95}
+              unoptimized={image.source === "action"}
               className="object-cover object-top opacity-100 transition duration-500 group-hover:scale-[1.015]"
               priority
             />

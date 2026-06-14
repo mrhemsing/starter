@@ -151,8 +151,8 @@ function selectActionShotLink(asset: SportradarAsset | null) {
 }
 
 function linkScore(link: NonNullable<SportradarAsset["links"]>[number]) {
+  if (link.type === "original") return 10_000;
   if (link.href?.includes("h1000")) return 1000;
-  if (link.type === "original") return 900;
   return link.width ?? 0;
 }
 
