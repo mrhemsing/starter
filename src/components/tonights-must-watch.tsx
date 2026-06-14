@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
+import { LocalTime } from "@/components/local-time";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
+
+const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 
 export function TonightsMustWatch({
   tonight,
@@ -96,7 +99,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>#{game.status === "ppd" ? "-" : "1"} / {tier.label}</p>
             <h3 className="mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
             <p id={summaryId} className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500" aria-label={watchCardSummaryAriaLabel(game)}>
-              {gameStatusLabel(game.status)} / {formatFirstPitch(game.firstPitch)} / {gameVenueLabel(game)} / #1 of {slateSize} watch rank
+              {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #1 of {slateSize} watch rank
             </p>
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
@@ -142,7 +145,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
             <div>
               <h3 className="font-serif text-2xl font-bold text-zinc-50">{game.label}</h3>
               <p id={summaryId} className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={watchCardSummaryAriaLabel(game)}>
-                {gameStatusLabel(game.status)} / {formatFirstPitch(game.firstPitch)} / {gameVenueLabel(game)} / #{rank} of {slateSize} watch rank
+                {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #{rank} of {slateSize} watch rank
               </p>
             </div>
             <p className="shrink-0 rounded border border-amber-300/25 bg-amber-300/10 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">
@@ -484,6 +487,7 @@ function formatFirstPitch(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: SITE_TIME_ZONE,
     timeZoneName: "short",
   }).format(date);
 }

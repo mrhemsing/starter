@@ -6,6 +6,7 @@ const host = "127.0.0.1";
 const date = process.env.THE_BUMP_UPCOMING_CONTRACT_DATE ?? "2026-06-08";
 const days = process.env.THE_BUMP_UPCOMING_CONTRACT_DAYS ?? "1";
 const windowSize = process.env.THE_BUMP_UPCOMING_CONTRACT_WINDOW ?? "5";
+const siteTimeZone = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const FORM_TIER_KEYS = ["onfire", "hot", "even", "cooling", "ice"];
 
 function assert(condition, message) {
@@ -622,6 +623,12 @@ function elementHasAttributes(html, tagName, attributes) {
   );
 }
 
+function timeHasDateTime(html, value) {
+  const times = html.match(/<time\b[^>]*>/g) ?? [];
+  const escapedValue = escapeHtmlAttribute(value);
+  return times.some((time) => time.includes(`dateTime="${escapedValue}"`) || time.includes(`datetime="${escapedValue}"`));
+}
+
 function elementWithTextHasAttributes(html, tagName, attributes, text) {
   const elements = html.match(new RegExp(`<${tagName}\\b[^>]*>.*?<\\/${tagName}>`, "gs")) ?? [];
   return elements.some((element) => {
@@ -763,6 +770,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     assert(
       card.text.includes(formatFirstPitch(game.firstPitch)),
       `${route} should render first pitch time for ${game.label}`,
+    );
+    assert(
+      timeHasDateTime(card.html, game.firstPitch),
+      `${route} should render first pitch as a time element for ${game.label}`,
     );
     if (game.park) {
       assert(card.text.includes(game.park), `${route} should render venue for ${game.label}`);
@@ -1007,6 +1018,7 @@ function formatFirstPitch(value) {
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: siteTimeZone,
     timeZoneName: "short",
   }).format(parsed);
 }
