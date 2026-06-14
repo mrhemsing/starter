@@ -204,7 +204,7 @@ function BestStartCard({ title, start, highlight, badge }: { title: string; star
     return (
       <div className="rounded border border-white/10 bg-[#101014] p-5">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{title}</p>
-        <p className="mt-3 text-sm text-zinc-400">Pending a completed archived start.</p>
+        <p className="mt-3 text-sm text-zinc-400">Pending a completed start.</p>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { slatePath, startPath } from "@/lib/routes";
 import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS = 35;
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const FALLBACK_TEAM_COLOR = "#27272a";
 const FALLBACK_ACCENT_COLOR = "#fbbf24";
@@ -237,7 +238,16 @@ function isPostponedGameState(game: MlbScheduleGame) {
 }
 
 function shouldFetchLiveSchedule(date: string) {
-  return process.env.THE_BUMP_LIVE_MLB === "1" || date >= getHomeSlateDate();
+  if (process.env.THE_BUMP_LIVE_MLB === "1") return true;
+  const today = getHomeSlateDate();
+  if (date >= today) return true;
+
+  const target = new Date(`${date}T00:00:00.000Z`);
+  const current = new Date(`${today}T00:00:00.000Z`);
+  if (Number.isNaN(target.valueOf()) || Number.isNaN(current.valueOf())) return false;
+
+  const ageInDays = Math.floor((current.getTime() - target.getTime()) / ONE_DAY_MS);
+  return ageInDays >= 0 && ageInDays <= RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS;
 }
 
 export function getHomeSlateDate(now = new Date()) {

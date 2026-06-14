@@ -45,7 +45,7 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Best starts archive</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Best Starts / {month}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Rolling 7- and 30-day leaders, then the strongest archived starts for the month.
+            Rolling 7- and 30-day leaders, then the strongest completed starts for the month.
           </p>
         </header>
 
@@ -79,7 +79,7 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
     return (
       <div className="rounded border border-white/10 bg-[#101014] p-5">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</p>
-        <p className="mt-3 text-sm text-zinc-400">Pending a completed archived start.</p>
+        <p className="mt-3 text-sm text-zinc-400">Pending a completed start.</p>
       </div>
     );
   }
