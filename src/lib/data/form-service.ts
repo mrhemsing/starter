@@ -1,4 +1,4 @@
-import { getArchivedSeasonStartSummaries, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
+import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import type { FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormStartPoint, FormSummary, FormTrend, HeatBandKey, StartSummary } from "@/lib/types";
@@ -15,6 +15,8 @@ type PitcherBucket = {
   pitcherId: string;
   starts: StartSummary[];
 };
+
+const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {
   const parsed = Number(value ?? FORM_CONFIG.windowDefault);
@@ -163,6 +165,27 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
 
 async function getQualifiedFormStarts(season: string) {
   const starts = await getArchivedSeasonStartSummaries(season);
+  const qualifiedArchivedStarts = filterQualifiedStarts(starts);
+  if (qualifiedArchivedStarts.length > 0) return qualifiedArchivedStarts;
+
+  const recentStarts = await getRecentLiveFormStarts(season);
+  return filterQualifiedStarts(recentStarts);
+}
+
+async function getRecentLiveFormStarts(season: string) {
+  const today = getHomeSlateDate();
+  const dates = Array.from({ length: RECENT_FORM_LIVE_LOOKBACK_DAYS }, (_, index) => addDays(today, -index))
+    .filter((date) => date.startsWith(season))
+    .reverse();
+  const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
+
+  return slates
+    .flat()
+    .filter((start) => start.source?.line !== "fixture")
+    .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
+}
+
+function filterQualifiedStarts(starts: StartSummary[]) {
   return starts.filter((start) => start.source?.line !== "fixture" && inningsToOuts(start.line.inningsPitched) >= inningsToOuts(FORM_CONFIG.ipFloor));
 }
 
