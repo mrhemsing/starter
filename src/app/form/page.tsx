@@ -129,7 +129,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Who is pitching like an ace right now. Form is average GS+ over the last {window} qualified starts, with starts under 2.0 IP excluded.
           </p>
-          <div className="mt-5 grid gap-3 font-mono text-xs sm:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
             <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
             <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
             <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
