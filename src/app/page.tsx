@@ -87,7 +87,7 @@ export default async function Home() {
               </p>
               <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:mt-3 sm:text-sm sm:leading-6">
                 GS+ scores a single start on a 0-100 scale, with league average around 50.
-                <a href={rankedStartsPath(rankedDate)} className="ml-1 font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
+                <a href={rankedStartsPath(rankedDate)} className="ml-[10px] font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology
                 </a>
               </p>
