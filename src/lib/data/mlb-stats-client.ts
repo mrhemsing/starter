@@ -7,6 +7,9 @@ const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
 const LIVE_SCHEDULE_CACHE_TTL_MS = 60 * 1000;
 const LIVE_GAMEFEED_CACHE_TTL_MS = 60 * 1000;
 const LIVE_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
+const MLB_SCHEDULE_REVALIDATE_SECONDS = 5 * 60;
+const MLB_GAMEFEED_REVALIDATE_SECONDS = 15 * 60;
+const MLB_CONTEXT_REVALIDATE_SECONDS = 60 * 60;
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
@@ -27,6 +30,19 @@ const scheduleCache = new Map<string, CachedSchedule>();
 const completedPitchingLineCache = new Map<string, CachedValue<MlbCompletedPitchingLine[]>>();
 const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQualityContext>>>();
 const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
+
+function cachedRequestInit(options: MlbScheduleClientOptions, revalidate: number): RequestInit & { next?: { revalidate: number } } {
+  if (options.signal) {
+    return {
+      cache: "no-store",
+      signal: options.signal,
+    };
+  }
+
+  return {
+    next: { revalidate },
+  };
+}
 
 type MlbApiTeamNode = {
   team?: {
@@ -275,10 +291,7 @@ async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOpti
   });
 
   try {
-    const response = await fetch(`${MLB_STATS_API_BASE}/schedule?${params.toString()}`, {
-      cache: "no-store",
-      signal: options.signal,
-    });
+    const response = await fetch(`${MLB_STATS_API_BASE}/schedule?${params.toString()}`, cachedRequestInit(options, MLB_SCHEDULE_REVALIDATE_SECONDS));
 
     if (!response.ok) return getFixtureSchedule(date);
 
@@ -326,10 +339,7 @@ export async function fetchMlbCompletedPitchingLines(gamePk: number, options: Ml
 
 async function fetchLiveMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   try {
-    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, {
-      cache: "no-store",
-      signal: options.signal,
-    });
+    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, MLB_GAMEFEED_REVALIDATE_SECONDS));
 
     if (!response.ok) return [];
 
@@ -368,10 +378,7 @@ async function fetchLiveMlbTeamQualityContexts(date: string, options: MlbSchedul
 
   try {
     const [response, offenseContexts] = await Promise.all([
-      fetch(`${MLB_STATS_API_BASE}/standings?${params.toString()}`, {
-        cache: "no-store",
-        signal: options.signal,
-      }),
+      fetch(`${MLB_STATS_API_BASE}/standings?${params.toString()}`, cachedRequestInit(options, MLB_CONTEXT_REVALIDATE_SECONDS)),
       fetchMlbTeamOffenseContexts(season, options),
     ]);
 
@@ -409,10 +416,7 @@ async function fetchLiveMlbTeamOffenseContexts(season: string, options: MlbSched
   });
 
   try {
-    const response = await fetch(`${MLB_STATS_API_BASE}/teams/stats?${params.toString()}`, {
-      cache: "no-store",
-      signal: options.signal,
-    });
+    const response = await fetch(`${MLB_STATS_API_BASE}/teams/stats?${params.toString()}`, cachedRequestInit(options, MLB_CONTEXT_REVALIDATE_SECONDS));
 
     if (!response.ok) return new Map<number, MlbTeamOffenseContext>();
 
@@ -427,10 +431,7 @@ export async function fetchMlbStartPitchDetails(gamePk: number, pitcherMlbId: nu
   if (!options.fetchLive) return null;
 
   try {
-    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, {
-      cache: "no-store",
-      signal: options.signal,
-    });
+    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, MLB_GAMEFEED_REVALIDATE_SECONDS));
 
     if (!response.ok) return null;
 

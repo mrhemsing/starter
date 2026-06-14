@@ -19,6 +19,7 @@ type PitcherBucket = {
 
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
+const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
 
 type CachedValue<T> = {
   expiresAt: number;
@@ -31,19 +32,19 @@ const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
 const getCachedFormLeaderboard = unstable_cache(
   async (season: string, window: FormWindow, qualifiedOnly: boolean) => buildFormLeaderboard({ season, window, qualifiedOnly }),
   ["form-leaderboard"],
-  { revalidate: 60 },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
 
 const getCachedFormHome = unstable_cache(
   async (season: string, window: FormWindow) => buildFormHome({ season, window }),
   ["form-home"],
-  { revalidate: 60 },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
 
 const getCachedRecentLiveFormStarts = unstable_cache(
   async (season: string, today: string) => buildRecentLiveFormStarts(season, today),
   ["recent-live-form-starts"],
-  { revalidate: 60 },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {

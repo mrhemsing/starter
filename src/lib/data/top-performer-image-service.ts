@@ -6,6 +6,7 @@ const CACHE_DIR = path.join(process.cwd(), "public", "images", "top-performer-ac
 const PUBLIC_CACHE_PATH = "/images/top-performer-action-shots";
 const SPORTRADAR_API_BASE = "https://api.sportradar.com";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 
 type TopPerformerImageSource = "action" | "highlight" | "headshot";
@@ -105,7 +106,7 @@ async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerf
 async function resolveSportradarGameId(start: StartSummary, apiKey: string) {
   const [year, month, day] = start.date.split("-");
   const url = `${SPORTRADAR_API_BASE}/mlb/trial/v8/en/games/${year}/${month}/${day}/schedule.json?${new URLSearchParams({ api_key: apiKey })}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { next: { revalidate: SPORTRADAR_REVALIDATE_SECONDS } });
   if (!response.ok) return null;
 
   const schedule = await response.json() as SportradarSchedule;
@@ -120,7 +121,7 @@ async function resolveSportradarGameId(start: StartSummary, apiKey: string) {
 
 async function fetchActionShotManifest(eventId: string, provider: (typeof PROVIDERS)[number], apiKey: string) {
   const url = `${SPORTRADAR_API_BASE}/mlb-images-p3/${provider}/actionshots/events/game/${eventId}/manifest.json?${new URLSearchParams({ api_key: apiKey })}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { next: { revalidate: SPORTRADAR_REVALIDATE_SECONDS } });
   if (!response.ok) return null;
   return await response.json() as SportradarManifest;
 }
@@ -159,7 +160,7 @@ function linkScore(link: NonNullable<SportradarAsset["links"]>[number]) {
 async function cacheActionShot(start: StartSummary, asset: SportradarAsset, href: string, provider: string, apiKey: string): Promise<CachedActionShot | null> {
   if (!asset.id) return null;
   const downloadUrl = `${SPORTRADAR_API_BASE}/mlb-images-p3/${provider}${href}?${new URLSearchParams({ api_key: apiKey })}`;
-  const response = await fetch(downloadUrl, { cache: "no-store" });
+  const response = await fetch(downloadUrl, { next: { revalidate: SPORTRADAR_REVALIDATE_SECONDS } });
   if (!response.ok) return null;
 
   const contentType = response.headers.get("content-type") ?? "";

@@ -5,6 +5,7 @@ const MLB_CHANNEL_HANDLE = "MLB";
 const MLB_CHANNEL_PREFIX = "UCoLrcjPV5";
 const SEARCH_RESULT_LIMIT = 5;
 const CACHE_TTL_MS = 18 * 60 * 60 * 1000;
+const YOUTUBE_REVALIDATE_SECONDS = 18 * 60 * 60;
 const ALL_GAME_HIGHLIGHTS_TITLE_PATTERN = /\ball\s+games(?:\s+highlights?)?\b/i;
 const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-06-12-mil-phi-694819": "MaAOy8pY36c",
@@ -100,7 +101,7 @@ async function resolveMlbChannelId(apiKey: string) {
     forHandle: MLB_CHANNEL_HANDLE,
     key: apiKey,
   });
-  const response = await fetch(`${YOUTUBE_API_BASE}/channels?${params.toString()}`, { cache: "no-store" });
+  const response = await fetch(`${YOUTUBE_API_BASE}/channels?${params.toString()}`, { next: { revalidate: YOUTUBE_REVALIDATE_SECONDS } });
   if (!response.ok) return cacheMlbChannelId(null);
 
   const body = await response.json() as { items?: Array<{ id?: string }> };
@@ -139,7 +140,7 @@ async function searchHighlightCandidates(start: StartDetail, channelId: string, 
       order: "relevance",
       key: apiKey,
     });
-    const response = await fetch(`${YOUTUBE_API_BASE}/search?${params.toString()}`, { cache: "no-store" });
+    const response = await fetch(`${YOUTUBE_API_BASE}/search?${params.toString()}`, { next: { revalidate: YOUTUBE_REVALIDATE_SECONDS } });
     if (!response.ok) continue;
 
     const body = await response.json() as { items?: YouTubeSearchItem[] };
@@ -186,7 +187,7 @@ async function fetchVideoDurations(videoIds: string[], apiKey: string) {
     id: videoIds.join(","),
     key: apiKey,
   });
-  const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params.toString()}`, { cache: "no-store" });
+  const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params.toString()}`, { next: { revalidate: YOUTUBE_REVALIDATE_SECONDS } });
   if (!response.ok) return durations;
 
   const body = await response.json() as { items?: YouTubeVideoItem[] };
