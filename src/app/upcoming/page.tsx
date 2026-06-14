@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getDefaultSlateDates } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
 import UpcomingDatePage from "./[date]/page";
@@ -7,7 +7,7 @@ import UpcomingDatePage from "./[date]/page";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const date = getHomeSlateDate();
+  const { upcomingDate: date } = await getDefaultSlateDates();
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const title = upcomingDayTitle(upcoming.date);
   const description = upcomingDayDescription(upcoming);
@@ -36,6 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function UpcomingPage() {
-  return <UpcomingDatePage params={Promise.resolve({ date: getHomeSlateDate() })} />;
+export default async function UpcomingPage() {
+  const { upcomingDate } = await getDefaultSlateDates();
+  return <UpcomingDatePage params={Promise.resolve({ date: upcomingDate })} />;
 }

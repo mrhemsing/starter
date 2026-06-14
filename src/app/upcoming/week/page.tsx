@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getDefaultSlateDates } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 import UpcomingWeekPage from "./[startDate]/page";
@@ -7,7 +7,7 @@ import UpcomingWeekPage from "./[startDate]/page";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const startDate = getHomeSlateDate();
+  const { upcomingDate: startDate } = await getDefaultSlateDates();
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const title = upcomingWeekTitle(upcoming.range.start);
   const description = upcomingWeekDescription(upcoming);
@@ -36,6 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function UpcomingWeekIndexPage() {
-  return <UpcomingWeekPage params={Promise.resolve({ startDate: getHomeSlateDate() })} />;
+export default async function UpcomingWeekIndexPage() {
+  const { upcomingDate } = await getDefaultSlateDates();
+  return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} />;
 }

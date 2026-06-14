@@ -1,4 +1,4 @@
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getDefaultSlateDates } from "@/lib/data/start-service";
 import Image from "./[date]/opengraph-image";
 
 export const alt = "Front Five upcoming starter watch card";
@@ -9,6 +9,7 @@ export const size = {
 export const contentType = "image/png";
 export const dynamic = "force-dynamic";
 
-export default function UpcomingIndexImage() {
-  return Image({ params: Promise.resolve({ date: getHomeSlateDate() }) });
+export default async function UpcomingIndexImage() {
+  const { upcomingDate } = await getDefaultSlateDates();
+  return Image({ params: Promise.resolve({ date: upcomingDate }) });
 }

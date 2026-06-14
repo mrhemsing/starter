@@ -183,7 +183,7 @@ function UpcomingToggle({ activeDate, today, tomorrow }: { activeDate: string; t
     <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
       <Link className={toggleClass(todayActive)} href={upcomingDateHref(today)} aria-current={todayActive ? "page" : undefined} aria-label={`View today slate for ${formatUpcomingDate(today)}`}>Today</Link>
       <Link className={toggleClass(tomorrowActive)} href={upcomingDateHref(tomorrow)} aria-current={tomorrowActive ? "page" : undefined} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`}>Tomorrow</Link>
-      <Link className={toggleClass(false)} href={upcomingWeekHref(today)} aria-label={`View week of ${formatUpcomingDate(today)}`}>This week</Link>
+      <Link className={toggleClass(false)} href={upcomingWeekHref(activeDate)} aria-label={`View week of ${formatUpcomingDate(activeDate)}`}>This week</Link>
     </nav>
   );
 }

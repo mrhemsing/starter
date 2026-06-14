@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { getRankedStartsDefaultDate } from "@/lib/data/start-service";
+import { getDefaultSlateDates } from "@/lib/data/start-service";
 import { heatCheckPath, rankedStartsPath, upcomingDateHref, watchlistPath } from "@/lib/routes";
 
 type NavKey = "home" | "starts" | "heat" | "upcoming" | "watchlist";
 
 export async function SiteNav({ active, today }: { active: NavKey; today: string; rankedDate?: string }) {
-  const rankedDate = await getRankedStartsDefaultDate(today);
+  const { rankedDate, upcomingDate } = await getDefaultSlateDates(today);
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
     { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(rankedDate) },
     { key: "heat" as const, label: "Heat Check", href: heatCheckPath() },
-    { key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(today) },
+    { key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(upcomingDate) },
     { key: "watchlist" as const, label: "Watchlist", href: watchlistPath() },
   ];
 

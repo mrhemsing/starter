@@ -116,7 +116,7 @@ function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function addDays(date: string, days: number) {
+export function addDays(date: string, days: number) {
   return toIsoDate(new Date(new Date(`${date}T00:00:00.000Z`).getTime() + days * ONE_DAY_MS));
 }
 
@@ -151,6 +151,15 @@ export type RankedSlateCompletionState = {
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
   const completion = await getRankedSlateCompletionState(today, today);
   return completion.finalGames > 0 ? today : addDays(today, -1);
+}
+
+export async function getDefaultSlateDates(today = getHomeSlateDate()) {
+  const completion = await getRankedSlateCompletionState(today, today);
+
+  return {
+    rankedDate: completion.finalGames > 0 ? today : addDays(today, -1),
+    upcomingDate: completion.isFinal ? addDays(today, 1) : today,
+  };
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {
