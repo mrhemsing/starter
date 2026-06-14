@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
@@ -27,21 +28,42 @@ type CachedValue<T> = {
 const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse>>();
 const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
 
+const getCachedFormLeaderboard = unstable_cache(
+  async (season: string, window: FormWindow, qualifiedOnly: boolean) => buildFormLeaderboard({ season, window, qualifiedOnly }),
+  ["form-leaderboard"],
+  { revalidate: 60 },
+);
+
+const getCachedFormHome = unstable_cache(
+  async (season: string, window: FormWindow) => buildFormHome({ season, window }),
+  ["form-home"],
+  { revalidate: 60 },
+);
+
+const getCachedRecentLiveFormStarts = unstable_cache(
+  async (season: string, today: string) => buildRecentLiveFormStarts(season, today),
+  ["recent-live-form-starts"],
+  { revalidate: 60 },
+);
+
 export function parseFormWindow(value: number | string | undefined): FormWindow {
   const parsed = Number(value ?? FORM_CONFIG.windowDefault);
   return FORM_CONFIG.windows.includes(parsed as FormWindow) ? parsed as FormWindow : FORM_CONFIG.windowDefault;
 }
 
 export async function getFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
+  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const window = parseFormWindow(options.window);
+  const qualifiedOnly = options.qualifiedOnly !== false;
   const cacheKey = JSON.stringify({
-    season: options.season ?? getHomeSlateDate().slice(0, 4),
-    window: parseFormWindow(options.window),
-    qualifiedOnly: options.qualifiedOnly !== false,
+    season,
+    window,
+    qualifiedOnly,
   });
   const cached = formLeaderboardCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = buildFormLeaderboard(options);
+  const promise = getCachedFormLeaderboard(season, window, qualifiedOnly);
   formLeaderboardCache.set(cacheKey, {
     expiresAt: Date.now() + FORM_CACHE_TTL_MS,
     promise,
@@ -106,14 +128,16 @@ export async function getPitcherFormMap(pitcherIds: string[], options: FormBuild
 }
 
 export async function getFormHome(options: FormBuildOptions = {}): Promise<FormHomeResponse> {
+  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const window = parseFormWindow(options.window);
   const cacheKey = JSON.stringify({
-    season: options.season ?? getHomeSlateDate().slice(0, 4),
-    window: parseFormWindow(options.window),
+    season,
+    window,
   });
   const cached = formHomeCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = buildFormHome(options);
+  const promise = getCachedFormHome(season, window);
   formHomeCache.set(cacheKey, {
     expiresAt: Date.now() + FORM_CACHE_TTL_MS,
     promise,
@@ -218,6 +242,10 @@ async function getQualifiedFormStarts(season: string) {
 
 async function getRecentLiveFormStarts(season: string) {
   const today = getHomeSlateDate();
+  return getCachedRecentLiveFormStarts(season, today);
+}
+
+async function buildRecentLiveFormStarts(season: string, today: string) {
   const dates = Array.from({ length: RECENT_FORM_LIVE_LOOKBACK_DAYS }, (_, index) => addDays(today, -index))
     .filter((date) => date.startsWith(season))
     .reverse();
