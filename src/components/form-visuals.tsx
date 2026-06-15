@@ -70,7 +70,7 @@ export function FormSparkline({
         </defs>
         <line x1={padding} y1={leagueY} x2={width - padding} y2={leagueY} stroke={FORM_CHART_COLORS.gridStrong} strokeDasharray="3 3" />
         {points.length > 1 ? <path className="form-spark-area" d={areaPath} fill={`url(#${gradientId})`} /> : null}
-        <path className={`form-spark-line ${intensity === "pole" ? "is-animated is-glowing" : ""}`} d={path} fill="none" stroke={lineColor} strokeWidth={variant === "hero" ? "4" : variant === "mini" ? "2" : "3"} strokeLinecap="round" strokeLinejoin="round" />
+        <path className={`form-spark-line ${intensity === "pole" ? "is-animated is-glowing" : ""}`} d={path} fill="none" stroke={intensity === "field" ? `${lineColor}CC` : lineColor} strokeWidth={variant === "hero" ? "4" : intensity === "field" ? "1.5" : variant === "mini" ? "2" : "3"} strokeLinecap="round" strokeLinejoin="round" />
         {points.slice(0, -1).map((value, index) => (
           <circle key={`${value}-${index}`} cx={xFor(index)} cy={yFor(value)} r={variant === "hero" ? "3.2" : "2.4"} fill={lineColor} opacity="0.72" />
         ))}

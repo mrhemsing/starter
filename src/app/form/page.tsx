@@ -146,7 +146,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <ThermalBookendsHero fire={firePole} ice={icePole} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} />
         ) : null}
 
-        <MoversStrip risers={risers} fallers={fallers} window={window} leagueMeanGS={leaderboard.leagueMeanGS} />
+        <MoversStrip risers={risers} fallers={fallers} window={window} />
 
         <section className="my-5 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-controls">
           <details>
@@ -280,7 +280,7 @@ function BandDistribution({ bands, total, params }: { bands: Array<HeatBand & { 
   );
 }
 
-function MoversStrip({ risers, fallers, window, leagueMeanGS }: { risers: FormSummary[]; fallers: FormSummary[]; window: number; leagueMeanGS: number }) {
+function MoversStrip({ risers, fallers, window }: { risers: FormSummary[]; fallers: FormSummary[]; window: number }) {
   const movers = [
     ...risers.map((pitcher) => ({ pitcher, direction: "up" as const })),
     ...fallers.map((pitcher) => ({ pitcher, direction: "down" as const })),
@@ -288,17 +288,15 @@ function MoversStrip({ risers, fallers, window, leagueMeanGS }: { risers: FormSu
 
   return (
     <section className="my-5 max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="heat-movers-strip">
-      <div className="flex max-w-full min-w-0 flex-wrap items-center gap-3 pb-1">
-        <p className="w-full font-mono text-xs uppercase tracking-[0.2em] text-amber-300 sm:w-auto sm:shrink-0">Movers</p>
+      <div className="flex max-w-full min-w-0 items-center gap-3 overflow-x-auto pb-1">
+        <p className="shrink-0 font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Movers</p>
         {movers.map(({ pitcher, direction }) => {
           const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
+          const marker = direction === "up" ? "↑" : "↓";
           return (
-            <a key={`${direction}-${pitcher.pitcherId}`} href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_72px] items-center gap-2 rounded border border-white/10 bg-black/20 px-3 py-2 hover:border-amber-300/30 sm:w-[210px]">
-              <div className="min-w-0">
-                <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{pitcher.name}</p>
-                <p className="font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color }}>{direction === "up" ? "Rising" : "Falling"} {formatSignedDelta(pitcher.deltaForm)}</p>
-              </div>
-              <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="mini" />
+            <a key={`${direction}-${pitcher.pitcherId}`} href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
+              <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{lastName(pitcher.name)}</span>
+              <span style={{ color }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</span>
             </a>
           );
         })}
@@ -373,32 +371,32 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   return (
     <article
       id={poleId}
-      className={`heat-check-row heat-glow-card scroll-mt-24 grid grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded border border-white/10 bg-[#101014] transition hover:bg-white/[0.04] lg:grid-cols-[48px_minmax(0,1fr)_420px] ${treatment.padding} ${treatment.opacity}`}
-      style={{ ...heatGlowStyle(pitcher), borderLeftColor: bandColor, borderLeftWidth: 4 }}
+      className={`heat-check-row scroll-mt-24 grid items-center gap-x-4 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
+      style={{ ...(isPoleTier(pitcher) && fullWindow ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
       data-heat-band={pitcher.tier}
     >
-      <p className={`${treatment.rankClass} font-serif text-zinc-500`}>#{rank}</p>
-      <PitcherChip
-        pitcherId={pitcher.pitcherId}
-        name={pitcher.name}
-        team={`${pitcher.team} / ${pitcher.windowCount} of ${window} / ${tierLabel(pitcher.tier)}`}
-        href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
-        metric={Math.round(pitcher.rgs)}
-        metricLabel="Form"
-        metricColor={bandColor}
-        imageWidth={treatment.imageWidth}
-        size={treatment.chipSize}
-        className={`${treatment.chipGrid} gap-2 sm:gap-3`}
-        nameClassName={`whitespace-normal overflow-visible text-clip leading-[0.95] ${treatment.nameClass}`}
-      >
-        <p className={`truncate text-xs ${treatment.metaClass}`}>
-          {lastLine}
+      <div className="min-w-0">
+        <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
+      </div>
+      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className={`${treatment.plateClass} relative grid place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`} style={{ borderColor: bandColor }}>
+        <span className="absolute font-mono text-xs font-semibold text-zinc-300">{pitcherInitials(pitcher.name)}</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={rankedHeadshotUrl(pitcher.pitcherId, treatment.imageWidth)} alt={`${pitcher.name}, ${pitcher.team}`} loading="lazy" className={`relative h-full w-full object-cover object-[center_18%] ${treatment.imageClass}`} />
+      </Link>
+      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 overflow-hidden gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <h2 className={`${treatment.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
+        <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
+          {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Starting today</span> : null}
         </p>
-      </PitcherChip>
-      <div className="col-span-full grid grid-cols-[auto_minmax(96px,1fr)_auto] items-center gap-2 lg:col-span-1">
-        <div className="min-w-0">{fullWindow ? <TrendChip summary={pitcher} compact /> : <InsufficientTrend windowCount={pitcher.windowCount} window={window} />}</div>
+        <div className="flex flex-wrap gap-1.5">
+          <FormDriverChips chips={pitcher.driverChips} compact />
+        </div>
+      </Link>
+      <div className="col-span-full row-start-2 grid min-w-0 grid-cols-[auto_minmax(120px,1fr)] items-center gap-2 sm:col-span-1 sm:row-auto sm:grid-cols-1">
+        <div className="min-w-0 sm:justify-self-end">{fullWindow ? <TrendChip summary={pitcher} compact /> : <InsufficientTrend windowCount={pitcher.windowCount} window={window} />}</div>
         <FormSparkline
           values={pitcher.spark}
           tier={pitcher.tier}
@@ -407,10 +405,15 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           trend={pitcher.trend}
           intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
         />
-        <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
-        <div className="col-span-full">
-          <FormDriverChips chips={pitcher.driverChips} compact />
+      </div>
+      <div className="col-start-4 row-start-1 flex items-center justify-end gap-2 text-right sm:col-auto sm:row-auto">
+        <div className="hidden sm:block">
+          <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
         </div>
+        <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
+          <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
+        </Link>
       </div>
     </article>
   );
@@ -435,9 +438,8 @@ function TemperatureRail({ bands, total, params }: { bands: Array<HeatBand & { c
 
 function BandHeader({ band, count }: { band: HeatBand; count: number }) {
   return (
-    <div className="sticky top-0 z-10 -mx-1 flex items-center gap-3 border-b border-white/10 bg-[#08080a]/92 px-1 py-2 backdrop-blur" data-heat-band-header={band.key}>
-      <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-300">{band.label} · {count}</p>
+    <div className="sticky top-0 z-10 mt-6 mb-3 flex items-center gap-3 bg-[#08080a]/92 py-2 backdrop-blur" data-heat-band-header={band.key}>
+      <p className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: band.color }}>{band.label} · {count}</p>
       <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
     </div>
   );
@@ -454,29 +456,50 @@ function rowTreatment(pitcher: FormSummary): {
   padding: string;
   opacity: string;
   rankClass: string;
-  chipGrid: string;
-  chipSize: "sm" | "md" | "lg";
+  gridClass: string;
+  plateClass: string;
+  borderClass: string;
   imageWidth: number;
+  imageClass: string;
   nameClass: string;
+  scoreClass: string;
   metaClass: string;
 } {
   if (pitcher.tier === "onfire") {
-    return { padding: "p-4", opacity: "", rankClass: "text-3xl", chipGrid: "grid-cols-[72px_minmax(0,1fr)_auto]", chipSize: "lg", imageWidth: 160, nameClass: "text-2xl", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_64px_minmax(0,1fr)_auto] sm:grid-cols-[44px_64px_minmax(0,1fr)_150px_auto]", plateClass: "h-20 w-16", borderClass: "border-white/10", imageWidth: 160, imageClass: "", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "hot") {
-    return { padding: "p-3.5", opacity: "", rankClass: "text-3xl", chipGrid: "grid-cols-[64px_minmax(0,1fr)_auto]", chipSize: "md", imageWidth: 140, nameClass: "text-[1.45rem] sm:text-2xl", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_64px_minmax(0,1fr)_auto] sm:grid-cols-[44px_64px_minmax(0,1fr)_150px_auto]", plateClass: "h-20 w-16", borderClass: "border-white/10", imageWidth: 140, imageClass: "", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "cooling") {
-    return { padding: "p-2.5", opacity: "opacity-90", rankClass: "text-xl", chipGrid: "grid-cols-[44px_minmax(0,1fr)_auto]", chipSize: "sm", imageWidth: 90, nameClass: "text-lg", metaClass: "text-zinc-500" };
+    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_44px_minmax(0,1fr)_auto] sm:grid-cols-[44px_44px_minmax(0,1fr)_132px_auto]", plateClass: "h-[55px] w-11", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 90, imageClass: "grayscale opacity-80", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "ice") {
-    return { padding: "p-2", opacity: "opacity-85 grayscale-[35%]", rankClass: "text-lg", chipGrid: "grid-cols-[40px_minmax(0,1fr)_auto]", chipSize: "sm", imageWidth: 80, nameClass: "text-base", metaClass: "text-zinc-500" };
+    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_40px_minmax(0,1fr)_auto] sm:grid-cols-[44px_40px_minmax(0,1fr)_120px_auto]", plateClass: "h-[50px] w-10", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 80, imageClass: "grayscale opacity-65", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
   }
-  return { padding: "p-3", opacity: "", rankClass: "text-2xl", chipGrid: "grid-cols-[52px_minmax(0,1fr)_auto]", chipSize: "md", imageWidth: 120, nameClass: "text-xl", metaClass: "text-zinc-500" };
+  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_52px_minmax(0,1fr)_auto] sm:grid-cols-[44px_52px_minmax(0,1fr)_140px_auto]", plateClass: "h-[65px] w-[52px]", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 120, imageClass: "", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
 function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
+}
+
+function pitcherInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function rankedHeadshotUrl(pitcherId: string, width: number) {
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
+}
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
 }
 
 function InsufficientTrend({ windowCount, window }: { windowCount: number; window: number }) {
