@@ -35,7 +35,11 @@ export async function GET(request: Request) {
 
   if (completedStarts.length > 0) {
     revalidatePath("/");
+    revalidatePath("/heat-check");
     revalidatePath(`/starts/${today}`);
+    for (const pitcherId of new Set(completedStarts.map((start) => start.pitcher.id))) {
+      revalidatePath(`/pitchers/${pitcherId}/form`);
+    }
   }
 
   return NextResponse.json({
@@ -45,6 +49,7 @@ export async function GET(request: Request) {
     finalGames: completion.finalGames,
     totalGames: completion.totalGames,
     completedStarts: completedStarts.length,
+    affectedPitchers: new Set(completedStarts.map((start) => start.pitcher.id)).size,
     revalidated: completedStarts.length > 0,
     generatedAt: new Date().toISOString(),
   });

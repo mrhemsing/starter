@@ -133,6 +133,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Furnace to freezer across the last {window} qualified starts. The trace shows where every arm is moving; the glow is reserved for the poles.
           </p>
+          <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
+            Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
+          </p>
           <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
             <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
             <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />

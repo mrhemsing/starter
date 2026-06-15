@@ -17,6 +17,13 @@ type PitcherBucket = {
   starts: StartSummary[];
 };
 
+type FormStartSet = {
+  starts: StartSummary[];
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  stale: boolean;
+};
+
 type FormMetricKey = "k9" | "bb9" | "ipPerStart" | "er9";
 
 type FormMetricSnapshot = Record<FormMetricKey, number>;
@@ -29,7 +36,7 @@ type FormLeagueContext = {
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-drivers-workload-v1";
+const FORM_CACHE_VERSION = "form-scored-start-merge-v1";
 
 type CachedValue<T> = {
   expiresAt: number;
@@ -86,7 +93,8 @@ export async function getFormLeaderboard(options: FormBuildOptions = {}): Promis
 async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
-  const starts = await getQualifiedFormStarts(season);
+  const startSet = await getQualifiedFormStarts(season);
+  const starts = startSet.starts;
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const summaries = buildPitcherBuckets(starts)
@@ -97,6 +105,9 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
 
   return {
     generatedAt: new Date().toISOString(),
+    formThroughDate: startSet.formThroughDate,
+    latestScoredStartDate: startSet.latestScoredStartDate,
+    stale: startSet.stale,
     window,
     leagueMeanGS: round1(leagueMeanGS),
     count: pitchers.length,
@@ -110,7 +121,8 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
 export async function getPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
-  const starts = await getQualifiedFormStarts(season);
+  const startSet = await getQualifiedFormStarts(season);
+  const starts = startSet.starts;
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
@@ -127,6 +139,9 @@ export async function getPitcherForm(pitcherId: string, options: FormBuildOption
       throws: summary.throws,
       status: summary.status,
     },
+    formThroughDate: startSet.formThroughDate,
+    latestScoredStartDate: startSet.latestScoredStartDate,
+    stale: startSet.stale,
     window,
     leagueMeanGS: round1(leagueMeanGS),
     series,
@@ -175,6 +190,9 @@ async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeRe
 
   return {
     generatedAt: leaderboard.generatedAt,
+    formThroughDate: leaderboard.formThroughDate,
+    latestScoredStartDate: leaderboard.latestScoredStartDate,
+    stale: leaderboard.stale,
     window: leaderboard.window,
     leagueMeanGS: leaderboard.leagueMeanGS,
     totalQualified: qualified.length,
@@ -244,13 +262,30 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
   };
 }
 
-async function getQualifiedFormStarts(season: string) {
-  const starts = await getArchivedSeasonStartSummaries(season);
-  const qualifiedArchivedStarts = filterQualifiedStarts(starts);
-  if (qualifiedArchivedStarts.length > 0) return qualifiedArchivedStarts;
+async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
+  const [archivedStarts, recentStarts] = await Promise.all([
+    getArchivedSeasonStartSummaries(season),
+    getRecentLiveFormStarts(season),
+  ]);
+  const scoredStarts = mergeScoredStarts(archivedStarts, recentStarts);
+  const qualifiedStarts = filterQualifiedStarts(scoredStarts);
+  const formThroughDate = latestStartDate(qualifiedStarts);
+  const latestScoredStartDate = latestStartDate(scoredStarts.filter((start) => start.source?.line !== "fixture"));
+  const stale = Boolean(formThroughDate && latestScoredStartDate && formThroughDate < latestScoredStartDate);
 
-  const recentStarts = await getRecentLiveFormStarts(season);
-  return filterQualifiedStarts(recentStarts);
+  if (stale) {
+    const affectedPitchers = new Set(scoredStarts.filter((start) => start.date === latestScoredStartDate).map((start) => start.pitcher.mlbId));
+    console.warn(
+      `[form-pipeline] rolling form is stale: formThroughDate=${formThroughDate}, latestScoredStartDate=${latestScoredStartDate}, affectedPitchers=${affectedPitchers.size}`,
+    );
+  }
+
+  return {
+    starts: qualifiedStarts,
+    formThroughDate,
+    latestScoredStartDate,
+    stale,
+  };
 }
 
 async function getRecentLiveFormStarts(season: string) {
@@ -272,6 +307,23 @@ async function buildRecentLiveFormStarts(season: string, today: string) {
 
 function filterQualifiedStarts(starts: StartSummary[]) {
   return starts.filter((start) => start.source?.line !== "fixture" && inningsToOuts(start.line.inningsPitched) >= inningsToOuts(FORM_CONFIG.ipFloor));
+}
+
+function mergeScoredStarts(...groups: StartSummary[][]) {
+  const byStartId = new Map<string, StartSummary>();
+
+  for (const starts of groups) {
+    for (const start of starts) {
+      if (start.source?.line === "fixture") continue;
+      byStartId.set(`${start.gamePk}:${start.pitcher.mlbId}`, start);
+    }
+  }
+
+  return [...byStartId.values()].sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk || a.pitcher.name.localeCompare(b.pitcher.name));
+}
+
+function latestStartDate(starts: StartSummary[]) {
+  return starts.reduce<string | null>((latest, start) => (latest && latest > start.date ? latest : start.date), null);
 }
 
 function buildPitcherBuckets(starts: StartSummary[]): PitcherBucket[] {

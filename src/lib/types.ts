@@ -230,6 +230,9 @@ export type FormNextStart = {
 
 export type FormLeaderboardResponse = {
   generatedAt: string;
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  stale: boolean;
   window: 3 | 5 | 10;
   leagueMeanGS: number;
   count: number;
@@ -241,6 +244,9 @@ export type FormLeaderboardResponse = {
 
 export type FormHomeResponse = {
   generatedAt: string;
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  stale: boolean;
   window: 3 | 5 | 10;
   leagueMeanGS: number;
   totalQualified: number;
@@ -251,6 +257,9 @@ export type FormHomeResponse = {
 
 export type FormPitcherResponse = {
   pitcher: Pick<FormSummary, "pitcherId" | "name" | "team" | "throws" | "status">;
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  stale: boolean;
   window: 3 | 5 | 10;
   leagueMeanGS: number;
   series: FormStartPoint[];
