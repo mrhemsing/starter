@@ -27,8 +27,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <>
             <LeagueTempStrip home={home} />
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <HeatRail title="On fire & hot" tone="hot" pitchers={home.hot} />
-              <HeatRail title="Cooling & ice cold" tone="cold" pitchers={home.cold} />
+              <HeatRail title="On fire & hot" tone="hot" pitchers={home.hot} window={home.window} />
+              <HeatRail title="Cooling & ice cold" tone="cold" pitchers={home.cold} window={home.window} />
             </div>
             {home.totalQualified < HOME_CONFIG.railSize * 4 ? (
               <p className="mt-4 font-mono text-xs text-zinc-500">Form stabilizes after a few starts. Sample is still small.</p>
@@ -76,7 +76,7 @@ function LeagueTempStrip({ home }: { home: FormHomeResponse }) {
   );
 }
 
-function HeatRail({ title, tone, pitchers }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[] }) {
+function HeatRail({ title, tone, pitchers, window }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[]; window: number }) {
   const toneColor = tone === "hot" ? HEAT_BANDS[0].color : HEAT_BANDS[HEAT_BANDS.length - 1].color;
   const railMarker = tone === "hot" ? "▲" : "▼";
   const railIntensity = Math.max(
@@ -94,13 +94,13 @@ function HeatRail({ title, tone, pitchers }: { title: string; tone: "hot" | "col
         <h3 className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: toneColor }}>{title}</h3>
       </div>
       <div className="space-y-2">
-        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} />)}
+        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} window={window} />)}
       </div>
     </section>
   );
 }
 
-function HeatRow({ pitcher }: { pitcher: FormSummary }) {
+function HeatRow({ pitcher, window }: { pitcher: FormSummary; window: number }) {
   const band = levelBandFor(pitcher);
   const nextStart = nextStartDetails(pitcher);
   const tone = heatTone(band);
@@ -124,13 +124,13 @@ function HeatRow({ pitcher }: { pitcher: FormSummary }) {
       data-responsive-check="heat-row"
     >
       <Link
-        href={`/pitchers/${pitcher.pitcherId}/form`}
-        className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
+        href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
+        className="absolute inset-0 z-20 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
         aria-label={`Open ${pitcher.name} form page`}
       />
       <HeatCardEffects intensity={intensity} />
       <div
-        className="heat-photo relative z-30 h-[118px] w-[92px] overflow-hidden rounded-xl bg-[#23232a] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] overflow-hidden rounded-xl bg-[#23232a] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
         style={{ background: `linear-gradient(160deg, ${teamColors.primary}, #16161b)`, boxShadow: `inset 0 0 0 2px ${teamColors.accent}, 0 4px 14px rgba(0,0,0,0.4)` }}
       >
         {HOME_CONFIG.showHeadshots ? (
@@ -147,12 +147,16 @@ function HeatRow({ pitcher }: { pitcher: FormSummary }) {
         <div className="heat-photo-tint pointer-events-none absolute inset-0 z-0" />
       </div>
 
-      <div className="relative z-10 flex min-h-[118px] min-w-0 flex-col justify-between">
+      <div className="pointer-events-none relative z-30 flex min-h-[118px] min-w-0 flex-col justify-between">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="min-w-0">
             <div className="flex min-w-0 items-start gap-2">
               <p className="min-w-0 text-lg font-bold leading-[1.1] text-zinc-100">{pitcher.name}</p>
-              {pitcher.highlight ? <HeatHighlightModal highlight={pitcher.highlight} pitcherName={pitcher.name} /> : null}
+              {pitcher.highlight ? (
+                <span className="pointer-events-auto relative z-40">
+                  <HeatHighlightModal highlight={pitcher.highlight} pitcherName={pitcher.name} />
+                </span>
+              ) : null}
             </div>
             <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.12em] text-[#7d7d86]">{pitcher.team} · {handednessLabel(pitcher.throws)}</span>
           </div>
@@ -170,7 +174,7 @@ function HeatRow({ pitcher }: { pitcher: FormSummary }) {
         <HeatMeter heatIndex={pitcher.heatIndex ?? 0} band={band} deltaForm={pitcher.deltaForm} />
       </div>
 
-      <div className="relative z-10 col-span-full mt-1 flex items-center justify-between gap-3 border-t border-[#26262c] pt-3 font-mono text-[11px] uppercase tracking-[0.12em]">
+      <div className="pointer-events-none relative z-30 col-span-full mt-1 flex items-center justify-between gap-3 border-t border-[#26262c] pt-3 font-mono text-[11px] uppercase tracking-[0.12em]">
         <p className="text-[#56565e]">Next start</p>
         <p className="truncate font-semibold text-[#f3f3f5]">{nextStart}</p>
       </div>

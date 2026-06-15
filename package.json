@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "archive:mlb-season": "node scripts/archive-mlb-season.mjs",
+    "sync:supabase-mlb-archive": "node scripts/sync-supabase-mlb-archive.mjs",
     "check:mlb-archive": "node scripts/check-mlb-archive.mjs",
     "check:form-debug": "node scripts/check-form-debug.mjs",
     "check:innings": "node --experimental-strip-types scripts/check-innings-helper.mjs",

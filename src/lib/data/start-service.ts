@@ -1,6 +1,7 @@
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
+import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
 import { fetchMlbCompletedPitchingLines, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
@@ -196,7 +197,7 @@ export async function getSlateSchedule(params: SlateRouteParams) {
 
 export async function getTodayProbables(date?: string) {
   const slateDate = date ?? new Date().toISOString().slice(0, 10);
-  const archivedStarts = await readArchivedCompletedStarts(slateDate);
+  const archivedStarts = await readCompletedStarts(slateDate);
   const shouldFetchLiveProbables = shouldFetchLiveSchedule(slateDate) || archivedStarts.length > 0;
 
   const probableSchedule = await fetchMlbSchedule(slateDate, { fetchLive: shouldFetchLiveProbables });
@@ -1243,7 +1244,7 @@ function scheduledGameToStarts(
 }
 
 export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
-  const archivedStarts = await readArchivedCompletedStarts(date);
+  const archivedStarts = await readCompletedStarts(date);
 
   return archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
@@ -1252,11 +1253,21 @@ export async function getArchivedSlateStarts(date: string): Promise<StartSummary
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {
-  const archivedStarts = await readArchivedSeasonCompletedStarts(season);
+  const archivedStarts = await readSeasonCompletedStarts(season);
 
   return archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
     .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
+}
+
+async function readCompletedStarts(date: string) {
+  const supabaseStarts = await readSupabaseArchivedCompletedStarts(date);
+  return supabaseStarts.length > 0 ? supabaseStarts : readArchivedCompletedStarts(date);
+}
+
+async function readSeasonCompletedStarts(season: string) {
+  const supabaseStarts = await readSupabaseArchivedSeasonCompletedStarts(season);
+  return supabaseStarts.length > 0 ? supabaseStarts : readArchivedSeasonCompletedStarts(season);
 }
 
 function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): StartSummary {
