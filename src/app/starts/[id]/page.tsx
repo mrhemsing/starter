@@ -371,7 +371,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               src={rankedHeadshotUrl(String(start.pitcher.mlbId), profile.imageWidth)}
               alt={`${start.pitcher.name}, ${start.pitcher.team}`}
               loading="lazy"
-              className={`relative h-full w-full object-cover object-[center_18%] ${profile.imageClass}`}
+              className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`}
             />
           </div>
           <div className="grid min-w-0 gap-1">
@@ -447,7 +447,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       <Link href={startPath(start.id)} className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid h-12 w-12 place-items-center overflow-hidden rounded-xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
         <ThermalHeadshotEffects band={thermalBand} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 96)} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="relative h-full w-full object-cover object-[center_18%]" />
+        <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 96)} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="relative h-full w-full object-contain object-bottom" />
       </Link>
       <div className="min-w-0">
         <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
