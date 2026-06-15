@@ -82,6 +82,37 @@ body {
   contain-intrinsic-size: 96px;
 }
 
+.ranked-start-details:not([open]) {
+  border-top: 0;
+  height: 0;
+  overflow: visible;
+}
+
+.ranked-start-details[open] {
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  margin-top: 12px;
+  padding-top: 44px;
+}
+
+.ranked-start-details > summary {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ranked-start-details[open] > summary {
+  top: auto;
+  bottom: 0;
+  transform: none;
+}
+
+@media (min-width: 640px) {
+  .ranked-start-details > summary {
+    right: 20px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .heat-badge {
     animation: heat-badge-pulse 1.45s ease-in-out infinite alternate;
