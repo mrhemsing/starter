@@ -1,5 +1,5 @@
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
-import type { StartLine, TeamSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, StartLine, TeamSummary } from "@/lib/types";
 
 type SupabaseCompletedStartRow = {
   date: string;
@@ -17,7 +17,14 @@ type SupabaseCompletedStartRow = {
   line: StartLine;
 };
 
+type SupabaseFeaturedStartHighlightRow = {
+  start_id: string;
+  video_id: string;
+  is_short: boolean | null;
+};
+
 const COMPLETED_STARTS_TABLE = "frontfive_mlb_completed_starts";
+const FEATURED_START_HIGHLIGHTS_TABLE = "frontfive_featured_start_highlights";
 const PAGE_SIZE = 1000;
 
 export function isSupabaseArchiveConfigured() {
@@ -84,6 +91,24 @@ export async function readSupabaseArchivedSeasonCompletedStarts(season: string):
   return rows.map(rowToCompletedStart);
 }
 
+export async function readSupabaseFeaturedStartHighlight(startId: string): Promise<FeaturedStartHighlight | null> {
+  if (!isSupabaseArchiveConfigured()) return null;
+
+  const rows = await fetchSupabaseRows<SupabaseFeaturedStartHighlightRow>(
+    FEATURED_START_HIGHLIGHTS_TABLE,
+    {
+      start_id: `eq.${startId}`,
+      limit: "1",
+    },
+    0,
+    0,
+  );
+  const row = rows[0];
+  if (!row?.video_id) return null;
+
+  return highlightFromStoredVideoId(row.video_id, Boolean(row.is_short));
+}
+
 async function fetchCompletedStartRows(filters: Record<string, string | string[]>) {
   const rows: SupabaseCompletedStartRow[] = [];
 
@@ -92,6 +117,17 @@ async function fetchCompletedStartRows(filters: Record<string, string | string[]
     rows.push(...batch);
     if (batch.length < PAGE_SIZE) return rows;
   }
+}
+
+function highlightFromStoredVideoId(videoId: string, isShort: boolean): FeaturedStartHighlight {
+  return {
+    videoId,
+    source: "stored",
+    isShort,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=1`,
+    thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+    watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
+  };
 }
 
 async function fetchSupabaseRows<T>(table: string, filters: Record<string, string | string[]>, from: number, to: number): Promise<T[]> {

@@ -624,7 +624,7 @@ export type StartDetail = StartSummary & {
 
 export type FeaturedStartHighlight = {
   videoId: string;
-  source: "manual" | "youtube-search";
+  source: "manual" | "stored" | "youtube-search";
   isShort: boolean;
   embedUrl: string;
   thumbnailUrl: string;

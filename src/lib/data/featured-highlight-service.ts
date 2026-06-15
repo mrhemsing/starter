@@ -1,4 +1,5 @@
 import type { FeaturedStartHighlight, StartDetail } from "@/lib/types";
+import { readSupabaseFeaturedStartHighlight } from "@/lib/data/supabase-archive";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 const MLB_CHANNEL_HANDLE = "MLB";
@@ -57,6 +58,9 @@ export async function resolveFeaturedStartHighlight(start: StartDetail | null): 
   if (manualVideoId) {
     return cacheResolution(start.id, highlightFromVideoId(manualVideoId, "manual", false));
   }
+
+  const stored = await readSupabaseFeaturedStartHighlight(start.id);
+  if (stored) return cacheResolution(start.id, stored);
 
   if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);
 

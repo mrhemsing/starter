@@ -31,13 +31,26 @@ create table if not exists public.frontfive_mlb_archive_manifests (
   synced_at timestamptz not null default now()
 );
 
+create table if not exists public.frontfive_featured_start_highlights (
+  start_id text primary key,
+  video_id text not null,
+  is_short boolean not null default false,
+  source text not null default 'curated' check (source in ('curated', 'youtube-search')),
+  title text,
+  resolved_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.frontfive_mlb_completed_starts enable row level security;
 alter table public.frontfive_mlb_archive_manifests enable row level security;
+alter table public.frontfive_featured_start_highlights enable row level security;
 
 drop policy if exists "frontfive service archive read" on public.frontfive_mlb_completed_starts;
 drop policy if exists "frontfive service archive write" on public.frontfive_mlb_completed_starts;
 drop policy if exists "frontfive service manifest read" on public.frontfive_mlb_archive_manifests;
 drop policy if exists "frontfive service manifest write" on public.frontfive_mlb_archive_manifests;
+drop policy if exists "frontfive service highlight read" on public.frontfive_featured_start_highlights;
+drop policy if exists "frontfive service highlight write" on public.frontfive_featured_start_highlights;
 
 create policy "frontfive service archive read"
   on public.frontfive_mlb_completed_starts for select
@@ -54,5 +67,14 @@ create policy "frontfive service manifest read"
 
 create policy "frontfive service manifest write"
   on public.frontfive_mlb_archive_manifests for all
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy "frontfive service highlight read"
+  on public.frontfive_featured_start_highlights for select
+  using (auth.role() = 'service_role');
+
+create policy "frontfive service highlight write"
+  on public.frontfive_featured_start_highlights for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
