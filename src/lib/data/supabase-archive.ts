@@ -24,6 +24,44 @@ export function isSupabaseArchiveConfigured() {
   return Boolean(supabaseUrl() && supabaseServiceKey());
 }
 
+export async function getSupabaseArchiveStatus(season: string) {
+  const configured = isSupabaseArchiveConfigured();
+  const env = {
+    THE_BUMP_SUPABASE_URL: Boolean(process.env.THE_BUMP_SUPABASE_URL),
+    SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    THE_BUMP_SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY),
+    SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    THE_BUMP_SUPABASE_SECRET_KEY: Boolean(process.env.THE_BUMP_SUPABASE_SECRET_KEY),
+    SUPABASE_SECRET_KEY: Boolean(process.env.SUPABASE_SECRET_KEY),
+  };
+
+  if (!configured) {
+    return { configured, env, starts: 0, firstDate: null, lastDate: null, error: null };
+  }
+
+  try {
+    const starts = await readSupabaseArchivedSeasonCompletedStarts(season);
+    return {
+      configured,
+      env,
+      starts: starts.length,
+      firstDate: starts[0]?.date ?? null,
+      lastDate: starts.at(-1)?.date ?? null,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      configured,
+      env,
+      starts: 0,
+      firstDate: null,
+      lastDate: null,
+      error: error instanceof Error ? error.message : "Unknown Supabase archive error",
+    };
+  }
+}
+
 export async function readSupabaseArchivedCompletedStarts(date: string): Promise<ArchivedCompletedStartSummary[]> {
   if (!isSupabaseArchiveConfigured()) return [];
 
@@ -107,9 +145,9 @@ function rowToCompletedStart(row: SupabaseCompletedStartRow): ArchivedCompletedS
 }
 
 function supabaseUrl() {
-  return process.env.THE_BUMP_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
+  return process.env.THE_BUMP_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 }
 
 function supabaseServiceKey() {
-  return process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  return process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.THE_BUMP_SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "";
 }
