@@ -223,28 +223,95 @@ function SlateSwarm({ starts, mean }: { starts: StartSummary[]; mean: number }) 
 
 function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: FeaturedStartHighlight | null }) {
   const tier = qualityTierOf(start.gameScorePlus);
-  const color = tierDisplayColor(tier);
+  const profile = recapBandProfile(tier.label);
+  const color = profile.scoreColor;
+  const gas = isRecapGasStart(start, tier.label);
 
   return (
-    <article className="grid min-h-16 grid-cols-[42px_42px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-[#101014] px-3 py-2 transition hover:border-white/20">
-      <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300">#{start.rank}</Link>
-      <div className="col-span-2 min-w-0">
-        <Link href={startPath(start.id)} className="block">
-          <PitcherChip
-            pitcherId={String(start.pitcher.mlbId)}
-            name={start.pitcher.name}
-            team={`${start.pitcher.team} / ${formatStartLine(start.line)}`}
-            imageWidth={100}
-            size="sm"
-          />
-        </Link>
-      </div>
+    <article
+      className={`relative grid min-h-16 grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded border px-3 py-2 transition hover:border-white/20 ${profile.borderClass}`}
+      style={{ background: profile.background }}
+      data-band={qualityBandSlug(tier.label)}
+      data-gas={gas ? "true" : "false"}
+    >
+      <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
+      <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
+      <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-xl border-2" style={{ borderColor: profile.ringColor, background: profile.plateBackground }}>
+          <span className="absolute font-mono text-[10px] font-semibold text-zinc-400">{pitcherInitials(start.pitcher.name)}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 100)} alt="" loading="lazy" className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`} />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
+          <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.pitcher.team} / {formatStartLine(start.line)}</p>
+          {gas ? <span className="mt-1 inline-flex rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#F6C445]">GAS</span> : null}
+        </div>
+      </Link>
       <div className="flex items-center gap-2">
-        {highlight ? <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} /> : null}
-        <Link href={startPath(start.id)} className="font-serif text-3xl font-bold" style={{ color }}>{start.gameScorePlus}</Link>
+        {highlight ? (
+          <HeatHighlightModal
+            highlight={highlight}
+            pitcherName={start.pitcher.name}
+            className="grid h-11 w-11 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          />
+        ) : null}
+        <Link href={startPath(start.id)} className="text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <span className="block font-mono text-3xl font-black tabular-nums leading-none" style={{ color }}>{start.gameScorePlus}</span>
+          <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
+        </Link>
       </div>
     </article>
   );
+}
+
+function isRecapGasStart(start: StartSummary, bandLabel: string) {
+  return (bandLabel === "Elite" || bandLabel === "Plus") && (start.line.strikeouts >= 8 || inningsFromIP(start.line.inningsPitched) >= 7);
+}
+
+function recapBandProfile(label: string) {
+  if (label === "Elite" || label === "Plus") {
+    return {
+      scoreColor: "#F6C445",
+      ringColor: label === "Elite" ? "#F6C445" : "#EF9F27",
+      rail: "linear-gradient(180deg,#F6C445,#FF7A3D)",
+      background: "linear-gradient(90deg,rgba(255,122,61,0.14),rgba(16,16,20,0.96) 42%,rgba(10,11,13,0.96))",
+      borderClass: "border-[#F6C445]/25",
+      plateBackground: "radial-gradient(circle at 50% 18%,rgba(246,196,69,0.22),rgba(10,11,13,0.92))",
+      imageClass: "",
+    };
+  }
+  if (label === "Solid") {
+    return {
+      scoreColor: "#F5F2EA",
+      ringColor: "#888780",
+      rail: "#888780",
+      background: "linear-gradient(90deg,rgba(136,135,128,0.08),rgba(16,16,20,0.96))",
+      borderClass: "border-white/10",
+      plateBackground: "rgba(21,24,28,0.95)",
+      imageClass: "",
+    };
+  }
+  if (label === "Below") {
+    return {
+      scoreColor: "#85B7EB",
+      ringColor: "#5BA8FF",
+      rail: "rgba(91,168,255,0.64)",
+      background: "linear-gradient(90deg,rgba(91,168,255,0.10),rgba(14,18,24,0.92))",
+      borderClass: "border-white/10",
+      plateBackground: "rgba(16,24,34,0.92)",
+      imageClass: "grayscale opacity-80",
+    };
+  }
+  return {
+    scoreColor: "#5BA8FF",
+    ringColor: "rgba(91,168,255,0.65)",
+    rail: "rgba(91,168,255,0.42)",
+    background: "linear-gradient(90deg,rgba(91,168,255,0.07),rgba(10,13,18,0.9))",
+    borderClass: "border-white/5",
+    plateBackground: "rgba(12,18,26,0.88)",
+    imageClass: "grayscale opacity-65",
+  };
 }
 
 function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: string }) {
@@ -276,6 +343,24 @@ function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: 
 
 function lastName(name: string) {
   return name.trim().split(/\s+/).at(-1) ?? name;
+}
+
+function qualityBandSlug(label: string) {
+  return label.toLowerCase().replace(/\s+/g, "-");
+}
+
+function pitcherInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function rankedHeadshotUrl(pitcherId: string, width: number) {
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
 }
 
 function stableHash(value: string) {

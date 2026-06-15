@@ -8,7 +8,6 @@ import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
-import { PitcherChip } from "@/components/pitcher-chip";
 import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
@@ -176,6 +175,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       if (sort === "ip") return inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) || a.rank - b.rank;
       return a.rank - b.rank;
     });
+  const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
@@ -238,9 +238,24 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <>
             <StartsDistributionStrip starts={starts} />
             {visibleStarts.length > 0 ? (
-              <section className="mt-4 grid gap-3" data-responsive-check="ranked-starts-recap">
-                {visibleStarts.map((start, index) => (
-                  <RankedStartCard key={start.id} start={start} displayRank={index + 1} pairedStart={pairs.get(start.id)} highlight={highlights.get(start.id) ?? null} provisionalLeader={index === 0 && completionState.isPartialToday && band === "all" && sort === "rank"} />
+              <section className="mt-4 space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
+                {groupedStarts.map((group) => (
+                  <div key={group.key} className="space-y-2">
+                    {group.label ? <BandHeader label={group.label} count={group.count} color={group.color} /> : null}
+                    <div className="grid gap-2">
+                      {group.starts.map((start) => (
+                        <RankedStartCard
+                          key={start.id}
+                          start={start}
+                          displayRank={visibleStarts.findIndex((candidate) => candidate.id === start.id) + 1}
+                          pairedStart={pairs.get(start.id)}
+                          highlight={highlights.get(start.id) ?? null}
+                          provisionalLeader={visibleStarts[0]?.id === start.id && completionState.isPartialToday && band === "all" && sort === "rank"}
+                          grouped={Boolean(group.label)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </section>
             ) : (
@@ -265,50 +280,101 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   );
 }
 
-function RankedStartCard({ start, displayRank, pairedStart, highlight, provisionalLeader }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean }) {
+function BandHeader({ label, count, color }: { label: string; count: number; color: string }) {
+  return (
+    <div className="sticky top-0 z-20 flex items-center gap-3 bg-[#08080a]/92 py-2 backdrop-blur sm:static sm:bg-transparent sm:backdrop-blur-none">
+      <span className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${color}, rgba(255,255,255,0.08))` }} />
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color }}>
+        {label} · {count}
+      </p>
+    </div>
+  );
+}
+
+function RankedStartCard({ start, displayRank, pairedStart, highlight, provisionalLeader, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean; grouped?: boolean }) {
   const tier = qualityTierOf(start.gameScorePlus);
-  const tierTextColor = tierDisplayColor(tier);
+  const profile = rankedBandProfile(tier.label);
+  const tierTextColor = profile.scoreColor;
   const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;
+  const gas = isGasStart(start, tier.label);
+  const topReason = topInlineReason(start);
+  const initials = pitcherInitials(start.pitcher.name);
 
   return (
-    <article id={start.id} className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-responsive-check="ranked-start-card">
-      <div className="grid grid-cols-[42px_52px_minmax(0,1fr)_auto] gap-3 border-l-4 p-3 sm:grid-cols-[58px_58px_minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:p-4" style={{ borderLeftColor: tier.color }}>
-        <div>
-          <p className="font-serif text-3xl font-bold leading-none text-zinc-500">#{displayRank}</p>
+    <article
+      id={start.id}
+      className={`group relative overflow-hidden rounded border ${profile.borderClass} ${profile.paddingClass} ${profile.minHeightClass}`}
+      style={{
+        background: profile.background,
+        boxShadow: profile.shadow,
+      }}
+      data-responsive-check="ranked-start-card"
+      data-band={qualityBandSlug(tier.label)}
+      data-gas={gas ? "true" : "false"}
+      data-grouped={grouped ? "true" : "false"}
+    >
+      <div className="absolute inset-y-0 left-0 w-1.5" style={{ background: profile.rail }} aria-hidden="true" />
+      {profile.ghostRank ? (
+        <div className="pointer-events-none absolute -left-2 top-1/2 hidden -translate-y-1/2 font-mono text-8xl font-black leading-none text-white/[0.035] sm:block" aria-hidden="true">
+          #{start.rank}
+        </div>
+      ) : null}
+      <div className={`relative grid gap-3 ${profile.gridClass}`}>
+        <div className="min-w-0">
+          <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
-        <div className="col-span-2 sm:col-span-2">
-          <PitcherChip
-            pitcherId={String(start.pitcher.mlbId)}
-            name={start.pitcher.name}
-            team={`${start.pitcher.team} vs ${start.opponent}`}
-            href={startPath(start.id)}
-            imageWidth={120}
-            size="md"
-          />
+        <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
+          <div className={`${profile.plateClass} relative grid place-items-center overflow-hidden rounded-xl border-2`} style={{ borderColor: profile.ringColor, background: profile.plateBackground }}>
+            <span className="absolute font-mono text-xs font-semibold text-zinc-300">{initials}</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={rankedHeadshotUrl(String(start.pitcher.mlbId), profile.imageWidth)}
+              alt={`${start.pitcher.name}, ${start.pitcher.team}`}
+              loading="lazy"
+              className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`}
+            />
+          </div>
+          <div className="min-w-0">
+            <h2 className={`${profile.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
+              {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
+            </div>
+          </div>
+        </Link>
+        <div className="flex items-center justify-end gap-2 sm:text-right">
+          {highlight ? (
+            <div>
+              <HeatHighlightModal
+                highlight={highlight}
+                pitcherName={start.pitcher.name}
+                className="grid h-11 w-11 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              />
+            </div>
+          ) : null}
+          <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
+            <div className="mt-1 flex items-center justify-end gap-1.5">
+              <span className="h-px w-6" style={{ backgroundColor: tierTextColor }} />
+              <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
+            </div>
+          </Link>
         </div>
-        <div className="col-span-full min-w-0 sm:col-span-1">
-          <p className="font-mono text-sm text-zinc-300">{formatStartLine(start.line)}</p>
+        <div className={`min-w-0 ${profile.lineClass}`}>
+          <p className={`${profile.statClass} font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
           <p className="mt-1 truncate text-xs text-zinc-500">{contextLabel}</p>
           {pairedStart ? (
-            <Link href={`#${pairedStart.id}`} className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline">
+            <Link href={`#${pairedStart.id}`} className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
               Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
             </Link>
           ) : null}
         </div>
-        <div className="sm:text-right">
-          <p className="font-serif text-4xl font-bold leading-none" style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">GS+</p>
-          {highlight ? (
-            <div className="mt-2 flex justify-end">
-              <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} />
-            </div>
-          ) : null}
-        </div>
       </div>
       <details className="border-t border-white/10">
-        <summary className="flex cursor-pointer list-none items-center justify-center px-4 py-3 text-zinc-400 marker:text-amber-300" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center px-4 py-3 text-zinc-400 marker:text-amber-300" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
           <span aria-hidden="true" className="font-mono text-lg leading-none text-amber-300">⌄</span>
         </summary>
         <div className="grid gap-4 px-4 pb-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]" data-responsive-check="starts-score-breakdown">
@@ -468,6 +534,161 @@ function visibleRankingReasons(reasons: StartApiGameScorePlusBreakdown["rankingR
   return reasons.filter((reason) => !hiddenKeys.has(reason.key));
 }
 
+function topInlineReason(start: StartSummary) {
+  if (start.line.strikeouts >= 8) return `${start.line.strikeouts} K`;
+  if (inningsFromIP(start.line.inningsPitched) >= 7) return `${start.line.inningsPitched.toFixed(1)} IP`;
+  const reason = visibleRankingReasons(start.gameScorePlusBreakdown?.rankingReasons ?? [])[0];
+  return reason ? reason.label : null;
+}
+
+function isGasStart(start: StartSummary, bandLabel: string) {
+  return (bandLabel === "Elite" || bandLabel === "Plus") && (start.line.strikeouts >= 8 || inningsFromIP(start.line.inningsPitched) >= 7);
+}
+
+function pitcherInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function rankedHeadshotUrl(pitcherId: string, width: number) {
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
+}
+
+function rankedBandProfile(label: string) {
+  if (label === "Elite") {
+    return {
+      scoreColor: "#F6C445",
+      ringColor: "#F6C445",
+      rail: "linear-gradient(180deg,#F6C445,#FF7A3D)",
+      background: "linear-gradient(90deg,rgba(255,122,61,0.20),rgba(21,24,28,0.98) 38%,rgba(10,11,13,0.98))",
+      shadow: "0 14px 48px rgba(246,196,69,0.15), inset 0 0 54px rgba(246,196,69,0.055)",
+      borderClass: "border-[#F6C445]/35",
+      paddingClass: "p-4 sm:p-5",
+      minHeightClass: "min-h-[156px] sm:min-h-[132px]",
+      gridClass: "grid-cols-[42px_minmax(0,1fr)_auto] sm:grid-cols-[62px_minmax(0,1.35fr)_minmax(0,1fr)_auto] sm:items-center",
+      pitcherGridClass: "grid-cols-[64px_minmax(0,1fr)] sm:grid-cols-[88px_minmax(0,1fr)]",
+      plateClass: "h-16 w-16 sm:h-[88px] sm:w-[88px]",
+      imageWidth: 180,
+      imageClass: "",
+      nameClass: "text-3xl sm:text-4xl",
+      rankClass: "text-3xl sm:text-4xl",
+      scoreClass: "text-6xl sm:text-[64px]",
+      statClass: "text-sm",
+      lineClass: "col-span-full sm:col-span-1",
+      plateBackground: "radial-gradient(circle at 50% 18%,rgba(246,196,69,0.28),rgba(10,11,13,0.92))",
+      showReason: true,
+      ghostRank: true,
+    };
+  }
+
+  if (label === "Plus") {
+    return {
+      scoreColor: "#F6C445",
+      ringColor: "#EF9F27",
+      rail: "linear-gradient(180deg,#F6C445,#FF7A3D)",
+      background: "linear-gradient(90deg,rgba(255,122,61,0.14),rgba(21,24,28,0.98) 36%,rgba(10,11,13,0.98))",
+      shadow: "0 10px 34px rgba(239,159,39,0.12)",
+      borderClass: "border-[#F6C445]/25",
+      paddingClass: "p-3 sm:p-4",
+      minHeightClass: "min-h-[134px] sm:min-h-[118px]",
+      gridClass: "grid-cols-[40px_minmax(0,1fr)_auto] sm:grid-cols-[58px_minmax(0,1.35fr)_minmax(0,1fr)_auto] sm:items-center",
+      pitcherGridClass: "grid-cols-[56px_minmax(0,1fr)] sm:grid-cols-[72px_minmax(0,1fr)]",
+      plateClass: "h-14 w-14 sm:h-[72px] sm:w-[72px]",
+      imageWidth: 160,
+      imageClass: "",
+      nameClass: "text-2xl sm:text-3xl",
+      rankClass: "text-3xl",
+      scoreClass: "text-5xl sm:text-[52px]",
+      statClass: "text-sm",
+      lineClass: "col-span-full sm:col-span-1",
+      plateBackground: "radial-gradient(circle at 50% 18%,rgba(239,159,39,0.22),rgba(10,11,13,0.92))",
+      showReason: true,
+      ghostRank: false,
+    };
+  }
+
+  if (label === "Solid") {
+    return {
+      scoreColor: "#F5F2EA",
+      ringColor: "#888780",
+      rail: "#888780",
+      background: "linear-gradient(90deg,rgba(136,135,128,0.08),rgba(21,24,28,0.96))",
+      shadow: "none",
+      borderClass: "border-white/10",
+      paddingClass: "p-3",
+      minHeightClass: "min-h-[112px] sm:min-h-[96px]",
+      gridClass: "grid-cols-[38px_minmax(0,1fr)_auto] sm:grid-cols-[52px_minmax(0,1.25fr)_minmax(0,1fr)_auto] sm:items-center",
+      pitcherGridClass: "grid-cols-[48px_minmax(0,1fr)] sm:grid-cols-[56px_minmax(0,1fr)]",
+      plateClass: "h-12 w-12 sm:h-14 sm:w-14",
+      imageWidth: 120,
+      imageClass: "",
+      nameClass: "text-xl sm:text-2xl",
+      rankClass: "text-2xl",
+      scoreClass: "text-4xl",
+      statClass: "text-sm",
+      lineClass: "col-span-full sm:col-span-1",
+      plateBackground: "rgba(21,24,28,0.95)",
+      showReason: false,
+      ghostRank: false,
+    };
+  }
+
+  if (label === "Below") {
+    return {
+      scoreColor: "#85B7EB",
+      ringColor: "#5BA8FF",
+      rail: "rgba(91,168,255,0.64)",
+      background: "linear-gradient(90deg,rgba(91,168,255,0.10),rgba(14,18,24,0.92))",
+      shadow: "none",
+      borderClass: "border-white/8",
+      paddingClass: "p-2.5",
+      minHeightClass: "min-h-[88px] sm:min-h-[76px]",
+      gridClass: "grid-cols-[34px_minmax(0,1fr)_auto] sm:grid-cols-[46px_minmax(0,1.35fr)_minmax(0,1fr)_auto] sm:items-center",
+      pitcherGridClass: "grid-cols-[40px_minmax(0,1fr)] sm:grid-cols-[44px_minmax(0,1fr)]",
+      plateClass: "h-10 w-10 sm:h-11 sm:w-11",
+      imageWidth: 100,
+      imageClass: "grayscale opacity-80",
+      nameClass: "text-lg sm:text-xl",
+      rankClass: "text-xl",
+      scoreClass: "text-3xl sm:text-[32px]",
+      statClass: "text-xs",
+      lineClass: "col-span-full sm:col-span-1",
+      plateBackground: "rgba(16,24,34,0.92)",
+      showReason: false,
+      ghostRank: false,
+    };
+  }
+
+  return {
+    scoreColor: "#5BA8FF",
+    ringColor: "rgba(91,168,255,0.65)",
+    rail: "rgba(91,168,255,0.42)",
+    background: "linear-gradient(90deg,rgba(91,168,255,0.07),rgba(10,13,18,0.9))",
+    shadow: "none",
+    borderClass: "border-white/5",
+    paddingClass: "p-2",
+    minHeightClass: "min-h-[72px]",
+    gridClass: "grid-cols-[30px_minmax(0,1fr)_auto] sm:grid-cols-[42px_minmax(0,1.45fr)_minmax(0,1fr)_auto] sm:items-center",
+    pitcherGridClass: "grid-cols-[36px_minmax(0,1fr)]",
+    plateClass: "h-9 w-9",
+    imageWidth: 80,
+    imageClass: "grayscale opacity-65",
+    nameClass: "text-base sm:text-lg",
+    rankClass: "text-lg",
+    scoreClass: "text-3xl sm:text-[28px]",
+    statClass: "text-xs",
+    lineClass: "col-span-full sm:col-span-1",
+    plateBackground: "rgba(12,18,26,0.88)",
+    showReason: false,
+    ghostRank: false,
+  };
+}
+
 type RankedStartSort = "rank" | "k" | "ip";
 type QualityBandFilter = "all" | "elite" | "plus" | "solid" | "below" | "poor";
 
@@ -481,6 +702,30 @@ function parseQualityBand(value: string | undefined): QualityBandFilter {
 
 function isQualityBandFilter(value: string | undefined): value is QualityBandFilter {
   return value === "all" || QUALITY_BANDS.some((band) => qualityBandSlug(band.label) === value);
+}
+
+function rankedStartGroups(starts: StartSummary[], sort: RankedStartSort, band: QualityBandFilter, counts: Map<string, number>) {
+  if (sort !== "rank") {
+    return [{ key: `sort-${sort}`, starts, label: null, count: starts.length, color: "#878D97" }];
+  }
+
+  if (band !== "all") {
+    const qualityBand = QUALITY_BANDS.find((candidate) => qualityBandSlug(candidate.label) === band);
+    return [{ key: band, starts, label: null, count: starts.length, color: qualityBand?.color ?? "#878D97" }];
+  }
+
+  return QUALITY_BANDS
+    .map((qualityBand) => {
+      const groupStarts = starts.filter((start) => qualityTierOf(start.gameScorePlus).label === qualityBand.label);
+      return {
+        key: qualityBand.label,
+        starts: groupStarts,
+        label: groupStarts.length > 0 ? qualityBand.label.toUpperCase() : null,
+        count: counts.get(qualityBand.label) ?? groupStarts.length,
+        color: qualityBand.color,
+      };
+    })
+    .filter((group) => group.starts.length > 0);
 }
 
 function qualityBandSlug(label: string): QualityBandFilter {
@@ -648,8 +893,4 @@ function formatMetadataDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
-}
-
-function tierDisplayColor(tier: { color: string; textCssVar?: string }) {
-  return tier.textCssVar ? `var(${tier.textCssVar})` : tier.color;
 }
