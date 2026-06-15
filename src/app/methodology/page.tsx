@@ -8,7 +8,7 @@ import { rankedStartsPath } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 
 const title = "Methodology - GS+, Form & Watch Scores";
-const description = "How Front Five ranks MLB starting pitcher performances, recent form, probable matchups, Heat Check bands, and pitching duels.";
+const description = "How Toe the Slab ranks MLB starting pitcher performances, recent form, probable matchups, Heat Check bands, and pitching duels.";
 
 export const metadata: Metadata = {
   title,
@@ -31,13 +31,13 @@ export default async function MethodologyPage() {
       <div className="mx-auto max-w-5xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Methodology</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">GS+, Form, and watch scores</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Front Five turns every start into one comparable score, then uses recent form and matchup context to rank probable starters before first pitch.
+            Toe the Slab turns every start into one comparable score, then uses recent form and matchup context to rank probable starters before first pitch.
           </p>
         </header>
 
@@ -118,7 +118,7 @@ function faqJsonLd() {
   const questions = [
     {
       name: "What is GS+?",
-      acceptedAnswer: "GS+ is Front Five's single-start score for MLB starting pitchers. It combines line quality, workload, run prevention, strikeouts, walks, park, opponent, and slate context.",
+      acceptedAnswer: "GS+ is Toe the Slab's single-start score for MLB starting pitchers. It combines line quality, workload, run prevention, strikeouts, walks, park, opponent, and slate context.",
     },
     {
       name: "What does Heat Check measure?",

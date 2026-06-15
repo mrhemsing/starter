@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 
 export const metadata = {
-  title: "Highest Ceiling Starting Pitchers | Front Five",
+  title: "Highest Ceiling Starting Pitchers | Toe the Slab",
   description: "Qualified MLB starters ranked by recent GS+ ceiling and spike-start upside.",
 };
 
@@ -24,7 +24,7 @@ export default async function CeilingLeaderboardPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
+        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Leaderboard</p>
           <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Highest Ceiling Arms</h1>

@@ -45,7 +45,7 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
+            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Best starts archive</p>
@@ -105,7 +105,7 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
       <div className="sm:col-span-3">
         <ShareStartButton
           title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
+          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Toe the Slab`}
           path={startPath(start.id)}
         />
         {highlight ? (

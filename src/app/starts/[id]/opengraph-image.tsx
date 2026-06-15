@@ -10,7 +10,7 @@ type StartImageProps = {
   }>;
 };
 
-export const alt = "Front Five start card";
+export const alt = "Toe the Slab start card";
 export const size = {
   width: 1200,
   height: 630,
@@ -45,7 +45,7 @@ export default async function Image({ params }: StartImageProps) {
       >
         <div style={{ border: "1px solid rgba(255,255,255,0.12)", display: "flex", flex: 1, flexDirection: "column", padding: "34px" }}>
           <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 800, letterSpacing: 5, textTransform: "uppercase" }}>Front Five</div>
+            <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 800, letterSpacing: 5, textTransform: "uppercase" }}>Toe the Slab</div>
             <div style={{ color: tier.color, display: "flex", fontSize: 24, fontWeight: 800, letterSpacing: 4, textTransform: "uppercase" }}>{tier.label} start</div>
           </div>
 

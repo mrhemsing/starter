@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.frontfive.app").replace(/\/+$/, "");
-export const SITE_NAME = "Front Five";
+export const SITE_NAME = "Toe the Slab";
 export const DEFAULT_OG_IMAGE = "/opengraph-image";
 
 export function absoluteUrl(path = "/") {

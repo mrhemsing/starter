@@ -1,6 +1,6 @@
-# Front Five
+# Toe the Slab
 
-Front Five is a visual-first MLB starting-pitcher site. It ranks completed starts, shows probable and live starters, and turns each start into a pitch-level deep dive with arsenal, velocity, count leverage, inning timeline, and explainable Game Score+ context.
+Toe the Slab is a visual-first MLB starting-pitcher site. It ranks completed starts, shows probable and live starters, and turns each start into a pitch-level deep dive with arsenal, velocity, count leverage, inning timeline, and explainable Game Score+ context.
 
 ## Current Surface
 

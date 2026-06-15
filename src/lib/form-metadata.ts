@@ -1,7 +1,7 @@
 import { tierOf, TREND_STYLES } from "@/lib/form-tokens";
 import type { FormLeaderboardResponse, FormPitcherResponse, FormSummary } from "@/lib/types";
 
-export const FORM_SITE_TITLE = "Front Five";
+export const FORM_SITE_TITLE = "Toe the Slab";
 export const FORM_PAGE_TITLE = "Heat Check";
 
 export function formPageTitle(window: number) {

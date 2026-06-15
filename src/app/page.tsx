@@ -20,7 +20,7 @@ import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartDetail
 
 export const revalidate = 60;
 
-const homeTitle = "Front Five: Every MLB start, ranked.";
+const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
 
 export const metadata: Metadata = {
@@ -89,13 +89,13 @@ export default async function Home() {
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      name: "Front Five",
+      name: "Toe the Slab",
       url: "https://www.frontfive.app/",
     },
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "Front Five",
+      name: "Toe the Slab",
       url: "https://www.frontfive.app/",
       description: homeDescription,
     },
@@ -130,7 +130,7 @@ export default async function Home() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Front Five</p>
+              <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Toe the Slab</p>
               <p className="mt-1 font-mono text-xs text-zinc-500">Starting pitcher command center</p>
             </div>
             <SiteNav active="home" today={today} rankedDate={rankedDate} />
@@ -291,7 +291,7 @@ function BestStartCard({ title, start, highlight, badge }: { title: string; star
       <div className="mt-4">
         <ShareStartButton
           title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
+          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Toe the Slab`}
           path={startPath(start.id)}
         />
         {highlight ? (

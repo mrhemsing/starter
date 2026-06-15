@@ -21,7 +21,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Front Five - MLB Starting Pitcher Rankings & GS+ Scores",
+    default: "Toe the Slab - MLB Starting Pitcher Rankings & GS+ Scores",
     template: `%s | ${SITE_NAME}`,
   },
   description: "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.",
@@ -29,18 +29,18 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Front Five - MLB Starting Pitcher Rankings & GS+ Scores",
+    title: "Toe the Slab - MLB Starting Pitcher Rankings & GS+ Scores",
     description: "Daily starting-pitcher rankings, rolling form, probable matchups, and GS+ scores for every MLB start.",
     url: "/",
     siteName: SITE_NAME,
     type: "website",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Front Five MLB starting pitcher rankings" }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Toe the Slab MLB starting pitcher rankings" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Front Five - MLB Starting Pitcher Rankings & GS+ Scores",
+    title: "Toe the Slab - MLB Starting Pitcher Rankings & GS+ Scores",
     description: "Daily starting-pitcher rankings, rolling form, probable matchups, and GS+ scores for every MLB start.",
-    images: [{ url: "/opengraph-image", alt: "Front Five MLB starting pitcher rankings" }],
+    images: [{ url: "/opengraph-image", alt: "Toe the Slab MLB starting pitcher rankings" }],
   },
   icons: {
     icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%BE%3C/text%3E%3C/svg%3E",

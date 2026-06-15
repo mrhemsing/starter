@@ -39,7 +39,7 @@ export default async function SlatePage({ params }: SlatePageProps) {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-white/10 pb-6">
           <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
-            Front Five
+            Toe the Slab
           </Link>
           <h1 className="mt-4 font-serif text-5xl font-black capitalize text-zinc-50">{window} slate</h1>
           <p className="mt-2 font-mono text-sm text-zinc-500">

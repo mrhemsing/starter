@@ -18,7 +18,7 @@ export async function fetchSavantStartPitchDetails(date: string, gamePk: number,
 
   try {
     const response = await fetch(`${BASEBALL_SAVANT_CSV}?${params.toString()}`, {
-      headers: { "User-Agent": "FrontFive/1.0" },
+      headers: { "User-Agent": "ToeTheSlab/1.0" },
       next: { revalidate: SAVANT_REVALIDATE_SECONDS },
     });
     if (!response.ok) return null;

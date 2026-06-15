@@ -8,7 +8,7 @@ type FormImageProps = {
   }>;
 };
 
-export const alt = "Front Five Heat Check";
+export const alt = "Toe the Slab Heat Check";
 export const size = {
   width: 1200,
   height: 630,
@@ -38,7 +38,7 @@ export default async function Image({ searchParams }: FormImageProps) {
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-          <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase" }}>Front Five</div>
+          <div style={{ color: "#EF9F27", display: "flex", fontSize: 28, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase" }}>Toe the Slab</div>
           <div style={{ color: "#a1a1aa", display: "flex", fontSize: 24 }}>Last {leaderboard.window} qualified starts</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>

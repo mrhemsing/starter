@@ -60,7 +60,7 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
-          Front Five
+          Toe the Slab
         </Link>
         <Link href={`/pitchers/${id}/form`} className="ml-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-400">
           Form

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getParkFactorRows } from "@/lib/data/run-environment";
 
 export const metadata = {
-  title: "MLB Park Factors | Front Five",
-  description: "Run-environment park factors used as context for Front Five starter projections and matchup cards.",
+  title: "MLB Park Factors | Toe the Slab",
+  description: "Run-environment park factors used as context for Toe the Slab starter projections and matchup cards.",
 };
 
 export default function ParksPage() {
@@ -14,7 +14,7 @@ export default function ParksPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
+        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Reference</p>
           <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">MLB Park Factors</h1>

@@ -1,7 +1,7 @@
 import { getDefaultSlateDates } from "@/lib/data/start-service";
 import Image from "./[startDate]/opengraph-image";
 
-export const alt = "Front Five weekly upcoming starter watch card";
+export const alt = "Toe the Slab weekly upcoming starter watch card";
 export const size = {
   width: 1200,
   height: 630,
