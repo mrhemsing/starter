@@ -25,10 +25,6 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 ::selection {
   background: #fbbf24;
   color: #08080a;

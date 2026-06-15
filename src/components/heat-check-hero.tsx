@@ -125,6 +125,7 @@ function HeatRow({ pitcher, window }: { pitcher: FormSummary; window: number }) 
     >
       <Link
         href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
+        scroll
         className="absolute inset-0 z-20 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
         aria-label={`Open ${pitcher.name} form page`}
       />
