@@ -108,17 +108,20 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
     });
   const bandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
-    count: leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok" && pitcher.tier === candidate.key).length,
+    count: pitchers.filter((pitcher) => pitcher.status === "ok" && pitcher.tier === candidate.key).length,
   }));
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
-  const hottestPitchers = pitchers.filter((pitcher) => pitcher.tier === "onfire").slice(0, 8);
-  const heroIds = new Set(hottestPitchers.map((pitcher) => pitcher.pitcherId));
-  const boardPitchers = pitchers.filter((pitcher) => !heroIds.has(pitcher.pitcherId));
+  const fullWindowPitchers = pitchers.filter((pitcher) => pitcher.windowCount >= window);
+  const firePole = fullWindowPitchers.find((pitcher) => pitcher.tier === "onfire") ?? fullWindowPitchers.find((pitcher) => pitcher.tier === "hot") ?? pitchers[0] ?? null;
+  const icePole = [...fullWindowPitchers].reverse().find((pitcher) => pitcher.tier === "ice") ?? [...fullWindowPitchers].reverse().find((pitcher) => pitcher.tier === "cooling") ?? pitchers.at(-1) ?? null;
+  const boardPitchers = pitchers;
+  const groupedBoard = groupPitchersByBand(boardPitchers);
+  const showBandHeaders = sort === "form";
   const risers = [...qualifiedPitchers].filter((pitcher) => pitcher.windowCount >= window).sort((a, b) => b.deltaForm - a.deltaForm).slice(0, 3);
   const fallers = [...qualifiedPitchers].filter((pitcher) => pitcher.windowCount >= window).sort((a, b) => a.deltaForm - b.deltaForm).slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
@@ -126,9 +129,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Front Five</Link>
             <SiteNav active="heat" today={today} rankedDate={rankedDate} />
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50 sm:text-6xl">Heat Check</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Who is pitching like an ace right now. Form is average GS+ over the last {window} qualified starts, with starts under 2.0 IP excluded.
+            Furnace to freezer across the last {window} qualified starts. The trace shows where every arm is moving; the glow is reserved for the poles.
           </p>
           <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
             <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
@@ -136,8 +139,12 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
             <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
           </div>
-          <BandDistribution bands={bandCounts} total={leaderboard.qualifiedCount} params={params ?? {}} />
+          <BandDistribution bands={bandCounts} total={pitchers.length} params={params ?? {}} />
         </header>
+
+        {firePole && icePole ? (
+          <ThermalBookendsHero fire={firePole} ice={icePole} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} />
+        ) : null}
 
         <MoversStrip risers={risers} fallers={fallers} window={window} leagueMeanGS={leaderboard.leagueMeanGS} />
 
@@ -181,46 +188,40 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </details>
         </section>
 
-        {hottestPitchers.length > 0 ? (
-          <section className="my-5" data-responsive-check="heat-hero-tier">
-            <div className="mb-3 flex flex-col justify-between gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end">
-              <div>
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">On fire tier</p>
-                <h2 className="font-serif text-4xl font-bold text-zinc-50">The hottest arms in baseball</h2>
-              </div>
-              <a href="#full-board" className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-400 underline-offset-4 hover:text-amber-300 hover:underline">Jump to full board</a>
-            </div>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {hottestPitchers.map((pitcher, index) => (
-                <HeatHeroCard key={pitcher.pitcherId} pitcher={pitcher} rank={index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
         {pitchers.length === 0 ? (
           <section className="rounded border border-white/10 bg-[#101014] p-6">
             <p className="font-mono text-sm text-zinc-300">No qualified pitchers match these filters.</p>
           </section>
         ) : (
-          <section id="full-board" className="grid gap-3 scroll-mt-8" data-responsive-check="form-leaderboard">
-            <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-              <div>
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Full board</p>
-                <h2 className="font-serif text-3xl font-bold text-zinc-50">League heat map</h2>
+          <div id="full-board" className="grid gap-4 scroll-mt-8 lg:grid-cols-[80px_minmax(0,1fr)]" data-responsive-check="form-leaderboard">
+            <TemperatureRail bands={bandCounts} total={pitchers.length} params={params ?? {}} />
+            <section className="grid gap-2">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Full board</p>
+                  <h2 className="font-serif text-3xl font-bold text-zinc-50">League heat map</h2>
+                </div>
+                <nav className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.14em]" aria-label="Jump to heat band">
+                  <a href="#heat-fire" className="rounded border border-amber-300/30 px-2 py-1 text-amber-200 hover:text-amber-100">Jump to fire</a>
+                  <a href="#heat-ice" className="rounded border border-sky-300/30 px-2 py-1 text-sky-200 hover:text-sky-100">Jump to ice</a>
+                </nav>
               </div>
-              <nav className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.14em]" aria-label="Jump to heat band">
-                {HEAT_BANDS.map((candidate) => (
-                  <a key={candidate.key} href={`#band-${candidate.key}`} className="rounded border border-white/10 px-2 py-1 text-zinc-400 hover:text-zinc-100">
-                    {candidate.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
-            {boardPitchers.map((pitcher, index) => (
-              <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={heroIds.size + index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} showBandAnchor={firstBandIndex(boardPitchers, index)} />
-            ))}
-          </section>
+              {showBandHeaders ? (
+                groupedBoard.map((group) => (
+                  <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">
+                    <BandHeader band={group.band} count={group.pitchers.length} />
+                    {group.pitchers.map((pitcher, index) => (
+                      <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={pitchers.indexOf(pitcher) + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
+                    ))}
+                  </section>
+                ))
+              ) : (
+                boardPitchers.map((pitcher, index) => (
+                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} />
+                ))
+              )}
+            </section>
+          </div>
         )}
       </div>
     </main>
@@ -280,44 +281,54 @@ function BandDistribution({ bands, total, params }: { bands: Array<HeatBand & { 
 }
 
 function MoversStrip({ risers, fallers, window, leagueMeanGS }: { risers: FormSummary[]; fallers: FormSummary[]; window: number; leagueMeanGS: number }) {
-  return (
-    <section className="my-5 grid gap-3 lg:grid-cols-2" data-responsive-check="heat-movers-strip">
-      <MoverPanel title="Biggest risers" pitchers={risers} window={window} leagueMeanGS={leagueMeanGS} />
-      <MoverPanel title="Biggest fallers" pitchers={fallers} window={window} leagueMeanGS={leagueMeanGS} />
-    </section>
-  );
-}
+  const movers = [
+    ...risers.map((pitcher) => ({ pitcher, direction: "up" as const })),
+    ...fallers.map((pitcher) => ({ pitcher, direction: "down" as const })),
+  ];
 
-function MoverPanel({ title, pitchers, window, leagueMeanGS }: { title: string; pitchers: FormSummary[]; window: number; leagueMeanGS: number }) {
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-4">
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>
-      <div className="mt-3 grid gap-3">
-        {pitchers.map((pitcher) => {
-          const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
+    <section className="my-5 max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="heat-movers-strip">
+      <div className="flex max-w-full min-w-0 flex-wrap items-center gap-3 pb-1">
+        <p className="w-full font-mono text-xs uppercase tracking-[0.2em] text-amber-300 sm:w-auto sm:shrink-0">Movers</p>
+        {movers.map(({ pitcher, direction }) => {
+          const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
           return (
-            <a key={pitcher.pitcherId} href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid grid-cols-[minmax(0,1fr)_96px_auto] items-center gap-2 rounded border border-white/10 bg-black/20 p-2 hover:border-amber-300/30">
-              <PitcherChip pitcherId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} imageWidth={80} size="sm" />
-              <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="mini" />
-              <p className="font-mono text-sm font-semibold" style={{ color: bandColor }}>{formatSignedDelta(pitcher.deltaForm)}</p>
-              <div className="col-span-full">
-                <FormDriverChips chips={pitcher.driverChips} compact />
+            <a key={`${direction}-${pitcher.pitcherId}`} href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_72px] items-center gap-2 rounded border border-white/10 bg-black/20 px-3 py-2 hover:border-amber-300/30 sm:w-[210px]">
+              <div className="min-w-0">
+                <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{pitcher.name}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color }}>{direction === "up" ? "Rising" : "Falling"} {formatSignedDelta(pitcher.deltaForm)}</p>
               </div>
+              <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="mini" />
             </a>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
-function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean }) {
+function ThermalBookendsHero({ fire, ice, window, leagueMeanGS, followedIds }: { fire: FormSummary; ice: FormSummary; window: number; leagueMeanGS: number; followedIds: string[] }) {
+  return (
+    <section className="my-5 grid gap-3 lg:grid-cols-2" data-responsive-check="heat-bookends-hero">
+      <PolePanel tone="fire" pitcher={fire} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(fire.pitcherId)} />
+      <PolePanel tone="ice" pitcher={ice} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(ice.pitcherId)} />
+    </section>
+  );
+}
+
+function PolePanel({ tone, pitcher, window, leagueMeanGS, followed }: { tone: "fire" | "ice"; pitcher: FormSummary; window: number; leagueMeanGS: number; followed: boolean }) {
   const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#D85A30";
   const nextToday = isStartingToday(pitcher);
+  const cool = tone === "ice";
 
   return (
-    <article className="heat-glow-card rounded border border-amber-300/20 bg-[#101014] p-5" style={heatGlowStyle(pitcher, true)} data-form-hero-card>
-      <div className="grid gap-4">
+    <article className={`heat-glow-card relative overflow-hidden rounded border bg-[#101014] p-5 ${cool ? "border-sky-300/25" : "border-amber-300/25"}`} style={heatGlowStyle(pitcher, true)} data-form-hero-card data-thermal-pole={tone}>
+      <div className={`pointer-events-none absolute inset-0 ${cool ? "bg-[radial-gradient(circle_at_80%_0%,rgba(143,203,255,0.18),transparent_42%)]" : "bg-[radial-gradient(circle_at_8%_0%,rgba(255,90,31,0.2),transparent_44%)]"}`} />
+      <div className="relative grid gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className={`font-mono text-xs uppercase tracking-[0.2em] ${cool ? "text-sky-200" : "text-amber-200"}`}>{cool ? "Ice cold" : "On fire"}</p>
+          <span className={`rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${cool ? "border-sky-300/35 text-sky-100" : "border-amber-300/35 text-amber-100"}`}>{tierLabel(pitcher.tier)}</span>
+        </div>
         <PitcherChip
           pitcherId={pitcher.pitcherId}
           name={pitcher.name}
@@ -328,17 +339,15 @@ function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitch
           metricColor={bandColor}
           imageWidth={220}
           size="lg"
-          loading={rank === 1 ? "eager" : "lazy"}
+          loading="eager"
+          nameClassName="whitespace-normal overflow-visible text-clip text-2xl leading-none sm:text-3xl"
         />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="heat-badge inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.14em] text-amber-200">
-              #{rank} · {tierLabel(pitcher.tier)}
-            </span>
-            <TrendChip summary={pitcher} compact />
+            {pitcher.windowCount >= window ? <TrendChip summary={pitcher} compact /> : <InsufficientTrend windowCount={pitcher.windowCount} window={window} />}
             {nextToday ? <span className="rounded border border-teal-300/30 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em] text-teal-300">Starting today</span> : null}
           </div>
-          <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" />
+          <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" intensity="pole" />
           <FormDriverChips chips={pitcher.driverChips} />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="font-mono text-xs text-zinc-400">
@@ -353,8 +362,9 @@ function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitch
   );
 }
 
-function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, showBandAnchor }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; showBandAnchor?: boolean }) {
+function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string }) {
   const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
+  const treatment = rowTreatment(pitcher);
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
@@ -362,12 +372,13 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, sho
 
   return (
     <article
-      id={showBandAnchor ? `band-${pitcher.tier}` : undefined}
-      className="heat-glow-card scroll-mt-6 grid grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded border border-white/10 bg-[#101014] p-3 transition hover:bg-white/[0.04] lg:grid-cols-[48px_minmax(0,1fr)_420px]"
+      id={poleId}
+      className={`heat-check-row heat-glow-card scroll-mt-24 grid grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded border border-white/10 bg-[#101014] transition hover:bg-white/[0.04] lg:grid-cols-[48px_minmax(0,1fr)_420px] ${treatment.padding} ${treatment.opacity}`}
       style={{ ...heatGlowStyle(pitcher), borderLeftColor: bandColor, borderLeftWidth: 4 }}
       data-form-row
+      data-heat-band={pitcher.tier}
     >
-      <p className="font-serif text-2xl text-zinc-500">#{rank}</p>
+      <p className={`${treatment.rankClass} font-serif text-zinc-500`}>#{rank}</p>
       <PitcherChip
         pitcherId={pitcher.pitcherId}
         name={pitcher.name}
@@ -376,12 +387,12 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, sho
         metric={Math.round(pitcher.rgs)}
         metricLabel="Form"
         metricColor={bandColor}
-        imageWidth={120}
-        size="md"
-        className="grid-cols-[48px_minmax(0,1fr)_auto] gap-2 sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-3"
-        nameClassName="whitespace-normal overflow-visible text-clip text-[1.32rem] leading-[0.95] sm:text-xl"
+        imageWidth={treatment.imageWidth}
+        size={treatment.chipSize}
+        className={`${treatment.chipGrid} gap-2 sm:gap-3`}
+        nameClassName={`whitespace-normal overflow-visible text-clip leading-[0.95] ${treatment.nameClass}`}
       >
-        <p className="truncate text-xs text-zinc-500">
+        <p className={`truncate text-xs ${treatment.metaClass}`}>
           {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Starting today</span> : null}
         </p>
@@ -394,6 +405,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, sho
           leagueMeanGS={leagueMeanGS}
           label={`Last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`}
           trend={pitcher.trend}
+          intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
         />
         <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
         <div className="col-span-full">
@@ -402,6 +414,69 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, sho
       </div>
     </article>
   );
+}
+
+function TemperatureRail({ bands, total, params }: { bands: Array<HeatBand & { count: number }>; total: number; params: Record<string, string | undefined> }) {
+  return (
+    <aside className="hidden lg:block">
+      <nav className="sticky top-4 grid gap-1 rounded border border-white/10 bg-[#101014]/90 p-2 font-mono text-[10px] uppercase tracking-[0.12em]" aria-label="Heat zones">
+        {bands.filter((band) => band.count > 0).map((band) => {
+          const height = Math.max(34, total > 0 ? (band.count / total) * 280 : 34);
+          return (
+            <Link key={band.key} href={heatCheckHref({ ...params, band: band.key })} className="flex items-end justify-center rounded border border-white/10 px-1 py-2 text-center text-zinc-950" style={{ minHeight: height, backgroundColor: band.color }} aria-label={`${band.label}: ${band.count} pitchers`}>
+              <span className="[writing-mode:vertical-rl]">{band.label} {band.count}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+function BandHeader({ band, count }: { band: HeatBand; count: number }) {
+  return (
+    <div className="sticky top-0 z-10 -mx-1 flex items-center gap-3 border-b border-white/10 bg-[#08080a]/92 px-1 py-2 backdrop-blur" data-heat-band-header={band.key}>
+      <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
+      <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-300">{band.label} · {count}</p>
+      <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
+    </div>
+  );
+}
+
+function groupPitchersByBand(pitchers: FormSummary[]) {
+  return HEAT_BANDS.map((band) => ({
+    band,
+    pitchers: pitchers.filter((pitcher) => pitcher.tier === band.key),
+  })).filter((group) => group.pitchers.length > 0);
+}
+
+function rowTreatment(pitcher: FormSummary): {
+  padding: string;
+  opacity: string;
+  rankClass: string;
+  chipGrid: string;
+  chipSize: "sm" | "md" | "lg";
+  imageWidth: number;
+  nameClass: string;
+  metaClass: string;
+} {
+  if (pitcher.tier === "onfire") {
+    return { padding: "p-4", opacity: "", rankClass: "text-3xl", chipGrid: "grid-cols-[72px_minmax(0,1fr)_auto]", chipSize: "lg", imageWidth: 160, nameClass: "text-2xl", metaClass: "text-zinc-400" };
+  }
+  if (pitcher.tier === "hot") {
+    return { padding: "p-3.5", opacity: "", rankClass: "text-3xl", chipGrid: "grid-cols-[64px_minmax(0,1fr)_auto]", chipSize: "md", imageWidth: 140, nameClass: "text-[1.45rem] sm:text-2xl", metaClass: "text-zinc-400" };
+  }
+  if (pitcher.tier === "cooling") {
+    return { padding: "p-2.5", opacity: "opacity-90", rankClass: "text-xl", chipGrid: "grid-cols-[44px_minmax(0,1fr)_auto]", chipSize: "sm", imageWidth: 90, nameClass: "text-lg", metaClass: "text-zinc-500" };
+  }
+  if (pitcher.tier === "ice") {
+    return { padding: "p-2", opacity: "opacity-85 grayscale-[35%]", rankClass: "text-lg", chipGrid: "grid-cols-[40px_minmax(0,1fr)_auto]", chipSize: "sm", imageWidth: 80, nameClass: "text-base", metaClass: "text-zinc-500" };
+  }
+  return { padding: "p-3", opacity: "", rankClass: "text-2xl", chipGrid: "grid-cols-[52px_minmax(0,1fr)_auto]", chipSize: "md", imageWidth: 120, nameClass: "text-xl", metaClass: "text-zinc-500" };
+}
+
+function isPoleTier(pitcher: FormSummary) {
+  return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
 }
 
 function InsufficientTrend({ windowCount, window }: { windowCount: number; window: number }) {
@@ -437,10 +512,6 @@ function heatCheckHref(values: Record<string, string | undefined>) {
   }
   const query = params.toString();
   return `/heat-check${query ? `?${query}` : ""}`;
-}
-
-function firstBandIndex(pitchers: FormSummary[], index: number) {
-  return index === 0 || pitchers[index - 1]?.tier !== pitchers[index]?.tier;
 }
 
 function formatSignedDelta(value: number) {
