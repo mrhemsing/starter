@@ -5,16 +5,16 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierLabel } from "@/components/form-visuals";
-import { PitcherChip } from "@/components/pitcher-chip";
 import { SiteNav } from "@/components/site-nav";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { FormSummary, FormTier, HeatBand } from "@/lib/types";
+import type { FormSummary, FormTier, HeatBand, TonightGame } from "@/lib/types";
 import type React from "react";
 
 type FormPageProps = {
@@ -87,13 +87,15 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const qualifiedOnly = params?.qualified !== "false";
   const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
-  const [leaderboard, followedIds] = await Promise.all([
+  const today = getHomeSlateDate();
+  const [leaderboard, followedIds, tonight] = await Promise.all([
     getFormLeaderboard({ window, qualifiedOnly }),
     getWatchlistPitcherIds(accountId),
+    getTonightMustWatch({ date: today, window }),
   ]);
   const jsonLd = jsonLdForFormPage(leaderboard);
-  const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
+  const startContext = buildTodayStartContext(tonight.games);
   const teams = [...new Set(leaderboard.pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
   const pitchers = leaderboard.pitchers
     .filter((pitcher) => !team || pitcher.team === team)
@@ -111,14 +113,17 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
     count: pitchers.filter((pitcher) => pitcher.status === "ok" && pitcher.tier === candidate.key).length,
   }));
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
-  const fullWindowPitchers = pitchers.filter((pitcher) => pitcher.windowCount >= window);
-  const firePole = fullWindowPitchers.find((pitcher) => pitcher.tier === "onfire") ?? fullWindowPitchers.find((pitcher) => pitcher.tier === "hot") ?? pitchers[0] ?? null;
-  const icePole = [...fullWindowPitchers].reverse().find((pitcher) => pitcher.tier === "ice") ?? [...fullWindowPitchers].reverse().find((pitcher) => pitcher.tier === "cooling") ?? pitchers.at(-1) ?? null;
+  const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);
+  const riserCandidates = [...heroCandidates].sort((a, b) => compareRisers(a, b, startContext));
+  const fallerCandidates = [...heroCandidates].sort((a, b) => compareFallers(a, b, startContext));
+  const biggestRiser = riserCandidates[0] ?? null;
+  const biggestFaller = fallerCandidates[0] ?? null;
+  const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
   const boardPitchers = pitchers;
   const groupedBoard = groupPitchersByBand(boardPitchers);
   const showBandHeaders = sort === "form";
-  const risers = [...qualifiedPitchers].filter((pitcher) => pitcher.windowCount >= window).sort((a, b) => b.deltaForm - a.deltaForm).slice(0, 3);
-  const fallers = [...qualifiedPitchers].filter((pitcher) => pitcher.windowCount >= window).sort((a, b) => a.deltaForm - b.deltaForm).slice(0, 3);
+  const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
+  const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
@@ -145,8 +150,18 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <BandDistribution bands={bandCounts} total={pitchers.length} params={params ?? {}} />
         </header>
 
-        {firePole && icePole ? (
-          <ThermalBookendsHero fire={firePole} ice={icePole} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} />
+        {biggestRiser && biggestFaller ? (
+          <MomentumHero
+            riser={biggestRiser}
+            faller={biggestFaller}
+            window={window}
+            leagueMeanGS={leaderboard.leagueMeanGS}
+            followedIds={followedIds}
+            startContext={startContext}
+            qualifiedCount={leaderboard.qualifiedCount}
+            heatingCount={leaderboard.heatingCount}
+            coolingCount={leaderboard.coolingCount}
+          />
         ) : null}
 
         <MoversStrip risers={risers} fallers={fallers} window={window} />
@@ -308,59 +323,140 @@ function MoversStrip({ risers, fallers, window }: { risers: FormSummary[]; falle
   );
 }
 
-function ThermalBookendsHero({ fire, ice, window, leagueMeanGS, followedIds }: { fire: FormSummary; ice: FormSummary; window: number; leagueMeanGS: number; followedIds: string[] }) {
+type TodayStartContext = {
+  opponent: string;
+  side: "home" | "away";
+  firstPitch: string;
+  status: TonightGame["status"];
+};
+
+function MomentumHero({
+  riser,
+  faller,
+  window,
+  leagueMeanGS,
+  followedIds,
+  startContext,
+  qualifiedCount,
+  heatingCount,
+  coolingCount,
+}: {
+  riser: FormSummary;
+  faller: FormSummary;
+  window: number;
+  leagueMeanGS: number;
+  followedIds: string[];
+  startContext: Map<string, TodayStartContext>;
+  qualifiedCount: number;
+  heatingCount: number;
+  coolingCount: number;
+}) {
   return (
-    <section className="my-5 grid gap-3 lg:grid-cols-2" data-responsive-check="heat-bookends-hero">
-      <PolePanel tone="fire" pitcher={fire} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(fire.pitcherId)} />
-      <PolePanel tone="ice" pitcher={ice} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(ice.pitcherId)} />
+    <section className="my-5 overflow-hidden rounded border border-white/10 bg-[#101014]" data-responsive-check="heat-momentum-hero">
+      <div className="grid gap-px bg-white/10 lg:grid-cols-2">
+        <MomentumPanel role="riser" pitcher={riser} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(riser.pitcherId)} start={startContext.get(riser.pitcherId) ?? null} />
+        <MomentumPanel role="faller" pitcher={faller} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(faller.pitcherId)} start={startContext.get(faller.pitcherId) ?? null} />
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 bg-black/20 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+        <span>{qualifiedCount} qualified</span>
+        <span>{heatingCount} rising</span>
+        <span>{coolingCount} falling</span>
+        <span>league mean {leagueMeanGS.toFixed(1)}</span>
+      </div>
     </section>
   );
 }
 
-function PolePanel({ tone, pitcher, window, leagueMeanGS, followed }: { tone: "fire" | "ice"; pitcher: FormSummary; window: number; leagueMeanGS: number; followed: boolean }) {
+function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }: { role: "riser" | "faller"; pitcher: FormSummary; window: number; leagueMeanGS: number; followed: boolean; start: TodayStartContext | null }) {
   const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#D85A30";
-  const nextToday = isStartingToday(pitcher);
-  const cool = tone === "ice";
+  const isRiser = role === "riser";
+  const accent = isRiser ? "#FF7A3D" : "#8FCBFF";
+  const marker = isRiser ? "↑" : "↓";
+  const thermalBand = pitcher.windowCount >= window ? pitcher.tier : null;
 
   return (
-    <article className={`heat-glow-card relative overflow-hidden rounded border bg-[#101014] p-5 ${cool ? "border-sky-300/25" : "border-amber-300/25"}`} style={heatGlowStyle(pitcher, true)} data-form-hero-card data-thermal-pole={tone}>
-      <div className={`pointer-events-none absolute inset-0 ${cool ? "bg-[radial-gradient(circle_at_80%_0%,rgba(143,203,255,0.18),transparent_42%)]" : "bg-[radial-gradient(circle_at_8%_0%,rgba(255,90,31,0.2),transparent_44%)]"}`} />
-      <div className="relative grid gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className={`font-mono text-xs uppercase tracking-[0.2em] ${cool ? "text-sky-200" : "text-amber-200"}`}>{cool ? "Ice cold" : "On fire"}</p>
-          <span className={`rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${cool ? "border-sky-300/35 text-sky-100" : "border-amber-300/35 text-amber-100"}`}>{tierLabel(pitcher.tier)}</span>
-        </div>
-        <PitcherChip
-          pitcherId={pitcher.pitcherId}
-          name={pitcher.name}
-          team={`${pitcher.team} / ${pitcher.windowCount} of ${window}`}
+    <article className="relative overflow-hidden bg-[#101014] p-4 sm:p-5" data-form-hero-card data-momentum-role={role}>
+      <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
+      <div className="relative grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)] sm:items-center">
+        <Link
           href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
-          metric={Math.round(pitcher.rgs)}
-          metricLabel="Form"
-          metricColor={bandColor}
-          imageWidth={220}
-          size="lg"
-          loading="eager"
-          nameClassName="whitespace-normal overflow-visible text-clip text-2xl leading-none sm:text-3xl"
-        />
+          className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative mx-auto grid h-[116px] w-[92px] place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0`}
+          style={{ borderColor: thermalBorderColor(thermalBand, bandColor) }}
+          data-form-band={thermalBand ?? "neutral"}
+        >
+          <ThermalHeadshotEffects band={thermalBand} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={rankedHeadshotUrl(pitcher.pitcherId, 220)} alt={`${pitcher.name}, ${pitcher.team}`} loading="eager" className="relative h-full w-full object-contain object-bottom" />
+        </Link>
         <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {pitcher.windowCount >= window ? <TrendChip summary={pitcher} compact /> : <InsufficientTrend windowCount={pitcher.windowCount} window={window} />}
-            {nextToday ? <span className="rounded border border-teal-300/30 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em] text-teal-300">Starting today</span> : null}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
+            <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
           </div>
-          <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" intensity="pole" />
-          <FormDriverChips chips={pitcher.driverChips} />
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="font-mono text-xs text-zinc-400">
-              Last GS+ {pitcher.lastStart?.gsPlus ?? "--"} / Delta {formatSignedDelta(pitcher.deltaForm)}
-              {pitcher.nextStart ? ` / Next ${pitcher.nextStart.date} vs ${pitcher.nextStart.opponent}` : ""}
+          <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            <h2 className="truncate font-serif text-3xl font-bold leading-none text-zinc-50">{pitcher.name}</h2>
+            <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
+          </Link>
+          <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
+            <p className="font-mono text-5xl font-black leading-none tabular-nums" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
+            <p className="pb-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
+              now Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}
             </p>
+          </div>
+        </div>
+        <div className="min-w-0 sm:col-span-2">
+          <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" intensity="pole" />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+            <MomentumContextLine pitcher={pitcher} start={start} />
             <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
           </div>
         </div>
       </div>
     </article>
   );
+}
+
+function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: TodayStartContext | null }) {
+  if (start) {
+    const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
+    return (
+      <p className="font-mono text-xs uppercase tracking-[0.12em] text-teal-300">
+        Starts today {matchup} · {formatPacificTime(start.firstPitch)}
+      </p>
+    );
+  }
+
+  return (
+    <p className="font-mono text-xs uppercase tracking-[0.12em] text-zinc-500">
+      Last: {pitcher.lastStart?.gsPlus ?? "--"} vs {pitcher.lastStart?.opp ?? "TBD"}{pitcher.lastStart ? ` (${formatMonthDay(pitcher.lastStart.gameDate)})` : ""}
+    </p>
+  );
+}
+
+function buildTodayStartContext(games: TonightGame[]) {
+  const context = new Map<string, TodayStartContext>();
+
+  for (const game of games) {
+    for (const starter of game.starters) {
+      if (!starter.pitcherId) continue;
+      context.set(starter.pitcherId, {
+        opponent: starter.side === "away" ? game.home : game.away,
+        side: starter.side,
+        firstPitch: game.firstPitch,
+        status: game.status,
+      });
+    }
+  }
+
+  return context;
+}
+
+function compareRisers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
+  return b.deltaForm - a.deltaForm || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId)) || b.rgs - a.rgs || a.name.localeCompare(b.name);
+}
+
+function compareFallers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
+  return a.deltaForm - b.deltaForm || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId)) || b.rgs - a.rgs || a.name.localeCompare(b.name);
 }
 
 function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string }) {
@@ -565,6 +661,27 @@ function heatCheckHref(values: Record<string, string | undefined>) {
 
 function formatSignedDelta(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+}
+
+function formatPacificTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return "time TBD";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(date).replace("PDT", "PT").replace("PST", "PT");
+}
+
+function formatMonthDay(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.valueOf())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 function isStartingToday(pitcher: FormSummary) {
