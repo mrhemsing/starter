@@ -57,9 +57,6 @@ type SportradarManifest = {
 export async function resolveTopPerformerImage(start: StartSummary | null, highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
   if (!start) return null;
 
-  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
-  if (actionShot) return actionShot;
-
   if (highlight) {
     return {
       source: "highlight",
@@ -68,6 +65,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
       playUrl: highlight.watchUrl,
     };
   }
+
+  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
+  if (actionShot) return actionShot;
 
   return {
     source: "headshot",
