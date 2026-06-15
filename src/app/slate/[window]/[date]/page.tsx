@@ -209,13 +209,13 @@ function getScoreReasons(start: StartSummary) {
 function getCompletedSourceLabel(starts: StartSummary[]) {
   if (starts.some((start) => start.source?.line === "archive-gamefeed")) return "Archived gamefeed lines";
   if (starts.some((start) => start.source?.line === "live-gamefeed")) return "Live gamefeed lines";
-  return "Fixture line fallback";
+  return "Scheduled line estimate";
 }
 
 function getStartLineSourceLabel(start: StartSummary) {
   if (start.source?.line === "archive-gamefeed") return "archive";
   if (start.source?.line === "live-gamefeed") return "MLB gamefeed";
-  return "fixture fallback";
+  return "scheduled estimate";
 }
 
 function rankProbableMatchups(probables: Array<{ id: string; matchupScore: number }>) {

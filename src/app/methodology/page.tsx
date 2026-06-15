@@ -45,6 +45,27 @@ export default async function MethodologyPage() {
           <ScoreExplainer scoreScale={scoreScale} />
         </section>
 
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Formula transparency</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">GS+ component weights</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Raw GS+ starts at 45, adds length and strikeouts, subtracts runs, hits, and walks, then applies context and a 20-80 display transform.
+          </p>
+          <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
+            <FormulaItem label="Baseline" value="+45" />
+            <FormulaItem label="Length" value="+3.0 per IP" />
+            <FormulaItem label="Strikeouts" value="+2.2 per K" />
+            <FormulaItem label="Earned runs" value="-5.0 per ER" />
+            <FormulaItem label="Hits" value="-1.2 per H" />
+            <FormulaItem label="Walks" value="-1.5 per BB" />
+            <FormulaItem label="Whiff context" value="+0.35 per pct point" />
+            <FormulaItem label="Velocity context" value="+1.75 per mph" />
+            <FormulaItem label="Park context" value="(1.00 - run factor) x 12" />
+            <FormulaItem label="Display transform" value="50 + (raw - 59) x 0.72, capped 20-80" />
+          </dl>
+          <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
+        </section>
+
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           <MethodCard title="GS+" id="gs-plus">
             GS+ scores a single completed start on a 0-100 style scale, with league-average work around 50. It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context.
@@ -72,6 +93,15 @@ export default async function MethodologyPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function FormulaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded border border-white/10 bg-black/25 px-3 py-2">
+      <dt className="text-zinc-500">{label}</dt>
+      <dd className="text-right text-zinc-100">{value}</dd>
+    </div>
   );
 }
 

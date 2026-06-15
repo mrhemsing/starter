@@ -75,6 +75,22 @@ const VENUE_WEATHER_PROFILES: Record<string, VenueWeatherProfile> = {
   "Yankee Stadium": { latitude: 40.8296, longitude: -73.9262, outdoor: true, label: "Bronx, NY" },
 };
 
+export function getParkFactorRows() {
+  return Object.entries(VENUE_RUN_FACTORS)
+    .map(([venue, runFactor]) => {
+      const weatherProfile = VENUE_WEATHER_PROFILES[venue];
+      return {
+        venue,
+        runFactor,
+        runValue: Number(((NEUTRAL_PARK_RUN_FACTOR - runFactor) * 12).toFixed(1)),
+        environment: weatherProfile?.outdoor === false ? "Roofed / climate controlled" : weatherProfile?.outdoor === true ? "Outdoor" : "Weather profile pending",
+        location: weatherProfile?.label ?? "Location pending",
+        label: parkLabel(venue, runFactor),
+      };
+    })
+    .sort((a, b) => b.runFactor - a.runFactor || a.venue.localeCompare(b.venue));
+}
+
 type OpenMeteoHourly = {
   time?: string[];
   temperature_2m?: number[];

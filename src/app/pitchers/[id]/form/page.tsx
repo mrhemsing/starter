@@ -94,6 +94,9 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <div>
                 <p className={`font-serif text-6xl font-bold ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
                 <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
+                <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+                  ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)}
+                </p>
               </div>
               <TrendChip summary={summary} />
               <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} />
@@ -258,6 +261,10 @@ function MiniStat({ label, value, color }: { label: string; value: string; color
       <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
     </div>
   );
+}
+
+function formatNullable(value: number | null | undefined, digits: number) {
+  return typeof value === "number" ? value.toFixed(digits) : "--";
 }
 
 function VeloSparkline({ values, label, color }: { values: number[]; label: string; color: string }) {

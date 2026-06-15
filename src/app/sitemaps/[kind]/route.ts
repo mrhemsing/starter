@@ -48,6 +48,13 @@ async function urlsForKind(kind: SitemapKind): Promise<SitemapUrl[]> {
     return [
       url("/", now, "daily", 1),
       url(heatCheckPath(), now, "hourly", 0.9),
+      url("/leaderboard", now, "daily", 0.8),
+      url(`/leaderboard/${season}`, now, "daily", 0.8),
+      url("/leaderboard/consistency", now, "daily", 0.7),
+      url("/leaderboard/ceiling", now, "daily", 0.7),
+      url("/pitchers", now, "daily", 0.8),
+      url("/parks", now, "monthly", 0.7),
+      url("/glossary", now, "monthly", 0.7),
       url("/methodology", now, "monthly", 0.8),
       url(rankedStartsPath(defaults.rankedDate), now, "hourly", 0.9),
       url(upcomingDateHref(defaults.upcomingDate), now, "hourly", 0.9),
@@ -61,7 +68,11 @@ async function urlsForKind(kind: SitemapKind): Promise<SitemapUrl[]> {
 
   if (kind === "pitchers") {
     const pitcherIds = [...new Set(starts.map((start) => start.pitcher.id))];
-    return pitcherIds.map((pitcherId) => url(`/pitchers/${pitcherId}/form`, now, "weekly", 0.7));
+    const teams = [...new Set(starts.map((start) => start.pitcher.team).filter(Boolean))];
+    return [
+      ...pitcherIds.map((pitcherId) => url(`/pitchers/${pitcherId}/form`, now, "weekly", 0.7)),
+      ...teams.map((team) => url(`/teams/${team.toLowerCase()}`, now, "weekly", 0.6)),
+    ];
   }
 
   const months = [...new Set(starts.map((start) => start.date.slice(0, 7)))].sort().reverse();

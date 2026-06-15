@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { formatStartLine } from "@/lib/format";
 import { pitchResults, pitchTypes } from "@/lib/pitch-taxonomy";
-import type { PitchEvent, PitchResultKey, PitchTypeKey, StartApiPitchSequenceRow, StartDetail } from "@/lib/types";
+import type { PitchEvent, PitchResultKey, PitchTypeKey, StartApiGameScorePlusBreakdown, StartApiPitchSequenceRow, StartDetail } from "@/lib/types";
 
 const strikeZone = { xMin: -0.83, xMax: 0.83, zMin: 1.5, zMax: 3.5 };
 const view = { xMin: -2.2, xMax: 2.2, zMin: 0.3, zMax: 4.7 };
@@ -68,6 +68,7 @@ export function PitchChart({ start }: { start: StartDetail }) {
   const minTrendVelo = Math.floor(Math.min(...velocityTrend.map((inning) => inning.avgVelocityMph), 90) - 1);
   const maxTrendVelo = Math.ceil(Math.max(...velocityTrend.map((inning) => inning.avgVelocityMph), 96) + 1);
   const scoreBreakdown = start.gameScorePlusBreakdown;
+  const hasPitchDetails = start.pitchDetailSource !== "fixture" && pitches.length > 0;
 
   function toggleType(type: PitchTypeKey) {
     const next = new Set(activeTypes);
@@ -88,6 +89,42 @@ export function PitchChart({ start }: { start: StartDetail }) {
     return 4 + ((velo - 80) / 21) * 6;
   }
 
+  if (!hasPitchDetails) {
+    return (
+      <section className="border-t border-white/10 bg-[#08080a] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded border border-white/10 bg-[#101014] p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Pitch data</p>
+            <h2 className="mt-3 font-serif text-4xl font-bold text-zinc-50">Pitch data pending</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+              The start line and GS+ are available from the MLB gamefeed. Pitch-level data is hidden until real pitch events are available.
+            </p>
+          </div>
+
+          {scoreBreakdown ? (
+            <section className="rounded border border-white/10 bg-[#101014] p-4">
+              <div className="mb-4 flex items-baseline justify-between gap-3">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+ why</p>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">{scoreBreakdown.formulaVersion}</p>
+                </div>
+                <p className="font-serif text-4xl font-semibold text-amber-300">{scoreBreakdown.total}</p>
+              </div>
+              {typeof start.expectedGameScorePlus === "number" ? (
+                <div className="mb-4 rounded border border-white/10 bg-black/25 p-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">xGS+ process check</p>
+                  <p className="mt-1 font-serif text-3xl text-zinc-50">{start.expectedGameScorePlus}</p>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">Line-backed expected score from length, strikeouts, walks, and park; excludes hits/runs until Statcast contact quality is available.</p>
+                </div>
+              ) : null}
+              <ScoreComponentList components={nonPitchScoreComponents(scoreBreakdown.components)} />
+            </section>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="border-t border-white/10 bg-[#08080a] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -102,6 +139,9 @@ export function PitchChart({ start }: { start: StartDetail }) {
           <div className="md:text-right">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+</p>
             <p className="font-serif text-6xl font-bold leading-none text-amber-300">{start.gameScorePlus}</p>
+            {typeof start.expectedGameScorePlus === "number" ? (
+              <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">xGS+ {start.expectedGameScorePlus}</p>
+            ) : null}
             {scoreBreakdown ? (
               <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
                 {scoreBreakdown.gradeBand.label} / {scoreBreakdown.gradeBand.percentileLabel}
@@ -428,6 +468,11 @@ export function PitchChart({ start }: { start: StartDetail }) {
       </div>
     </section>
   );
+}
+
+function nonPitchScoreComponents(components: StartApiGameScorePlusBreakdown["components"]) {
+  const hiddenKeys = new Set(["whiffDelta", "velocityDelta"]);
+  return components.filter((component) => !hiddenKeys.has(component.key));
 }
 
 function matchesCountFilter(pitch: Pick<PitchEvent | StartApiPitchSequenceRow, "count">, filter: CountFilter) {

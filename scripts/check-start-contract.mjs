@@ -95,7 +95,7 @@ assertExactKeys(start.source, ["schedule", "line", "ranking", "pitchDetail", "ar
 assertSource(start.source.schedule, ["fixture", "live"], "source.schedule");
 assertSource(start.source.line, ["fixture", "archive-gamefeed", "live-gamefeed"], "source.line");
 assertSource(start.source.ranking, ["schedule-derived-fixture-line", "schedule-derived-archive-line", "schedule-derived-gamefeed-line"], "source.ranking");
-assertSource(start.source.pitchDetail, ["fixture", "archive-gamefeed", "live-gamefeed"], "source.pitchDetail");
+assertSource(start.source.pitchDetail, ["fixture", "archive-gamefeed", "live-gamefeed", "statcast-savant"], "source.pitchDetail");
 assertSource(start.source.archivePitchDetail.status, ["stored", "missing-gamefeed-pitches", "not-archived"], "source.archivePitchDetail.status");
 assert(Number.isInteger(start.source.archivePitchDetail.pitchEvents) && start.source.archivePitchDetail.pitchEvents >= 0, "source.archivePitchDetail.pitchEvents must be non-negative");
 assertSource(start.source.archiveCompletedLine?.status, ["stored", "not-archived"], "source.archiveCompletedLine.status");
@@ -218,9 +218,16 @@ if (start.source.archiveCompletedLine.status === "stored") {
   assert(start.source.line === "archive-gamefeed", "stored archive completed line metadata must drive archive-gamefeed line source");
 }
 
-assert(Number.isInteger(start.pitchCounts?.total) && start.pitchCounts.total > 0, "start missing positive pitch total");
+const hasPitchDetails = start.source.pitchDetail !== "fixture";
+assert(Number.isInteger(start.pitchCounts?.total) && start.pitchCounts.total >= 0, "start missing pitch total");
+if (hasPitchDetails) {
+  assert(start.pitchCounts.total > 0, "start missing positive pitch total");
+}
 assert(start.pitchCounts.total <= start.line.pitches, "pitch detail count must not exceed official line pitch count");
-assert(Array.isArray(start.pitchCounts?.byInning) && start.pitchCounts.byInning.length > 0, "start missing inning pitch counts");
+assert(Array.isArray(start.pitchCounts?.byInning), "start missing inning pitch counts");
+if (hasPitchDetails) {
+  assert(start.pitchCounts.byInning.length > 0, "start missing inning pitch counts");
+}
 assert(Array.isArray(start.velocityTrend) && start.velocityTrend.length === start.pitchCounts.byInning.length, "velocityTrend must match inning count");
 assert(Array.isArray(start.inningTimeline) && start.inningTimeline.length === start.pitchCounts.byInning.length, "inningTimeline must match inning count");
 assert(Array.isArray(start.countLeverage) && start.countLeverage.length === start.pitchCounts.byInning.length, "countLeverage must match inning count");
@@ -234,10 +241,24 @@ assert(typeof start.gameScorePlusBreakdown.gradeBand?.rangeLabel === "string" &&
 assert(typeof start.gameScorePlusBreakdown.gradeBand?.description === "string" && start.gameScorePlusBreakdown.gradeBand.description.length > 0, "gameScorePlusBreakdown gradeBand description must be present");
 assert(Array.isArray(start.gameScorePlusBreakdown?.components) && start.gameScorePlusBreakdown.components.length >= 11, "gameScorePlusBreakdown must include explainable line, stuff, park, opponent quality, and opponent offense components");
 assert(Array.isArray(start.gameScorePlusBreakdown?.rankingReasons) && start.gameScorePlusBreakdown.rankingReasons.length === 3, "gameScorePlusBreakdown must include 3 ranked reasons");
-assert(Array.isArray(start.arsenal) && start.arsenal.length > 0, "start missing arsenal");
+assert(Array.isArray(start.arsenal), "start missing arsenal");
+if (hasPitchDetails) {
+  assert(start.arsenal.length > 0, "start missing arsenal");
+} else {
+  assert(start.arsenal.length === 0, "missing pitch detail must not return synthetic arsenal");
+  assert(start.pitchCounts.total === 0, "missing pitch detail must not return synthetic pitch counts");
+  assert(start.velocityTrend.length === 0, "missing pitch detail must not return synthetic velocity trend");
+  assert(start.inningTimeline.length === 0, "missing pitch detail must not return synthetic inning timeline");
+  assert(start.countLeverage.length === 0, "missing pitch detail must not return synthetic count leverage");
+  assert(start.pitchSequence.length === 0, "missing pitch detail must not return synthetic pitch sequence");
+}
 assert(Array.isArray(start.pitchEvents) && start.pitchEvents.length === start.pitchCounts.total, "pitchEvents length must match pitch total");
 if (start.source.pitchDetail === "archive-gamefeed") {
   assert(start.source.archivePitchDetail.status === "stored", "archive-gamefeed pitch detail must report stored archive detail");
+}
+if (start.source.pitchDetail === "statcast-savant") {
+  assert(start.pitchEvents.length > 0, "statcast-savant pitch detail must include pitch events");
+  assert(start.arsenal.length > 0, "statcast-savant pitch detail must include arsenal");
 }
 if (start.source.archivePitchDetail.status === "stored") {
   assert(start.source.archivePitchDetail.pitchEvents === start.pitchCounts.total, "stored archive pitch detail count must match pitch total");
@@ -266,7 +287,7 @@ if (start.source.archivePitchDetail.status === "stored") {
 }
 if (start.source.archivePitchDetail.status === "missing-gamefeed-pitches") {
   assert(start.source.line === "archive-gamefeed", "missing archive pitch detail must keep the archived completed line");
-  assert(start.source.pitchDetail === "fixture", "missing archive pitch detail must use fixture pitch-detail fallback");
+  assert(["fixture", "statcast-savant"].includes(start.source.pitchDetail), "missing archive pitch detail must use pending or Statcast pitch detail");
   assert(start.source.archivePitchDetail.pitchEvents === 0, "missing archive pitch detail must report zero archived pitch events");
   assert(start.source.archivePitchDetail.date === start.date, "missing archive pitch detail date must match start date");
   assert(isIsoTimestamp(start.source.archivePitchDetail.archivedAt), "missing archive pitch detail archivedAt must be an ISO timestamp");

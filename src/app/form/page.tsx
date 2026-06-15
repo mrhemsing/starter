@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
+import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierLabel } from "@/components/form-visuals";
 import { PitcherChip } from "@/components/pitcher-chip";
 import { SiteNav } from "@/components/site-nav";
@@ -299,6 +300,9 @@ function MoverPanel({ title, pitchers, window, leagueMeanGS }: { title: string; 
               <PitcherChip pitcherId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} imageWidth={80} size="sm" />
               <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="mini" />
               <p className="font-mono text-sm font-semibold" style={{ color: bandColor }}>{formatSignedDelta(pitcher.deltaForm)}</p>
+              <div className="col-span-full">
+                <FormDriverChips chips={pitcher.driverChips} compact />
+              </div>
             </a>
           );
         })}
@@ -335,6 +339,7 @@ function HeatHeroCard({ pitcher, rank, window, leagueMeanGS, followed }: { pitch
             {nextToday ? <span className="rounded border border-teal-300/30 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em] text-teal-300">Starting today</span> : null}
           </div>
           <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" />
+          <FormDriverChips chips={pitcher.driverChips} />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="font-mono text-xs text-zinc-400">
               Last GS+ {pitcher.lastStart?.gsPlus ?? "--"} / Delta {formatSignedDelta(pitcher.deltaForm)}
@@ -391,6 +396,9 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, sho
           trend={pitcher.trend}
         />
         <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
+        <div className="col-span-full">
+          <FormDriverChips chips={pitcher.driverChips} compact />
+        </div>
       </div>
     </article>
   );

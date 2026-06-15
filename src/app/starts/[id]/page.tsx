@@ -57,7 +57,10 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
   }
 
   const title = `${start.pitcher.name} vs ${start.opponent} - ${formatShortDate(start.date)} (GS+ ${start.gameScorePlus})`;
-  const description = `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`;
+  const hasPitchDetails = start.pitchDetailSource !== "fixture" && start.pitchEvents.length > 0;
+  const description = hasPitchDetails
+    ? `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`
+    : `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus} and ranking breakdown.`;
   const url = startPath(start.id);
   const image = startShareImagePath(start.id);
 
@@ -597,19 +600,19 @@ function pairedStarts(starts: StartSummary[]) {
 function getLineSourceLabel(source?: string) {
   if (source === "archive-gamefeed") return "Archive line";
   if (source === "live-gamefeed") return "MLB gamefeed line";
-  return "Fixture line fallback";
+  return "Scheduled line estimate";
 }
 
 function getRankingSourceLabel(source?: string) {
   if (source === "schedule-derived-archive-line") return "Ranked from archive stats";
   if (source === "schedule-derived-gamefeed-line") return "Ranked from live gamefeed stats";
-  return "Ranked from fixture stats";
+  return "Ranked from scheduled estimate";
 }
 
 function getPitchSourceLabel(source?: string) {
   if (source === "archive-gamefeed") return "Pitch chart from archive";
   if (source === "live-gamefeed") return "Pitch chart from MLB gamefeed";
-  return "Pitch chart fixture fallback";
+  return "Pitch data pending";
 }
 
 function addDays(date: string, days: number) {

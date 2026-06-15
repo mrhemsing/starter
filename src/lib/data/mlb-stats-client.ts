@@ -1,6 +1,6 @@
 import { demoProbableStarts } from "@/lib/data/demo";
 import { inningsFromIP } from "@/lib/innings";
-import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, StartLine } from "@/lib/types";
+import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, StartLine } from "@/lib/types";
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
@@ -31,6 +31,7 @@ const scheduleCache = new Map<string, CachedSchedule>();
 const completedPitchingLineCache = new Map<string, CachedValue<MlbCompletedPitchingLine[]>>();
 const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQualityContext>>>();
 const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
+const teamHandednessSplitCache = new Map<string, CachedValue<Map<string, MlbTeamHandednessSplitContext>>>();
 
 function cachedRequestInit(options: MlbScheduleClientOptions, revalidate: number): RequestInit & { next?: { revalidate: number } } {
   if (options.signal) {
@@ -158,11 +159,25 @@ type MlbTeamsApiResponse = {
 type MlbTeamHittingSplit = {
   team?: {
     id?: number;
+    name?: string;
+  };
+  split?: {
+    code?: string;
+    description?: string;
   };
   stat?: {
     gamesPlayed?: number;
     runs?: number;
+    strikeOuts?: number;
+    baseOnBalls?: number;
+    hits?: number;
+    atBats?: number;
+    plateAppearances?: number;
+    totalBases?: number;
     ops?: string;
+    obp?: string;
+    slg?: string;
+    avg?: string;
   };
 };
 
@@ -371,6 +386,50 @@ export async function fetchMlbTeamQualityContexts(date: string, options: MlbSche
   }
 
   return promise;
+}
+
+export async function fetchMlbTeamHandednessSplitContexts(season: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbTeamHandednessSplitContext>> {
+  if (!options.fetchLive) return new Map();
+  const cacheKey = `${season}:team-handedness-splits`;
+  const cached = teamHandednessSplitCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = fetchLiveMlbTeamHandednessSplitContexts(season, options);
+  if (!options.signal) {
+    teamHandednessSplitCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_CONTEXT_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchLiveMlbTeamHandednessSplitContexts(season: string, options: MlbScheduleClientOptions = {}) {
+  const splitParams = new URLSearchParams({
+    season,
+    group: "hitting",
+    stats: "statSplits",
+    sportIds: "1",
+    sitCodes: "vr,vl",
+  });
+  const teamsParams = new URLSearchParams({ sportId: "1", season });
+
+  try {
+    const [splitResponse, teamsResponse] = await Promise.all([
+      fetch(`${MLB_STATS_API_BASE}/teams/stats?${splitParams.toString()}`, cachedRequestInit(options, MLB_CONTEXT_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/teams?${teamsParams.toString()}`, cachedRequestInit(options, MLB_CONTEXT_REVALIDATE_SECONDS)),
+    ]);
+    if (!splitResponse.ok || !teamsResponse.ok) return new Map<string, MlbTeamHandednessSplitContext>();
+
+    const [splitPayload, teamsPayload] = (await Promise.all([
+      splitResponse.json(),
+      teamsResponse.json(),
+    ])) as [MlbTeamStatsApiResponse, MlbTeamsApiResponse];
+    return parseTeamHandednessSplitContexts(splitPayload, parseTeamAbbreviationLookup(teamsPayload));
+  } catch {
+    return new Map<string, MlbTeamHandednessSplitContext>();
+  }
 }
 
 async function fetchLiveMlbTeamQualityContexts(date: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbTeamQualityContext>> {
@@ -602,6 +661,69 @@ function parseTeamOffenseContexts(payload: MlbTeamStatsApiResponse) {
   return contexts;
 }
 
+function parseTeamHandednessSplitContexts(payload: MlbTeamStatsApiResponse, teamLookup: Map<number, string>) {
+  const rawContexts: Array<Omit<MlbTeamHandednessSplitContext, "opsRank" | "strikeoutRateRank" | "matchupRunValue" | "label">> = [];
+
+  for (const statGroup of payload.stats ?? []) {
+    for (const split of statGroup.splits ?? []) {
+      const teamId = split.team?.id;
+      const team = teamId ? teamLookup.get(teamId) : undefined;
+      const splitKey = split.split?.code === "vl" ? "vs-lhp" : split.split?.code === "vr" ? "vs-rhp" : undefined;
+      const stat = split.stat;
+      const plateAppearances = stat?.plateAppearances ?? 0;
+      const ops = Number(stat?.ops);
+      const obp = Number(stat?.obp);
+      const slg = Number(stat?.slg);
+      const avg = Number(stat?.avg);
+      if (!teamId || !team || !splitKey || !stat || plateAppearances <= 0 || !Number.isFinite(ops) || !Number.isFinite(obp) || !Number.isFinite(slg) || !Number.isFinite(avg)) continue;
+
+      rawContexts.push({
+        team,
+        teamId,
+        split: splitKey,
+        gamesPlayed: stat.gamesPlayed ?? 0,
+        plateAppearances,
+        ops,
+        obp,
+        slg,
+        iso: Number((slg - avg).toFixed(3)),
+        strikeoutRate: Number(((stat.strikeOuts ?? 0) / plateAppearances).toFixed(3)),
+        walkRate: Number(((stat.baseOnBalls ?? 0) / plateAppearances).toFixed(3)),
+      });
+    }
+  }
+
+  const bySplit = new Map<MlbTeamHandednessSplitContext["split"], typeof rawContexts>();
+  for (const context of rawContexts) {
+    const values = bySplit.get(context.split) ?? [];
+    values.push(context);
+    bySplit.set(context.split, values);
+  }
+
+  const contexts = new Map<string, MlbTeamHandednessSplitContext>();
+  for (const [split, splitContexts] of bySplit) {
+    const opsRank = rankValues(splitContexts, (context) => context.ops, "desc");
+    const strikeoutRank = rankValues(splitContexts, (context) => context.strikeoutRate, "desc");
+    const averageOps = average(splitContexts.map((context) => context.ops));
+    const averageStrikeoutRate = average(splitContexts.map((context) => context.strikeoutRate));
+    const averageIso = average(splitContexts.map((context) => context.iso));
+
+    for (const context of splitContexts) {
+      const matchupRunValue = clamp((context.ops - averageOps) * 45 + (context.iso - averageIso) * 18 - (context.strikeoutRate - averageStrikeoutRate) * 24, -8, 8);
+      const fullContext: MlbTeamHandednessSplitContext = {
+        ...context,
+        opsRank: opsRank.get(context.team) ?? 30,
+        strikeoutRateRank: strikeoutRank.get(context.team) ?? 30,
+        matchupRunValue: Number(matchupRunValue.toFixed(1)),
+        label: `${context.team} ${split === "vs-lhp" ? "vs LHP" : "vs RHP"}: ${context.ops.toFixed(3)} OPS, ${(context.strikeoutRate * 100).toFixed(1)}% K, ${(context.walkRate * 100).toFixed(1)}% BB, ${context.iso.toFixed(3)} ISO.`,
+      };
+      contexts.set(teamSplitKey(fullContext.team, split), fullContext);
+    }
+  }
+
+  return contexts;
+}
+
 function parsePitcherSeasonProfile(
   pitcherMlbId: number,
   personPayload: MlbPeopleApiResponse,
@@ -697,6 +819,22 @@ function parseTeamAbbreviationLookup(payload: MlbTeamsApiResponse) {
   }
 
   return lookup;
+}
+
+function teamSplitKey(team: string, split: MlbTeamHandednessSplitContext["split"]) {
+  return `${team}:${split}`;
+}
+
+function rankValues<T extends { team: string }>(values: T[], readValue: (value: T) => number, direction: "asc" | "desc") {
+  return new Map(
+    [...values]
+      .sort((a, b) => direction === "desc" ? readValue(b) - readValue(a) : readValue(a) - readValue(b))
+      .map((value, index) => [value.team, index + 1]),
+  );
+}
+
+function average(values: number[]) {
+  return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
 
 function readPitcherGameLogStart(split: MlbPersonStatSplit, pitcherMlbId: number, teamLookup: Map<number, string>): MlbPitcherSeasonProfile["starts"][number] | undefined {

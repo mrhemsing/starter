@@ -1,11 +1,12 @@
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
+import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
 import { fetchMlbCompletedPitchingLines, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
-import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
+import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS = 35;
@@ -123,6 +124,18 @@ export function addDays(date: string, days: number) {
   return toIsoDate(new Date(new Date(`${date}T00:00:00.000Z`).getTime() + days * ONE_DAY_MS));
 }
 
+function daysBetween(olderDate: string, newerDate: string) {
+  return Math.round((new Date(`${newerDate}T00:00:00.000Z`).getTime() - new Date(`${olderDate}T00:00:00.000Z`).getTime()) / ONE_DAY_MS);
+}
+
+function round1(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function round2(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise<StartSummary[]> {
   if (!params?.date) return demoSlateStarts;
 
@@ -216,7 +229,7 @@ export async function getTodayProbables(date?: string) {
       })),
   );
 
-  return probables.filter((probable) => isUnstartedGameStatus(probable.gameStatus)).map((probable, index) => ({
+  return probables.filter((probable) => isUnstartedGameStatus(probable.gameStatus)).map((probable) => ({
     id: `${slateDate}-${probable.teamAbbreviation.toLowerCase()}-${probable.opponentAbbreviation.toLowerCase()}-${probable.id}`,
     gamePk: probable.gamePk,
     date: slateDate,
@@ -229,7 +242,7 @@ export async function getTodayProbables(date?: string) {
     venue: probable.venue,
     gameLabel: `${probable.awayTeam.abbreviation} @ ${probable.homeTeam.abbreviation}`,
     status: probable.gameStatus,
-    matchupScore: 74 - index * 3,
+    matchupScore: 50,
     parkAdjustment: 0,
   }));
 }
@@ -432,11 +445,13 @@ export async function getStartDetail(startId: string) {
     readArchivedStartPitchDetailSummary(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId),
     readArchivedStartLineSummary(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId),
   ]);
-  const livePitchDetails = archivedPitchDetails ?? await fetchMlbStartPitchDetails(matchedStart.gamePk, matchedStart.pitcher.mlbId, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" });
+  const livePitchDetails = archivedPitchDetails
+    ?? await fetchMlbStartPitchDetails(matchedStart.gamePk, matchedStart.pitcher.mlbId, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" })
+    ?? await fetchSavantStartPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId);
   const pitchDetails = livePitchDetails ?? {
     source: "fixture" as const,
-    arsenal: demoStartDetail.arsenal,
-    pitchEvents: demoStartDetail.pitchEvents.map((pitch) => ({ ...pitch, gamePk: matchedStart.gamePk })),
+    arsenal: [],
+    pitchEvents: [],
   };
 
   return withStartSummaries({
@@ -470,11 +485,12 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     opponentOffenseLabel: `${start.opponent} archived offense quality from fixture lineup context.`,
   };
   const gameScorePlus = scoreCompletedLine(start.line, context);
+  const savantPitchDetails = start.pitchEvents?.length
+    ? null
+    : await fetchSavantStartPitchDetails(date, start.gamePk, start.pitcherMlbId);
   const archivedPitchEvents = start.pitchEvents ?? [];
-  const pitchEvents = archivedPitchEvents.length > 0
-    ? archivedPitchEvents
-    : demoStartDetail.pitchEvents.map((pitch) => ({ ...pitch, gamePk: start.gamePk }));
-  const arsenal = archivedPitchEvents.length > 0 ? start.arsenal ?? demoStartDetail.arsenal : demoStartDetail.arsenal;
+  const pitchEvents = archivedPitchEvents.length > 0 ? archivedPitchEvents : savantPitchDetails?.pitchEvents ?? [];
+  const arsenal = archivedPitchEvents.length > 0 ? start.arsenal ?? [] : savantPitchDetails?.arsenal ?? [];
 
   return withStartSummaries({
     ...demoStartDetail,
@@ -504,7 +520,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     },
     arsenal,
     pitchEvents,
-    pitchDetailSource: archivedPitchEvents.length > 0 ? "archive-gamefeed" : "fixture",
+    pitchDetailSource: archivedPitchEvents.length > 0 ? "archive-gamefeed" : savantPitchDetails ? "statcast-savant" : "fixture",
     archivePitchDetail: {
       status: archivedPitchEvents.length > 0 ? "stored" : "missing-gamefeed-pitches",
       pitchEvents: start.pitchEventCount ?? archivedPitchEvents.length,
@@ -645,7 +661,7 @@ export async function getPitcherApiResponse(pitcherId: string, controls: { sort?
   const startHistorySource = "startHistorySource" in pitcher && pitcher.startHistorySource === "archive-gamefeed" ? pitcher.startHistorySource : isLiveProfile ? "live-people-stats" : "fixture";
   const archiveArsenal = "archiveArsenal" in pitcher && pitcher.archiveArsenal ? pitcher.archiveArsenal : null;
   const archiveProfile = "archiveProfile" in pitcher && pitcher.archiveProfile ? pitcher.archiveProfile : null;
-  const liveSplits = isLiveProfile ? await fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" }) : null;
+  const liveSplits = await fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: true });
   const splitGroups = liveSplits?.map((split) => ({
     ...split,
     status: "live-people-stat-splits" as const,
@@ -656,11 +672,12 @@ export async function getPitcherApiResponse(pitcherId: string, controls: { sort?
     ...start,
     startHref: startPath(start.id),
   }));
+  const skillProfile = buildPitcherSkillProfile(allStarts, seasonLineSource);
   const seasonLogControls = normalizePitcherSeasonLogControls(controls, allStarts);
   const starts = sortPitcherSeasonLog(
     seasonLogControls.result === "all" ? allStarts : allStarts.filter((start) => start.result === seasonLogControls.result),
     seasonLogControls.sort,
-  );
+  ).map(stripPitchEventsFromPitcherStart);
 
   return {
     id: pitcher.id,
@@ -670,6 +687,7 @@ export async function getPitcherApiResponse(pitcherId: string, controls: { sort?
     throws: pitcher.throws,
     headshotUrl: pitcher.headshotUrl,
     seasonLine: pitcher.seasonLine,
+    skillProfile,
     arsenal: pitcher.arsenal,
     starts,
     seasonLogSummary: summarizePitcherSeasonLog(starts),
@@ -752,6 +770,123 @@ function summarizePitcherStart(start: PitcherApiStartLogEntry) {
     result: start.result,
     gameScorePlus: start.gameScorePlus,
     startHref: start.startHref,
+  };
+}
+
+function buildPitcherSkillProfile(
+  starts: PitcherApiStartLogEntry[],
+  seasonLineSource: PitcherApiResponse["source"]["seasonLine"],
+): PitcherSkillProfile {
+  const sorted = [...starts].sort((a, b) => b.date.localeCompare(a.date));
+  const latestDate = sorted[0]?.date;
+  const trailing30 = latestDate
+    ? sorted.filter((start) => daysBetween(start.date, latestDate) <= 30)
+    : [];
+  const source: PitcherSkillProfile["source"] = seasonLineSource === "archive-gamefeed"
+    ? "archive-gamefeed-line"
+    : seasonLineSource === "live-people-stats"
+      ? "live-people-stats-line"
+      : "fixture-line";
+
+  const season = summarizeSkillSnapshot("Season", starts);
+  const trailing30Snapshot = summarizeSkillSnapshot("Last 30", trailing30);
+  const pitchSnapshots = [season, trailing30Snapshot].filter((snapshot) => snapshot.pitchCount > 0);
+  const statcastStatus: PitcherSkillProfile["statcastStatus"] = pitchSnapshots.length === 0
+    ? "pending"
+    : pitchSnapshots.every((snapshot) => snapshot.pitchCount >= Math.max(1, snapshot.starts * 40))
+      ? "available"
+      : "partial";
+
+  return {
+    source,
+    note: statcastStatus === "pending"
+      ? "Line-backed skill profile from completed-start totals. Statcast CSW, SwStr, chase, zone, expected stats, and contact quality remain pending verified Savant ingestion."
+      : "Line-backed profile plus verified pitch-event skills where archived gamefeed or Savant rows exist. Chase, zone, expected stats, and contact quality remain pending full Savant leaderboard ingestion.",
+    season,
+    trailing30: trailing30Snapshot,
+    statcastStatus,
+  };
+}
+
+function summarizeSkillSnapshot(label: PitcherSkillSnapshot["label"], starts: PitcherApiStartLogEntry[]): PitcherSkillSnapshot {
+  if (starts.length === 0) {
+    return {
+      label,
+      status: "insufficient",
+      starts: 0,
+      inningsPitched: 0,
+      era: null,
+      whip: null,
+      k9: null,
+      bb9: null,
+      kMinusBbPer9: null,
+      avgIpPerStart: null,
+      pitchesPerStart: null,
+      pitchCount: 0,
+      cswPct: null,
+      swStrPct: null,
+      whiffPct: null,
+      avgVelocityMph: null,
+      maxVelocityMph: null,
+    };
+  }
+
+  const innings = starts.reduce((sum, start) => sum + inningsFromIP(start.line.inningsPitched), 0);
+  const earnedRuns = starts.reduce((sum, start) => sum + start.line.earnedRuns, 0);
+  const hits = starts.reduce((sum, start) => sum + start.line.hits, 0);
+  const walks = starts.reduce((sum, start) => sum + start.line.walks, 0);
+  const strikeouts = starts.reduce((sum, start) => sum + start.line.strikeouts, 0);
+  const pitches = starts.reduce((sum, start) => sum + start.line.pitches, 0);
+  const pitchEvents = starts.flatMap((start) => start.pitchEvents ?? []);
+  const pitchSkill = summarizePitchEventSkills(pitchEvents);
+  const status: PitcherSkillSnapshot["status"] = innings >= 5 ? "line-backed" : "insufficient";
+
+  return {
+    label,
+    status,
+    starts: starts.length,
+    inningsPitched: round1(innings),
+    era: innings > 0 ? round2((earnedRuns * 9) / innings) : null,
+    whip: innings > 0 ? round2((hits + walks) / innings) : null,
+    k9: innings > 0 ? round1((strikeouts * 9) / innings) : null,
+    bb9: innings > 0 ? round1((walks * 9) / innings) : null,
+    kMinusBbPer9: innings > 0 ? round1(((strikeouts - walks) * 9) / innings) : null,
+    avgIpPerStart: starts.length > 0 ? round1(innings / starts.length) : null,
+    pitchesPerStart: starts.length > 0 && pitches > 0 ? round1(pitches / starts.length) : null,
+    ...pitchSkill,
+  };
+}
+
+function stripPitchEventsFromPitcherStart(start: PitcherApiStartLogEntry): PitcherApiStartLogEntry {
+  const publicStart = { ...start };
+  delete publicStart.pitchEvents;
+  return publicStart;
+}
+
+function summarizePitchEventSkills(pitchEvents: PitchEvent[]) {
+  if (pitchEvents.length === 0) {
+    return {
+      pitchCount: 0,
+      cswPct: null,
+      swStrPct: null,
+      whiffPct: null,
+      avgVelocityMph: null,
+      maxVelocityMph: null,
+    };
+  }
+
+  const calledStrikes = pitchEvents.filter((pitch) => pitch.result === "called_strike").length;
+  const swingingStrikes = pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
+  const swings = pitchEvents.filter((pitch) => ["swinging_strike", "foul", "hit_into_play"].includes(pitch.result)).length;
+  const velocities = pitchEvents.map((pitch) => pitch.velocityMph).filter((velocity) => Number.isFinite(velocity));
+
+  return {
+    pitchCount: pitchEvents.length,
+    cswPct: round1(((calledStrikes + swingingStrikes) / pitchEvents.length) * 100),
+    swStrPct: round1((swingingStrikes / pitchEvents.length) * 100),
+    whiffPct: swings > 0 ? round1((swingingStrikes / swings) * 100) : null,
+    avgVelocityMph: velocities.length > 0 ? round1(velocities.reduce((total, velocity) => total + velocity, 0) / velocities.length) : null,
+    maxVelocityMph: velocities.length > 0 ? round1(Math.max(...velocities)) : null,
   };
 }
 
@@ -856,12 +991,24 @@ function summarizeStartPitchCounts(pitchEvents: PitchEvent[]): StartApiPitchCoun
 function withStartSummaries(start: StartDetail): StartDetail {
   return {
     ...start,
+    expectedGameScorePlus: summarizeExpectedGameScorePlus(start.line, start.context),
     velocityTrend: summarizeVelocityTrend(start.pitchEvents),
     inningTimeline: summarizeInningTimeline(start.pitchEvents),
     countLeverage: summarizeCountLeverage(start.pitchEvents),
     pitchSequence: summarizePitchSequence(start.pitchEvents),
     gameScorePlusBreakdown: summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
   };
+}
+
+function summarizeExpectedGameScorePlus(line: StartLine, context?: StartContext) {
+  const computedInnings = inningsFromIP(line.inningsPitched);
+  const raw = 45
+    + computedInnings * 3.2
+    + line.strikeouts * 2.6
+    - line.walks * 2.1
+    + (context ? (NEUTRAL_PARK_RUN_FACTOR - context.parkRunFactor) * 10 : 0);
+  const scaled = GAME_SCORE_PLUS_DISPLAY_MIDPOINT + (raw - GAME_SCORE_PLUS_RAW_MIDPOINT) * GAME_SCORE_PLUS_RAW_TO_DISPLAY_MULTIPLIER;
+  return Math.max(GAME_SCORE_PLUS_DISPLAY_MIN, Math.min(GAME_SCORE_PLUS_DISPLAY_MAX, Math.round(scaled)));
 }
 
 function summarizePitchSequence(pitchEvents: PitchEvent[]): StartApiPitchSequenceRow[] {

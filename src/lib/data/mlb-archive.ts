@@ -774,6 +774,7 @@ export async function readArchivedPitcherSeasonProfile(pitcherMlbId: number, sea
           result: start.result,
           line: start.line,
           gameScorePlus: scoreArchivedPitcherStartLine(start.line),
+          pitchEvents: start.pitchEvents ?? [],
         });
       }
     }

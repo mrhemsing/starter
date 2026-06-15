@@ -84,6 +84,24 @@ export type MlbTeamQualityContext = {
   opponentOffenseLabel: string;
 };
 
+export type MlbTeamHandednessSplitContext = {
+  team: string;
+  teamId: number;
+  split: "vs-lhp" | "vs-rhp";
+  gamesPlayed: number;
+  plateAppearances: number;
+  ops: number;
+  obp: number;
+  slg: number;
+  iso: number;
+  strikeoutRate: number;
+  walkRate: number;
+  opsRank: number;
+  strikeoutRateRank: number;
+  matchupRunValue: number;
+  label: string;
+};
+
 export type StartDataSource = {
   schedule: MlbSchedule["source"];
   line: "fixture" | "archive-gamefeed" | "live-gamefeed";
@@ -100,6 +118,7 @@ export type StartSummary = {
   result: "W" | "L" | "ND";
   line: StartLine;
   gameScorePlus: number;
+  expectedGameScorePlus?: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   teamColor: string;
   accentColor: string;
@@ -157,6 +176,28 @@ export type FormStartPoint = {
   startHref: string;
 };
 
+export type FormDriverChip = {
+  key: "k-rate" | "walks" | "depth" | "run-prevention";
+  label: string;
+  direction: "good" | "bad";
+  delta: number;
+  score: number;
+};
+
+export type FormSeasonStats = {
+  inningsPitched: number;
+  era: number | null;
+  whip: number | null;
+  k9: number | null;
+};
+
+export type FormWorkload = {
+  lastStartDate: string | null;
+  lastStartPitches: number | null;
+  avgPitchesLast5: number | null;
+  avgIpLast5: number | null;
+};
+
 export type FormSummary = {
   pitcherId: string;
   name: string;
@@ -173,6 +214,9 @@ export type FormSummary = {
   heatIndex?: number;
   spark: number[];
   lastStart: FormStartPoint | null;
+  seasonStats: FormSeasonStats;
+  driverChips: FormDriverChip[];
+  workload: FormWorkload;
   nextStart?: FormNextStart | null;
   highlight?: FeaturedStartHighlight | null;
   flags?: { rust?: boolean; limitedSample?: boolean };
@@ -214,6 +258,7 @@ export type FormPitcherResponse = {
 };
 
 export type WatchTierKey = "mustwatch" | "worthit" | "background";
+export type WatchSortPolicy = "status-then-watch-score";
 
 export type TonightStarter = {
   pitcherId: string | null;
@@ -227,9 +272,38 @@ export type TonightStarter = {
   deltaForm?: number;
   spark?: number[];
   lastStart?: FormStartPoint | null;
+  seasonStats?: FormSeasonStats;
+  driverChips?: FormDriverChip[];
+  opponentSplit?: MlbTeamHandednessSplitContext | null;
+  projection?: {
+    status: "line-backed" | "pending";
+    projectedGsPlus: number | null;
+    confidence: "low" | "medium" | "high";
+    line: {
+      inningsPitched: number | null;
+      strikeouts: number | null;
+      earnedRuns: number | null;
+    };
+    notes: string[];
+  };
+  marketContext?: {
+    status: "pending-feed" | "ready";
+    source: "the-odds-api" | "not-configured";
+    projectedStrikeouts: number | null;
+    strikeoutPropLine: number | null;
+    strikeoutEdge: number | null;
+    opposingTeamTotal: number | null;
+    label: string;
+  };
+  workload?: FormWorkload & {
+    daysRest: number | null;
+    restLabel: "short" | "normal" | "extended" | "unknown";
+  };
+  flags?: FormSummary["flags"];
 };
 
 export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
+export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame" | "live">;
 
 export type TonightGame = {
   gamePk: string;
@@ -237,11 +311,17 @@ export type TonightGame = {
   status: TonightGameStatus;
   firstPitch: string;
   park: string;
+  parkContext: DecisionParkContext;
+  weatherContext: DecisionWeatherContext;
   away: string;
   home: string;
   label: string;
   matchupScore: number;
   matchupRankTonight: number;
+  matchupContext: {
+    status: "pending-opponent-splits" | "scored";
+    label: string;
+  };
   starters: [TonightStarter, TonightStarter];
   gameWatchScore: number;
   watchTier: WatchTierKey;
@@ -256,7 +336,17 @@ export type TonightGame = {
 export type TonightResponse = {
   date: string;
   generatedAt: string;
+  activeCardStatuses: UpcomingCardStatus[];
+  formWindow: 3 | 5 | 10;
   leagueMeanGS: number;
+  watchScoreWeights: {
+    topArm: number;
+    pairAvg: number;
+    matchup: number;
+  };
+  watchSortPolicy: WatchSortPolicy;
+  watchScoreRange: { min: number; max: number };
+  watchScorePrecision: number;
   matchupScoreRange: { min: number; max: number };
   scheduledGames: number;
   games: TonightGame[];
@@ -424,7 +514,7 @@ export type MlbCompletedPitchingLine = {
   line: StartLine;
 };
 
-export type StartPitchDetailSource = "fixture" | "archive-gamefeed" | "live-gamefeed";
+export type StartPitchDetailSource = "fixture" | "archive-gamefeed" | "live-gamefeed" | "statcast-savant";
 
 export type ArsenalPitchSummary = {
   type: PitchTypeKey;
@@ -543,6 +633,7 @@ export type FeaturedStartHighlight = {
 
 export type PitcherStartLogEntry = Pick<StartSummary, "id" | "date" | "opponent" | "result" | "line" | "gameScorePlus"> & {
   gamePk?: number;
+  pitchEvents?: PitchEvent[];
 };
 
 export type PitcherDetail = PitcherSummary & {
@@ -567,6 +658,34 @@ export type PitcherApiSeasonLogSummary = {
   averageInningsPitched: number;
   lastStart: Pick<PitcherApiStartLogEntry, "id" | "date" | "opponent" | "result" | "gameScorePlus" | "startHref"> | null;
   bestStart: Pick<PitcherApiStartLogEntry, "id" | "date" | "opponent" | "result" | "gameScorePlus" | "startHref"> | null;
+};
+
+export type PitcherSkillSnapshot = {
+  label: "Season" | "Last 30";
+  status: "line-backed" | "insufficient";
+  starts: number;
+  inningsPitched: number;
+  era: number | null;
+  whip: number | null;
+  k9: number | null;
+  bb9: number | null;
+  kMinusBbPer9: number | null;
+  avgIpPerStart: number | null;
+  pitchesPerStart: number | null;
+  pitchCount: number;
+  cswPct: number | null;
+  swStrPct: number | null;
+  whiffPct: number | null;
+  avgVelocityMph: number | null;
+  maxVelocityMph: number | null;
+};
+
+export type PitcherSkillProfile = {
+  source: "archive-gamefeed-line" | "live-people-stats-line" | "fixture-line";
+  note: string;
+  season: PitcherSkillSnapshot;
+  trailing30: PitcherSkillSnapshot;
+  statcastStatus: "available" | "partial" | "pending";
 };
 
 export type PitcherApiSeasonLogSort = "date-desc" | "gs-desc" | "ip-desc";
@@ -599,6 +718,7 @@ export type PitcherApiSplitGroup = {
 
 export type PitcherApiResponse = Pick<PitcherSummary, "id" | "mlbId" | "name" | "team" | "throws" | "headshotUrl"> & {
   seasonLine: PitcherDetail["seasonLine"];
+  skillProfile: PitcherSkillProfile;
   arsenal: ArsenalPitchSummary[];
   starts: PitcherApiStartLogEntry[];
   seasonLogSummary: PitcherApiSeasonLogSummary;
@@ -607,7 +727,7 @@ export type PitcherApiResponse = Pick<PitcherSummary, "id" | "mlbId" | "name" | 
     identity: "fixture" | "live-people-stats";
     seasonLine: "fixture" | "archive-gamefeed" | "live-people-stats";
     startHistory: "fixture" | "archive-gamefeed" | "live-people-stats";
-    arsenal: "fixture" | "archive-gamefeed" | "live-gamefeed";
+    arsenal: "fixture" | "archive-gamefeed" | "live-gamefeed" | "statcast-savant";
     splits: "live-people-stat-splits" | "pending-live-source";
     archiveArsenal: {
       season: string;

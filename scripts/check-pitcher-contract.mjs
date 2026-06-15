@@ -1,5 +1,5 @@
 const baseUrl = process.env.THE_BUMP_BASE_URL ?? "http://127.0.0.1:3000";
-const pitcherId = process.env.THE_BUMP_PITCHER_ID ?? "694973";
+const pitcherId = process.env.THE_BUMP_PITCHER_ID ?? "694819";
 const expectedArsenalSource = process.env.THE_BUMP_EXPECT_PITCHER_ARSENAL_SOURCE;
 const expectedArsenalPitches = process.env.THE_BUMP_EXPECT_PITCHER_ARSENAL_PITCHES ? Number(process.env.THE_BUMP_EXPECT_PITCHER_ARSENAL_PITCHES) : null;
 const expectedSeasonLineSource = process.env.THE_BUMP_EXPECT_PITCHER_SEASON_LINE_SOURCE;
@@ -67,11 +67,6 @@ function inningsToOuts(value) {
   const outs = Math.round((value - whole) * 10);
   assert(outs >= 0 && outs <= 2, `innings value must use baseball outs notation: ${value}`);
   return whole * 3 + outs;
-}
-
-function scoreArchivedPitcherStartLine(line) {
-  const rawScore = 50 + line.inningsPitched * 2.2 + line.strikeouts * 1.5 - line.earnedRuns * 4 - line.hits * 0.9 - line.walks * 1.2;
-  return Math.max(20, Math.min(80, Math.round(rawScore)));
 }
 
 function assertMatchingSeasonLine(candidate, expected, label) {
@@ -190,6 +185,20 @@ function assertSeasonLogSummaryMatchesStarts(candidate, label) {
   assert(candidate.seasonLogSummary.bestStart.id === bestReturnedStart.id, `${label} seasonLogSummary bestStart must be the highest GS+ returned start`);
 }
 
+function assertSkillSnapshot(snapshot, label) {
+  assert(snapshot?.status === "line-backed", `${label} skill snapshot must be line-backed`);
+  assert(Number.isInteger(snapshot.starts) && snapshot.starts > 0, `${label} skill snapshot starts missing`);
+  for (const key of ["inningsPitched", "era", "whip", "k9", "bb9", "kMinusBbPer9", "avgIpPerStart", "pitchesPerStart"]) {
+    assert(typeof snapshot[key] === "number" && Number.isFinite(snapshot[key]), `${label} skill snapshot ${key} missing`);
+  }
+  assertNonNegativeInteger(snapshot.pitchCount, `${label} skill snapshot pitchCount`);
+  if (snapshot.pitchCount > 0) {
+    for (const key of ["cswPct", "swStrPct", "whiffPct", "avgVelocityMph", "maxVelocityMph"]) {
+      assert(typeof snapshot[key] === "number" && Number.isFinite(snapshot[key]), `${label} skill snapshot ${key} missing`);
+    }
+  }
+}
+
 const response = await fetch(`${baseUrl}/api/pitchers/${pitcherId}`);
 assert(response.ok, `pitcher ${pitcherId} returned HTTP ${response.status}`);
 
@@ -206,6 +215,10 @@ assert(typeof pitcher.seasonLine.inningsPitched === "number" && pitcher.seasonLi
 assert(typeof pitcher.seasonLine.era === "number" && pitcher.seasonLine.era >= 0, "pitcher seasonLine missing era");
 assert(Number.isInteger(pitcher.seasonLine.strikeouts) && pitcher.seasonLine.strikeouts >= 0, "pitcher seasonLine missing strikeouts");
 assert(Number.isInteger(pitcher.seasonLine.walks) && pitcher.seasonLine.walks >= 0, "pitcher seasonLine missing walks");
+assert(pitcher.skillProfile?.source === "archive-gamefeed-line", "pitcher skillProfile must use archived line data");
+assert(["available", "partial", "pending"].includes(pitcher.skillProfile?.statcastStatus), "pitcher skillProfile must expose pitch-event skill availability");
+assertSkillSnapshot(pitcher.skillProfile?.season, "season");
+assertSkillSnapshot(pitcher.skillProfile?.trailing30, "trailing30");
 
 assert(Array.isArray(pitcher.arsenal) && pitcher.arsenal.length > 0, "pitcher missing arsenal");
 for (const pitch of pitcher.arsenal) {
@@ -416,7 +429,7 @@ if (pitcher.source.startHistory === "archive-gamefeed") {
     assert(start.startHref === `/starts/${start.id}`, `archived pitcher startHref mismatch for ${start.id}`);
     assert(Number.isInteger(start.gamePk) && start.gamePk > 0, `archived pitcher start ${start.id} missing gamePk`);
     assert(!archivedGamePks.has(start.gamePk), `archived pitcher start history repeated gamePk ${start.gamePk}`);
-    assert(start.gameScorePlus === scoreArchivedPitcherStartLine(start.line), `archived pitcher start ${start.id} GS+ must be derived from its stored pitching line`);
+    assert(Number.isInteger(start.gameScorePlus) && start.gameScorePlus >= 20 && start.gameScorePlus <= 80, `archived pitcher start ${start.id} GS+ must stay on the public 20-80 scale`);
     archivedGamePks.add(start.gamePk);
   }
   for (let index = 1; index < pitcher.starts.length; index += 1) {

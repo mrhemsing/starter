@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { FormDriverChips } from "@/components/form-driver-chips";
+import { FormSparkline } from "@/components/form-visuals";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
@@ -27,8 +29,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <>
             <LeagueTempStrip home={home} />
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <HeatRail title="On fire & hot" tone="hot" pitchers={home.hot} window={home.window} />
-              <HeatRail title="Cooling & ice cold" tone="cold" pitchers={home.cold} window={home.window} />
+              <HeatRail title="On fire & hot" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="Cooling & ice cold" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
             </div>
             {home.totalQualified < HOME_CONFIG.railSize * 4 ? (
               <p className="mt-4 font-mono text-xs text-zinc-500">Form stabilizes after a few starts. Sample is still small.</p>
@@ -76,7 +78,7 @@ function LeagueTempStrip({ home }: { home: FormHomeResponse }) {
   );
 }
 
-function HeatRail({ title, tone, pitchers, window }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[]; window: number }) {
+function HeatRail({ title, tone, pitchers, window, leagueMeanGS }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[]; window: number; leagueMeanGS: number }) {
   const toneColor = tone === "hot" ? HEAT_BANDS[0].color : HEAT_BANDS[HEAT_BANDS.length - 1].color;
   const railMarker = tone === "hot" ? "▲" : "▼";
   const railIntensity = Math.max(
@@ -94,13 +96,13 @@ function HeatRail({ title, tone, pitchers, window }: { title: string; tone: "hot
         <h3 className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: toneColor }}>{title}</h3>
       </div>
       <div className="space-y-2">
-        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} window={window} />)}
+        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} window={window} leagueMeanGS={leagueMeanGS} />)}
       </div>
     </section>
   );
 }
 
-function HeatRow({ pitcher, window }: { pitcher: FormSummary; window: number }) {
+function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; window: number; leagueMeanGS: number }) {
   const band = levelBandFor(pitcher);
   const nextStart = nextStartDetails(pitcher);
   const tone = heatTone(band);
@@ -173,6 +175,15 @@ function HeatRow({ pitcher, window }: { pitcher: FormSummary; window: number }) 
         </div>
 
         <HeatMeter heatIndex={pitcher.heatIndex ?? 0} band={band} deltaForm={pitcher.deltaForm} />
+        <FormSparkline
+          values={pitcher.spark}
+          tier={pitcher.tier}
+          leagueMeanGS={leagueMeanGS}
+          label={`${pitcher.name} recent GS+: ${pitcher.spark.join(", ")}`}
+          trend={pitcher.trend}
+          variant="mini"
+        />
+        <FormDriverChips chips={pitcher.driverChips} compact />
       </div>
 
       <div className="pointer-events-none relative z-30 col-span-full mt-1 flex items-center justify-between gap-3 border-t border-[#26262c] pt-3 font-mono text-[11px] uppercase tracking-[0.12em]">

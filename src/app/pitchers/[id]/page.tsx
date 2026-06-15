@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getPitcherApiResponse } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
-import type { PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort } from "@/lib/types";
+import type { PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherSkillSnapshot } from "@/lib/types";
 
 type PitcherPageProps = {
   params: Promise<{
@@ -20,6 +20,7 @@ const sourceLabels = {
   "archive-gamefeed": "Archived gamefeed",
   "live-people-stats": "MLB people stats",
   "live-gamefeed": "MLB gamefeed",
+  "statcast-savant": "Baseball Savant",
   "live-people-stat-splits": "MLB stat splits",
   "pending-live-source": "Pending live source",
 } as const;
@@ -165,6 +166,20 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
 
           <div>
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Start history</p>
+            <section className="mb-6 rounded border border-white/10 bg-[#101014] p-4">
+              <div className="flex flex-col justify-between gap-2 border-b border-white/10 pb-4 md:flex-row md:items-end">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Skill profile</p>
+                  <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Skill profile</h2>
+                </div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{pitcher.skillProfile.source} / {pitcher.skillProfile.statcastStatus}</p>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <SkillSnapshotCard snapshot={pitcher.skillProfile.season} />
+                <SkillSnapshotCard snapshot={pitcher.skillProfile.trailing30} />
+              </div>
+              <p className="mt-3 text-xs leading-5 text-zinc-500">{pitcher.skillProfile.note}</p>
+            </section>
             <div className="mb-4 grid gap-3 sm:grid-cols-3">
               <div className="rounded border border-white/10 bg-[#101014] p-4">
                 <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Recent starts</p>
@@ -254,5 +269,46 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
         </section>
       </div>
     </main>
+  );
+}
+
+function SkillSnapshotCard({ snapshot }: { snapshot: PitcherSkillSnapshot }) {
+  return (
+    <div className="rounded border border-white/10 bg-black/25 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-zinc-200">{snapshot.label}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{snapshot.starts} starts</p>
+      </div>
+      <dl className="mt-3 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
+        <SkillMetric label="ERA" value={formatNullableStat(snapshot.era, 2)} />
+        <SkillMetric label="WHIP" value={formatNullableStat(snapshot.whip, 2)} />
+        <SkillMetric label="K/9" value={formatNullableStat(snapshot.k9, 1)} />
+        <SkillMetric label="BB/9" value={formatNullableStat(snapshot.bb9, 1)} />
+        <SkillMetric label="K-BB/9" value={formatNullableStat(snapshot.kMinusBbPer9, 1)} />
+        <SkillMetric label="IP/start" value={formatNullableStat(snapshot.avgIpPerStart, 1)} />
+        <SkillMetric label="Pit/start" value={formatNullableStat(snapshot.pitchesPerStart, 1)} />
+        <SkillMetric label="IP" value={snapshot.inningsPitched.toFixed(1)} />
+      </dl>
+      {snapshot.pitchCount > 0 ? (
+        <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-white/10 pt-3 font-mono text-xs sm:grid-cols-5">
+          <SkillMetric label="CSW%" value={formatNullableStat(snapshot.cswPct, 1)} />
+          <SkillMetric label="SwStr%" value={formatNullableStat(snapshot.swStrPct, 1)} />
+          <SkillMetric label="Whiff%" value={formatNullableStat(snapshot.whiffPct, 1)} />
+          <SkillMetric label="Avg velo" value={formatNullableStat(snapshot.avgVelocityMph, 1)} />
+          <SkillMetric label="Max velo" value={formatNullableStat(snapshot.maxVelocityMph, 1)} />
+        </dl>
+      ) : (
+        <p className="mt-3 border-t border-white/10 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Pitch-event skills pending</p>
+      )}
+    </div>
+  );
+}
+
+function SkillMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-zinc-500">{label}</dt>
+      <dd className="mt-1 text-zinc-100">{value}</dd>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { LocalTime } from "@/components/local-time";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
@@ -44,6 +45,17 @@ export function TonightsMustWatch({
       data-game-count={shownGames.length}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
+      data-active-card-statuses={tonight.activeCardStatuses.join(",")}
+      data-form-window={tonight.formWindow}
+      data-watch-weight-top-arm={tonight.watchScoreWeights.topArm}
+      data-watch-weight-pairing={tonight.watchScoreWeights.pairAvg}
+      data-watch-weight-matchup={tonight.watchScoreWeights.matchup}
+      data-watch-sort-policy={tonight.watchSortPolicy}
+      data-watch-score-min={tonight.watchScoreRange.min}
+      data-watch-score-max={tonight.watchScoreRange.max}
+      data-watch-score-precision={tonight.watchScorePrecision}
+      data-matchup-score-min={tonight.matchupScoreRange.min}
+      data-matchup-score-max={tonight.matchupScoreRange.max}
     >
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
@@ -52,6 +64,9 @@ export function TonightsMustWatch({
             <h2 id={headingId} className="mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               Ranked by starter form, pairing quality, and matchup context. Matchup values are shown with a slate rank, never as a bare number.
+            </p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+              Data through <LocalTime value={tonight.generatedAt} fallback={formatFirstPitch(tonight.generatedAt)} /> / MLB Stats API / Baseball Savant / Open-Meteo
             </p>
           </div>
           <Link
@@ -64,11 +79,16 @@ export function TonightsMustWatch({
         </div>
 
         {!headliner ? (
-          <div className="rounded border border-white/10 bg-[#101014] p-6" role="status" aria-label="Upcoming slate status">
+          <div
+            className="rounded border border-white/10 bg-[#101014] p-6"
+            role="status"
+            aria-label="Upcoming slate status"
+            data-empty-reason={tonight.scheduledGames > 0 ? "completed-or-postponed" : "no-games"}
+          >
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
             <p className="mt-3 text-sm text-zinc-400">
               {tonight.scheduledGames > 0
-                ? "No pregame matchups remain on this slate. Final games move into the ranked-start recap."
+                ? "No active pregame matchups remain on this slate. Final or postponed games are removed from the upcoming watch list."
                 : "The next probable slate will appear when MLB publishes it."}
             </p>
           </div>
@@ -104,6 +124,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
       data-limited-form={String(game.flags?.limitedForm === true)}
       data-watch-rank={game.status === "ppd" ? "-" : "1"}
       data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
@@ -123,9 +144,10 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
             >
               {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #1 of {slateSize} watch rank
             </p>
+            <GameEnvironmentChips game={game} />
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200">Best matchup on the board</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200">Top watch score</p>
             <p className="mt-1 font-serif text-3xl font-black text-amber-100">#1 tonight</p>
           </div>
         </div>
@@ -159,6 +181,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-limited-form={String(game.flags?.limitedForm === true)}
       data-watch-rank={rank}
       data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
@@ -182,9 +205,10 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
               >
                 {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #{rank} of {slateSize} watch rank
               </p>
+              <GameEnvironmentChips game={game} compact />
             </div>
             <p className="shrink-0 rounded border border-amber-300/25 bg-amber-300/10 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">
-              {ordinal(game.matchupRankTonight)} matchup
+              {matchupStatusLabel(game)}
             </p>
           </div>
           <WatchComponentReadout game={game} compact rankLabel={rankLabel} />
@@ -206,8 +230,10 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       key: "matchup",
       label: "Matchup",
       value: game.matchupScore,
-      detail: `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
-      ariaLabel: `Matchup score ${Math.round(game.matchupScore)}, ranked ${ordinal(game.matchupRankTonight)} ${rankLabel}`,
+      detail: game.matchupContext.status === "pending-opponent-splits" ? "pending" : `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
+      ariaLabel: game.matchupContext.status === "pending-opponent-splits"
+        ? "Opponent split matchup context pending"
+        : `Matchup score ${Math.round(game.matchupScore)}, ranked ${ordinal(game.matchupRankTonight)} ${rankLabel}`,
     },
   ];
 
@@ -258,10 +284,14 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
     <div className="flex min-h-full flex-col justify-between rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]">
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">The hook</p>
-        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">#1</p>
+        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{game.matchupContext.status === "pending-opponent-splits" ? "Pending" : `#${game.matchupRankTonight}`}</p>
         <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">matchup {rankLabel}</p>
-        <p className="mt-3 text-sm leading-5 text-zinc-300">Best matchup on the board tonight</p>
-        <p className="mt-1 font-mono text-xs text-zinc-500">Score {game.matchupScore.toFixed(1)}</p>
+        <p className="mt-3 text-sm leading-5 text-zinc-300">
+          {game.matchupContext.status === "pending-opponent-splits"
+            ? game.matchupContext.label
+            : game.matchupRankTonight === 1 ? "Best matchup on the board tonight" : `Overall watch leader, ${ordinal(game.matchupRankTonight)} matchup`}
+        </p>
+        {game.matchupContext.status === "scored" ? <p className="mt-1 font-mono text-xs text-zinc-500">Score {game.matchupScore.toFixed(1)}</p> : null}
       </div>
       <div className="mt-4">
         <FormClash away={awayStarter} home={homeStarter} leagueMeanGS={leagueMeanGS} />
@@ -291,12 +321,17 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           </h4>
           {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
-              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}</p>
+              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
               {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
+              <StarterStatusChips starter={starter} />
+              <FormDriverChips chips={starter.driverChips} limit={1} compact />
             </div>
           ) : (
             <LimitedStarterLine starter={starter} />
           )}
+          <StarterProjectionLine starter={starter} align={align} />
+          <OpponentSplitLine starter={starter} align={align} />
+          <MarketContextLine starter={starter} align={align} />
         </div>
       </div>
       {starter.status === "ok" && starter.spark && starter.tier ? (
@@ -366,13 +401,49 @@ function componentBarColor(value: number) {
 }
 
 function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
-  if (!game.flags?.tbd && !game.flags?.limitedForm) return null;
+  if (!game.flags?.tbd && !game.flags?.limitedForm && game.matchupContext.status !== "pending-opponent-splits") return null;
 
   return (
     <p className={`${compact ? "mt-2" : "mt-4"} font-mono text-xs text-zinc-500`} aria-label={watchFlagNoteAriaLabel(game)}>
-      {game.flags.tbd ? "TBD starter included with league-mean fallback. " : ""}
-      {game.flags.limitedForm ? "Limited form samples use baseline fallback where needed." : ""}
+      {game.flags?.tbd ? "TBD starter included with league-mean fallback. " : ""}
+      {game.flags?.limitedForm ? "Limited form samples use baseline fallback where needed." : ""}
+      {game.matchupContext.status === "pending-opponent-splits" ? "Opponent split context pending." : ""}
     </p>
+  );
+}
+
+function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
+  const chips = [
+    {
+      label: `Park ${game.parkContext.runFactor.toFixed(2)}`,
+      detail: game.parkContext.label,
+      tone: game.parkContext.runFactor >= 1.06 ? "warm" : game.parkContext.runFactor <= 0.96 ? "cool" : "muted",
+    },
+    {
+      label: weatherChipLabel(game),
+      detail: game.weatherContext.label,
+      tone: game.weatherContext.runValue > 0.4 ? "warm" : game.weatherContext.runValue < -0.4 ? "cool" : "muted",
+    },
+  ] as const;
+
+  return (
+    <div className={`${compact ? "mt-2" : "mt-3"} flex flex-wrap gap-1.5`} aria-label={`${game.label} park and weather context`}>
+      {chips.map((chip) => (
+        <span
+          key={chip.label}
+          title={chip.detail}
+          className={`inline-flex min-h-6 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            chip.tone === "warm"
+              ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
+              : chip.tone === "cool"
+                ? "border-sky-300/30 bg-sky-300/10 text-sky-200"
+                : "border-white/10 bg-white/[0.04] text-zinc-400"
+          }`}
+        >
+          {chip.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -403,7 +474,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       <div className="ml-auto text-right">
         {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
           <>
-            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}</p>
+            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
             {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
           </>
         ) : (
@@ -412,6 +483,15 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           </p>
         )}
       </div>
+      {starter.status === "ok" ? (
+        <div className="col-span-full -mt-1">
+          <StarterStatusChips starter={starter} />
+          <FormDriverChips chips={starter.driverChips} limit={1} compact />
+          <StarterProjectionLine starter={starter} compact />
+          <OpponentSplitLine starter={starter} compact />
+          <MarketContextLine starter={starter} compact />
+        </div>
+      ) : null}
       {starter.status === "ok" && starter.spark && starter.tier ? (
         <div className="col-span-full -mt-1">
           <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={color} />
@@ -430,6 +510,135 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
     <div className="mt-3 text-sm text-zinc-400">
       <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>Limited form sample</p>
       {starter.lastStart ? <p className="mt-1">Last: vs {starter.lastStart.opp} / {formatStartLine({ inningsPitched: starter.lastStart.ip, hits: starter.lastStart.h, earnedRuns: starter.lastStart.er, walks: starter.lastStart.bb, strikeouts: starter.lastStart.k, pitches: 0 })} / GS+ {starter.lastStart.gsPlus}</p> : null}
+    </div>
+  );
+}
+
+function StarterProjectionLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
+  const projection = starter.projection;
+  if (!projection) return null;
+  const justify = align === "home" ? "lg:justify-end" : "";
+  if (projection.status !== "line-backed" || projection.projectedGsPlus === null) {
+    return (
+      <p className={`${compact ? "mt-1" : "mt-3"} font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 ${justify}`}>
+        Projection pending
+      </p>
+    );
+  }
+
+  const projectedLine = [
+    projection.line.inningsPitched === null ? null : `${projection.line.inningsPitched.toFixed(1)} IP`,
+    projection.line.strikeouts === null ? null : `${projection.line.strikeouts.toFixed(1)} K`,
+    projection.line.earnedRuns === null ? null : `${projection.line.earnedRuns.toFixed(1)} ER`,
+  ].filter(Boolean).join(" / ");
+
+  return (
+    <div className={`${compact ? "mt-1" : "mt-3"} flex flex-wrap gap-1.5 ${justify}`} title={projection.notes.join("; ")}>
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+        Proj GS+ {projection.projectedGsPlus.toFixed(1)}
+      </span>
+      {projectedLine ? (
+        <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+          {projectedLine}
+        </span>
+      ) : null}
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+        {projection.confidence} confidence
+      </span>
+    </div>
+  );
+}
+
+function OpponentSplitLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
+  const split = starter.opponentSplit;
+  if (!split) return null;
+  const justify = align === "home" ? "lg:justify-end" : "";
+  return (
+    <div className={`${compact ? "mt-1" : "mt-2"} flex flex-wrap gap-1.5 ${justify}`} title={split.label} aria-label={`${starter.name ?? "Starter"} opponent split context`}>
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+        Opp {split.split === "vs-lhp" ? "vs LHP" : "vs RHP"} {split.ops.toFixed(3)} OPS
+      </span>
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+        {(split.strikeoutRate * 100).toFixed(1)}% K
+      </span>
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+        OPS rank {ordinal(split.opsRank)}
+      </span>
+    </div>
+  );
+}
+
+function MarketContextLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
+  const market = starter.marketContext;
+  if (!market) return null;
+  const justify = align === "home" ? "lg:justify-end" : "";
+  const strikeoutText = market.strikeoutPropLine === null
+    ? `Proj K ${market.projectedStrikeouts === null ? "--" : market.projectedStrikeouts.toFixed(1)} / prop pending`
+    : `K edge ${market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}`;
+
+  return (
+    <div
+      className={`${compact ? "mt-1" : "mt-2"} flex flex-wrap gap-1.5 ${justify}`}
+      title={market.label}
+      aria-label={`${starter.name ?? "Starter"} betting and DFS context`}
+      data-market-status={market.status}
+      data-market-source={market.source}
+      data-projected-strikeouts={market.projectedStrikeouts === null ? "pending" : market.projectedStrikeouts.toFixed(1)}
+      data-strikeout-prop-line={market.strikeoutPropLine === null ? "pending" : market.strikeoutPropLine.toFixed(1)}
+      data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
+      data-opposing-team-total={market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
+    >
+      <span className="inline-flex min-h-6 items-center rounded border border-emerald-300/20 bg-emerald-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-200">
+        {strikeoutText}
+      </span>
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+        Team total {market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
+      </span>
+    </div>
+  );
+}
+
+function EraAnchor({ starter }: { starter: TonightStarter }) {
+  const era = starter.seasonStats?.era;
+  const ip = starter.seasonStats?.inningsPitched ?? 0;
+  if (typeof era !== "number") return <span className="text-zinc-500"> · —</span>;
+  if (ip < 10) return null;
+  return <span className="font-normal text-zinc-500"> · {era.toFixed(2)} ERA</span>;
+}
+
+function formatSigned(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+}
+
+function StarterStatusChips({ starter }: { starter: TonightStarter }) {
+  const chips: Array<{ label: string; tone: "warn" | "muted" | "info" }> = [];
+  if (starter.flags?.limitedSample) chips.push({ label: "Small sample", tone: "warn" });
+  if (starter.flags?.rust) chips.push({ label: "Rust watch", tone: "warn" });
+  if (starter.workload?.daysRest !== null && starter.workload?.daysRest !== undefined) {
+    const restLabel = `${starter.workload.daysRest}d rest`;
+    chips.push({ label: restLabel, tone: starter.workload.restLabel === "short" ? "warn" : starter.workload.restLabel === "extended" ? "info" : "muted" });
+  }
+  if (typeof starter.workload?.avgPitchesLast5 === "number") {
+    chips.push({ label: `${starter.workload.avgPitchesLast5.toFixed(0)} pitch avg`, tone: "muted" });
+  }
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden" aria-label={`${starter.name ?? "Starter"} rest and workload`}>
+      {chips.slice(0, 3).map((chip) => (
+        <span
+          key={chip.label}
+          className={`inline-flex min-h-6 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            chip.tone === "warn"
+              ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
+              : chip.tone === "info"
+                ? "border-sky-300/30 bg-sky-300/10 text-sky-200"
+                : "border-white/10 bg-white/[0.04] text-zinc-400"
+          }`}
+        >
+          {chip.label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -483,6 +692,23 @@ function gameVenueLabel(game: TonightGame) {
   return game.park || "Venue TBD";
 }
 
+function weatherChipLabel(game: TonightGame) {
+  if (game.weatherContext.source === "indoor") return "Indoor";
+  if (game.weatherContext.source === "unavailable") return "Weather pending";
+  const parts = [];
+  if (typeof game.weatherContext.tempF === "number") parts.push(`${Math.round(game.weatherContext.tempF)}F`);
+  if (typeof game.weatherContext.windMph === "number") parts.push(`${Math.round(game.weatherContext.windMph)} mph wind`);
+  if (typeof game.weatherContext.precipProbability === "number" && game.weatherContext.precipProbability >= 30) {
+    parts.push(`${Math.round(game.weatherContext.precipProbability)}% rain`);
+  }
+  return parts.length > 0 ? parts.join(" / ") : "Weather neutral";
+}
+
+function matchupStatusLabel(game: TonightGame) {
+  if (game.matchupContext.status === "pending-opponent-splits") return "Matchup pending";
+  return `${ordinal(game.matchupRankTonight)} matchup`;
+}
+
 function watchCardAriaLabel(game: TonightGame) {
   return `Watch card for ${game.label} on ${formatSlateDate(game.date)}`;
 }
@@ -512,6 +738,7 @@ function watchFlagNoteAriaLabel(game: TonightGame) {
   const notes = [];
   if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
   if (game.flags?.limitedForm) notes.push("Limited form samples use baseline fallback where needed");
+  if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }
 
