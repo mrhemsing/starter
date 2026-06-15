@@ -10,13 +10,14 @@ import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
 import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
+import { getPitcherFormMap } from "@/lib/data/form-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
-import { QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
+import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { pitcherPath, rankedStartsPath, startPath, startShareImagePath } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { FeaturedStartHighlight, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
   params: Promise<{
@@ -24,6 +25,7 @@ type StartPageProps = {
   }>;
   searchParams?: Promise<{
     band?: string;
+    openers?: string;
     team?: string;
     sort?: string;
   }>;
@@ -161,14 +163,18 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
     getRankedSlateCompletionState(date, today),
   ]);
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
-  const scoreScale = summarizeSlateScoreScale(starts);
+  const qualifiedStarts = starts.filter(isQualifiedRankedStart);
+  const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
+  const scoreScale = summarizeSlateScoreScale(qualifiedStarts);
   const sort = isRankedStartSort(params?.sort) ? params?.sort ?? "rank" : "rank";
   const band = parseQualityBand(params?.band);
-  const qualityBandCounts = countQualityBands(starts);
+  const showOpeners = params?.openers === "1";
+  const qualityBandCounts = countQualityBands(qualifiedStarts);
   const pairs = pairedStarts(starts);
   const highlights = await resolveRankedStartHighlights(starts);
-  const jsonLd = jsonLdForRankedStarts(date, starts);
-  const visibleStarts = starts
+  const formByPitcher = await getPitcherFormMap(starts.map((start) => String(start.pitcher.mlbId)), { window: 5 });
+  const jsonLd = jsonLdForRankedStarts(date, qualifiedStarts);
+  const visibleStarts = qualifiedStarts
     .filter((start) => band === "all" || qualityBandSlug(qualityTierOf(start.gameScorePlus).label) === band)
     .sort((a, b) => {
       if (sort === "k") return b.line.strikeouts - a.line.strikeouts || a.rank - b.rank;
@@ -205,18 +211,18 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="ranked-start-controls">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-zinc-500">Sort</span>
-                <ControlLink active={sort === "rank"} href={rankedStartsHref(date, { band, sort: "rank" })}>GS+ rank</ControlLink>
-                <ControlLink active={sort === "k"} href={rankedStartsHref(date, { band, sort: "k" })}>Strikeouts</ControlLink>
-                <ControlLink active={sort === "ip"} href={rankedStartsHref(date, { band, sort: "ip" })}>IP</ControlLink>
+                <ControlLink active={sort === "rank"} href={rankedStartsHref(date, { band, sort: "rank", showOpeners })}>GS+ rank</ControlLink>
+                <ControlLink active={sort === "k"} href={rankedStartsHref(date, { band, sort: "k", showOpeners })}>Strikeouts</ControlLink>
+                <ControlLink active={sort === "ip"} href={rankedStartsHref(date, { band, sort: "ip", showOpeners })}>IP</ControlLink>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-zinc-500">Band</span>
-                <ControlLink active={band === "all"} href={rankedStartsHref(date, { sort })}>All <span className="opacity-60">{starts.length}</span></ControlLink>
+                <ControlLink active={band === "all"} href={rankedStartsHref(date, { sort, showOpeners })}>All <span className="opacity-60">{qualifiedStarts.length}</span></ControlLink>
                 {QUALITY_BANDS.map((qualityBand) => (
                   <ControlLink
                     key={qualityBand.label}
                     active={band === qualityBandSlug(qualityBand.label)}
-                    href={rankedStartsHref(date, { band: qualityBandSlug(qualityBand.label), sort })}
+                    href={rankedStartsHref(date, { band: qualityBandSlug(qualityBand.label), sort, showOpeners })}
                     color={qualityBand.color}
                   >
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: qualityBand.color }} />
@@ -225,6 +231,13 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   </ControlLink>
                 ))}
               </div>
+              {shortStarts.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-zinc-500">Short outings</span>
+                  <ControlLink active={!showOpeners} href={rankedStartsHref(date, { band, sort })}>Hide <span className="opacity-60">{shortStarts.length}</span></ControlLink>
+                  <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: true })}>Show openers & short outings</ControlLink>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </header>
@@ -236,7 +249,10 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           </section>
         ) : (
           <>
-            <StartsDistributionStrip starts={starts} />
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+              Board ranks qualified starts (3.0+ IP); openers and short outings are listed separately.
+            </p>
+            <StartsDistributionStrip starts={qualifiedStarts} />
             {visibleStarts.length > 0 ? (
               <section className="mt-4 space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
                 {groupedStarts.map((group) => (
@@ -249,6 +265,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                           start={start}
                           displayRank={visibleStarts.findIndex((candidate) => candidate.id === start.id) + 1}
                           pairedStart={pairs.get(start.id)}
+                          formSummary={formByPitcher.get(String(start.pitcher.mlbId))}
                           highlight={highlights.get(start.id) ?? null}
                           provisionalLeader={visibleStarts[0]?.id === start.id && completionState.isPartialToday && band === "all" && sort === "rank"}
                           grouped={Boolean(group.label)}
@@ -262,9 +279,29 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               <section className="mt-4 rounded border border-white/10 bg-[#101014] p-6" role="status" data-responsive-check="ranked-starts-empty-band">
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">No starts in this band</p>
                 <p className="mt-3 text-sm text-zinc-400">Try another GS+ quality band or return to all starts for this slate.</p>
-                <ControlLink active={false} href={rankedStartsHref(date, { sort })}>Show all starts</ControlLink>
+                <ControlLink active={false} href={rankedStartsHref(date, { sort, showOpeners })}>Show all starts</ControlLink>
               </section>
             )}
+            {shortStarts.length > 0 ? (
+              <section className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="ranked-starts-openers" data-openers-visible={showOpeners ? "true" : "false"}>
+                <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Openers & short outings · {shortStarts.length}</p>
+                    <p className="mt-1 text-sm text-zinc-400">Sub-3.0 IP starts are kept out of the ranked positions but remain visible for slate completeness.</p>
+                  </div>
+                  <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })}>
+                    {showOpeners ? "Hide short outings" : "Show openers & short outings"}
+                  </ControlLink>
+                </div>
+                {showOpeners ? (
+                  <div className="mt-3 grid gap-2">
+                    {shortStarts.map((start) => (
+                      <ShortStartCard key={start.id} start={start} formSummary={formByPitcher.get(String(start.pitcher.mlbId))} />
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
             {completionState.isPartialToday ? (
               <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
@@ -291,7 +328,7 @@ function BandHeader({ label, count, color }: { label: string; count: number; col
   );
 }
 
-function RankedStartCard({ start, displayRank, pairedStart, highlight, provisionalLeader, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean; grouped?: boolean }) {
+function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlight, provisionalLeader, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; formSummary?: FormSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean; grouped?: boolean }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const profile = rankedBandProfile(tier.label);
   const tierTextColor = profile.scoreColor;
@@ -299,6 +336,8 @@ function RankedStartCard({ start, displayRank, pairedStart, highlight, provision
   const gas = isGasStart(start, tier.label);
   const topReason = topInlineReason(start);
   const initials = pitcherInitials(start.pitcher.name);
+  const thermalBand = thermalBandForForm(formSummary);
+  const thermalClass = thermalHeadshotClass(thermalBand);
 
   return (
     <article
@@ -326,7 +365,8 @@ function RankedStartCard({ start, displayRank, pairedStart, highlight, provision
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
         <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
-          <div className={`${profile.plateClass} relative grid place-items-center overflow-hidden rounded-xl border`} style={{ borderColor: profile.ringColor, background: "#15181C" }}>
+          <div className={`${profile.plateClass} thermal-headshot ${thermalClass} relative grid place-items-center overflow-hidden rounded-xl border`} style={{ borderColor: thermalBorderColor(thermalBand, profile.ringColor), background: "#15181C" }} data-form-band={thermalBand ?? "neutral"}>
+            <ThermalHeadshotEffects band={thermalBand} />
             <span className="absolute font-mono text-xs font-semibold text-zinc-300">{initials}</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -391,6 +431,57 @@ function RankedStartCard({ start, displayRank, pairedStart, highlight, provision
       </details>
     </article>
   );
+}
+
+function ShortStartCard({ start, formSummary }: { start: StartSummary; formSummary?: FormSummary }) {
+  const thermalBand = thermalBandForForm(formSummary);
+  const badge = shortStartBadge(start);
+  return (
+    <article
+      id={start.id}
+      className="grid items-center gap-3 rounded border border-white/10 bg-black/20 p-3 sm:grid-cols-[auto_48px_minmax(0,1fr)_auto]"
+      data-short-start-kind={badge}
+      data-responsive-check="short-start-card"
+    >
+      <span className={`inline-flex min-h-7 w-fit items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${badge === "OPENER" ? "border-amber-300/35 bg-amber-300/10 text-amber-200" : "border-sky-300/25 bg-sky-300/10 text-sky-200"}`}>
+        {badge}
+      </span>
+      <Link href={startPath(start.id)} className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid h-12 w-12 place-items-center overflow-hidden rounded-xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
+        <ThermalHeadshotEffects band={thermalBand} />
+        <span className="absolute font-mono text-xs font-semibold text-zinc-300">{pitcherInitials(start.pitcher.name)}</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 96)} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="relative h-full w-full object-cover object-[center_18%]" />
+      </Link>
+      <div className="min-w-0">
+        <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent} / not ranked</p>
+      </div>
+      <div className="font-mono text-xs text-zinc-400 sm:text-right">
+        <p>{formatStartLine(start.line)}</p>
+        <p className="mt-1 text-zinc-500">GS+ {start.gameScorePlus}</p>
+      </div>
+    </article>
+  );
+}
+
+function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
+  if (band === "onfire") {
+    return (
+      <>
+        <span className="thermal-headshot__flames" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  if (band === "ice") {
+    return (
+      <>
+        <span className="thermal-headshot__frost" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  return null;
 }
 
 async function resolveRankedStartHighlights(starts: StartSummary[]) {
@@ -738,12 +829,38 @@ function countQualityBands(starts: StartSummary[]) {
   return counts;
 }
 
-function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort?: string }) {
+function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort?: string; showOpeners?: boolean }) {
   const params = new URLSearchParams();
   if (values.sort && values.sort !== "rank") params.set("sort", values.sort);
   if (values.band && values.band !== "all") params.set("band", values.band);
+  if (values.showOpeners) params.set("openers", "1");
   const query = params.toString();
   return `/starts/${date}${query ? `?${query}` : ""}`;
+}
+
+function isQualifiedRankedStart(start: StartSummary) {
+  return inningsFromIP(start.line.inningsPitched) >= 3;
+}
+
+function shortStartBadge(start: StartSummary): "OPENER" | "SHORT" {
+  return inningsFromIP(start.line.inningsPitched) < 2 ? "OPENER" : "SHORT";
+}
+
+function thermalBandForForm(summary: FormSummary | undefined): FormTier | null {
+  if (!summary || summary.status !== "ok" || summary.windowCount < FORM_CONFIG.minStartsToQualify) return null;
+  return summary.tier;
+}
+
+function thermalHeadshotClass(band: FormTier | null) {
+  return band ? `thermal-headshot--${band}` : "thermal-headshot--neutral";
+}
+
+function thermalBorderColor(band: FormTier | null, fallback: string) {
+  if (band === "onfire") return "#FF3B1F";
+  if (band === "hot") return "#FF8A3D";
+  if (band === "cooling") return "#5BA8FF";
+  if (band === "ice") return "#8FCBFF";
+  return fallback;
 }
 
 function jsonLdForRankedStarts(date: string, starts: StartSummary[]) {

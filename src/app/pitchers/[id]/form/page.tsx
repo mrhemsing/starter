@@ -14,7 +14,7 @@ import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, PitcherApiResponse, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormTier, PitcherApiResponse, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -80,6 +80,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
   const streak = countCurrentPlusStreak(series);
+  const thermalBand = summary.status === "ok" && summary.windowCount >= window ? summary.tier : null;
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
@@ -102,8 +103,11 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} />
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_240,q_auto:best/v1/people/${summary.pitcherId}/headshot/67/current`} alt="" className="mx-auto h-64 w-full max-w-64 object-contain object-bottom" />
+          <div className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative mx-auto h-64 w-full max-w-64 overflow-hidden rounded-2xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
+            <ThermalHeadshotEffects band={thermalBand} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_240,q_auto:best/v1/people/${summary.pitcherId}/headshot/67/current`} alt="" className="relative h-full w-full object-contain object-bottom" />
+          </div>
         </header>
 
         <section className="py-8">
@@ -298,6 +302,38 @@ function Callout({ label, value, detail, href }: { label: string; value: string;
       <p className="mt-1 font-mono text-xs text-zinc-500">{detail}</p>
     </Link>
   );
+}
+
+function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
+  if (band === "onfire") {
+    return (
+      <>
+        <span className="thermal-headshot__flames" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  if (band === "ice") {
+    return (
+      <>
+        <span className="thermal-headshot__frost" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  return null;
+}
+
+function thermalHeadshotClass(band: FormTier | null) {
+  return band ? `thermal-headshot--${band}` : "thermal-headshot--neutral";
+}
+
+function thermalBorderColor(band: FormTier | null, fallback: string) {
+  if (band === "onfire") return "#FF3B1F";
+  if (band === "hot") return "#FF8A3D";
+  if (band === "cooling") return "#5BA8FF";
+  if (band === "ice") return "#8FCBFF";
+  return fallback;
 }
 
 function countCurrentPlusStreak(series: Array<{ gsPlus: number }>) {

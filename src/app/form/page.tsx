@@ -14,7 +14,7 @@ import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/for
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { FormSummary, HeatBand } from "@/lib/types";
+import type { FormSummary, FormTier, HeatBand } from "@/lib/types";
 import type React from "react";
 
 type FormPageProps = {
@@ -367,6 +367,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
   const fullWindow = pitcher.windowCount >= window;
+  const thermalBand = fullWindow ? pitcher.tier : null;
 
   return (
     <article
@@ -380,7 +381,8 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
-      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className={`${treatment.plateClass} relative grid place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`} style={{ borderColor: bandColor }}>
+      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className={`${treatment.plateClass} thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`} style={{ borderColor: thermalBorderColor(thermalBand, bandColor) }} data-form-band={thermalBand ?? "neutral"}>
+        <ThermalHeadshotEffects band={thermalBand} />
         <span className="absolute font-mono text-xs font-semibold text-zinc-300">{pitcherInitials(pitcher.name)}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={rankedHeadshotUrl(pitcher.pitcherId, treatment.imageWidth)} alt={`${pitcher.name}, ${pitcher.team}`} loading="lazy" className={`relative h-full w-full object-cover object-[center_18%] ${treatment.imageClass}`} />
@@ -417,6 +419,38 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       </div>
     </article>
   );
+}
+
+function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
+  if (band === "onfire") {
+    return (
+      <>
+        <span className="thermal-headshot__flames" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  if (band === "ice") {
+    return (
+      <>
+        <span className="thermal-headshot__frost" aria-hidden="true" />
+        <span className="thermal-headshot__tint" aria-hidden="true" />
+      </>
+    );
+  }
+  return null;
+}
+
+function thermalHeadshotClass(band: FormTier | null) {
+  return band ? `thermal-headshot--${band}` : "thermal-headshot--neutral";
+}
+
+function thermalBorderColor(band: FormTier | null, fallback: string) {
+  if (band === "onfire") return "#FF3B1F";
+  if (band === "hot") return "#FF8A3D";
+  if (band === "cooling") return "#5BA8FF";
+  if (band === "ice") return "#8FCBFF";
+  return fallback;
 }
 
 function TemperatureRail({ bands, total, params }: { bands: Array<HeatBand & { count: number }>; total: number; params: Record<string, string | undefined> }) {
