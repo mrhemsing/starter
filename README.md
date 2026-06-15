@@ -18,6 +18,8 @@ Set `THE_BUMP_LIVE_MLB=1` when starting the Next server to ingest public MLB Sta
 
 Set `THE_BUMP_ODDS_API_KEY` to hydrate K props, team totals, and game totals from The Odds API. The default budget guard only fetches odds for today and tomorrow, then caches responses for 30 minutes so 7-day pages do not burn free-tier credits for every future slate. Override with `THE_BUMP_ODDS_MAX_DAYS_AHEAD` and `THE_BUMP_ODDS_CACHE_MINUTES` only when you intentionally want broader or fresher market coverage.
 
+YouTube highlights use checked-in manual video IDs by default. Dynamic YouTube search is disabled unless `YOUTUBE_SEARCH_ENABLED=1` because `search.list` is quota-expensive and page renders can otherwise exhaust a small API budget quickly.
+
 For durable local season storage, use the MLB archive commands. They write normalized schedule, completed starting-pitcher lines, arsenal summaries, and pitch events into ignored local JSON files under `data/mlb-archive/[season]/`.
 
 ```bash

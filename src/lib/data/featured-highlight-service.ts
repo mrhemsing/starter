@@ -6,6 +6,7 @@ const MLB_CHANNEL_PREFIX = "UCoLrcjPV5";
 const SEARCH_RESULT_LIMIT = 5;
 const CACHE_TTL_MS = 18 * 60 * 60 * 1000;
 const YOUTUBE_REVALIDATE_SECONDS = 18 * 60 * 60;
+const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";
 const ALL_GAME_HIGHLIGHTS_TITLE_PATTERN = /\ball\s+games(?:\s+highlights?)?\b/i;
 const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-06-12-mil-phi-694819": "MaAOy8pY36c",
@@ -56,6 +57,8 @@ export async function resolveFeaturedStartHighlight(start: StartDetail | null): 
   if (manualVideoId) {
     return cacheResolution(start.id, highlightFromVideoId(manualVideoId, "manual", false));
   }
+
+  if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);
 
   const resolved = await resolveYouTubeHighlight(start).catch(() => null);
   return cacheResolution(start.id, resolved);
