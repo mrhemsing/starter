@@ -299,7 +299,7 @@ function recapBandProfile(label: string) {
       background: "linear-gradient(90deg,rgba(91,168,255,0.10),rgba(14,18,24,0.92))",
       borderClass: "border-white/10",
       plateBackground: "rgba(16,24,34,0.92)",
-      imageClass: "grayscale opacity-80",
+      imageClass: "",
     };
   }
   return {

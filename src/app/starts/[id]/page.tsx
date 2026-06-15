@@ -727,7 +727,7 @@ function rankedBandProfile(label: string) {
       pitcherGridClass: "grid-cols-[40px_minmax(0,1fr)] sm:contents",
       plateClass: "h-10 w-10 sm:h-[55px] sm:w-11",
       imageWidth: 100,
-      imageClass: "grayscale opacity-80",
+      imageClass: "",
       nameClass: "text-lg sm:text-xl",
       rankClass: "text-xl",
       scoreClass: "text-3xl sm:text-[30px]",
