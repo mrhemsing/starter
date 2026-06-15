@@ -27,6 +27,7 @@ for (const file of dateFiles) {
   for (const game of archive.games ?? []) {
     for (const start of game.starts ?? []) {
       rows.push({
+        season: archive.season,
         date: archive.date,
         game_pk: start.gamePk,
         game_date: game.gameDate,

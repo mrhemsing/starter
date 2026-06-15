@@ -1,5 +1,5 @@
 create table if not exists public.frontfive_mlb_completed_starts (
-  season text generated always as (left(date, 4)) stored,
+  season text not null,
   date date not null,
   game_pk bigint not null,
   game_date timestamptz not null,
