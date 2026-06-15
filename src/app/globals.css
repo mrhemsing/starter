@@ -112,14 +112,6 @@ body {
     0 0 14px rgb(143 203 255 / 0.25);
 }
 
-.thermal-headshot--onfire img {
-  filter: saturate(1.2) contrast(1.05);
-}
-
-.thermal-headshot--ice img {
-  filter: grayscale(0.7) brightness(1.05) contrast(0.95);
-}
-
 .thermal-headshot__flames {
   background:
     radial-gradient(120% 80% at 50% 100%, #ffb347 0%, #ff3b1f 45%, transparent 75%),

@@ -508,10 +508,10 @@ function rowTreatment(pitcher: FormSummary): {
     return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_64px_minmax(0,1fr)_auto] sm:grid-cols-[44px_64px_minmax(0,1fr)_150px_auto]", plateClass: "h-20 w-16", borderClass: "border-white/10", imageWidth: 140, imageClass: "", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "cooling") {
-    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_44px_minmax(0,1fr)_auto] sm:grid-cols-[44px_44px_minmax(0,1fr)_132px_auto]", plateClass: "h-[55px] w-11", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 90, imageClass: "grayscale opacity-80", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
+    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_44px_minmax(0,1fr)_auto] sm:grid-cols-[44px_44px_minmax(0,1fr)_132px_auto]", plateClass: "h-[55px] w-11", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 90, imageClass: "", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "ice") {
-    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_40px_minmax(0,1fr)_auto] sm:grid-cols-[44px_40px_minmax(0,1fr)_120px_auto]", plateClass: "h-[50px] w-10", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 80, imageClass: "grayscale opacity-65", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
+    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_40px_minmax(0,1fr)_auto] sm:grid-cols-[44px_40px_minmax(0,1fr)_120px_auto]", plateClass: "h-[50px] w-10", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 80, imageClass: "", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
   }
   return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_52px_minmax(0,1fr)_auto] sm:grid-cols-[44px_52px_minmax(0,1fr)_140px_auto]", plateClass: "h-[65px] w-[52px]", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", imageWidth: 120, imageClass: "", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
