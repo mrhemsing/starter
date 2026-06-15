@@ -112,46 +112,6 @@ body {
     0 0 14px rgb(143 203 255 / 0.25);
 }
 
-.thermal-headshot__flames {
-  background:
-    radial-gradient(120% 80% at 50% 100%, #ffb347 0%, #ff3b1f 45%, transparent 75%),
-    radial-gradient(45% 58% at 18% 112%, #ffd166 0%, #ff3b1f 52%, transparent 78%),
-    radial-gradient(42% 60% at 82% 112%, #ffb347 0%, #d91f00 54%, transparent 80%);
-  inset: 0;
-  opacity: 0.86;
-  pointer-events: none;
-  position: absolute;
-  z-index: 0;
-}
-
-.thermal-headshot__tint {
-  inset: 0;
-  pointer-events: none;
-  position: absolute;
-  z-index: 3;
-}
-
-.thermal-headshot--onfire .thermal-headshot__tint {
-  background: rgb(255 59 31 / 0.3);
-  mix-blend-mode: overlay;
-}
-
-.thermal-headshot__frost {
-  background:
-    linear-gradient(160deg, rgb(143 203 255 / 0.22), transparent 60%),
-    radial-gradient(60% 42% at 0% 0%, rgb(223 241 255 / 0.2), transparent 62%),
-    radial-gradient(55% 38% at 100% 0%, rgb(223 241 255 / 0.15), transparent 60%);
-  inset: 0;
-  pointer-events: none;
-  position: absolute;
-  z-index: 4;
-}
-
-.thermal-headshot--ice .thermal-headshot__tint {
-  background: linear-gradient(160deg, rgb(143 203 255 / 0.5), rgb(91 168 255 / 0.32));
-  mix-blend-mode: screen;
-}
-
 .ranked-start-details:not([open]) {
   border-top: 0;
   height: 0;
@@ -203,9 +163,6 @@ body {
     transform-origin: left center;
   }
 
-  .thermal-headshot--onfire .thermal-headshot__flames {
-    animation: thermal-ember-flicker 2.4s ease-in-out infinite;
-  }
 }
 
 @keyframes heat-badge-pulse {
@@ -235,17 +192,6 @@ body {
   }
   to {
     transform: scaleX(1);
-  }
-}
-
-@keyframes thermal-ember-flicker {
-  0%, 100% {
-    opacity: 0.78;
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-1px) scale(1.02);
   }
 }
 
@@ -294,15 +240,6 @@ body {
   box-shadow:
     inset 0 0 0 2px #7ec8ff,
     0 0 calc(6px + 14px * var(--chill)) rgb(126 200 255 / calc(0.2 + 0.3 * var(--chill))) !important;
-}
-
-.heat-intensity-card.fire .heat-photo-tint {
-  background: linear-gradient(180deg, rgb(255 140 40 / calc(0.05 + 0.1 * var(--burn))), rgb(224 31 0 / calc(0.15 + 0.3 * var(--burn))) 130%);
-}
-
-.heat-intensity-card.ice .heat-photo-tint {
-  background: linear-gradient(180deg, rgb(126 200 255 / calc(0.08 + 0.14 * var(--chill))), rgb(43 111 214 / calc(0.12 + 0.25 * var(--chill))) 130%);
-  mix-blend-mode: screen;
 }
 
 .heat-flames {
@@ -412,8 +349,7 @@ body {
 
   .heat-flames,
   .heat-ember,
-  .heat-shimmer,
-  .thermal-headshot__flames {
+  .heat-shimmer {
     animation: none !important;
   }
 

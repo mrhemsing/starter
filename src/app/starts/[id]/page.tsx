@@ -462,22 +462,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
 }
 
 function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
-  if (band === "onfire") {
-    return (
-      <>
-        <span className="thermal-headshot__flames" aria-hidden="true" />
-        <span className="thermal-headshot__tint" aria-hidden="true" />
-      </>
-    );
-  }
-  if (band === "ice") {
-    return (
-      <>
-        <span className="thermal-headshot__frost" aria-hidden="true" />
-        <span className="thermal-headshot__tint" aria-hidden="true" />
-      </>
-    );
-  }
+  void band;
   return null;
 }
 

@@ -150,7 +150,6 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
           <span className="flex h-full w-full items-center justify-center font-mono text-xl font-semibold text-zinc-300">{initials(pitcher.name)}</span>
         )}
         <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-transparent from-[55%] to-black/35" />
-        <div className="heat-photo-tint pointer-events-none absolute inset-0 z-0" />
       </div>
 
       <div className="pointer-events-none relative z-30 flex min-h-[118px] min-w-0 flex-col justify-between">
