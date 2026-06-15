@@ -8,18 +8,21 @@ import type { FeaturedStartHighlight } from "@/lib/types";
 type HeatHighlightModalProps = {
   highlight: FeaturedStartHighlight;
   pitcherName: string;
+  label?: string;
+  className?: string;
 };
 
-export function HeatHighlightModal({ highlight, pitcherName }: HeatHighlightModalProps) {
+export function HeatHighlightModal({ highlight, pitcherName, label, className }: HeatHighlightModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const modalRoot = typeof document === "undefined" ? null : document.body;
+  const buttonLabel = label ?? "";
 
   return (
     <>
       <button
         type="button"
-        className="relative z-40 inline-grid h-8 w-8 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        className={className ?? "relative z-40 inline-grid h-8 w-8 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"}
         aria-label={`Open ${pitcherName} MLB highlight`}
         title="MLB highlight"
         onClick={() => setIsOpen(true)}
@@ -27,6 +30,7 @@ export function HeatHighlightModal({ highlight, pitcherName }: HeatHighlightModa
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
           <path d="M8 5.8v12.4L18.2 12 8 5.8Z" />
         </svg>
+        {buttonLabel ? <span>{buttonLabel}</span> : null}
       </button>
 
       {isOpen && modalRoot ? createPortal(

@@ -16,7 +16,7 @@ import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service
 import { formatStartLine } from "@/lib/format";
 import { startPath, upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartDetail, StartSummary } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -157,11 +157,17 @@ export default async function Home() {
                   pitcherName={heroFocal.pitcher.name}
                   team={heroFocal.pitcher.team}
                   opponent={heroFocal.opponent}
-                  lineLabel={formatStartLine(heroFocal.line)}
                   dateLabel={formatLongDate(heroFocal.date)}
                   score={heroFocal.gameScorePlus}
+                  line={heroFocal.line}
+                  rank={1}
+                  slateCount={completedSlateStarts.length}
                   image={heroImage}
+                  highlight={featuredHighlight}
                   isProvisional={todayCompletion.isPartialToday}
+                  whiffRate={featuredStart ? startWhiffRate(featuredStart) : null}
+                  topVelo={featuredStart ? startTopVelo(featuredStart) : null}
+                  veloSparkline={featuredStart?.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? []}
                 />
               </div>
             ) : null}
@@ -186,8 +192,6 @@ export default async function Home() {
         date={rankedDate}
         label={rankedLabel}
         starts={slateStarts}
-        spotlight={featuredStart}
-        spotlightHighlight={featuredHighlight}
         highlights={topHighlights}
       />
 
@@ -340,4 +344,13 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+function startWhiffRate(start: StartDetail) {
+  const whiffs = start.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
+  return start.pitchEvents.length ? (whiffs / start.pitchEvents.length) * 100 : null;
+}
+
+function startTopVelo(start: StartDetail) {
+  return start.pitchEvents.length ? Math.max(...start.pitchEvents.map((pitch) => pitch.velocityMph)) : null;
 }

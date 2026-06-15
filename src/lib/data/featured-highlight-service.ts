@@ -212,7 +212,7 @@ function highlightFromVideoId(videoId: string, source: FeaturedStartHighlight["s
     videoId,
     source,
     isShort,
-    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=1`,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`,
     thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
   };

@@ -124,7 +124,7 @@ function highlightFromStoredVideoId(videoId: string, isShort: boolean): Featured
     videoId,
     source: "stored",
     isShort,
-    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=1`,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`,
     thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
   };

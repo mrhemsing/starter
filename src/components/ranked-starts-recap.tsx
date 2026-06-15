@@ -1,33 +1,28 @@
 import Link from "next/link";
-import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherChip } from "@/components/pitcher-chip";
-import { ShareStartButton } from "@/components/share-start-button";
 import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { rankedStartsPath, startPath } from "@/lib/routes";
-import type { FeaturedStartHighlight, StartDetail, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 type RankedStartsRecapProps = {
   date: string;
   label?: string;
   starts: StartSummary[];
-  spotlight?: StartDetail | null;
-  spotlightHighlight?: FeaturedStartHighlight | null;
   highlights?: Map<string, FeaturedStartHighlight | null>;
 };
 
-export function RankedStartsRecap({ date, label = "Yesterday", starts, spotlight, spotlightHighlight, highlights }: RankedStartsRecapProps) {
+export function RankedStartsRecap({ date, label = "Yesterday", starts, highlights }: RankedStartsRecapProps) {
   const settledStarts = starts
     .filter((start) => start.source?.line !== "fixture")
     .sort((a, b) => b.gameScorePlus - a.gameScorePlus || inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) || a.pitcher.name.localeCompare(b.pitcher.name))
     .map((start, index) => ({ ...start, rank: index + 1 }));
   const topStarts = settledStarts.slice(0, 5);
-  const listStarts = topStarts.filter((start) => start.id !== spotlight?.id).slice(0, 4);
+  const listStarts = topStarts;
   const duds = settledStarts.slice(-3);
   const slateAverage = average(settledStarts.map((start) => start.gameScorePlus));
-  const spotlightRank = spotlight ? settledStarts.find((start) => start.id === spotlight.id)?.rank ?? spotlight.rank : null;
 
   return (
     <section id="slate" className="border-y border-white/10 bg-[#0c0b09] px-4 py-10 sm:px-6 lg:px-8">
@@ -54,7 +49,6 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, spotlight
           </div>
         ) : (
           <div className="space-y-5">
-            {spotlight ? <SpotlightStart start={spotlight} rank={spotlightRank ?? 1} highlight={spotlightHighlight} /> : null}
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
             <SlateSwarm starts={settledStarts} mean={slateAverage} />
             <div className="space-y-4">
@@ -68,56 +62,6 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, spotlight
         )}
       </div>
     </section>
-  );
-}
-
-function SpotlightStart({ start, rank, highlight }: { start: StartDetail; rank: number; highlight?: FeaturedStartHighlight | null }) {
-  const tier = qualityTierOf(start.gameScorePlus);
-  const whiffs = start.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
-  const whiffRate = start.pitchEvents.length ? (whiffs / start.pitchEvents.length) * 100 : 0;
-  const topVelo = start.pitchEvents.length ? Math.max(...start.pitchEvents.map((pitch) => pitch.velocityMph)) : 0;
-  const spark = start.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? [];
-
-  return (
-        <article className="grid gap-5 rounded border border-white/10 bg-[#101014] p-5 md:grid-cols-[160px_minmax(0,1fr)_280px] md:items-center" data-responsive-check="spotlight-start">
-          <div className="overflow-hidden rounded border border-white/10 bg-black/25" style={{ borderTop: `4px solid ${tier.color}` }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={start.pitcher.headshotUrl} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="mx-auto h-44 w-36 object-contain object-bottom" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>Spotlight / start of the night / #{rank}</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">{start.pitcher.name}</h2>
-            <p className="mt-2 font-mono text-sm text-zinc-300">{start.pitcher.team} vs {start.opponent} / {formatStartLine(start.line)}</p>
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              The slate&apos;s best start leads the recap here; the pitch map, filters, arsenal, and sequence stay on the full start log.
-            </p>
-            <Link href={startPath(start.id)} className="mt-4 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
-              View full start log
-            </Link>
-            <ShareStartButton
-              title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-              text={`${start.pitcher.name} ${formatStartLine(start.line)} on Front Five`}
-              path={startPath(start.id)}
-              className="ml-2 mt-4"
-            />
-            {highlight ? (
-              <div className="mt-4">
-                <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
-              </div>
-            ) : null}
-          </div>
-          <div className="grid gap-3">
-            <div className="grid grid-cols-3 rounded border border-white/10 bg-black/20 font-mono text-xs">
-              <MiniStat label="GS+" value={String(start.gameScorePlus)} color={tier.color} />
-              <MiniStat label="Whiff" value={`${whiffRate.toFixed(0)}%`} />
-              <MiniStat label="Top velo" value={topVelo ? topVelo.toFixed(1) : "--"} />
-            </div>
-            <div className="rounded border border-white/10 bg-black/20 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Inning velo shape</p>
-              <VeloSparkline values={spark} label={`${start.pitcher.name} inning average velocity: ${spark.join(", ")}`} color={tier.color} />
-            </div>
-          </div>
-        </article>
   );
 }
 
@@ -327,38 +271,6 @@ function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: 
         })}
       </div>
     </div>
-  );
-}
-
-function MiniStat({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div className="border-r border-white/10 p-3 last:border-r-0">
-      <p className="text-lg font-bold text-zinc-50" style={color ? { color } : undefined}>{value}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
-    </div>
-  );
-}
-
-function VeloSparkline({ values, label, color }: { values: number[]; label: string; color: string }) {
-  const width = 220;
-  const height = 52;
-  const pad = 5;
-  const points = values.length > 0 ? values : [0];
-  const min = points.length > 1 ? Math.min(...points) - 1 : points[0] - 1;
-  const max = points.length > 1 ? Math.max(...points) + 1 : points[0] + 1;
-  const xFor = (index: number) => pad + (points.length === 1 ? (width - pad * 2) / 2 : (index / (points.length - 1)) * (width - pad * 2));
-  const yFor = (value: number) => pad + ((max - value) / Math.max(1, max - min)) * (height - pad * 2);
-  const path = points.map((value, index) => `${index === 0 ? "M" : "L"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
-
-  return (
-    <svg className="mt-2 h-14 w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
-      <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {points.map((value, index) => (
-        <circle key={`${value}-${index}`} cx={xFor(index)} cy={yFor(value)} r="3" fill={color}>
-          <title>{`${value.toFixed(1)} mph`}</title>
-        </circle>
-      ))}
-    </svg>
   );
 }
 

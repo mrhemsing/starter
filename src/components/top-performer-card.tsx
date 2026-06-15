@@ -1,26 +1,56 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import type { FeaturedStartHighlight, StartLine } from "@/lib/types";
 
 type TopPerformerCardProps = {
   href: string;
   pitcherName: string;
   team: string;
   opponent: string;
-  lineLabel: string;
   dateLabel: string;
   score: number;
+  line: StartLine;
+  rank: number;
+  slateCount: number;
   image: TopPerformerImage | null;
+  highlight?: FeaturedStartHighlight | null;
   isProvisional: boolean;
+  whiffRate?: number | null;
+  topVelo?: number | null;
+  veloSparkline?: number[];
 };
 
-export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel, dateLabel, score, image, isProvisional }: TopPerformerCardProps) {
-  const cardRef = useRef<HTMLAnchorElement | null>(null);
+export function TopPerformerCard({
+  href,
+  pitcherName,
+  team,
+  opponent,
+  dateLabel,
+  score,
+  line,
+  rank,
+  slateCount,
+  image,
+  highlight,
+  isProvisional,
+  whiffRate,
+  topVelo,
+  veloSparkline = [],
+}: TopPerformerCardProps) {
+  const cardRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [displayScore, setDisplayScore] = useState(score);
-  const isFullBleed = image?.source === "action" || image?.source === "highlight";
+  const imageUrl = image?.imageUrl;
+  const scoreText = displayScore.toString().padStart(2, "0");
+  const finalScoreText = score.toString().padStart(2, "0");
+  const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
+  const statLine = `IP ${line.inningsPitched.toFixed(1)} · H ${line.hits} · ER ${line.earnedRuns} · BB ${line.walks} · K ${line.strikeouts}`;
+  const context = `#${rank} of ${slateCount} · league avg 50`;
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -42,14 +72,11 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
           observer.disconnect();
         }
       },
-      { threshold: 0.28 },
+      { threshold: 0.24 },
     );
 
     observer.observe(card);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [score]);
 
   useEffect(() => {
@@ -61,7 +88,7 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
       return () => cancelAnimationFrame(frame);
     }
 
-    const duration = 850;
+    const duration = 620;
     const start = performance.now();
     let animationFrame = 0;
 
@@ -79,112 +106,184 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
     return () => cancelAnimationFrame(animationFrame);
   }, [isVisible, score]);
 
-  const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
-
   return (
-    <a
+    <article
       ref={cardRef}
-      href={href}
-      className={`top-performer-card heat-glow-card group relative block overflow-hidden rounded border border-amber-300/25 bg-[#09090b] transition duration-700 hover:border-amber-300/50 sm:grid sm:min-h-[430px] lg:min-h-[520px] ${isVisible ? "is-visible" : ""}`}
-      style={{ "--heat-glow-color": "239 159 39", "--heat-glow-opacity": "0.44" } as CSSProperties}
+      className={`top-performer-card top-performer-scorebug relative overflow-hidden rounded border border-[#4A3E1C] bg-[#0A0B0D] text-[#F5F2EA] transition duration-700 lg:min-h-[500px] ${isVisible ? "is-visible" : ""}`}
+      style={{ "--heat-glow-color": "246 196 69", "--heat-glow-opacity": "0.3" } as CSSProperties}
       data-responsive-check="home-top-performer-marquee"
+      aria-label={`${pitcherName}, Start of the Night, ${score} GS+`}
     >
-      {image && isFullBleed ? (
-        <>
-          <div className="top-performer-photo-wrap relative h-80 overflow-hidden sm:absolute sm:inset-y-0 sm:left-[30%] sm:right-[-30%] sm:h-auto">
+      <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">
+        {finalScoreText}
+      </div>
+
+      <div className="grid lg:min-h-[500px] lg:grid-cols-[45%_55%]">
+        <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#4A3E1C] bg-[#0A0B0D] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
+          <div className="hidden lg:block">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#F6C445]">
+              {eyebrow} · {dateLabel}
+            </p>
+            <h2 className="mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
+              {pitcherName}
+            </h2>
+            <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
+              {team} vs {opponent}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="hidden grid-cols-5 overflow-hidden rounded border border-white/10 bg-[#15181C] font-mono lg:grid">
+              <StatTile label="IP" value={line.inningsPitched.toFixed(1)} />
+              <StatTile label="H" value={String(line.hits)} />
+              <StatTile label="ER" value={String(line.earnedRuns)} />
+              <StatTile label="BB" value={String(line.walks)} />
+              <StatTile label="K" value={String(line.strikeouts)} />
+            </div>
+
+            <p className="font-mono text-xs leading-5 text-[#F5F2EA] lg:hidden">{statLine}</p>
+
+            <div className="hidden rounded border border-white/10 bg-black/25 p-3 lg:block">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#878D97]">Velo by inning</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#878D97]">
+                  {topVelo ? `${topVelo.toFixed(1)} top` : "top velo pending"}
+                  {whiffRate ? ` · ${whiffRate.toFixed(0)}% whiff` : ""}
+                </p>
+              </div>
+              <VeloSparkline values={veloSparkline} active={isVisible} />
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:flex">
+              {highlight ? (
+                <HeatHighlightModal
+                  highlight={highlight}
+                  pitcherName={pitcherName}
+                  label="Watch highlights"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-[#F6C445]/50 bg-[#F6C445] px-3 font-mono text-xs uppercase tracking-[0.14em] text-[#0A0B0D] transition hover:bg-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] lg:w-auto"
+                />
+              ) : null}
+              <Link
+                href={href}
+                className={`inline-flex min-h-11 items-center justify-center rounded border border-white/15 px-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F5F2EA] transition hover:border-[#F6C445]/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] ${highlight ? "" : "sm:col-span-2 lg:w-auto"}`}
+              >
+                View log
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative order-1 min-h-[470px] overflow-hidden bg-[#15181C] lg:order-2 lg:min-h-[500px]">
+          {imageUrl ? (
             <Image
-              src={image.imageUrl}
-              alt={image.alt}
+              src={imageUrl}
+              alt={image?.alt ?? ""}
               fill
-              sizes="(min-width: 1280px) 900px, (min-width: 640px) 70vw, 100vw"
-              quality={82}
-              className="object-cover object-top opacity-100 transition duration-500 group-hover:scale-[1.015]"
+              sizes="(min-width: 1024px) 55vw, 100vw"
+              quality={86}
+              className="object-cover object-[58%_18%] lg:object-center"
               priority
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.08)_34%,rgba(0,0,0,0.03)_58%,rgba(0,0,0,0.78)_100%)]" />
-            {image.source === "highlight" && image.playUrl ? <PlayAffordance className="right-4 top-4" /> : null}
-            <span className="absolute bottom-3 left-3 z-10 inline-flex min-h-9 items-center rounded border border-white/15 bg-black/65 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200 shadow-[0_10px_28px_rgba(0,0,0,0.48)] backdrop-blur-sm sm:hidden">
-              View start log
-            </span>
-            <MobilePhotoScore score={displayScore} hasCredit={Boolean(image.attribution)} />
-            {image.source === "action" && image.attribution ? <CreditLine attribution={image.attribution} className="bottom-3 left-3 right-3" /> : null}
+          ) : (
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#15181C_0%,#0A0B0D_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.05)_38%,rgba(10,11,13,0.86)_100%)] lg:bg-[linear-gradient(90deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.02)_38%,rgba(10,11,13,0.66)_100%)]" />
+          <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4 sm:p-5 lg:hidden">
+            <p className="max-w-[58%] font-mono text-[10px] uppercase tracking-[0.2em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+              {eyebrow} · {dateLabel}
+            </p>
+            <ScoreBug score={scoreText} compact />
           </div>
-          <div className="absolute inset-y-0 left-[18%] hidden w-[38%] bg-[linear-gradient(90deg,#09090b_0%,rgba(9,9,11,0.96)_28%,rgba(9,9,11,0.62)_64%,transparent_100%)] sm:block" />
-          <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.84)_24%,rgba(0,0,0,0.36)_48%,rgba(0,0,0,0.08)_66%,transparent_82%)] sm:block" />
-          <div className="absolute inset-0 hidden bg-[linear-gradient(180deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.18)_24%,rgba(0,0,0,0.02)_48%,rgba(0,0,0,0.22)_70%,rgba(0,0,0,0.86)_100%)] sm:block" />
-        </>
-      ) : (
-        <>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(253,184,39,0.32),transparent_34%),linear-gradient(135deg,rgba(0,0,0,0.96)_0%,rgba(33,20,8,0.72)_100%)]" />
-          <div className="absolute inset-y-0 right-0 w-[52%] bg-[radial-gradient(circle_at_54%_46%,rgba(253,184,39,0.28),transparent_58%)]" />
-          {image ? (
-            <div className="top-performer-photo-wrap absolute bottom-0 right-[-22px] h-[72%] max-h-[320px] w-[54%] sm:right-3 sm:h-[88%] sm:max-h-[430px] sm:w-[46%]">
-              <Image
-                src={image.imageUrl}
-                alt={image.alt}
-                width={360}
-                height={360}
-                sizes="(min-width: 1024px) 300px, 52vw"
-                className="h-full w-full object-contain object-bottom opacity-95 drop-shadow-[0_18px_45px_rgba(0,0,0,0.72)] transition duration-500 group-hover:scale-[1.02]"
-                priority
+          {highlight ? (
+            <div className="absolute inset-0 z-20 grid place-items-center lg:hidden">
+              <HeatHighlightModal
+                highlight={highlight}
+                pitcherName={pitcherName}
+                label=""
+                className="grid h-14 w-14 place-items-center rounded-full border border-white/50 bg-black/65 text-[#F6C445] shadow-[0_16px_42px_rgba(0,0,0,0.46)] backdrop-blur-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445]"
               />
             </div>
           ) : null}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.18)_0%,rgba(0,0,0,0.60)_42%,rgba(0,0,0,0.94)_100%)] sm:bg-[linear-gradient(90deg,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.74)_52%,rgba(0,0,0,0.18)_100%)]" />
-        </>
-      )}
-      <div className="absolute left-0 top-0 hidden h-full w-[48%] bg-[radial-gradient(ellipse_at_20%_20%,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.58)_34%,rgba(0,0,0,0.18)_64%,transparent_84%)] sm:block" />
-      <div className="relative flex flex-col gap-5 bg-[#09090b] p-5 sm:min-h-[430px] sm:justify-between sm:gap-7 sm:bg-transparent sm:p-7 lg:min-h-[520px]">
-        <div className="max-w-[17.5rem] sm:max-w-md">
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
-            <span>{eyebrow}</span>
-            <span className="text-zinc-300/90">{dateLabel}</span>
-          </p>
-          <h2 className="mt-3 font-serif text-4xl font-black leading-none text-zinc-50 drop-shadow-[0_4px_22px_rgba(0,0,0,0.86)] sm:text-6xl">
-            {pitcherName}
-          </h2>
-          <p className="mt-4 max-w-xs rounded bg-black/55 px-2.5 py-2 font-mono text-xs uppercase leading-5 tracking-[0.12em] text-zinc-100 shadow-[0_0_24px_rgba(0,0,0,0.62)] backdrop-blur-[2px] sm:max-w-sm">
-            {team} vs {opponent} · {lineLabel}
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <span className={`${isFullBleed ? "hidden sm:inline-flex" : "inline-flex"} min-h-11 w-full items-center justify-center rounded border border-white/10 bg-black/70 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200 shadow-[0_10px_34px_rgba(0,0,0,0.52)] backdrop-blur-sm sm:w-auto sm:justify-self-start`}>
-            View start log
-          </span>
-          <div className={`top-performer-score relative justify-self-end text-right ${isFullBleed ? "hidden sm:block" : ""}`}>
-            <div className="absolute -inset-x-8 -inset-y-5 rounded-full bg-[radial-gradient(circle,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.58)_42%,rgba(239,159,39,0.20)_63%,transparent_78%)] blur-sm" aria-hidden="true" />
-            <p className="relative font-serif text-8xl font-black leading-none text-amber-300 drop-shadow-[0_0_28px_rgba(239,159,39,0.66)] sm:text-9xl">{displayScore}</p>
-            <p className="relative font-mono text-[10px] uppercase tracking-[0.18em] text-amber-100">GS+</p>
+          <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 lg:hidden">
+            <h3 className="max-w-[9ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] drop-shadow-[0_4px_18px_rgba(0,0,0,0.95)] sm:text-5xl">
+              {pitcherName}
+            </h3>
+            <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#F5F2EA] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+              {team} vs {opponent}
+            </p>
           </div>
+          <div className="absolute bottom-7 right-7 z-10 hidden text-right lg:block">
+            <ScoreBug score={scoreText} />
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#F5F2EA]">{context}</p>
+          </div>
+          {highlight ? (
+            <div className="absolute inset-0 z-20 hidden place-items-center lg:grid">
+              <HeatHighlightModal
+                highlight={highlight}
+                pitcherName={pitcherName}
+                label=""
+                className="grid h-14 w-14 place-items-center rounded-full border border-white/50 bg-black/65 text-[#F6C445] shadow-[0_16px_42px_rgba(0,0,0,0.46)] backdrop-blur-sm transition hover:scale-105 hover:border-[#F6C445] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445]"
+              />
+            </div>
+          ) : null}
+          {image?.attribution ? <CreditLine attribution={image.attribution} /> : null}
         </div>
       </div>
-      {image?.source === "highlight" && image.playUrl ? <PlayAffordance className="right-4 top-4 hidden sm:grid" /> : null}
-      {image?.source === "action" && image.attribution ? <CreditLine attribution={image.attribution} className="bottom-3 left-4 right-4 hidden sm:block" /> : null}
-    </a>
+
+      <div className="border-t border-[#4A3E1C] bg-[#0A0B0D] px-4 py-3 sm:px-5 lg:hidden">
+        <p className="font-mono text-xs text-[#F5F2EA]">{context}</p>
+      </div>
+    </article>
   );
 }
 
-function MobilePhotoScore({ score, hasCredit }: { score: number; hasCredit: boolean }) {
+function ScoreBug({ score, compact = false }: { score: string; compact?: boolean }) {
   return (
-    <div className={`absolute right-3 z-10 text-right sm:hidden ${hasCredit ? "bottom-9" : "bottom-3"}`}>
-      <div className="absolute -inset-x-7 -inset-y-4 rounded-full bg-[radial-gradient(circle,rgba(239,159,39,0.34)_0%,rgba(239,159,39,0.18)_46%,transparent_74%)] blur-md" aria-hidden="true" />
-      <p className="relative font-serif text-7xl font-black leading-[0.82] text-amber-300 drop-shadow-[0_0_24px_rgba(239,159,39,0.66)]">{score}</p>
-      <p className="relative mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-100">GS+</p>
+    <div className="relative text-right">
+      <p className={`font-mono font-black tabular-nums leading-[0.82] text-[#F6C445] ${compact ? "text-7xl" : "text-9xl"}`}>{score}</p>
+      <div className="mt-2 flex items-center justify-end gap-2">
+        <span className="h-px w-10 bg-[#F6C445]" />
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F5F2EA]">GS+</span>
+      </div>
     </div>
   );
 }
 
-function PlayAffordance({ className = "" }: { className?: string }) {
+function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <span className={`absolute grid h-12 w-12 place-items-center rounded-full border border-white/45 bg-black/65 text-amber-200 shadow-lg ${className}`}>
-      <span className="ml-1 h-0 w-0 border-y-[9px] border-l-[14px] border-y-transparent border-l-current" />
-    </span>
+    <div className="border-r border-white/10 p-3 last:border-r-0">
+      <p className="text-2xl font-semibold tabular-nums text-[#F5F2EA]">{value}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-[#878D97]">{label}</p>
+    </div>
   );
 }
 
-function CreditLine({ attribution, className = "" }: { attribution: string; className?: string }) {
+function VeloSparkline({ values, active }: { values: number[]; active: boolean }) {
+  const width = 260;
+  const height = 58;
+  const pad = 6;
+  const points = values.length > 0 ? values : [0];
+  const min = points.length > 1 ? Math.min(...points) - 1 : points[0] - 1;
+  const max = points.length > 1 ? Math.max(...points) + 1 : points[0] + 1;
+  const xFor = (index: number) => pad + (points.length === 1 ? (width - pad * 2) / 2 : (index / (points.length - 1)) * (width - pad * 2));
+  const yFor = (value: number) => pad + ((max - value) / Math.max(1, max - min)) * (height - pad * 2);
+  const path = points.map((value, index) => `${index === 0 ? "M" : "L"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
+
   return (
-    <span className={`absolute text-right font-mono text-[9px] uppercase tracking-[0.08em] text-white/80 ${className}`}>
+    <svg className="mt-2 h-16 w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Average velocity by inning: ${points.map((value) => value.toFixed(1)).join(", ")}`}>
+      <path className={active ? "top-performer-velo-line" : ""} d={path} fill="none" stroke="#F6C445" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pathLength="1" />
+      {points.map((value, index) => (
+        <circle key={`${value}-${index}`} cx={xFor(index)} cy={yFor(value)} r="2.8" fill="#F6C445">
+          <title>{`${value.toFixed(1)} mph`}</title>
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+function CreditLine({ attribution }: { attribution: string }) {
+  return (
+    <span className="absolute bottom-2 left-3 right-3 z-30 text-right font-mono text-[9px] uppercase tracking-[0.08em] text-white/80">
       {attribution}
     </span>
   );
