@@ -105,7 +105,7 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string }) {
   const tier = watchTierForRank(1);
   const summaryId = watchCardSummaryId(game);
   const awayStarter = game.starters[0];
@@ -133,7 +133,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
       <div className="relative">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 md:flex-row md:items-start">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>#{game.status === "ppd" ? "-" : "1"} / {tier.label}</p>
+            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>{tier.label}</p>
             <h3 className="mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
             <p
               id={summaryId}
@@ -142,7 +142,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
               data-venue={gameVenueLabel(game)}
               aria-label={watchCardSummaryAriaLabel(game)}
             >
-              {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #1 of {slateSize} watch rank
+              {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)}
             </p>
             <GameEnvironmentChips game={game} />
           </div>
@@ -279,25 +279,44 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
 
 function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; rankLabel: string }) {
   const [awayStarter, homeStarter] = game.starters;
+  const reason = watchHookReason(game, rankLabel);
 
   return (
-    <div className="flex min-h-full flex-col justify-between rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]">
+    <div
+      className="flex min-h-full flex-col justify-between rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]"
+      data-responsive-check="watch-hook"
+      data-hook-score={game.gameWatchScore.toFixed(1)}
+      data-hook-score-label="score"
+      data-hook-reason={reason}
+    >
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">The hook</p>
-        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{game.matchupContext.status === "pending-opponent-splits" ? "Pending" : `#${game.matchupRankTonight}`}</p>
-        <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">matchup {rankLabel}</p>
-        <p className="mt-3 text-sm leading-5 text-zinc-300">
-          {game.matchupContext.status === "pending-opponent-splits"
-            ? game.matchupContext.label
-            : game.matchupRankTonight === 1 ? "Best matchup on the board tonight" : `Overall watch leader, ${ordinal(game.matchupRankTonight)} matchup`}
-        </p>
-        {game.matchupContext.status === "scored" ? <p className="mt-1 font-mono text-xs text-zinc-500">Score {game.matchupScore.toFixed(1)}</p> : null}
+        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{game.gameWatchScore.toFixed(1)}</p>
+        <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
+        <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
       </div>
       <div className="mt-4">
         <FormClash away={awayStarter} home={homeStarter} leagueMeanGS={leagueMeanGS} />
       </div>
     </div>
   );
+}
+
+function watchHookReason(game: TonightGame, rankLabel: string) {
+  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext.status === "pending-opponent-splits") {
+    return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+  }
+  if (game.matchupRankTonight === 1) return "Best matchup on the board";
+  if (game.starters.every((starter) => starter.trend === "heating")) return "Two arms trending up";
+  if (combinedProjectedStrikeouts(game.starters) >= 12) return "Strikeout upside";
+  return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+}
+
+function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
+  return starters.reduce((total, starter) => {
+    const projected = starter.marketContext?.projectedStrikeouts ?? starter.projection?.line.strikeouts ?? 0;
+    return total + projected;
+  }, 0);
 }
 
 function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightStarter; leagueMeanGS: number; align: "away" | "home" }) {

@@ -1170,10 +1170,22 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       `${route} should render visible watch tier for ${game.label}`,
     );
     assertRenderedWatchRank(card.text, route, game, rank);
-    assert(
-      hasSlateWatchRank(card.text, rank, scheduledGames),
-      `${route} should render visible slate-relative watch rank for ${game.label}`,
-    );
+    if (rank === 1) {
+      assertRenderedWatchHook(card.html, card.text, route, game, rankLabel);
+      assert(
+        card.text.includes("Top watch score") && card.text.includes("#1 tonight"),
+        `${route} should render the headliner watch rank once in the badge for ${game.label}`,
+      );
+      assert(
+        !card.html.includes(">#1 /"),
+        `${route} should not duplicate the headliner watch rank in the eyebrow for ${game.label}`,
+      );
+    } else {
+      assert(
+        hasSlateWatchRank(card.text, rank, scheduledGames),
+        `${route} should render visible slate-relative watch rank for ${game.label}`,
+      );
+    }
     assert(card.text.includes("Matchup"), `${route} should render matchup context for ${game.label}`);
     if (game.matchupContext?.status === "pending-opponent-splits") {
       assert(card.text.includes("pending"), `${route} should render pending matchup context for ${game.label}`);
@@ -1217,7 +1229,7 @@ function renderedGameCard(html, route, game, rank, rankLabel) {
     .filter(
       (article) =>
         article.text.includes(game.label) &&
-        article.text.includes("watch rank") &&
+        (rank === 1 ? article.text.includes("Top watch score") : article.text.includes("watch rank")) &&
         article.text.includes(firstPitch) &&
         article.text.includes(matchupRankLine),
     );
@@ -1238,6 +1250,43 @@ function matchupSummaryIsAccessible(html) {
 function matchupStatusText(game, rankLabel) {
   if (game.matchupContext?.status === "pending-opponent-splits") return "Opponent split";
   return `${ordinal(game.matchupRankTonight)} ${rankLabel}`;
+}
+
+function assertRenderedWatchHook(html, normalizedHtml, route, game, rankLabel) {
+  const reason = expectedWatchHookReason(game, rankLabel);
+  assert(
+    countDivsWithAttributes(html, {
+      "data-responsive-check": "watch-hook",
+      "data-hook-score": game.gameWatchScore.toFixed(1),
+      "data-hook-score-label": "score",
+      "data-hook-reason": reason,
+    }) === 1,
+    `${route} should render one score-led hook for ${game.label}`,
+  );
+  assert(normalizedHtml.includes("The hook"), `${route} should label the center hook for ${game.label}`);
+  assert(normalizedHtml.includes(game.gameWatchScore.toFixed(1)), `${route} should render watch score in the center hook for ${game.label}`);
+  assert(normalizedHtml.includes(reason), `${route} should render derived hook reason for ${game.label}`);
+  assert(
+    !html.includes(`>#${game.matchupRankTonight}<`) && !html.includes(`matchup ${escapeHtmlAttribute(rankLabel)}</p>`),
+    `${route} center hook should not render matchup rank copy for ${game.label}`,
+  );
+}
+
+function expectedWatchHookReason(game, rankLabel) {
+  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
+    return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+  }
+  if (game.matchupRankTonight === 1) return "Best matchup on the board";
+  if (game.starters.every((starter) => starter.trend === "heating")) return "Two arms trending up";
+  if (combinedProjectedStrikeouts(game.starters) >= 12) return "Strikeout upside";
+  return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+}
+
+function combinedProjectedStrikeouts(starters) {
+  return starters.reduce((total, starter) => {
+    const projected = starter.marketContext?.projectedStrikeouts ?? starter.projection?.line?.strikeouts ?? 0;
+    return total + projected;
+  }, 0);
 }
 
 function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
