@@ -25,7 +25,7 @@ export function PitchingDuelsModule({
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Tonight"}</p>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Today"}</p>
             <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               Two lenses from the same game-level scores: best duel rewards two strong, even arms; mismatch rewards the biggest gap.

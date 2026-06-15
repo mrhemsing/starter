@@ -7,12 +7,13 @@ const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
 const LIVE_SCHEDULE_CACHE_TTL_MS = 60 * 1000;
 const LIVE_GAMEFEED_CACHE_TTL_MS = 60 * 1000;
 const LIVE_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
-const MLB_SCHEDULE_REVALIDATE_SECONDS = 5 * 60;
+const MLB_SCHEDULE_REVALIDATE_SECONDS = 60;
 const MLB_GAMEFEED_REVALIDATE_SECONDS = 15 * 60;
 const MLB_CONTEXT_REVALIDATE_SECONDS = 60 * 60;
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
+  gamefeedRevalidateSeconds?: number;
   signal?: AbortSignal;
 };
 
@@ -207,6 +208,10 @@ type MlbGameFeedTeam = {
 
 type MlbGameFeedResponse = {
   gameData?: {
+    status?: {
+      abstractGameState?: string;
+      detailedState?: string;
+    };
     teams?: {
       away?: { abbreviation?: string };
       home?: { abbreviation?: string };
@@ -322,7 +327,8 @@ export async function getMlbProbablePitchers(date: string, options: MlbScheduleC
 
 export async function fetchMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   if (!options.fetchLive) return [];
-  const cacheKey = `${gamePk}:completed-lines`;
+  const gamefeedRevalidateSeconds = options.gamefeedRevalidateSeconds ?? MLB_GAMEFEED_REVALIDATE_SECONDS;
+  const cacheKey = `${gamePk}:completed-lines:${gamefeedRevalidateSeconds}`;
   const cached = completedPitchingLineCache.get(cacheKey);
   if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
 
@@ -339,7 +345,7 @@ export async function fetchMlbCompletedPitchingLines(gamePk: number, options: Ml
 
 async function fetchLiveMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   try {
-    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, MLB_GAMEFEED_REVALIDATE_SECONDS));
+    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, options.gamefeedRevalidateSeconds ?? MLB_GAMEFEED_REVALIDATE_SECONDS));
 
     if (!response.ok) return [];
 
@@ -734,10 +740,11 @@ function parseCompletedPitchingLines(gamePk: number, payload: MlbGameFeedRespons
   const homeTeam = payload.liveData?.boxscore?.teams?.home;
   const awayAbbreviation = awayTeam?.team?.abbreviation ?? payload.gameData?.teams?.away?.abbreviation;
   const homeAbbreviation = homeTeam?.team?.abbreviation ?? payload.gameData?.teams?.home?.abbreviation;
+  const isFinal = isFinalGameFeedState(payload);
 
   return [
-    ...parseTeamPitchingLines(gamePk, "away", awayTeam, awayAbbreviation, homeAbbreviation, payload),
-    ...parseTeamPitchingLines(gamePk, "home", homeTeam, homeAbbreviation, awayAbbreviation, payload),
+    ...parseTeamPitchingLines(gamePk, "away", awayTeam, awayAbbreviation, homeAbbreviation, payload, isFinal),
+    ...parseTeamPitchingLines(gamePk, "home", homeTeam, homeAbbreviation, awayAbbreviation, payload, isFinal),
   ];
 }
 
@@ -748,11 +755,15 @@ function parseTeamPitchingLines(
   teamAbbreviation: string | undefined,
   opponentAbbreviation: string | undefined,
   payload: MlbGameFeedResponse,
+  isFinal: boolean,
 ): MlbCompletedPitchingLine[] {
   if (!team?.players || !teamAbbreviation || !opponentAbbreviation) return [];
 
+  const starterMlbId = team.pitchers?.[0];
+  const starterIsOut = isFinal || (team.pitchers?.length ?? 0) > 1;
+
   return Object.values(team.players)
-    .map((player) => readCompletedPitchingLine(gamePk, side, teamAbbreviation, opponentAbbreviation, player, payload))
+    .map((player) => readCompletedPitchingLine(gamePk, side, teamAbbreviation, opponentAbbreviation, player, payload, starterMlbId, starterIsOut))
     .filter((line): line is MlbCompletedPitchingLine => Boolean(line));
 }
 
@@ -763,10 +774,13 @@ function readCompletedPitchingLine(
   opponentAbbreviation: string,
   player: MlbGameFeedPlayer,
   payload: MlbGameFeedResponse,
+  starterMlbId: number | undefined,
+  starterIsOut: boolean,
 ): MlbCompletedPitchingLine | undefined {
   const pitcherMlbId = player.person?.id;
   const stats = player.stats?.pitching;
   if (!pitcherMlbId || !stats || stats.gamesStarted !== 1) return undefined;
+  if (pitcherMlbId !== starterMlbId || !starterIsOut) return undefined;
 
   const line = readStartLine(stats);
   if (!line) return undefined;
@@ -781,6 +795,11 @@ function readCompletedPitchingLine(
     result: readPitchingDecision(pitcherMlbId, payload),
     line,
   };
+}
+
+function isFinalGameFeedState(payload: MlbGameFeedResponse) {
+  const status = `${payload.gameData?.status?.abstractGameState ?? ""} ${payload.gameData?.status?.detailedState ?? ""}`.toLowerCase();
+  return /\b(final|game over|completed early)\b/.test(status);
 }
 
 function readStartLine(stats: MlbGameFeedPitchingStats): StartLine | undefined {

@@ -20,6 +20,8 @@ type CompletedPitchingLineEntry = MlbCompletedPitchingLine & {
   source: CompletedPitchingLineSource;
 };
 
+const LIVE_STARTER_RESULT_REVALIDATE_SECONDS = 60;
+
 const teamColors: Record<string, { color: string; accent: string }> = {
   ARI: { color: "#a71930", accent: "#e3d4ad" },
   ATL: { color: "#13274f", accent: "#ce1141" },
@@ -772,9 +774,9 @@ async function getCompletedPitchingLineMap(schedule: MlbSchedule) {
   if (schedule.source === "live" || process.env.THE_BUMP_LIVE_MLB === "1") {
     const liveLinesByGame = await Promise.all(
       schedule.games
-        .filter(isFinalGameState)
+        .filter((game) => isLiveGameState(game) || isFinalGameState(game))
         .filter((game) => !lines.has(startLineKey(game.gamePk, game.probableAwayPitcher?.id ?? 0)) || !lines.has(startLineKey(game.gamePk, game.probableHomePitcher?.id ?? 0)))
-        .map((game) => fetchMlbCompletedPitchingLines(game.gamePk, { fetchLive: true })),
+        .map((game) => fetchMlbCompletedPitchingLines(game.gamePk, { fetchLive: true, gamefeedRevalidateSeconds: LIVE_STARTER_RESULT_REVALIDATE_SECONDS })),
     );
 
     for (const line of liveLinesByGame.flat()) {
@@ -792,6 +794,11 @@ async function getTeamQualityContextMap(date: string) {
 
 function startLineKey(gamePk: number, pitcherMlbId: number) {
   return `${gamePk}:${pitcherMlbId}`;
+}
+
+function isLiveGameState(game: MlbScheduleGame) {
+  const status = `${game.status} ${game.detailedState}`.toLowerCase();
+  return /\b(live|in progress|manager challenge|review|delayed)\b/.test(status);
 }
 
 function summarizeCompletedStartSource(starts: StartSummary[]) {

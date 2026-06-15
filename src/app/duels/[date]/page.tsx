@@ -64,7 +64,7 @@ export default async function DuelsPage({ params, searchParams }: DuelsPageProps
           </nav>
         </div>
       </header>
-      <PitchingDuelsModule duels={duels} title={mode === "settled" ? "Duels & Mismatches" : "Best Duels Tonight"} />
+      <PitchingDuelsModule duels={duels} title={mode === "settled" ? "Duels & Mismatches" : "Best Duels Today"} />
     </main>
   );
 }

@@ -10,12 +10,13 @@ type TopPerformerCardProps = {
   team: string;
   opponent: string;
   lineLabel: string;
+  dateLabel: string;
   score: number;
   image: TopPerformerImage | null;
   isProvisional: boolean;
 };
 
-export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel, score, image, isProvisional }: TopPerformerCardProps) {
+export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel, dateLabel, score, image, isProvisional }: TopPerformerCardProps) {
   const cardRef = useRef<HTMLAnchorElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [displayScore, setDisplayScore] = useState(score);
@@ -135,7 +136,10 @@ export function TopPerformerCard({ href, pitcherName, team, opponent, lineLabel,
       <div className="absolute left-0 top-0 hidden h-full w-[48%] bg-[radial-gradient(ellipse_at_20%_20%,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.58)_34%,rgba(0,0,0,0.18)_64%,transparent_84%)] sm:block" />
       <div className="relative flex flex-col gap-5 bg-[#09090b] p-5 sm:min-h-[430px] sm:justify-between sm:gap-7 sm:bg-transparent sm:p-7 lg:min-h-[520px]">
         <div className="max-w-[17.5rem] sm:max-w-md">
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">{eyebrow}</p>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+            <span>{eyebrow}</span>
+            <span className="text-zinc-300/90">{dateLabel}</span>
+          </p>
           <h2 className="mt-3 font-serif text-4xl font-black leading-none text-zinc-50 drop-shadow-[0_4px_22px_rgba(0,0,0,0.86)] sm:text-6xl">
             {pitcherName}
           </h2>

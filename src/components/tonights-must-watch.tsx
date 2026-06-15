@@ -35,7 +35,16 @@ export function TonightsMustWatch({
   const headingId = `${sectionId}-heading`;
 
   return (
-    <section id={sectionId} aria-labelledby={headingId} className="border-y border-white/10 bg-[#0d0d11] px-4 py-10 sm:px-6 lg:px-8" data-responsive-check="must-watch">
+    <section
+      id={sectionId}
+      aria-labelledby={headingId}
+      className="border-y border-white/10 bg-[#0d0d11] px-4 py-10 sm:px-6 lg:px-8"
+      data-responsive-check="must-watch"
+      data-slate-date={tonight.date}
+      data-game-count={shownGames.length}
+      data-scheduled-games={tonight.scheduledGames}
+      data-rank-label={rankLabel}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
@@ -89,6 +98,13 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
       className="heat-glow-card relative overflow-hidden rounded border border-amber-300/25 bg-[#101014] p-5 lg:p-6"
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayColor, homeColor) }}
       data-responsive-check="must-watch-headliner"
+      data-game-pk={game.gamePk}
+      data-game-status={game.status}
+      data-has-tbd={String(game.flags?.tbd === true)}
+      data-limited-form={String(game.flags?.limitedForm === true)}
+      data-watch-rank={game.status === "ppd" ? "-" : "1"}
+      data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-tier={tier.label}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
     >
@@ -98,7 +114,13 @@ function MustWatchHeadliner({ game, leagueMeanGS, slateSize, rankLabel }: { game
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>#{game.status === "ppd" ? "-" : "1"} / {tier.label}</p>
             <h3 className="mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
-            <p id={summaryId} className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500" aria-label={watchCardSummaryAriaLabel(game)}>
+            <p
+              id={summaryId}
+              className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"
+              data-first-pitch={game.firstPitch}
+              data-venue={gameVenueLabel(game)}
+              aria-label={watchCardSummaryAriaLabel(game)}
+            >
               {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #1 of {slateSize} watch rank
             </p>
           </div>
@@ -131,6 +153,13 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       className={`heat-glow-card relative overflow-hidden rounded border bg-[#101014] p-4 ${isStarted ? "border-sky-300/20 opacity-75" : "border-white/10"}`}
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(teamAccentColor(game.starters[0].team), teamAccentColor(game.starters[1].team)) }}
       data-responsive-check="must-watch-row"
+      data-game-pk={game.gamePk}
+      data-game-status={game.status}
+      data-has-tbd={String(game.flags?.tbd === true)}
+      data-limited-form={String(game.flags?.limitedForm === true)}
+      data-watch-rank={rank}
+      data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-tier={tier.label}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
     >
@@ -144,7 +173,13 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
             <div>
               <h3 className="font-serif text-2xl font-bold text-zinc-50">{game.label}</h3>
-              <p id={summaryId} className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={watchCardSummaryAriaLabel(game)}>
+              <p
+                id={summaryId}
+                className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
+                data-first-pitch={game.firstPitch}
+                data-venue={gameVenueLabel(game)}
+                aria-label={watchCardSummaryAriaLabel(game)}
+              >
                 {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #{rank} of {slateSize} watch rank
               </p>
             </div>
@@ -165,9 +200,10 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
 
 function WatchComponentReadout({ game, compact = false, featured = false, rankLabel }: { game: TonightGame; compact?: boolean; featured?: boolean; rankLabel: string }) {
   const items = [
-    { label: "Top arm", value: game.watchComponents.topArm },
-    { label: "Pairing", value: game.watchComponents.pairing },
+    { key: "top-arm", label: "Top arm", value: game.watchComponents.topArm },
+    { key: "pairing", label: "Pairing", value: game.watchComponents.pairing },
     {
+      key: "matchup",
       label: "Matchup",
       value: game.matchupScore,
       detail: `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
@@ -180,6 +216,8 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       className={`${compact ? "mt-3" : featured ? "mt-5" : "mt-5"} grid gap-2 sm:grid-cols-3`}
       data-responsive-check="watch-components"
       data-game-pk={game.gamePk}
+      data-matchup-rank={game.matchupRankTonight}
+      data-matchup-rank-label={rankLabel}
       role="group"
       aria-label={watchComponentsAriaLabel(game)}
     >
@@ -188,6 +226,8 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
           key={item.label}
           className={`${featured ? "px-3.5 py-3" : "px-3 py-2"} rounded border border-white/10 bg-black/25`}
           style={glowStyle(item.value, 100)}
+          data-watch-component={item.key}
+          data-watch-value={item.value.toFixed(1)}
           role={"ariaLabel" in item ? "img" : undefined}
           aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
         >

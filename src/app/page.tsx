@@ -43,7 +43,10 @@ export default async function Home() {
     getTonightMustWatch({ date: tomorrow, window: 5 }),
     getRankedSlateCompletionState(today, today),
   ]);
-  const todaySlateStarts = todayCompletion.finalGames > 0 ? await getDailySlate({ window: "today", date: today }) : [];
+  const gamesToday = tonight.scheduledGames;
+  const liveGamesToday = tonight.games.filter((game) => game.status === "live").length;
+  const startedGamesToday = todayCompletion.finalGames + liveGamesToday;
+  const todaySlateStarts = startedGamesToday > 0 ? await getDailySlate({ window: "today", date: today }) : [];
   const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
   const formHomeWithHighlights = await attachHotHighlights(formHome);
   const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
@@ -64,17 +67,21 @@ export default async function Home() {
     resolveSummaryHighlight(bestWindows.monthly),
   ]);
   const heroImage = await resolveTopPerformerImage(topStart ?? null, featuredHighlight);
-  const gamesToday = tonight.scheduledGames;
   const tonightBand = tonight.games.length > 0 ? tonight : tomorrowTonight;
   const tonightBandDate = tonight.games.length > 0 ? today : tomorrow;
   const tonightDuels = await getPitchingDuels(tonightBandDate, "upcoming");
   const slateStatus = useTodaySlate
     ? {
         lead: `Today · ${formatLongDate(rankedDate)}`,
-        detail: `${todayCompletion.finalGames} OF ${todayCompletion.totalGames} MLB GAMES FINAL`,
+        detail: `${todayCompletedSlateStarts.length} QUALIFYING ${todayCompletedSlateStarts.length === 1 ? "START" : "STARTS"} POSTED`,
       }
+    : startedGamesToday > 0
+      ? {
+          lead: `Today · ${formatLongDate(today)}`,
+          detail: `AWAITING FIRST COMPLETED START · ${liveGamesToday}/${gamesToday} ${liveGamesToday === 1 ? "GAME" : "GAMES"} IN PROGRESS`,
+        }
     : {
-        lead: `Tonight · ${formatLongDate(today)}`,
+        lead: `Today · ${formatLongDate(today)}`,
         detail: `${gamesToday} MLB GAMES SCHEDULED`,
       };
   const heroFocal = topStart ?? null;
@@ -151,6 +158,7 @@ export default async function Home() {
                   team={heroFocal.pitcher.team}
                   opponent={heroFocal.opponent}
                   lineLabel={formatStartLine(heroFocal.line)}
+                  dateLabel={formatLongDate(heroFocal.date)}
                   score={heroFocal.gameScorePlus}
                   image={heroImage}
                   isProvisional={todayCompletion.isPartialToday}
@@ -170,7 +178,7 @@ export default async function Home() {
         previewLimit={3}
       />
 
-      <PitchingDuelsModule duels={tonightDuels} title="Best Duels Tonight" compact />
+      <PitchingDuelsModule duels={tonightDuels} title="Best Duels Today" compact />
 
       <HeatCheckHero home={formHomeWithHighlights} />
 
