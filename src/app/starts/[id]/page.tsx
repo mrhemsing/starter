@@ -335,7 +335,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
   const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;
   const gas = isGasStart(start, tier.label);
   const topReason = topInlineReason(start);
-  const initials = pitcherInitials(start.pitcher.name);
   const thermalBand = thermalBandForForm(formSummary);
   const thermalClass = thermalHeadshotClass(thermalBand);
 
@@ -367,7 +366,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
           <div className={`${profile.plateClass} thermal-headshot ${thermalClass} relative grid place-items-center overflow-hidden rounded-xl border`} style={{ borderColor: thermalBorderColor(thermalBand, profile.ringColor), background: "#15181C" }} data-form-band={thermalBand ?? "neutral"}>
             <ThermalHeadshotEffects band={thermalBand} />
-            <span className="absolute font-mono text-xs font-semibold text-zinc-300">{initials}</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={rankedHeadshotUrl(String(start.pitcher.mlbId), profile.imageWidth)}
@@ -448,7 +446,6 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       </span>
       <Link href={startPath(start.id)} className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid h-12 w-12 place-items-center overflow-hidden rounded-xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
         <ThermalHeadshotEffects band={thermalBand} />
-        <span className="absolute font-mono text-xs font-semibold text-zinc-300">{pitcherInitials(start.pitcher.name)}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 96)} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="relative h-full w-full object-cover object-[center_18%]" />
       </Link>
@@ -631,16 +628,6 @@ function topInlineReason(start: StartSummary) {
 
 function isGasStart(start: StartSummary, bandLabel: string) {
   return (bandLabel === "Elite" || bandLabel === "Plus") && (start.line.strikeouts >= 8 || inningsFromIP(start.line.inningsPitched) >= 7);
-}
-
-function pitcherInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function rankedHeadshotUrl(pitcherId: string, width: number) {

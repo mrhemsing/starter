@@ -238,7 +238,6 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
       <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-xl border-2" style={{ borderColor: profile.ringColor, background: profile.plateBackground }}>
-          <span className="absolute font-mono text-[10px] font-semibold text-zinc-400">{pitcherInitials(start.pitcher.name)}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 100)} alt="" loading="lazy" className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`} />
         </div>
@@ -347,16 +346,6 @@ function lastName(name: string) {
 
 function qualityBandSlug(label: string) {
   return label.toLowerCase().replace(/\s+/g, "-");
-}
-
-function pitcherInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function rankedHeadshotUrl(pitcherId: string, width: number) {

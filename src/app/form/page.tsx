@@ -383,7 +383,6 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       </div>
       <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className={`${treatment.plateClass} thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`} style={{ borderColor: thermalBorderColor(thermalBand, bandColor) }} data-form-band={thermalBand ?? "neutral"}>
         <ThermalHeadshotEffects band={thermalBand} />
-        <span className="absolute font-mono text-xs font-semibold text-zinc-300">{pitcherInitials(pitcher.name)}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={rankedHeadshotUrl(pitcher.pitcherId, treatment.imageWidth)} alt={`${pitcher.name}, ${pitcher.team}`} loading="lazy" className={`relative h-full w-full object-cover object-[center_18%] ${treatment.imageClass}`} />
       </Link>
@@ -516,16 +515,6 @@ function rowTreatment(pitcher: FormSummary): {
 
 function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
-}
-
-function pitcherInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function rankedHeadshotUrl(pitcherId: string, width: number) {
