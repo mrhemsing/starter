@@ -288,7 +288,7 @@ export type TonightStarter = {
   };
   marketContext?: {
     status: "pending-feed" | "ready";
-    source: "the-odds-api" | "not-configured";
+    source: "the-odds-api" | "not-configured" | "odds-deferred";
     projectedStrikeouts: number | null;
     strikeoutPropLine: number | null;
     strikeoutEdge: number | null;

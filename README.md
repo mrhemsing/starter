@@ -16,6 +16,8 @@ The app runs with fixture-backed data by default so local development and CI-sty
 
 Set `THE_BUMP_LIVE_MLB=1` when starting the Next server to ingest public MLB Stats API schedule, gamefeed, standings, pitcher splits, and hitting-stat data where available. The app keeps fixture fallbacks for missing or not-yet-final data.
 
+Set `THE_BUMP_ODDS_API_KEY` to hydrate K props, team totals, and game totals from The Odds API. The default budget guard only fetches odds for today and tomorrow, then caches responses for 30 minutes so 7-day pages do not burn free-tier credits for every future slate. Override with `THE_BUMP_ODDS_MAX_DAYS_AHEAD` and `THE_BUMP_ODDS_CACHE_MINUTES` only when you intentionally want broader or fresher market coverage.
+
 For durable local season storage, use the MLB archive commands. They write normalized schedule, completed starting-pitcher lines, arsenal summaries, and pitch events into ignored local JSON files under `data/mlb-archive/[season]/`.
 
 ```bash

@@ -1,6 +1,6 @@
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbTeamHandednessSplitContexts } from "@/lib/data/mlb-stats-client";
-import { fetchMlbOddsMarketContexts, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
+import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
 import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
@@ -184,7 +184,7 @@ function buildTonightStarter(
       side,
       status: "tbd",
       projection,
-      marketContext: buildMarketContext(projection, null, opponentMarketName, marketContext),
+      marketContext: buildMarketContext(projection, null, opponentMarketName, date, marketContext),
     };
   }
 
@@ -199,7 +199,7 @@ function buildTonightStarter(
       side,
       status: "insufficient",
       projection,
-      marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, marketContext),
+      marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, date, marketContext),
     };
   }
   const formWorkload = form.workload ?? {
@@ -227,7 +227,7 @@ function buildTonightStarter(
     driverChips: form.driverChips,
     opponentSplit,
     projection,
-    marketContext: buildMarketContext(projection, form.name, opponentMarketName, marketContext),
+    marketContext: buildMarketContext(projection, form.name, opponentMarketName, date, marketContext),
     workload: {
       ...formWorkload,
       daysRest,
@@ -290,6 +290,7 @@ function buildMarketContext(
   projection: NonNullable<TonightStarter["projection"]>,
   starterName: string | null,
   opponentTeam: string,
+  date: string,
   marketContext: MlbOddsGameMarketContext | null,
 ): NonNullable<TonightStarter["marketContext"]> {
   const projectedStrikeouts = projection.line.strikeouts;
@@ -308,6 +309,18 @@ function buildMarketContext(
       label: strikeoutPropLine !== null || opposingTeamTotal !== null
         ? "Market context from The Odds API."
         : "The Odds API event matched, but starter prop/team-total lines were not available yet.",
+    };
+  }
+
+  if (process.env.THE_BUMP_ODDS_API_KEY && !isOddsEligibleDate(date)) {
+    return {
+      status: "pending-feed",
+      source: "odds-deferred",
+      projectedStrikeouts,
+      strikeoutPropLine: null,
+      strikeoutEdge: null,
+      opposingTeamTotal: null,
+      label: "Market lines deferred to conserve The Odds API credits; odds hydrate only for near-term slates.",
     };
   }
 

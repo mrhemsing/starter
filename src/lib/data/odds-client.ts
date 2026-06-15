@@ -34,7 +34,9 @@ export type MlbOddsGameMarketContext = {
 const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
 const ODDS_REGION = process.env.THE_BUMP_ODDS_REGION ?? "us";
 const ODDS_BOOKMAKERS = process.env.THE_BUMP_ODDS_BOOKMAKERS;
-const ODDS_CACHE_TTL_MS = 5 * 60 * 1000;
+const ODDS_CACHE_TTL_MS = envPositiveInt("THE_BUMP_ODDS_CACHE_MINUTES", 30) * 60 * 1000;
+const ODDS_REVALIDATE_SECONDS = Math.max(60, Math.floor(ODDS_CACHE_TTL_MS / 1000));
+const ODDS_MAX_DAYS_AHEAD = envPositiveInt("THE_BUMP_ODDS_MAX_DAYS_AHEAD", 1);
 
 type CachedOddsContext = {
   expiresAt: number;
@@ -48,6 +50,8 @@ export async function fetchMlbOddsMarketContexts(games: MlbScheduleGame[]): Prom
   if (!apiKey || games.length === 0) return new Map();
 
   const dateKey = games[0]?.gameDate.slice(0, 10) ?? "unknown";
+  if (!isOddsEligibleDate(dateKey)) return new Map();
+
   const cacheKey = `${dateKey}:${games.map((game) => game.gamePk).join(",")}:${ODDS_REGION}:${ODDS_BOOKMAKERS ?? "all"}`;
   const cached = oddsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
@@ -84,7 +88,7 @@ async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: stri
 async function fetchOddsEvents(apiKey: string): Promise<OddsEvent[]> {
   const params = oddsParams(apiKey, "h2h");
   const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/odds?${params.toString()}`, {
-    next: { revalidate: 300 },
+    next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
   if (!response.ok) throw new Error(`The Odds API events returned ${response.status}`);
   return await response.json() as OddsEvent[];
@@ -93,7 +97,7 @@ async function fetchOddsEvents(apiKey: string): Promise<OddsEvent[]> {
 async function fetchEventMarkets(apiKey: string, eventId: string): Promise<OddsEvent | null> {
   const params = oddsParams(apiKey, "pitcher_strikeouts,team_totals,totals");
   const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`, {
-    next: { revalidate: 300 },
+    next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`The Odds API event ${eventId} returned ${response.status}`);
@@ -185,8 +189,35 @@ function isMatchingEvent(game: MlbScheduleGame, event: OddsEvent) {
   return Math.abs(eventTime - gameTime) <= 6 * 60 * 60 * 1000;
 }
 
+export function isOddsEligibleDate(dateKey: string) {
+  const today = currentPacificDateKey();
+  const daysAway = daysBetweenDateKeys(today, dateKey);
+  return daysAway >= 0 && daysAway <= ODDS_MAX_DAYS_AHEAD;
+}
+
 export function normalizeOddsName(value: string) {
   return normalizeName(value);
+}
+
+function currentPacificDateKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function daysBetweenDateKeys(start: string, end: string) {
+  const startMs = Date.parse(`${start}T00:00:00.000Z`);
+  const endMs = Date.parse(`${end}T00:00:00.000Z`);
+  if (Number.isNaN(startMs) || Number.isNaN(endMs)) return Number.POSITIVE_INFINITY;
+  return Math.round((endMs - startMs) / (24 * 60 * 60 * 1000));
+}
+
+function envPositiveInt(name: string, fallback: number) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback;
 }
 
 function normalizeName(value: string) {

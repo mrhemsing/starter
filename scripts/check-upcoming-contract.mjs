@@ -217,7 +217,7 @@ function assertStarterProjection(projection, label) {
 function assertMarketContext(market, label) {
   assert(market && typeof market === "object", `${label} must be present`);
   assert(["pending-feed", "ready"].includes(market.status), `${label}.status must be supported`);
-  assert(["the-odds-api", "not-configured"].includes(market.source), `${label}.source must be supported`);
+  assert(["the-odds-api", "not-configured", "odds-deferred"].includes(market.source), `${label}.source must be supported`);
   if (market.projectedStrikeouts !== null) assertNumber(market.projectedStrikeouts, `${label}.projectedStrikeouts`);
   if (market.strikeoutPropLine !== null) assertNumber(market.strikeoutPropLine, `${label}.strikeoutPropLine`);
   if (market.strikeoutEdge !== null) assertNumber(market.strikeoutEdge, `${label}.strikeoutEdge`);
