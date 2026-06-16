@@ -366,9 +366,9 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
           <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative />
           <div className="grid min-w-0 gap-1">
-            <h2 className={`${profile.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
-            <div className="flex flex-wrap gap-1.5">
+            <h2 className={`${profile.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+            <div className="flex min-w-0 flex-wrap gap-1.5">
               {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
               {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
             </div>

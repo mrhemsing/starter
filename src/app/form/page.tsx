@@ -481,13 +481,13 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
         <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative />
       </Link>
-      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 overflow-hidden gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <h2 className={`${treatment.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
+      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Starting today</span> : null}
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex min-w-0 flex-wrap gap-1.5">
           <FormDriverChips chips={pitcher.driverChips} compact />
         </div>
       </Link>
