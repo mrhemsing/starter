@@ -363,7 +363,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
-        <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
+        <div className={`relative grid min-w-0 items-center gap-3 ${profile.pitcherGridClass}`}>
           <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative />
           <div className="grid min-w-0 gap-1">
             <h2 className={`${profile.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
@@ -373,14 +373,14 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
             </div>
           </div>
-        </Link>
+        </div>
         <div className={`order-4 min-w-0 sm:order-none ${profile.lineClass}`}>
           <p className={`${profile.statClass} font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
           <p className="mt-1 truncate text-xs text-zinc-500">{contextLabel}</p>
           {pairedStart ? (
-            <Link href={`#${pairedStart.id}`} className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            <span className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
               Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
-            </Link>
+            </span>
           ) : null}
         </div>
         <div className="order-3 flex items-center justify-end gap-2 sm:order-none sm:text-right">
@@ -393,10 +393,10 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               />
             </div>
           ) : null}
-          <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <div>
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
-          </Link>
+          </div>
         </div>
       </div>
       <details className="ranked-start-details">
