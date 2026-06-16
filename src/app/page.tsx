@@ -140,7 +140,7 @@ export default async function Home() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300">Toe the Slab</p>
+              <p className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</p>
             </div>
             <SiteNav active="home" today={today} rankedDate={rankedDate} />
           </header>
