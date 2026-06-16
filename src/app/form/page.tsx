@@ -469,7 +469,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   return (
     <article
       id={poleId}
-      className={`heat-check-row scroll-mt-24 grid items-center gap-x-2 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
+      className={`heat-check-row scroll-mt-24 grid items-center gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
       style={{ ...(isPoleTier(pitcher) && fullWindow ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
       data-heat-band={pitcher.tier}

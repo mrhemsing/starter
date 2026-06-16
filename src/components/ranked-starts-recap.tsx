@@ -237,7 +237,7 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
     >
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
       <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
-      <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+      <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="ml-1 border-2" />
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>

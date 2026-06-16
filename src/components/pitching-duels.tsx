@@ -131,7 +131,7 @@ function DuelStarterCard({ starter }: { starter: PitchingDuel["starters"][number
   return (
     <Link href={starter.href} className="min-w-0 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/30">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2">
+        <div className="flex min-w-0 items-start gap-3">
           <Headshot playerId={starter.pitcherId} name={starter.name} team={starter.team} size="sm" band={starter.tier ?? null} decorative className="ml-1" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-zinc-100">{starter.name}</p>

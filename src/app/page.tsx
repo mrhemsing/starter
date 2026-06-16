@@ -330,7 +330,7 @@ function BestStartCard({ title, start, highlight, badge }: { title: string; star
 
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-5">
-      <a href={startPath(start.id)} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-2">
+      <a href={startPath(start.id)} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-3">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative className="ml-1" />
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>

@@ -77,7 +77,7 @@ export function PitcherChip({
     </>
   );
 
-  const classNames = `grid min-w-0 items-center gap-2 ${styles.wrapper} ${className}`;
+  const classNames = `grid min-w-0 items-center gap-3 ${styles.wrapper} ${className}`;
 
   if (href) {
     return <a href={href} className={classNames}>{content}</a>;

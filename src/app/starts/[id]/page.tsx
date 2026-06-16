@@ -357,13 +357,13 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           #{start.rank}
         </div>
       ) : null}
-      <div className={`relative grid items-center gap-x-2 gap-y-2 ${profile.gridClass}`}>
+      <div className={`relative grid items-center gap-x-3 gap-y-2 ${profile.gridClass}`}>
         <div className="min-w-0">
           <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
-        <div className={`relative grid min-w-0 items-center gap-2 ${profile.pitcherGridClass}`}>
+        <div className={`relative grid min-w-0 items-center gap-3 ${profile.pitcherGridClass}`}>
           <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className="ml-1" />
           <div className="grid min-w-0 gap-1">
             <h2 className={`${profile.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
@@ -428,7 +428,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
   return (
     <article
       id={start.id}
-      className="grid items-center gap-2 rounded border border-white/10 bg-black/20 p-3 sm:grid-cols-[auto_42px_minmax(0,1fr)_auto]"
+      className="grid items-center gap-3 rounded border border-white/10 bg-black/20 p-3 sm:grid-cols-[auto_42px_minmax(0,1fr)_auto]"
       data-short-start-kind={badge}
       data-responsive-check="short-start-card"
     >

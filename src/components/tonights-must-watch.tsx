@@ -332,7 +332,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
     >
-      <div className={`flex gap-2 sm:gap-3 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
+      <div className={`flex gap-3 sm:gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
         <StarterHeadshot starter={starter} size="duel" />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{starter.team} / {starter.side}</p>
@@ -484,7 +484,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
 
   return (
     <div
-      className="grid min-w-0 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-2 rounded border border-white/10 bg-black/25 p-3"
+      className="grid min-w-0 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-3 rounded border border-white/10 bg-black/25 p-3"
       style={{ borderColor: `${color}44`, boxShadow: `inset 3px 0 0 ${color}` }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
