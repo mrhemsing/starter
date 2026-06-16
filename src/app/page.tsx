@@ -8,16 +8,17 @@ import { SiteNav } from "@/components/site-nav";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import type { Metadata } from "next";
+import { Suspense, cache } from "react";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getFormHome } from "@/lib/data/form-service";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getStartDetail, type RankedSlateCompletionState } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule, getStartDetail, type RankedSlateCompletionState } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { formatStartLine } from "@/lib/format";
 import { startPath, upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartDetail, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, MlbSchedule, StartDetail, StartSummary } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -38,54 +39,22 @@ export default async function Home() {
   const slateNavigation = getHomeSlateNavigation(today);
   const yesterday = slateNavigation[0].date;
   const tomorrow = addDays(today, 1);
-  const [yesterdayArchivedSlateStarts, formHome, tonight, tomorrowTonight, todayCompletion] = await Promise.all([
-    getArchivedSlateStarts(yesterday),
-    getFormHome({ window: 5 }),
-    getTonightMustWatch({ date: today, window: 5 }),
-    getTonightMustWatch({ date: tomorrow, window: 5 }),
+  const [todaySchedule, tomorrowSchedule, todayCompletion] = await Promise.all([
+    getSlateSchedule({ window: "today", date: today }),
+    getSlateSchedule({ window: "tomorrow", date: tomorrow }),
     getRankedSlateCompletionState(today, today),
   ]);
-  const gamesToday = tonight.scheduledGames;
-  const liveGamesToday = tonight.games.filter((game) => game.status === "live").length;
+  const gamesToday = todaySchedule.games.length;
+  const liveGamesToday = todaySchedule.games.filter((game) => normalizeScheduleStatus(game) === "live").length;
   const startedGamesToday = todayCompletion.finalGames + liveGamesToday;
-  const todaySlateStarts = startedGamesToday > 0 ? await getDailySlate({ window: "today", date: today }) : [];
-  const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
-  const formHomeWithHighlights = await attachHotHighlights(formHome);
-  const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
-  const isTodaySlateStarted = startedGamesToday > 0;
-  const useTodaySlate = todayCompletedSlateStarts.length > 0;
-  const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
-  const rankedDate = useTodaySlate ? today : yesterday;
-  const rankedLabel = useTodaySlate ? "Today" : "Yesterday";
-  const completedSlateStarts = slateStarts.filter((start) => start.source?.line !== "fixture");
-  const topPerformerState = resolveTopPerformerState({
-    today,
-    yesterday,
-    todayCompletion,
-    isTodaySlateStarted,
-    todayCompletedSlateStarts,
-    yesterdaySlateStarts,
-  });
-  const topStart = topPerformerState?.start ?? null;
-  const [featuredStart, bestWindows, topHighlights] = await Promise.all([
-    topStart ? getStartDetail(topStart.id) : null,
-    getBestStartWindows(yesterday),
-    resolveSummaryHighlights(completedSlateStarts.slice(0, 5)),
-  ]);
-  const [featuredHighlight, weeklyHighlight, monthlyHighlight] = await Promise.all([
-    resolveFeaturedStartHighlight(featuredStart),
-    resolveSummaryHighlight(bestWindows.weekly),
-    resolveSummaryHighlight(bestWindows.monthly),
-  ]);
-  const heroImage = await resolveTopPerformerImage(topStart ?? null, featuredHighlight);
-  const tonightBand = tonight.games.length > 0 ? tonight : tomorrowTonight;
-  const tonightBandDate = tonight.games.length > 0 ? today : tomorrow;
-  const firstPitchCountdown = getFirstPitchCountdown(tonightBand, upcomingDateHref(tonightBandDate));
-  const tonightDuels = await getPitchingDuels(tonightBandDate, "upcoming");
-  const slateStatus = useTodaySlate
+  const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
+  const firstPitchSchedule = hasActiveScheduleGames(todaySchedule) ? todaySchedule : tomorrowSchedule;
+  const firstPitchDate = firstPitchSchedule.date;
+  const firstPitchCountdown = getFirstPitchCountdown(firstPitchSchedule, upcomingDateHref(firstPitchDate));
+  const slateStatus = todayCompletion.finalGames > 0
     ? {
-        lead: `Today · ${formatLongDate(rankedDate)}`,
-        detail: `${todayCompletedSlateStarts.length} QUALIFYING ${todayCompletedSlateStarts.length === 1 ? "START" : "STARTS"} POSTED`,
+        lead: `Today · ${formatLongDate(today)}`,
+        detail: `${todayCompletion.finalGames} ${todayCompletion.finalGames === 1 ? "GAME" : "GAMES"} FINAL`,
       }
     : startedGamesToday > 0
       ? {
@@ -161,54 +130,178 @@ export default async function Home() {
                 </a>
               </p>
             </div>
-            {topPerformerState ? (
-              <div className="mt-4 sm:mt-0">
-                <TopPerformerCard
-                  href={startPath(topPerformerState.start.id)}
-                  pitcherName={topPerformerState.start.pitcher.name}
-                  team={topPerformerState.start.pitcher.team}
-                  opponent={topPerformerState.start.opponent}
-                  dateLabel={topPerformerState.dateLabel}
-                  score={topPerformerState.start.gameScorePlus}
-                  line={topPerformerState.start.line}
-                  rank={1}
-                  slateCount={topPerformerState.slateCount}
-                  image={heroImage}
-                  highlight={featuredHighlight}
-                  isProvisional={topPerformerState.status === "live"}
-                  whiffRate={featuredStart ? startWhiffRate(featuredStart) : null}
-                  topVelo={featuredStart ? startTopVelo(featuredStart) : null}
-                  veloSparkline={featuredStart?.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? []}
-                />
-              </div>
-            ) : null}
+            <Suspense fallback={null}>
+              <HomeTopPerformerCard today={today} yesterday={yesterday} todayCompletion={todayCompletion} startedGamesToday={startedGamesToday} />
+            </Suspense>
           </div>
         </div>
       </section>
 
-      <TonightsMustWatch
-        tonight={tonightBand}
-        fullSlateHref={upcomingDateHref(tonightBandDate)}
-        fullSlateLabel="See tonight's full slate"
-        eyebrow={tonight.games.length > 0 ? "Tonight" : "Tomorrow"}
-        title="Tonight's Must-Watch Games"
-        previewLimit={3}
-      />
+      <Suspense fallback={<HomeSectionFallback />}>
+        <HomeMustWatchSection today={today} tomorrow={tomorrow} />
+      </Suspense>
 
-      <PitchingDuelsModule duels={tonightDuels} title="Best Duels Today" compact />
+      <Suspense fallback={<HomeSectionFallback />}>
+        <HomePitchingDuelsSection today={today} tomorrow={tomorrow} />
+      </Suspense>
 
-      <HeatCheckHero home={formHomeWithHighlights} />
+      <Suspense fallback={<HomeSectionFallback />}>
+        <HomeHeatCheckSection />
+      </Suspense>
 
-      <RankedStartsRecap
-        date={rankedDate}
-        label={rankedLabel}
-        starts={slateStarts}
-        highlights={topHighlights}
-      />
+      <Suspense fallback={<HomeSectionFallback />}>
+        <HomeRankedStartsRecap today={today} yesterday={yesterday} todayCompletion={todayCompletion} startedGamesToday={startedGamesToday} />
+      </Suspense>
 
-      <BestStartsShowcase weekly={bestWindows.weekly} monthly={bestWindows.monthly} weeklyHighlight={weeklyHighlight} monthlyHighlight={monthlyHighlight} />
+      <Suspense fallback={<HomeSectionFallback />}>
+        <HomeBestStartsShowcase yesterday={yesterday} />
+      </Suspense>
     </main>
   );
+}
+
+const getHomeRankedData = cache(async (today: string, yesterday: string, startedGamesToday: number, todayCompletion: RankedSlateCompletionState) => {
+  const [yesterdayArchivedSlateStarts, todaySlateStarts] = await Promise.all([
+    getArchivedSlateStarts(yesterday),
+    startedGamesToday > 0 ? getDailySlate({ window: "today", date: today }) : Promise.resolve([]),
+  ]);
+  const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
+  const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
+  const useTodaySlate = todayCompletedSlateStarts.length > 0;
+  const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
+  const rankedDate = useTodaySlate ? today : yesterday;
+  const rankedLabel = useTodaySlate ? "Today" : "Yesterday";
+  const completedSlateStarts = slateStarts.filter((start) => start.source?.line !== "fixture");
+  const topPerformerState = resolveTopPerformerState({
+    today,
+    yesterday,
+    todayCompletion,
+    isTodaySlateStarted: startedGamesToday > 0,
+    todayCompletedSlateStarts,
+    yesterdaySlateStarts,
+  });
+
+  return {
+    topPerformerState,
+    slateStarts,
+    rankedDate,
+    rankedLabel,
+    topHighlights: await resolveSummaryHighlights(completedSlateStarts.slice(0, 5)),
+  };
+});
+
+async function HomeTopPerformerCard({
+  today,
+  yesterday,
+  todayCompletion,
+  startedGamesToday,
+}: {
+  today: string;
+  yesterday: string;
+  todayCompletion: RankedSlateCompletionState;
+  startedGamesToday: number;
+}) {
+  const { topPerformerState } = await getHomeRankedData(today, yesterday, startedGamesToday, todayCompletion);
+  const topStart = topPerformerState?.start ?? null;
+  if (!topStart || !topPerformerState) return null;
+
+  const featuredStart = await getStartDetail(topStart.id);
+  const featuredHighlight = await resolveFeaturedStartHighlight(featuredStart);
+  const heroImage = await resolveTopPerformerImage(topStart, featuredHighlight);
+
+  return (
+    <div className="mt-4 sm:mt-0">
+      <TopPerformerCard
+        href={startPath(topStart.id)}
+        pitcherName={topStart.pitcher.name}
+        team={topStart.pitcher.team}
+        opponent={topStart.opponent}
+        dateLabel={topPerformerState.dateLabel}
+        score={topStart.gameScorePlus}
+        line={topStart.line}
+        rank={1}
+        slateCount={topPerformerState.slateCount}
+        image={heroImage}
+        highlight={featuredHighlight}
+        isProvisional={topPerformerState.status === "live"}
+        whiffRate={featuredStart ? startWhiffRate(featuredStart) : null}
+        topVelo={featuredStart ? startTopVelo(featuredStart) : null}
+        veloSparkline={featuredStart?.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? []}
+      />
+    </div>
+  );
+}
+
+async function HomeMustWatchSection({ today, tomorrow }: { today: string; tomorrow: string }) {
+  const [tonight, tomorrowTonight] = await Promise.all([
+    getTonightMustWatch({ date: today, window: 5 }),
+    getTonightMustWatch({ date: tomorrow, window: 5 }),
+  ]);
+  const tonightBand = tonight.games.length > 0 ? tonight : tomorrowTonight;
+  const tonightBandDate = tonight.games.length > 0 ? today : tomorrow;
+
+  return (
+    <TonightsMustWatch
+      tonight={tonightBand}
+      fullSlateHref={upcomingDateHref(tonightBandDate)}
+      fullSlateLabel="See tonight's full slate"
+      eyebrow={tonight.games.length > 0 ? "Tonight" : "Tomorrow"}
+      title="Tonight's Must-Watch Games"
+      previewLimit={3}
+    />
+  );
+}
+
+async function HomePitchingDuelsSection({ today, tomorrow }: { today: string; tomorrow: string }) {
+  const todayTonight = await getTonightMustWatch({ date: today, window: 5 });
+  const tonightBandDate = todayTonight.games.length > 0 ? today : tomorrow;
+  const tonightDuels = await getPitchingDuels(tonightBandDate, "upcoming");
+
+  return <PitchingDuelsModule duels={tonightDuels} title="Best Duels Today" compact />;
+}
+
+async function HomeHeatCheckSection() {
+  const formHome = await getFormHome({ window: 5 });
+  const formHomeWithHighlights = await attachHotHighlights(formHome);
+
+  return <HeatCheckHero home={formHomeWithHighlights} />;
+}
+
+async function HomeRankedStartsRecap({
+  today,
+  yesterday,
+  todayCompletion,
+  startedGamesToday,
+}: {
+  today: string;
+  yesterday: string;
+  todayCompletion: RankedSlateCompletionState;
+  startedGamesToday: number;
+}) {
+  const { slateStarts, rankedDate, rankedLabel, topHighlights } = await getHomeRankedData(today, yesterday, startedGamesToday, todayCompletion);
+
+  return (
+    <RankedStartsRecap
+      date={rankedDate}
+      label={rankedLabel}
+      starts={slateStarts}
+      highlights={topHighlights}
+    />
+  );
+}
+
+async function HomeBestStartsShowcase({ yesterday }: { yesterday: string }) {
+  const bestWindows = await getBestStartWindows(yesterday);
+  const [weeklyHighlight, monthlyHighlight] = await Promise.all([
+    resolveSummaryHighlight(bestWindows.weekly),
+    resolveSummaryHighlight(bestWindows.monthly),
+  ]);
+
+  return <BestStartsShowcase weekly={bestWindows.weekly} monthly={bestWindows.monthly} weeklyHighlight={weeklyHighlight} monthlyHighlight={monthlyHighlight} />;
+}
+
+function HomeSectionFallback() {
+  return <div className="border-t border-white/10 bg-[#08080a] px-4 py-8 sm:px-6 lg:px-8" aria-hidden="true" />;
 }
 
 async function attachHotHighlights(home: FormHomeResponse): Promise<FormHomeResponse> {
@@ -304,10 +397,10 @@ function FirstPitchCountdownBadge({ countdown }: { countdown: FirstPitchCountdow
   );
 }
 
-function getFirstPitchCountdown(tonight: TonightResponse, href: string, now = new Date()): FirstPitchCountdown | null {
-  const pendingFirstPitches = tonight.games
-    .filter((game) => game.status === "pregame")
-    .map((game) => ({ startsAt: game.firstPitch, startsAtMs: new Date(game.firstPitch).getTime() }))
+function getFirstPitchCountdown(schedule: MlbSchedule, href: string, now = new Date()): FirstPitchCountdown | null {
+  const pendingFirstPitches = schedule.games
+    .filter((game) => normalizeScheduleStatus(game) === "pregame")
+    .map((game) => ({ startsAt: game.gameDate, startsAtMs: new Date(game.gameDate).getTime() }))
     .filter((game) => Number.isFinite(game.startsAtMs) && game.startsAtMs > now.getTime())
     .sort((a, b) => a.startsAtMs - b.startsAtMs);
 
@@ -331,6 +424,21 @@ function formatCountdownDuration(durationMs: number) {
   const minutes = totalMinutes % 60;
 
   return `${hours} ${hours === 1 ? "hour" : "hours"} ${minutes} ${minutes === 1 ? "min" : "mins"}`;
+}
+
+function hasActiveScheduleGames(schedule: MlbSchedule) {
+  return schedule.games.some((game) => {
+    const status = normalizeScheduleStatus(game);
+    return status === "pregame" || status === "live";
+  });
+}
+
+function normalizeScheduleStatus(game: MlbSchedule["games"][number]) {
+  const status = `${game.status} ${game.detailedState}`.toLowerCase();
+  if (/\b(postponed|cancelled|canceled)\b/.test(status)) return "ppd";
+  if (/\b(final|game over|completed early)\b/.test(status)) return "final";
+  if (/\b(live|in progress|manager challenge|delayed|suspended)\b/.test(status)) return "live";
+  return "pregame";
 }
 
 function BestStartsShowcase({
