@@ -507,7 +507,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         />
       </div>
       <div className="col-start-4 row-start-1 flex items-center justify-end gap-2 text-right sm:col-auto sm:row-auto">
-        <div className="hidden sm:block">
+        <div>
           <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
         </div>
         <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">

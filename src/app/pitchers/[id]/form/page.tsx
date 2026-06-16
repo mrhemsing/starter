@@ -103,7 +103,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                 </p>
               </div>
               <TrendChip summary={summary} />
-              <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} />
+              <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
             </div>
           </div>
           <div className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative mx-auto h-64 w-full max-w-64 overflow-hidden rounded-2xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>

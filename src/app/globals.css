@@ -143,6 +143,11 @@ body {
     transform-origin: left center;
   }
 
+  .follow-star-pulse {
+    animation: follow-star-pulse 0.32s ease-out both;
+    transform-origin: center;
+  }
+
 }
 
 @keyframes heat-badge-pulse {
@@ -172,6 +177,18 @@ body {
   }
   to {
     transform: scaleX(1);
+  }
+}
+
+@keyframes follow-star-pulse {
+  0% {
+    transform: scale(0.88);
+  }
+  55% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
