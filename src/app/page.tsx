@@ -272,9 +272,9 @@ async function attachLastStartHighlight(pitcher: FormSummary): Promise<FormSumma
 
 function SlateStatusPill({ lead, detail }: { lead: string; detail: string }) {
   return (
-    <p className="mb-3 inline-flex flex-col font-mono text-xs uppercase tracking-[0.18em] text-amber-200">
-      <span>{lead}</span>
-      <span className="mt-1">{detail}</span>
+    <p className="mb-2 block max-w-full whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 sm:text-xs sm:tracking-[0.18em]">
+      <span>{lead}</span>{" "}
+      <span className="ml-2">{detail}</span>
     </p>
   );
 }
@@ -293,7 +293,7 @@ function FirstPitchCountdownBadge({ countdown }: { countdown: FirstPitchCountdow
   return (
     <a
       href={countdown.href}
-      className="mb-4 inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-200 underline-offset-4 hover:border-amber-300/70 hover:bg-amber-300/15 hover:text-amber-100"
+      className="mb-4 flex w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-200 underline-offset-4 hover:border-amber-300/70 hover:bg-amber-300/15 hover:text-amber-100"
       data-responsive-check="first-pitch-countdown"
       data-first-pitch={countdown.startsAt}
       data-first-pitch-games={countdown.gameCount}
