@@ -55,11 +55,11 @@ for (const file of dateFiles) {
 
 for (let index = 0; index < rows.length; index += batchSize) {
   const batch = rows.slice(index, index + batchSize);
-  await upsert("frontfive_mlb_completed_starts", batch, "date,game_pk,pitcher_mlb_id");
+  await upsert("toetheslab_mlb_completed_starts", batch, "date,game_pk,pitcher_mlb_id");
   console.log(`synced starts ${Math.min(index + batch.length, rows.length)} / ${rows.length}`);
 }
 
-await upsert("frontfive_mlb_archive_manifests", [{
+await upsert("toetheslab_mlb_archive_manifests", [{
   season: manifest.season,
   start_date: manifest.startDate,
   end_date: manifest.endDate,

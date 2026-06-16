@@ -3,7 +3,7 @@ import { once } from "node:events";
 import net from "node:net";
 
 const host = "localhost";
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.frontfive.app").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.toetheslab.com").replace(/\/+$/, "");
 const date = process.env.THE_BUMP_UPCOMING_CONTRACT_DATE ?? "2026-06-14";
 const days = process.env.THE_BUMP_UPCOMING_CONTRACT_DAYS ?? "1";
 const windowSize = process.env.THE_BUMP_UPCOMING_CONTRACT_WINDOW ?? "5";

@@ -23,8 +23,8 @@ type SupabaseFeaturedStartHighlightRow = {
   is_short: boolean | null;
 };
 
-const COMPLETED_STARTS_TABLE = "frontfive_mlb_completed_starts";
-const FEATURED_START_HIGHLIGHTS_TABLE = "frontfive_featured_start_highlights";
+const COMPLETED_STARTS_TABLE = "toetheslab_mlb_completed_starts";
+const FEATURED_START_HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
 const PAGE_SIZE = 1000;
 
 export function isSupabaseArchiveConfigured() {

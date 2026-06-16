@@ -1,4 +1,4 @@
-create table if not exists public.frontfive_mlb_completed_starts (
+create table if not exists public.toetheslab_mlb_completed_starts (
   season text not null,
   date date not null,
   game_pk bigint not null,
@@ -17,10 +17,10 @@ create table if not exists public.frontfive_mlb_completed_starts (
   primary key (date, game_pk, pitcher_mlb_id)
 );
 
-create index if not exists frontfive_mlb_completed_starts_season_date_idx
-  on public.frontfive_mlb_completed_starts (season, date, game_pk);
+create index if not exists toetheslab_mlb_completed_starts_season_date_idx
+  on public.toetheslab_mlb_completed_starts (season, date, game_pk);
 
-create table if not exists public.frontfive_mlb_archive_manifests (
+create table if not exists public.toetheslab_mlb_archive_manifests (
   season text primary key,
   start_date date not null,
   end_date date not null,
@@ -31,7 +31,7 @@ create table if not exists public.frontfive_mlb_archive_manifests (
   synced_at timestamptz not null default now()
 );
 
-create table if not exists public.frontfive_featured_start_highlights (
+create table if not exists public.toetheslab_featured_start_highlights (
   start_id text primary key,
   video_id text not null,
   is_short boolean not null default false,
@@ -41,40 +41,40 @@ create table if not exists public.frontfive_featured_start_highlights (
   updated_at timestamptz not null default now()
 );
 
-alter table public.frontfive_mlb_completed_starts enable row level security;
-alter table public.frontfive_mlb_archive_manifests enable row level security;
-alter table public.frontfive_featured_start_highlights enable row level security;
+alter table public.toetheslab_mlb_completed_starts enable row level security;
+alter table public.toetheslab_mlb_archive_manifests enable row level security;
+alter table public.toetheslab_featured_start_highlights enable row level security;
 
-drop policy if exists "frontfive service archive read" on public.frontfive_mlb_completed_starts;
-drop policy if exists "frontfive service archive write" on public.frontfive_mlb_completed_starts;
-drop policy if exists "frontfive service manifest read" on public.frontfive_mlb_archive_manifests;
-drop policy if exists "frontfive service manifest write" on public.frontfive_mlb_archive_manifests;
-drop policy if exists "frontfive service highlight read" on public.frontfive_featured_start_highlights;
-drop policy if exists "frontfive service highlight write" on public.frontfive_featured_start_highlights;
+drop policy if exists "toetheslab service archive read" on public.toetheslab_mlb_completed_starts;
+drop policy if exists "toetheslab service archive write" on public.toetheslab_mlb_completed_starts;
+drop policy if exists "toetheslab service manifest read" on public.toetheslab_mlb_archive_manifests;
+drop policy if exists "toetheslab service manifest write" on public.toetheslab_mlb_archive_manifests;
+drop policy if exists "toetheslab service highlight read" on public.toetheslab_featured_start_highlights;
+drop policy if exists "toetheslab service highlight write" on public.toetheslab_featured_start_highlights;
 
-create policy "frontfive service archive read"
-  on public.frontfive_mlb_completed_starts for select
+create policy "toetheslab service archive read"
+  on public.toetheslab_mlb_completed_starts for select
   using (auth.role() = 'service_role');
 
-create policy "frontfive service archive write"
-  on public.frontfive_mlb_completed_starts for all
+create policy "toetheslab service archive write"
+  on public.toetheslab_mlb_completed_starts for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 
-create policy "frontfive service manifest read"
-  on public.frontfive_mlb_archive_manifests for select
+create policy "toetheslab service manifest read"
+  on public.toetheslab_mlb_archive_manifests for select
   using (auth.role() = 'service_role');
 
-create policy "frontfive service manifest write"
-  on public.frontfive_mlb_archive_manifests for all
+create policy "toetheslab service manifest write"
+  on public.toetheslab_mlb_archive_manifests for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 
-create policy "frontfive service highlight read"
-  on public.frontfive_featured_start_highlights for select
+create policy "toetheslab service highlight read"
+  on public.toetheslab_featured_start_highlights for select
   using (auth.role() = 'service_role');
 
-create policy "frontfive service highlight write"
-  on public.frontfive_featured_start_highlights for all
+create policy "toetheslab service highlight write"
+  on public.toetheslab_featured_start_highlights for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');

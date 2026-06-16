@@ -100,13 +100,13 @@ export default async function Home() {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: "Toe the Slab",
-      url: "https://www.frontfive.app/",
+      url: "https://www.toetheslab.com/",
     },
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       name: "Toe the Slab",
-      url: "https://www.frontfive.app/",
+      url: "https://www.toetheslab.com/",
       description: homeDescription,
     },
   ];
