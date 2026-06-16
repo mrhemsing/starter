@@ -118,21 +118,30 @@ body {
 }
 
 .ranked-start-details > summary {
-  bottom: 8px;
+  bottom: 0;
+  height: 44px;
+  min-height: 44px;
   position: absolute;
-  right: 12px;
+  right: 0;
   top: auto;
   transform: none;
+  width: 44px;
   z-index: 5;
 }
 
 .ranked-start-details[open] > summary {
-  bottom: 8px;
+  bottom: 0;
+}
+
+.ranked-start-details > summary > span {
+  bottom: 2px;
+  position: absolute;
+  right: 4px;
 }
 
 @media (min-width: 640px) {
   .ranked-start-details > summary {
-    right: 16px;
+    right: 0;
   }
 }
 
