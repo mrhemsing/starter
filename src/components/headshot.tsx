@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { FormTier } from "@/lib/types";
 
-type HeadshotSize = "xl" | "lg" | "md" | "sm" | "xs";
+export type HeadshotSize = "xl" | "lg" | "md" | "sm" | "xs";
 
 type HeadshotProps = {
   playerId?: number | string | null;
@@ -15,9 +15,7 @@ type HeadshotProps = {
   decorative?: boolean;
   alt?: string;
   loading?: "eager" | "lazy";
-  imageWidth?: number;
   className?: string;
-  imageClassName?: string;
   starterStatus?: string;
 };
 
@@ -39,15 +37,13 @@ export function Headshot({
   decorative = false,
   alt,
   loading = "lazy",
-  imageWidth,
   className = "",
-  imageClassName = "",
   starterStatus,
 }: HeadshotProps) {
   const [failed, setFailed] = useState(false);
   const resolvedBand = sampleSufficient ? band : null;
   const hasImage = Boolean(playerId) && !failed;
-  const width = imageWidth ?? headshotImageWidth(size);
+  const width = headshotImageWidth(size);
   const label = alt ?? (team ? `${name}, ${team}` : name);
 
   return (
@@ -72,7 +68,7 @@ export function Headshot({
           height={width}
           loading={loading}
           onError={() => setFailed(true)}
-          className={`headshot__img relative z-10 h-full w-full ${imageClassName}`}
+          className="headshot__img relative z-10 h-full w-full"
         />
       ) : (
         <span className="relative z-10 flex h-full w-full items-center justify-center bg-black/10 font-mono text-xs font-semibold text-zinc-300">

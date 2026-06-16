@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Headshot } from "@/components/headshot";
+import { Headshot, type HeadshotSize } from "@/components/headshot";
 
 type PitcherChipProps = {
   pitcherId: string;
@@ -11,7 +11,6 @@ type PitcherChipProps = {
   metricLabel?: string;
   metricColor?: string;
   href?: string;
-  imageWidth?: number;
   size?: "sm" | "md" | "lg" | "spotlight";
   loading?: "eager" | "lazy";
   className?: string;
@@ -21,30 +20,30 @@ type PitcherChipProps = {
 
 const sizeClasses = {
   sm: {
-    wrapper: "grid-cols-[40px_minmax(0,1fr)_auto]",
-    image: "h-10 w-10",
+    wrapper: "grid-cols-[36px_minmax(0,1fr)_auto]",
+    imageSize: "xs",
     name: "text-base",
     metric: "text-2xl",
   },
   md: {
     wrapper: "grid-cols-[52px_minmax(0,1fr)_auto]",
-    image: "h-12 w-12",
+    imageSize: "md",
     name: "text-xl",
     metric: "text-3xl",
   },
   lg: {
-    wrapper: "grid-cols-[76px_minmax(0,1fr)_auto]",
-    image: "h-20 w-16",
+    wrapper: "grid-cols-[64px_minmax(0,1fr)_auto]",
+    imageSize: "lg",
     name: "text-2xl",
     metric: "text-4xl",
   },
   spotlight: {
-    wrapper: "grid-cols-[150px_minmax(0,1fr)_auto]",
-    image: "h-44 w-36",
+    wrapper: "grid-cols-[88px_minmax(0,1fr)_auto]",
+    imageSize: "xl",
     name: "text-4xl",
     metric: "text-5xl",
   },
-};
+} satisfies Record<string, { wrapper: string; imageSize: HeadshotSize; name: string; metric: string }>;
 
 export function PitcherChip({
   pitcherId,
@@ -54,7 +53,6 @@ export function PitcherChip({
   metricLabel,
   metricColor,
   href,
-  imageWidth = 120,
   size = "md",
   loading = "lazy",
   className = "",
@@ -64,7 +62,7 @@ export function PitcherChip({
   const styles = sizeClasses[size];
   const content = (
     <>
-      <Headshot playerId={pitcherId} name={name} team={team} loading={loading} imageWidth={imageWidth} decorative className={styles.image} />
+      <Headshot playerId={pitcherId} name={name} team={team} size={styles.imageSize} loading={loading} decorative />
       <div className="min-w-0">
         <p className={`truncate font-serif font-bold leading-tight text-zinc-50 ${styles.name} ${nameClassName}`} data-pitcher-name>{name}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{team}</p>

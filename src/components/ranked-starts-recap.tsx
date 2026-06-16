@@ -238,7 +238,7 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
       <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
       <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} imageWidth={100} decorative className="h-11 w-11 border-2" imageClassName={profile.imageClass} />
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="border-2" />
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
           <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.pitcher.team} / {formatStartLine(start.line)}</p>
@@ -275,7 +275,6 @@ function recapBandProfile(label: string) {
       background: "linear-gradient(90deg,rgba(255,122,61,0.14),rgba(16,16,20,0.96) 42%,rgba(10,11,13,0.96))",
       borderClass: "border-[#F6C445]/25",
       plateBackground: "radial-gradient(circle at 50% 18%,rgba(246,196,69,0.22),rgba(10,11,13,0.92))",
-      imageClass: "",
     };
   }
   if (label === "Solid") {
@@ -286,7 +285,6 @@ function recapBandProfile(label: string) {
       background: "linear-gradient(90deg,rgba(136,135,128,0.08),rgba(16,16,20,0.96))",
       borderClass: "border-white/10",
       plateBackground: "rgba(21,24,28,0.95)",
-      imageClass: "",
     };
   }
   if (label === "Below") {
@@ -297,7 +295,6 @@ function recapBandProfile(label: string) {
       background: "linear-gradient(90deg,rgba(91,168,255,0.10),rgba(14,18,24,0.92))",
       borderClass: "border-white/10",
       plateBackground: "rgba(16,24,34,0.92)",
-      imageClass: "",
     };
   }
   return {
@@ -307,7 +304,6 @@ function recapBandProfile(label: string) {
     background: "linear-gradient(90deg,rgba(91,168,255,0.07),rgba(10,13,18,0.9))",
     borderClass: "border-white/5",
     plateBackground: "rgba(12,18,26,0.88)",
-    imageClass: "",
   };
 }
 
@@ -326,7 +322,6 @@ function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: 
                 pitcherId={String(start.pitcher.mlbId)}
                 name={start.pitcher.name}
                 team={`${start.pitcher.team} / ${formatStartLine(start.line)}`}
-                imageWidth={100}
                 size="sm"
               />
               <span className="shrink-0 font-mono" style={{ color }}>GS+ {start.gameScorePlus}</span>

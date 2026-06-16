@@ -138,10 +138,11 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
         playerId={HOME_CONFIG.showHeadshots ? pitcher.pitcherId : null}
         name={pitcher.name}
         team={pitcher.team}
+        size="xl"
         band={pitcher.windowCount >= window ? pitcher.tier : null}
         sampleSufficient={pitcher.windowCount >= window}
-        imageWidth={240}
-        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+        loading="eager"
+        className="heat-photo pointer-events-none relative z-30 shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
         decorative
       />
 

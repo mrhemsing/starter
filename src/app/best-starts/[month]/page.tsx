@@ -94,7 +94,7 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
   return (
     <div className="grid gap-4 rounded border border-white/10 bg-[#101014] p-5 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center">
       <Link href={startPath(start.id)} className="contents">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} imageWidth={120} decorative className="h-24 w-20" />
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative />
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{label}</p>
           <h3 className="mt-1 truncate font-serif text-3xl font-bold text-zinc-50">{start.pitcher.name}</h3>

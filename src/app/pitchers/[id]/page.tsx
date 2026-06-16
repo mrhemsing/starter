@@ -76,7 +76,7 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
               {pitcher.seasonLine.starts} starts / {pitcher.seasonLine.inningsPitched.toFixed(1)} IP / {pitcher.seasonLine.era.toFixed(2)} ERA / {pitcher.seasonLine.strikeouts} K
             </p>
           </div>
-          <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} imageWidth={240} decorative className="mx-auto h-64 w-full max-w-72 rounded-2xl md:max-w-none" />
+          <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} size="xl" loading="eager" decorative className="mx-auto" />
         </header>
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_1fr]">

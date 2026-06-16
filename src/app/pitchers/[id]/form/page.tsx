@@ -107,7 +107,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
             </div>
           </div>
-          <Headshot playerId={summary.pitcherId} name={summary.name} team={summary.team} band={thermalBand} imageWidth={240} decorative className="mx-auto h-64 w-full max-w-64 rounded-2xl" />
+          <Headshot playerId={summary.pitcherId} name={summary.name} team={summary.team} size="xl" band={thermalBand} sampleSufficient={summary.windowCount >= window} loading="eager" decorative className="mx-auto" />
         </header>
 
         <section className="py-8">

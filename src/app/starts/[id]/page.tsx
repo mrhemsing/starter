@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { notFound } from "next/navigation";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
-import { Headshot } from "@/components/headshot";
+import { Headshot, type HeadshotSize } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
@@ -364,7 +364,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
         <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
-          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} band={thermalBand} imageWidth={profile.imageWidth} decorative className={profile.plateClass} imageClassName={profile.imageClass} />
+          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative />
           <div className="grid min-w-0 gap-1">
             <h2 className={`${profile.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
@@ -436,7 +436,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
         {badge}
       </span>
       <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${start.pitcher.name} start log`}>
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} band={thermalBand} imageWidth={96} decorative className="h-12 w-12" />
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="md" band={thermalBand} decorative />
       </Link>
       <div className="min-w-0">
         <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
@@ -612,9 +612,7 @@ function rankedBandProfile(label: string) {
       paddingClass: "py-4 sm:py-[18px]",
       gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
       pitcherGridClass: "grid-cols-[64px_minmax(0,1fr)] sm:contents",
-      plateClass: "h-16 w-16 sm:h-20 sm:w-16",
-      imageWidth: 180,
-      imageClass: "",
+      headshotSize: "lg" as HeadshotSize,
       nameClass: "text-3xl sm:text-4xl",
       rankClass: "text-3xl sm:text-4xl",
       scoreClass: "text-6xl sm:text-[44px]",
@@ -638,9 +636,7 @@ function rankedBandProfile(label: string) {
       paddingClass: "py-4 sm:py-[18px]",
       gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
       pitcherGridClass: "grid-cols-[56px_minmax(0,1fr)] sm:contents",
-      plateClass: "h-14 w-14 sm:h-20 sm:w-16",
-      imageWidth: 160,
-      imageClass: "",
+      headshotSize: "lg" as HeadshotSize,
       nameClass: "text-2xl sm:text-3xl",
       rankClass: "text-3xl",
       scoreClass: "text-5xl sm:text-[44px]",
@@ -664,9 +660,7 @@ function rankedBandProfile(label: string) {
       paddingClass: "py-3 sm:py-3.5",
       gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
       pitcherGridClass: "grid-cols-[48px_minmax(0,1fr)] sm:contents",
-      plateClass: "h-12 w-12 sm:h-[65px] sm:w-[52px]",
-      imageWidth: 120,
-      imageClass: "",
+      headshotSize: "md" as HeadshotSize,
       nameClass: "text-xl sm:text-2xl",
       rankClass: "text-2xl",
       scoreClass: "text-4xl sm:text-[36px]",
@@ -690,9 +684,7 @@ function rankedBandProfile(label: string) {
       paddingClass: "py-3",
       gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
       pitcherGridClass: "grid-cols-[40px_minmax(0,1fr)] sm:contents",
-      plateClass: "h-10 w-10 sm:h-[55px] sm:w-11",
-      imageWidth: 100,
-      imageClass: "",
+      headshotSize: "sm" as HeadshotSize,
       nameClass: "text-lg sm:text-xl",
       rankClass: "text-xl",
       scoreClass: "text-3xl sm:text-[30px]",
@@ -715,9 +707,7 @@ function rankedBandProfile(label: string) {
     paddingClass: "py-2.5",
     gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
     pitcherGridClass: "grid-cols-[36px_minmax(0,1fr)] sm:contents",
-    plateClass: "h-9 w-9 sm:h-[50px] sm:w-10",
-    imageWidth: 80,
-    imageClass: "",
+    headshotSize: "xs" as HeadshotSize,
     nameClass: "text-base sm:text-lg",
     rankClass: "text-lg",
     scoreClass: "text-3xl sm:text-[28px]",

@@ -674,19 +674,19 @@ function StarterStatusChips({ starter }: { starter: TonightStarter }) {
 }
 
 function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "small" | "large" | "duel" }) {
-  const className = size === "duel" ? "h-24 w-24 lg:h-28 lg:w-28" : size === "large" ? "h-16 w-16" : "h-10 w-10";
+  const headshotSize = size === "duel" ? "xl" : size === "large" ? "lg" : "sm";
   const thermalBand = starter.status === "ok" ? starter.tier ?? null : null;
+  const sampleSufficient = starter.status === "ok" && !starter.flags?.limitedSample;
+  const label = starter.name ?? `TBD ${starter.team} starter`;
   const image = (
     <Headshot
       playerId={starter.pitcherId}
-      name={starter.name ?? `${starter.team} starter`}
+      name={label}
       team={starter.team}
-      alt={starter.name ?? `${starter.team} starter`}
+      size={headshotSize}
       band={thermalBand}
-      sampleSufficient={starter.status === "ok"}
-      imageWidth={100}
-      decorative={false}
-      className={className}
+      sampleSufficient={sampleSufficient}
+      decorative
       starterStatus={starter.status}
     />
   );

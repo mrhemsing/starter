@@ -116,7 +116,6 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
         name={entry.name}
         team={`${entry.team} / ${tierLabel(entry.tier)} / ${entry.windowCount} starts`}
         href={pitcherPath(entry.pitcherId)}
-        imageWidth={120}
         size="md"
       >
         <p className="truncate text-xs text-zinc-500">{lastLine}</p>
