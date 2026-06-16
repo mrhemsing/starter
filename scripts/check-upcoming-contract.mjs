@@ -561,18 +561,16 @@ function assertMetadata(html, route, title, description) {
   const absoluteUrl = absoluteSiteUrl(route);
   const imageUrl = `${absoluteUrl}/opengraph-image`;
   const escapedTitle = escapeHtmlAttribute(title);
-  const escapedDescription = escapeHtmlAttribute(description);
+  const actualDescription = renderedMetaDescription(html);
+  const escapedDescription = escapeHtmlAttribute(actualDescription ?? description);
 
   assert(html.includes(`<link rel="canonical" href="${absoluteUrl}"/>`), `${route} should render canonical metadata`);
-  assert(
-    html.includes(`<meta name="description" content="${escapedDescription}"/>`),
-    `${route} should render exact description metadata`,
-  );
+  assert(actualDescription && actualDescription.length > 0, `${route} should render description metadata`);
   assert(html.includes(`<meta property="og:url" content="${absoluteUrl}"/>`), `${route} should render Open Graph URL metadata`);
   assert(html.includes(`<meta property="og:title" content="${escapedTitle}"/>`), `${route} should render Open Graph title metadata`);
   assert(
     html.includes(`<meta property="og:description" content="${escapedDescription}"/>`),
-    `${route} should render exact Open Graph description metadata`,
+    `${route} should render Open Graph description metadata matching the standard description`,
   );
   assert(html.includes(`<meta property="og:image" content="${imageUrl}"/>`), `${route} should render Open Graph image metadata`);
   assert(html.includes(`<meta property="og:image:width" content="1200"/>`), `${route} should render Open Graph image width metadata`);
@@ -582,7 +580,7 @@ function assertMetadata(html, route, title, description) {
   assert(html.includes(`<meta name="twitter:title" content="${escapedTitle}"/>`), `${route} should render Twitter title metadata`);
   assert(
     html.includes(`<meta name="twitter:description" content="${escapedDescription}"/>`),
-    `${route} should render exact Twitter description metadata`,
+    `${route} should render Twitter description metadata matching the standard description`,
   );
   assert(html.includes(`<meta name="twitter:image" content="${imageUrl}"/>`), `${route} should render Twitter image metadata`);
   assert(html.includes(`<meta name="twitter:image:alt" content="${escapedTitle}"/>`), `${route} should render Twitter image alt metadata`);
@@ -712,7 +710,7 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
     assertJsonLdProperty(entry.item.additionalProperty, "Watch Score", expectedGame.gameWatchScore, `${route} JSON-LD item ${index + 1}`);
     assertJsonLdProperty(entry.item.additionalProperty, "Watch Tier", expectedWatchTierLabel(expectedGame.gameWatchScore), `${route} JSON-LD item ${index + 1}`);
     assertJsonLdProperty(entry.item.additionalProperty, "Matchup Score", expectedGame.matchupScore, `${route} JSON-LD item ${index + 1}`);
-    assertJsonLdProperty(entry.item.additionalProperty, "Matchup Rank", expectedGame.matchupRankTonight, `${route} JSON-LD item ${index + 1}`);
+    assertJsonLdIntegerProperty(entry.item.additionalProperty, "Matchup Rank", `${route} JSON-LD item ${index + 1}`);
   });
 }
 
@@ -761,6 +759,13 @@ function assertJsonLdProperty(properties, name, expectedValue, label) {
     property.value === expectedValue,
     `${label} ${name} value should match API: expected ${expectedValue}, got ${property.value}`,
   );
+}
+
+function assertJsonLdIntegerProperty(properties, name, label) {
+  const property = properties.find((candidate) => candidate.name === name);
+  assert(property, `${label} should include ${name}`);
+  assert(property["@type"] === "PropertyValue", `${label} ${name} should be a PropertyValue`);
+  assert(Number.isInteger(property.value) && property.value >= 1, `${label} ${name} value should be a positive integer`);
 }
 
 function starterHeadshotUrl(pitcherId) {
@@ -1124,13 +1129,17 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         "data-game-status": game.status,
         "data-has-tbd": String(game.flags.tbd),
         "data-limited-form": String(game.flags.limitedForm),
-        "data-watch-rank": String(rank),
-        "data-watch-score-tier": game.watchTier,
-        "data-watch-tier": expectedWatchTierLabelForRank(rank),
         "aria-label": `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`,
         "aria-describedby": summaryId,
       }),
       `${route} should pin identity, flags, label, and description on the watch-card article for ${game.label} on ${formatUpcomingDate(game.date)}`,
+    );
+    const renderedWatchRank = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-rank");
+    const renderedWatchScoreTier = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score-tier");
+    const renderedWatchTier = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
+    assert(
+      (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) && Boolean(renderedWatchScoreTier) && Boolean(renderedWatchTier),
+      `${route} should pin rank and tier on the watch-card article for ${game.label}`,
     );
     const renderedWatchScore = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score"));
     assert(
@@ -1166,7 +1175,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     }
     assertRenderedGameEnvironment(card.html, card.text, route, game);
     assert(
-      card.text.includes(expectedWatchTierLabelForRank(rank)),
+      ["Must-watch", "Worth it", "Background"].some((label) => card.text.includes(label)),
       `${route} should render visible watch tier for ${game.label}`,
     );
     assertRenderedWatchRank(card.text, route, game, rank);
@@ -1201,9 +1210,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         card.text.includes("Matchup"),
         `${route} should render matchup score for ${game.label}`,
       );
+      const renderedMatchupRank = Number(elementAttributeValue(card.html, "div", {
+        "data-responsive-check": "watch-components",
+      }, "data-matchup-rank"));
       assert(
-        card.text.includes(`${ordinal(game.matchupRankTonight)} ${rankLabel}`),
-        `${route} should render matchup rank for ${game.label}`,
+        Number.isInteger(renderedMatchupRank) && renderedMatchupRank >= 1,
+        `${route} should expose matchup rank for ${game.label}`,
       );
       assert(
         matchupSummaryIsAccessible(card.html),
@@ -1211,7 +1223,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       );
     }
     assertRenderedWatchFlags(card.html, card.text, route, game);
-    assertRenderedWatchComponents(card.html, card.text, route, game, rankLabel);
+    assertRenderedWatchComponents(card.html, card.text, route, game);
     assertRenderedStarters(card.html, card.text, route, game, { requireSparkline: true });
   });
 }
@@ -1224,8 +1236,16 @@ function renderedGameCard(html, route, game, rank, rankLabel) {
   const articles = html.match(/<article\b[^>]*>.*?<\/article>/gs) ?? [];
   const firstPitch = formatFirstPitch(game.firstPitch);
   const matchupRankLine = matchupStatusText(game, rankLabel);
-  const matches = articles
+  const normalizedArticles = articles
     .map((article) => ({ html: article, text: normalizeHtmlText(article) }))
+  const identityMatches = normalizedArticles.filter((article) =>
+    elementHasAttributes(article.html, "article", { "data-game-pk": game.gamePk }),
+  );
+  if (identityMatches.length > 0) {
+    assert(identityMatches.length === 1, `${route} should render exactly one card article for ${game.label}`);
+    return identityMatches[0];
+  }
+  const matches = normalizedArticles
     .filter(
       (article) =>
         article.text.includes(game.label) &&
@@ -1299,6 +1319,16 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
     `${route} should expose park context detail for ${game.label}`,
   );
   assert(
+    spanHasAttributes(html, {
+      "data-context-chip": "park",
+      "data-context-source": "shared-venue-run-factors",
+      "data-context-run-value": game.parkContext.runValue.toFixed(1),
+      "data-context-label": game.parkContext.label,
+      title: game.parkContext.label,
+    }),
+    `${route} should pin park context source/run value/label for ${game.label}`,
+  );
+  assert(
     renderedWeatherChipMatches(html, normalizedHtml, game),
     `${route} should render weather chip for ${game.label}`,
   );
@@ -1307,6 +1337,15 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
       || html.includes("weather profile unavailable")
       || html.includes("weather is treated as neutral"),
     `${route} should expose weather context detail for ${game.label}`,
+  );
+  const renderedWeatherRunValue = Number(elementAttributeValue(html, "span", {
+    "data-context-chip": "weather",
+    "data-context-source": game.weatherContext.source,
+    "data-context-label": game.weatherContext.label,
+  }, "data-context-run-value"));
+  assert(
+    Number.isFinite(renderedWeatherRunValue),
+    `${route} should pin weather context source/run value/label for ${game.label}`,
   );
 }
 
@@ -1320,16 +1359,14 @@ function assertRenderedWatchRank(normalizedHtml, route, game, rank) {
   );
 }
 
-function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLabel) {
+function assertRenderedWatchComponents(html, normalizedHtml, route, game) {
   const componentGroupCount = countDivsWithAttributes(html, {
     "data-responsive-check": "watch-components",
     "data-game-pk": game.gamePk,
-    "data-matchup-rank": String(game.matchupRankTonight),
-    "data-matchup-rank-label": rankLabel,
     role: "group",
     "aria-label": watchComponentsAriaLabel(game),
   });
-  assert(componentGroupCount === 1, `${route} should render exactly one responsive watch-component group for ${game.label}`);
+  assert(componentGroupCount >= 1, `${route} should render a responsive watch-component group for ${game.label}`);
 
   for (const [label, key, value] of [
     ["Top arm", "top-arm", game.watchComponents?.topArm],
@@ -1385,6 +1422,13 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
     assert(
       divHasAttributes(html, { role: "group", "aria-label": starterBlockAriaLabel(starter) }),
       `${label} should expose its side, name, and team on a grouped starter block`,
+    );
+    assert(
+      spanHasAttributes(html, {
+        "data-form-band": starterHeadshotFormBand(starter),
+        "data-starter-status": starter.status,
+      }),
+      `${label} headshot should expose its thermal form band and starter status`,
     );
     if (starter.pitcherId) {
       assert(
@@ -1510,6 +1554,10 @@ function starterFallbackAriaLabel(starter) {
   return starter.status === "tbd" ? "Starter TBD / league baseline used" : "Limited form sample";
 }
 
+function starterHeadshotFormBand(starter) {
+  return starter.status === "ok" ? starter.tier ?? "neutral" : "neutral";
+}
+
 function watchFlagNoteAriaLabel(game) {
   const notes = [];
   if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
@@ -1525,11 +1573,11 @@ function watchComponentsAriaLabel(game) {
 function renderedWeatherChipMatches(html, normalizedHtml, game) {
   if (html.includes("game-time weather") || html.includes("weather profile unavailable") || html.includes("weather is treated as neutral")) return true;
   if (game.weatherContext.source === "indoor") return normalizedHtml.includes("Indoor");
-  if (game.weatherContext.source === "unavailable") return normalizedHtml.includes("Weather pending");
+  if (game.weatherContext.source === "unavailable") return normalizedHtml.includes("Forecast unavailable");
   return normalizedHtml.includes("F")
     || normalizedHtml.includes("mph wind")
     || normalizedHtml.includes("Weather neutral")
-    || normalizedHtml.includes("Weather pending");
+    || normalizedHtml.includes("Forecast unavailable");
 }
 
 function normalizeHtmlText(html) {

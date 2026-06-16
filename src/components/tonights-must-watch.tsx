@@ -435,13 +435,19 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
 function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
   const chips = [
     {
+      key: "park",
       label: `Park ${game.parkContext.runFactor.toFixed(2)}`,
       detail: game.parkContext.label,
+      source: "shared-venue-run-factors",
+      value: game.parkContext.runValue.toFixed(1),
       tone: game.parkContext.runFactor >= 1.06 ? "warm" : game.parkContext.runFactor <= 0.96 ? "cool" : "muted",
     },
     {
+      key: "weather",
       label: weatherChipLabel(game),
       detail: game.weatherContext.label,
+      source: game.weatherContext.source,
+      value: game.weatherContext.runValue.toFixed(1),
       tone: game.weatherContext.runValue > 0.4 ? "warm" : game.weatherContext.runValue < -0.4 ? "cool" : "muted",
     },
   ] as const;
@@ -452,6 +458,10 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
         <span
           key={chip.label}
           title={chip.detail}
+          data-context-chip={chip.key}
+          data-context-source={chip.source}
+          data-context-run-value={chip.value}
+          data-context-label={chip.detail}
           className={`inline-flex min-h-6 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
             chip.tone === "warm"
               ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
