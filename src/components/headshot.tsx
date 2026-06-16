@@ -68,7 +68,7 @@ export function Headshot({
           height={width}
           loading={loading}
           onError={() => setFailed(true)}
-          className="headshot__img relative z-10 h-full w-full"
+          className="headshot__img relative z-10"
         />
       ) : (
         <span className="relative z-10 flex h-full w-full items-center justify-center bg-black/10 font-mono text-xs font-semibold text-zinc-300">

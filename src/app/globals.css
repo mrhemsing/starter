@@ -92,11 +92,17 @@ body {
   z-index: 2;
 }
 
-.headshot__img {
+.thermal-headshot .headshot__img {
+  display: block;
+  inset: 0;
   height: 100%;
+  margin: auto;
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
   object-position: center bottom;
-  width: 100%;
+  position: absolute;
+  width: auto;
 }
 
 .ranked-start-details:not([open]) {
