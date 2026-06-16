@@ -4,7 +4,8 @@ import { startPath } from "@/lib/routes";
 import type { PitchingDuel, PitchingDuelsResponse, StartSummary, TonightGame } from "@/lib/types";
 
 const BEST_DUEL_MAX_GAP = 10;
-const MISMATCH_MIN_GAP = 18;
+const BEST_DUEL_MIN_STARTER_FORM = 55;
+const MISMATCH_MIN_GAP = 12;
 const BEST_DUEL_MIN_COMBINED_QUALITY = 90;
 const DUELS_CACHE_TTL_MS = 60 * 1000;
 
@@ -38,6 +39,7 @@ async function buildPitchingDuels(date: string, mode: "upcoming" | "settled"): P
     generatedAt: new Date().toISOString(),
     mode,
     bestDuels: bestDuels.sort((a, b) => b.duelScore - a.duelScore || a.gap - b.gap).slice(0, 6),
+    closestDuels: [...duels].sort((a, b) => b.duelScore - a.duelScore || a.gap - b.gap).slice(0, 6),
     mismatches: mismatches.sort((a, b) => b.mismatchScore - a.mismatchScore || b.combinedQuality - a.combinedQuality).slice(0, 6),
   };
 }
@@ -45,7 +47,8 @@ async function buildPitchingDuels(date: string, mode: "upcoming" | "settled"): P
 async function getUpcomingDuels(date: string) {
   const tonight = await getTonightMustWatch({ date, window: 5 });
   return tonight.games
-    .filter((game) => game.starters.every((starter) => starter.pitcherId && starter.status === "ok" && starter.rgs !== undefined))
+    .filter((game) => (game.status === "pregame" || game.status === "live")
+      && game.starters.every((starter) => starter.pitcherId && starter.status === "ok" && starter.rgs !== undefined && !isLikelyOpener(starter)))
     .map(upcomingGameToDuel);
 }
 
@@ -125,11 +128,17 @@ function buildDuel(input: Omit<PitchingDuel, "gap" | "combinedQuality" | "duelSc
 }
 
 function isBestDuelCandidate(duel: PitchingDuel) {
-  return duel.combinedQuality >= BEST_DUEL_MIN_COMBINED_QUALITY && duel.gap <= BEST_DUEL_MAX_GAP;
+  return duel.starters.every((starter) => starter.score >= BEST_DUEL_MIN_STARTER_FORM)
+    && duel.combinedQuality >= BEST_DUEL_MIN_COMBINED_QUALITY
+    && duel.gap <= BEST_DUEL_MAX_GAP;
 }
 
 function isMismatchCandidate(duel: PitchingDuel) {
   return duel.gap >= MISMATCH_MIN_GAP;
+}
+
+function isLikelyOpener(starter: TonightGame["starters"][number]) {
+  return starter.workload?.avgIpLast5 !== null && starter.workload?.avgIpLast5 !== undefined && starter.workload.avgIpLast5 < 3;
 }
 
 function round1(value: number) {

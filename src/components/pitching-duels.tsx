@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { HEAT_BANDS, tierOf } from "@/lib/form-tokens";
 import { duelsPath } from "@/lib/routes";
 import type { PitchingDuel, PitchingDuelsResponse } from "@/lib/types";
@@ -14,8 +15,10 @@ export function PitchingDuelsModule({
   title?: string;
   compact?: boolean;
 }) {
-  const shownDuels = duels.bestDuels.slice(0, compact ? 2 : 6);
-  const shownMismatches = duels.mismatches.slice(0, compact ? 2 : 6);
+  if (compact) return <HomepagePitchingDuelsModule duels={duels} title={title} />;
+
+  const shownDuels = duels.bestDuels.slice(0, 6);
+  const shownMismatches = duels.mismatches.slice(0, 6);
   const boardHref = duels.mode === "settled" ? `${duelsPath(duels.date)}?mode=settled` : duelsPath(duels.date);
 
   if (shownDuels.length === 0 && shownMismatches.length === 0) return null;
@@ -44,6 +47,50 @@ export function PitchingDuelsModule({
   );
 }
 
+function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsResponse; title: string }) {
+  const qualifyingDuels = duels.bestDuels.slice(0, 3);
+  const fallbackDuels = duels.closestDuels.slice(0, 2);
+  const displayDuels = qualifyingDuels.length > 0 ? qualifyingDuels : fallbackDuels;
+  const hasBestDuel = qualifyingDuels.length > 0;
+  const topMismatch = duels.mismatches[0] ?? null;
+  const boardHref = duels.mode === "settled" ? `${duelsPath(duels.date)}?mode=settled` : duelsPath(duels.date);
+
+  if (displayDuels.length === 0 && !topMismatch) return null;
+
+  return (
+    <section className="border-y border-white/10 bg-[#09090b] px-4 py-10 sm:px-6 lg:px-8" data-responsive-check="pitching-duels" data-duel-mode={hasBestDuel ? "best" : "closest"}>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Today"}</p>
+            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">{hasBestDuel ? title : "Closest matchups tonight"}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+              The strongest, most evenly matched matchups on tonight&apos;s slate.
+            </p>
+          </div>
+          <Link href={boardHref} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
+            Full duels board
+          </Link>
+        </div>
+        {displayDuels.length > 0 ? (
+          <div className={`grid gap-4 ${displayDuels.length === 1 ? "" : "lg:grid-cols-2"} ${displayDuels.length >= 3 ? "xl:grid-cols-3" : ""}`}>
+            {displayDuels.map((duel, index) => (
+              <DuelCard key={`homepage-duel-${duel.gamePk}`} duel={duel} rank={index + 1} kind={hasBestDuel ? "best" : "closest"} />
+            ))}
+          </div>
+        ) : null}
+        {topMismatch ? (
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <Link href={boardHref} className="inline-flex min-h-9 items-center font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 underline-offset-4 hover:text-amber-300 hover:underline">
+              Biggest gap tonight: {topMismatch.label} · {topMismatch.gap}-pt edge to {leadingTeam(topMismatch)}{" ->"}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function DuelList({ title, duels, kind }: { title: string; duels: PitchingDuel[]; kind: "best" | "mismatch" }) {
   return (
     <div>
@@ -55,12 +102,15 @@ function DuelList({ title, duels, kind }: { title: string; duels: PitchingDuel[]
   );
 }
 
-function DuelCard({ duel, rank, kind }: { duel: PitchingDuel; rank: number; kind: "best" | "mismatch" }) {
+function DuelCard({ duel, rank, kind }: { duel: PitchingDuel; rank: number; kind: "best" | "closest" | "mismatch" }) {
+  const rankLabel = kind === "mismatch" ? "mismatch" : kind === "closest" ? "matchup" : "duel";
+  const glowValue = kind === "mismatch" ? duel.gap : duel.combinedQuality;
+  const glowMax = kind === "mismatch" ? 50 : 160;
   return (
-    <article className="heat-glow-card rounded border border-white/10 bg-[#101014] p-4" style={duelGlowStyle(kind === "best" ? duel.combinedQuality : duel.gap, kind === "best" ? 160 : 50)}>
+    <article className="heat-glow-card rounded border border-white/10 bg-[#101014] p-4" style={duelGlowStyle(glowValue, glowMax)}>
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 md:flex-row md:items-start">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">#{rank} {kind === "best" ? "duel" : "mismatch"}</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">#{rank} {rankLabel}</p>
           <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">{duel.label}</h3>
           <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-500">{duel.park ?? "Venue TBD"}</p>
         </div>
@@ -81,9 +131,12 @@ function DuelStarterCard({ starter }: { starter: PitchingDuel["starters"][number
   return (
     <Link href={starter.href} className="min-w-0 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/30">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-zinc-100">{starter.name}</p>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team}</p>
+        <div className="flex min-w-0 items-start gap-3">
+          <Headshot playerId={starter.pitcherId} name={starter.name} team={starter.team} size="sm" band={starter.tier ?? null} decorative />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-zinc-100">{starter.name}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team}</p>
+          </div>
         </div>
         <div className="shrink-0 text-right">
           <p className={`font-mono text-sm ${starter.tier ? tierTextClass(starter.tier) : ""}`} style={!starter.tier ? { color } : undefined}>{starter.scoreLabel} {starter.score}</p>
@@ -127,6 +180,12 @@ function duelGlowColor(value: number, max: number) {
   if (pct >= 0.6) return HEAT_BANDS[1].color;
   if (pct >= 0.36) return HEAT_BANDS[2].color;
   return HEAT_BANDS[3].color;
+}
+
+function leadingTeam(duel: PitchingDuel) {
+  const [a, b] = duel.starters;
+  if (a.score === b.score) return "EVEN";
+  return a.score > b.score ? a.team : b.team;
 }
 
 function colorToRgb(color: string) {

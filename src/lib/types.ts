@@ -474,6 +474,7 @@ export type PitchingDuelsResponse = {
   generatedAt: string;
   mode: "upcoming" | "settled";
   bestDuels: PitchingDuel[];
+  closestDuels: PitchingDuel[];
   mismatches: PitchingDuel[];
 };
 
