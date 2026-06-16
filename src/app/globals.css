@@ -92,26 +92,6 @@ body {
   z-index: 2;
 }
 
-.thermal-headshot--onfire {
-  box-shadow:
-    0 0 14px rgb(255 59 31 / 0.55),
-    inset 0 0 18px rgb(255 59 31 / 0.18);
-}
-
-.thermal-headshot--hot {
-  box-shadow: 0 0 10px rgb(255 138 61 / 0.2);
-}
-
-.thermal-headshot--cooling {
-  box-shadow: 0 0 10px rgb(91 168 255 / 0.18);
-}
-
-.thermal-headshot--ice {
-  box-shadow:
-    inset 0 0 18px rgb(143 203 255 / 0.4),
-    0 0 14px rgb(143 203 255 / 0.25);
-}
-
 .ranked-start-details:not([open]) {
   border-top: 0;
   height: 0;
@@ -203,17 +183,6 @@ body {
   text-shadow: 0 0 calc(6px + 18px * var(--rail-chill)) rgb(126 200 255 / calc(0.22 + 0.42 * var(--rail-chill)));
 }
 
-.heat-intensity-card::after {
-  background: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, 0.1) 2px 3px);
-  content: "";
-  inset: 0;
-  mix-blend-mode: multiply;
-  opacity: 0.42;
-  pointer-events: none;
-  position: absolute;
-  z-index: 20;
-}
-
 .heat-intensity-card.fire {
   border-color: rgb(255 106 43 / calc(0.25 + 0.35 * var(--burn)));
   box-shadow:
@@ -242,101 +211,6 @@ body {
     0 0 calc(6px + 14px * var(--chill)) rgb(126 200 255 / calc(0.2 + 0.3 * var(--chill))) !important;
 }
 
-.heat-flames {
-  background:
-    radial-gradient(38px 56px at 12% 120%, #ffd23f 0%, #ff6a2b 40%, transparent 72%),
-    radial-gradient(46px 70px at 30% 125%, #ff6a2b 0%, #e01f00 45%, transparent 75%),
-    radial-gradient(40px 60px at 50% 120%, #ffd23f 0%, #ff6a2b 42%, transparent 72%),
-    radial-gradient(50px 72px at 72% 125%, #ff6a2b 0%, #e01f00 45%, transparent 75%),
-    radial-gradient(38px 58px at 90% 120%, #ffd23f 0%, #ff6a2b 40%, transparent 72%);
-  animation: heat-flames calc(1.5s - 0.5s * var(--burn)) ease-in-out infinite alternate;
-  bottom: -6px;
-  filter: blur(calc(5px + 4px * var(--burn)));
-  height: calc(34px + 56px * var(--burn));
-  left: 0;
-  opacity: calc(0.4 + 0.5 * var(--burn));
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 2;
-}
-
-.heat-ember {
-  animation: heat-rise 2.4s linear infinite;
-  background: #ffd23f;
-  border-radius: 999px;
-  bottom: 18px;
-  box-shadow: 0 0 6px #ffd23f;
-  height: 3px;
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  width: 3px;
-  z-index: 2;
-}
-
-.heat-shimmer {
-  animation: heat-shimmer 3s linear infinite;
-  background: repeating-linear-gradient(100deg, transparent 0 8px, rgba(255, 180, 80, 0.6) 8px 9px);
-  inset: 0;
-  mix-blend-mode: screen;
-  opacity: calc(0.02 + 0.12 * var(--burn));
-  pointer-events: none;
-  position: absolute;
-  z-index: 2;
-}
-
-.heat-frost {
-  background:
-    radial-gradient(60% 40% at 0% 0%, rgba(223, 241, 255, 0.16), transparent 60%),
-    radial-gradient(60% 40% at 100% 0%, rgba(223, 241, 255, 0.14), transparent 60%),
-    radial-gradient(80% 55% at 50% 100%, rgba(43, 111, 214, 0.2), transparent 70%);
-  inset: 0;
-  opacity: calc(0.35 + 0.65 * var(--chill));
-  pointer-events: none;
-  position: absolute;
-  z-index: 2;
-}
-
-.heat-icicles {
-  align-items: flex-start;
-  display: flex;
-  height: 22px;
-  left: 0;
-  padding: 0 6px;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  top: -1px;
-  transform: scaleY(calc(0.35 + 0.65 * var(--chill)));
-  transform-origin: top;
-  z-index: 2;
-}
-
-.heat-icicles i {
-  background: linear-gradient(180deg, #dff1ff, rgba(126, 200, 255, 0.2));
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-  flex: 1;
-  filter: drop-shadow(0 2px 3px rgba(126, 200, 255, 0.4));
-  opacity: 0.9;
-}
-
-@keyframes heat-flames {
-  from { transform: scaleY(0.92) translateY(2px); }
-  to { transform: scaleY(1.08) translateY(-3px); }
-}
-
-@keyframes heat-rise {
-  0% { opacity: 0; transform: translateY(0) scale(1); }
-  18% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-95px) scale(0.4); }
-}
-
-@keyframes heat-shimmer {
-  from { transform: translateX(0); }
-  to { transform: translateX(18px); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .top-performer-card {
     opacity: 1;
@@ -347,14 +221,4 @@ body {
     transform: none !important;
   }
 
-  .heat-flames,
-  .heat-ember,
-  .heat-shimmer {
-    animation: none !important;
-  }
-
-  .heat-ember,
-  .heat-shimmer {
-    display: none;
-  }
 }

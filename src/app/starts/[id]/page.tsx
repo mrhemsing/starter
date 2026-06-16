@@ -824,7 +824,8 @@ function thermalBandForForm(summary: FormSummary | undefined): FormTier | null {
 }
 
 function thermalHeadshotClass(band: FormTier | null) {
-  return band ? `thermal-headshot--${band}` : "thermal-headshot--neutral";
+  void band;
+  return "thermal-headshot--neutral";
 }
 
 function thermalBorderColor(band: FormTier | null, fallback: string) {

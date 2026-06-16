@@ -134,10 +134,9 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
         className="absolute inset-0 z-20 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
         aria-label={`Open ${pitcher.name} form page`}
       />
-      <HeatCardEffects intensity={intensity} />
       <div
-        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] overflow-hidden rounded-xl bg-[#23232a] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
-        style={{ background: `linear-gradient(160deg, ${teamColors.primary}, #16161b)`, boxShadow: `inset 0 0 0 2px ${teamColors.accent}, 0 4px 14px rgba(0,0,0,0.4)` }}
+        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] overflow-hidden rounded-xl bg-[#15181C] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+        style={{ boxShadow: `inset 0 0 0 2px ${teamColors.accent}, 0 4px 14px rgba(0,0,0,0.4)` }}
       >
         {HOME_CONFIG.showHeadshots ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -149,7 +148,6 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
         ) : (
           <span className="flex h-full w-full items-center justify-center font-mono text-xl font-semibold text-zinc-300">{initials(pitcher.name)}</span>
         )}
-        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-transparent from-[55%] to-black/35" />
       </div>
 
       <div className="pointer-events-none relative z-30 flex min-h-[118px] min-w-0 flex-col justify-between">
@@ -194,39 +192,6 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
       </div>
     </article>
   );
-}
-
-function HeatCardEffects({ intensity }: { intensity: HeatIntensity }) {
-  if (intensity.mode === "fire") {
-    return (
-      <>
-        <span aria-hidden="true" className="heat-flames" />
-        {intensity.value >= 0.88 ? <span aria-hidden="true" className="heat-shimmer" /> : null}
-        {intensity.value >= 0.7 ? (
-          <>
-            <span aria-hidden="true" className="heat-ember left-[16%] [animation-delay:.2s]" />
-            <span aria-hidden="true" className="heat-ember left-[44%] [animation-delay:.9s]" />
-            <span aria-hidden="true" className="heat-ember left-[72%] [animation-delay:1.4s]" />
-          </>
-        ) : null}
-      </>
-    );
-  }
-
-  if (intensity.mode === "ice") {
-    return (
-      <>
-        <span aria-hidden="true" className="heat-frost" />
-        <span aria-hidden="true" className="heat-icicles">
-          {[14, 8, 20, 7, 13, 9, 18, 7, 11, 16].map((height, index) => (
-            <i key={index} style={{ height }} />
-          ))}
-        </span>
-      </>
-    );
-  }
-
-  return null;
 }
 
 function nextStartDetails(pitcher: FormSummary) {
