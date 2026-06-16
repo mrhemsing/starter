@@ -46,6 +46,7 @@ export function TopPerformerCard({
   const [isVisible, setIsVisible] = useState(false);
   const [displayScore, setDisplayScore] = useState(score);
   const imageUrl = image?.imageUrl;
+  const isHeadshotFallback = image?.source === "headshot";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
@@ -174,7 +175,21 @@ export function TopPerformerCard({
         </div>
 
         <div className="relative order-1 min-h-[470px] overflow-hidden bg-[#15181C] lg:order-2 lg:min-h-[500px]">
-          {imageUrl ? (
+          {imageUrl && isHeadshotFallback ? (
+            <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_42%,rgba(246,196,69,0.12),rgba(21,24,28,0.62)_42%,#0A0B0D_100%)]">
+              <div className="relative h-52 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#15181C] shadow-[0_24px_80px_rgba(0,0,0,0.42)] sm:h-64 sm:w-64 lg:h-72 lg:w-72">
+                <Image
+                  src={imageUrl}
+                  alt={image?.alt ?? ""}
+                  fill
+                  sizes="(min-width: 1024px) 288px, 256px"
+                  quality={82}
+                  className="object-contain object-center"
+                  priority
+                />
+              </div>
+            </div>
+          ) : imageUrl ? (
             <Image
               src={imageUrl}
               alt={image?.alt ?? ""}
