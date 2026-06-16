@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherChip } from "@/components/pitcher-chip";
 import { qualityTierOf } from "@/lib/form-tokens";
@@ -237,10 +238,7 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
       <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
       <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-xl border-2" style={{ borderColor: profile.ringColor, background: profile.plateBackground }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 100)} alt="" loading="lazy" className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`} />
-        </div>
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} imageWidth={100} decorative className="h-11 w-11 border-2" imageClassName={profile.imageClass} />
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
           <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.pitcher.team} / {formatStartLine(start.line)}</p>
@@ -346,10 +344,6 @@ function lastName(name: string) {
 
 function qualityBandSlug(label: string) {
   return label.toLowerCase().replace(/\s+/g, "-");
-}
-
-function rankedHeadshotUrl(pitcherId: string, width: number) {
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
 }
 
 function stableHash(value: string) {

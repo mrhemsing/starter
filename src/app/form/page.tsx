@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierLabel } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { SiteNav } from "@/components/site-nav";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -14,7 +15,7 @@ import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/for
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { FormSummary, FormTier, HeatBand, TonightGame } from "@/lib/types";
+import type { FormSummary, HeatBand, TonightGame } from "@/lib/types";
 import type React from "react";
 
 type FormPageProps = {
@@ -380,13 +381,10 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
       <div className="relative grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)] sm:items-center">
         <Link
           href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
-          className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative mx-auto grid h-[116px] w-[92px] place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0`}
-          style={{ borderColor: thermalBorderColor(thermalBand, bandColor) }}
-          data-form-band={thermalBand ?? "neutral"}
+          className="relative mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0"
+          aria-label={`Open ${pitcher.name} form page`}
         >
-          <ThermalHeadshotEffects band={thermalBand} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={rankedHeadshotUrl(pitcher.pitcherId, 220)} alt={`${pitcher.name}, ${pitcher.team}`} loading="eager" className="relative h-full w-full object-contain object-bottom" />
+          <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} band={thermalBand} loading="eager" imageWidth={220} decorative className="h-[116px] w-[92px]" />
         </Link>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -480,10 +478,8 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
-      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className={`${treatment.plateClass} thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid place-items-center overflow-hidden rounded-xl border bg-[#15181C] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300`} style={{ borderColor: thermalBorderColor(thermalBand, bandColor) }} data-form-band={thermalBand ?? "neutral"}>
-        <ThermalHeadshotEffects band={thermalBand} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={rankedHeadshotUrl(pitcher.pitcherId, treatment.imageWidth)} alt={`${pitcher.name}, ${pitcher.team}`} loading="lazy" className={`relative h-full w-full object-contain object-bottom ${treatment.imageClass}`} />
+      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
+        <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} band={thermalBand} imageWidth={treatment.imageWidth} decorative className={treatment.plateClass} imageClassName={treatment.imageClass} />
       </Link>
       <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 overflow-hidden gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <h2 className={`${treatment.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
@@ -517,24 +513,6 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       </div>
     </article>
   );
-}
-
-function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
-  void band;
-  return null;
-}
-
-function thermalHeadshotClass(band: FormTier | null) {
-  void band;
-  return "thermal-headshot--neutral";
-}
-
-function thermalBorderColor(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "#FF3B1F";
-  if (band === "hot") return "#FF8A3D";
-  if (band === "cooling") return "#5BA8FF";
-  if (band === "ice") return "#8FCBFF";
-  return fallback;
 }
 
 function TemperatureRail({ bands, total, params }: { bands: Array<HeatBand & { count: number }>; total: number; params: Record<string, string | undefined> }) {
@@ -600,10 +578,6 @@ function rowTreatment(pitcher: FormSummary): {
 
 function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
-}
-
-function rankedHeadshotUrl(pitcherId: string, width: number) {
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
 }
 
 function lastName(name: string) {

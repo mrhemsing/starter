@@ -92,6 +92,13 @@ body {
   z-index: 2;
 }
 
+.headshot__img {
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  width: 100%;
+}
+
 .ranked-start-details:not([open]) {
   border-top: 0;
   height: 0;

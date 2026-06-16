@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { ReactNode } from "react";
+import { Headshot } from "@/components/headshot";
 
 type PitcherChipProps = {
   pitcherId: string;
@@ -61,24 +61,10 @@ export function PitcherChip({
   nameClassName = "",
   children,
 }: PitcherChipProps) {
-  const [failed, setFailed] = useState(false);
   const styles = sizeClasses[size];
   const content = (
     <>
-      <div className={`${styles.image} overflow-hidden rounded border border-white/10 bg-black/25`}>
-        {failed ? (
-          <span className="flex h-full w-full items-center justify-center font-mono text-xs font-semibold text-zinc-400">{initials(name)}</span>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={headshotUrl(pitcherId, imageWidth)}
-            alt={`${name}, ${team}`}
-            loading={loading}
-            onError={() => setFailed(true)}
-            className="h-full w-full object-contain object-bottom"
-          />
-        )}
-      </div>
+      <Headshot playerId={pitcherId} name={name} team={team} loading={loading} imageWidth={imageWidth} decorative className={styles.image} />
       <div className="min-w-0">
         <p className={`truncate font-serif font-bold leading-tight text-zinc-50 ${styles.name} ${nameClassName}`} data-pitcher-name>{name}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{team}</p>
@@ -100,18 +86,4 @@ export function PitcherChip({
   }
 
   return <div className={classNames}>{content}</div>;
-}
-
-export function headshotUrl(pitcherId: string, width: number) {
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }

@@ -2,10 +2,11 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
+import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 
@@ -664,64 +665,29 @@ function StarterStatusChips({ starter }: { starter: TonightStarter }) {
 
 function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "small" | "large" | "duel" }) {
   const className = size === "duel" ? "h-24 w-24 lg:h-28 lg:w-28" : size === "large" ? "h-16 w-16" : "h-10 w-10";
-  const color = teamAccentColor(starter.team);
   const thermalBand = starter.status === "ok" ? starter.tier ?? null : null;
-  const thermalClass = thermalHeadshotClass(thermalBand);
-  if (!starter.pitcherId) {
-    return (
-      <span
-        className={`${className} thermal-headshot ${thermalClass} relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800 font-mono text-[10px] text-zinc-300`}
-        style={{ border: `${size === "duel" ? "3px" : "2px"} solid ${thermalBorderColor(thermalBand, `${color}99`)}` }}
-        role="img"
-        aria-label={`TBD ${starter.team} starter`}
-      >
-        <ThermalHeadshotEffects band={thermalBand} />
-        {starter.team}
-      </span>
-    );
-  }
-
   const image = (
-    <span
-      className={`${className} thermal-headshot ${thermalClass} relative block shrink-0 overflow-hidden rounded-full bg-black/30`}
-      style={{ border: `${size === "duel" ? "3px" : "2px"} solid ${thermalBorderColor(thermalBand, `${color}99`)}` }}
-      data-form-band={thermalBand ?? "neutral"}
-    >
-      <ThermalHeadshotEffects band={thermalBand} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_100,q_auto:best/v1/people/${starter.pitcherId}/headshot/67/current`}
-        alt={starter.name ?? ""}
-        width={100}
-        height={100}
-        className="relative h-full w-full object-contain object-bottom"
-      />
-    </span>
+    <Headshot
+      playerId={starter.pitcherId}
+      name={starter.name ?? `${starter.team} starter`}
+      team={starter.team}
+      alt={starter.name ?? `${starter.team} starter`}
+      band={thermalBand}
+      sampleSufficient={starter.status === "ok"}
+      imageWidth={100}
+      decorative={false}
+      className={className}
+      starterStatus={starter.status}
+    />
   );
+
+  if (!starter.pitcherId) return image;
 
   return (
     <Link href={pitcherFormHref(starter.pitcherId)} className="shrink-0" aria-label={`${starter.name ?? "Pitcher"} form`}>
       {image}
     </Link>
   );
-}
-
-function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
-  void band;
-  return null;
-}
-
-function thermalHeadshotClass(band: FormTier | null) {
-  void band;
-  return "thermal-headshot--neutral";
-}
-
-function thermalBorderColor(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "#FF3B1F";
-  if (band === "hot") return "#FF8A3D";
-  if (band === "cooling") return "#5BA8FF";
-  if (band === "ice") return "#8FCBFF";
-  return fallback;
 }
 
 function pitcherFormHref(pitcherId: string) {

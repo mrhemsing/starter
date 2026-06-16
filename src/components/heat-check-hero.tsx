@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
@@ -109,7 +110,6 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
   const band = levelBandFor(pitcher);
   const nextStart = nextStartDetails(pitcher);
   const tone = heatTone(band);
-  const teamColors = teamColor(pitcher.team);
   const intensity = heatIntensity(pitcher.heatIndex ?? 0, band);
   const cardStyle = intensity.mode === "fire"
     ? ({ "--burn": intensity.value } as CSSProperties)
@@ -134,21 +134,16 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
         className="absolute inset-0 z-20 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
         aria-label={`Open ${pitcher.name} form page`}
       />
-      <div
-        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] overflow-hidden rounded-xl bg-[#15181C] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
-        style={{ boxShadow: `inset 0 0 0 2px ${teamColors.accent}, 0 4px 14px rgba(0,0,0,0.4)` }}
-      >
-        {HOME_CONFIG.showHeadshots ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_240,q_auto:best/v1/people/${pitcher.pitcherId}/headshot/67/current`}
-            alt={`${pitcher.name}, ${pitcher.team} ${handednessLabel(pitcher.throws)}`}
-            className="relative z-10 h-full w-full object-cover object-top"
-          />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center font-mono text-xl font-semibold text-zinc-300">{initials(pitcher.name)}</span>
-        )}
-      </div>
+      <Headshot
+        playerId={HOME_CONFIG.showHeadshots ? pitcher.pitcherId : null}
+        name={pitcher.name}
+        team={pitcher.team}
+        band={pitcher.windowCount >= window ? pitcher.tier : null}
+        sampleSufficient={pitcher.windowCount >= window}
+        imageWidth={240}
+        className="heat-photo pointer-events-none relative z-30 h-[118px] w-[92px] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+        decorative
+      />
 
       <div className="pointer-events-none relative z-30 flex min-h-[118px] min-w-0 flex-col justify-between">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
@@ -314,53 +309,6 @@ function heatTone(band: HeatBand) {
 
 function levelBandFor(pitcher: FormSummary) {
   return HEAT_BANDS.find((band) => band.key === pitcher.tier) ?? HEAT_BANDS[HEAT_BANDS.length - 1];
-}
-
-const TEAM_COLORS: Record<string, { primary: string; accent: string }> = {
-  ARI: { primary: "#a71930", accent: "#e3d4ad" },
-  ATL: { primary: "#13274f", accent: "#ce1141" },
-  BAL: { primary: "#df4601", accent: "#000000" },
-  BOS: { primary: "#bd3039", accent: "#0c2340" },
-  CHC: { primary: "#0e3386", accent: "#cc3433" },
-  CIN: { primary: "#c6011f", accent: "#ffffff" },
-  CLE: { primary: "#00385d", accent: "#e50022" },
-  COL: { primary: "#33006f", accent: "#c4ced4" },
-  CWS: { primary: "#27251f", accent: "#c4ced4" },
-  DET: { primary: "#0c2340", accent: "#fa4616" },
-  HOU: { primary: "#002d62", accent: "#eb6e1f" },
-  KC: { primary: "#004687", accent: "#bd9b60" },
-  LAA: { primary: "#ba0021", accent: "#003263" },
-  LAD: { primary: "#005a9c", accent: "#ef3e42" },
-  MIA: { primary: "#00a3e0", accent: "#ef3340" },
-  MIL: { primary: "#12284b", accent: "#ffc52f" },
-  MIN: { primary: "#002b5c", accent: "#d31145" },
-  NYM: { primary: "#002d72", accent: "#ff5910" },
-  NYY: { primary: "#0c2340", accent: "#c4ced4" },
-  OAK: { primary: "#003831", accent: "#efb21e" },
-  PHI: { primary: "#e81828", accent: "#002d72" },
-  PIT: { primary: "#27251f", accent: "#fdb827" },
-  SD: { primary: "#2f241d", accent: "#ffc425" },
-  SEA: { primary: "#0c2c56", accent: "#005c5c" },
-  SF: { primary: "#fd5a1e", accent: "#27251f" },
-  STL: { primary: "#c41e3a", accent: "#0c2340" },
-  TB: { primary: "#092c5c", accent: "#8fbce6" },
-  TEX: { primary: "#003278", accent: "#c0111f" },
-  TOR: { primary: "#134a8e", accent: "#e8291c" },
-  WSH: { primary: "#ab0003", accent: "#14225a" },
-};
-
-function teamColor(team: string) {
-  return TEAM_COLORS[team] ?? { primary: "#23232a", accent: "#56565e" };
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function HeatMeter({ heatIndex, band, deltaForm }: { heatIndex: number; band: HeatBand; deltaForm: number }) {

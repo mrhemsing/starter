@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormTrendChart, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
@@ -14,7 +15,7 @@ import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormTier, PitcherApiResponse, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, PitcherApiResponse, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -106,11 +107,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
             </div>
           </div>
-          <div className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative mx-auto h-64 w-full max-w-64 overflow-hidden rounded-2xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
-            <ThermalHeadshotEffects band={thermalBand} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_240,q_auto:best/v1/people/${summary.pitcherId}/headshot/67/current`} alt="" className="relative h-full w-full object-contain object-bottom" />
-          </div>
+          <Headshot playerId={summary.pitcherId} name={summary.name} team={summary.team} band={thermalBand} imageWidth={240} decorative className="mx-auto h-64 w-full max-w-64 rounded-2xl" />
         </header>
 
         <section className="py-8">
@@ -305,24 +302,6 @@ function Callout({ label, value, detail, href }: { label: string; value: string;
       <p className="mt-1 font-mono text-xs text-zinc-500">{detail}</p>
     </Link>
   );
-}
-
-function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
-  void band;
-  return null;
-}
-
-function thermalHeadshotClass(band: FormTier | null) {
-  void band;
-  return "thermal-headshot--neutral";
-}
-
-function thermalBorderColor(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "#FF3B1F";
-  if (band === "hot") return "#FF8A3D";
-  if (band === "cooling") return "#5BA8FF";
-  if (band === "ice") return "#8FCBFF";
-  return fallback;
 }
 
 function countCurrentPlusStreak(series: Array<{ gsPlus: number }>) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Headshot } from "@/components/headshot";
 import { getPitcherApiResponse } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
@@ -75,8 +76,7 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
               {pitcher.seasonLine.starts} starts / {pitcher.seasonLine.inningsPitched.toFixed(1)} IP / {pitcher.seasonLine.era.toFixed(2)} ERA / {pitcher.seasonLine.strikeouts} K
             </p>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pitcher.headshotUrl} alt="" className="mx-auto h-64 w-full max-w-72 object-contain object-bottom md:max-w-none" />
+          <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} imageWidth={240} decorative className="mx-auto h-64 w-full max-w-72 rounded-2xl md:max-w-none" />
         </header>
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_1fr]">

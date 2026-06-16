@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { notFound } from "next/navigation";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
@@ -336,7 +337,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
   const gas = isGasStart(start, tier.label);
   const topReason = topInlineReason(start);
   const thermalBand = thermalBandForForm(formSummary);
-  const thermalClass = thermalHeadshotClass(thermalBand);
 
   return (
     <article
@@ -364,16 +364,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
         <Link href={startPath(start.id)} className={`relative grid min-w-0 items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${profile.pitcherGridClass}`}>
-          <div className={`${profile.plateClass} thermal-headshot ${thermalClass} relative grid place-items-center overflow-hidden rounded-xl border`} style={{ borderColor: thermalBorderColor(thermalBand, profile.ringColor), background: "#15181C" }} data-form-band={thermalBand ?? "neutral"}>
-            <ThermalHeadshotEffects band={thermalBand} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={rankedHeadshotUrl(String(start.pitcher.mlbId), profile.imageWidth)}
-              alt={`${start.pitcher.name}, ${start.pitcher.team}`}
-              loading="lazy"
-              className={`relative h-full w-full object-contain object-bottom ${profile.imageClass}`}
-            />
-          </div>
+          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} band={thermalBand} imageWidth={profile.imageWidth} decorative className={profile.plateClass} imageClassName={profile.imageClass} />
           <div className="grid min-w-0 gap-1">
             <h2 className={`${profile.nameClass} font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
@@ -444,10 +435,8 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       <span className={`inline-flex min-h-7 w-fit items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${badge === "OPENER" ? "border-amber-300/35 bg-amber-300/10 text-amber-200" : "border-sky-300/25 bg-sky-300/10 text-sky-200"}`}>
         {badge}
       </span>
-      <Link href={startPath(start.id)} className={`thermal-headshot ${thermalHeadshotClass(thermalBand)} relative grid h-12 w-12 place-items-center overflow-hidden rounded-xl border bg-[#15181C]`} style={{ borderColor: thermalBorderColor(thermalBand, "#3f3f46") }} data-form-band={thermalBand ?? "neutral"}>
-        <ThermalHeadshotEffects band={thermalBand} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={rankedHeadshotUrl(String(start.pitcher.mlbId), 96)} alt={`${start.pitcher.name}, ${start.pitcher.team}`} loading="lazy" className="relative h-full w-full object-contain object-bottom" />
+      <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${start.pitcher.name} start log`}>
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} band={thermalBand} imageWidth={96} decorative className="h-12 w-12" />
       </Link>
       <div className="min-w-0">
         <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
@@ -459,11 +448,6 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       </div>
     </article>
   );
-}
-
-function ThermalHeadshotEffects({ band }: { band: FormTier | null }) {
-  void band;
-  return null;
 }
 
 async function resolveRankedStartHighlights(starts: StartSummary[]) {
@@ -613,10 +597,6 @@ function topInlineReason(start: StartSummary) {
 
 function isGasStart(start: StartSummary, bandLabel: string) {
   return (bandLabel === "Elite" || bandLabel === "Plus") && (start.line.strikeouts >= 8 || inningsFromIP(start.line.inningsPitched) >= 7);
-}
-
-function rankedHeadshotUrl(pitcherId: string, width: number) {
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${width},q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
 }
 
 function rankedBandProfile(label: string) {
@@ -821,19 +801,6 @@ function shortStartBadge(start: StartSummary): "OPENER" | "SHORT" {
 function thermalBandForForm(summary: FormSummary | undefined): FormTier | null {
   if (!summary || summary.status !== "ok" || summary.windowCount < FORM_CONFIG.minStartsToQualify) return null;
   return summary.tier;
-}
-
-function thermalHeadshotClass(band: FormTier | null) {
-  void band;
-  return "thermal-headshot--neutral";
-}
-
-function thermalBorderColor(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "#FF3B1F";
-  if (band === "hot") return "#FF8A3D";
-  if (band === "cooling") return "#5BA8FF";
-  if (band === "ice") return "#8FCBFF";
-  return fallback;
 }
 
 function jsonLdForRankedStarts(date: string, starts: StartSummary[]) {
