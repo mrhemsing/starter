@@ -20,25 +20,25 @@ type PitcherChipProps = {
 
 const sizeClasses = {
   sm: {
-    wrapper: "grid-cols-[36px_minmax(0,1fr)_auto]",
+    wrapper: "grid-cols-[30px_minmax(0,1fr)_auto]",
     imageSize: "xs",
     name: "text-base",
     metric: "text-2xl",
   },
   md: {
-    wrapper: "grid-cols-[52px_minmax(0,1fr)_auto]",
+    wrapper: "grid-cols-[41px_minmax(0,1fr)_auto]",
     imageSize: "md",
     name: "text-xl",
     metric: "text-3xl",
   },
   lg: {
-    wrapper: "grid-cols-[64px_minmax(0,1fr)_auto]",
+    wrapper: "grid-cols-[50px_minmax(0,1fr)_auto]",
     imageSize: "lg",
     name: "text-2xl",
     metric: "text-4xl",
   },
   spotlight: {
-    wrapper: "grid-cols-[88px_minmax(0,1fr)_auto]",
+    wrapper: "grid-cols-[66px_minmax(0,1fr)_auto]",
     imageSize: "xl",
     name: "text-4xl",
     metric: "text-5xl",
@@ -62,7 +62,7 @@ export function PitcherChip({
   const styles = sizeClasses[size];
   const content = (
     <>
-      <Headshot playerId={pitcherId} name={name} team={team} size={styles.imageSize} loading={loading} decorative />
+      <Headshot playerId={pitcherId} name={name} team={team} size={styles.imageSize} loading={loading} decorative className="ml-1" />
       <div className="min-w-0">
         <p className={`truncate font-serif font-bold leading-tight text-zinc-50 ${styles.name} ${nameClassName}`} data-pitcher-name>{name}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{team}</p>
@@ -77,7 +77,7 @@ export function PitcherChip({
     </>
   );
 
-  const classNames = `grid min-w-0 items-center gap-3 ${styles.wrapper} ${className}`;
+  const classNames = `grid min-w-0 items-center gap-2 ${styles.wrapper} ${className}`;
 
   if (href) {
     return <a href={href} className={classNames}>{content}</a>;

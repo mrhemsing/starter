@@ -357,14 +357,14 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           #{start.rank}
         </div>
       ) : null}
-      <div className={`relative grid items-center gap-x-4 gap-y-2 ${profile.gridClass}`}>
+      <div className={`relative grid items-center gap-x-2 gap-y-2 ${profile.gridClass}`}>
         <div className="min-w-0">
           <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
           {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
         </div>
-        <div className={`relative grid min-w-0 items-center gap-3 ${profile.pitcherGridClass}`}>
-          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative />
+        <div className={`relative grid min-w-0 items-center gap-2 ${profile.pitcherGridClass}`}>
+          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className="ml-1" />
           <div className="grid min-w-0 gap-1">
             <h2 className={`${profile.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
             <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
@@ -428,7 +428,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
   return (
     <article
       id={start.id}
-      className="grid items-center gap-3 rounded border border-white/10 bg-black/20 p-3 sm:grid-cols-[auto_48px_minmax(0,1fr)_auto]"
+      className="grid items-center gap-2 rounded border border-white/10 bg-black/20 p-3 sm:grid-cols-[auto_42px_minmax(0,1fr)_auto]"
       data-short-start-kind={badge}
       data-responsive-check="short-start-card"
     >
@@ -436,7 +436,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
         {badge}
       </span>
       <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${start.pitcher.name} start log`}>
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="md" band={thermalBand} decorative />
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="md" band={thermalBand} decorative className="ml-1" />
       </Link>
       <div className="min-w-0">
         <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
@@ -610,8 +610,8 @@ function rankedBandProfile(label: string) {
       borderClass: "border-[#F6C445]/35",
       fieldDividerClass: "border-[#F6C445]/35",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
-      pitcherGridClass: "grid-cols-[64px_minmax(0,1fr)] sm:contents",
+      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
+      pitcherGridClass: "grid-cols-[50px_minmax(0,1fr)] sm:contents",
       headshotSize: "lg" as HeadshotSize,
       nameClass: "text-3xl sm:text-4xl",
       rankClass: "text-3xl sm:text-4xl",
@@ -634,8 +634,8 @@ function rankedBandProfile(label: string) {
       borderClass: "border-[#F6C445]/25",
       fieldDividerClass: "border-[#F6C445]/25",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
-      pitcherGridClass: "grid-cols-[56px_minmax(0,1fr)] sm:contents",
+      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
+      pitcherGridClass: "grid-cols-[50px_minmax(0,1fr)] sm:contents",
       headshotSize: "lg" as HeadshotSize,
       nameClass: "text-2xl sm:text-3xl",
       rankClass: "text-3xl",
@@ -658,8 +658,8 @@ function rankedBandProfile(label: string) {
       borderClass: "border-white/10",
       fieldDividerClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none",
       paddingClass: "py-3 sm:py-3.5",
-      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
-      pitcherGridClass: "grid-cols-[48px_minmax(0,1fr)] sm:contents",
+      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_42px_minmax(0,1fr)_auto_auto]",
+      pitcherGridClass: "grid-cols-[42px_minmax(0,1fr)] sm:contents",
       headshotSize: "md" as HeadshotSize,
       nameClass: "text-xl sm:text-2xl",
       rankClass: "text-2xl",
@@ -682,8 +682,8 @@ function rankedBandProfile(label: string) {
       borderClass: "border-white/8",
       fieldDividerClass: "border-white/8 sm:border-x-0 sm:border-t-0 sm:rounded-none",
       paddingClass: "py-3",
-      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
-      pitcherGridClass: "grid-cols-[40px_minmax(0,1fr)] sm:contents",
+      gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_36px_minmax(0,1fr)_auto_auto]",
+      pitcherGridClass: "grid-cols-[36px_minmax(0,1fr)] sm:contents",
       headshotSize: "sm" as HeadshotSize,
       nameClass: "text-lg sm:text-xl",
       rankClass: "text-xl",
@@ -705,8 +705,8 @@ function rankedBandProfile(label: string) {
     borderClass: "border-white/5",
     fieldDividerClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none",
     paddingClass: "py-2.5",
-    gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
-    pitcherGridClass: "grid-cols-[36px_minmax(0,1fr)] sm:contents",
+    gridClass: "grid-cols-[48px_minmax(0,1fr)_auto] sm:grid-cols-[48px_31px_minmax(0,1fr)_auto_auto]",
+    pitcherGridClass: "grid-cols-[31px_minmax(0,1fr)] sm:contents",
     headshotSize: "xs" as HeadshotSize,
     nameClass: "text-base sm:text-lg",
     rankClass: "text-lg",

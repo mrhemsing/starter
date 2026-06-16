@@ -384,7 +384,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
           className="relative mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0"
           aria-label={`Open ${pitcher.name} form page`}
         >
-          <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative />
+          <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative className="ml-1" />
         </Link>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -469,7 +469,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   return (
     <article
       id={poleId}
-      className={`heat-check-row scroll-mt-24 grid items-center gap-x-4 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
+      className={`heat-check-row scroll-mt-24 grid items-center gap-x-2 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
       style={{ ...(isPoleTier(pitcher) && fullWindow ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
       data-heat-band={pitcher.tier}
@@ -479,7 +479,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
       <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
-        <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative />
+      <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </Link>
       <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
@@ -560,18 +560,18 @@ function rowTreatment(pitcher: FormSummary): {
   metaClass: string;
 } {
   if (pitcher.tier === "onfire") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_64px_minmax(0,1fr)_auto] sm:grid-cols-[44px_64px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "hot") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_64px_minmax(0,1fr)_auto] sm:grid-cols-[44px_64px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "cooling") {
-    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_44px_minmax(0,1fr)_auto] sm:grid-cols-[44px_44px_minmax(0,1fr)_132px_auto]", headshotSize: "sm", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
+    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_36px_minmax(0,1fr)_auto] sm:grid-cols-[44px_36px_minmax(0,1fr)_132px_auto]", headshotSize: "sm", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "ice") {
-    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_40px_minmax(0,1fr)_auto] sm:grid-cols-[44px_40px_minmax(0,1fr)_120px_auto]", headshotSize: "xs", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
+    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_31px_minmax(0,1fr)_auto] sm:grid-cols-[44px_31px_minmax(0,1fr)_120px_auto]", headshotSize: "xs", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
   }
-  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_52px_minmax(0,1fr)_auto] sm:grid-cols-[44px_52px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
 function isPoleTier(pitcher: FormSummary) {
