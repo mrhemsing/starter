@@ -74,7 +74,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             This week&apos;s probable slates grouped by date. Each game is ranked once, by watchability, with both starters shown head-to-head.
           </p>

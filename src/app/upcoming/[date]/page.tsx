@@ -73,7 +73,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             One card per game, ranked by starter form and matchup context. Probables are grouped head-to-head instead of duplicated by pitcher.
           </p>
