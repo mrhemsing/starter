@@ -125,9 +125,11 @@ export default async function Home() {
 
 function SlateStatusPill({ lead, detail }: { lead: string; detail: string }) {
   return (
-    <p className="mb-2 block max-w-full whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 sm:text-xs sm:tracking-[0.18em]">
+    <p className="block max-w-full whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 sm:text-xs sm:tracking-[0.18em]">
       <span>{lead}</span>{" "}
-      <span className="ml-2">{detail}</span>
+      <span className="mx-1.5">·</span>
+      {" "}
+      <span>{detail}</span>
     </p>
   );
 }
@@ -141,18 +143,20 @@ type FirstPitchCountdown = {
 
 function FirstPitchCountdownBadge({ countdown }: { countdown: FirstPitchCountdown }) {
   const subject = countdown.gameCount === 1 ? "First game" : "First games";
-  const verb = countdown.gameCount === 1 ? "starts" : "start";
 
   return (
     <a
       href={countdown.href}
-      className="mb-4 flex w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-200 underline-offset-4 hover:border-amber-300/70 hover:bg-amber-300/15 hover:text-amber-100"
+      className="mb-4 mt-1 block max-w-full truncate font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 underline-offset-4 hover:text-amber-100 hover:underline sm:text-xs sm:tracking-[0.18em]"
       data-responsive-check="first-pitch-countdown"
       data-first-pitch={countdown.startsAt}
       data-first-pitch-games={countdown.gameCount}
     >
-      <span>{subject} {verb} in {countdown.timeLabel}</span>
-      <span className="text-[10px] text-amber-300">Upcoming starts</span>
+      <span>{subject} in {countdown.timeLabel}</span>
+      {" "}
+      <span className="mx-1.5">·</span>
+      {" "}
+      <span>Upcoming starts {"->"}</span>
     </a>
   );
 }
@@ -183,7 +187,7 @@ function formatCountdownDuration(durationMs: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  return `${hours} ${hours === 1 ? "hour" : "hours"} ${minutes} ${minutes === 1 ? "min" : "mins"}`;
+  return `${hours}H ${minutes}M`;
 }
 
 function hasActiveScheduleGames(schedule: MlbSchedule) {
