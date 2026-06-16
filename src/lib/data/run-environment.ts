@@ -28,9 +28,11 @@ export const VENUE_RUN_FACTORS: Record<string, number> = {
   "Progressive Field": 0.99,
   "Rate Field": 1.01,
   "Rogers Centre": 1.02,
+  "Sutter Health Park": 1,
   "T-Mobile Park": 0.95,
   "Target Field": 0.99,
   "Truist Park": 1.01,
+  "UNIQLO Field at Dodger Stadium": 0.98,
   "Wrigley Field": 1.04,
   "Yankee Stadium": 1.03,
 };
@@ -68,9 +70,11 @@ const VENUE_WEATHER_PROFILES: Record<string, VenueWeatherProfile> = {
   "Progressive Field": { latitude: 41.4962, longitude: -81.6852, outdoor: true, label: "Cleveland, OH" },
   "Rate Field": { latitude: 41.83, longitude: -87.6338, outdoor: true, label: "Chicago, IL" },
   "Rogers Centre": { latitude: 43.6414, longitude: -79.3894, outdoor: false, label: "Toronto, ON" },
+  "Sutter Health Park": { latitude: 38.5804, longitude: -121.5135, outdoor: true, label: "West Sacramento, CA" },
   "T-Mobile Park": { latitude: 47.5914, longitude: -122.3325, outdoor: false, label: "Seattle, WA" },
   "Target Field": { latitude: 44.9817, longitude: -93.2776, outdoor: true, label: "Minneapolis, MN" },
   "Truist Park": { latitude: 33.8908, longitude: -84.4678, outdoor: true, label: "Atlanta, GA" },
+  "UNIQLO Field at Dodger Stadium": { latitude: 34.0739, longitude: -118.24, outdoor: true, label: "Los Angeles, CA" },
   "Wrigley Field": { latitude: 41.9484, longitude: -87.6553, outdoor: true, label: "Chicago, IL" },
   "Yankee Stadium": { latitude: 40.8296, longitude: -73.9262, outdoor: true, label: "Bronx, NY" },
 };

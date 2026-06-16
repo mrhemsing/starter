@@ -740,11 +740,11 @@ function gameVenueLabel(game: TonightGame) {
 
 function weatherChipLabel(game: TonightGame) {
   if (game.weatherContext.source === "indoor") return "Indoor";
-  if (game.weatherContext.source === "unavailable") return "Weather pending";
+  if (game.weatherContext.source === "unavailable") return "Forecast unavailable";
   const parts = [];
   if (typeof game.weatherContext.tempF === "number") parts.push(`${Math.round(game.weatherContext.tempF)}F`);
   if (typeof game.weatherContext.windMph === "number") parts.push(`${Math.round(game.weatherContext.windMph)} mph wind`);
-  if (typeof game.weatherContext.precipProbability === "number" && game.weatherContext.precipProbability >= 30) {
+  if (typeof game.weatherContext.precipProbability === "number" && game.weatherContext.precipProbability >= 10) {
     parts.push(`${Math.round(game.weatherContext.precipProbability)}% rain`);
   }
   return parts.length > 0 ? parts.join(" / ") : "Weather neutral";
