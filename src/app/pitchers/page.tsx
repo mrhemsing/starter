@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 
 export const metadata = {
-  title: "Pitcher Directory | Toe the Slab",
+  title: "Pitcher Directory",
   description: "Searchable directory of qualified starting pitchers with links to Toe the Slab form pages.",
 };
 

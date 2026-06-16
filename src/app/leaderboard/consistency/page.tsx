@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 
 export const metadata = {
-  title: "Most Consistent Starting Pitchers | Toe the Slab",
+  title: "Most Consistent Starting Pitchers",
   description: "Qualified MLB starters ranked by recent GS+ floor and volatility.",
 };
 

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { season } = await params;
   if (!isSeason(season)) return {};
   return {
-    title: `${season} GS+ Leaderboard | Toe the Slab`,
+    title: `${season} GS+ Leaderboard`,
     description: `${season} season-average GS+ leaderboard for qualified MLB starting pitchers.`,
   };
 }

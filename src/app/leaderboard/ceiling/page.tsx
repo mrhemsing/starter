@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 
 export const metadata = {
-  title: "Highest Ceiling Starting Pitchers | Toe the Slab",
+  title: "Highest Ceiling Starting Pitchers",
   description: "Qualified MLB starters ranked by recent GS+ ceiling and spike-start upside.",
 };
 

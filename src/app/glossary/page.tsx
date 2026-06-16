@@ -11,7 +11,7 @@ const terms = [
 ];
 
 export const metadata = {
-  title: "Glossary | Toe the Slab",
+  title: "Glossary",
   description: "Definitions for GS+, RGS, projected GS+, driver chips, ERA anchors, and Toe the Slab pitching terms.",
 };
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getParkFactorRows } from "@/lib/data/run-environment";
 
 export const metadata = {
-  title: "MLB Park Factors | Toe the Slab",
+  title: "MLB Park Factors",
   description: "Run-environment park factors used as context for Toe the Slab starter projections and matchup cards.",
 };
 

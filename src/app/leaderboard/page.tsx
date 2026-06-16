@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 
 export const metadata = {
-  title: "Season GS+ Leaderboard | Toe the Slab",
+  title: "Season GS+ Leaderboard",
   description: "Season-average GS+ leaderboard for qualified MLB starting pitchers.",
 };
 

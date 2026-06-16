@@ -9,7 +9,7 @@ type TeamPageProps = {
 export async function generateMetadata({ params }: TeamPageProps) {
   const { abbr } = await params;
   return {
-    title: `${abbr.toUpperCase()} Starting Rotation | Toe the Slab`,
+    title: `${abbr.toUpperCase()} Starting Rotation`,
     description: `${abbr.toUpperCase()} starting pitcher form, season GS+, and next-start context.`,
   };
 }
