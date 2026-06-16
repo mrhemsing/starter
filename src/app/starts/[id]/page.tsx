@@ -193,7 +193,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">MLB Starting Pitcher Rankings</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-mono text-sm text-zinc-500">{date} / completed starts recap</p>
