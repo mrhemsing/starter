@@ -383,7 +383,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             </span>
           ) : null}
         </div>
-        <div className="order-3 flex items-center justify-end gap-2 sm:order-none sm:text-right">
+        <div className="order-3 flex items-center justify-end gap-2 pl-3 sm:order-none sm:pl-4 sm:text-right">
           {highlight ? (
             <div>
               <HeatHighlightModal
