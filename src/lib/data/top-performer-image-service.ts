@@ -10,8 +10,9 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MLB_CONTENT_REVALIDATE_SECONDS = 5 * 60;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
+const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 
-type TopPerformerImageSource = "action" | "game-content" | "highlight" | "headshot";
+type TopPerformerImageSource = "action" | "game-content" | "highlight" | "placeholder";
 
 export type TopPerformerImage = {
   source: TopPerformerImageSource;
@@ -120,9 +121,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
   if (actionShot) return actionShot;
 
   return {
-    source: "headshot",
-    imageUrl: start.pitcher.headshotUrl,
-    alt: `${start.pitcher.name}, ${start.pitcher.team}`,
+    source: "placeholder",
+    imageUrl: PLACEHOLDER_IMAGE_URL,
+    alt: "Pitcher's mound and rubber on a baseball field",
   };
 }
 
