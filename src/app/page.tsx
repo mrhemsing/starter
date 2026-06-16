@@ -17,7 +17,7 @@ import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service
 import { formatStartLine } from "@/lib/format";
 import { startPath, upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartDetail, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, StartDetail, StartSummary, TonightResponse } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -80,6 +80,7 @@ export default async function Home() {
   const heroImage = await resolveTopPerformerImage(topStart ?? null, featuredHighlight);
   const tonightBand = tonight.games.length > 0 ? tonight : tomorrowTonight;
   const tonightBandDate = tonight.games.length > 0 ? today : tomorrow;
+  const firstPitchCountdown = getFirstPitchCountdown(tonightBand, upcomingDateHref(tonightBandDate));
   const tonightDuels = await getPitchingDuels(tonightBandDate, "upcoming");
   const slateStatus = useTodaySlate
     ? {
@@ -148,6 +149,7 @@ export default async function Home() {
           <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
               <SlateStatusPill lead={slateStatus.lead} detail={slateStatus.detail} />
+              {firstPitchCountdown ? <FirstPitchCountdownBadge countdown={firstPitchCountdown} /> : null}
               <h1 className="font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Every MLB start, ranked.</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base sm:leading-7">
                 Probable starters, form, matchup context, and last night&apos;s best pitching lines.
@@ -275,6 +277,60 @@ function SlateStatusPill({ lead, detail }: { lead: string; detail: string }) {
       <span className="mt-1">{detail}</span>
     </p>
   );
+}
+
+type FirstPitchCountdown = {
+  href: string;
+  startsAt: string;
+  gameCount: number;
+  timeLabel: string;
+};
+
+function FirstPitchCountdownBadge({ countdown }: { countdown: FirstPitchCountdown }) {
+  const subject = countdown.gameCount === 1 ? "First game" : "First games";
+  const verb = countdown.gameCount === 1 ? "starts" : "start";
+
+  return (
+    <a
+      href={countdown.href}
+      className="mb-4 inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-200 underline-offset-4 hover:border-amber-300/70 hover:bg-amber-300/15 hover:text-amber-100"
+      data-responsive-check="first-pitch-countdown"
+      data-first-pitch={countdown.startsAt}
+      data-first-pitch-games={countdown.gameCount}
+    >
+      <span>{subject} {verb} in {countdown.timeLabel}</span>
+      <span className="text-[10px] text-amber-300">Upcoming starts</span>
+    </a>
+  );
+}
+
+function getFirstPitchCountdown(tonight: TonightResponse, href: string, now = new Date()): FirstPitchCountdown | null {
+  const pendingFirstPitches = tonight.games
+    .filter((game) => game.status === "pregame")
+    .map((game) => ({ startsAt: game.firstPitch, startsAtMs: new Date(game.firstPitch).getTime() }))
+    .filter((game) => Number.isFinite(game.startsAtMs) && game.startsAtMs > now.getTime())
+    .sort((a, b) => a.startsAtMs - b.startsAtMs);
+
+  const first = pendingFirstPitches[0];
+  if (!first) return null;
+
+  const firstPitchMinute = Math.floor(first.startsAtMs / 60000);
+  const gameCount = pendingFirstPitches.filter((game) => Math.floor(game.startsAtMs / 60000) === firstPitchMinute).length;
+
+  return {
+    href,
+    startsAt: first.startsAt,
+    gameCount,
+    timeLabel: formatCountdownDuration(first.startsAtMs - now.getTime()),
+  };
+}
+
+function formatCountdownDuration(durationMs: number) {
+  const totalMinutes = Math.max(1, Math.ceil(durationMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours} ${hours === 1 ? "hour" : "hours"} ${minutes} ${minutes === 1 ? "min" : "mins"}`;
 }
 
 function BestStartsShowcase({
