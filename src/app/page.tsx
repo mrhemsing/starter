@@ -1,3 +1,4 @@
+import { FirstPitchCountdownEyebrow } from "@/components/first-pitch-countdown-eyebrow";
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { SiteNav } from "@/components/site-nav";
 import type { Metadata } from "next";
@@ -102,7 +103,14 @@ export default async function Home() {
           <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
               <SlateStatusPill lead={slateStatus.lead} detail={slateStatus.detail} />
-              {firstPitchCountdown ? <FirstPitchCountdownBadge countdown={firstPitchCountdown} /> : null}
+              {firstPitchCountdown ? (
+                <FirstPitchCountdownEyebrow
+                  href={firstPitchCountdown.href}
+                  startsAt={firstPitchCountdown.startsAt}
+                  gameCount={firstPitchCountdown.gameCount}
+                  initialTimeLabel={firstPitchCountdown.timeLabel}
+                />
+              ) : null}
               <h1 className="font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Every MLB start, ranked.</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base sm:leading-7">
                 Probable starters, form, matchup context, and last night&apos;s best pitching lines.
@@ -141,26 +149,6 @@ type FirstPitchCountdown = {
   timeLabel: string;
 };
 
-function FirstPitchCountdownBadge({ countdown }: { countdown: FirstPitchCountdown }) {
-  const subject = countdown.gameCount === 1 ? "First game" : "First games";
-
-  return (
-    <a
-      href={countdown.href}
-      className="mb-4 mt-1 block max-w-full truncate font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 underline-offset-4 hover:text-amber-100 hover:underline sm:text-xs sm:tracking-[0.18em]"
-      data-responsive-check="first-pitch-countdown"
-      data-first-pitch={countdown.startsAt}
-      data-first-pitch-games={countdown.gameCount}
-    >
-      <span>{subject} in {countdown.timeLabel}</span>
-      {" "}
-      <span className="mx-1.5">·</span>
-      {" "}
-      <span>Upcoming starts {"->"}</span>
-    </a>
-  );
-}
-
 function getFirstPitchCountdown(schedule: MlbSchedule, href: string, now = new Date()): FirstPitchCountdown | null {
   const pendingFirstPitches = schedule.games
     .filter((game) => normalizeScheduleStatus(game) === "pregame")
@@ -183,11 +171,12 @@ function getFirstPitchCountdown(schedule: MlbSchedule, href: string, now = new D
 }
 
 function formatCountdownDuration(durationMs: number) {
-  const totalMinutes = Math.max(1, Math.ceil(durationMs / 60000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
-  return `${hours}H ${minutes}M`;
+  return `${hours}H ${minutes}M ${seconds}S`;
 }
 
 function hasActiveScheduleGames(schedule: MlbSchedule) {
