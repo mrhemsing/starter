@@ -1,30 +1,15 @@
-import { HeatCheckHero } from "@/components/heat-check-hero";
-import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
-import { Headshot } from "@/components/headshot";
-import { PitchingDuelsModule } from "@/components/pitching-duels";
-import { RankedStartsRecap } from "@/components/ranked-starts-recap";
-import { ShareStartButton } from "@/components/share-start-button";
+import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { SiteNav } from "@/components/site-nav";
-import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { TopPerformerCard } from "@/components/top-performer-card";
 import type { Metadata } from "next";
-import { Suspense, cache } from "react";
-import { getPitchingDuels } from "@/lib/data/duels-service";
-import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
-import { getFormHome } from "@/lib/data/form-service";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule, getStartDetail, type RankedSlateCompletionState } from "@/lib/data/start-service";
-import { getTonightMustWatch } from "@/lib/data/tonight-service";
-import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
-import { formatStartLine } from "@/lib/format";
-import { startPath, upcomingDateHref } from "@/lib/routes";
+import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
+import { upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import type { FeaturedStartHighlight, FormHomeResponse, FormSummary, MlbSchedule, StartDetail, StartSummary } from "@/lib/types";
+import type { MlbSchedule } from "@/lib/types";
 
 export const revalidate = 60;
 
 const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
-const LIVE_TOP_PERFORMER_FLOOR = 58;
 
 export const metadata: Metadata = {
   title: { absolute: homeTitle },
@@ -49,8 +34,7 @@ export default async function Home() {
   const startedGamesToday = todayCompletion.finalGames + liveGamesToday;
   const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
   const firstPitchSchedule = hasActiveScheduleGames(todaySchedule) ? todaySchedule : tomorrowSchedule;
-  const firstPitchDate = firstPitchSchedule.date;
-  const firstPitchCountdown = getFirstPitchCountdown(firstPitchSchedule, upcomingDateHref(firstPitchDate));
+  const firstPitchCountdown = getFirstPitchCountdown(firstPitchSchedule, upcomingDateHref(firstPitchSchedule.date));
   const slateStatus = todayCompletion.finalGames > 0
     ? {
         lead: `Today · ${formatLongDate(today)}`,
@@ -61,10 +45,10 @@ export default async function Home() {
           lead: `Today · ${formatLongDate(today)}`,
           detail: `AWAITING FIRST COMPLETED START · ${liveGamesToday}/${gamesToday} ${liveGamesToday === 1 ? "GAME" : "GAMES"} IN PROGRESS`,
         }
-    : {
-        lead: `Today · ${formatLongDate(today)}`,
-        detail: `${gamesToday} MLB GAMES SCHEDULED`,
-      };
+      : {
+          lead: `Today · ${formatLongDate(today)}`,
+          detail: `${gamesToday} MLB GAMES SCHEDULED`,
+        };
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -130,237 +114,13 @@ export default async function Home() {
                 </a>
               </p>
             </div>
-            <Suspense fallback={null}>
-              <HomeTopPerformerCard today={today} yesterday={yesterday} todayCompletion={todayCompletion} startedGamesToday={startedGamesToday} />
-            </Suspense>
           </div>
         </div>
       </section>
 
-      <Suspense fallback={<HomeSectionFallback />}>
-        <HomeMustWatchSection today={today} tomorrow={tomorrow} />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionFallback />}>
-        <HomePitchingDuelsSection today={today} tomorrow={tomorrow} />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionFallback />}>
-        <HomeHeatCheckSection />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionFallback />}>
-        <HomeRankedStartsRecap today={today} yesterday={yesterday} todayCompletion={todayCompletion} startedGamesToday={startedGamesToday} />
-      </Suspense>
-
-      <Suspense fallback={<HomeSectionFallback />}>
-        <HomeBestStartsShowcase yesterday={yesterday} />
-      </Suspense>
+      <HomeDeferredSections today={today} tomorrow={tomorrow} />
     </main>
   );
-}
-
-const getHomeRankedData = cache(async (today: string, yesterday: string, startedGamesToday: number, todayCompletion: RankedSlateCompletionState) => {
-  const [yesterdayArchivedSlateStarts, todaySlateStarts] = await Promise.all([
-    getArchivedSlateStarts(yesterday),
-    startedGamesToday > 0 ? getDailySlate({ window: "today", date: today }) : Promise.resolve([]),
-  ]);
-  const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
-  const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
-  const useTodaySlate = todayCompletedSlateStarts.length > 0;
-  const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
-  const rankedDate = useTodaySlate ? today : yesterday;
-  const rankedLabel = useTodaySlate ? "Today" : "Yesterday";
-  const completedSlateStarts = slateStarts.filter((start) => start.source?.line !== "fixture");
-  const topPerformerState = resolveTopPerformerState({
-    today,
-    yesterday,
-    todayCompletion,
-    isTodaySlateStarted: startedGamesToday > 0,
-    todayCompletedSlateStarts,
-    yesterdaySlateStarts,
-  });
-
-  return {
-    topPerformerState,
-    slateStarts,
-    rankedDate,
-    rankedLabel,
-    topHighlights: await resolveSummaryHighlights(completedSlateStarts.slice(0, 5)),
-  };
-});
-
-async function HomeTopPerformerCard({
-  today,
-  yesterday,
-  todayCompletion,
-  startedGamesToday,
-}: {
-  today: string;
-  yesterday: string;
-  todayCompletion: RankedSlateCompletionState;
-  startedGamesToday: number;
-}) {
-  const { topPerformerState } = await getHomeRankedData(today, yesterday, startedGamesToday, todayCompletion);
-  const topStart = topPerformerState?.start ?? null;
-  if (!topStart || !topPerformerState) return null;
-
-  const featuredStart = await getStartDetail(topStart.id);
-  const featuredHighlight = await resolveFeaturedStartHighlight(featuredStart);
-  const heroImage = await resolveTopPerformerImage(topStart, featuredHighlight);
-
-  return (
-    <div className="mt-4 sm:mt-0">
-      <TopPerformerCard
-        href={startPath(topStart.id)}
-        pitcherName={topStart.pitcher.name}
-        team={topStart.pitcher.team}
-        opponent={topStart.opponent}
-        dateLabel={topPerformerState.dateLabel}
-        score={topStart.gameScorePlus}
-        line={topStart.line}
-        rank={1}
-        slateCount={topPerformerState.slateCount}
-        image={heroImage}
-        highlight={featuredHighlight}
-        isProvisional={topPerformerState.status === "live"}
-        whiffRate={featuredStart ? startWhiffRate(featuredStart) : null}
-        topVelo={featuredStart ? startTopVelo(featuredStart) : null}
-        veloSparkline={featuredStart?.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? []}
-      />
-    </div>
-  );
-}
-
-async function HomeMustWatchSection({ today, tomorrow }: { today: string; tomorrow: string }) {
-  const [tonight, tomorrowTonight] = await Promise.all([
-    getTonightMustWatch({ date: today, window: 5 }),
-    getTonightMustWatch({ date: tomorrow, window: 5 }),
-  ]);
-  const tonightBand = tonight.games.length > 0 ? tonight : tomorrowTonight;
-  const tonightBandDate = tonight.games.length > 0 ? today : tomorrow;
-
-  return (
-    <TonightsMustWatch
-      tonight={tonightBand}
-      fullSlateHref={upcomingDateHref(tonightBandDate)}
-      fullSlateLabel="See tonight's full slate"
-      eyebrow={tonight.games.length > 0 ? "Tonight" : "Tomorrow"}
-      title="Tonight's Must-Watch Games"
-      previewLimit={3}
-    />
-  );
-}
-
-async function HomePitchingDuelsSection({ today, tomorrow }: { today: string; tomorrow: string }) {
-  const todayTonight = await getTonightMustWatch({ date: today, window: 5 });
-  const tonightBandDate = todayTonight.games.length > 0 ? today : tomorrow;
-  const tonightDuels = await getPitchingDuels(tonightBandDate, "upcoming");
-
-  return <PitchingDuelsModule duels={tonightDuels} title="Best Duels Today" compact />;
-}
-
-async function HomeHeatCheckSection() {
-  const formHome = await getFormHome({ window: 5 });
-  const formHomeWithHighlights = await attachHotHighlights(formHome);
-
-  return <HeatCheckHero home={formHomeWithHighlights} />;
-}
-
-async function HomeRankedStartsRecap({
-  today,
-  yesterday,
-  todayCompletion,
-  startedGamesToday,
-}: {
-  today: string;
-  yesterday: string;
-  todayCompletion: RankedSlateCompletionState;
-  startedGamesToday: number;
-}) {
-  const { slateStarts, rankedDate, rankedLabel, topHighlights } = await getHomeRankedData(today, yesterday, startedGamesToday, todayCompletion);
-
-  return (
-    <RankedStartsRecap
-      date={rankedDate}
-      label={rankedLabel}
-      starts={slateStarts}
-      highlights={topHighlights}
-    />
-  );
-}
-
-async function HomeBestStartsShowcase({ yesterday }: { yesterday: string }) {
-  const bestWindows = await getBestStartWindows(yesterday);
-  const [weeklyHighlight, monthlyHighlight] = await Promise.all([
-    resolveSummaryHighlight(bestWindows.weekly),
-    resolveSummaryHighlight(bestWindows.monthly),
-  ]);
-
-  return <BestStartsShowcase weekly={bestWindows.weekly} monthly={bestWindows.monthly} weeklyHighlight={weeklyHighlight} monthlyHighlight={monthlyHighlight} />;
-}
-
-function HomeSectionFallback() {
-  return <div className="border-t border-white/10 bg-[#08080a] px-4 py-8 sm:px-6 lg:px-8" aria-hidden="true" />;
-}
-
-async function attachHotHighlights(home: FormHomeResponse): Promise<FormHomeResponse> {
-  const highlightedHot = await Promise.all(home.hot.map(attachLastStartHighlight));
-  return { ...home, hot: highlightedHot };
-}
-
-function resolveTopPerformerState({
-  today,
-  yesterday,
-  todayCompletion,
-  isTodaySlateStarted,
-  todayCompletedSlateStarts,
-  yesterdaySlateStarts,
-}: {
-  today: string;
-  yesterday: string;
-  todayCompletion: RankedSlateCompletionState;
-  isTodaySlateStarted: boolean;
-  todayCompletedSlateStarts: StartSummary[];
-  yesterdaySlateStarts: StartSummary[];
-}) {
-  const todayLeader = todayCompletedSlateStarts[0] ?? null;
-
-  if (todayCompletion.isFinal) {
-    if (!todayLeader) return null;
-    return {
-      status: "final" as const,
-      start: todayLeader,
-      slateCount: todayCompletedSlateStarts.length,
-      dateLabel: `Final · ${formatLongDate(today)}`,
-    };
-  }
-
-  if (isTodaySlateStarted) {
-    if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;
-    return {
-      status: "live" as const,
-      start: todayLeader,
-      slateCount: todayCompletedSlateStarts.length,
-      dateLabel: `Live leader · ${todayCompletion.finalGames} of ${todayCompletion.totalGames} final`,
-    };
-  }
-
-  const yesterdayLeader = yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture")[0] ?? null;
-  if (!yesterdayLeader) return null;
-  return {
-    status: "previous" as const,
-    start: yesterdayLeader,
-    slateCount: yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture").length,
-    dateLabel: `Last night · ${formatLongDate(yesterday)}`,
-  };
-}
-
-async function attachLastStartHighlight(pitcher: FormSummary): Promise<FormSummary> {
-  if (!pitcher.lastStart) return pitcher;
-  const start = await getStartDetail(pitcher.lastStart.id);
-  const highlight = await resolveFeaturedStartHighlight(start);
-  return { ...pitcher, highlight };
 }
 
 function SlateStatusPill({ lead, detail }: { lead: string; detail: string }) {
@@ -441,114 +201,6 @@ function normalizeScheduleStatus(game: MlbSchedule["games"][number]) {
   return "pregame";
 }
 
-function BestStartsShowcase({
-  weekly,
-  monthly,
-  weeklyHighlight,
-  monthlyHighlight,
-}: {
-  weekly: StartSummary | null;
-  monthly: StartSummary | null;
-  weeklyHighlight?: FeaturedStartHighlight | null;
-  monthlyHighlight?: FeaturedStartHighlight | null;
-}) {
-  const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
-  const sameStart = weekly && monthly && weekly.id === monthly.id;
-  return (
-    <section className="border-t border-white/10 bg-[#08080a] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Evergreen</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week / Month</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The daily Spotlight is disposable. These are the rolling-window starts worth revisiting.</p>
-          </div>
-          <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
-            Best starts archive
-          </a>
-        </div>
-        <div className={`grid gap-3 ${sameStart ? "" : "md:grid-cols-2"}`}>
-          {sameStart ? (
-            <BestStartCard title="7-day / 30-day best" badge="Tops the last 7 and 30 days" start={monthly} highlight={monthlyHighlight ?? weeklyHighlight} />
-          ) : (
-            <>
-              <BestStartCard title="7-day best" start={weekly} highlight={weeklyHighlight} />
-              <BestStartCard title="30-day best" start={monthly} highlight={monthlyHighlight} />
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function BestStartCard({ title, start, highlight, badge }: { title: string; start: StartSummary | null; highlight?: FeaturedStartHighlight | null; badge?: string }) {
-  if (!start) {
-    return (
-      <div className="rounded border border-white/10 bg-[#101014] p-5">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{title}</p>
-        <p className="mt-3 text-sm text-zinc-400">Pending a completed start.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded border border-white/10 bg-[#101014] p-5">
-      <a href={startPath(start.id)} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-3">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative className="ml-1" />
-        <div className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>
-          {badge ? <p className="mt-1 inline-flex max-w-full rounded border border-amber-300/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">{badge}</p> : null}
-          <h3 className="mt-1 font-serif text-3xl font-bold leading-tight text-zinc-50">{start.pitcher.name}</h3>
-          <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">{start.pitcher.team} vs {start.opponent} / {formatLongDate(start.date)}</p>
-        </div>
-      </a>
-      <div className="mt-5 border-t border-white/10 pt-4">
-        <p className="font-serif text-5xl font-bold leading-none text-amber-300">{start.gameScorePlus}</p>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
-      </div>
-      <div className="mt-4">
-        <ShareStartButton
-          title={`${start.pitcher.name}: ${start.gameScorePlus} GS+`}
-          text={`${start.pitcher.name} ${formatStartLine(start.line)} on Toe the Slab`}
-          path={startPath(start.id)}
-        />
-        {highlight ? (
-          <div className="mt-4">
-            <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-async function resolveSummaryHighlight(start: StartSummary | null) {
-  if (!start) return null;
-  const detail = await getStartDetail(start.id);
-  return resolveFeaturedStartHighlight(detail);
-}
-
-async function resolveSummaryHighlights(starts: StartSummary[]) {
-  const entries = await Promise.all(starts.map(async (start) => {
-    const highlight = await resolveSummaryHighlight(start);
-    return [start.id, highlight] as const;
-  }));
-  return new Map<string, FeaturedStartHighlight | null>(entries);
-}
-
-async function getBestStartWindows(anchorDate: string) {
-  const [weekly, monthly] = await Promise.all([getBestStartWindow(anchorDate, 7), getBestStartWindow(anchorDate, 30)]);
-  return { weekly, monthly };
-}
-
-async function getBestStartWindow(anchorDate: string, days: number) {
-  const dates = Array.from({ length: days }, (_, index) => addDays(anchorDate, -index));
-  const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
-  const starts = slates.flat().filter((start) => start.source?.line !== "fixture");
-  return starts.sort((a, b) => b.gameScorePlus - a.gameScorePlus)[0] ?? null;
-}
-
 function formatLongDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
@@ -563,13 +215,4 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
-}
-
-function startWhiffRate(start: StartDetail) {
-  const whiffs = start.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
-  return start.pitchEvents.length ? (whiffs / start.pitchEvents.length) * 100 : null;
-}
-
-function startTopVelo(start: StartDetail) {
-  return start.pitchEvents.length ? Math.max(...start.pitchEvents.map((pitch) => pitch.velocityMph)) : null;
 }
