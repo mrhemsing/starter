@@ -9,6 +9,7 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { formatStartLine } from "@/lib/format";
 import { startPath, upcomingDateHref } from "@/lib/routes";
+import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import type { FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 type RankedHomeResponse = {
@@ -20,6 +21,7 @@ type RankedHomeResponse = {
     start: StartSummary;
     slateCount: number;
     dateLabel: string;
+    image: TopPerformerImage | null;
   } | null;
 };
 
@@ -76,7 +78,7 @@ export function HomeDeferredSections({ today, tomorrow }: { today: string; tomor
               line={ranked.topPerformer.start.line}
               rank={1}
               slateCount={ranked.topPerformer.slateCount}
-              image={null}
+              image={ranked.topPerformer.image}
               highlight={null}
               isProvisional={ranked.topPerformer.status === "live"}
               whiffRate={null}

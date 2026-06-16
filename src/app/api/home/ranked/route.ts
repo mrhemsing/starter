@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
+import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import type { StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 58;
@@ -16,7 +17,7 @@ export async function GET() {
   const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
   const rankedDate = useTodaySlate ? today : yesterday;
   const rankedLabel = useTodaySlate ? "Today" : "Yesterday";
-  const topPerformer = resolveTopPerformerState({
+  const topPerformerState = resolveTopPerformerState({
     today,
     yesterday,
     todayCompletion,
@@ -24,12 +25,13 @@ export async function GET() {
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
+  const topPerformerImage = await resolveTopPerformerImage(topPerformerState?.start ?? null, null);
 
   return NextResponse.json({
     date: rankedDate,
     label: rankedLabel,
     starts: slateStarts,
-    topPerformer,
+    topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage } : null,
   });
 }
 
