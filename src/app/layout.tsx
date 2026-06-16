@@ -61,7 +61,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">
-          <BAverageBadge />
+          <div className="mx-auto max-w-7xl">
+            <BAverageBadge />
+          </div>
         </footer>
       </body>
     </html>
