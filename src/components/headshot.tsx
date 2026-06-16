@@ -20,11 +20,11 @@ type HeadshotProps = {
 };
 
 const sizeClasses: Record<HeadshotSize, string> = {
-  xl: "h-[88px] w-[88px]",
-  lg: "h-16 w-16",
-  md: "h-[52px] w-[52px]",
-  sm: "h-11 w-11",
-  xs: "h-9 w-9",
+  xl: "h-[88px] w-[88px] [--headshot-y-pad:10px]",
+  lg: "h-16 w-16 [--headshot-y-pad:8px]",
+  md: "h-[52px] w-[52px] [--headshot-y-pad:6px]",
+  sm: "h-11 w-11 [--headshot-y-pad:5px]",
+  xs: "h-9 w-9 [--headshot-y-pad:4px]",
 };
 
 export function Headshot({
