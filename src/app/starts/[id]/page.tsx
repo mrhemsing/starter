@@ -914,7 +914,7 @@ function completionStatusLabel(state: { date: string; finalGames: number; totalG
   if (state.isPartialToday) return `Today · ${state.finalGames} of ${state.totalGames} final · updating`;
   if (state.isToday && state.isFinal) return "Today · final";
   if (state.isToday) return `Today · ${state.finalGames} of ${state.totalGames} final`;
-  if (state.date === addDays(getHomeSlateDate(), -1)) return `Yesterday · ${formatMetadataDate(state.date)} · final`;
+  if (state.date === addDays(getHomeSlateDate(), -1)) return `${formatWeekday(state.date)} · ${formatMetadataDate(state.date)} · final`;
   return `${formatMetadataDate(state.date)} · final`;
 }
 
@@ -938,4 +938,10 @@ function formatMetadataDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function formatWeekday(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed);
 }
