@@ -86,7 +86,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
         fullSlateHref={upcomingWeekHref(resolvedDate)}
         fullSlateLabel="Week view"
         fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
-        eyebrow={formatUpcomingDate(resolvedDate)}
+        eyebrow={formatUpcomingSectionDate(resolvedDate)}
         title="Must-Watch Games"
         rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
       />
@@ -199,4 +199,15 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+function formatUpcomingSectionDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
 }
