@@ -1,11 +1,11 @@
-import { FirstPitchCountdownEyebrow } from "@/components/first-pitch-countdown-eyebrow";
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
+import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteNav } from "@/components/site-nav";
 import type { Metadata } from "next";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
 import { upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import type { MlbSchedule } from "@/lib/types";
+import { getSlateProgressState } from "@/lib/slate-state";
 
 export const revalidate = 60;
 
@@ -25,31 +25,12 @@ export default async function Home() {
   const slateNavigation = getHomeSlateNavigation(today);
   const yesterday = slateNavigation[0].date;
   const tomorrow = addDays(today, 1);
-  const [todaySchedule, tomorrowSchedule, todayCompletion] = await Promise.all([
+  const [todaySchedule, todayCompletion] = await Promise.all([
     getSlateSchedule({ window: "today", date: today }),
-    getSlateSchedule({ window: "tomorrow", date: tomorrow }),
     getRankedSlateCompletionState(today, today),
   ]);
-  const gamesToday = todaySchedule.games.length;
-  const liveGamesToday = todaySchedule.games.filter((game) => normalizeScheduleStatus(game) === "live").length;
-  const startedGamesToday = todayCompletion.finalGames + liveGamesToday;
   const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
-  const firstPitchSchedule = hasActiveScheduleGames(todaySchedule) ? todaySchedule : tomorrowSchedule;
-  const firstPitchCountdown = getFirstPitchCountdown(firstPitchSchedule, upcomingDateHref(firstPitchSchedule.date));
-  const slateStatus = todayCompletion.finalGames > 0
-    ? {
-        lead: `Today · ${formatLongDate(today)}`,
-        detail: `${todayCompletion.finalGames} ${todayCompletion.finalGames === 1 ? "GAME" : "GAMES"} FINAL`,
-      }
-    : startedGamesToday > 0
-      ? {
-          lead: `Today · ${formatLongDate(today)}`,
-          detail: `AWAITING FIRST COMPLETED START · ${liveGamesToday}/${gamesToday} ${liveGamesToday === 1 ? "GAME" : "GAMES"} IN PROGRESS`,
-        }
-      : {
-          lead: `Today · ${formatLongDate(today)}`,
-          detail: `${gamesToday} MLB GAMES SCHEDULED`,
-        };
+  const slateStatus = getSlateProgressState(todaySchedule);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -102,21 +83,10 @@ export default async function Home() {
 
           <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
-              <SlateStatusPill lead={slateStatus.lead} detail={slateStatus.detail} />
-              {firstPitchCountdown ? (
-                <FirstPitchCountdownEyebrow
-                  href={firstPitchCountdown.href}
-                  startsAt={firstPitchCountdown.startsAt}
-                  gameCount={firstPitchCountdown.gameCount}
-                  initialTimeLabel={firstPitchCountdown.timeLabel}
-                />
-              ) : null}
+              <HomeSlateStatusLine initialState={slateStatus} href={upcomingDateHref(today)} />
               <h1 className="font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Every MLB start, ranked.</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base sm:leading-7">
-                Probable starters, form, matchup context, and last night&apos;s best pitching lines.
-              </p>
-              <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:mt-3 sm:text-sm sm:leading-6 lg:mb-[10px]">
-                GS+ scores a single start on a 0-100 scale, with league average around 50.
+              <p className="mt-3 max-w-2xl text-xs leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
+                GS+ scores a single start 0-100, league average ~50.
                 <a href="/methodology" className="ml-[10px] font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology
                 </a>
@@ -129,80 +99,6 @@ export default async function Home() {
       <HomeDeferredSections today={today} tomorrow={tomorrow} />
     </main>
   );
-}
-
-function SlateStatusPill({ lead, detail }: { lead: string; detail: string }) {
-  return (
-    <p className="block max-w-full whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 sm:text-xs sm:tracking-[0.18em]">
-      <span>{lead}</span>{" "}
-      <span className="mx-1.5">·</span>
-      {" "}
-      <span>{detail}</span>
-    </p>
-  );
-}
-
-type FirstPitchCountdown = {
-  href: string;
-  startsAt: string;
-  gameCount: number;
-  timeLabel: string;
-};
-
-function getFirstPitchCountdown(schedule: MlbSchedule, href: string, now = new Date()): FirstPitchCountdown | null {
-  const pendingFirstPitches = schedule.games
-    .filter((game) => normalizeScheduleStatus(game) === "pregame")
-    .map((game) => ({ startsAt: game.gameDate, startsAtMs: new Date(game.gameDate).getTime() }))
-    .filter((game) => Number.isFinite(game.startsAtMs) && game.startsAtMs > now.getTime())
-    .sort((a, b) => a.startsAtMs - b.startsAtMs);
-
-  const first = pendingFirstPitches[0];
-  if (!first) return null;
-
-  const firstPitchMinute = Math.floor(first.startsAtMs / 60000);
-  const gameCount = pendingFirstPitches.filter((game) => Math.floor(game.startsAtMs / 60000) === firstPitchMinute).length;
-
-  return {
-    href,
-    startsAt: first.startsAt,
-    gameCount,
-    timeLabel: formatCountdownDuration(first.startsAtMs - now.getTime()),
-  };
-}
-
-function formatCountdownDuration(durationMs: number) {
-  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${hours}H ${minutes}M ${seconds}S`;
-}
-
-function hasActiveScheduleGames(schedule: MlbSchedule) {
-  return schedule.games.some((game) => {
-    const status = normalizeScheduleStatus(game);
-    return status === "pregame" || status === "live";
-  });
-}
-
-function normalizeScheduleStatus(game: MlbSchedule["games"][number]) {
-  const status = `${game.status} ${game.detailedState}`.toLowerCase();
-  if (/\b(postponed|cancelled|canceled)\b/.test(status)) return "ppd";
-  if (/\b(final|game over|completed early)\b/.test(status)) return "final";
-  if (/\b(suspended)\b/.test(status)) return "suspended";
-  if (/\b(live|in progress|manager challenge|delayed)\b/.test(status)) return "live";
-  return "pregame";
-}
-
-function formatLongDate(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(parsed);
 }
 
 function addDays(date: string, days: number) {

@@ -6,21 +6,91 @@ function assert(condition, message) {
   }
 }
 
-const homePage = await readFile("src/app/page.tsx", "utf8");
+const [homePage, slateState, statusLine, statusRoute] = await Promise.all([
+  readFile("src/app/page.tsx", "utf8"),
+  readFile("src/lib/slate-state.ts", "utf8"),
+  readFile("src/components/home-slate-status-line.tsx", "utf8"),
+  readFile("src/app/api/home/status/route.ts", "utf8"),
+]);
 
 assert(
-  homePage.includes('if (/\\b(suspended)\\b/.test(status)) return "suspended";'),
+  slateState.includes('if (/\\b(suspended)\\b/.test(status)) return "suspended";'),
   "homepage status normalizer must classify suspended games separately",
 );
 
 assert(
-  homePage.includes('if (/\\b(live|in progress|manager challenge|delayed)\\b/.test(status)) return "live";'),
-  "homepage live status normalizer must not count suspended games as in progress",
+  slateState.includes('if (/\\b(delayed)\\b/.test(status)) return "delayed";'),
+  "homepage status normalizer must classify delayed starts separately from live games",
 );
 
 assert(
-  homePage.indexOf('return "suspended"') < homePage.indexOf('return "live"'),
+  slateState.includes('if (/\\b(live|in progress|manager challenge)\\b/.test(status)) return "live";'),
+  "homepage live status normalizer must use live game status, not the clock or delayed starts",
+);
+
+assert(
+  slateState.indexOf('return "suspended"') < slateState.indexOf('return "live"'),
   "homepage status normalizer must check suspended before live statuses",
 );
 
-console.log("home status contract ok: suspended games do not count as in progress");
+assert(
+  slateState.includes('state: "pre-first-pitch"') && slateState.includes("formatFirstPitchCountdown"),
+  "homepage slate state must keep countdown inside the pre-first-pitch state",
+);
+
+assert(
+  slateState.includes('return `TODAY · ${dateLabel} · ${state.liveGames} OF ${state.totalGames} IN PROGRESS`;'),
+  "homepage in-progress line must render one state fact",
+);
+
+assert(
+  slateState.includes('return `TODAY · ${dateLabel} · ${state.finalGames} OF ${state.totalGames} FINAL`;'),
+  "homepage partial-final line must render one state fact",
+);
+
+assert(
+  slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalGames} FINAL`;'),
+  "homepage all-final line must render one state fact",
+);
+
+assert(
+  slateState.includes('return `${dateLabel} · NO GAMES TODAY`;'),
+  "homepage no-games line must render the off-day state",
+);
+
+assert(
+  slateState.includes("Math.ceil(durationMs / 60000)") && !slateState.includes("totalSeconds"),
+  "homepage countdown must use minute granularity without seconds",
+);
+
+assert(
+  statusLine.includes('window.setInterval(refresh, 30 * 1000)'),
+  "homepage status line must refresh live state without a manual reload",
+);
+
+assert(
+  statusLine.includes('window.setInterval(updateCountdown, 60 * 1000)') && !statusLine.includes("window.setInterval(updateCountdown, 1000)"),
+  "homepage countdown must not tick every second",
+);
+
+assert(
+  statusLine.includes('data-responsive-check="home-slate-status-line"') && statusLine.includes("Upcoming starts"),
+  "homepage status line must include the upcoming starts link in every state",
+);
+
+assert(
+  statusRoute.includes("getSlateProgressState(schedule)"),
+  "homepage status API must return the shared slate progress state",
+);
+
+assert(
+  homePage.includes("GS+ scores a single start 0-100, league average ~50.") && !homePage.includes("Probable starters, form, matchup context"),
+  "homepage masthead value prop must be trimmed to the tagline plus GS+ line",
+);
+
+assert(
+  !homePage.includes("FirstPitchCountdownEyebrow") && !homePage.includes("SlateStatusPill"),
+  "homepage must not render separate stacked countdown/status fragments",
+);
+
+console.log("home status contract ok: one shared slate-state line with pre-pitch-only countdown");
