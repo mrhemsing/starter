@@ -48,4 +48,9 @@ assert(
   "home best-starts card must render the highlight embed when a highlight is present",
 );
 
+assert(
+  homeDeferredSections.includes('best: { eyebrow: "Best starts", title: "Loading best starts" },'),
+  "home best-starts loading skeleton must use clear loading copy instead of the final Evergreen section label",
+);
+
 console.log("home best-starts contract ok: highlight payloads are resolved in the API and rendered by the homepage cards");

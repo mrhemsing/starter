@@ -133,7 +133,7 @@ function HomeDeferredFallback({ variant }: { variant: "spotlight" | "watch" | "d
     duels: { eyebrow: "Matchup lens", title: "Loading duels" },
     heat: { eyebrow: "Form board", title: "Loading heat check" },
     ranked: { eyebrow: "Settled results", title: "Loading ranked recap" },
-    best: { eyebrow: "Evergreen", title: "Loading best starts" },
+    best: { eyebrow: "Best starts", title: "Loading best starts" },
   }[variant];
 
   return (
