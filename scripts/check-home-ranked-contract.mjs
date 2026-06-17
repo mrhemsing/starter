@@ -41,13 +41,18 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center"}'),
-  "home top performer real images must use object-contain/object-center so pitchers are not cropped out of frame",
+  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-[100%_50%]"}'),
+  "home top performer real images must cover the frame while pinning the focal point to the player side",
 );
 
 assert(
-  topPerformerCard.includes('className="scale-110 object-cover object-center opacity-45 blur-xl"'),
-  "home top performer real images must fill contain letterbox space with a softened cover backdrop",
+  !topPerformerCard.includes('object-contain'),
+  "home top performer image must not use contain framing that creates letterbox bars",
+);
+
+assert(
+  !topPerformerCard.includes('blur-xl'),
+  "home top performer image must not use a blurred backdrop layer",
 );
 
 assert(
@@ -55,4 +60,4 @@ assert(
   "home top performer image must not use the old off-center crop position",
 );
 
-console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, preserves full real-image framing, and fills letterbox space");
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses player-side cover framing");
