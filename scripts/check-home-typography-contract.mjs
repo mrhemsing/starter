@@ -51,6 +51,12 @@ assert(
 );
 
 assert(
+  homePage.includes('<span className="block">Every MLB start,</span>') &&
+    homePage.includes('<span className="block">ranked.</span>'),
+  "homepage H1 must force a line break after the comma",
+);
+
+assert(
   homeStatusLine.includes("status-token block sm:inline") &&
     homeStatusLine.includes('Upcoming{"\\u00A0"}starts{"\\u00A0"}{"->"}'),
   "homepage status line must keep state text and the upcoming arrow link together",
