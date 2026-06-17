@@ -47,6 +47,7 @@ export function TopPerformerCard({
   const [displayScore, setDisplayScore] = useState(score);
   const imageUrl = image?.imageUrl;
   const isPlaceholderImage = image?.source === "placeholder";
+  const imageFitClass = isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
@@ -182,7 +183,7 @@ export function TopPerformerCard({
               fill
               sizes="(min-width: 1024px) 55vw, 100vw"
               quality={isPlaceholderImage ? 82 : 86}
-              className={`object-cover ${isPlaceholderImage ? "object-[50%_45%]" : "object-[58%_18%] lg:object-center"}`}
+              className={imageFitClass}
               priority
             />
           ) : (

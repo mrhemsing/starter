@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
+const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 
 assert(
   rankedRoute.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";'),
@@ -39,4 +40,14 @@ assert(
   "home deferred top performer card must not hardcode a null image",
 );
 
-console.log("home ranked contract ok: top performer image resolves in the API and is passed to the homepage card");
+assert(
+  topPerformerCard.includes('const imageFitClass = isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center";'),
+  "home top performer real images must use object-contain/object-center so pitchers are not cropped out of frame",
+);
+
+assert(
+  !topPerformerCard.includes('object-[58%_18%]'),
+  "home top performer image must not use the old off-center crop position",
+);
+
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and preserves full real-image framing");
