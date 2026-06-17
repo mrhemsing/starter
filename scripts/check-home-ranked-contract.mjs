@@ -87,8 +87,10 @@ assert(
 
 assert(
   topPerformerCard.includes('inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445]') &&
+    topPerformerCard.includes("View game log") &&
+    !topPerformerCard.includes("View log") &&
     !topPerformerCard.includes("justify-center rounded border border-white/15"),
-  "home top performer View log CTA must match the left-aligned yellow slate button treatment",
+  "home top performer View game log CTA must match the left-aligned yellow slate button treatment",
 );
 
 assert(
