@@ -86,6 +86,12 @@ assert(
 );
 
 assert(
+  topPerformerCard.includes('inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445]') &&
+    !topPerformerCard.includes("justify-center rounded border border-white/15"),
+  "home top performer View log CTA must match the left-aligned yellow slate button treatment",
+);
+
+assert(
   topPerformerCard.includes('const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";'),
   "home top performer card must detect real velocity data before rendering the velocity panel",
 );
