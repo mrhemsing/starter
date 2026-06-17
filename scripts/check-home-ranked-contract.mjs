@@ -41,8 +41,13 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('const imageFitClass = isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center";'),
+  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center"}'),
   "home top performer real images must use object-contain/object-center so pitchers are not cropped out of frame",
+);
+
+assert(
+  topPerformerCard.includes('className="scale-110 object-cover object-center opacity-45 blur-xl"'),
+  "home top performer real images must fill contain letterbox space with a softened cover backdrop",
 );
 
 assert(
@@ -50,4 +55,4 @@ assert(
   "home top performer image must not use the old off-center crop position",
 );
 
-console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and preserves full real-image framing");
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, preserves full real-image framing, and fills letterbox space");

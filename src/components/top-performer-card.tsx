@@ -47,7 +47,6 @@ export function TopPerformerCard({
   const [displayScore, setDisplayScore] = useState(score);
   const imageUrl = image?.imageUrl;
   const isPlaceholderImage = image?.source === "placeholder";
-  const imageFitClass = isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
@@ -177,15 +176,28 @@ export function TopPerformerCard({
 
         <div className="relative order-1 min-h-[470px] overflow-hidden bg-[#15181C] lg:order-2 lg:min-h-[500px]">
           {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={image?.alt ?? ""}
-              fill
-              sizes="(min-width: 1024px) 55vw, 100vw"
-              quality={isPlaceholderImage ? 82 : 86}
-              className={imageFitClass}
-              priority
-            />
+            <>
+              {!isPlaceholderImage ? (
+                <Image
+                  src={imageUrl}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 55vw, 100vw"
+                  quality={58}
+                  className="scale-110 object-cover object-center opacity-45 blur-xl"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <Image
+                src={imageUrl}
+                alt={image?.alt ?? ""}
+                fill
+                sizes="(min-width: 1024px) 55vw, 100vw"
+                quality={isPlaceholderImage ? 82 : 86}
+                className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-contain object-center"}
+                priority
+              />
+            </>
           ) : (
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#15181C_0%,#0A0B0D_100%)]" />
           )}
