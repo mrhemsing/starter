@@ -186,7 +186,7 @@ export function TopPerformerCard({
               fill
               sizes="(min-width: 1024px) 55vw, 100vw"
               quality={isPlaceholderImage ? 82 : 86}
-              className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-[100%_50%]"}
+              className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-center lg:object-[100%_50%]"}
               priority
             />
           ) : (

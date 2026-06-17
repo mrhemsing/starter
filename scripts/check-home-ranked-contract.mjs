@@ -62,8 +62,8 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-[100%_50%]"}'),
-  "home top performer real images must cover the frame while pinning the focal point to the player side",
+  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-center lg:object-[100%_50%]"}'),
+  "home top performer real images must cover the frame, center on mobile, and keep player-side framing on large screens",
 );
 
 assert(
@@ -116,4 +116,4 @@ assert(
   "home top performer image must not use the old off-center crop position",
 );
 
-console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses player-side cover framing");
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses mobile-safe cover framing");
