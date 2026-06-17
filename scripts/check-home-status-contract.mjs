@@ -74,14 +74,14 @@ assert(
 );
 
 assert(
-  statusLine.includes('data-responsive-check="home-slate-status-line"') && statusLine.includes("Upcoming starts"),
+  statusLine.includes('data-responsive-check="home-slate-status-line"') && statusLine.includes('Upcoming{"\\u00A0"}starts{"\\u00A0"}{"->"}'),
   "homepage status line must include the upcoming starts link in every state",
 );
 
 assert(
-  statusLine.includes('className="block sm:inline">{line}</span>') &&
+  statusLine.includes('className="status-token block sm:inline">{line}</span>') &&
     statusLine.includes('className="mx-1.5 hidden sm:inline"') &&
-    statusLine.includes('className="block underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
+    statusLine.includes('className="nowrap-token block underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
   "homepage status line must force the upcoming starts link onto a new line on mobile without the separator dot",
 );
 

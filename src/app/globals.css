@@ -25,6 +25,36 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+h1,
+h2,
+h3,
+.section-title,
+.card-title,
+.pitcher-name {
+  text-wrap: balance;
+}
+
+p,
+.subhead,
+.blurb {
+  text-wrap: pretty;
+}
+
+.meta-line {
+  overflow-wrap: normal;
+}
+
+.meta-seg,
+.stat-token,
+.nowrap-token,
+.status-token {
+  white-space: nowrap;
+}
+
+.meta-sep {
+  white-space: normal;
+}
+
 ::selection {
   background: #fbbf24;
   color: #08080a;

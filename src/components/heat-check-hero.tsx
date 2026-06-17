@@ -14,8 +14,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Rolling form trend</p>
-            <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Hot, Who&apos;s Not</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">Last {home.window} qualified starts, movement, and next probable start context.</p>
+            <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Hot, Who&apos;s Not</h2>
+            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Last {home.window} qualified starts, movement, and next probable start context.</p>
             <p className={`mt-2 font-mono text-[10px] uppercase tracking-[0.16em] ${home.stale ? "text-amber-300" : "text-zinc-500"}`} title={home.latestScoredStartDate ? `Latest scored start date: ${home.latestScoredStartDate}` : undefined}>
               Form through {home.formThroughDate ?? "pending"}{home.stale ? " / updating" : ""}
             </p>
@@ -150,7 +150,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="min-w-0">
             <div className="flex min-w-0 items-start gap-2">
-              <p className="min-w-0 text-lg font-bold leading-[1.1] text-zinc-100">{pitcher.name}</p>
+              <p className="pitcher-name min-w-0 text-lg font-bold leading-[1.1] text-zinc-100">{pitcher.name}</p>
               {pitcher.highlight ? (
                 <span className="pointer-events-auto relative z-40">
                   <HeatHighlightModal highlight={pitcher.highlight} pitcherName={pitcher.name} />

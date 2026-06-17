@@ -20,6 +20,7 @@
     "check:home-ranked": "node scripts/check-home-ranked-contract.mjs",
     "check:home-status": "node scripts/check-home-status-contract.mjs",
     "check:home-best-starts": "node scripts/check-home-best-starts-contract.mjs",
+    "check:home-typography": "node scripts/check-home-typography-contract.mjs",
     "check:starts-page": "node scripts/check-starts-page-contract.mjs",
     "test:contracts": "npm run test:slate-contract && npm run test:start-contract && npm run test:pitcher-contract && npm run check:home-ranked && npm run check:home-status && npm run check:home-best-starts && npm run check:starts-page",
     "test:fixture-gates": "node scripts/run-fixture-gates.mjs",

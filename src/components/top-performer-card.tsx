@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { StartLineText } from "@/components/wrap-safe-text";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import type { FeaturedStartHighlight, StartLine } from "@/lib/types";
 
@@ -50,7 +51,6 @@ export function TopPerformerCard({
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const eyebrow = isProvisional ? "The one to beat" : "Start of the day";
-  const statLine = `IP ${line.inningsPitched.toFixed(1)} · H ${line.hits} · ER ${line.earnedRuns} · BB ${line.walks} · K ${line.strikeouts}`;
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -127,7 +127,7 @@ export function TopPerformerCard({
               <span>{eyebrow}</span>
               <span className="mt-2 block">{dateLabel}</span>
             </p>
-            <h2 className="mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
+            <h2 className="pitcher-name mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
               {pitcherName}
             </h2>
             <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
@@ -144,7 +144,9 @@ export function TopPerformerCard({
               <StatTile label="K" value={String(line.strikeouts)} />
             </div>
 
-            <p className="font-mono text-xs leading-5 text-[#F5F2EA] lg:hidden">{statLine}</p>
+            <p className="font-mono text-xs leading-5 text-[#F5F2EA] lg:hidden">
+              <StartLineText line={line} />
+            </p>
 
             {hasVeloData ? (
               <div className="hidden rounded border border-white/10 bg-black/25 p-3 lg:block">
@@ -211,7 +213,7 @@ export function TopPerformerCard({
             </div>
           ) : null}
           <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 lg:hidden">
-            <h3 className="max-w-[9ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] drop-shadow-[0_4px_18px_rgba(0,0,0,0.95)] sm:text-5xl">
+            <h3 className="pitcher-name max-w-[9ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] drop-shadow-[0_4px_18px_rgba(0,0,0,0.95)] sm:text-5xl">
               {pitcherName}
             </h3>
             <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#F5F2EA] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
@@ -220,7 +222,7 @@ export function TopPerformerCard({
           </div>
           <div className="absolute bottom-7 right-7 z-10 hidden text-right lg:block">
             <ScoreBug score={scoreText} />
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#F5F2EA]">{context}</p>
+            <p className="nowrap-token mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#F5F2EA]">{context}</p>
           </div>
           {highlight ? (
             <div className="absolute inset-0 z-20 hidden place-items-center lg:grid">
@@ -237,7 +239,7 @@ export function TopPerformerCard({
       </div>
 
       <div className="border-t border-[#4A3E1C] bg-[#0A0B0D] px-4 py-3 sm:px-5 lg:hidden">
-        <p className="font-mono text-xs text-[#F5F2EA]">{context}</p>
+        <p className="nowrap-token font-mono text-xs text-[#F5F2EA]">{context}</p>
       </div>
     </article>
   );

@@ -8,7 +8,7 @@ import { PitchingDuelsModule } from "@/components/pitching-duels";
 import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
-import { formatStartLine } from "@/lib/format";
+import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { startPath, upcomingDateHref } from "@/lib/routes";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
@@ -196,8 +196,8 @@ function BestStartsLite({
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Evergreen</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week / Month</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The daily Spotlight is disposable. These are the rolling-window starts worth revisiting.</p>
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week / Month</h2>
+            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The daily Spotlight is disposable. These are the rolling-window starts worth revisiting.</p>
           </div>
           <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
             Best starts archive
@@ -235,15 +235,17 @@ function BestStartCard({ title, start, badge, highlight }: { title: string; star
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>
           {badge ? <p className="mt-1 inline-flex max-w-full rounded border border-amber-300/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">{badge}</p> : null}
-          <h3 className="mt-1 font-serif text-3xl font-bold leading-tight text-zinc-50">{start.pitcher.name}</h3>
-          <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">{start.pitcher.team} vs {start.opponent} / {formatLongDate(start.date)}</p>
+          <h3 className="pitcher-name mt-1 font-serif text-3xl font-bold leading-tight text-zinc-50">{start.pitcher.name}</h3>
+          <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">
+            <MetaLine segments={[`${start.pitcher.team} vs ${start.opponent}`, formatLongDate(start.date)]} />
+          </p>
         </div>
       </a>
       <div className="mt-5 border-t border-white/10 pt-4">
         <p className="font-serif text-5xl font-bold leading-none text-amber-300">{start.gameScorePlus}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
       </div>
-      <p className="mt-4 text-sm leading-6 text-zinc-400">{formatStartLine(start.line)}</p>
+      <p className="mt-4 text-sm leading-6 text-zinc-400"><StartLineText line={start.line} /></p>
       {highlight ? (
         <div className="mt-4">
           <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />

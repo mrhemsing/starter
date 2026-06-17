@@ -29,8 +29,8 @@ export function PitchingDuelsModule({
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Today"}</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
+            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               Two lenses from the same game-level scores: best duel rewards two strong, even arms; mismatch rewards the biggest gap.
             </p>
           </div>
@@ -63,8 +63,8 @@ function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsRes
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Today"}</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">{hasBestDuel ? title : "Closest matchups tonight"}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{hasBestDuel ? title : "Closest matchups tonight"}</h2>
+            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               The strongest, most evenly matched matchups on tonight&apos;s slate.
             </p>
           </div>
@@ -111,7 +111,7 @@ function DuelCard({ duel, rank, kind }: { duel: PitchingDuel; rank: number; kind
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 md:flex-row md:items-start">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">#{rank} {rankLabel}</p>
-          <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">{duel.label}</h3>
+          <h3 className="card-title mt-1 font-serif text-2xl font-bold text-zinc-50">{duel.label}</h3>
           <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-500">{duel.park ?? "Venue TBD"}</p>
         </div>
         <div className="grid grid-cols-2 gap-2 font-mono text-xs">
@@ -134,7 +134,7 @@ function DuelStarterCard({ starter }: { starter: PitchingDuel["starters"][number
         <div className="flex min-w-0 items-start gap-3">
           <Headshot playerId={starter.pitcherId} name={starter.name} team={starter.team} size="sm" band={starter.tier ?? null} decorative className="ml-1" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-zinc-100">{starter.name}</p>
+            <p className="pitcher-name text-sm font-medium leading-tight text-zinc-100">{starter.name}</p>
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team}</p>
           </div>
         </div>

@@ -4,8 +4,8 @@ import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
+import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
-import { formatStartLine } from "@/lib/format";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
@@ -62,12 +62,19 @@ export function TonightsMustWatch({
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{eyebrow}</p>
-            <h2 id={headingId} className="mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+            <h2 id={headingId} className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
+            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               Ranked by starter form, pairing quality, and matchup context. Matchup values are shown with a slate rank, never as a bare number.
             </p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">
-              Data through <LocalTime value={tonight.generatedAt} fallback={formatFirstPitch(tonight.generatedAt)} /> / MLB Stats API / Baseball Savant / Open-Meteo
+              <MetaLine
+                segments={[
+                  <>Data through <LocalTime value={tonight.generatedAt} fallback={formatFirstPitch(tonight.generatedAt)} /></>,
+                  "MLB Stats API",
+                  "Baseball Savant",
+                  "Open-Meteo",
+                ]}
+              />
             </p>
           </div>
           <Link
@@ -135,7 +142,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 md:flex-row md:items-start">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>{tier.label}</p>
-            <h3 className="mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
+            <h3 className="card-title mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
             <p
               id={summaryId}
               className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"
@@ -143,7 +150,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
               data-venue={gameVenueLabel(game)}
               aria-label={watchCardSummaryAriaLabel(game)}
             >
-              {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)}
+              <MetaLine segments={[gameStatusLabel(game.status), <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />, gameVenueLabel(game)]} />
             </p>
             <GameEnvironmentChips game={game} />
           </div>
@@ -196,7 +203,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
         <div className="min-w-0">
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
             <div>
-              <h3 className="font-serif text-2xl font-bold text-zinc-50">{game.label}</h3>
+              <h3 className="card-title font-serif text-2xl font-bold text-zinc-50">{game.label}</h3>
               <p
                 id={summaryId}
                 className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
@@ -204,7 +211,14 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
                 data-venue={gameVenueLabel(game)}
                 aria-label={watchCardSummaryAriaLabel(game)}
               >
-                {gameStatusLabel(game.status)} / <LocalTime value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} /> / {gameVenueLabel(game)} / #{rank} of {slateSize} watch rank
+                <MetaLine
+                  segments={[
+                    gameStatusLabel(game.status),
+                    <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />,
+                    gameVenueLabel(game),
+                    `#${rank} of ${slateSize} watch rank`,
+                  ]}
+                />
               </p>
               <GameEnvironmentChips game={game} compact />
             </div>
@@ -335,8 +349,10 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       <div className={`flex gap-3 sm:gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
         <StarterHeadshot starter={starter} size="duel" />
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{starter.team} / {starter.side}</p>
-          <h4 className="mt-1 min-w-0 text-wrap font-serif text-2xl font-bold leading-tight text-zinc-50 lg:text-3xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <MetaLine segments={[starter.team, starter.side]} />
+          </p>
+          <h4 className="pitcher-name mt-1 min-w-0 font-serif text-2xl font-bold leading-tight text-zinc-50 lg:text-3xl">
             {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
           </h4>
           {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
@@ -491,13 +507,13 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
     >
       <StarterHeadshot starter={starter} size="small" />
       <div className="min-w-0">
-        <p className="min-w-0 text-wrap text-sm font-medium leading-tight text-zinc-100">
+        <p className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100">
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team}</p>
         {starter.status === "insufficient" && starter.lastStart ? (
-          <p className="mt-1 truncate text-[11px] text-zinc-500">
-            Last: vs {starter.lastStart.opp} / GS+ {starter.lastStart.gsPlus}
+          <p className="mt-1 text-[11px] text-zinc-500">
+            <MetaLine segments={[`Last: vs ${starter.lastStart.opp}`, `GS+ ${starter.lastStart.gsPlus}`]} />
           </p>
         ) : null}
       </div>
@@ -533,13 +549,37 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
 
 function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
   if (starter.status === "tbd") {
-    return <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>Starter TBD / league baseline used</p>;
+    return (
+      <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
+        <MetaLine segments={["Starter TBD", "league baseline used"]} />
+      </p>
+    );
   }
 
   return (
     <div className="mt-3 text-sm text-zinc-400">
       <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>Limited form sample</p>
-      {starter.lastStart ? <p className="mt-1">Last: vs {starter.lastStart.opp} / {formatStartLine({ inningsPitched: starter.lastStart.ip, hits: starter.lastStart.h, earnedRuns: starter.lastStart.er, walks: starter.lastStart.bb, strikeouts: starter.lastStart.k, pitches: 0 })} / GS+ {starter.lastStart.gsPlus}</p> : null}
+      {starter.lastStart ? (
+        <p className="mt-1">
+          <MetaLine
+            segments={[
+              `Last: vs ${starter.lastStart.opp}`,
+              <StartLineText
+                key="line"
+                line={{
+                  inningsPitched: starter.lastStart.ip,
+                  hits: starter.lastStart.h,
+                  earnedRuns: starter.lastStart.er,
+                  walks: starter.lastStart.bb,
+                  strikeouts: starter.lastStart.k,
+                  pitches: 0,
+                }}
+              />,
+              `GS+ ${starter.lastStart.gsPlus}`,
+            ]}
+          />
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -557,19 +597,19 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
   }
 
   const projectedLine = [
-    projection.line.inningsPitched === null ? null : `${projection.line.inningsPitched.toFixed(1)} IP`,
-    projection.line.strikeouts === null ? null : `${projection.line.strikeouts.toFixed(1)} K`,
-    projection.line.earnedRuns === null ? null : `${projection.line.earnedRuns.toFixed(1)} ER`,
-  ].filter(Boolean).join(" / ");
+    projection.line.inningsPitched === null ? null : <span key="ip" className="stat-token">{projection.line.inningsPitched.toFixed(1)} IP</span>,
+    projection.line.strikeouts === null ? null : <span key="k" className="stat-token">{projection.line.strikeouts.toFixed(1)} K</span>,
+    projection.line.earnedRuns === null ? null : <span key="er" className="stat-token">{projection.line.earnedRuns.toFixed(1)} ER</span>,
+  ].filter(Boolean);
 
   return (
     <div className={`${compact ? "mt-1" : "mt-3"} flex flex-wrap gap-1.5 ${justify}`} title={projection.notes.join("; ")}>
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
         Proj GS+ {projection.projectedGsPlus.toFixed(1)}
       </span>
-      {projectedLine ? (
+      {projectedLine.length ? (
         <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-          {projectedLine}
+          <MetaLine segments={projectedLine} />
         </span>
       ) : null}
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
@@ -603,8 +643,8 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
   if (!market) return null;
   const justify = align === "home" ? "lg:justify-end" : "";
   const strikeoutText = market.strikeoutPropLine === null
-    ? `Proj K ${market.projectedStrikeouts === null ? "--" : market.projectedStrikeouts.toFixed(1)} / prop pending`
-    : `K edge ${market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}`;
+    ? <MetaLine segments={[<span key="projected" className="stat-token">Proj K {market.projectedStrikeouts === null ? "--" : market.projectedStrikeouts.toFixed(1)}</span>, "prop pending"]} />
+    : <>K edge {market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}</>;
 
   return (
     <div

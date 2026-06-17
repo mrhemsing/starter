@@ -64,10 +64,10 @@ export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineP
       data-slate-live-games={slateState.liveGames}
       data-slate-final-games={slateState.finalGames}
     >
-      <span className="block sm:inline">{line}</span>
+      <span className="status-token block sm:inline">{line}</span>
       <span className="mx-1.5 hidden sm:inline">·</span>
-      <a href={href} className="block underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
-        Upcoming starts {"->"}
+      <a href={href} className="nowrap-token block underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
+        Upcoming{"\u00A0"}starts{"\u00A0"}{"->"}
       </a>
     </p>
   );

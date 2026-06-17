@@ -23,7 +23,7 @@ export async function SiteNav({ active, today }: { active: NavKey; today: string
           </Link>
         ))}
       </nav>
-      <nav className="flex w-full gap-2 overflow-x-auto pt-1 pb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary mobile" data-responsive-check="home-mobile-nav">
+      <nav className="flex min-w-0 max-w-full gap-2 overflow-x-auto pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary mobile" data-responsive-check="home-mobile-nav">
         {items.map((item) => (
           <Link
             key={item.key}

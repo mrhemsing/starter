@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherChip } from "@/components/pitcher-chip";
+import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
@@ -240,8 +241,10 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="ml-1 border-2" />
         <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
-          <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.pitcher.team} / {formatStartLine(start.line)}</p>
+          <p className="pitcher-name font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+            <MetaLine segments={[start.pitcher.team, <StartLineText key="line" line={start.line} />]} />
+          </p>
           {gas ? <span className="mt-1 inline-flex rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#F6C445]">GAS</span> : null}
         </div>
       </Link>

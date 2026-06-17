@@ -84,8 +84,8 @@ export default async function Home() {
           <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
               <HomeSlateStatusLine initialState={slateStatus} href={upcomingDateHref(today)} />
-              <h1 className="font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Every MLB start, ranked.</h1>
-              <p className="mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
+              <h1 className="section-title font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Every MLB start, ranked.</h1>
+              <p className="blurb mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
                 <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">GS+ scores a single start 0-100, league average ~50.</span>
                 <a href="/methodology" className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline">
                   Methodology
