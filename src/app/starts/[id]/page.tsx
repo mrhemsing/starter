@@ -914,6 +914,7 @@ function completionStatusLabel(state: { date: string; finalGames: number; totalG
   if (state.isPartialToday) return `Today · ${state.finalGames} of ${state.totalGames} final · updating`;
   if (state.isToday && state.isFinal) return "Today · final";
   if (state.isToday) return `Today · ${state.finalGames} of ${state.totalGames} final`;
+  if (state.date === addDays(getHomeSlateDate(), -1)) return `Yesterday · ${formatMetadataDate(state.date)} · final`;
   return `${formatMetadataDate(state.date)} · final`;
 }
 
