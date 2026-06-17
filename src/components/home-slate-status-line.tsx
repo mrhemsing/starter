@@ -57,18 +57,16 @@ export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineP
 
   return (
     <p
-      className="mb-4 block max-w-full truncate font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 sm:text-xs sm:tracking-[0.18em]"
+      className="mb-4 block max-w-full font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-amber-200 sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
       data-slate-total-games={slateState.totalGames}
       data-slate-live-games={slateState.liveGames}
       data-slate-final-games={slateState.finalGames}
     >
-      <span>{line}</span>
-      {" "}
-      <span className="mx-1.5">·</span>
-      {" "}
-      <a href={href} className="underline-offset-4 hover:text-amber-100 hover:underline">
+      <span className="block sm:inline">{line}</span>
+      <span className="mx-1.5 hidden sm:inline">·</span>
+      <a href={href} className="block underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
         Upcoming starts {"->"}
       </a>
     </p>

@@ -79,6 +79,13 @@ assert(
 );
 
 assert(
+  statusLine.includes('className="block sm:inline">{line}</span>') &&
+    statusLine.includes('className="mx-1.5 hidden sm:inline"') &&
+    statusLine.includes('className="block underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
+  "homepage status line must force the upcoming starts link onto a new line on mobile without the separator dot",
+);
+
+assert(
   statusRoute.includes("getSlateProgressState(schedule)"),
   "homepage status API must return the shared slate progress state",
 );
