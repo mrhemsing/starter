@@ -32,6 +32,7 @@ const requiredScripts = [
   "test:slate-contract",
   "test:start-contract",
   "test:pitcher-contract",
+  "check:home-ranked",
   "test:responsive",
   "test:fixture-gates",
   "check:publish-prep",
