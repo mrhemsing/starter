@@ -78,7 +78,7 @@ function resolveTopPerformerState({
     status: "previous" as const,
     start: yesterdayLeader,
     slateCount: yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture").length,
-    dateLabel: `Last night · ${formatLongDate(yesterday)}`,
+    dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
   };
 }
 

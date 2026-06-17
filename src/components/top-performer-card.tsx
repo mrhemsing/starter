@@ -49,7 +49,7 @@ export function TopPerformerCard({
   const isPlaceholderImage = image?.source === "placeholder";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const eyebrow = isProvisional ? "The one to beat" : "Start of the night";
+  const eyebrow = isProvisional ? "The one to beat" : "Start of the day";
   const statLine = `IP ${line.inningsPitched.toFixed(1)} · H ${line.hits} · ER ${line.earnedRuns} · BB ${line.walks} · K ${line.strikeouts}`;
   const context = `#${rank} of ${slateCount} · league avg 50`;
 
@@ -113,7 +113,7 @@ export function TopPerformerCard({
       className={`top-performer-card top-performer-scorebug relative overflow-hidden rounded border border-[#4A3E1C] bg-[#0A0B0D] text-[#F5F2EA] transition duration-700 lg:min-h-[500px] ${isVisible ? "is-visible" : ""}`}
       style={{ "--heat-glow-color": "246 196 69", "--heat-glow-opacity": "0.3" } as CSSProperties}
       data-responsive-check="home-top-performer-marquee"
-      aria-label={`${pitcherName}, Start of the Night, ${score} GS+`}
+      aria-label={`${pitcherName}, Start of the Day, ${score} GS+`}
     >
       <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">
         {finalScoreText}
@@ -123,7 +123,8 @@ export function TopPerformerCard({
         <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#4A3E1C] bg-[#0A0B0D] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
           <div className="hidden lg:block">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#F6C445]">
-              {eyebrow} · {dateLabel}
+              <span>{eyebrow}</span>
+              <span className="mt-2 block">{dateLabel}</span>
             </p>
             <h2 className="mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
               {pitcherName}
@@ -191,7 +192,8 @@ export function TopPerformerCard({
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.05)_38%,rgba(10,11,13,0.86)_100%)] lg:bg-[linear-gradient(90deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.02)_38%,rgba(10,11,13,0.66)_100%)]" />
           <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4 sm:p-5 lg:hidden">
             <p className="max-w-[58%] font-mono text-[10px] uppercase tracking-[0.2em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-              {eyebrow} · {dateLabel}
+              <span>{eyebrow}</span>
+              <span className="mt-2 block">{dateLabel}</span>
             </p>
             <ScoreBug score={scoreText} compact />
           </div>

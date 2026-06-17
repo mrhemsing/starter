@@ -46,6 +46,21 @@ assert(
 );
 
 assert(
+  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat" : "Start of the day";'),
+  "home top performer final card eyebrow must read Start of the day",
+);
+
+assert(
+  topPerformerCard.includes('<span className="mt-2 block">{dateLabel}</span>'),
+  "home top performer date label must render on a forced new line",
+);
+
+assert(
+  rankedRoute.includes('dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,'),
+  "home top performer previous-slate label must read Yesterday",
+);
+
+assert(
   !topPerformerCard.includes('object-contain'),
   "home top performer image must not use contain framing that creates letterbox bars",
 );
