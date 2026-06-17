@@ -96,6 +96,12 @@ assert(
 );
 
 assert(
+  homePage.includes('className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm"') &&
+    homePage.includes('className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline"'),
+  "homepage mobile GS+ value prop must stay on one line and force a break before methodology",
+);
+
+assert(
   !homePage.includes("FirstPitchCountdownEyebrow") && !homePage.includes("SlateStatusPill"),
   "homepage must not render separate stacked countdown/status fragments",
 );
