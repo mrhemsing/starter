@@ -51,6 +51,7 @@ export function TopPerformerCard({
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const eyebrow = isProvisional ? "The one to beat" : "Start of the day";
+  const statusLabel = formatTopPerformerStatusLabel(eyebrow, dateLabel);
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -124,8 +125,8 @@ export function TopPerformerCard({
         <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#4A3E1C] bg-[#0A0B0D] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
           <div className="hidden lg:block">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#F6C445]">
-              <span>{eyebrow}</span>
-              <span className="mt-2 block">{dateLabel}</span>
+              <span>{statusLabel.eyebrow}</span>
+              <span className="mt-2 block">{statusLabel.detail}</span>
             </p>
             <h2 className="pitcher-name mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
               {pitcherName}
@@ -196,9 +197,9 @@ export function TopPerformerCard({
           )}
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.05)_38%,rgba(10,11,13,0.86)_100%)] lg:bg-[linear-gradient(90deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.02)_38%,rgba(10,11,13,0.66)_100%)]" />
           <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4 sm:p-5 lg:hidden">
-            <p className="max-w-[58%] font-mono text-[10px] uppercase tracking-[0.2em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-              <span>{eyebrow}</span>
-              <span className="mt-2 block">{dateLabel}</span>
+            <p className="max-w-[68%] font-mono text-[10px] uppercase tracking-[0.16em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+              <span className="nowrap-token">{statusLabel.eyebrow}</span>
+              <span className="mt-2 block nowrap-token">{statusLabel.detail}</span>
             </p>
             <ScoreBug score={scoreText} compact />
           </div>
@@ -243,6 +244,22 @@ export function TopPerformerCard({
       </div>
     </article>
   );
+}
+
+function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string) {
+  const livePrefix = "Live leader · ";
+  if (dateLabel.startsWith(livePrefix)) {
+    const liveDetail = dateLabel.slice(livePrefix.length).replace(/^(\d+\s+of\s+\d+)\s+final$/i, "$1 games final");
+    return {
+      eyebrow: `${eyebrow} · Live leader`,
+      detail: liveDetail,
+    };
+  }
+
+  return {
+    eyebrow,
+    detail: dateLabel,
+  };
 }
 
 function ScoreBug({ score, compact = false }: { score: string; compact?: boolean }) {

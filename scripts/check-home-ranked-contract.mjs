@@ -72,8 +72,17 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('<span className="mt-2 block">{dateLabel}</span>'),
-  "home top performer date label must render on a forced new line without an inline separator after the eyebrow",
+  topPerformerCard.includes("function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string)") &&
+    topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
+    topPerformerCard.includes('eyebrow: `${eyebrow} · Live leader`,') &&
+    topPerformerCard.includes('"$1 games final"'),
+  "home top performer live label must combine the eyebrow with Live leader, then force the games-final detail onto the next line",
+);
+
+assert(
+  topPerformerCard.includes('<span className="mt-2 block">{statusLabel.detail}</span>') &&
+    topPerformerCard.includes('<span className="mt-2 block nowrap-token">{statusLabel.detail}</span>'),
+  "home top performer status detail must render on a forced new line on desktop and mobile",
 );
 
 assert(
