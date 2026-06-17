@@ -52,6 +52,7 @@ export function TopPerformerCard({
   const eyebrow = isProvisional ? "The one to beat" : "Start of the day";
   const statLine = `IP ${line.inningsPitched.toFixed(1)} · H ${line.hits} · ER ${line.earnedRuns} · BB ${line.walks} · K ${line.strikeouts}`;
   const context = `#${rank} of ${slateCount} · league avg 50`;
+  const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -145,16 +146,18 @@ export function TopPerformerCard({
 
             <p className="font-mono text-xs leading-5 text-[#F5F2EA] lg:hidden">{statLine}</p>
 
-            <div className="hidden rounded border border-white/10 bg-black/25 p-3 lg:block">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#878D97]">Velo by inning</p>
-                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#878D97]">
-                  {topVelo ? `${topVelo.toFixed(1)} top` : "top velo pending"}
-                  {whiffRate ? ` · ${whiffRate.toFixed(0)}% whiff` : ""}
-                </p>
+            {hasVeloData ? (
+              <div className="hidden rounded border border-white/10 bg-black/25 p-3 lg:block">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#878D97]">Velo by inning</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#878D97]">
+                    {topVelo ? `${topVelo.toFixed(1)} top` : ""}
+                    {whiffRate ? `${topVelo ? " · " : ""}${whiffRate.toFixed(0)}% whiff` : ""}
+                  </p>
+                </div>
+                {veloSparkline.length > 1 ? <VeloSparkline values={veloSparkline} active={isVisible} /> : null}
               </div>
-              <VeloSparkline values={veloSparkline} active={isVisible} />
-            </div>
+            ) : null}
 
             <div className="grid gap-2 sm:grid-cols-2 lg:flex">
               {highlight ? (

@@ -56,6 +56,16 @@ assert(
 );
 
 assert(
+  topPerformerCard.includes('const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";'),
+  "home top performer card must detect real velocity data before rendering the velocity panel",
+);
+
+assert(
+  !topPerformerCard.includes("top velo pending"),
+  "home top performer card must not render an empty pending velocity chart",
+);
+
+assert(
   rankedRoute.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
   "home top performer previous-slate label must read the weekday",
 );
