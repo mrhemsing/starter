@@ -20,6 +20,13 @@ assert(
 );
 
 assert(
+  bestStartsRoute.includes("getArchivedSeasonStartSummaries") &&
+    bestStartsRoute.includes("rankedWindowStarts") &&
+    bestStartsRoute.includes("monthlyStarts.length > 0"),
+  "home best-starts API must use the archived season summary fast path before falling back to daily slate fanout",
+);
+
+assert(
   homeDeferredSections.includes('import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";'),
   "home best-starts client must import the highlight embed",
 );
