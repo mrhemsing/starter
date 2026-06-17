@@ -14,7 +14,7 @@ export default async function HowItWorksPage() {
       <div className="mx-auto max-w-5xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
+            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <h1 className="mt-5 font-serif text-5xl font-black text-zinc-50">How rankings work</h1>

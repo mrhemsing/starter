@@ -103,7 +103,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <section className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
+          <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
             Toe the Slab
           </Link>
           <div className="mt-6 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -190,7 +190,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Toe the Slab</Link>
+            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>
