@@ -1,4 +1,4 @@
-import type { FeaturedStartHighlight, StartDetail } from "@/lib/types";
+import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 import { readSupabaseFeaturedStartHighlight } from "@/lib/data/supabase-archive";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
@@ -41,10 +41,12 @@ type YouTubeVideoItem = {
   };
 };
 
+type HighlightStart = Pick<StartSummary, "id" | "date" | "pitcher" | "highlightVideoId">;
+
 const resolutionCache = new Map<string, CachedResolution>();
 let cachedMlbChannelId: CachedChannelId | null = null;
 
-export async function resolveFeaturedStartHighlight(start: StartDetail | null): Promise<FeaturedStartHighlight | null> {
+export async function resolveFeaturedStartHighlight(start: HighlightStart | null): Promise<FeaturedStartHighlight | null> {
   if (!start) return null;
 
   const cached = resolutionCache.get(start.id);
@@ -76,7 +78,7 @@ function cacheResolution(startId: string, value: FeaturedStartHighlight | null) 
   return value;
 }
 
-async function resolveYouTubeHighlight(start: StartDetail): Promise<FeaturedStartHighlight | null> {
+async function resolveYouTubeHighlight(start: HighlightStart): Promise<FeaturedStartHighlight | null> {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) return null;
 
@@ -127,7 +129,7 @@ function cacheMlbChannelId(value: string | null) {
   return value;
 }
 
-async function searchHighlightCandidates(start: StartDetail, channelId: string, apiKey: string) {
+async function searchHighlightCandidates(start: HighlightStart, channelId: string, apiKey: string) {
   const { publishedAfter, publishedBefore } = publishWindow(start.date);
   const queries = [
     `${start.pitcher.name} strikeouts start`,
@@ -232,7 +234,7 @@ function candidateScore(
     hoursFromStartDateNoon: number;
     lastNameInTitle: boolean;
   },
-  start: StartDetail,
+  start: HighlightStart,
 ) {
   let score = 0;
   if (candidate.lastNameInTitle) score += 100;

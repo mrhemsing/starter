@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
+import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 
 export async function GET() {
   const yesterday = addDays(getHomeSlateDate(), -1);
   const [weekly, monthly] = await Promise.all([getBestStartWindow(yesterday, 7), getBestStartWindow(yesterday, 30)]);
+  const [weeklyHighlight, monthlyHighlight] = await Promise.all([
+    resolveFeaturedStartHighlight(weekly),
+    monthly?.id === weekly?.id ? Promise.resolve(null) : resolveFeaturedStartHighlight(monthly),
+  ]);
 
-  return NextResponse.json({ weekly, monthly });
+  return NextResponse.json({
+    weekly,
+    monthly,
+    weeklyHighlight,
+    monthlyHighlight: monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight,
+  });
 }
 
 async function getBestStartWindow(anchorDate: string, days: number) {

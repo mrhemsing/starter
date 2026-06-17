@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
 import { PitchingDuelsModule } from "@/components/pitching-duels";
@@ -10,7 +11,7 @@ import { TopPerformerCard } from "@/components/top-performer-card";
 import { formatStartLine } from "@/lib/format";
 import { startPath, upcomingDateHref } from "@/lib/routes";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
-import type { FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 type RankedHomeResponse = {
   date: string;
@@ -28,6 +29,8 @@ type RankedHomeResponse = {
 type BestStartsHomeResponse = {
   weekly: StartSummary | null;
   monthly: StartSummary | null;
+  weeklyHighlight: FeaturedStartHighlight | null;
+  monthlyHighlight: FeaturedStartHighlight | null;
 };
 
 export function HomeDeferredSections({ today, tomorrow }: { today: string; tomorrow: string }) {
@@ -103,7 +106,14 @@ export function HomeDeferredSections({ today, tomorrow }: { today: string; tomor
       {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : <HomeDeferredFallback />}
       {formHome ? <HeatCheckHero home={formHome} /> : <HomeDeferredFallback />}
       {ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : <HomeDeferredFallback />}
-      {bestStarts ? <BestStartsLite weekly={bestStarts.weekly} monthly={bestStarts.monthly} /> : <HomeDeferredFallback />}
+      {bestStarts ? (
+        <BestStartsLite
+          weekly={bestStarts.weekly}
+          monthly={bestStarts.monthly}
+          weeklyHighlight={bestStarts.weeklyHighlight}
+          monthlyHighlight={bestStarts.monthlyHighlight}
+        />
+      ) : <HomeDeferredFallback />}
     </>
   );
 }
@@ -118,7 +128,17 @@ function HomeDeferredFallback() {
   return <div className="border-t border-white/10 bg-[#08080a] px-4 py-8 sm:px-6 lg:px-8" aria-hidden="true" />;
 }
 
-function BestStartsLite({ weekly, monthly }: { weekly: StartSummary | null; monthly: StartSummary | null }) {
+function BestStartsLite({
+  weekly,
+  monthly,
+  weeklyHighlight,
+  monthlyHighlight,
+}: {
+  weekly: StartSummary | null;
+  monthly: StartSummary | null;
+  weeklyHighlight: FeaturedStartHighlight | null;
+  monthlyHighlight: FeaturedStartHighlight | null;
+}) {
   const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
   const sameStart = weekly && monthly && weekly.id === monthly.id;
 
@@ -137,11 +157,11 @@ function BestStartsLite({ weekly, monthly }: { weekly: StartSummary | null; mont
         </div>
         <div className={`grid gap-3 ${sameStart ? "" : "md:grid-cols-2"}`}>
           {sameStart ? (
-            <BestStartCard title="7-day / 30-day best" badge="Tops the last 7 and 30 days" start={monthly} />
+            <BestStartCard title="7-day / 30-day best" badge="Tops the last 7 and 30 days" start={monthly} highlight={monthlyHighlight ?? weeklyHighlight} />
           ) : (
             <>
-              <BestStartCard title="7-day best" start={weekly} />
-              <BestStartCard title="30-day best" start={monthly} />
+              <BestStartCard title="7-day best" start={weekly} highlight={weeklyHighlight} />
+              <BestStartCard title="30-day best" start={monthly} highlight={monthlyHighlight} />
             </>
           )}
         </div>
@@ -150,7 +170,7 @@ function BestStartsLite({ weekly, monthly }: { weekly: StartSummary | null; mont
   );
 }
 
-function BestStartCard({ title, start, badge }: { title: string; start: StartSummary | null; badge?: string }) {
+function BestStartCard({ title, start, badge, highlight }: { title: string; start: StartSummary | null; badge?: string; highlight?: FeaturedStartHighlight | null }) {
   if (!start) {
     return (
       <div className="rounded border border-white/10 bg-[#101014] p-5">
@@ -176,6 +196,11 @@ function BestStartCard({ title, start, badge }: { title: string; start: StartSum
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
       </div>
       <p className="mt-4 text-sm leading-6 text-zinc-400">{formatStartLine(start.line)}</p>
+      {highlight ? (
+        <div className="mt-4">
+          <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
+        </div>
+      ) : null}
     </div>
   );
 }
