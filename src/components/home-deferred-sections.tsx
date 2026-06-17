@@ -23,6 +23,11 @@ type RankedHomeResponse = {
     slateCount: number;
     dateLabel: string;
     image: TopPerformerImage | null;
+    metrics: {
+      topVelo: number | null;
+      whiffRate: number | null;
+      veloSparkline: number[];
+    } | null;
   } | null;
 };
 
@@ -86,9 +91,9 @@ export function HomeDeferredSections({ today, tomorrow }: { today: string; tomor
               image={ranked.topPerformer.image}
               highlight={null}
               isProvisional={ranked.topPerformer.status === "live"}
-              whiffRate={null}
-              topVelo={null}
-              veloSparkline={[]}
+              whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}
+              topVelo={ranked.topPerformer.metrics?.topVelo ?? null}
+              veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}
             />
           </div>
         </section>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
-import type { StartSummary } from "@/lib/types";
+import type { PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 58;
 
@@ -25,14 +25,39 @@ export async function GET() {
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
-  const topPerformerImage = await resolveTopPerformerImage(topPerformerState?.start ?? null, null);
+  const [topPerformerImage, topPerformerMetrics] = await Promise.all([
+    resolveTopPerformerImage(topPerformerState?.start ?? null, null),
+    resolveTopPerformerMetrics(topPerformerState?.start ?? null),
+  ]);
 
   return NextResponse.json({
     date: rankedDate,
     label: rankedLabel,
     starts: slateStarts,
-    topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage } : null,
+    topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null,
   });
+}
+
+async function resolveTopPerformerMetrics(start: StartSummary | null) {
+  if (!start) return null;
+
+  const detail = await getStartDetail(start.id);
+  if (!detail || detail.pitchEvents.length === 0) return null;
+
+  const velocityTrend = detail.velocityTrend ?? [];
+  const velocities = detail.pitchEvents.map((pitch) => pitch.velocityMph).filter((velocity) => Number.isFinite(velocity));
+  const swings = detail.pitchEvents.filter(isSwing).length;
+  const whiffs = detail.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
+
+  return {
+    topVelo: velocities.length > 0 ? Math.max(...velocities) : null,
+    whiffRate: swings > 0 ? (whiffs / swings) * 100 : null,
+    veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),
+  };
+}
+
+function isSwing(pitch: PitchEvent) {
+  return pitch.result === "swinging_strike" || pitch.result === "foul" || pitch.result === "hit_into_play";
 }
 
 function resolveTopPerformerState({

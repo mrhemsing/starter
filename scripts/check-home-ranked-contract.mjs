@@ -16,13 +16,20 @@ assert(
 );
 
 assert(
-  rankedRoute.includes("const topPerformerImage = await resolveTopPerformerImage(topPerformerState?.start ?? null, null);"),
+  rankedRoute.includes("resolveTopPerformerImage(topPerformerState?.start ?? null, null),"),
   "home ranked API must resolve an image for the selected top performer",
 );
 
 assert(
-  rankedRoute.includes("topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage } : null"),
+  rankedRoute.includes("topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null"),
   "home ranked API must include image in the topPerformer payload",
+);
+
+assert(
+  rankedRoute.includes("async function resolveTopPerformerMetrics(start: StartSummary | null)") &&
+    rankedRoute.includes("const detail = await getStartDetail(start.id);") &&
+    rankedRoute.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
+  "home ranked API must enrich the top performer with real start-detail velocity metrics",
 );
 
 assert(
@@ -31,8 +38,22 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("metrics: {") &&
+    homeDeferredSections.includes("topVelo: number | null;") &&
+    homeDeferredSections.includes("veloSparkline: number[];"),
+  "home ranked client response type must include topPerformer.metrics",
+);
+
+assert(
   homeDeferredSections.includes("image={ranked.topPerformer.image}"),
   "home deferred top performer card must pass through the ranked API image",
+);
+
+assert(
+  homeDeferredSections.includes("topVelo={ranked.topPerformer.metrics?.topVelo ?? null}") &&
+    homeDeferredSections.includes("veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}") &&
+    homeDeferredSections.includes("whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}"),
+  "home deferred top performer card must pass through ranked API velocity metrics",
 );
 
 assert(
