@@ -190,7 +190,8 @@ function normalizeScheduleStatus(game: MlbSchedule["games"][number]) {
   const status = `${game.status} ${game.detailedState}`.toLowerCase();
   if (/\b(postponed|cancelled|canceled)\b/.test(status)) return "ppd";
   if (/\b(final|game over|completed early)\b/.test(status)) return "final";
-  if (/\b(live|in progress|manager challenge|delayed|suspended)\b/.test(status)) return "live";
+  if (/\b(suspended)\b/.test(status)) return "suspended";
+  if (/\b(live|in progress|manager challenge|delayed)\b/.test(status)) return "live";
   return "pregame";
 }
 
