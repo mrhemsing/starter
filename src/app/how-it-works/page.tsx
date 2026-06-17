@@ -10,7 +10,7 @@ export default async function HowItWorksPage() {
   const scoreScale = summarizeSlateScoreScale(starts);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

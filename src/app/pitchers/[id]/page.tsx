@@ -58,7 +58,7 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
   if (!pitcher) notFound();
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
           Toe the Slab

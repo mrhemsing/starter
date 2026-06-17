@@ -101,7 +101,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <section className="px-4 py-8 sm:px-6 lg:px-8">
+      <section className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
             Toe the Slab
@@ -185,7 +185,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">

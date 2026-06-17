@@ -66,7 +66,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const allGames = upcoming.days.flatMap((day) => day.games);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">

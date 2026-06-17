@@ -84,7 +84,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const thermalBand = summary.status === "ok" && summary.windowCount >= window ? summary.tier : null;
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>

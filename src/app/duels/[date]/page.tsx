@@ -45,7 +45,7 @@ export default async function DuelsPage({ params, searchParams }: DuelsPageProps
 
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
-      <header className="px-4 py-8 sm:px-6 lg:px-8">
+      <header className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>

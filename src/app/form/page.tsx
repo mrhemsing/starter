@@ -127,7 +127,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 py-8 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
