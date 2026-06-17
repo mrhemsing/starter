@@ -16,7 +16,7 @@ export async function GET() {
   const useTodaySlate = todayCompletedSlateStarts.length > 0;
   const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
   const rankedDate = useTodaySlate ? today : yesterday;
-  const rankedLabel = useTodaySlate ? "Today" : "Yesterday";
+  const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);
   const topPerformerState = resolveTopPerformerState({
     today,
     yesterday,

@@ -61,6 +61,11 @@ assert(
 );
 
 assert(
+  rankedRoute.includes('const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);'),
+  "home ranked recap previous-slate label must read the weekday",
+);
+
+assert(
   rankedRoute.includes("function formatWeekday(date: string)"),
   "home ranked API must format previous-slate weekday labels",
 );
