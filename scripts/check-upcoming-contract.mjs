@@ -91,6 +91,20 @@ function assertDateKey(value, label) {
   assert(typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value), `${label} must be YYYY-MM-DD`);
 }
 
+function assertNullableDateKey(value, label) {
+  if (value === null) return;
+  assertDateKey(value, label);
+}
+
+function assertRenderedDateOrNone(value, label) {
+  assert(value === "none" || /^\d{4}-\d{2}-\d{2}$/.test(value ?? ""), `${label} must be YYYY-MM-DD or none`);
+}
+
+function csvAttributeValues(value) {
+  if (!value || value === "none") return [];
+  return value.split(",").filter(Boolean);
+}
+
 function assertUpcomingEnvelope(upcoming, expectedStart, expectedDays, label) {
   const expectedEnd = addDays(expectedStart, expectedDays - 1);
   assertDateKey(upcoming.range?.start, `${label} range start`);
@@ -280,6 +294,9 @@ function assertDay(day, expectedDate, options = {}) {
   assertIsoTimestamp(day.generatedAt, `${expectedDate} generatedAt`);
   assertActiveCardStatuses(day.activeCardStatuses, expectedDate);
   assert([3, 5, 10].includes(day.formWindow), `${expectedDate} formWindow must be a supported form window`);
+  assertNullableDateKey(day.formThroughDate, `${expectedDate} formThroughDate`);
+  assertNullableDateKey(day.latestScoredStartDate, `${expectedDate} latestScoredStartDate`);
+  assert(typeof day.formDataStale === "boolean", `${expectedDate} formDataStale must be boolean`);
   assertNumber(day.leagueMeanGS, `${expectedDate} leagueMeanGS`);
   assertWatchScoreWeights(day.watchScoreWeights, expectedDate);
   assert(day.watchSortPolicy === WATCH_SORT_POLICY, `${expectedDate} watchSortPolicy should be ${WATCH_SORT_POLICY}`);
@@ -302,9 +319,14 @@ function assertDay(day, expectedDate, options = {}) {
     gamePks.add(game.gamePk);
     assert(game.date === expectedDate, `${game.gamePk} date mismatch`);
     assert(day.activeCardStatuses.includes(game.status), `${game.gamePk} should only return active upcoming games, not final or postponed games`);
+    assertNonEmptyString(game.detailedState, `${game.gamePk} detailedState`);
     assertIsoTimestamp(game.firstPitch, `${game.gamePk} firstPitch`);
     assertNonEmptyString(game.away, `${game.gamePk} away team`);
+    assertNonEmptyString(game.awayName, `${game.gamePk} away team name`);
     assertNonEmptyString(game.home, `${game.gamePk} home team`);
+    assertNonEmptyString(game.homeName, `${game.gamePk} home team name`);
+    assert(game.awayName !== game.away, `${game.gamePk} away team name should not duplicate abbreviation`);
+    assert(game.homeName !== game.home, `${game.gamePk} home team name should not duplicate abbreviation`);
     assert(game.label === `${game.away} @ ${game.home}`, `${game.gamePk} label should match away/home teams`);
     if (game.park !== null && game.park !== undefined) {
       assertNonEmptyString(game.park, `${game.gamePk} park`);
@@ -326,6 +348,10 @@ function assertDay(day, expectedDate, options = {}) {
     assert(
       game.watchTier === expectedWatchTier(game.gameWatchScore),
       `${game.gamePk} watchTier should match watch score ${game.gameWatchScore}`,
+    );
+    assert(
+      game.watchSortGroup === expectedStatusSortGroup(game.status),
+      `${game.gamePk} watchSortGroup should match ${day.watchSortPolicy}`,
     );
     assertNumber(game.matchupScore, `${game.gamePk} matchupScore`);
     assert(
@@ -367,7 +393,7 @@ function assertDay(day, expectedDate, options = {}) {
       `${game.gamePk} flags.limitedForm should match limited starter or small-sample state`,
     );
 
-    const sortGroup = expectedStatusSortGroup(game.status);
+    const sortGroup = game.watchSortGroup;
     assert(sortGroup >= previousSortGroup, `${expectedDate} games must keep pregame games ahead of started games`);
     if (sortGroup !== previousSortGroup) previousWatchScore = Infinity;
     assert(game.gameWatchScore <= previousWatchScore, `${expectedDate} games must be sorted by watch score within status groups`);
@@ -470,6 +496,9 @@ function dayApiSignature(day) {
   return JSON.stringify({
     date: day.date,
     formWindow: day.formWindow,
+    formThroughDate: day.formThroughDate,
+    latestScoredStartDate: day.latestScoredStartDate,
+    formDataStale: day.formDataStale,
     leagueMeanGS: day.leagueMeanGS,
     watchScoreWeights: day.watchScoreWeights,
     watchSortPolicy: day.watchSortPolicy,
@@ -484,7 +513,9 @@ function dayApiSignature(day) {
       firstPitch: game.firstPitch,
       park: game.park,
       away: game.away,
+      awayName: game.awayName,
       home: game.home,
+      homeName: game.homeName,
       label: game.label,
       parkContext: game.parkContext,
       weatherContext: game.weatherContext,
@@ -493,6 +524,7 @@ function dayApiSignature(day) {
       matchupContext: game.matchupContext,
       gameWatchScore: game.gameWatchScore,
       watchTier: game.watchTier,
+      watchSortGroup: game.watchSortGroup,
       watchComponents: game.watchComponents,
       flags: game.flags,
       starters: game.starters,
@@ -545,12 +577,60 @@ function expectedGameStatusLabel(status) {
   return "Pregame";
 }
 
+function supportedGameStatusLabels() {
+  return ["Pregame", "Live", "Postponed"];
+}
+
 function formatSignedValue(value) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
 }
 
 function marketValue(value) {
   return value === null ? "pending" : value.toFixed(1);
+}
+
+function projectionValue(value) {
+  return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function workloadValue(value) {
+  return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function starterFormValue(value) {
+  return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function starterSeasonValue(value, precision) {
+  return value === null || value === undefined ? "pending" : value.toFixed(precision);
+}
+
+function starterLastStartValue(starter, key) {
+  const lastStart = starter.lastStart;
+  if (!lastStart) return "none";
+  if (key === "gsPlus") return lastStart.gsPlus.toFixed(1);
+  return lastStart[key] ?? "none";
+}
+
+function starterSparkLatestValue(starter) {
+  return starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none";
+}
+
+function starterTopDriverValue(starter, key) {
+  const topDriver = starter.driverChips?.[0];
+  if (!topDriver) return "none";
+  if (key === "delta") return topDriver.delta.toFixed(1);
+  if (key === "score") return topDriver.score.toFixed(1);
+  return topDriver[key] ?? "none";
+}
+
+function starterStatusChipCount(starter) {
+  let count = 0;
+  if (starter.flags?.limitedSample) count += 1;
+  if (starter.flags?.rust) count += 1;
+  if (starter.workload?.daysRest !== null && starter.workload?.daysRest !== undefined) count += 1;
+  if (typeof starter.workload?.avgPitchesLast5 === "number") count += 1;
+  return Math.min(count, 3);
 }
 
 function round1(value) {
@@ -673,12 +753,19 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
   assert(jsonLd.name === expectedName, `${route} JSON-LD name should match route title`);
   assert(jsonLd.description === expectedJsonLdDescription, `${route} JSON-LD description should match route metadata`);
   assertNumber(jsonLd.numberOfItems, `${route} JSON-LD numberOfItems`);
-  assert(jsonLd.numberOfItems === expectedItemCount, `${route} JSON-LD should expose exact item count`);
+  if (allowsRenderedLiveDataDrift(route)) {
+    assert(
+      Number.isInteger(jsonLd.numberOfItems) && jsonLd.numberOfItems >= 0 && jsonLd.numberOfItems <= expectedItemCount,
+      `${route} JSON-LD should expose a valid live-adjusted item count`,
+    );
+  } else {
+    assert(jsonLd.numberOfItems === expectedItemCount, `${route} JSON-LD should expose exact item count`);
+  }
   assert(Array.isArray(jsonLd.itemListElement), `${route} JSON-LD itemListElement must be an array`);
-  assert(
-    jsonLd.itemListElement.length === Math.min(jsonLd.numberOfItems, jsonLdLimit, expectedGames.length),
-    `${route} JSON-LD should cap visible list items correctly`,
-  );
+  const expectedVisibleJsonLdItems = allowsRenderedLiveDataDrift(route)
+    ? Math.min(jsonLd.numberOfItems, jsonLdLimit)
+    : Math.min(jsonLd.numberOfItems, jsonLdLimit, expectedGames.length);
+  assert(jsonLd.itemListElement.length === expectedVisibleJsonLdItems, `${route} JSON-LD should cap visible list items correctly`);
 
   jsonLd.itemListElement.forEach((entry, index) => {
     const expectedGame = expectedGames.find((game) => game.label === entry.item?.name && game.firstPitch === entry.item?.startDate) ?? expectedGames[index];
@@ -690,27 +777,50 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
     assert(entry.item.url === absoluteSiteUrl(`/upcoming/${expectedGame.date}`), `${route} JSON-LD item ${index + 1} event URL should point to its day slate`);
     assert(entry.item.startDate === expectedGame.firstPitch, `${route} JSON-LD item ${index + 1} startDate should match API first pitch`);
     const expectedEventStatus = expectedJsonLdEventStatus(expectedGame.status);
-    assert(
-      entry.item.eventStatus === expectedEventStatus,
-      `${route} JSON-LD item ${index + 1} eventStatus should match API status ${expectedGame.status}: expected ${expectedEventStatus}, got ${entry.item.eventStatus}`,
-    );
+    if (allowsRenderedLiveDataDrift(route)) {
+      assert(
+        supportedJsonLdEventStatuses().includes(entry.item.eventStatus),
+        `${route} JSON-LD item ${index + 1} eventStatus should remain a supported schema status during live drift; got ${entry.item.eventStatus}`,
+      );
+    } else {
+      assert(
+        entry.item.eventStatus === expectedEventStatus,
+        `${route} JSON-LD item ${index + 1} eventStatus should match API status ${expectedGame.status}: expected ${expectedEventStatus}, got ${entry.item.eventStatus}`,
+      );
+    }
     assertJsonLdLocation(entry.item.location, expectedGame, `${route} JSON-LD item ${index + 1}`);
     const expectedStarterCompetitors = expectedGame.starters.filter((starter) => starter.name && starter.pitcherId);
     assert(Array.isArray(entry.item.competitor), `${route} JSON-LD item ${index + 1} should include competitors`);
-    assert(
-      entry.item.competitor.length === 2 + expectedStarterCompetitors.length,
-      `${route} JSON-LD item ${index + 1} should include only the two teams and named starters as competitors`,
-    );
-    assertJsonLdCompetitor(entry.item.competitor, expectedGame.away, `${route} JSON-LD item ${index + 1}`);
-    assertJsonLdCompetitor(entry.item.competitor, expectedGame.home, `${route} JSON-LD item ${index + 1}`);
-    expectedStarterCompetitors.forEach((starter) => {
-      assertJsonLdStarter(entry.item.competitor, starter, `${route} JSON-LD item ${index + 1}`);
-    });
+    const competitorCountMatchesExpected = entry.item.competitor.length === 2 + expectedStarterCompetitors.length;
+    if (allowsRenderedLiveDataDrift(route)) {
+      assertLiveDriftJsonLdCompetitors(entry.item.competitor, `${route} JSON-LD item ${index + 1}`);
+    } else {
+      assert(
+        competitorCountMatchesExpected,
+        `${route} JSON-LD item ${index + 1} should include only the two teams and named starters as competitors`,
+      );
+      assertJsonLdCompetitor(entry.item.competitor, expectedGame.away, `${route} JSON-LD item ${index + 1}`);
+      assertJsonLdCompetitor(entry.item.competitor, expectedGame.home, `${route} JSON-LD item ${index + 1}`);
+      expectedStarterCompetitors.forEach((starter) => {
+        assertJsonLdStarter(entry.item.competitor, starter, `${route} JSON-LD item ${index + 1}`);
+      });
+    }
     assert(Array.isArray(entry.item.additionalProperty) && entry.item.additionalProperty.length === 4, `${route} JSON-LD item ${index + 1} should include watch properties`);
     assertJsonLdProperty(entry.item.additionalProperty, "Watch Score", expectedGame.gameWatchScore, `${route} JSON-LD item ${index + 1}`);
     assertJsonLdProperty(entry.item.additionalProperty, "Watch Tier", expectedWatchTierLabel(expectedGame.gameWatchScore), `${route} JSON-LD item ${index + 1}`);
     assertJsonLdProperty(entry.item.additionalProperty, "Matchup Score", expectedGame.matchupScore, `${route} JSON-LD item ${index + 1}`);
     assertJsonLdIntegerProperty(entry.item.additionalProperty, "Matchup Rank", `${route} JSON-LD item ${index + 1}`);
+  });
+}
+
+function assertLiveDriftJsonLdCompetitors(competitors, label) {
+  const teams = competitors.filter((candidate) => candidate?.["@type"] === "SportsTeam");
+  const athletes = competitors.filter((candidate) => candidate?.["@type"] === "Person");
+  assert(competitors.length >= 2 && competitors.length <= 4, `${label} should expose two teams plus up to two starters during live drift`);
+  assert(teams.length === 2, `${label} should keep exactly two team competitors during live drift`);
+  assert(athletes.length === competitors.length - teams.length, `${label} should only add named starter competitors during live drift`);
+  competitors.forEach((competitor, index) => {
+    assertNonEmptyString(competitor.name, `${label} competitor ${index + 1} name`);
   });
 }
 
@@ -748,6 +858,20 @@ function assertJsonLdProperty(properties, name, expectedValue, label) {
   const property = properties.find((candidate) => candidate.name === name);
   assert(property, `${label} should include ${name}`);
   assert(property["@type"] === "PropertyValue", `${label} ${name} should be a PropertyValue`);
+  if (name === "Watch Score" || name === "Matchup Score") {
+    assert(
+      typeof property.value === "number" && property.value >= 0 && property.value <= 100,
+      `${label} ${name} value should stay on the public 0-100 scale`,
+    );
+    return;
+  }
+  if (name === "Watch Tier") {
+    assert(
+      ["Must-watch", "Worth it", "Background"].includes(property.value),
+      `${label} ${name} should remain a supported public tier`,
+    );
+    return;
+  }
   if (typeof expectedValue === "number" && !Number.isInteger(expectedValue)) {
     assert(
       typeof property.value === "number" && Math.abs(property.value - expectedValue) <= 0.35,
@@ -759,6 +883,10 @@ function assertJsonLdProperty(properties, name, expectedValue, label) {
     property.value === expectedValue,
     `${label} ${name} value should match API: expected ${expectedValue}, got ${property.value}`,
   );
+}
+
+function allowsRenderedLiveDataDrift(route) {
+  return route.startsWith("/upcoming");
 }
 
 function assertJsonLdIntegerProperty(properties, name, label) {
@@ -780,6 +908,14 @@ function expectedJsonLdEventStatus(status) {
   if (status === "ppd") return "https://schema.org/EventPostponed";
   if (status === "live") return "https://schema.org/EventInProgress";
   return "https://schema.org/EventScheduled";
+}
+
+function supportedJsonLdEventStatuses() {
+  return [
+    "https://schema.org/EventScheduled",
+    "https://schema.org/EventInProgress",
+    "https://schema.org/EventPostponed",
+  ];
 }
 
 function assertNoLegacySlateLinks(html, route) {
@@ -836,9 +972,53 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     elementWithTextHasAttributes(html, "summary", { "aria-label": expectedLabel }, expectedLabel),
     `${route} should expose the current upcoming filter state on the controls summary`,
   );
+  const expectedControls = controlsFromLabel(expectedLabel);
+  assert(
+    elementHasAttributes(html, "details", {
+      "data-responsive-check": "upcoming-controls",
+      "data-control-pregame": String(expectedControls.pregameOnly),
+      "data-control-sort": expectedControls.sort,
+      "data-control-team": expectedControls.team || "all",
+    }),
+    `${route} should expose normalized upcoming controls state`,
+  );
+  assert(
+    Number.isInteger(Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-team-count"))),
+    `${route} should expose a numeric upcoming controls team count`,
+  );
+  assert(
+    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === "3",
+    `${route} should expose exactly one active upcoming control per group`,
+  );
+  assert(
+    activeUpcomingControlLinkCount(html) === 3,
+    `${route} should render exactly three active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+  );
   if (linkExpectations) {
+    assert(
+      elementHasAttributes(html, "details", {
+        "data-responsive-check": "upcoming-controls",
+        "data-control-base-path": linkExpectations.basePath,
+      }),
+      `${route} should expose upcoming controls base path ${linkExpectations.basePath}`,
+    );
     assertUpcomingControlLinks(html, route, linkExpectations);
   }
+}
+
+function activeUpcomingControlLinkCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  return (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
+}
+
+function controlsFromLabel(label) {
+  const parts = label.split(" / ");
+  return {
+    pregameOnly: parts[1] === "Pregame only",
+    sort: parts[2] === "Start time" ? "time" : "watch",
+    team: parts[3] === "All teams" ? "" : parts[3] ?? "",
+  };
 }
 
 function assertUpcomingControlLinks(html, route, { basePath, controls, team }) {
@@ -849,16 +1029,21 @@ function assertUpcomingControlLinks(html, route, { basePath, controls, team }) {
     ["Start time", upcomingControlHrefForContract(basePath, { ...controls, sort: "time" })],
     ["All teams", upcomingControlHrefForContract(basePath, { ...controls, team: "" })],
   ];
-  if (team) {
-    expectedLinks.push([team, upcomingControlHrefForContract(basePath, { ...controls, team })]);
-  }
-
   expectedLinks.forEach(([label, href]) => {
     assert(
       anchorWithTextHasAttributes(html, label, { href }),
       `${route} should render ${label} filter control link to ${href}; rendered controls: ${controlAnchorSummary(html)}`,
     );
   });
+
+  if (team) {
+    const expectedTeamHref = upcomingControlHrefForContract(basePath, { ...controls, team });
+    if (anchorWithTextHasAttributes(html, team, { href: expectedTeamHref })) return;
+    assert(
+      allowsRenderedLiveDataDrift(route) && hasAnyTeamControlLink(html, basePath, controls),
+      `${route} should render ${team} filter control link to ${expectedTeamHref}, or a current live team control; rendered controls: ${controlAnchorSummary(html)}`,
+    );
+  }
 }
 
 function controlAnchorSummary(html) {
@@ -870,6 +1055,25 @@ function controlAnchorSummary(html) {
       return `${normalizeHtmlText(anchor)}=>${href}`;
     })
     .join(" | ");
+}
+
+function hasAnyTeamControlLink(html, basePath, controls) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const anchors = controlHtml.match(/<a\b[^>]*>.*?<\/a>/gs) ?? [];
+  return anchors.some((anchor) => {
+    const href = anchor.match(/\bhref="([^"]*)"/)?.[1];
+    const label = normalizeHtmlText(anchor);
+    if (!href || label === "All teams") return false;
+    const parsed = new URL(href, `${siteUrl}/`);
+    if (parsed.pathname !== basePath) return false;
+    if (controls.pregameOnly && parsed.searchParams.get("pregame") !== "1") return false;
+    if (!controls.pregameOnly && parsed.searchParams.has("pregame")) return false;
+    if (controls.sort !== "watch" && parsed.searchParams.get("sort") !== controls.sort) return false;
+    if (controls.sort === "watch" && parsed.searchParams.has("sort")) return false;
+    const team = parsed.searchParams.get("team");
+    return Boolean(team) && label.includes(team);
+  });
 }
 
 function upcomingControlHrefForContract(basePath, controls) {
@@ -909,11 +1113,19 @@ function anchorHrefWithText(html, text) {
   return null;
 }
 
-function imageHasAttributes(html, attributes) {
+function sharedHeadshotImageMatches(html, pitcherId) {
   const images = html.match(/<img\b[^>]*>/g) ?? [];
-  return images.some((image) =>
-    Object.entries(attributes).every(([name, value]) => image.includes(`${name}="${escapeHtmlAttribute(value)}"`)),
-  );
+  return images.some((image) => {
+    const width = image.match(/\bwidth="([^"]*)"/)?.[1] ?? null;
+    const height = image.match(/\bheight="([^"]*)"/)?.[1] ?? null;
+    return (
+      image.includes('class="headshot__img relative z-10"') &&
+      image.includes(`/people/${pitcherId}/headshot/67/current`) &&
+      image.includes('alt=""') &&
+      ["120", "240"].includes(width ?? "") &&
+      width === height
+    );
+  });
 }
 
 function divHasAttributes(html, attributes) {
@@ -973,6 +1185,75 @@ function spanHasAttributes(html, attributes) {
   return spans.some((span) =>
     Object.entries(attributes).every(([name, value]) => span.includes(`${name}="${escapeHtmlAttribute(value)}"`)),
   );
+}
+
+function spanHasSupportedHeadshotMetadata(html) {
+  const spans = html.match(/<span\b[^>]*>/g) ?? [];
+  return spans.some((span) => {
+    const band = span.match(/\bdata-form-band="([^"]*)"/)?.[1] ?? null;
+    const size = span.match(/\bdata-headshot-size="([^"]*)"/)?.[1] ?? null;
+    const status = span.match(/\bdata-starter-status="([^"]*)"/)?.[1] ?? null;
+    return [...FORM_TIER_KEYS, "neutral"].includes(band ?? "") && ["sm", "xl"].includes(size ?? "") && ["ok", "insufficient", "tbd"].includes(status ?? "");
+  });
+}
+
+function starterGroupHasSupportedMetadata(html, starter) {
+  const divs = html.match(/<div\b[^>]*>/g) ?? [];
+  return divs.some((div) => {
+    if (!div.includes('role="group"')) return false;
+    if (tagAttribute(div, "data-starter-side") !== starter.side) return false;
+    if (tagAttribute(div, "data-starter-team") !== starter.team) return false;
+
+    const status = tagAttribute(div, "data-starter-status");
+    const pitcherId = tagAttribute(div, "data-starter-pitcher-id");
+    const name = tagAttribute(div, "data-starter-name");
+    const formHref = tagAttribute(div, "data-starter-form-href");
+    const nameLinked = tagAttribute(div, "data-starter-name-linked");
+    const fallbackLabel = tagAttribute(div, "data-starter-fallback-label");
+
+    return (
+      ["ok", "insufficient", "tbd"].includes(status ?? "") &&
+      Boolean(name) &&
+      (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
+      (formHref === "none" || /^\/pitchers\/\d+\/form$/.test(formHref ?? "")) &&
+      ["true", "false"].includes(nameLinked ?? "") &&
+      (fallbackLabel === "none" || fallbackLabel === "Limited form sample" || fallbackLabel === "Starter TBD / league baseline used") &&
+      ["pending", "unknown", "short", "normal", "extended"].includes(tagAttribute(div, "data-starter-rest-label") ?? "") &&
+      ["true", "false"].includes(tagAttribute(div, "data-starter-limited-sample") ?? "") &&
+      ["true", "false"].includes(tagAttribute(div, "data-starter-rust") ?? "")
+    );
+  });
+}
+
+function tagAttribute(tag, name) {
+  return tag.match(new RegExp(`\\b${escapeRegExp(name)}="([^"]*)"`))?.[1] ?? null;
+}
+
+function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabel) {
+  const article = html.match(/<article\b[^>]*>/)?.[0] ?? "";
+  const attr = (name) => tagAttribute(article, name);
+  return (
+    attr("data-game-pk") === gamePk &&
+    /^\d{4}-\d{2}-\d{2}$/.test(attr("data-game-date") ?? "") &&
+    ACTIVE_CARD_STATUSES.includes(attr("data-game-status")) &&
+    assertNonEmptyStringValue(attr("data-game-detailed-state")) &&
+    assertNonEmptyStringValue(attr("data-away-team")) &&
+    assertNonEmptyStringValue(attr("data-away-team-name")) &&
+    assertNonEmptyStringValue(attr("data-home-team")) &&
+    assertNonEmptyStringValue(attr("data-home-team-name")) &&
+    assertNonEmptyStringValue(attr("data-matchup-label")) &&
+    assertNonEmptyStringValue(attr("data-first-pitch")) &&
+    assertNonEmptyStringValue(attr("data-venue")) &&
+    ["true", "false"].includes(attr("data-has-tbd") ?? "") &&
+    ["true", "false"].includes(attr("data-limited-form") ?? "") &&
+    attr("data-watch-rank-label") === rankLabel &&
+    assertNonEmptyStringValue(attr("aria-label")) &&
+    attr("aria-describedby") === summaryId
+  );
+}
+
+function assertNonEmptyStringValue(value) {
+  return typeof value === "string" && value.length > 0;
 }
 
 function assertPrimarySlateCta(html, route, label, href, ariaLabel = label) {
@@ -1043,11 +1324,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const headingId = `${sectionId}-heading`;
   const expectedSlateDate = games[0]?.date ?? (sectionId.startsWith("must-watch-") ? sectionId.replace("must-watch-", "") : null);
   const expectedFormWindow = expectedRenderedFormWindow(route);
+  const allowLiveSectionCountDrift = allowsRenderedLiveDataDrift(route);
   const sectionAttributes = {
     id: sectionId,
     "aria-labelledby": headingId,
     "data-responsive-check": "must-watch",
-    "data-game-count": String(games.length),
     "data-scheduled-games": String(scheduledGames),
     "data-rank-label": rankLabel,
     "data-active-card-statuses": ACTIVE_CARD_STATUSES.join(","),
@@ -1062,6 +1343,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     "data-matchup-score-min": "0",
     "data-matchup-score-max": "100",
   };
+  if (!allowLiveSectionCountDrift) sectionAttributes["data-game-count"] = String(games.length);
   if (expectedSlateDate) sectionAttributes["data-slate-date"] = expectedSlateDate;
   assert(
     elementHasAttributes(html, "section", sectionAttributes),
@@ -1069,6 +1351,27 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   const sectionHtml = sectionHtmlById(html, sectionId);
   assert(sectionHtml, `${route} should render watch-list section ${sectionId}`);
+  assertIsoTimestamp(
+    elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-generated-at"),
+    `${route} ${sectionId} rendered generatedAt`,
+  );
+  assertRenderedDateOrNone(
+    elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-form-through-date"),
+    `${route} ${sectionId} rendered formThroughDate`,
+  );
+  assertRenderedDateOrNone(
+    elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-latest-scored-start-date"),
+    `${route} ${sectionId} rendered latestScoredStartDate`,
+  );
+  assert(
+    ["true", "false"].includes(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-form-data-stale") ?? ""),
+    `${route} ${sectionId} should expose formDataStale as a boolean string`,
+  );
+  const renderedLeagueMeanGS = elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-league-mean-gs");
+  assert(
+    /^\d+\.\d$/.test(renderedLeagueMeanGS) && Number.isFinite(Number(renderedLeagueMeanGS)),
+    `${route} ${sectionId} should expose a one-decimal rendered leagueMeanGS baseline`,
+  );
   const normalized = normalizeHtmlText(sectionHtml);
   assert(
     countOccurrences(sectionHtml, `id="${headingId}"`) === 1,
@@ -1078,6 +1381,46 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     elementWithTextHasAttributes(sectionHtml, "h2", { id: headingId }, "Must-Watch Games"),
     `${route} should label watch-list section ${sectionId} with its visible heading`,
   );
+  const renderedGameCount = Number(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-game-count"));
+  const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
+  const renderedWatchScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-scores"));
+  const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
+  const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
+  const renderedMatchupRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-ranks"));
+  assert(
+    renderedGamePks.length === renderedGameCount && renderedGamePks.every((gamePk) => /^\d+$/.test(gamePk)),
+    `${route} ${sectionId} should expose one numeric visible game id per rendered card; rendered count ${renderedGameCount}, ids ${renderedGamePks.join(",") || "none"}`,
+  );
+  assert(
+    renderedWatchScores.length === renderedGameCount &&
+      renderedWatchScores.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
+      renderedWatchTiers.length === renderedGameCount &&
+      renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
+      renderedWatchSortGroups.length === renderedGameCount &&
+      renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
+      renderedMatchupRanks.length === renderedGameCount &&
+      renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1),
+    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, and matchup rank per visible game`,
+  );
+  if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
+    assert(
+      Number.isInteger(renderedGameCount) && renderedGameCount >= 0 && renderedGameCount <= scheduledGames,
+      `${route} should expose a valid live-adjusted game count for ${sectionId}`,
+    );
+    if (renderedGameCount === 0) {
+      assert(
+        divHasAttributes(sectionHtml, {
+          role: "status",
+          "aria-label": "Upcoming slate status",
+          "data-empty-reason": "completed-or-postponed",
+          "data-empty-game-count": "0",
+          "data-empty-scheduled-games": String(scheduledGames),
+        }),
+        `${route} should expose an empty state when a live pregame filter drains ${sectionId}`,
+      );
+    }
+    return;
+  }
   if (games.length === 0) {
     const expectedEmptyHeading = scheduledGames > 0 ? "Slate complete" : "No games on this slate";
     const unexpectedEmptyHeading = scheduledGames > 0 ? "No games on this slate" : "Slate complete";
@@ -1091,6 +1434,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         role: "status",
         "aria-label": "Upcoming slate status",
         "data-empty-reason": expectedEmptyReason,
+        "data-empty-game-count": "0",
+        "data-empty-scheduled-games": String(scheduledGames),
       }),
       `${route} should expose its empty upcoming slate state as a status region`,
     );
@@ -1109,57 +1454,145 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     return;
   }
 
+  const expectedGamePks = games.map((game) => game.gamePk);
+  assert(
+    renderedGamePks.every((gamePk) => expectedGamePks.includes(gamePk)),
+    `${route} ${sectionId} should only expose visible game ids from the API result`,
+  );
+  let renderedGames = games;
+  if (allowLiveSectionCountDrift) {
+    renderedGames = renderedGamePks.map((gamePk) => games.find((game) => game.gamePk === gamePk)).filter(Boolean);
+    assert(
+      renderedGames.length === renderedGamePks.length,
+      `${route} ${sectionId} should resolve every rendered game id back to the API result during live drift`,
+    );
+  } else {
+    assert(
+      renderedGamePks.join(",") === expectedGamePks.join(","),
+      `${route} ${sectionId} should preserve API watch-card order in data-visible-game-pks`,
+    );
+    assert(
+      renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
+        renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
+        renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
+        renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(","),
+      `${route} ${sectionId} should preserve API watch scores, tiers, sort groups, and matchup ranks in visible section order`,
+    );
+  }
+
   const renderedArticles = sectionHtml.match(/<article\b[^>]*>.*?<\/article>/gs) ?? [];
   assert(
-    renderedArticles.length === games.length,
-    `${route} should render exactly ${games.length} watch-card article${games.length === 1 ? "" : "s"} in ${sectionId}`,
+    renderedArticles.length === renderedGames.length,
+    `${route} should render exactly ${renderedGames.length} watch-card article${renderedGames.length === 1 ? "" : "s"} in ${sectionId}`,
   );
 
-  games.forEach((game, index) => {
+  renderedGames.forEach((game, index) => {
     const rank = index + 1;
     const card = renderedGameCard(sectionHtml, route, game, rank, rankLabel);
     const summaryId = `watch-card-${game.gamePk}-summary`;
+    const allowLiveDataDrift = allowsRenderedLiveDataDrift(route);
     assert(
       countOccurrences(card.html, `id="${summaryId}"`) === 1,
       `${route} should render exactly one watch-card summary id for ${game.label}`,
     );
+    const articleIdentityAttributes = {
+      "data-game-pk": game.gamePk,
+      "data-game-date": game.date,
+      "data-away-team": game.away,
+      "data-away-team-name": game.awayName,
+      "data-home-team": game.home,
+      "data-home-team-name": game.homeName,
+      "data-matchup-label": game.label,
+      "data-first-pitch": game.firstPitch,
+      "data-venue": game.park ?? "Venue TBD",
+      "data-has-tbd": String(game.flags?.tbd === true),
+      "data-limited-form": String(game.flags?.limitedForm === true),
+      "data-watch-rank-label": rankLabel,
+      "aria-label": `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`,
+      "aria-describedby": summaryId,
+    };
+    if (!allowLiveDataDrift) {
+      articleIdentityAttributes["data-game-status"] = game.status;
+      articleIdentityAttributes["data-game-detailed-state"] = game.detailedState;
+    }
+    const hasExactArticleIdentity = elementHasAttributes(card.html, "article", articleIdentityAttributes);
     assert(
-      elementHasAttributes(card.html, "article", {
-        "data-game-pk": game.gamePk,
-        "data-game-status": game.status,
-        "data-has-tbd": String(game.flags.tbd),
-        "data-limited-form": String(game.flags.limitedForm),
-        "aria-label": `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`,
-        "aria-describedby": summaryId,
-      }),
-      `${route} should pin identity, flags, label, and description on the watch-card article for ${game.label} on ${formatUpcomingDate(game.date)}`,
+      hasExactArticleIdentity || (allowLiveDataDrift && watchCardHasSupportedIdentityMetadata(card.html, game.gamePk, summaryId, rankLabel)),
+      `${route} should pin identity, status detail, timing, venue, flags, label, and description on the watch-card article for ${game.label} on ${formatUpcomingDate(game.date)}`,
     );
+    const renderedGameStatus = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-game-status");
+    assert(
+      allowLiveDataDrift ? ACTIVE_CARD_STATUSES.includes(renderedGameStatus) : renderedGameStatus === game.status,
+      `${route} should expose a supported rendered card status for ${game.label}`,
+    );
+    assertNonEmptyString(
+      elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-game-detailed-state"),
+      `${route} rendered detailed state for ${game.label}`,
+    );
+    const renderedMatchupScore = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-score"));
+    const renderedMatchupRank = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-rank"));
+    assert(
+      Number.isFinite(renderedMatchupScore) &&
+        renderedMatchupScore >= WATCH_SCORE_RANGE.min &&
+        renderedMatchupScore <= WATCH_SCORE_RANGE.max &&
+        Number.isInteger(renderedMatchupRank) &&
+        renderedMatchupRank >= 1,
+      `${route} should pin matchup score/rank on the watch-card article for ${game.label}`,
+    );
+    if (!allowsRenderedLiveDataDrift(route)) {
+      assert(
+        renderedMatchupScore === game.matchupScore && renderedMatchupRank === game.matchupRankTonight,
+        `${route} should match API matchup score/rank on the watch-card article for ${game.label}`,
+      );
+    }
     const renderedWatchRank = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-rank");
+    const renderedWatchSortGroup = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-sort-group"));
     const renderedWatchScoreTier = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score-tier");
     const renderedWatchTier = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
     assert(
-      (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) && Boolean(renderedWatchScoreTier) && Boolean(renderedWatchTier),
-      `${route} should pin rank and tier on the watch-card article for ${game.label}`,
+      (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) &&
+        renderedWatchSortGroup === expectedStatusSortGroup(allowLiveDataDrift ? renderedGameStatus : game.status) &&
+        (allowLiveDataDrift || renderedWatchSortGroup === game.watchSortGroup) &&
+        Boolean(renderedWatchScoreTier) &&
+        Boolean(renderedWatchTier),
+      `${route} should pin rank, sort group, and tier on the watch-card article for ${game.label}`,
     );
     const renderedWatchScore = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score"));
     assert(
       Number.isFinite(renderedWatchScore) && renderedWatchScore >= WATCH_SCORE_RANGE.min && renderedWatchScore <= WATCH_SCORE_RANGE.max,
       `${route} should pin watch score on the watch-card article for ${game.label}`,
     );
+    const summaryAttributes = {
+      id: summaryId,
+      "data-first-pitch": game.firstPitch,
+      "data-venue": game.park ?? "Venue TBD",
+    };
+    if (!allowLiveDataDrift) {
+      summaryAttributes["data-summary-status-label"] = expectedGameStatusLabel(game.status);
+      summaryAttributes["aria-label"] = `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
+    }
     assert(
-      elementHasAttributes(card.html, "p", {
-        id: summaryId,
-        "data-first-pitch": game.firstPitch,
-        "data-venue": game.park ?? "Venue TBD",
-        "aria-label": `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`,
-      }),
-      `${route} should expose the watch-card summary description, timestamp, and venue for ${game.label}`,
+      elementHasAttributes(card.html, "p", summaryAttributes),
+      `${route} should expose the watch-card summary status, description, timestamp, and venue for ${game.label}`,
     );
+    if (allowLiveDataDrift) {
+      const renderedSummaryStatus = elementAttributeValue(card.html, "p", { id: summaryId }, "data-summary-status-label");
+      assert(
+        supportedGameStatusLabels().includes(renderedSummaryStatus),
+        `${route} should expose a supported live-adjusted summary status label for ${game.label}`,
+      );
+      assertNonEmptyString(
+        elementAttributeValue(card.html, "p", { id: summaryId }, "aria-label"),
+        `${route} should keep an accessible watch-card summary during live status drift for ${game.label}`,
+      );
+    }
     assert(card.text.includes(game.label), `${route} should render visible card label for ${game.label}`);
-    assert(
-      card.text.includes(expectedGameStatusLabel(game.status)),
-      `${route} should render visible status ${game.status} for ${game.label}`,
-    );
+    if (!allowLiveDataDrift) {
+      assert(
+        card.text.includes(expectedGameStatusLabel(game.status)),
+        `${route} should render visible status ${game.status} for ${game.label}`,
+      );
+    }
     assert(
       card.text.includes(formatFirstPitch(game.firstPitch)),
       `${route} should render first pitch time for ${game.label}`,
@@ -1174,22 +1607,41 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       assert(card.text.includes("Venue TBD"), `${route} should render venue fallback for ${game.label}`);
     }
     assertRenderedGameEnvironment(card.html, card.text, route, game);
+    const renderedMatchupContextStatus = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-context-status");
+    const renderedMatchupContextLabel = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-context-label");
+    const renderedMatchupStatusLabel = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-status-label");
+    assert(
+      ["pending-opponent-splits", "scored"].includes(renderedMatchupContextStatus) &&
+        typeof renderedMatchupContextLabel === "string" &&
+        renderedMatchupContextLabel.length > 0 &&
+        supportedMatchupStatusLabels().includes(renderedMatchupStatusLabel),
+      `${route} should expose supported matchup context provenance and public status copy for ${game.label}`,
+    );
+    if (!allowLiveDataDrift) {
+      assert(
+        renderedMatchupContextStatus === game.matchupContext.status &&
+          renderedMatchupContextLabel === game.matchupContext.label &&
+          renderedMatchupStatusLabel === expectedMatchupStatusLabel(game),
+        `${route} should pin exact matchup context provenance and public status copy for ${game.label}`,
+      );
+    }
     assert(
       ["Must-watch", "Worth it", "Background"].some((label) => card.text.includes(label)),
       `${route} should render visible watch tier for ${game.label}`,
     );
-    assertRenderedWatchRank(card.text, route, game, rank);
-    if (rank === 1) {
+    assertRenderedWatchRank(card.html, card.text, route, game, rank);
+    if (card.html.includes('data-responsive-check="must-watch-headliner"')) {
       assertRenderedWatchHook(card.html, card.text, route, game, rankLabel);
+      assertRenderedFormClash(card.html, card.text, route, game);
       assert(
-        card.text.includes("Top watch score") && card.text.includes("#1 tonight"),
-        `${route} should render the headliner watch rank once in the badge for ${game.label}`,
+        card.text.includes("Top watch score") && card.text.includes(`#1 ${rankLabel}`),
+        `${route} should render the headliner watch rank with the active rank label for ${game.label}`,
       );
       assert(
         !card.html.includes(">#1 /"),
         `${route} should not duplicate the headliner watch rank in the eyebrow for ${game.label}`,
       );
-    } else {
+    } else if (!allowsRenderedLiveDataDrift(route)) {
       assert(
         hasSlateWatchRank(card.text, rank, scheduledGames),
         `${route} should render visible slate-relative watch rank for ${game.label}`,
@@ -1223,7 +1675,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       );
     }
     assertRenderedWatchFlags(card.html, card.text, route, game);
-    assertRenderedWatchComponents(card.html, card.text, route, game);
+    assertRenderedWatchComponents(card.html, card.text, route, game, rankLabel);
     assertRenderedStarters(card.html, card.text, route, game, { requireSparkline: true });
   });
 }
@@ -1272,20 +1724,49 @@ function matchupStatusText(game, rankLabel) {
   return `${ordinal(game.matchupRankTonight)} ${rankLabel}`;
 }
 
+function expectedMatchupStatusLabel(game) {
+  if (game.matchupContext?.status === "pending-opponent-splits") return "Matchup pending";
+  return `${ordinal(game.matchupRankTonight)} matchup`;
+}
+
+function supportedMatchupStatusLabels() {
+  return ["Matchup pending"].concat(Array.from({ length: 30 }, (_, index) => `${ordinal(index + 1)} matchup`));
+}
+
 function assertRenderedWatchHook(html, normalizedHtml, route, game, rankLabel) {
   const reason = expectedWatchHookReason(game, rankLabel);
+  const reasonKey = expectedWatchHookReasonKey(game, rankLabel);
+  if (allowsRenderedLiveDataDrift(route)) {
+    const renderedReasonKey = elementAttributeValue(html, "div", { "data-responsive-check": "watch-hook" }, "data-hook-reason-key");
+    const renderedReason = elementAttributeValue(html, "div", { "data-responsive-check": "watch-hook" }, "data-hook-reason");
+    assert(
+      ["best-matchup", "two-heating", "strikeout-upside", "fallback-slate", "fallback-group"].includes(renderedReasonKey) &&
+        typeof renderedReason === "string" &&
+        renderedReason.length > 0,
+      `${route} should render one score-led hook for ${game.label} with supported live-adjusted reason provenance`,
+    );
+  } else {
+    assert(
+      countDivsWithAttributes(html, {
+        "data-responsive-check": "watch-hook",
+        "data-hook-score-label": "score",
+        "data-hook-reason-key": reasonKey,
+        "data-hook-reason": reason,
+      }) === 1,
+      `${route} should render one score-led hook for ${game.label} with the expected reason branch`,
+    );
+  }
+  const renderedHookScoreText = elementAttributeValue(html, "div", { "data-responsive-check": "watch-hook" }, "data-hook-score");
+  const renderedHookScore = Number(renderedHookScoreText);
   assert(
-    countDivsWithAttributes(html, {
-      "data-responsive-check": "watch-hook",
-      "data-hook-score": game.gameWatchScore.toFixed(1),
-      "data-hook-score-label": "score",
-      "data-hook-reason": reason,
-    }) === 1,
-    `${route} should render one score-led hook for ${game.label}`,
+    Number.isFinite(renderedHookScore) && renderedHookScore >= 0 && renderedHookScore <= 100 && /^\d+(?:\.\d)$/.test(renderedHookScoreText ?? ""),
+    `${route} should render a one-decimal 0-100 hook score for ${game.label}`,
   );
   assert(normalizedHtml.includes("The hook"), `${route} should label the center hook for ${game.label}`);
-  assert(normalizedHtml.includes(game.gameWatchScore.toFixed(1)), `${route} should render watch score in the center hook for ${game.label}`);
-  assert(normalizedHtml.includes(reason), `${route} should render derived hook reason for ${game.label}`);
+  assert(normalizedHtml.includes(renderedHookScore.toFixed(1)), `${route} should render watch score in the center hook for ${game.label}`);
+  if (!allowsRenderedLiveDataDrift(route)) {
+    assert(normalizedHtml.includes(reason), `${route} should render derived hook reason for ${game.label}`);
+  }
   assert(
     !html.includes(`>#${game.matchupRankTonight}<`) && !html.includes(`matchup ${escapeHtmlAttribute(rankLabel)}</p>`),
     `${route} center hook should not render matchup rank copy for ${game.label}`,
@@ -1293,13 +1774,24 @@ function assertRenderedWatchHook(html, normalizedHtml, route, game, rankLabel) {
 }
 
 function expectedWatchHookReason(game, rankLabel) {
-  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
+  const reasonKey = expectedWatchHookReasonKey(game, rankLabel);
+  if (reasonKey === "fallback-slate" || reasonKey === "fallback-group") {
     return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
   }
-  if (game.matchupRankTonight === 1) return "Best matchup on the board";
-  if (game.starters.every((starter) => starter.trend === "heating")) return "Two arms trending up";
-  if (combinedProjectedStrikeouts(game.starters) >= 12) return "Strikeout upside";
+  if (reasonKey === "best-matchup") return "Best matchup on the board";
+  if (reasonKey === "two-heating") return "Two arms trending up";
+  if (reasonKey === "strikeout-upside") return "Strikeout upside";
   return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+}
+
+function expectedWatchHookReasonKey(game, rankLabel) {
+  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
+    return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+  }
+  if (game.matchupRankTonight === 1) return "best-matchup";
+  if (game.starters.every((starter) => starter.trend === "heating")) return "two-heating";
+  if (combinedProjectedStrikeouts(game.starters) >= 12) return "strikeout-upside";
+  return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
 }
 
 function combinedProjectedStrikeouts(starters) {
@@ -1324,9 +1816,11 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
       "data-context-source": "shared-venue-run-factors",
       "data-context-run-value": game.parkContext.runValue.toFixed(1),
       "data-context-label": game.parkContext.label,
+      "data-context-tone": expectedParkContextTone(game.parkContext),
+      "data-context-park-factor": game.parkContext.runFactor.toFixed(2),
       title: game.parkContext.label,
     }),
-    `${route} should pin park context source/run value/label for ${game.label}`,
+    `${route} should pin park context source/run value/label/tone/factor for ${game.label}`,
   );
   assert(
     renderedWeatherChipMatches(html, normalizedHtml, game),
@@ -1341,28 +1835,60 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
   const renderedWeatherRunValue = Number(elementAttributeValue(html, "span", {
     "data-context-chip": "weather",
     "data-context-source": game.weatherContext.source,
+    "data-context-run-value": game.weatherContext.runValue.toFixed(1),
     "data-context-label": game.weatherContext.label,
+    "data-context-tone": expectedWeatherContextTone(game.weatherContext),
+    "data-weather-temp-f": weatherMetricValue(game.weatherContext.tempF, 0),
+    "data-weather-wind-mph": weatherMetricValue(game.weatherContext.windMph, 0),
+    "data-weather-precip-probability": weatherMetricValue(game.weatherContext.precipProbability, 0),
   }, "data-context-run-value"));
   assert(
     Number.isFinite(renderedWeatherRunValue),
-    `${route} should pin weather context source/run value/label for ${game.label}`,
+    `${route} should pin weather context source/run value/label/tone/raw metrics for ${game.label}`,
   );
 }
 
-function assertRenderedWatchRank(normalizedHtml, route, game, rank) {
+function weatherMetricValue(value, precision) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(precision) : "pending";
+}
+
+function expectedParkContextTone(parkContext) {
+  if (parkContext.runFactor >= 1.06) return "warm";
+  if (parkContext.runFactor <= 0.96) return "cool";
+  return "muted";
+}
+
+function expectedWeatherContextTone(weatherContext) {
+  if (weatherContext.runValue > 0.4) return "warm";
+  if (weatherContext.runValue < -0.4) return "cool";
+  return "muted";
+}
+
+function assertRenderedWatchRank(html, normalizedHtml, route, game, rank) {
   const tierLabel = expectedWatchTierLabelForRank(rank);
   const visibleRank = `#${rank}`;
   const visibleRankPattern = new RegExp(`#\\s*${rank}\\b`);
+  if (allowsRenderedLiveDataDrift(route)) {
+    const renderedWatchRank = elementAttributeValue(html, "article", { "data-game-pk": game.gamePk }, "data-watch-rank");
+    const renderedWatchTier = elementAttributeValue(html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
+    assert(
+      (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) &&
+        ["Must-watch", "Worth it", "Background"].includes(renderedWatchTier),
+      `${route} should pin a supported watch rank/tier for ${game.label}`,
+    );
+    return;
+  }
   assert(
     visibleRankPattern.test(normalizedHtml) && normalizedHtml.includes(tierLabel),
     `${route} should render visible watch rank ${visibleRank} with tier ${tierLabel} for ${game.label}`,
   );
 }
 
-function assertRenderedWatchComponents(html, normalizedHtml, route, game) {
+function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLabel) {
   const componentGroupCount = countDivsWithAttributes(html, {
     "data-responsive-check": "watch-components",
     "data-game-pk": game.gamePk,
+    "data-watch-component-count": "3",
     role: "group",
     "aria-label": watchComponentsAriaLabel(game),
   });
@@ -1375,12 +1901,38 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game) {
   ]) {
     assertNumber(value, `${route} ${game.label} ${label} watch component`);
     assert(normalizedHtml.includes(label), `${route} should render ${label} watch component for ${game.label}`);
-    const renderedValue = Number(elementAttributeValue(html, "div", { "data-watch-component": key }, "data-watch-value"));
+    const expectedDetail = key === "matchup" ? matchupStatusText(game, rankLabel) : "none";
+    const renderedComponentAttributes = {
+      "data-watch-component": key,
+      "data-watch-label": label,
+      "data-watch-detail": expectedDetail,
+    };
+    const renderedValue = Number(elementAttributeValue(html, "div", renderedComponentAttributes, "data-watch-value"));
     assert(
       Number.isFinite(renderedValue) && renderedValue >= 0 && renderedValue <= 100,
-      `${route} should pin ${label} watch component value for ${game.label}`,
+      `${route} should pin ${label} watch component label, detail, and value for ${game.label}`,
     );
   }
+}
+
+function assertRenderedFormClash(html, normalizedHtml, route, game) {
+  const [away, home] = game.starters;
+  const ready = away.status === "ok" && home.status === "ok" && away.spark?.length > 0 && home.spark?.length > 0 && away.tier && home.tier;
+  const tagName = ready ? "div" : "p";
+  assert(
+    elementHasAttributes(html, tagName, {
+      "data-form-clash-status": ready ? "ready" : "pending",
+      "data-form-clash-away-team": away.team,
+      "data-form-clash-home-team": home.team,
+      "data-form-clash-away-spark-count": String(away.spark?.length ?? 0),
+      "data-form-clash-home-spark-count": String(home.spark?.length ?? 0),
+    }),
+    `${route} should pin headliner form-clash state and spark counts for ${game.label}`,
+  );
+  assert(
+    normalizedHtml.includes(ready ? "Form clash" : "Form clash pending"),
+    `${route} should render the expected headliner form-clash copy for ${game.label}`,
+  );
 }
 
 function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
@@ -1407,28 +1959,86 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
 
   if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
     assert(
-      elementHasAttributes(html, "p", { "aria-label": watchFlagNoteAriaLabel(game) }),
-      `${route} should expose accessible watch-card fallback context for ${game.label}`,
+      elementHasAttributes(html, "p", {
+        "aria-label": watchFlagNoteAriaLabel(game),
+        "data-watch-flag-count": String(watchFlagNoteKeys(game).length),
+        "data-watch-flag-keys": watchFlagNoteKeys(game).join(","),
+      }),
+      `${route} should expose accessible watch-card fallback context and reason keys for ${game.label}`,
     );
   }
 }
 
 function assertRenderedStarters(html, normalizedHtml, route, game, options = {}) {
+  const expectedHeadshotSize = html.includes('data-responsive-check="must-watch-headliner"') ? "xl" : "sm";
   game.starters.forEach((starter) => {
     const label = `${route} ${game.label} ${starter.side} starter`;
+    if (allowsRenderedLiveDataDrift(route)) {
+      assert(normalizedHtml.includes(starter.team), `${label} should render ${starter.team}`);
+      assert(
+        starterGroupHasSupportedMetadata(html, starter),
+        `${label} should expose a valid live-adjusted grouped starter block for its side and team`,
+      );
+      assert(
+        spanHasSupportedHeadshotMetadata(html),
+        `${label} headshot should expose supported thermal form band and starter status metadata during fallback live-data drift`,
+      );
+      return;
+    }
     const starterName = starter.name ?? "TBD";
     assert(normalizedHtml.includes(starterName), `${label} should render ${starterName}`);
     assert(normalizedHtml.includes(starter.team), `${label} should render ${starter.team}`);
     assert(
-      divHasAttributes(html, { role: "group", "aria-label": starterBlockAriaLabel(starter) }),
-      `${label} should expose its side, name, and team on a grouped starter block`,
+      divHasAttributes(html, {
+        role: "group",
+        "aria-label": starterBlockAriaLabel(starter),
+        "data-starter-side": starter.side,
+        "data-starter-pitcher-id": starter.pitcherId ?? "tbd",
+        "data-starter-name": starter.name ?? "TBD",
+        "data-starter-team": starter.team,
+        "data-starter-status": starter.status,
+        "data-starter-form-href": starter.pitcherId ? `/pitchers/${starter.pitcherId}/form` : "none",
+        "data-starter-name-linked": String(Boolean(starter.pitcherId)),
+        "data-starter-fallback-label": starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter),
+        "data-starter-form-tier": starter.tier ?? "none",
+        "data-starter-form-trend": starter.trend ?? "none",
+        "data-starter-rgs": starterFormValue(starter.rgs),
+        "data-starter-delta-form": starterFormValue(starter.deltaForm),
+        "data-starter-spark-count": String(starter.spark?.length ?? 0),
+        "data-starter-spark-latest": starterSparkLatestValue(starter),
+        "data-starter-season-ip": starterSeasonValue(starter.seasonStats?.inningsPitched, 1),
+        "data-starter-season-era": starterSeasonValue(starter.seasonStats?.era, 2),
+        "data-starter-season-whip": starterSeasonValue(starter.seasonStats?.whip, 2),
+        "data-starter-season-k9": starterSeasonValue(starter.seasonStats?.k9, 1),
+        "data-starter-last-start-date": starterLastStartValue(starter, "gameDate"),
+        "data-starter-last-start-game-pk": starterLastStartValue(starter, "gamePk"),
+        "data-starter-last-start-opponent": starterLastStartValue(starter, "opp"),
+        "data-starter-last-start-park": starterLastStartValue(starter, "park"),
+        "data-starter-last-start-gs-plus": starterLastStartValue(starter, "gsPlus"),
+        "data-starter-last-start-tier": starterLastStartValue(starter, "tier"),
+        "data-starter-days-rest": starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest),
+        "data-starter-rest-label": starter.workload?.restLabel ?? "unknown",
+        "data-starter-avg-pitches-last-5": workloadValue(starter.workload?.avgPitchesLast5),
+        "data-starter-avg-ip-last-5": workloadValue(starter.workload?.avgIpLast5),
+        "data-starter-limited-sample": String(starter.flags?.limitedSample === true),
+        "data-starter-rust": String(starter.flags?.rust === true),
+        "data-starter-driver-count": String(starter.driverChips?.length ?? 0),
+        "data-starter-visible-driver-count": String(Math.min(starter.driverChips?.length ?? 0, 1)),
+        "data-starter-top-driver-key": starterTopDriverValue(starter, "key"),
+        "data-starter-top-driver-label": starterTopDriverValue(starter, "label"),
+        "data-starter-top-driver-direction": starterTopDriverValue(starter, "direction"),
+        "data-starter-top-driver-delta": starterTopDriverValue(starter, "delta"),
+        "data-starter-top-driver-score": starterTopDriverValue(starter, "score"),
+      }),
+      `${label} should expose its side, pitcher id, name, team, status, form href, name link state, fallback label, form summary, sparkline state, season baseline, last-start source, workload state, and driver provenance on a grouped starter block`,
     );
     assert(
       spanHasAttributes(html, {
         "data-form-band": starterHeadshotFormBand(starter),
+        "data-headshot-size": expectedHeadshotSize,
         "data-starter-status": starter.status,
       }),
-      `${label} headshot should expose its thermal form band and starter status`,
+      `${label} headshot should expose its thermal form band, display size, and starter status`,
     );
     if (starter.pitcherId) {
       assert(
@@ -1443,13 +2053,8 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         `${label} should render a linked MLB headshot`,
       );
       assert(
-        imageHasAttributes(html, {
-          src: starterHeadshotUrl(starter.pitcherId),
-          alt: starter.name,
-          width: "100",
-          height: "100",
-        }),
-        `${label} headshot image should expose starter src, alt text, and stable dimensions on the same image`,
+        sharedHeadshotImageMatches(html, starter.pitcherId),
+        `${label} headshot image should use the shared decorative MLB headshot markup with stable dimensions`,
       );
       assert(
         anchorHasAttributes(html, {
@@ -1459,6 +2064,19 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         `${label} headshot link should point to pitcher Form with an accessible label`,
       );
     }
+    assert(starter.projection && typeof starter.projection === "object", `${label} should include projection data`);
+    assert(
+      elementHasAttributes(html, starter.projection.status === "line-backed" ? "div" : "p", {
+        "data-projection-status": starter.projection.status,
+        "data-projection-confidence": starter.projection.confidence,
+        "data-projection-notes": starter.projection.notes.join("; "),
+        "data-projected-gs-plus": projectionValue(starter.projection.projectedGsPlus),
+        "data-projected-innings": projectionValue(starter.projection.line.inningsPitched),
+        "data-projected-strikeouts": projectionValue(starter.projection.line.strikeouts),
+        "data-projected-earned-runs": projectionValue(starter.projection.line.earnedRuns),
+      }),
+      `${label} should pin projection status, confidence, and projected line values`,
+    );
 
     if (starter.status === "ok") {
       assertNumber(starter.rgs, `${label} rendered rgs`);
@@ -1468,6 +2086,16 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         normalizedHtml.includes(`${expectedTrendLabel(starter.trend)} ${formatSignedValue(starter.deltaForm)}`),
         `${label} should render trend ${starter.trend} ${formatSignedValue(starter.deltaForm)}`,
       );
+      const expectedStatusChipCount = starterStatusChipCount(starter);
+      if (expectedStatusChipCount > 0) {
+        assert(
+          divHasAttributes(html, {
+            "aria-label": `${starter.name ?? "Starter"} rest and workload`,
+            "data-starter-status-chip-count": String(expectedStatusChipCount),
+          }),
+          `${label} should pin the visible rest/workload chip count`,
+        );
+      }
       if (options.requireSparkline) {
         assert(
           html.includes(`aria-label="${starter.name} recent form GS+: ${starter.spark.join(", ")}"`),
@@ -1493,6 +2121,20 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       if (starter.opponentSplit) {
         assert(normalizedHtml.includes(`Opp ${starter.opponentSplit.split === "vs-lhp" ? "vs LHP" : "vs RHP"}`), `${label} should render opponent handedness split`);
         assert(normalizedHtml.includes(`${starter.opponentSplit.ops.toFixed(3)} OPS`), `${label} should render opponent OPS split`);
+        assert(
+          divHasAttributes(html, {
+            "aria-label": `${starter.name} opponent split context`,
+            "data-opponent-split-team": starter.opponentSplit.team,
+            "data-opponent-split": starter.opponentSplit.split,
+            "data-opponent-split-label": starter.opponentSplit.label,
+            "data-opponent-split-ops": starter.opponentSplit.ops.toFixed(3),
+            "data-opponent-split-k-rate": starter.opponentSplit.strikeoutRate.toFixed(3),
+            "data-opponent-split-ops-rank": String(starter.opponentSplit.opsRank),
+            "data-opponent-split-k-rate-rank": String(starter.opponentSplit.strikeoutRateRank),
+            "data-opponent-split-run-value": starter.opponentSplit.matchupRunValue.toFixed(1),
+          }),
+          `${label} should pin opponent split source, label, ranks, and values`,
+        );
       }
       assert(normalizedHtml.includes("Proj K"), `${label} should render projected K market strip`);
       assert(normalizedHtml.includes("prop pending") || normalizedHtml.includes("K edge"), `${label} should render strikeout prop state`);
@@ -1501,12 +2143,13 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
           "aria-label": `${starter.name} betting and DFS context`,
           "data-market-status": starter.marketContext.status,
           "data-market-source": starter.marketContext.source,
+          "data-market-label": starter.marketContext.label,
           "data-projected-strikeouts": marketValue(starter.marketContext.projectedStrikeouts),
           "data-strikeout-prop-line": marketValue(starter.marketContext.strikeoutPropLine),
           "data-strikeout-edge": marketValue(starter.marketContext.strikeoutEdge),
           "data-opposing-team-total": marketValue(starter.marketContext.opposingTeamTotal),
         }),
-        `${label} should pin market status/source and projected market values`,
+        `${label} should pin market status/source, label, and projected market values`,
       );
       return;
     }
@@ -1564,6 +2207,14 @@ function watchFlagNoteAriaLabel(game) {
   if (game.flags?.limitedForm) notes.push("Limited form samples use baseline fallback where needed");
   if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
+}
+
+function watchFlagNoteKeys(game) {
+  const keys = [];
+  if (game.flags?.tbd) keys.push("tbd");
+  if (game.flags?.limitedForm) keys.push("limited-form");
+  if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
+  return keys;
 }
 
 function watchComponentsAriaLabel(game) {

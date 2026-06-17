@@ -124,9 +124,19 @@ export function teamsForGames(games: Array<{ away: string; home: string }>) {
 
 export function UpcomingControls({ controls, teams, basePath }: { controls: UpcomingControlsState; teams: string[]; basePath: string }) {
   const controlsLabel = upcomingControlsLabel(controls);
+  const activeControlCount = 3;
 
   return (
-    <details className="mt-5 rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="upcoming-controls">
+    <details
+      className="mt-5 rounded border border-white/10 bg-[#101014] p-3"
+      data-responsive-check="upcoming-controls"
+      data-control-pregame={String(controls.pregameOnly)}
+      data-control-sort={controls.sort}
+      data-control-team={controls.team || "all"}
+      data-control-base-path={basePath}
+      data-control-team-count={teams.length}
+      data-control-active-count={activeControlCount}
+    >
       <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
         {controlsLabel}
       </summary>
@@ -163,7 +173,7 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <Link className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href}>
+    <Link className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} data-control-link-active={String(active)}>
       {children}
     </Link>
   );

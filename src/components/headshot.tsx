@@ -54,6 +54,7 @@ export function Headshot({
         background: thermalBackground(resolvedBand, teamColor(team)),
       }}
       data-form-band={resolvedBand ?? "neutral"}
+      data-headshot-size={size}
       data-starter-status={starterStatus}
       role={decorative ? undefined : "img"}
       aria-label={decorative ? undefined : label}

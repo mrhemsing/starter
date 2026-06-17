@@ -318,12 +318,15 @@ export type TonightGame = {
   gamePk: string;
   date: string;
   status: TonightGameStatus;
+  detailedState: string;
   firstPitch: string;
   park: string;
   parkContext: DecisionParkContext;
   weatherContext: DecisionWeatherContext;
   away: string;
+  awayName: string;
   home: string;
+  homeName: string;
   label: string;
   matchupScore: number;
   matchupRankTonight: number;
@@ -334,6 +337,7 @@ export type TonightGame = {
   starters: [TonightStarter, TonightStarter];
   gameWatchScore: number;
   watchTier: WatchTierKey;
+  watchSortGroup: number;
   watchComponents: {
     topArm: number;
     pairing: number;
@@ -347,6 +351,9 @@ export type TonightResponse = {
   generatedAt: string;
   activeCardStatuses: UpcomingCardStatus[];
   formWindow: 3 | 5 | 10;
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  formDataStale: boolean;
   leagueMeanGS: number;
   watchScoreWeights: {
     topArm: number;

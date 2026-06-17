@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
@@ -43,11 +43,21 @@ export function TonightsMustWatch({
       className="border-y border-white/10 bg-[#0d0d11] px-4 py-10 sm:px-6 lg:px-8"
       data-responsive-check="must-watch"
       data-slate-date={tonight.date}
+      data-generated-at={tonight.generatedAt}
       data-game-count={shownGames.length}
+      data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
+      data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
+      data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
+      data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
+      data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
       data-active-card-statuses={tonight.activeCardStatuses.join(",")}
       data-form-window={tonight.formWindow}
+      data-form-through-date={tonight.formThroughDate ?? "none"}
+      data-latest-scored-start-date={tonight.latestScoredStartDate ?? "none"}
+      data-form-data-stale={String(tonight.formDataStale)}
+      data-league-mean-gs={tonight.leagueMeanGS.toFixed(1)}
       data-watch-weight-top-arm={tonight.watchScoreWeights.topArm}
       data-watch-weight-pairing={tonight.watchScoreWeights.pairAvg}
       data-watch-weight-matchup={tonight.watchScoreWeights.matchup}
@@ -92,6 +102,8 @@ export function TonightsMustWatch({
             role="status"
             aria-label="Upcoming slate status"
             data-empty-reason={tonight.scheduledGames > 0 ? "completed-or-postponed" : "no-games"}
+            data-empty-game-count={shownGames.length}
+            data-empty-scheduled-games={tonight.scheduledGames}
           >
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
             <p className="mt-3 text-sm text-zinc-400">
@@ -127,10 +139,26 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayColor, homeColor) }}
       data-responsive-check="must-watch-headliner"
       data-game-pk={game.gamePk}
+      data-game-date={game.date}
       data-game-status={game.status}
+      data-game-detailed-state={game.detailedState}
+      data-away-team={game.away}
+      data-away-team-name={game.awayName}
+      data-home-team={game.home}
+      data-home-team-name={game.homeName}
+      data-matchup-label={game.label}
+      data-first-pitch={game.firstPitch}
+      data-venue={gameVenueLabel(game)}
       data-has-tbd={String(game.flags?.tbd === true)}
       data-limited-form={String(game.flags?.limitedForm === true)}
+      data-matchup-context-status={game.matchupContext.status}
+      data-matchup-context-label={game.matchupContext.label}
+      data-matchup-status-label={matchupStatusLabel(game)}
+      data-matchup-score={game.matchupScore.toFixed(1)}
+      data-matchup-rank={game.matchupRankTonight}
       data-watch-rank={game.status === "ppd" ? "-" : "1"}
+      data-watch-rank-label={rankLabel}
+      data-watch-sort-group={game.watchSortGroup}
       data-watch-score={game.gameWatchScore.toFixed(1)}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
@@ -146,6 +174,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
             <p
               id={summaryId}
               className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"
+              data-summary-status-label={gameStatusLabel(game.status)}
               data-first-pitch={game.firstPitch}
               data-venue={gameVenueLabel(game)}
               aria-label={watchCardSummaryAriaLabel(game)}
@@ -156,7 +185,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200">Top watch score</p>
-            <p className="mt-1 font-serif text-3xl font-black text-amber-100">#1 tonight</p>
+            <p className="mt-1 font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
           </div>
         </div>
 
@@ -184,10 +213,26 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(teamAccentColor(game.starters[0].team), teamAccentColor(game.starters[1].team)) }}
       data-responsive-check="must-watch-row"
       data-game-pk={game.gamePk}
+      data-game-date={game.date}
       data-game-status={game.status}
+      data-game-detailed-state={game.detailedState}
+      data-away-team={game.away}
+      data-away-team-name={game.awayName}
+      data-home-team={game.home}
+      data-home-team-name={game.homeName}
+      data-matchup-label={game.label}
+      data-first-pitch={game.firstPitch}
+      data-venue={gameVenueLabel(game)}
       data-has-tbd={String(game.flags?.tbd === true)}
       data-limited-form={String(game.flags?.limitedForm === true)}
+      data-matchup-context-status={game.matchupContext.status}
+      data-matchup-context-label={game.matchupContext.label}
+      data-matchup-status-label={matchupStatusLabel(game)}
+      data-matchup-score={game.matchupScore.toFixed(1)}
+      data-matchup-rank={game.matchupRankTonight}
       data-watch-rank={rank}
+      data-watch-rank-label={rankLabel}
+      data-watch-sort-group={game.watchSortGroup}
       data-watch-score={game.gameWatchScore.toFixed(1)}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
@@ -207,6 +252,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
               <p
                 id={summaryId}
                 className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
+                data-summary-status-label={gameStatusLabel(game.status)}
                 data-first-pitch={game.firstPitch}
                 data-venue={gameVenueLabel(game)}
                 aria-label={watchCardSummaryAriaLabel(game)}
@@ -257,6 +303,7 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       className={`${compact ? "mt-3" : featured ? "mt-5" : "mt-5"} grid gap-2 sm:grid-cols-3`}
       data-responsive-check="watch-components"
       data-game-pk={game.gamePk}
+      data-watch-component-count={items.length}
       data-matchup-rank={game.matchupRankTonight}
       data-matchup-rank-label={rankLabel}
       role="group"
@@ -268,7 +315,9 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
           className={`${featured ? "px-3.5 py-3" : "px-3 py-2"} rounded border border-white/10 bg-black/25`}
           style={glowStyle(item.value, 100)}
           data-watch-component={item.key}
+          data-watch-label={item.label}
           data-watch-value={item.value.toFixed(1)}
+          data-watch-detail={"detail" in item && item.detail ? item.detail : "none"}
           role={"ariaLabel" in item ? "img" : undefined}
           aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
         >
@@ -295,6 +344,7 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
 function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; rankLabel: string }) {
   const [awayStarter, homeStarter] = game.starters;
   const reason = watchHookReason(game, rankLabel);
+  const reasonKey = watchHookReasonKey(game, rankLabel);
 
   return (
     <div
@@ -302,6 +352,7 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
       data-responsive-check="watch-hook"
       data-hook-score={game.gameWatchScore.toFixed(1)}
       data-hook-score-label="score"
+      data-hook-reason-key={reasonKey}
       data-hook-reason={reason}
     >
       <div>
@@ -318,13 +369,24 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
 }
 
 function watchHookReason(game: TonightGame, rankLabel: string) {
-  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext.status === "pending-opponent-splits") {
+  const reasonKey = watchHookReasonKey(game, rankLabel);
+  if (reasonKey === "fallback-slate" || reasonKey === "fallback-group") {
     return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
   }
-  if (game.matchupRankTonight === 1) return "Best matchup on the board";
-  if (game.starters.every((starter) => starter.trend === "heating")) return "Two arms trending up";
-  if (combinedProjectedStrikeouts(game.starters) >= 12) return "Strikeout upside";
+  if (reasonKey === "best-matchup") return "Best matchup on the board";
+  if (reasonKey === "two-heating") return "Two arms trending up";
+  if (reasonKey === "strikeout-upside") return "Strikeout upside";
   return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+}
+
+function watchHookReasonKey(game: TonightGame, rankLabel: string) {
+  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext.status === "pending-opponent-splits") {
+    return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+  }
+  if (game.matchupRankTonight === 1) return "best-matchup";
+  if (game.starters.every((starter) => starter.trend === "heating")) return "two-heating";
+  if (combinedProjectedStrikeouts(game.starters) >= 12) return "strikeout-upside";
+  return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
 }
 
 function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
@@ -345,6 +407,19 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       style={{ borderColor: `${color}66`, boxShadow: `inset ${align === "home" ? "-" : ""}4px 0 0 ${color}` }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
+      data-starter-side={starter.side}
+      data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
+      data-starter-name={starter.name ?? "TBD"}
+      data-starter-team={starter.team}
+      data-starter-status={starter.status}
+      data-starter-form-href={formHref ?? "none"}
+      data-starter-name-linked={String(formHref !== null)}
+      data-starter-fallback-label={starterFallbackDataLabel(starter)}
+      {...starterFormData(starter)}
+      {...starterSeasonData(starter)}
+      {...starterLastStartData(starter)}
+      {...starterWorkloadData(starter)}
+      {...starterDriverData(starter)}
     >
       <div className={`flex gap-3 sm:gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
         <StarterHeadshot starter={starter} size="duel" />
@@ -380,12 +455,20 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
 }
 
 function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: TonightStarter; leagueMeanGS: number }) {
+  const clashData = formClashData(away, home);
   if (away.status !== "ok" || home.status !== "ok" || !away.spark || !home.spark || !away.tier || !home.tier) {
-    return <p className="rounded border border-white/10 bg-black/25 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">Form clash pending</p>;
+    return (
+      <p
+        className="rounded border border-white/10 bg-black/25 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
+        {...clashData}
+      >
+        Form clash pending
+      </p>
+    );
   }
 
   return (
-    <div className="rounded border border-white/10 bg-black/25 p-3 text-left">
+    <div className="rounded border border-white/10 bg-black/25 p-3 text-left" {...clashData}>
       <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
         <span style={{ color: teamAccentColor(away.team) }}>{away.team}</span>
         <span>Form clash</span>
@@ -397,6 +480,17 @@ function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: T
       </div>
     </div>
   );
+}
+
+function formClashData(away: TonightStarter, home: TonightStarter) {
+  const ready = away.status === "ok" && home.status === "ok" && away.spark && home.spark && away.tier && home.tier;
+  return {
+    "data-form-clash-status": ready ? "ready" : "pending",
+    "data-form-clash-away-team": away.team,
+    "data-form-clash-home-team": home.team,
+    "data-form-clash-away-spark-count": String(away.spark?.length ?? 0),
+    "data-form-clash-home-spark-count": String(home.spark?.length ?? 0),
+  };
 }
 
 function glowColor(value: number, max: number) {
@@ -438,14 +532,28 @@ function componentBarColor(value: number) {
 
 function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
   if (!game.flags?.tbd && !game.flags?.limitedForm && game.matchupContext.status !== "pending-opponent-splits") return null;
+  const flagKeys = watchFlagNoteKeys(game);
 
   return (
-    <p className={`${compact ? "mt-2" : "mt-4"} font-mono text-xs text-zinc-500`} aria-label={watchFlagNoteAriaLabel(game)}>
+    <p
+      className={`${compact ? "mt-2" : "mt-4"} font-mono text-xs text-zinc-500`}
+      aria-label={watchFlagNoteAriaLabel(game)}
+      data-watch-flag-count={flagKeys.length}
+      data-watch-flag-keys={flagKeys.join(",")}
+    >
       {game.flags?.tbd ? "TBD starter included with league-mean fallback. " : ""}
       {game.flags?.limitedForm ? "Limited form samples use baseline fallback where needed." : ""}
       {game.matchupContext.status === "pending-opponent-splits" ? "Opponent split context pending." : ""}
     </p>
   );
+}
+
+function watchFlagNoteKeys(game: TonightGame) {
+  const keys: string[] = [];
+  if (game.flags?.tbd) keys.push("tbd");
+  if (game.flags?.limitedForm) keys.push("limited-form");
+  if (game.matchupContext.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
+  return keys;
 }
 
 function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
@@ -457,6 +565,9 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
       source: "shared-venue-run-factors",
       value: game.parkContext.runValue.toFixed(1),
       tone: game.parkContext.runFactor >= 1.06 ? "warm" : game.parkContext.runFactor <= 0.96 ? "cool" : "muted",
+      metadata: {
+        "data-context-park-factor": game.parkContext.runFactor.toFixed(2),
+      },
     },
     {
       key: "weather",
@@ -465,6 +576,11 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
       source: game.weatherContext.source,
       value: game.weatherContext.runValue.toFixed(1),
       tone: game.weatherContext.runValue > 0.4 ? "warm" : game.weatherContext.runValue < -0.4 ? "cool" : "muted",
+      metadata: {
+        "data-weather-temp-f": weatherMetricValue(game.weatherContext.tempF, 0),
+        "data-weather-wind-mph": weatherMetricValue(game.weatherContext.windMph, 0),
+        "data-weather-precip-probability": weatherMetricValue(game.weatherContext.precipProbability, 0),
+      },
     },
   ] as const;
 
@@ -478,6 +594,8 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
           data-context-source={chip.source}
           data-context-run-value={chip.value}
           data-context-label={chip.detail}
+          data-context-tone={chip.tone}
+          {...chip.metadata}
           className={`inline-flex min-h-6 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
             chip.tone === "warm"
               ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
@@ -493,6 +611,10 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
   );
 }
 
+function weatherMetricValue(value: number | undefined, precision: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(precision) : "pending";
+}
+
 function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagueMeanGS: number }) {
   const name = starter.name ?? "TBD";
   const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId) : null;
@@ -504,6 +626,19 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       style={{ borderColor: `${color}44`, boxShadow: `inset 3px 0 0 ${color}` }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
+      data-starter-side={starter.side}
+      data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
+      data-starter-name={starter.name ?? "TBD"}
+      data-starter-team={starter.team}
+      data-starter-status={starter.status}
+      data-starter-form-href={formHref ?? "none"}
+      data-starter-name-linked={String(formHref !== null)}
+      data-starter-fallback-label={starterFallbackDataLabel(starter)}
+      {...starterFormData(starter)}
+      {...starterSeasonData(starter)}
+      {...starterLastStartData(starter)}
+      {...starterWorkloadData(starter)}
+      {...starterDriverData(starter)}
     >
       <StarterHeadshot starter={starter} size="small" />
       <div className="min-w-0">
@@ -588,22 +723,38 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
   const projection = starter.projection;
   if (!projection) return null;
   const justify = align === "home" ? "lg:justify-end" : "";
+  const projectionData = {
+    "data-projection-status": projection.status,
+    "data-projection-confidence": projection.confidence,
+    "data-projection-notes": projection.notes.join("; "),
+    "data-projected-gs-plus": projection.projectedGsPlus === null ? "pending" : projection.projectedGsPlus.toFixed(1),
+    "data-projected-innings": projection.line.inningsPitched === null ? "pending" : projection.line.inningsPitched.toFixed(1),
+    "data-projected-strikeouts": projection.line.strikeouts === null ? "pending" : projection.line.strikeouts.toFixed(1),
+    "data-projected-earned-runs": projection.line.earnedRuns === null ? "pending" : projection.line.earnedRuns.toFixed(1),
+  };
   if (projection.status !== "line-backed" || projection.projectedGsPlus === null) {
     return (
-      <p className={`${compact ? "mt-1" : "mt-3"} font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 ${justify}`}>
+      <p
+        className={`${compact ? "mt-1" : "mt-3"} font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 ${justify}`}
+        {...projectionData}
+      >
         Projection pending
       </p>
     );
   }
 
-  const projectedLine = [
+  const projectedLine: ReactNode[] = [
     projection.line.inningsPitched === null ? null : <span key="ip" className="stat-token">{projection.line.inningsPitched.toFixed(1)} IP</span>,
     projection.line.strikeouts === null ? null : <span key="k" className="stat-token">{projection.line.strikeouts.toFixed(1)} K</span>,
     projection.line.earnedRuns === null ? null : <span key="er" className="stat-token">{projection.line.earnedRuns.toFixed(1)} ER</span>,
-  ].filter(Boolean);
+  ].filter((segment): segment is NonNullable<typeof segment> => segment !== null);
 
   return (
-    <div className={`${compact ? "mt-1" : "mt-3"} flex flex-wrap gap-1.5 ${justify}`} title={projection.notes.join("; ")}>
+    <div
+      className={`${compact ? "mt-1" : "mt-3"} flex flex-wrap gap-1.5 ${justify}`}
+      title={projection.notes.join("; ")}
+      {...projectionData}
+    >
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
         Proj GS+ {projection.projectedGsPlus.toFixed(1)}
       </span>
@@ -624,7 +775,19 @@ function OpponentSplitLine({ starter, compact = false, align }: { starter: Tonig
   if (!split) return null;
   const justify = align === "home" ? "lg:justify-end" : "";
   return (
-    <div className={`${compact ? "mt-1" : "mt-2"} flex flex-wrap gap-1.5 ${justify}`} title={split.label} aria-label={`${starter.name ?? "Starter"} opponent split context`}>
+    <div
+      className={`${compact ? "mt-1" : "mt-2"} flex flex-wrap gap-1.5 ${justify}`}
+      title={split.label}
+      aria-label={`${starter.name ?? "Starter"} opponent split context`}
+      data-opponent-split-team={split.team}
+      data-opponent-split={split.split}
+      data-opponent-split-label={split.label}
+      data-opponent-split-ops={split.ops.toFixed(3)}
+      data-opponent-split-k-rate={split.strikeoutRate.toFixed(3)}
+      data-opponent-split-ops-rank={split.opsRank}
+      data-opponent-split-k-rate-rank={split.strikeoutRateRank}
+      data-opponent-split-run-value={split.matchupRunValue.toFixed(1)}
+    >
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
         Opp {split.split === "vs-lhp" ? "vs LHP" : "vs RHP"} {split.ops.toFixed(3)} OPS
       </span>
@@ -653,6 +816,7 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
       aria-label={`${starter.name ?? "Starter"} betting and DFS context`}
       data-market-status={market.status}
       data-market-source={market.source}
+      data-market-label={market.label}
       data-projected-strikeouts={market.projectedStrikeouts === null ? "pending" : market.projectedStrikeouts.toFixed(1)}
       data-strikeout-prop-line={market.strikeoutPropLine === null ? "pending" : market.strikeoutPropLine.toFixed(1)}
       data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
@@ -692,10 +856,11 @@ function StarterStatusChips({ starter }: { starter: TonightStarter }) {
     chips.push({ label: `${starter.workload.avgPitchesLast5.toFixed(0)} pitch avg`, tone: "muted" });
   }
   if (chips.length === 0) return null;
+  const visibleChips = chips.slice(0, 3);
 
   return (
-    <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden" aria-label={`${starter.name ?? "Starter"} rest and workload`}>
-      {chips.slice(0, 3).map((chip) => (
+    <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden" aria-label={`${starter.name ?? "Starter"} rest and workload`} data-starter-status-chip-count={visibleChips.length}>
+      {visibleChips.map((chip) => (
         <span
           key={chip.label}
           className={`inline-flex min-h-6 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
@@ -711,6 +876,63 @@ function StarterStatusChips({ starter }: { starter: TonightStarter }) {
       ))}
     </div>
   );
+}
+
+function starterWorkloadData(starter: TonightStarter) {
+  return {
+    "data-starter-days-rest": starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest),
+    "data-starter-rest-label": starter.workload?.restLabel ?? "unknown",
+    "data-starter-avg-pitches-last-5": starter.workload?.avgPitchesLast5 === null || starter.workload?.avgPitchesLast5 === undefined ? "pending" : starter.workload.avgPitchesLast5.toFixed(1),
+    "data-starter-avg-ip-last-5": starter.workload?.avgIpLast5 === null || starter.workload?.avgIpLast5 === undefined ? "pending" : starter.workload.avgIpLast5.toFixed(1),
+    "data-starter-limited-sample": String(starter.flags?.limitedSample === true),
+    "data-starter-rust": String(starter.flags?.rust === true),
+  };
+}
+
+function starterFormData(starter: TonightStarter) {
+  return {
+    "data-starter-form-tier": starter.tier ?? "none",
+    "data-starter-form-trend": starter.trend ?? "none",
+    "data-starter-rgs": starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1),
+    "data-starter-delta-form": starter.deltaForm === null || starter.deltaForm === undefined ? "pending" : starter.deltaForm.toFixed(1),
+    "data-starter-spark-count": String(starter.spark?.length ?? 0),
+    "data-starter-spark-latest": starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none",
+  };
+}
+
+function starterSeasonData(starter: TonightStarter) {
+  return {
+    "data-starter-season-ip": starter.seasonStats?.inningsPitched === null || starter.seasonStats?.inningsPitched === undefined ? "pending" : starter.seasonStats.inningsPitched.toFixed(1),
+    "data-starter-season-era": starter.seasonStats?.era === null || starter.seasonStats?.era === undefined ? "pending" : starter.seasonStats.era.toFixed(2),
+    "data-starter-season-whip": starter.seasonStats?.whip === null || starter.seasonStats?.whip === undefined ? "pending" : starter.seasonStats.whip.toFixed(2),
+    "data-starter-season-k9": starter.seasonStats?.k9 === null || starter.seasonStats?.k9 === undefined ? "pending" : starter.seasonStats.k9.toFixed(1),
+  };
+}
+
+function starterLastStartData(starter: TonightStarter) {
+  const lastStart = starter.lastStart;
+  return {
+    "data-starter-last-start-date": lastStart?.gameDate ?? "none",
+    "data-starter-last-start-game-pk": lastStart?.gamePk ?? "none",
+    "data-starter-last-start-opponent": lastStart?.opp ?? "none",
+    "data-starter-last-start-park": lastStart?.park ?? "none",
+    "data-starter-last-start-gs-plus": lastStart ? lastStart.gsPlus.toFixed(1) : "none",
+    "data-starter-last-start-tier": lastStart?.tier ?? "none",
+  };
+}
+
+function starterDriverData(starter: TonightStarter) {
+  const topDriver = starter.driverChips?.[0];
+  const visibleDriverCount = Math.min(starter.driverChips?.length ?? 0, 1);
+  return {
+    "data-starter-driver-count": String(starter.driverChips?.length ?? 0),
+    "data-starter-visible-driver-count": String(visibleDriverCount),
+    "data-starter-top-driver-key": topDriver?.key ?? "none",
+    "data-starter-top-driver-label": topDriver?.label ?? "none",
+    "data-starter-top-driver-direction": topDriver?.direction ?? "none",
+    "data-starter-top-driver-delta": topDriver ? topDriver.delta.toFixed(1) : "none",
+    "data-starter-top-driver-score": topDriver ? topDriver.score.toFixed(1) : "none",
+  };
 }
 
 function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "small" | "large" | "duel" }) {
@@ -791,6 +1013,10 @@ function watchComponentsAriaLabel(game: TonightGame) {
 function starterBlockAriaLabel(starter: TonightStarter) {
   const side = starter.side === "away" ? "Away" : "Home";
   return `${side} starter: ${starter.name ?? "TBD"} (${starter.team})`;
+}
+
+function starterFallbackDataLabel(starter: TonightStarter) {
+  return starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter);
 }
 
 function starterFallbackAriaLabel(starter: TonightStarter) {

@@ -57,7 +57,11 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
   const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
   const matchupRanks = rankMatchups(candidates);
   const games = candidates
-    .map((game) => ({ ...game, matchupRankTonight: matchupRanks.get(game.gamePk) ?? game.matchupRankTonight }))
+    .map((game) => ({
+      ...game,
+      matchupRankTonight: matchupRanks.get(game.gamePk) ?? game.matchupRankTonight,
+      watchSortGroup: watchSortGroup(game.status),
+    }))
     .sort((a, b) => {
       if (isStartedStatus(a.status) && !isStartedStatus(b.status)) return 1;
       if (!isStartedStatus(a.status) && isStartedStatus(b.status)) return -1;
@@ -69,6 +73,9 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
     generatedAt: new Date().toISOString(),
     activeCardStatuses: ACTIVE_UPCOMING_CARD_STATUSES,
     formWindow: window,
+    formThroughDate: leaderboard.formThroughDate,
+    latestScoredStartDate: leaderboard.latestScoredStartDate,
+    formDataStale: leaderboard.stale,
     leagueMeanGS: leaderboard.leagueMeanGS,
     watchScoreWeights: MUSTWATCH_CONFIG.weights,
     watchSortPolicy: WATCH_SORT_POLICY,
@@ -126,12 +133,15 @@ async function buildTonightGame(
     gamePk: String(game.gamePk),
     date,
     status,
+    detailedState: game.detailedState,
     firstPitch: game.gameDate,
     park: game.venue,
     parkContext,
     weatherContext,
     away: game.awayTeam.abbreviation,
+    awayName: game.awayTeam.name,
     home: game.homeTeam.abbreviation,
+    homeName: game.homeTeam.name,
     label: `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`,
     matchupScore,
     matchupRankTonight: 1,
@@ -142,6 +152,7 @@ async function buildTonightGame(
     starters: [awayStarter, homeStarter],
     gameWatchScore,
     watchTier,
+    watchSortGroup: watchSortGroup(status),
     watchComponents: {
       topArm,
       pairing,
@@ -156,6 +167,12 @@ async function buildTonightGame(
 
 function isStartedStatus(status: TonightGameStatus) {
   return status === "live" || status === "final";
+}
+
+function watchSortGroup(status: TonightGameStatus) {
+  if (status === "pregame") return 0;
+  if (status === "live") return 1;
+  return 2;
 }
 
 function isUpcomingCardStatus(status: TonightGameStatus) {
