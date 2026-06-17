@@ -52,12 +52,17 @@ assert(
 
 assert(
   topPerformerCard.includes('<span className="mt-2 block">{dateLabel}</span>'),
-  "home top performer date label must render on a forced new line",
+  "home top performer date label must render on a forced new line without an inline separator after the eyebrow",
 );
 
 assert(
-  rankedRoute.includes('dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,'),
-  "home top performer previous-slate label must read Yesterday",
+  rankedRoute.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
+  "home top performer previous-slate label must read the weekday",
+);
+
+assert(
+  rankedRoute.includes("function formatWeekday(date: string)"),
+  "home ranked API must format previous-slate weekday labels",
 );
 
 assert(

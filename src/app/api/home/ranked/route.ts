@@ -78,7 +78,7 @@ function resolveTopPerformerState({
     status: "previous" as const,
     start: yesterdayLeader,
     slateCount: yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture").length,
-    dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
+    dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,
   };
 }
 
@@ -88,6 +88,15 @@ function formatLongDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
+}
+
+function formatWeekday(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
     timeZone: "UTC",
   }).format(parsed);
 }
