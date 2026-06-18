@@ -1419,6 +1419,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedGameCount = Number(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-game-count"));
   const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
   const renderedGameDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-dates"));
+  const renderedMatchupLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-labels"));
   const renderedTeamMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-matchups"));
   const renderedVenues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-venues"));
   const renderedFirstPitches = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-first-pitches"));
@@ -1446,6 +1447,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   assert(
     renderedGameDates.length === renderedGameCount && renderedGameDates.every((gameDate) => /^\d{4}-\d{2}-\d{2}$/.test(gameDate)),
     `${route} ${sectionId} should expose one visible game date per rendered card`,
+  );
+  assert(
+    renderedMatchupLabels.length === renderedGameCount &&
+      renderedMatchupLabels.every((label) => /^[A-Z0-9]{2,4} @ [A-Z0-9]{2,4}$/.test(label)),
+    `${route} ${sectionId} should expose one public matchup label per rendered card`,
   );
   assert(
     renderedTeamMatchups.length === renderedGameCount &&
@@ -1594,6 +1600,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
       renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
       renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
+      renderedMatchupLabels.join(",") === games.map((game) => game.label).join(",") &&
       renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
       renderedVenues.join(",") === games.map((game) => game.park ?? "Venue TBD").join(",") &&
       renderedFirstPitches.join(",") === games.map((game) => game.firstPitch).join(",") &&
@@ -1604,7 +1611,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, teams, venues, statuses, detailed states, starter statuses, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, starter statuses, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
     );
   }
 

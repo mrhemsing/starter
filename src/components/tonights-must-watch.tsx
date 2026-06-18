@@ -48,6 +48,7 @@ export function TonightsMustWatch({
       data-game-count={shownGames.length}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
       data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
+      data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join(",") : "none"}
       data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
       data-visible-venues={shownGames.length ? shownGames.map((game) => game.park ?? "Venue TBD").join(",") : "none"}
       data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
