@@ -275,6 +275,10 @@ function shouldFetchLiveSchedule(date: string) {
   return ageInDays >= 0 && ageInDays <= RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS;
 }
 
+function shouldFetchLivePitchDetails(date: string, scheduleSource: MlbSchedule["source"]) {
+  return scheduleSource === "live" || shouldFetchLiveSchedule(date);
+}
+
 export function getHomeSlateDate(now = new Date()) {
   return toTimeZoneIsoDate(now, SITE_TIME_ZONE);
 }
@@ -446,7 +450,10 @@ export async function getStartDetail(startId: string) {
     readArchivedStartLineSummary(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId),
   ]);
   const livePitchDetails = archivedPitchDetails
-    ?? await fetchMlbStartPitchDetails(matchedStart.gamePk, matchedStart.pitcher.mlbId, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" })
+    ?? await fetchMlbStartPitchDetails(matchedStart.gamePk, matchedStart.pitcher.mlbId, {
+      fetchLive: shouldFetchLivePitchDetails(schedule.date, schedule.source),
+      gamefeedRevalidateSeconds: LIVE_STARTER_RESULT_REVALIDATE_SECONDS,
+    })
     ?? await fetchSavantStartPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId);
   const pitchDetails = livePitchDetails ?? {
     source: "fixture" as const,

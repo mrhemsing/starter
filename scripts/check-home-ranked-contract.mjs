@@ -9,6 +9,7 @@ function assert(condition, message) {
 const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
+const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 
 assert(
   rankedRoute.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";'),
@@ -30,6 +31,14 @@ assert(
     rankedRoute.includes("const detail = await getStartDetail(start.id);") &&
     rankedRoute.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
   "home ranked API must enrich the top performer with real start-detail velocity metrics",
+);
+
+assert(
+  startService.includes("function shouldFetchLivePitchDetails(date: string, scheduleSource: MlbSchedule[\"source\"])") &&
+    startService.includes('return scheduleSource === "live" || shouldFetchLiveSchedule(date);') &&
+    startService.includes("fetchLive: shouldFetchLivePitchDetails(schedule.date, schedule.source)") &&
+    startService.includes("gamefeedRevalidateSeconds: LIVE_STARTER_RESULT_REVALIDATE_SECONDS"),
+  "home ranked live top performer velocity metrics must fetch gamefeed pitch detail without relying on THE_BUMP_LIVE_MLB",
 );
 
 assert(
