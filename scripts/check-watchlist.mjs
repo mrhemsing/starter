@@ -50,6 +50,7 @@ function stopProcessTree(child) {
 function cookieFrom(response) {
   const value = response.headers.get("set-cookie");
   assert(value?.includes("the_bump_watchlist_id="), "follow response should set watchlist cookie");
+  assert(value.includes("wlids_"), "follow response should persist followed pitcher ids in the cookie");
   return value.split(";")[0];
 }
 

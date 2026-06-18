@@ -6,6 +6,7 @@ import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import type { FormNextStart, FormSummary } from "@/lib/types";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
+const WATCHLIST_IDS_PREFIX = "wlids_";
 
 type WatchlistStore = {
   users: Record<string, { pitcherIds: string[]; updatedAt: string }>;
@@ -35,10 +36,29 @@ export function createWatchlistAccountId() {
   return `wl_${randomUUID()}`;
 }
 
-export async function getWatchlistPitcherIds(accountId: string | null | undefined) {
-  if (!accountId) return [];
+export function serializeWatchlistPitcherIds(pitcherIds: string[]) {
+  const uniqueIds = Array.from(new Set(pitcherIds.map(normalizePitcherId)));
+  return `${WATCHLIST_IDS_PREFIX}${uniqueIds.join(".")}`;
+}
+
+export async function addPitcherToWatchlistValue(watchlistValue: string | null | undefined, pitcherId: string) {
+  const pitcherIds = await getWatchlistPitcherIds(watchlistValue);
+  const safePitcherId = normalizePitcherId(pitcherId);
+  return pitcherIds.includes(safePitcherId) ? pitcherIds : [...pitcherIds, safePitcherId];
+}
+
+export async function removePitcherFromWatchlistValue(watchlistValue: string | null | undefined, pitcherId: string) {
+  const pitcherIds = await getWatchlistPitcherIds(watchlistValue);
+  const safePitcherId = normalizePitcherId(pitcherId);
+  return pitcherIds.filter((id) => id !== safePitcherId);
+}
+
+export async function getWatchlistPitcherIds(watchlistValue: string | null | undefined) {
+  if (!watchlistValue) return [];
+  const cookieIds = parseWatchlistPitcherIds(watchlistValue);
+  if (cookieIds) return cookieIds;
   const store = await readStore();
-  return store.users[accountId]?.pitcherIds ?? [];
+  return store.users[watchlistValue]?.pitcherIds ?? [];
 }
 
 export async function followPitcher(accountId: string, pitcherId: string) {
@@ -164,6 +184,13 @@ async function writeStore(store: WatchlistStore) {
 function normalizePitcherId(pitcherId: string) {
   if (!/^\d+$/.test(pitcherId)) throw new Error("invalid pitcher id");
   return pitcherId;
+}
+
+function parseWatchlistPitcherIds(watchlistValue: string) {
+  if (!watchlistValue.startsWith(WATCHLIST_IDS_PREFIX)) return null;
+  const encodedIds = watchlistValue.slice(WATCHLIST_IDS_PREFIX.length);
+  if (!encodedIds) return [];
+  return encodedIds.split(".").map(normalizePitcherId);
 }
 
 function addDays(date: string, days: number) {
