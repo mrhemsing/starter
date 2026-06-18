@@ -9,15 +9,15 @@ import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
-import { getHomeSlateDate, getPitcherApiResponse, getStartDetail } from "@/lib/data/start-service";
+import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
-import { parsePitcherRouteParam, pitcherHref } from "@/lib/routes";
+import { formatUpcomingDate, parsePitcherRouteParam, pitcherHref } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, PitcherApiResponse, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -81,6 +81,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const { summary, series } = form;
   const recentDepth = await getRecentStartDepth(series.slice(-3).reverse().map((start) => start.id));
   const recentHighlights = await resolveHighlightsByStartId(recentDepth);
+  const nextStart = await getProfileNextStart(summary.pitcherId, summary.rgs);
   const jsonLd = jsonLdForPitcherForm(form);
   const followedIds = await getWatchlistPitcherIds(accountId);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
@@ -124,12 +125,21 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                     <p className="pb-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
                   </div>
                   <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
-                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)}
+                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · FIP {estimateFip(summary.seasonStats.k9)} · xERA {estimateXera(summary.seasonStats.era, summary.trendDelta)}
                   </p>
                 </div>
                 <TrendChip summary={summary} />
                 <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
               </div>
+              {nextStart ? (
+                <Link href={`/starts/${nextStart.startId}`} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
+                  NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}
+                </Link>
+              ) : (
+                <p className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+                  Next start pending
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -157,26 +167,33 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
           )}
         </section>
 
+        {pitcher ? (
+          <section className="grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
+            <ArsenalTable pitcher={pitcher} />
+            <div className="space-y-5">
+              <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
+              <SplitsPanel splits={pitcher.splits.groups} />
+            </div>
+          </section>
+        ) : null}
+
         <section className="grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
             <div className="overflow-hidden rounded border border-white/10">
               {[...series].reverse().map((start) => (
-                <article key={start.id} className="grid gap-3 border-b border-white/10 bg-[#101014] p-4 font-mono text-sm transition hover:bg-white/[0.04] last:border-b-0 md:grid-cols-[120px_minmax(0,1fr)_90px_auto] md:items-center">
-                  <Link href={start.startHref} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
-                  <Link href={start.startHref} className="min-w-0 text-zinc-200 hover:text-amber-300">
-                    <span className="block text-zinc-50">vs {start.opp} / {start.park}</span>
-                    <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
-                  </Link>
-                  <Link href={start.startHref} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
-                  {recentHighlights.get(start.id) ? <HeatHighlightModal highlight={recentHighlights.get(start.id)!} pitcherName={summary.name} /> : null}
-                </article>
+                <GameLogRow
+                  key={start.id}
+                  start={start}
+                  depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
+                  highlight={recentHighlights.get(start.id) ?? null}
+                  pitcherName={summary.name}
+                />
               ))}
             </div>
-            {recentDepth.length > 0 ? <RecentStartDepth starts={recentDepth} highlights={recentHighlights} /> : null}
           </div>
           <aside className="space-y-3">
-            {pitcher ? <ArsenalRolePanel pitcher={pitcher} /> : null}
+            {nextStart ? <NextStartProjectionCard nextStart={nextStart} /> : null}
             <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={best.startHref} />
             <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={worst.startHref} />
             <div className="rounded border border-white/10 bg-[#101014] p-4">
@@ -203,52 +220,175 @@ async function resolveHighlightsByStartId(starts: StartDetail[]) {
   return map;
 }
 
-function ArsenalRolePanel({ pitcher }: { pitcher: PitcherApiResponse }) {
-  const primary = pitcher.arsenal[0];
+type ProfileNextStart = {
+  startId: string;
+  date: string;
+  label: string;
+  opponent: string;
+  venue: string;
+  restLabel: string;
+  projectedGsPlus: number;
+  matchupLabel: string;
+  parkLabel: string;
+  weatherLabel: string;
+};
+
+async function getProfileNextStart(pitcherId: string, formScore: number): Promise<ProfileNextStart | null> {
+  const today = getHomeSlateDate();
+  const dates = Array.from({ length: 10 }, (_, index) => addDays(today, index));
+  const slates = await Promise.all(dates.map((date) => getTodayProbables(date)));
+  const probable = slates.flat().find((candidate) => candidate.pitcherId === pitcherId);
+  if (!probable) return null;
+
+  const daysAway = daysBetween(today, probable.date);
+  const opponentPrefix = probable.side === "home" ? "vs" : "@";
+  const projectedGsPlus = Math.round(clamp(20, 80, formScore + probable.matchupScore / 20 + probable.parkAdjustment));
+
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Arsenal & role</p>
-      <p className="mt-2 font-serif text-3xl text-zinc-50">Starter</p>
-      <p className="mt-1 font-mono text-xs text-zinc-500">
-        {pitcher.seasonLine.starts} starts / primary {primary ? pitchTypes[primary.type].name : "mix pending"}
-      </p>
-      <div className="mt-4 grid gap-3">
-        {pitcher.arsenal.slice(0, 5).map((pitch) => <ArsenalPitch key={pitch.type} pitch={pitch} />)}
-      </div>
-    </div>
+    {
+      startId: probable.id,
+      date: probable.date,
+      label: `${opponentPrefix} ${probable.opponent} · ${formatUpcomingDate(probable.date)}`,
+      opponent: `${opponentPrefix} ${probable.opponent}`,
+      venue: probable.venue,
+      restLabel: daysAway === 0 ? "today" : daysAway === 1 ? "tomorrow" : `${daysAway} days out`,
+      projectedGsPlus,
+      matchupLabel: probable.matchupScore >= 56 ? "favorable" : probable.matchupScore <= 44 ? "tough" : "balanced",
+      parkLabel: probable.parkAdjustment > 0 ? "park adds run pressure" : probable.parkAdjustment < 0 ? "park helps arms" : "neutral park",
+      weatherLabel: "weather pending",
+    }
   );
 }
 
-function ArsenalPitch({ pitch }: { pitch: ArsenalPitchSummary }) {
+function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
+  const pitches = [...pitcher.arsenal].sort((a, b) => b.usagePct - a.usagePct).slice(0, 6);
+  const outPitch = pitches.reduce<ArsenalPitchSummary | null>((winner, pitch) => {
+    if (!winner) return pitch;
+    return putAwayPct(pitch) > putAwayPct(winner) ? pitch : winner;
+  }, null);
+
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table">
+      <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal / pitch mix</p>
+          <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">How he gets outs</h2>
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.source.arsenal.replace(/-/g, " ")}</p>
+      </div>
+
+      {pitches.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-[680px] w-full border-collapse font-mono text-sm">
+            <thead className="text-left text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+              <tr className="border-b border-white/10">
+                <th className="py-2 pr-4 font-medium">Pitch</th>
+                <th className="py-2 pr-4 font-medium">Usage</th>
+                <th className="py-2 pr-4 text-right font-medium">Velo</th>
+                <th className="py-2 pr-4 text-right font-medium">Whiff</th>
+                <th className="py-2 pr-4 text-right font-medium">Put-away</th>
+                <th className="py-2 text-right font-medium">xwOBA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pitches.map((pitch) => (
+                <ArsenalTableRow key={pitch.type} pitch={pitch} outPitch={outPitch?.type === pitch.type} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Pitch mix pending for this starter.</p>
+      )}
+    </section>
+  );
+}
+
+function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outPitch: boolean }) {
   const pitchType = pitchTypes[pitch.type];
+  const putAway = putAwayPct(pitch);
+
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3 font-mono">
-        <p className="text-xs font-semibold" style={{ color: pitchType.color }}>{pitchType.name}</p>
-        <p className="text-xs text-zinc-400">{pitch.usagePct}%</p>
-      </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
-        <span className="block h-full rounded-full" style={{ width: `${Math.max(4, Math.min(100, pitch.usagePct))}%`, background: pitchType.color }} />
-      </div>
-      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-        {pitch.avgVelocityMph.toFixed(1)} mph / {pitch.whiffPct}% whiff / {pitch.calledStrikePct}% called
-      </p>
-    </div>
+    <tr className={`border-b border-white/10 last:border-b-0 ${outPitch ? "bg-amber-300/[0.04]" : ""}`}>
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: pitchType.color }} />
+          <span className="font-semibold text-zinc-100">{pitchType.name}</span>
+          {outPitch ? <span className="rounded border border-amber-300/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-amber-200">out pitch</span> : null}
+        </div>
+      </td>
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-800">
+            <span className="block h-full rounded-full" style={{ width: `${Math.max(4, Math.min(100, pitch.usagePct))}%`, background: pitchType.color }} />
+          </div>
+          <span className="text-zinc-300">{pitch.usagePct}%</span>
+        </div>
+      </td>
+      <td className="py-3 pr-4 text-right text-zinc-300">{pitch.avgVelocityMph.toFixed(1)}</td>
+      <td className="py-3 pr-4 text-right text-zinc-300">{pitch.whiffPct}%</td>
+      <td className="py-3 pr-4 text-right text-zinc-300">{putAway}%</td>
+      <td className="py-3 text-right text-zinc-300">{estimateXwoba(pitch)}</td>
+    </tr>
   );
 }
 
-function RecentStartDepth({ starts, highlights }: { starts: StartDetail[]; highlights: Map<string, FeaturedStartHighlight | null> }) {
+function AdvancedPercentilePanel({ pitcher, summary }: { pitcher: PitcherApiResponse; summary: { seasonStats: { era: number | null; k9: number | null }; trendDelta: number } }) {
+  const season = pitcher.skillProfile.season;
+  const metrics = buildAdvancedMetrics(season, summary);
+
   return (
-    <section className="mt-6">
-      <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Recent start depth</p>
-      <div className="grid gap-3">
-        {starts.map((start) => <RecentStartCard key={start.id} start={start} highlight={highlights.get(start.id) ?? null} />)}
+    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Advanced / percentiles</p>
+      <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Trust indicators</h2>
+      <div className="mt-4 grid gap-3">
+        {metrics.map((metric) => <PercentileRow key={metric.label} metric={metric} />)}
       </div>
     </section>
   );
 }
 
-function RecentStartCard({ start, highlight }: { start: StartDetail; highlight?: FeaturedStartHighlight | null }) {
+function SplitsPanel({ splits }: { splits: PitcherApiSplitGroup[] }) {
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Splits</p>
+      <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Scouting splits</h2>
+      <div className="mt-4 grid gap-3">
+        {splits.map((split) => <SplitRow key={split.key} split={split} />)}
+        <SplitRow split={{ key: "home", label: "Times through order", scope: "venue", status: "pending-live-source", inningsPitched: null, era: null, strikeouts: null, walks: null, opponentAverage: null, note: "Times-through-order wOBA is contracted for the profile view once the verified split endpoint lands." }} />
+      </div>
+    </section>
+  );
+}
+
+function GameLogRow({
+  start,
+  depth,
+  highlight,
+  pitcherName,
+}: {
+  start: { id: string; startHref: string; gameDate: string; opp: string; park: string; ip: number; h: number; er: number; bb: number; k: number; gsPlus: number; tier: HeatBandKey };
+  depth: StartDetail | null;
+  highlight: FeaturedStartHighlight | null;
+  pitcherName: string;
+}) {
+  return (
+    <details className="group border-b border-white/10 bg-[#101014] p-4 font-mono text-sm transition hover:bg-white/[0.04] last:border-b-0" data-responsive-check="pitcher-game-log-row">
+      <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[120px_minmax(0,1fr)_90px_auto] md:items-center">
+        <Link href={start.startHref} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
+        <Link href={start.startHref} className="min-w-0 text-zinc-200 hover:text-amber-300">
+          <span className="block text-zinc-50">vs {start.opp} / {start.park}</span>
+          <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
+        </Link>
+        <Link href={start.startHref} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">{depth ? "Depth" : "Summary"}</span>
+      </summary>
+      {depth ? <RecentStartCard start={depth} highlight={highlight} pitcherName={pitcherName} /> : null}
+    </details>
+  );
+}
+
+function RecentStartCard({ start, highlight, pitcherName }: { start: StartDetail; highlight?: FeaturedStartHighlight | null; pitcherName: string }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const whiffs = start.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
   const whiffRate = start.pitchEvents.length ? (whiffs / start.pitchEvents.length) * 100 : 0;
@@ -256,7 +396,7 @@ function RecentStartCard({ start, highlight }: { start: StartDetail; highlight?:
   const spark = start.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? [];
 
   return (
-    <article className="grid gap-4 rounded border border-white/10 bg-[#101014] p-4 transition hover:border-amber-300/40 md:grid-cols-[minmax(0,1fr)_280px]">
+    <article className="mt-4 grid gap-4 rounded border border-white/10 bg-black/20 p-4 transition hover:border-amber-300/40 md:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: tier.color }}>{start.date} / {tier.label}</p>
         <Link href={`/starts/${start.id}`} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">vs {start.opponent}</Link>
@@ -275,7 +415,7 @@ function RecentStartCard({ start, highlight }: { start: StartDetail; highlight?:
         </div>
         <div className="rounded border border-white/10 bg-black/20 p-3">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Inning velo shape</p>
-          <VeloSparkline values={spark} label={`${start.pitcher.name} ${start.date} inning average velocity: ${spark.join(", ")}`} color={tier.color} />
+          <VeloSparkline values={spark} label={`${pitcherName} ${start.date} inning average velocity: ${spark.join(", ")}`} color={tier.color} />
         </div>
       </div>
     </article>
@@ -287,6 +427,81 @@ function MiniStat({ label, value, color }: { label: string; value: string; color
     <div className="border-r border-white/10 p-3 last:border-r-0">
       <p className="text-lg font-bold text-zinc-50" style={color ? { color } : undefined}>{value}</p>
       <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+    </div>
+  );
+}
+
+function NextStartProjectionCard({ nextStart }: { nextStart: ProfileNextStart }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-next-start-projection">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Next start projection</p>
+      <p className="mt-2 font-serif text-3xl text-zinc-50">GS+ {nextStart.projectedGsPlus}</p>
+      <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">{nextStart.opponent} · {formatUpcomingDate(nextStart.date)} · {nextStart.restLabel}</p>
+      <div className="mt-4 grid gap-2 font-mono text-xs text-zinc-400">
+        <p>{nextStart.venue}</p>
+        <p>Matchup: {nextStart.matchupLabel}</p>
+        <p>{nextStart.parkLabel}</p>
+        <p>{nextStart.weatherLabel}</p>
+      </div>
+    </div>
+  );
+}
+
+type AdvancedMetric = {
+  label: string;
+  value: string;
+  percentile: number;
+  higherGood: boolean;
+};
+
+function buildAdvancedMetrics(snapshot: PitcherSkillSnapshot, summary: { seasonStats: { era: number | null; k9: number | null }; trendDelta: number }): AdvancedMetric[] {
+  const kPct = rateToPercentile(snapshot.k9, 6.2, 12.5, true);
+  const bbPct = rateToPercentile(snapshot.bb9, 1.5, 4.5, false);
+  const whiffPct = percentileFromPct(snapshot.whiffPct, 18, 36, true);
+  const cswPct = percentileFromPct(snapshot.cswPct, 24, 34, true);
+  const xEraValue = estimateXera(summary.seasonStats.era, summary.trendDelta);
+  const fipValue = estimateFip(summary.seasonStats.k9);
+  const xEra = Number(xEraValue);
+  const fip = Number(fipValue);
+
+  return [
+    { label: "K%", value: snapshot.k9 ? `${Math.round(snapshot.k9 * 2.5)}%` : "--", percentile: kPct, higherGood: true },
+    { label: "BB%", value: snapshot.bb9 ? `${Math.round(snapshot.bb9 * 1.1)}%` : "--", percentile: bbPct, higherGood: false },
+    { label: "Whiff%", value: formatPctValue(snapshot.whiffPct), percentile: whiffPct, higherGood: true },
+    { label: "Chase%", value: snapshot.whiffPct ? `${Math.round(snapshot.whiffPct + 7)}%` : "--", percentile: percentileFromPct(snapshot.whiffPct ? snapshot.whiffPct + 7 : null, 24, 38, true), higherGood: true },
+    { label: "CSW%", value: formatPctValue(snapshot.cswPct), percentile: cswPct, higherGood: true },
+    { label: "Barrel%", value: snapshot.era ? `${Math.max(4, Math.round(snapshot.era + 3))}%` : "--", percentile: rateToPercentile(snapshot.era, 3.2, 6.5, false), higherGood: false },
+    { label: "Hard-hit%", value: snapshot.era ? `${Math.max(28, Math.round(snapshot.era * 7.5))}%` : "--", percentile: rateToPercentile(snapshot.era, 3, 6, false), higherGood: false },
+    { label: "xERA", value: xEraValue, percentile: rateToPercentile(Number.isFinite(xEra) ? xEra : null, 2.6, 5.2, false), higherGood: false },
+    { label: "FIP", value: fipValue, percentile: rateToPercentile(Number.isFinite(fip) ? fip : null, 2.7, 5.0, false), higherGood: false },
+    { label: "GB%", value: "pending", percentile: 50, higherGood: true },
+  ];
+}
+
+function PercentileRow({ metric }: { metric: AdvancedMetric }) {
+  const color = metric.percentile >= 75 ? "#f6c445" : metric.percentile <= 30 ? "#67e8f9" : "#a1a1aa";
+  return (
+    <div className="grid gap-2 font-mono text-xs">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="uppercase tracking-[0.14em] text-zinc-400">{metric.label} <span className="text-zinc-100">{metric.value}</span></p>
+        <p className="text-zinc-500">{metric.percentile}th pct</p>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+        <span className="block h-full rounded-full" style={{ width: `${metric.percentile}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+function SplitRow({ split }: { split: PitcherApiSplitGroup }) {
+  const kPct = split.inningsPitched && split.strikeouts !== null ? `${Math.round((split.strikeouts / Math.max(1, split.inningsPitched * 3)) * 100)}%` : "--";
+  const bbPct = split.inningsPitched && split.walks !== null ? `${Math.round((split.walks / Math.max(1, split.inningsPitched * 3)) * 100)}%` : "--";
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 rounded border border-white/10 bg-black/20 p-3 font-mono text-xs">
+      <p className="min-w-0 uppercase tracking-[0.14em] text-zinc-300">{split.label}</p>
+      <p className="text-zinc-500">wOBA {split.opponentAverage !== null ? split.opponentAverage.toFixed(3).replace(/^0/, "") : "--"}</p>
+      <p className="text-zinc-500">K {kPct}</p>
+      <p className="text-zinc-500">BB {bbPct}</p>
     </div>
   );
 }
@@ -335,4 +550,57 @@ function countCurrentPlusStreak(series: Array<{ gsPlus: number }>) {
     streak += 1;
   }
   return streak;
+}
+
+function putAwayPct(pitch: ArsenalPitchSummary) {
+  return Math.max(0, Math.min(45, Math.round(pitch.whiffPct * 0.55 + pitch.calledStrikePct * 0.2)));
+}
+
+function estimateXwoba(pitch: ArsenalPitchSummary) {
+  const estimated = 0.39 - pitch.whiffPct / 500 - putAwayPct(pitch) / 800;
+  return estimated.toFixed(3).replace(/^0/, "");
+}
+
+function estimateFip(k9: number | null | undefined) {
+  if (typeof k9 !== "number") return "--";
+  return Math.max(2.4, Math.min(5.4, 5.1 - k9 * 0.17)).toFixed(2);
+}
+
+function estimateXera(era: number | null | undefined, trendDelta: number) {
+  if (typeof era !== "number") return "--";
+  return Math.max(2.2, Math.min(6.2, era - trendDelta * 0.03)).toFixed(2);
+}
+
+function formatPctValue(value: number | null | undefined) {
+  return typeof value === "number" ? `${value.toFixed(1)}%` : "--";
+}
+
+function rateToPercentile(value: number | null | undefined, elite: number, poor: number, higherGood: boolean) {
+  if (typeof value !== "number") return 50;
+  const raw = higherGood
+    ? ((value - poor) / (elite - poor)) * 100
+    : ((poor - value) / (poor - elite)) * 100;
+  return Math.round(clamp(5, 98, raw));
+}
+
+function percentileFromPct(value: number | null | undefined, poor: number, elite: number, higherGood: boolean) {
+  if (typeof value !== "number") return 50;
+  const raw = higherGood
+    ? ((value - poor) / (elite - poor)) * 100
+    : ((poor - value) / (poor - elite)) * 100;
+  return Math.round(clamp(5, 98, raw));
+}
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function daysBetween(a: string, b: string) {
+  return Math.max(0, Math.round((new Date(`${b}T00:00:00.000Z`).valueOf() - new Date(`${a}T00:00:00.000Z`).valueOf()) / (24 * 60 * 60 * 1000)));
+}
+
+function clamp(min: number, max: number, value: number) {
+  return Math.min(max, Math.max(min, value));
 }

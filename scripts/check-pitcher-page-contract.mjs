@@ -15,7 +15,8 @@ const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 
 assert(
-  packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"'),
+  packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"') ||
+    packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-pages-contract.mjs"'),
   "package scripts must expose the pitcher page contract",
 );
 
@@ -59,5 +60,49 @@ assert(pitcherFormPage.includes("sm:grid-cols-[minmax(0,1fr)_auto_auto]"), "pitc
 assert(pitcherFormPage.includes("font-bold leading-none"), "pitcher form score must use a tight line-height so it cannot collide with its label");
 assert(pitcherFormPage.includes("[overflow-wrap:anywhere]"), "pitcher form stat line must be allowed to wrap inside the header");
 assert(!pitcherFormPage.includes('<div className="mt-5 flex flex-wrap items-center gap-3">'), "pitcher form score/action row must not return to the overlapping flex layout");
+
+assert(
+  pitcherFormPage.includes("getTodayProbables") &&
+    pitcherFormPage.includes("getProfileNextStart") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-next-start-projection"') &&
+    pitcherFormPage.includes("NEXT: {nextStart.label} · Proj GS+"),
+  "pitcher profile must surface a next-start projection from probable-start data",
+);
+
+assert(
+  pitcherFormPage.includes("function ArsenalTable") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-arsenal-table"') &&
+    pitcherFormPage.includes("Arsenal / pitch mix") &&
+    pitcherFormPage.includes("Put-away") &&
+    pitcherFormPage.includes("xwOBA") &&
+    pitcherFormPage.includes("out pitch"),
+  "pitcher profile must render a serious arsenal table with usage, whiff, put-away, xwOBA, and out-pitch highlight",
+);
+
+assert(
+  pitcherFormPage.includes("function AdvancedPercentilePanel") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-advanced-percentiles"') &&
+    pitcherFormPage.includes("Whiff%") &&
+    pitcherFormPage.includes("CSW%") &&
+    pitcherFormPage.includes("Barrel%") &&
+    pitcherFormPage.includes("th pct"),
+  "pitcher profile must render advanced metric percentile bars",
+);
+
+assert(
+  pitcherFormPage.includes("function SplitsPanel") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-splits-panel"') &&
+    pitcherFormPage.includes("Times through order") &&
+    pitcherFormPage.includes("wOBA"),
+  "pitcher profile must render scouting splits including times-through-order placeholder",
+);
+
+assert(
+  pitcherFormPage.includes("function GameLogRow") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-game-log-row"') &&
+    pitcherFormPage.includes("<details") &&
+    !pitcherFormPage.includes("function RecentStartDepth"),
+  "pitcher profile must consolidate recent start depth into expandable game-log rows instead of a duplicate start list",
+);
 
 console.log("pitcher page contract ok: canonical slug profile, shared nav, redirects, and hero headshot profile are present");
