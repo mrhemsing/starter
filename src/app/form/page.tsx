@@ -14,6 +14,7 @@ import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-s
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
+import { pitcherHref } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { FormSummary, HeatBand, TonightGame } from "@/lib/types";
 import type React from "react";
@@ -27,6 +28,7 @@ type FormPageProps = {
     hot?: string;
     qualified?: string;
     band?: string;
+    motion?: string;
   }>;
 };
 
@@ -87,6 +89,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const query = (params?.q ?? "").trim().toLowerCase();
   const qualifiedOnly = params?.qualified !== "false";
   const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
+  const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, tonight] = await Promise.all([
@@ -102,6 +105,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
     .filter((pitcher) => !team || pitcher.team === team)
     .filter((pitcher) => !query || pitcher.name.toLowerCase().includes(query))
     .filter((pitcher) => !band || pitcher.tier === band)
+    .filter((pitcher) => !motion || (motion === "rising" ? pitcher.trend === "heating" : pitcher.trend === "cooling"))
     .sort((a, b) => {
       const aLimited = a.windowCount < window;
       const bLimited = b.windowCount < window;
@@ -109,11 +113,11 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       if (sort === "fallers") return Number(aLimited) - Number(bLimited) || a.deltaForm - b.deltaForm || b.rgs - a.rgs;
       return b.rgs - a.rgs || b.deltaForm - a.deltaForm;
     });
-  const bandCounts = HEAT_BANDS.map((candidate) => ({
-    ...candidate,
-    count: pitchers.filter((pitcher) => pitcher.status === "ok" && pitcher.tier === candidate.key).length,
-  }));
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
+  const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
+    ...candidate,
+    count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
+  }));
   const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);
   const riserCandidates = [...heroCandidates].sort((a, b) => compareRisers(a, b, startContext));
   const fallerCandidates = [...heroCandidates].sort((a, b) => compareFallers(a, b, startContext));
@@ -125,6 +129,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const showBandHeaders = sort === "form";
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
+  const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -148,7 +153,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
             <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
           </div>
-          <BandDistribution bands={bandCounts} total={pitchers.length} params={params ?? {}} />
+          <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />
         </header>
 
         {biggestRiser && biggestFaller ? (
@@ -165,34 +170,53 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           />
         ) : null}
 
-        <MoversStrip risers={risers} fallers={fallers} window={window} />
+        <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
 
-        <section className="my-5 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-controls">
+        <section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
+            <p className="text-zinc-300">
+              Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length}
+            </p>
+            {activeFilterLabel !== "All arms" ? (
+              <Link href={heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" })} className="text-amber-300 hover:text-amber-200">Clear</Link>
+            ) : null}
+          </div>
           <details>
             <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
               Filters / Last {window} / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
             </summary>
-            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+            <div className="grid gap-3" data-control-role="filter">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Filter</p>
+              <ControlGroup label="Band">
+                <ControlLink active={!band} href={heatCheckHref({ ...params, band: "" })}>All bands</ControlLink>
+                {HEAT_BANDS.map((candidate) => (
+                  <ControlLink key={candidate.key} active={band === candidate.key} href={heatCheckHref({ ...params, band: candidate.key })}>{candidate.label}</ControlLink>
+                ))}
+              </ControlGroup>
+              <ControlGroup label="Momentum">
+                <ControlLink active={!motion} href={heatCheckHref({ ...params, motion: "" })}>All motion</ControlLink>
+                <ControlLink active={motion === "rising"} href={heatCheckHref({ ...params, motion: "rising" })}>Rising ({leaderboard.heatingCount})</ControlLink>
+                <ControlLink active={motion === "falling"} href={heatCheckHref({ ...params, motion: "falling" })}>Falling ({leaderboard.coolingCount})</ControlLink>
+              </ControlGroup>
+              <ControlGroup label="Team">
+                <ControlLink active={!team} href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>
+                {teams.map((candidate) => (
+                  <ControlLink key={candidate} active={team === candidate} href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>
+                ))}
+              </ControlGroup>
+            </div>
+            <div className="grid gap-3" data-control-role="sort-window">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort + window</p>
             <ControlGroup label="Window">
               {[3, 5, 10].map((value) => <ControlLink key={value} active={window === value} href={heatCheckHref({ ...params, window: String(value) })}>Last {value}</ControlLink>)}
             </ControlGroup>
             <ControlGroup label="Sort">
               {sortOptions.map((option) => <ControlLink key={option.key} active={sort === option.key} href={heatCheckHref({ ...params, sort: option.key })}>{option.label}</ControlLink>)}
             </ControlGroup>
-            <ControlGroup label="Band">
-              <ControlLink active={!band} href={heatCheckHref({ ...params, band: "" })}>All bands</ControlLink>
-              {HEAT_BANDS.map((candidate) => (
-                <ControlLink key={candidate.key} active={band === candidate.key} href={heatCheckHref({ ...params, band: candidate.key })}>{candidate.label}</ControlLink>
-              ))}
-            </ControlGroup>
-            <ControlGroup label="Team">
-              <ControlLink active={!team} href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>
-              {teams.map((candidate) => (
-                <ControlLink key={candidate} active={team === candidate} href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>
-              ))}
-            </ControlGroup>
             <div className="flex flex-wrap gap-2 lg:justify-end">
               <ControlLink active={qualifiedOnly} href={heatCheckHref({ ...params, qualified: qualifiedOnly ? "false" : "true" })}>Qualified</ControlLink>
+            </div>
             </div>
             </div>
             <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" action="/heat-check">
@@ -200,6 +224,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <input type="hidden" name="sort" value={sort} />
             <input type="hidden" name="qualified" value={String(qualifiedOnly)} />
             {band ? <input type="hidden" name="band" value={band} /> : null}
+            {motion ? <input type="hidden" name="motion" value={motion} /> : null}
             {team ? <input type="hidden" name="team" value={team} /> : null}
             <input name="q" defaultValue={params?.q ?? ""} placeholder="Search pitcher" className="min-h-11 rounded border border-white/10 bg-black/20 px-3 font-mono text-sm text-zinc-100 outline-none focus:border-amber-300" />
             <button className="min-h-11 rounded border border-amber-300/40 px-4 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">Search</button>
@@ -213,17 +238,14 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </section>
         ) : (
           <div id="full-board" className="grid gap-4 scroll-mt-8 lg:grid-cols-[80px_minmax(0,1fr)]" data-responsive-check="form-leaderboard">
-            <TemperatureRail bands={bandCounts} total={pitchers.length} params={params ?? {}} />
+            <MobileBandJumper bands={leagueBandCounts} />
+            <TemperatureRail bands={leagueBandCounts} total={qualifiedPitchers.length} />
             <section className="grid gap-2">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Full board</p>
                   <h2 className="font-serif text-3xl font-bold text-zinc-50">League heat map</h2>
                 </div>
-                <nav className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.14em]" aria-label="Jump to heat band">
-                  <a href="#heat-fire" className="rounded border border-amber-300/30 px-2 py-1 text-amber-200 hover:text-amber-100">Jump to fire</a>
-                  <a href="#heat-ice" className="rounded border border-sky-300/30 px-2 py-1 text-sky-200 hover:text-sky-100">Jump to ice</a>
-                </nav>
               </div>
               {showBandHeaders ? (
                 groupedBoard.map((group) => (
@@ -256,28 +278,30 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BandDistribution({ bands, total, params }: { bands: Array<HeatBand & { count: number }>; total: number; params: Record<string, string | undefined> }) {
+function BandDistribution({ bands, total, activeBand, params }: { bands: Array<HeatBand & { count: number }>; total: number; activeBand: string; params: Record<string, string | undefined> }) {
   const onFire = bands.find((band) => band.key === "onfire")?.count ?? 0;
   const ice = bands.find((band) => band.key === "ice")?.count ?? 0;
   return (
-    <div className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-band-distribution">
+    <div className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-band-distribution" data-temperature-job="filter">
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>
           <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold · {total} qualified</p>
         </div>
-        <p className="font-mono text-xs text-zinc-500">Counts match row badges</p>
+        <p className="font-mono text-xs text-zinc-500">Click a segment to filter · league totals stay visible</p>
       </div>
       <div className="flex h-12 overflow-hidden rounded border border-white/10">
         {bands.map((band) => {
           const width = total > 0 ? (band.count / total) * 100 : 0;
+          const active = activeBand === band.key;
+          const dimmed = activeBand && !active;
           return (
             <Link
               key={band.key}
               href={heatCheckHref({ ...params, band: band.key })}
-              className="heat-band-fill flex min-w-[2px] items-center justify-center font-mono text-xs font-semibold text-[#08080a]"
+              className={`heat-band-fill flex min-w-[2px] items-center justify-center font-mono text-xs font-semibold text-[#08080a] transition ${active ? "ring-2 ring-white/80 ring-inset" : ""} ${dimmed ? "opacity-35" : ""}`}
               style={{ width: `${width}%`, backgroundColor: band.color }}
-              aria-label={`${band.label}: ${band.count} pitchers`}
+              aria-label={`Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
             >
               {width >= 7 ? band.count : null}
             </Link>
@@ -286,7 +310,7 @@ function BandDistribution({ bands, total, params }: { bands: Array<HeatBand & { 
       </div>
       <div className="mt-2 hidden gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:grid sm:grid-cols-5">
         {bands.map((band) => (
-          <Link key={band.key} href={heatCheckHref({ ...params, band: band.key })} className="flex items-center justify-between gap-2 rounded border border-white/10 px-2 py-1">
+          <Link key={band.key} href={heatCheckHref({ ...params, band: band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
               {band.label}
@@ -299,7 +323,7 @@ function BandDistribution({ bands, total, params }: { bands: Array<HeatBand & { 
   );
 }
 
-function MoversStrip({ risers, fallers, window }: { risers: FormSummary[]; fallers: FormSummary[]; window: number }) {
+function MoversStrip({ risers, fallers, params }: { risers: FormSummary[]; fallers: FormSummary[]; params: Record<string, string | undefined> }) {
   const movers = [
     ...risers.map((pitcher) => ({ pitcher, direction: "up" as const })),
     ...fallers.map((pitcher) => ({ pitcher, direction: "down" as const })),
@@ -313,10 +337,10 @@ function MoversStrip({ risers, fallers, window }: { risers: FormSummary[]; falle
           const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
           const marker = direction === "up" ? "↑" : "↓";
           return (
-            <a key={`${direction}-${pitcher.pitcherId}`} href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
+            <Link key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
               <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{lastName(pitcher.name)}</span>
               <span style={{ color }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</span>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -380,7 +404,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
       <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
       <div className="relative grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)] sm:items-center">
         <Link
-          href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
+          href={pitcherHref(pitcher, { window })}
           className="relative mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0"
           aria-label={`Open ${pitcher.name} form page`}
         >
@@ -391,7 +415,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
             <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
           </div>
-          <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <Link href={pitcherHref(pitcher, { window })} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
             <h2 className="truncate font-serif text-3xl font-bold leading-none text-zinc-50">{pitcher.name}</h2>
             <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
           </Link>
@@ -478,10 +502,10 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
-      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
+      <Link href={pitcherHref(pitcher, { window })} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </Link>
-      <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+      <Link href={pitcherHref(pitcher, { window })} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
@@ -506,7 +530,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <div>
           <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
         </div>
-        <Link href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <Link href={pitcherHref(pitcher, { window })} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
           <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
         </Link>
@@ -515,20 +539,34 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   );
 }
 
-function TemperatureRail({ bands, total, params }: { bands: Array<HeatBand & { count: number }>; total: number; params: Record<string, string | undefined> }) {
+function TemperatureRail({ bands, total }: { bands: Array<HeatBand & { count: number }>; total: number }) {
   return (
     <aside className="hidden lg:block">
-      <nav className="sticky top-4 grid gap-1 rounded border border-white/10 bg-[#101014]/90 p-2 font-mono text-[10px] uppercase tracking-[0.12em]" aria-label="Heat zones">
+      <nav className="sticky top-4 grid gap-1 rounded border border-white/10 bg-[#101014]/90 p-2 font-mono text-[10px] uppercase tracking-[0.12em]" aria-label="Jump to heat zones" data-temperature-job="jump">
         {bands.filter((band) => band.count > 0).map((band) => {
           const height = Math.max(34, total > 0 ? (band.count / total) * 280 : 34);
           return (
-            <Link key={band.key} href={heatCheckHref({ ...params, band: band.key })} className="flex items-end justify-center rounded border border-white/10 px-1 py-2 text-center text-zinc-950" style={{ minHeight: height, backgroundColor: band.color }} aria-label={`${band.label}: ${band.count} pitchers`}>
+            <a key={band.key} href={`#band-${band.key}`} className="flex items-end justify-center rounded border border-white/10 px-1 py-2 text-center text-zinc-950" style={{ minHeight: height, backgroundColor: band.color }} aria-label={`Jump to ${band.label} section, ${band.count} pitchers`}>
               <span className="[writing-mode:vertical-rl]">{band.label} {band.count}</span>
-            </Link>
+            </a>
           );
         })}
       </nav>
     </aside>
+  );
+}
+
+function MobileBandJumper({ bands }: { bands: Array<HeatBand & { count: number }> }) {
+  const firstBand = bands.find((band) => band.count > 0);
+  return (
+    <nav className="sticky top-[76px] z-10 col-span-full -mx-1 flex gap-2 overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump">
+      {firstBand ? <span className="shrink-0 rounded bg-black/30 px-2 py-2 text-zinc-400">{firstBand.label} · {firstBand.count}</span> : null}
+      {bands.filter((band) => band.count > 0).map((band) => (
+        <a key={band.key} href={`#band-${band.key}`} className="shrink-0 rounded border border-white/10 px-2 py-2 text-zinc-200" style={{ borderColor: `${band.color}66` }}>
+          {band.label}
+        </a>
+      ))}
+    </nav>
   );
 }
 
@@ -546,6 +584,17 @@ function groupPitchersByBand(pitchers: FormSummary[]) {
     band,
     pitchers: pitchers.filter((pitcher) => pitcher.tier === band.key),
   })).filter((group) => group.pitchers.length > 0);
+}
+
+function buildActiveFilterLabel({ band, motion, team, query }: { band: string; motion: string; team: string; query: string }) {
+  const labels = [
+    band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label.toUpperCase() : "",
+    motion ? motion.toUpperCase() : "",
+    team ? team.toUpperCase() : "",
+    query ? `"${query}"` : "",
+  ].filter(Boolean);
+
+  return labels.length > 0 ? labels.join(" / ") : "All arms";
 }
 
 function rowTreatment(pitcher: FormSummary): {
