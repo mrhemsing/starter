@@ -107,7 +107,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
           fullSlateHref={upcomingDateHref(watchDate)}
           fullSlateLabel="See tonight's full slate"
           eyebrow={todayWatch?.games.length ? "Tonight" : "Tomorrow"}
-          title="Tonight's Must-Watch Games"
+          title="Must-Watch Games"
           previewLimit={3}
         />
       ) : <HomeDeferredFallback variant="watch" />}
