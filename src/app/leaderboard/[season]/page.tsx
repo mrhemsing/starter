@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 
 type PageProps = {
@@ -19,6 +21,8 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function SeasonLeaderboardPage({ params }: PageProps) {
   const { season } = await params;
   if (!isSeason(season)) notFound();
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
 
   const leaderboard = await getFormLeaderboard({ season, window: 10, qualifiedOnly: true });
   if (leaderboard.pitchers.length === 0) notFound();
@@ -28,10 +32,10 @@ export default async function SeasonLeaderboardPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{season} season leaderboard</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">{season} GS+</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">{season} GS+</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-400">
             Qualified starters ranked by season-average GS+. ERA is shown only as a reference anchor and is not used to sort this board.
           </p>

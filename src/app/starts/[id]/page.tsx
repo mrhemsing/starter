@@ -10,7 +10,7 @@ import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherFormMap } from "@/lib/data/form-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
@@ -114,12 +114,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <section className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="start-detail-site-header">
-            <Link href="/" className="site-logo-wordmark">
-              Toe the Slab
-            </Link>
-            <SiteNav active={null} today={today} />
-          </header>
+          <SiteHeader active={null} today={today} responsiveCheck="start-detail-site-header" />
           <div className="mt-6">
             <EntityOrientation
               sourceLabel={sourceInfo.label}
@@ -210,16 +205,13 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="starts" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="mb-6 pb-6">
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-mono text-sm text-zinc-500">{date} / completed starts recap</p>
-              <span className="inline-flex min-h-8 items-center rounded border border-amber-300/30 bg-amber-300/10 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200" role="status" aria-label={`Slate completion: ${completionStatusLabel(completionState)}`}>
+              <span className="ml-[5px] inline-flex min-h-8 items-center rounded border border-amber-300/30 bg-amber-300/10 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200" role="status" aria-label={`Slate completion: ${completionStatusLabel(completionState)}`}>
                 {completionStatusLabel(completionState)}
               </span>
             </div>

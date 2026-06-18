@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { filterAndSortGames, normalizeUpcomingControls, teamsForGames, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -71,11 +71,8 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="mb-6 pb-6">
+          <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             This week&apos;s probable slates grouped by date. Each game is ranked once, by watchability, with both starters shown head-to-head.

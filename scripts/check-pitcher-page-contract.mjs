@@ -15,6 +15,7 @@ const entityOrientation = await readFile("src/components/entity-orientation.tsx"
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
+const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
   packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"') ||
@@ -43,6 +44,8 @@ assert(pitcherPage.includes("<PitcherFormPage"), "canonical profile route must r
 assert(pitcherFormPage.includes("parsePitcherRouteParam(routeParams.id)"), "legacy /form route must resolve slug or numeric params by trailing ID");
 assert(watchlistPage.includes('sourceParams("watchlist")'), "watchlist links must carry watchlist source context");
 assert(mustWatch.includes("import { pitcherHref, sourceParams } from") && mustWatch.includes('sourceParams("upcoming")'), "Must-Watch starter links must use shared canonical pitcherHref helper with upcoming source context");
+assert(formService.includes("const recentLiveFormStartsCache = new Map"), "recent live form starts must use a short in-process cache");
+assert(!formService.includes("getCachedRecentLiveFormStarts"), "recent live form starts must not use Next unstable_cache because the payload can exceed the 2MB data-cache limit");
 
 assert(
   entityOrientation.includes("router.back()") &&
@@ -63,9 +66,9 @@ assert(
 for (const [label, source] of [
   ["pitcher form", pitcherFormPage],
 ]) {
-  assert(source.includes('import { SiteNav } from "@/components/site-nav";'), `${label} must import shared site navigation`);
+  assert(source.includes('import { SiteHeader } from "@/components/site-header";'), `${label} must import shared site header`);
   assert(source.includes("getHomeSlateDate"), `${label} must resolve today for shared site navigation`);
-  assert(source.includes('href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300"'), `${label} must keep the Toe the Slab wordmark link`);
+  assert(source.includes('<SiteHeader active={null} today={today} responsiveCheck="pitcher-form-site-header" />'), `${label} must keep the shared Toe the Slab wordmark/nav header`);
   assert(source.includes('className="flex max-w-5xl items-start gap-4 sm:gap-6"'), `${label} header must align the headshot to the left of the name block`);
   assert(source.includes('size="hero"'), `${label} header must use the larger hero headshot`);
   assert(!source.includes('md:grid-cols-[1fr_240px]'), `${label} header must not keep the old detached right-column headshot layout`);
@@ -73,8 +76,7 @@ for (const [label, source] of [
 }
 
 assert(
-  pitcherFormPage.includes('data-responsive-check="pitcher-form-site-header"') &&
-    pitcherFormPage.includes("<SiteNav active={null} today={today} />") &&
+  pitcherFormPage.includes('<SiteHeader active={null} today={today} responsiveCheck="pitcher-form-site-header" />') &&
     pitcherFormPage.includes("<EntityOrientation"),
   "pitcher form must render the shared header with neutral nav and source-aware orientation",
 );

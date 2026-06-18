@@ -45,6 +45,7 @@ type CachedValue<T> = {
 
 const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse>>();
 const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
+const recentLiveFormStartsCache = new Map<string, CachedValue<StartSummary[]>>();
 
 const getCachedFormLeaderboard = unstable_cache(
   async (season: string, window: FormWindow, qualifiedOnly: boolean) => buildFormLeaderboard({ season, window, qualifiedOnly }),
@@ -55,12 +56,6 @@ const getCachedFormLeaderboard = unstable_cache(
 const getCachedFormHome = unstable_cache(
   async (season: string, window: FormWindow) => buildFormHome({ season, window }),
   ["form-home", FORM_CACHE_VERSION],
-  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
-);
-
-const getCachedRecentLiveFormStarts = unstable_cache(
-  async (season: string, today: string) => buildRecentLiveFormStarts(season, today),
-  ["recent-live-form-starts"],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
 
@@ -290,7 +285,17 @@ async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
 
 async function getRecentLiveFormStarts(season: string) {
   const today = getHomeSlateDate();
-  return getCachedRecentLiveFormStarts(season, today);
+  const cacheKey = `${season}:${today}`;
+  const cached = recentLiveFormStartsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = buildRecentLiveFormStarts(season, today);
+  recentLiveFormStartsCache.set(cacheKey, {
+    expiresAt: Date.now() + FORM_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
 }
 
 async function buildRecentLiveFormStarts(season: string, today: string) {

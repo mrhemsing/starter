@@ -48,6 +48,13 @@ p,
   }
 }
 
+@media (min-width: 640px) {
+  h1.font-serif,
+  .section-title {
+    margin-top: 24px;
+  }
+}
+
 .meta-line {
   overflow-wrap: normal;
 }

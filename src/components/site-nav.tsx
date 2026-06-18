@@ -3,6 +3,7 @@ import { getDefaultSlateDates } from "@/lib/data/start-service";
 import { heatCheckPath, rankedStartsPath, upcomingDateHref, watchlistPath } from "@/lib/routes";
 
 type NavKey = "home" | "starts" | "heat" | "upcoming" | "watchlist";
+export type { NavKey };
 
 export async function SiteNav({ active, today }: { active: NavKey | null; today: string; rankedDate?: string }) {
   const { rankedDate, upcomingDate } = await getDefaultSlateDates(today);

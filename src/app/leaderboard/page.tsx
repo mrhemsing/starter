@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 
 export const metadata = {
@@ -8,16 +10,18 @@ export const metadata = {
 };
 
 export default async function LeaderboardPage() {
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
   const leaderboard = await getFormLeaderboard({ window: 10, qualifiedOnly: true });
   const pitchers = [...leaderboard.pitchers].sort((a, b) => b.bgs - a.bgs || b.rgs - a.rgs);
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Season leaderboard</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Season GS+</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">Season GS+</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-400">
             Qualified starters ranked by season-average GS+. Rolling form stays separate on Heat Check; this board is the season reference.
           </p>

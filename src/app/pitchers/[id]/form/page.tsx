@@ -7,7 +7,7 @@ import { FormTrendChart, TrendChip, tierLabel, tierTextClass } from "@/component
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
@@ -99,12 +99,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="pitcher-form-site-header">
-          <Link href="/" className="site-logo-wordmark">
-            Toe the Slab
-          </Link>
-          <SiteNav active={null} today={today} />
-        </header>
+        <SiteHeader active={null} today={today} responsiveCheck="pitcher-form-site-header" />
         <div className="mt-6">
           <EntityOrientation
             sourceLabel={sourceInfo.label}

@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 import { getParkFactorRows } from "@/lib/data/run-environment";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 
 export const metadata = {
   title: "MLB Park Factors",
@@ -7,6 +8,8 @@ export const metadata = {
 };
 
 export default function ParksPage() {
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
   const parks = getParkFactorRows();
   const hitterFriendly = parks.filter((park) => park.runFactor > 1.02);
   const pitcherFriendly = parks.filter((park) => park.runFactor < 0.98);
@@ -14,10 +17,10 @@ export default function ParksPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Reference</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">MLB Park Factors</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">MLB Park Factors</h1>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-400">
             Run factors are display context for projections and matchup cards. They are not a standalone rank key, and they stay secondary to starter form and opponent context.
           </p>

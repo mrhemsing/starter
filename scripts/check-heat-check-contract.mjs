@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
+const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
@@ -24,10 +25,19 @@ assert(
 assert(
   formPage.includes('data-responsive-check="heat-band-distribution"') &&
     formPage.includes('data-temperature-job="filter"') &&
+    formPage.includes('className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>') &&
     formPage.includes("Click a segment to filter") &&
-    formPage.includes("href={heatCheckHref({ ...params, band: band.key })}") &&
+    formPage.includes('>All</span>') &&
+    formPage.includes('aria-current={!activeBand ? "page" : undefined}') &&
+    formPage.includes("href={heatCheckHref({ ...params, band: active ? \"\" : band.key })}") &&
     formPage.includes("activeBand"),
-  "horizontal temperature bar must be the filter surface with highlighted active filter",
+  "horizontal temperature bar must be the filter surface with visible All state and highlighted active filter",
+);
+
+assert(
+  formPage.includes('<span className="block">Furnace to freezer across the last {window} qualified starts.</span>') &&
+    formPage.includes('<span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>'),
+  "Heat Check deck must force a break after the first sentence and keep the second sentence unwrapped on desktop",
 );
 
 assert(
@@ -47,9 +57,24 @@ assert(
 
 assert(
   formPage.includes('data-responsive-check="heat-filter-status"') &&
-    formPage.includes("Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length}") &&
-    formPage.includes("Clear"),
-  "Heat Check must show persistent filtered-list status with clear affordance",
+    formPage.includes('activeFilterLabel === "All arms"') &&
+    formPage.includes("Click a segment to filter · league totals stay visible") &&
+    formPage.includes('Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length} · {"✕"} Show all'),
+  "Heat Check must swap the hint for a persistent filtered-list status with Show all affordance",
+);
+
+assert(
+  formPage.includes("href={heatCheckHref({ ...params, band: band === candidate.key ? \"\" : candidate.key })}") &&
+    formPage.includes("href={heatCheckHref({ ...params, band: activeBand === band.key ? \"\" : band.key })}"),
+  "Heat Check active band controls must toggle back to All",
+);
+
+assert(
+  formPage.includes("<HeatCheckEscapeClear href={clearFilterHref} />") &&
+    escapeClear.includes('"use client";') &&
+    escapeClear.includes('event.key === "Escape"') &&
+    escapeClear.includes("router.push(href)"),
+  "Heat Check must clear active filters with Escape",
 );
 
 assert(

@@ -5,9 +5,10 @@ import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreDeltaComparison } from "@/components/score-delta-comparison";
 import { ScoreExplainer } from "@/components/score-explainer";
 import { ScoreReasonList } from "@/components/score-reason-list";
+import { SiteHeader } from "@/components/site-header";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { getPitcherFormMap } from "@/lib/data/form-service";
-import { getDailySlate, getSlateSchedule, getTodayProbables, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { addDays, getDailySlate, getHomeSlateDate, getSlateSchedule, getTodayProbables, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { formatPct, formatSigned, formatStartLine } from "@/lib/format";
 import { formatUpcomingDate, isSlateWindow, pitcherHref, sourceParams, startHref, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import type { FormSummary, ProbableStart, StartSummary } from "@/lib/types";
@@ -24,6 +25,8 @@ export default async function SlatePage({ params }: SlatePageProps) {
   if (!isSlateWindow(window)) notFound();
   if (window === "today" || window === "tomorrow") redirect(upcomingDateHref(date));
   if (window === "week") redirect(upcomingWeekHref(date));
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
 
   const [starts, probables, schedule] = await Promise.all([getDailySlate({ window, date }), getTodayProbables(date), getSlateSchedule({ window, date })]);
   const formByPitcher = await getPitcherFormMap([...starts.map((start) => String(start.pitcher.mlbId)), ...probables.map((probable) => probable.pitcherId)], { window: 5, qualifiedOnly: false });
@@ -38,9 +41,7 @@ export default async function SlatePage({ params }: SlatePageProps) {
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-white/10 pb-6">
-          <Link href="/" className="site-logo-wordmark">
-            Toe the Slab
-          </Link>
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black capitalize text-zinc-50">{window} slate</h1>
           <p className="mt-2 font-mono text-sm text-zinc-500">
             {date} / {schedule.games.length} scheduled games

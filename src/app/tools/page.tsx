@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { getDecisionToolsFoundation } from "@/lib/data/decision-tools-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { formatUpcomingDate, upcomingDateHref } from "@/lib/routes";
@@ -28,11 +28,8 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="pb-6">
+          <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Decision tools</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Tools Foundation</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">

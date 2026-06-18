@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 
 type TeamPageProps = {
@@ -18,6 +20,8 @@ export async function generateMetadata({ params }: TeamPageProps) {
 export default async function TeamPage({ params }: TeamPageProps) {
   const { abbr } = await params;
   const team = abbr.toUpperCase();
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
   const leaderboard = await getFormLeaderboard({ window: 5, qualifiedOnly: false });
   const rotation = leaderboard.pitchers
     .filter((pitcher) => pitcher.team === team)
@@ -28,10 +32,10 @@ export default async function TeamPage({ params }: TeamPageProps) {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Team rotation</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">{team} starters</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">{team} starters</h1>
           <p className="mt-4 text-sm text-zinc-400">{rotation.length} tracked starters / avg GS+ {(rotation.reduce((sum, pitcher) => sum + pitcher.bgs, 0) / rotation.length).toFixed(1)}</p>
         </header>
 

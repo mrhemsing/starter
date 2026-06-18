@@ -1,6 +1,6 @@
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
@@ -89,14 +89,9 @@ export default async function Home() {
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-7xl">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
-            <div>
-              <p className="site-logo-wordmark">Toe the Slab</p>
-            </div>
-            <SiteNav active="home" today={today} rankedDate={rankedDate} />
-          </header>
+          <SiteHeader active="home" today={today} rankedDate={rankedDate} />
 
-          <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
+          <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
               <HomeSlateStatusLine initialState={slateStatus} href={upcomingDateHref(today)} />
               <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">

@@ -21,6 +21,7 @@ export function TonightsMustWatch({
   rankLabel = "tonight",
   previewLimit,
   sectionId = "must-watch",
+  compactTopPadding = false,
 }: {
   tonight: TonightResponse;
   fullSlateHref: string;
@@ -31,6 +32,7 @@ export function TonightsMustWatch({
   rankLabel?: string;
   previewLimit?: number;
   sectionId?: string;
+  compactTopPadding?: boolean;
 }) {
   const shownGames = typeof previewLimit === "number" ? tonight.games.slice(0, previewLimit) : tonight.games;
   const headliner = shownGames[0];
@@ -41,7 +43,7 @@ export function TonightsMustWatch({
     <section
       id={sectionId}
       aria-labelledby={headingId}
-      className="border-y border-white/10 bg-[#0d0d11] px-4 py-10 sm:px-6 lg:px-8"
+      className={`border-y border-white/10 bg-[#0d0d11] px-4 ${compactTopPadding ? "pb-10 pt-4" : "py-10"} sm:px-6 lg:px-8`}
       data-responsive-check="must-watch"
       data-slate-date={tonight.date}
       data-generated-at={tonight.generatedAt}
@@ -55,6 +57,8 @@ export function TonightsMustWatch({
       data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
       data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
+      data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
+      data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}

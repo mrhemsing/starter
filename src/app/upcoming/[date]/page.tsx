@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
@@ -68,14 +68,12 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="upcoming" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="mb-6 pb-6">
+          <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            One card per game, ranked by starter form and matchup context. Probables are grouped head-to-head instead of duplicated by pitcher.
+            <span className="block">One card per game, ranked by starter form and matchup context.</span>
+            <span className="block lg:whitespace-nowrap">Probables are grouped head-to-head instead of duplicated by pitcher.</span>
           </p>
           <UpcomingToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
           <UpcomingControls
@@ -95,6 +93,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
         eyebrow={formatUpcomingSectionDate(resolvedDate)}
         title="Must-Watch Games"
         rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
+        compactTopPadding
       />
     </main>
   );

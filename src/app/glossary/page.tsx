@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 
 const terms = [
   ["GS+", "Toe the Slab's completed-start score. It rates one start using line quality, workload, strikeouts, walks, run prevention, park, opponent, and calibration context."],
@@ -16,13 +17,16 @@ export const metadata = {
 };
 
 export default function GlossaryPage() {
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
+
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Reference</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Glossary</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">Glossary</h1>
         </header>
         <section className="grid gap-3 py-8">
           {terms.map(([term, definition]) => (

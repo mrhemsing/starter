@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { Headshot } from "@/components/headshot";
 import { ShareStartButton } from "@/components/share-start-button";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
@@ -44,11 +44,8 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="starts" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="pb-6">
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Best starts archive</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Best Starts / {month}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">

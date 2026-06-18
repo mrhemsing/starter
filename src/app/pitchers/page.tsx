@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 
 export const metadata = {
@@ -8,6 +10,8 @@ export const metadata = {
 };
 
 export default async function PitchersIndexPage() {
+  const today = getHomeSlateDate();
+  const rankedDate = addDays(today, -1);
   const leaderboard = await getFormLeaderboard({ window: 5, qualifiedOnly: true });
   const pitchers = [...leaderboard.pitchers].sort((a, b) => a.name.localeCompare(b.name));
   const teams = [...new Set(pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
@@ -15,10 +19,10 @@ export default async function PitchersIndexPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
+        <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Directory</p>
-          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Pitchers</h1>
+          <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50">Pitchers</h1>
           <p className="mt-4 text-sm text-zinc-400">{pitchers.length} qualified starters / {teams.length} teams</p>
         </header>
 

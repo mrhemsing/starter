@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -59,15 +59,13 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="watchlist" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="pb-6">
+          <SiteHeader active="watchlist" today={today} rankedDate={rankedDate} />
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Daily ritual</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Watchlist</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Follow starters from Heat Check or pitcher pages. This view joins your followed arms to current Form, next scheduled start, and digest-worthy events.
+            <span className="block">Follow starters from Heat Check or pitcher pages.</span>
+            <span className="block lg:whitespace-nowrap">This view joins your followed arms to current Form, next scheduled start, and digest-worthy events.</span>
           </p>
           <div className="mt-5 grid gap-3 font-mono text-xs sm:grid-cols-3">
             <SummaryStat label="Followed" value={String(watchlist.entries.length)} />
@@ -155,12 +153,6 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               )}
             </section>
 
-            <section className="rounded border border-white/10 bg-[#101014] p-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Delivery status</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">
-                The digest payload is live in-app. Email and push delivery stay provider-pluggable; the next bolt-on is channel preferences and a daily send job.
-              </p>
-            </section>
           </aside>
         </section>
       </div>

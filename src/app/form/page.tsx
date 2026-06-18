@@ -6,7 +6,8 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
-import { SiteNav } from "@/components/site-nav";
+import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
+import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
@@ -130,19 +131,19 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
+  const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" });
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+      {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="heat" today={today} rankedDate={rankedDate} />
-          </div>
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50 sm:text-6xl">Heat Check</h1>
+        <header className="pb-6">
+          <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Furnace to freezer across the last {window} qualified starts. The trace shows where every arm is moving; the glow is reserved for the poles.
+            <span className="block">Furnace to freezer across the last {window} qualified starts.</span>
+            <span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>
           </p>
           <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
             Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
@@ -174,12 +175,13 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
 
         <section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
-            <p className="text-zinc-300">
-              Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length}
-            </p>
-            {activeFilterLabel !== "All arms" ? (
-              <Link href={heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" })} className="text-amber-300 hover:text-amber-200">Clear</Link>
-            ) : null}
+            {activeFilterLabel === "All arms" ? (
+              <p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>
+            ) : (
+              <Link href={clearFilterHref} className="text-amber-300 hover:text-amber-200">
+                Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length} · {"✕"} Show all
+              </Link>
+            )}
           </div>
           <details>
             <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
@@ -189,9 +191,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <div className="grid gap-3" data-control-role="filter">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Filter</p>
               <ControlGroup label="Band">
-                <ControlLink active={!band} href={heatCheckHref({ ...params, band: "" })}>All bands</ControlLink>
+                <ControlLink active={!band} href={heatCheckHref({ ...params, band: "" })}>All</ControlLink>
                 {HEAT_BANDS.map((candidate) => (
-                  <ControlLink key={candidate.key} active={band === candidate.key} href={heatCheckHref({ ...params, band: candidate.key })}>{candidate.label}</ControlLink>
+                  <ControlLink key={candidate.key} active={band === candidate.key} href={heatCheckHref({ ...params, band: band === candidate.key ? "" : candidate.key })}>{candidate.label}</ControlLink>
                 ))}
               </ControlGroup>
               <ControlGroup label="Momentum">
@@ -285,10 +287,10 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
     <div className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-band-distribution" data-temperature-job="filter">
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>
+          <p className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>
           <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold · {total} qualified</p>
         </div>
-        <p className="font-mono text-xs text-zinc-500">Click a segment to filter · league totals stay visible</p>
+        <p className="font-mono text-xs text-zinc-500">{activeBand ? "Click the active segment again to show all" : "Click a segment to filter · league totals stay visible"}</p>
       </div>
       <div className="flex h-12 overflow-hidden rounded border border-white/10">
         {bands.map((band) => {
@@ -298,19 +300,23 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
           return (
             <Link
               key={band.key}
-              href={heatCheckHref({ ...params, band: band.key })}
+              href={heatCheckHref({ ...params, band: active ? "" : band.key })}
               className={`heat-band-fill flex min-w-[2px] items-center justify-center font-mono text-xs font-semibold text-[#08080a] transition ${active ? "ring-2 ring-white/80 ring-inset" : ""} ${dimmed ? "opacity-35" : ""}`}
               style={{ width: `${width}%`, backgroundColor: band.color }}
-              aria-label={`Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
+              aria-label={active ? `Show all pitchers, clearing ${band.label} filter` : `Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
             >
               {width >= 7 ? band.count : null}
             </Link>
           );
         })}
       </div>
-      <div className="mt-2 hidden gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:grid sm:grid-cols-5">
+      <div className="mt-2 grid grid-cols-2 gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:grid-cols-6">
+        <Link href={heatCheckHref({ ...params, band: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${!activeBand ? "border-white/60 bg-white/10 text-zinc-100" : "border-white/10 text-zinc-400"}`} aria-current={!activeBand ? "page" : undefined}>
+          <span>All</span>
+          <span className="text-zinc-300">{total}</span>
+        </Link>
         {bands.map((band) => (
-          <Link key={band.key} href={heatCheckHref({ ...params, band: band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`}>
+          <Link key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} aria-current={activeBand === band.key ? "page" : undefined}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
               {band.label}

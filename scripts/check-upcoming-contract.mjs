@@ -1426,6 +1426,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedGameStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-statuses"));
   const renderedDetailedStates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-detailed-states"));
   const renderedStarterStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-statuses"));
+  const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
+  const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
   const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
   const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
@@ -1481,6 +1483,16 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterStatuses.length === renderedGameCount &&
       renderedStarterStatuses.every((statuses) => /^(ok|insufficient|tbd)\/(ok|insufficient|tbd)$/.test(statuses)),
     `${route} ${sectionId} should expose one away/home starter status pair per visible game`,
+  );
+  assert(
+    renderedStarterPitcherIds.length === renderedGameCount &&
+      renderedStarterPitcherIds.every((ids) => /^(?:\d+|tbd)\/(?:\d+|tbd)$/.test(ids)),
+    `${route} ${sectionId} should expose one away/home starter pitcher-id pair per visible game`,
+  );
+  assert(
+    renderedStarterNames.length === renderedGameCount &&
+      renderedStarterNames.every((names) => names.split("/").length === 2 && names.split("/").every((name) => name.length > 0)),
+    `${route} ${sectionId} should expose one away/home starter name pair per visible game`,
   );
   assert(
     renderedParkRunFactors.length === renderedGameCount &&
@@ -1607,11 +1619,13 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedGameStatuses.join(",") === games.map((game) => game.status).join(",") &&
       renderedDetailedStates.join(",") === games.map((game) => game.detailedState).join(",") &&
       renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
+      renderedStarterPitcherIds.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") &&
+      renderedStarterNames.join(",") === games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, starter statuses, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, starter statuses, starter identities, starter names, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
     );
   }
 

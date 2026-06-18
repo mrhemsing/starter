@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { ScoreExplainer } from "@/components/score-explainer";
-import { SiteNav } from "@/components/site-nav";
+import { SiteHeader } from "@/components/site-header";
 import { getDailySlate, getHomeSlateDate, summarizeSlateScoreScale } from "@/lib/data/start-service";
 
 export default async function HowItWorksPage() {
@@ -12,11 +11,8 @@ export default async function HowItWorksPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
-            <SiteNav active="starts" today={today} rankedDate={rankedDate} />
-          </div>
+        <header className="pb-6">
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <h1 className="mt-5 font-serif text-5xl font-black text-zinc-50">How rankings work</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Game Score+ turns a starter line into a 20-80 daily ranking, then calibrates it so each slate scans like a scouting board.
