@@ -18,7 +18,7 @@ import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -88,6 +88,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const recentDepth = await getRecentStartDepth(series.slice(-3).reverse().map((start) => start.id));
   const recentHighlights = await resolveHighlightsByStartId(recentDepth);
   const nextStart = await getProfileNextStart(summary.pitcherId, summary.rgs);
+  const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
   const jsonLd = jsonLdForPitcherForm(form);
   const followedIds = await getWatchlistPitcherIds(accountId);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
@@ -136,6 +137,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                   <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
                     ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · FIP {estimateFip(summary.seasonStats.k9)} · xERA {estimateXera(summary.seasonStats.era, summary.trendDelta)}
                   </p>
+                  {summary.venueSplit ? <HomeRoadSplitBadge split={summary.venueSplit} /> : null}
                 </div>
                 <TrendChip summary={summary} />
                 <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
@@ -143,6 +145,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               {nextStart ? (
                 <Link href={startHref(nextStart.startId, sourceParams(source))} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
                   NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}
+                  {venueSplitContext ? <span className={venueSplitContext.toneClass}> · {venueSplitContext.label}</span> : null}
                 </Link>
               ) : (
                 <p className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
@@ -181,7 +184,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
             <ArsenalTable pitcher={pitcher} />
             <div className="space-y-5">
               <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
-              <SplitsPanel splits={pitcher.splits.groups} />
+              <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
             </div>
           </section>
         ) : null}
@@ -203,7 +206,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
             </div>
           </div>
           <aside className="space-y-3">
-            {nextStart ? <NextStartProjectionCard nextStart={nextStart} /> : null}
+            {nextStart ? <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} /> : null}
             <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
             <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
             <div className="rounded border border-white/10 bg-[#101014] p-4">
@@ -235,6 +238,7 @@ type ProfileNextStart = {
   date: string;
   label: string;
   opponent: string;
+  side: "home" | "away";
   venue: string;
   restLabel: string;
   projectedGsPlus: number;
@@ -260,6 +264,7 @@ async function getProfileNextStart(pitcherId: string, formScore: number): Promis
       date: probable.date,
       label: `${opponentPrefix} ${probable.opponent} · ${formatUpcomingDate(probable.date)}`,
       opponent: `${opponentPrefix} ${probable.opponent}`,
+      side: probable.side,
       venue: probable.venue,
       restLabel: daysAway === 0 ? "today" : daysAway === 1 ? "tomorrow" : `${daysAway} days out`,
       projectedGsPlus,
@@ -358,11 +363,54 @@ function AdvancedPercentilePanel({ pitcher, summary }: { pitcher: PitcherApiResp
   );
 }
 
-function SplitsPanel({ splits }: { splits: PitcherApiSplitGroup[] }) {
+function HomeRoadSplitBadge({ split }: { split: FormVenueSplitLabel }) {
+  const strong = split.strongSide === "home" ? split.home : split.away;
+  const weak = split.weakSide === "home" ? split.home : split.away;
+  const tone = split.strongSide === "home" ? "border-orange-300/35 text-orange-200" : "border-cyan-300/35 text-cyan-200";
+
+  return (
+    <div className={`mt-3 inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded border bg-black/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] ${tone}`} data-responsive-check="home-road-split-badge">
+      <span>{split.label}</span>
+      <span className="text-zinc-500">·</span>
+      <span>+{split.gap.toFixed(0)} vs {split.weakSide === "home" ? "home" : "road"}</span>
+      <span className="text-zinc-500">·</span>
+      <span className="text-zinc-400">{strong.starts}/{weak.starts} starts</span>
+    </div>
+  );
+}
+
+type VenueSplitContext = {
+  label: string;
+  toneClass: string;
+};
+
+function venueSplitContextForNextStart(split: FormVenueSplitLabel, side: "home" | "away"): VenueSplitContext {
+  if (side === split.strongSide) {
+    return {
+      label: `${split.label === "HOME FORTRESS" ? "Home fortress" : "Road warrior"} — ${side === "home" ? "home" : "away"} start tailwind`,
+      toneClass: "text-emerald-300",
+    };
+  }
+
+  return {
+    label: `${split.weakSide === "home" ? "Fades at home" : "Fades on the road"} — ${side === "home" ? "home" : "away"} start headwind`,
+    toneClass: "text-amber-300",
+  };
+}
+
+function SplitsPanel({ splits, venueSplit }: { splits: PitcherApiSplitGroup[]; venueSplit: FormVenueSplitLabel | null }) {
   return (
     <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Splits</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Scouting splits</h2>
+      {venueSplit ? (
+        <div className="mt-4 rounded border border-white/10 bg-black/20 p-3" data-responsive-check="home-road-split-evidence">
+          <HomeRoadSplitBadge split={venueSplit} />
+          <p className="mt-2 font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-zinc-500">
+            Home GS+ {venueSplit.home.gsPlus.toFixed(1)} ({venueSplit.home.starts} starts) · Road GS+ {venueSplit.away.gsPlus.toFixed(1)} ({venueSplit.away.starts} starts) · current + prior seasons
+          </p>
+        </div>
+      ) : null}
       <div className="mt-4 grid gap-3">
         {splits.map((split) => <SplitRow key={split.key} split={split} />)}
         <SplitRow split={{ key: "home", label: "Times through order", scope: "venue", status: "pending-live-source", inningsPitched: null, era: null, strikeouts: null, walks: null, opponentAverage: null, note: "Times-through-order wOBA is contracted for the profile view once the verified split endpoint lands." }} />
@@ -444,12 +492,13 @@ function MiniStat({ label, value, color }: { label: string; value: string; color
   );
 }
 
-function NextStartProjectionCard({ nextStart }: { nextStart: ProfileNextStart }) {
+function NextStartProjectionCard({ nextStart, venueSplitContext }: { nextStart: ProfileNextStart; venueSplitContext: VenueSplitContext | null }) {
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-next-start-projection">
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Next start projection</p>
       <p className="mt-2 font-serif text-3xl text-zinc-50">GS+ {nextStart.projectedGsPlus}</p>
       <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">{nextStart.opponent} · {formatUpcomingDate(nextStart.date)} · {nextStart.restLabel}</p>
+      {venueSplitContext ? <p className={`mt-3 font-mono text-xs uppercase tracking-[0.12em] ${venueSplitContext.toneClass}`} data-responsive-check="home-road-next-start-context">{venueSplitContext.label}</p> : null}
       <div className="mt-4 grid gap-2 font-mono text-xs text-zinc-400">
         <p>{nextStart.venue}</p>
         <p>Matchup: {nextStart.matchupLabel}</p>

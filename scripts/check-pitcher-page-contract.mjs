@@ -16,6 +16,7 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const types = await readFile("src/lib/types.ts", "utf8");
 
 assert(
   packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"') ||
@@ -46,6 +47,27 @@ assert(watchlistPage.includes('sourceParams("watchlist")'), "watchlist links mus
 assert(mustWatch.includes("import { pitcherHref, sourceParams } from") && mustWatch.includes('sourceParams("upcoming")'), "Must-Watch starter links must use shared canonical pitcherHref helper with upcoming source context");
 assert(formService.includes("const recentLiveFormStartsCache = new Map"), "recent live form starts must use a short in-process cache");
 assert(!formService.includes("getCachedRecentLiveFormStarts"), "recent live form starts must not use Next unstable_cache because the payload can exceed the 2MB data-cache limit");
+
+assert(
+  types.includes("export type FormVenueSplitLabel") &&
+    types.includes('label: "HOME FORTRESS" | "ROAD WARRIOR";') &&
+    types.includes('window: "current-plus-prior";') &&
+    types.includes('side?: "home" | "away";'),
+  "types must expose conservative home/road split labels and preserve start side for venue splits",
+);
+
+assert(
+  formService.includes("const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;") &&
+    formService.includes("const VENUE_SPLIT_MIN_GAP = 11;") &&
+    formService.includes("function getStableVenueSplitStarts") &&
+    formService.includes("getQualifiedFormStarts(previousSeason)") &&
+    formService.includes("buildVenueSplitLabel(venueSplitStarts)") &&
+    formService.includes("homeStarts.length < VENUE_SPLIT_MIN_STARTS_PER_SIDE || awayStarts.length < VENUE_SPLIT_MIN_STARTS_PER_SIDE") &&
+    formService.includes("if (gap < VENUE_SPLIT_MIN_GAP) return null;") &&
+    formService.includes("strongGsPlus >= 50") &&
+    formService.includes("weakGsPlus <= 50 || tierRank(strongTier) - tierRank(weakTier) >= 1"),
+  "form service must fire home/road labels only after sample, gap, and direction gates over current+prior seasons",
+);
 
 assert(
   entityOrientation.includes("router.back()") &&
@@ -100,8 +122,12 @@ assert(
   pitcherFormPage.includes("getTodayProbables") &&
     pitcherFormPage.includes("getProfileNextStart") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-next-start-projection"') &&
-    pitcherFormPage.includes("NEXT: {nextStart.label} · Proj GS+"),
-  "pitcher profile must surface a next-start projection from probable-start data",
+    pitcherFormPage.includes("NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}") &&
+    pitcherFormPage.includes("venueSplitContextForNextStart") &&
+    pitcherFormPage.includes('data-responsive-check="home-road-next-start-context"') &&
+    pitcherFormPage.includes("start tailwind") &&
+    pitcherFormPage.includes("start headwind"),
+  "pitcher profile must surface a next-start projection from probable-start data with contextual home/road tailwind or headwind when the split qualifies",
 );
 
 assert(
@@ -127,9 +153,13 @@ assert(
 assert(
   pitcherFormPage.includes("function SplitsPanel") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-splits-panel"') &&
+    pitcherFormPage.includes('data-responsive-check="home-road-split-badge"') &&
+    pitcherFormPage.includes('data-responsive-check="home-road-split-evidence"') &&
+    pitcherFormPage.includes("<HomeRoadSplitBadge split={summary.venueSplit} />") &&
+    pitcherFormPage.includes("Home GS+ {venueSplit.home.gsPlus.toFixed(1)}") &&
     pitcherFormPage.includes("Times through order") &&
     pitcherFormPage.includes("wOBA"),
-  "pitcher profile must render scouting splits including times-through-order placeholder",
+  "pitcher profile must render scouting splits, gated home/road evidence when present, and times-through-order placeholder",
 );
 
 assert(

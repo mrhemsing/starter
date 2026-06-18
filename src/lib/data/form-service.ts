@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
-import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormWorkload, HeatBandKey, StartSummary } from "@/lib/types";
+import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, StartSummary } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
 
@@ -37,6 +37,8 @@ const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
 const FORM_CACHE_VERSION = "form-scored-start-merge-v1";
+const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
+const VENUE_SPLIT_MIN_GAP = 11;
 
 type CachedValue<T> = {
   expiresAt: number;
@@ -116,14 +118,21 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
 export async function getPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
-  const startSet = await getQualifiedFormStarts(season);
+  const [startSet, venueSplitStartSet] = await Promise.all([
+    getQualifiedFormStarts(season),
+    getStableVenueSplitStarts(season),
+  ]);
   const starts = startSet.starts;
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
   if (!bucket) return null;
 
-  const summary = summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext);
+  const venueSplitStarts = venueSplitStartSet.starts.filter((start) => String(start.pitcher.mlbId) === pitcherId);
+  const summary = {
+    ...summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext),
+    venueSplit: buildVenueSplitLabel(venueSplitStarts),
+  };
   const series = buildStartPoints(bucket.starts, window);
 
   return {
@@ -283,6 +292,22 @@ async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
   };
 }
 
+async function getStableVenueSplitStarts(season: string): Promise<FormStartSet> {
+  const previousSeason = String(Number(season) - 1);
+  const [previous, current] = await Promise.all([
+    getQualifiedFormStarts(previousSeason),
+    getQualifiedFormStarts(season),
+  ]);
+  const starts = mergeScoredStarts(previous.starts, current.starts).filter((start) => start.side === "home" || start.side === "away");
+
+  return {
+    starts,
+    formThroughDate: current.formThroughDate,
+    latestScoredStartDate: current.latestScoredStartDate,
+    stale: current.stale,
+  };
+}
+
 async function getRecentLiveFormStarts(season: string) {
   const today = getHomeSlateDate();
   const cacheKey = `${season}:${today}`;
@@ -409,6 +434,58 @@ function buildWorkload(starts: StartSummary[], window: FormWindow): FormWorkload
     avgPitchesLast5: round1(mean(recentStarts.map((start) => start.line.pitches))),
     avgIpLast5: round1(outsToInnings(Math.round(mean(recentStarts.map((start) => inningsToOuts(start.line.inningsPitched)))))),
   };
+}
+
+function buildVenueSplitLabel(starts: StartSummary[]): FormVenueSplitLabel | null {
+  const homeStarts = starts.filter((start) => start.side === "home");
+  const awayStarts = starts.filter((start) => start.side === "away");
+  if (homeStarts.length < VENUE_SPLIT_MIN_STARTS_PER_SIDE || awayStarts.length < VENUE_SPLIT_MIN_STARTS_PER_SIDE) return null;
+
+  const homeGsPlus = round1(mean(homeStarts.map((start) => start.gameScorePlus)));
+  const awayGsPlus = round1(mean(awayStarts.map((start) => start.gameScorePlus)));
+  const rawGap = homeGsPlus - awayGsPlus;
+  const gap = round1(Math.abs(rawGap));
+  if (gap < VENUE_SPLIT_MIN_GAP) return null;
+
+  const homeTier = tierOf(homeGsPlus).key;
+  const awayTier = tierOf(awayGsPlus).key;
+  const strongSide = rawGap > 0 ? "home" : "away";
+  const weakSide = strongSide === "home" ? "away" : "home";
+  const strongGsPlus = strongSide === "home" ? homeGsPlus : awayGsPlus;
+  const weakGsPlus = strongSide === "home" ? awayGsPlus : homeGsPlus;
+  const strongTier = strongSide === "home" ? homeTier : awayTier;
+  const weakTier = strongSide === "home" ? awayTier : homeTier;
+  const hasDirection = strongGsPlus >= 50 && (weakGsPlus <= 50 || tierRank(strongTier) - tierRank(weakTier) >= 1);
+  if (!hasDirection) return null;
+
+  return {
+    label: strongSide === "home" ? "HOME FORTRESS" : "ROAD WARRIOR",
+    strongSide,
+    weakSide,
+    gap,
+    home: {
+      starts: homeStarts.length,
+      gsPlus: homeGsPlus,
+      tier: homeTier,
+    },
+    away: {
+      starts: awayStarts.length,
+      gsPlus: awayGsPlus,
+      tier: awayTier,
+    },
+    window: "current-plus-prior",
+  };
+}
+
+function tierRank(tier: HeatBandKey) {
+  const rank: Record<HeatBandKey, number> = {
+    ice: 0,
+    cooling: 1,
+    even: 2,
+    hot: 3,
+    onfire: 4,
+  };
+  return rank[tier];
 }
 
 function buildSeasonStats(starts: StartSummary[]): FormSeasonStats {

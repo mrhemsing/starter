@@ -102,8 +102,9 @@ assert(
     homeDeferredSections.includes("startHref(start, sourceParams(\"home\"))") &&
     homeDeferredSections.includes("score-bug") &&
     homeDeferredSections.includes("band={scoreBand(start.gameScorePlus)}") &&
-    homeDeferredSections.includes("whitespace-nowrap"),
-  "home best-starts cards must show GS+ score-bug, thermal headshot, no-wrap badge, profile name link, and start deep-dive card link",
+    homeDeferredSections.includes("whitespace-nowrap") &&
+    homeDeferredSections.includes("grid-cols-[66px_minmax(0,1fr)_auto] items-start"),
+  "home best-starts cards must show GS+ score-bug, thermal headshot, no-wrap badge, profile name link, start deep-dive card link, and top-aligned columns",
 );
 
 assert(

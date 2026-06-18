@@ -115,6 +115,7 @@ export type StartSummary = {
   rank: number;
   pitcher: PitcherSummary;
   opponent: string;
+  side?: "home" | "away";
   result: "W" | "L" | "ND";
   line: StartLine;
   gameScorePlus: number;
@@ -198,6 +199,24 @@ export type FormWorkload = {
   avgIpLast5: number | null;
 };
 
+export type FormVenueSplitLabel = {
+  label: "HOME FORTRESS" | "ROAD WARRIOR";
+  strongSide: "home" | "away";
+  weakSide: "home" | "away";
+  gap: number;
+  home: {
+    starts: number;
+    gsPlus: number;
+    tier: FormTier;
+  };
+  away: {
+    starts: number;
+    gsPlus: number;
+    tier: FormTier;
+  };
+  window: "current-plus-prior";
+};
+
 export type FormSummary = {
   pitcherId: string;
   name: string;
@@ -217,6 +236,7 @@ export type FormSummary = {
   seasonStats: FormSeasonStats;
   driverChips: FormDriverChip[];
   workload: FormWorkload;
+  venueSplit?: FormVenueSplitLabel | null;
   nextStart?: FormNextStart | null;
   highlight?: FeaturedStartHighlight | null;
   flags?: { rust?: boolean; limitedSample?: boolean };

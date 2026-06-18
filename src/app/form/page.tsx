@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
-import { FormSparkline, TrendChip, tierLabel } from "@/components/form-visuals";
+import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
@@ -31,6 +32,7 @@ type FormPageProps = {
     qualified?: string;
     band?: string;
     motion?: string;
+    even?: string;
   }>;
 };
 
@@ -92,6 +94,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const qualifiedOnly = params?.qualified !== "false";
   const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
   const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
+  const evenExpanded = params?.even === "show" || band === "even" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, tonight] = await Promise.all([
@@ -236,13 +239,15 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
         </section>
 
         {pitchers.length === 0 ? (
-          <section className="rounded border border-white/10 bg-[#101014] p-6">
-            <p className="font-mono text-sm text-zinc-300">No qualified pitchers match these filters.</p>
+          <section className="rounded border border-white/10 bg-[#101014] p-6" data-responsive-check="heat-empty-filter">
+            <p className="font-mono text-sm uppercase tracking-[0.14em] text-zinc-300">
+              {band ? `No arms in ${HEAT_BANDS.find((candidate) => candidate.key === band)?.label ?? "this band"}` : "No arms match these filters"}
+              <Link href={clearFilterHref} className="ml-2 text-amber-300 hover:text-amber-200">· Clear</Link>
+            </p>
           </section>
         ) : (
           <div id="full-board" className="grid gap-4 scroll-mt-8 lg:grid-cols-[80px_minmax(0,1fr)]" data-responsive-check="form-leaderboard">
-            <MobileBandJumper bands={leagueBandCounts} />
-            <TemperatureRail bands={leagueBandCounts} total={qualifiedPitchers.length} />
+            <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} />
             <section className="grid gap-2">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                 <div>
@@ -254,9 +259,16 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 groupedBoard.map((group) => (
                   <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">
                     <BandHeader band={group.band} count={group.pitchers.length} />
-                    {group.pitchers.map((pitcher, index) => (
-                      <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={pitchers.indexOf(pitcher) + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
-                    ))}
+                    {group.band.key === "even" && !evenExpanded ? (
+                      <EvenBandCollapsed count={group.pitchers.length} href={heatCheckHref({ ...params, even: "show" })} />
+                    ) : (
+                      <>
+                        {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
+                        {group.pitchers.map((pitcher, index) => (
+                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={pitchers.indexOf(pitcher) + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
+                        ))}
+                      </>
+                    )}
                   </section>
                 ))
               ) : (
@@ -289,7 +301,7 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>
-          <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold · {total} qualified</p>
+          <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>
         </div>
         <p className="font-mono text-xs text-zinc-500">{activeBand ? "Click the active segment again to show all" : "Click a segment to filter · league totals stay visible"}</p>
       </div>
@@ -409,31 +421,38 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
   return (
     <article className="relative overflow-hidden bg-[#101014] p-4 sm:p-5" data-form-hero-card data-momentum-role={role}>
       <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
-      <div className="relative grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)] sm:items-center">
+      <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center">
         <Link
           href={pitcherHref(pitcher, sourceParams("heat", { window }))}
-          className="relative mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0"
+          className="relative col-start-1 row-start-1 block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:hidden"
+          aria-label={`Open ${pitcher.name} form page`}
+        >
+          <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative />
+        </Link>
+        <Link
+          href={pitcherHref(pitcher, sourceParams("heat", { window }))}
+          className="relative hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:block"
           aria-label={`Open ${pitcher.name} form page`}
         >
           <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative className="ml-1" />
         </Link>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
+        <div className="col-start-2 row-start-1 min-w-0 sm:col-start-auto sm:row-start-auto">
+          <div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
             <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
           </div>
-          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-            <h2 className="truncate font-serif text-3xl font-bold leading-none text-zinc-50">{pitcher.name}</h2>
+          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="mt-2 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mt-3">
+            <h2 className="truncate font-serif text-xl font-bold leading-none text-zinc-50 sm:text-3xl">{pitcher.name}</h2>
             <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
           </Link>
-          <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
-            <p className="font-mono text-5xl font-black leading-none tabular-nums" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
-            <p className="pb-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
+          <div className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1">
+            <p className="font-mono text-[34px] font-black leading-none tabular-nums sm:text-5xl" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400 sm:pb-1 sm:text-xs sm:tracking-[0.14em]">
               now Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}
             </p>
           </div>
         </div>
-        <div className="min-w-0 sm:col-span-2">
+        <div className="col-span-full row-start-2 min-w-0 sm:row-start-auto sm:col-span-2">
           <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" intensity="pole" />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
             <MomentumContextLine pitcher={pitcher} start={start} />
@@ -500,7 +519,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   return (
     <article
       id={poleId}
-      className={`heat-check-row scroll-mt-24 grid items-center gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
+      className={`heat-check-row scroll-mt-24 grid items-start gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${treatment.opacity} ${isPoleTier(pitcher) && fullWindow ? "heat-glow-card" : ""}`}
       style={{ ...(isPoleTier(pitcher) && fullWindow ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
       data-heat-band={pitcher.tier}
@@ -522,8 +541,27 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           <FormDriverChips chips={pitcher.driverChips} compact />
         </div>
       </Link>
-      <div className="col-span-full row-start-2 grid min-w-0 grid-cols-[auto_minmax(120px,1fr)] items-center gap-2 sm:col-span-1 sm:row-auto sm:grid-cols-1">
-        <div className="min-w-0 sm:justify-self-end">{fullWindow ? <TrendChip summary={pitcher} compact /> : <InsufficientTrend windowCount={pitcher.windowCount} window={window} />}</div>
+      <div className="col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:grid sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-3">
+        <div className="hidden min-w-0 sm:block">
+          <FormSparkline
+            values={pitcher.spark}
+            tier={pitcher.tier}
+            leagueMeanGS={leagueMeanGS}
+            label={`Last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`}
+            trend={pitcher.trend}
+            intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
+          />
+        </div>
+        <div className="flex items-start justify-end gap-2">
+          <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
+          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`${pitcher.name} Form ${Math.round(pitcher.rgs)}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
+            <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
+            <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
+            {fullWindow ? <FormDeltaLabel summary={pitcher} /> : null}
+          </Link>
+        </div>
+      </div>
+      <div className="col-span-full row-start-2 min-w-0 sm:hidden">
         <FormSparkline
           values={pitcher.spark}
           tier={pitcher.tier}
@@ -533,47 +571,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
         />
       </div>
-      <div className="col-start-4 row-start-1 flex items-center justify-end gap-2 text-right sm:col-auto sm:row-auto">
-        <div>
-          <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
-        </div>
-        <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-          <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
-          <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
-        </Link>
-      </div>
     </article>
-  );
-}
-
-function TemperatureRail({ bands, total }: { bands: Array<HeatBand & { count: number }>; total: number }) {
-  return (
-    <aside className="hidden lg:block">
-      <nav className="sticky top-4 grid gap-1 rounded border border-white/10 bg-[#101014]/90 p-2 font-mono text-[10px] uppercase tracking-[0.12em]" aria-label="Jump to heat zones" data-temperature-job="jump">
-        {bands.filter((band) => band.count > 0).map((band) => {
-          const height = Math.max(34, total > 0 ? (band.count / total) * 280 : 34);
-          return (
-            <a key={band.key} href={`#band-${band.key}`} className="flex items-end justify-center rounded border border-white/10 px-1 py-2 text-center text-zinc-950" style={{ minHeight: height, backgroundColor: band.color }} aria-label={`Jump to ${band.label} section, ${band.count} pitchers`}>
-              <span className="[writing-mode:vertical-rl]">{band.label} {band.count}</span>
-            </a>
-          );
-        })}
-      </nav>
-    </aside>
-  );
-}
-
-function MobileBandJumper({ bands }: { bands: Array<HeatBand & { count: number }> }) {
-  const firstBand = bands.find((band) => band.count > 0);
-  return (
-    <nav className="sticky top-[76px] z-10 col-span-full -mx-1 flex gap-2 overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump">
-      {firstBand ? <span className="shrink-0 rounded bg-black/30 px-2 py-2 text-zinc-400">{firstBand.label} · {firstBand.count}</span> : null}
-      {bands.filter((band) => band.count > 0).map((band) => (
-        <a key={band.key} href={`#band-${band.key}`} className="shrink-0 rounded border border-white/10 px-2 py-2 text-zinc-200" style={{ borderColor: `${band.color}66` }}>
-          {band.label}
-        </a>
-      ))}
-    </nav>
   );
 }
 
@@ -582,6 +580,26 @@ function BandHeader({ band, count }: { band: HeatBand; count: number }) {
     <div className="sticky top-0 z-10 mt-6 mb-3 flex items-center gap-3 bg-[#08080a]/92 py-2 backdrop-blur" data-heat-band-header={band.key}>
       <p className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: band.color }}>{band.label} · {count}</p>
       <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
+    </div>
+  );
+}
+
+function EvenBandCollapsed({ count, href }: { count: number; href: string }) {
+  return (
+    <div className="rounded border border-white/10 bg-black/20 p-4" data-responsive-check="heat-even-collapsed">
+      <Link href={href} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300/40 hover:text-amber-300">
+        Show {count} even arms
+      </Link>
+    </div>
+  );
+}
+
+function EvenBandExpanded({ count, href }: { count: number; href: string }) {
+  return (
+    <div className="flex justify-end" data-responsive-check="heat-even-expanded">
+      <Link href={href} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 hover:border-amber-300/40 hover:text-amber-300">
+        Hide {count} even arms
+      </Link>
     </div>
   );
 }
@@ -634,17 +652,32 @@ function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
 }
 
-function lastName(name: string) {
-  return name.trim().split(/\s+/).at(-1) ?? name;
-}
+function FormDeltaLabel({ summary }: { summary: Pick<FormSummary, "trend" | "deltaForm"> }) {
+  const steady = Math.abs(summary.deltaForm) < 1;
+  const marker = summary.trend === "heating" ? "↑" : summary.trend === "cooling" ? "↓" : "→";
+  const label = steady ? "steady" : `${marker} ${formatSignedDelta(summary.deltaForm)}`;
+  const className = summary.trend === "heating"
+    ? "text-cyan-300"
+    : summary.trend === "cooling"
+      ? "text-amber-300"
+      : "text-zinc-500";
 
-function InsufficientTrend({ windowCount, window }: { windowCount: number; window: number }) {
   return (
-    <span className="inline-flex min-h-8 items-center gap-2 rounded border border-zinc-500/25 px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-500" aria-label={`Insufficient trend data, ${windowCount} of ${window} starts`}>
-      <span>--</span>
-      <span>Insufficient</span>
+    <span className={`mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${className}`}>
+      {label}
     </span>
   );
+}
+
+function deltaAriaLabel(summary: Pick<FormSummary, "trend" | "deltaForm">) {
+  if (Math.abs(summary.deltaForm) < 1) return "steady";
+  if (summary.trend === "heating") return `rising ${formatSignedDelta(summary.deltaForm)}`;
+  if (summary.trend === "cooling") return `falling ${formatSignedDelta(summary.deltaForm)}`;
+  return `steady ${formatSignedDelta(summary.deltaForm)}`;
+}
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
 }
 
 function ControlGroup({ label, children }: { label: string; children: React.ReactNode }) {

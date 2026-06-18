@@ -514,6 +514,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
       headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${start.pitcherMlbId}/headshot/67/current`,
     },
     opponent: start.opponent,
+    side: start.side,
     result: start.result,
     line: start.line,
     gameScorePlus,
