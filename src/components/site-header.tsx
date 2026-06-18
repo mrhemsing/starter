@@ -16,7 +16,7 @@ export async function SiteHeader({
 }) {
   return (
     <header className={`site-header-nav flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 ${className}`} data-responsive-check={responsiveCheck}>
-      <Link href="/" className="site-logo-wordmark">
+      <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
         Toe the Slab
       </Link>
       <SiteNav active={active} today={today} rankedDate={rankedDate} />

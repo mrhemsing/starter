@@ -66,9 +66,10 @@ assert(
 
 assert(
   siteHeader.includes("site-header-nav") &&
+    siteHeader.includes('<Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">') &&
     siteHeader.includes("border-b border-white/10 pb-5") &&
     siteHeader.includes("<SiteNav active={active} today={today} rankedDate={rankedDate} />"),
-  "site header must own the shared logo/nav hairline divider",
+  "site header must own the shared home-linking logo/nav hairline divider",
 );
 
 assert(
