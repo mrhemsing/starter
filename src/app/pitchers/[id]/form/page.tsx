@@ -15,6 +15,7 @@ import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
+import { parsePitcherRouteParam, pitcherHref } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { ArsenalPitchSummary, FeaturedStartHighlight, PitcherApiResponse, StartDetail } from "@/lib/types";
 
@@ -28,7 +29,8 @@ type PitcherFormPageProps = {
 };
 
 export async function generateMetadata({ params, searchParams }: PitcherFormPageProps): Promise<Metadata> {
-  const { id } = await params;
+  const routeParams = await params;
+  const id = parsePitcherRouteParam(routeParams.id);
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
   const form = await getPitcherForm(id, { window });
@@ -37,7 +39,7 @@ export async function generateMetadata({ params, searchParams }: PitcherFormPage
   const title = pitcherFormTitle(form);
   const description = pitcherFormDescription(form);
   const isDefaultWindow = window === FORM_CONFIG.windowDefault;
-  const url = `/pitchers/${id}/form${isDefaultWindow ? "" : `?window=${window}`}`;
+  const url = pitcherHref(form.summary, isDefaultWindow ? undefined : { window });
   const image = `/pitchers/${id}/form/opengraph-image${isDefaultWindow ? "" : `?window=${window}`}`;
 
   return {
@@ -64,7 +66,8 @@ export async function generateMetadata({ params, searchParams }: PitcherFormPage
 }
 
 export default async function PitcherFormPage({ params, searchParams }: PitcherFormPageProps) {
-  const { id } = await params;
+  const routeParams = await params;
+  const id = parsePitcherRouteParam(routeParams.id);
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
   const today = getHomeSlateDate();
@@ -139,7 +142,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
             </div>
             <div className="flex flex-wrap gap-2">
               {[3, 5, 10].map((value) => (
-                <Link key={value} href={`/pitchers/${id}/form?window=${value}`} className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${window === value ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}>
+                <Link key={value} href={pitcherHref(summary, value === FORM_CONFIG.windowDefault ? undefined : { window: value })} className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${window === value ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}>
                   Last {value}
                 </Link>
               ))}

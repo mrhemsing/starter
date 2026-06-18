@@ -6,6 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
+import { pitcherHref } from "@/lib/routes";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
@@ -46,10 +47,14 @@ export function TonightsMustWatch({
       data-generated-at={tonight.generatedAt}
       data-game-count={shownGames.length}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
+      data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
+      data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
+      data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
+      data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
       data-active-card-statuses={tonight.activeCardStatuses.join(",")}
@@ -407,6 +412,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       style={{ borderColor: `${color}66`, boxShadow: `inset ${align === "home" ? "-" : ""}4px 0 0 ${color}` }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
+      data-starter-layout="duel"
       data-starter-side={starter.side}
       data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
       data-starter-name={starter.name ?? "TBD"}
@@ -626,6 +632,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       style={{ borderColor: `${color}44`, boxShadow: `inset 3px 0 0 ${color}` }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
+      data-starter-layout="mini"
       data-starter-side={starter.side}
       data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
       data-starter-name={starter.name ?? "TBD"}
@@ -727,6 +734,11 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
     "data-projection-status": projection.status,
     "data-projection-confidence": projection.confidence,
     "data-projection-notes": projection.notes.join("; "),
+    "data-projection-line-token-count": String([
+      projection.line.inningsPitched,
+      projection.line.strikeouts,
+      projection.line.earnedRuns,
+    ].filter((value) => value !== null).length),
     "data-projected-gs-plus": projection.projectedGsPlus === null ? "pending" : projection.projectedGsPlus.toFixed(1),
     "data-projected-innings": projection.line.inningsPitched === null ? "pending" : projection.line.inningsPitched.toFixed(1),
     "data-projected-strikeouts": projection.line.strikeouts === null ? "pending" : projection.line.strikeouts.toFixed(1),
@@ -957,14 +969,14 @@ function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "sm
   if (!starter.pitcherId) return image;
 
   return (
-    <Link href={pitcherFormHref(starter.pitcherId)} className="shrink-0" aria-label={`${starter.name ?? "Pitcher"} form`}>
+    <Link href={pitcherFormHref(starter.pitcherId, starter.name)} className="shrink-0" aria-label={`${starter.name ?? "Pitcher"} form`}>
       {image}
     </Link>
   );
 }
 
-function pitcherFormHref(pitcherId: string) {
-  return `/pitchers/${pitcherId}/form`;
+function pitcherFormHref(pitcherId: string, name?: string | null) {
+  return pitcherHref({ pitcherId, name });
 }
 
 function gameStatusLabel(status: TonightGame["status"]) {

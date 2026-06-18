@@ -8,8 +8,11 @@ function assert(condition, message) {
 
 const packageJson = await readFile("package.json", "utf8");
 const headshotComponent = await readFile("src/components/headshot.tsx", "utf8");
+const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
+const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
+const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 
 assert(
   packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"'),
@@ -23,8 +26,17 @@ assert(
   "shared headshot component must expose a larger hero size for pitcher page headers",
 );
 
+assert(routes.includes("export function pitcherHref"), "routes must expose one shared pitcherHref helper");
+assert(routes.includes("export function parsePitcherRouteParam"), "routes must resolve canonical slug routes by trailing pitcher ID");
+assert(routes.includes("export function pitcherSlug"), "routes must build readable slug-ID pitcher URLs");
+assert(pitcherPage.includes("parsePitcherRouteParam(routeParams.id)"), "canonical profile route must resolve by trailing ID");
+assert(pitcherPage.includes("permanentRedirect(canonicalHref)"), "numeric or mismatched pitcher profile routes must permanently redirect");
+assert(pitcherPage.includes("<PitcherFormPage"), "canonical profile route must render the rich Heat Check profile");
+assert(pitcherFormPage.includes("parsePitcherRouteParam(routeParams.id)"), "legacy /form route must resolve slug or numeric params by trailing ID");
+assert(watchlistPage.includes("pitcherHref(entry)") && watchlistPage.includes("pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName })"), "watchlist links must use shared canonical pitcherHref helper");
+assert(mustWatch.includes("import { pitcherHref } from") && mustWatch.includes("return pitcherHref({ pitcherId, name });"), "Must-Watch starter links must use shared canonical pitcherHref helper");
+
 for (const [label, source] of [
-  ["pitcher profile", pitcherPage],
   ["pitcher form", pitcherFormPage],
 ]) {
   assert(source.includes('import { SiteNav } from "@/components/site-nav";'), `${label} must import shared site navigation`);
@@ -35,12 +47,6 @@ for (const [label, source] of [
   assert(!source.includes('md:grid-cols-[1fr_240px]'), `${label} header must not keep the old detached right-column headshot layout`);
   assert(!source.includes('className="mx-auto"'), `${label} header headshot must not be centered away from the name`);
 }
-
-assert(
-  pitcherPage.includes('data-responsive-check="pitcher-site-header"') &&
-    pitcherPage.includes('<SiteNav active="starts" today={today} />'),
-  "pitcher profile must render the shared header with the Ranked Starts nav context",
-);
 
 assert(
   pitcherFormPage.includes('data-responsive-check="pitcher-form-site-header"') &&
@@ -54,4 +60,4 @@ assert(pitcherFormPage.includes("font-bold leading-none"), "pitcher form score m
 assert(pitcherFormPage.includes("[overflow-wrap:anywhere]"), "pitcher form stat line must be allowed to wrap inside the header");
 assert(!pitcherFormPage.includes('<div className="mt-5 flex flex-wrap items-center gap-3">'), "pitcher form score/action row must not return to the overlapping flex layout");
 
-console.log("pitcher page contract ok: shared header/nav and larger left-aligned hero headshots");
+console.log("pitcher page contract ok: canonical slug profile, shared nav, redirects, and hero headshot profile are present");

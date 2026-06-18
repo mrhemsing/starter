@@ -8,7 +8,7 @@ import { SiteNav } from "@/components/site-nav";
 import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
-import { heatCheckPath, pitcherPath, upcomingDateHref } from "@/lib/routes";
+import { heatCheckPath, pitcherHref, upcomingDateHref } from "@/lib/routes";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +81,7 @@ export default async function WatchlistPage() {
               ) : (
                 <div className="mt-4 grid gap-2">
                   {watchlist.digestEvents.slice(0, 8).map((event) => (
-                    <Link key={`${event.pitcherId}-${event.key}`} href={pitcherPath(event.pitcherId)} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
+                    <Link key={`${event.pitcherId}-${event.key}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName })} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
                       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
                       <p className="mt-1 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
                       <p className="mt-1 text-xs text-zinc-500">{event.detail}</p>
@@ -115,7 +115,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
         pitcherId={entry.pitcherId}
         name={entry.name}
         team={`${entry.team} / ${tierLabel(entry.tier)} / ${entry.windowCount} starts`}
-        href={pitcherPath(entry.pitcherId)}
+        href={pitcherHref(entry)}
         size="md"
       >
         <p className="truncate text-xs text-zinc-500">{lastLine}</p>

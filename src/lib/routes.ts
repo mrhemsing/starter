@@ -18,6 +18,44 @@ export function pitcherPath(pitcherId: string) {
   return `/pitchers/${pitcherId}`;
 }
 
+export type PitcherHrefInput = {
+  pitcherId?: string | number | null;
+  id?: string | number | null;
+  name?: string | null;
+  pitcherName?: string | null;
+};
+
+export function pitcherSlug(name: string | null | undefined, fallbackId: string | number) {
+  const slug = (name ?? "")
+    .toLowerCase()
+    .replace(/['.]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `${slug || "pitcher"}-${fallbackId}`;
+}
+
+export function parsePitcherRouteParam(value: string) {
+  const match = value.match(/(\d+)$/);
+  return match?.[1] ?? value;
+}
+
+export function pitcherHref(pitcher: PitcherHrefInput, params?: Record<string, string | number | null | undefined>) {
+  const pitcherId = pitcher.pitcherId ?? pitcher.id;
+  if (pitcherId === null || pitcherId === undefined || pitcherId === "") return "/pitchers";
+
+  const name = pitcher.name ?? pitcher.pitcherName;
+  const path = `/pitchers/${pitcherSlug(name, pitcherId)}`;
+  if (!params) return path;
+
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== "") search.set(key, String(value));
+  }
+  const query = search.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 export function slatePath({ window, date }: SlateRouteParams) {
   return `/slate/${window}/${date}`;
 }

@@ -1,4 +1,5 @@
 import { tierOf, TREND_STYLES } from "@/lib/form-tokens";
+import { pitcherHref } from "@/lib/routes";
 import type { FormLeaderboardResponse, FormPitcherResponse, FormSummary } from "@/lib/types";
 
 export const FORM_SITE_TITLE = "Toe the Slab";
@@ -35,7 +36,7 @@ export function jsonLdForFormPage(leaderboard: FormLeaderboardResponse) {
       "@type": "ListItem",
       position: index + 1,
       name: pitcher.name,
-      url: `/pitchers/${pitcher.pitcherId}/form?window=${leaderboard.window}`,
+      url: pitcherHref(pitcher, { window: leaderboard.window }),
       additionalProperty: formSummaryProperties(pitcher),
     })),
   };
@@ -50,7 +51,7 @@ export function jsonLdForPitcherForm(form: FormPitcherResponse) {
     identifier: form.summary.pitcherId,
     jobTitle: "Baseball pitcher",
     memberOf: form.summary.team ? { "@type": "SportsTeam", name: form.summary.team } : undefined,
-    url: `/pitchers/${form.summary.pitcherId}/form`,
+    url: pitcherHref(form.summary),
     additionalProperty: formSummaryProperties(form.summary),
   };
 }
