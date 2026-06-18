@@ -113,9 +113,11 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('<span className="mt-2 block">{statusLabel.detail}</span>') &&
-    topPerformerCard.includes('<span className="mt-2 block nowrap-token">{statusLabel.detail}</span>'),
-  "home top performer status detail must render on a forced new line on desktop and mobile",
+  topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.22em] text-[#F6C445]') &&
+    topPerformerCard.includes('<span className="mt-1 block">{statusLabel.detail}</span>') &&
+    topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.16em] text-[#F6C445]') &&
+    topPerformerCard.includes('<span className="mt-1 block nowrap-token">{statusLabel.detail}</span>'),
+  "home top performer status detail must render on a forced tight new line on desktop and mobile",
 );
 
 assert(
