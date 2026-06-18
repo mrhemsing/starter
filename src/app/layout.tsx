@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Shrikhand } from "next/font/google";
+import { Analytics } from '@vercel/analytics/next';
 import { BAverageBadge } from "@/components/b-average-badge";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
@@ -71,6 +72,7 @@ export default function RootLayout({
             <BAverageBadge />
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
