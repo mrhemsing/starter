@@ -84,7 +84,7 @@ export default async function Home() {
           <div className="grid gap-5 py-4 lg:py-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
               <HomeSlateStatusLine initialState={slateStatus} href={upcomingDateHref(today)} />
-              <h1 className="section-title font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">
+              <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
                 <span className="block">Every MLB start,</span>
                 <span className="block">ranked.</span>
               </h1>
