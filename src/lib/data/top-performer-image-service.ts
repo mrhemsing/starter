@@ -11,6 +11,9 @@ const MLB_CONTENT_REVALIDATE_SECONDS = 5 * 60;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
+const PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID: Record<string, string> = {
+  "2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam",
+};
 
 type TopPerformerImageSource = "action" | "game-content" | "highlight" | "placeholder";
 
@@ -153,6 +156,11 @@ function selectMlbContentItem(content: MlbGameContent, start: StartSummary) {
     ...(content.highlights?.live?.items ?? []),
     ...(content.media?.featuredMedia?.items ?? []),
   ];
+  const preferredHeadline = PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID[start.id];
+  const preferredItem = preferredHeadline
+    ? items.find((item) => item.headline === preferredHeadline || item.title === preferredHeadline)
+    : null;
+  if (preferredItem) return preferredItem;
 
   return items
     .map((item) => ({ item, score: mlbContentItemScore(item, start) }))

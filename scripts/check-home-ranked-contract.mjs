@@ -10,6 +10,7 @@ const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
   rankedRoute.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";'),
@@ -140,6 +141,13 @@ assert(
 assert(
   !topPerformerCard.includes('object-[58%_18%]'),
   "home top performer image must not use the old off-center crop position",
+);
+
+assert(
+  imageService.includes('"2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam"') &&
+    imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID[start.id]") &&
+    imageService.includes("if (preferredItem) return preferredItem;"),
+  "home top performer image resolver must prefer Nolan McLean's wider bases-loaded jam image",
 );
 
 console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses mobile-safe cover framing");
