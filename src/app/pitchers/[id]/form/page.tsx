@@ -6,9 +6,10 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormTrendChart, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
-import { getPitcherApiResponse, getStartDetail } from "@/lib/data/start-service";
+import { getHomeSlateDate, getPitcherApiResponse, getStartDetail } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
@@ -66,6 +67,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const { id } = await params;
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
+  const today = getHomeSlateDate();
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const [form, pitcher] = await Promise.all([
     getPitcherForm(id, { window }),
@@ -87,8 +89,13 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>
-        <header className="mt-6 border-b border-white/10 pb-8">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="pitcher-form-site-header">
+          <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
+            Toe the Slab
+          </Link>
+          <SiteNav active="heat" today={today} />
+        </header>
+        <section className="mt-6 border-b border-white/10 pb-8" data-responsive-check="pitcher-form-hero">
           <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
             <Headshot
               playerId={summary.pitcherId}
@@ -120,7 +127,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               </div>
             </div>
           </div>
-        </header>
+        </section>
 
         <section className="py-8">
           <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-end">

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Headshot } from "@/components/headshot";
-import { getPitcherApiResponse } from "@/lib/data/start-service";
+import { SiteNav } from "@/components/site-nav";
+import { getHomeSlateDate, getPitcherApiResponse } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import type { PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherSkillSnapshot } from "@/lib/types";
@@ -54,19 +55,20 @@ function pitcherSeasonLogHref(id: string, sort: PitcherApiSeasonLogSort, result:
 export default async function PitcherPage({ params, searchParams }: PitcherPageProps) {
   const { id } = await params;
   const controls = await searchParams;
+  const today = getHomeSlateDate();
   const pitcher = await getPitcherApiResponse(id, controls);
   if (!pitcher) notFound();
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
-          Toe the Slab
-        </Link>
-        <Link href={`/pitchers/${id}/form`} className="ml-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-400">
-          Form
-        </Link>
-        <header className="mt-6 border-b border-white/10 pb-8">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="pitcher-site-header">
+          <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
+            Toe the Slab
+          </Link>
+          <SiteNav active="starts" today={today} />
+        </header>
+        <section className="mt-6 border-b border-white/10 pb-8" data-responsive-check="pitcher-hero">
           <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
             <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} size="hero" loading="eager" decorative className="mt-1" />
             <div className="min-w-0 flex-1">
@@ -77,9 +79,12 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
               <p className="mt-4 font-mono text-sm text-zinc-400">
                 {pitcher.seasonLine.starts} starts / {pitcher.seasonLine.inningsPitched.toFixed(1)} IP / {pitcher.seasonLine.era.toFixed(2)} ERA / {pitcher.seasonLine.strikeouts} K
               </p>
+              <Link href={`/pitchers/${id}/form`} className="mt-4 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:bg-amber-300/10">
+                View Form
+              </Link>
             </div>
           </div>
-        </header>
+        </section>
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_1fr]">
           <div>

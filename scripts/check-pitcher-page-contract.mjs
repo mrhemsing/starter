@@ -27,10 +27,25 @@ for (const [label, source] of [
   ["pitcher profile", pitcherPage],
   ["pitcher form", pitcherFormPage],
 ]) {
+  assert(source.includes('import { SiteNav } from "@/components/site-nav";'), `${label} must import shared site navigation`);
+  assert(source.includes("getHomeSlateDate"), `${label} must resolve today for shared site navigation`);
+  assert(source.includes('href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300"'), `${label} must keep the Toe the Slab wordmark link`);
   assert(source.includes('className="flex max-w-5xl items-start gap-4 sm:gap-6"'), `${label} header must align the headshot to the left of the name block`);
   assert(source.includes('size="hero"'), `${label} header must use the larger hero headshot`);
   assert(!source.includes('md:grid-cols-[1fr_240px]'), `${label} header must not keep the old detached right-column headshot layout`);
   assert(!source.includes('className="mx-auto"'), `${label} header headshot must not be centered away from the name`);
 }
 
-console.log("pitcher page contract ok: player headers use larger left-aligned hero headshots");
+assert(
+  pitcherPage.includes('data-responsive-check="pitcher-site-header"') &&
+    pitcherPage.includes('<SiteNav active="starts" today={today} />'),
+  "pitcher profile must render the shared header with the Ranked Starts nav context",
+);
+
+assert(
+  pitcherFormPage.includes('data-responsive-check="pitcher-form-site-header"') &&
+    pitcherFormPage.includes('<SiteNav active="heat" today={today} />'),
+  "pitcher form must render the shared header with the Heat Check nav context",
+);
+
+console.log("pitcher page contract ok: shared header/nav and larger left-aligned hero headshots");
