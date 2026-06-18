@@ -189,7 +189,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 md:flex-row md:items-start">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: tier.color }}>{tier.label}</p>
-            <h3 className="card-title mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl">{game.label}</h3>
+            <h3 className="card-title mt-2 font-serif text-[1.8rem] font-bold text-zinc-50 lg:text-[2.4rem]">{game.label}</h3>
             <p
               id={summaryId}
               className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"
@@ -267,7 +267,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
         <div className="min-w-0">
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
             <div>
-              <h3 className="card-title font-serif text-2xl font-bold text-zinc-50">{game.label}</h3>
+              <h3 className="card-title font-serif text-[1.2rem] font-bold text-zinc-50">{game.label}</h3>
               <p
                 id={summaryId}
                 className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"

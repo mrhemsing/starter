@@ -10,6 +10,7 @@ const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
+const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
@@ -85,6 +86,14 @@ assert(
 assert(
   homeDeferredSections.includes('title="Must-Watch Games"') && !homeDeferredSections.includes('title="Tonight\\\'s Must-Watch Games"'),
   "home must-watch section title must read Must-Watch Games without the Tonight prefix",
+);
+
+assert(
+  mustWatch.includes("card-title mt-2 font-serif text-[1.8rem] font-bold text-zinc-50 lg:text-[2.4rem]") &&
+    mustWatch.includes("card-title font-serif text-[1.2rem] font-bold text-zinc-50") &&
+    !mustWatch.includes("card-title mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl") &&
+    !mustWatch.includes("card-title font-serif text-2xl font-bold text-zinc-50"),
+  "home must-watch game-name titles must stay 20% smaller than the prior 4xl/5xl and 2xl treatment",
 );
 
 assert(
