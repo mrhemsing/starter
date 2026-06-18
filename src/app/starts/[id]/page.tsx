@@ -19,6 +19,7 @@ import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
+import { slateTimeWord } from "@/lib/time-words";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
@@ -321,7 +322,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
                 <Link href={`/upcoming/${date}`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
-                  {completionState.remainingGames} {completionState.remainingGames === 1 ? "game" : "games"} still to come tonight
+                  {completionState.remainingGames} {completionState.remainingGames === 1 ? "game" : "games"} still to come {slateTimeWord({ date }, { today })}
                 </Link>
               </section>
             ) : null}

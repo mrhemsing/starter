@@ -11,6 +11,7 @@ import { getHomeSlateDate } from "@/lib/data/start-service";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { heatCheckPath, pitcherHref, sourceParams, upcomingDateHref } from "@/lib/routes";
+import { slateTimeWordTitle } from "@/lib/time-words";
 import type { FormSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +118,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]">
                   <Link href={heatCheckPath()} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 text-amber-300">Full Heat Check</Link>
-                  <Link href={upcomingDateHref(today)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300">Tonight&apos;s starters</Link>
+                  <Link href={upcomingDateHref(today)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300">{slateTimeWordTitle({ date: today }, { today })}&apos;s starters</Link>
                 </div>
               </div>
             ) : (

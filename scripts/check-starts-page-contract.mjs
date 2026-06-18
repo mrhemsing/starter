@@ -40,9 +40,16 @@ assert(
 assert(
   startsPage.includes('const source = parseEntitySource(query?.from, "starts");') &&
     startsPage.includes("<EntityOrientation") &&
-    startsPage.includes("<SiteNav active={null} today={today} />") &&
+    startsPage.includes('<SiteHeader active={null} today={today} responsiveCheck="start-detail-site-header" />') &&
     siteNav.includes("active: NavKey | null"),
   "start detail pages must render neutral nav and source-aware back/breadcrumb orientation",
+);
+
+assert(
+  startsPage.includes('import { slateTimeWord } from "@/lib/time-words";') &&
+    startsPage.includes("still to come {slateTimeWord({ date }, { today })}") &&
+    !startsPage.includes("still to come tonight"),
+  "ranked starts partial-slate CTA must use slateTimeWord instead of hardcoded tonight copy",
 );
 
 assert(

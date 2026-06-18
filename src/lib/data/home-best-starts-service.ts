@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
+import { inningsFromIP } from "@/lib/innings";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;
@@ -55,14 +56,27 @@ async function getBestStarts(anchorDate: string) {
 async function getBestStartWindow(anchorDate: string, days: number) {
   const dates = Array.from({ length: days }, (_, index) => addDays(anchorDate, -index));
   const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
-  const starts = slates.flat().filter((start) => start.source?.line !== "fixture");
-  return starts.sort((a, b) => b.gameScorePlus - a.gameScorePlus)[0] ?? null;
+  const starts = slates.flat().filter(isEligibleBestStart);
+  return starts.sort(compareBestStarts)[0] ?? null;
 }
 
 function rankedWindowStarts(starts: StartSummary[], startDate: string, endDate: string) {
   return starts
-    .filter((start) => start.source?.line !== "fixture" && start.date >= startDate && start.date <= endDate)
-    .sort((a, b) => b.gameScorePlus - a.gameScorePlus);
+    .filter((start) => isEligibleBestStart(start) && start.date >= startDate && start.date <= endDate)
+    .sort(compareBestStarts);
+}
+
+function isEligibleBestStart(start: StartSummary) {
+  return start.source?.line !== "fixture" && inningsFromIP(start.line.inningsPitched) >= 3;
+}
+
+function compareBestStarts(a: StartSummary, b: StartSummary) {
+  return (
+    b.gameScorePlus - a.gameScorePlus ||
+    b.date.localeCompare(a.date) ||
+    inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) ||
+    b.line.strikeouts - a.line.strikeouts
+  );
 }
 
 function addDays(date: string, days: number) {

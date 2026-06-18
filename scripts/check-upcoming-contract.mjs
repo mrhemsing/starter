@@ -1425,9 +1425,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedFirstPitches = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-first-pitches"));
   const renderedGameStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-statuses"));
   const renderedDetailedStates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-detailed-states"));
+  const renderedStarterSides = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-sides"));
   const renderedStarterStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-statuses"));
   const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
   const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
+  const renderedStarterFormHrefs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-hrefs"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
   const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
   const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
@@ -1480,6 +1482,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one non-empty detailed state per visible game`,
   );
   assert(
+    renderedStarterSides.length === renderedGameCount &&
+      renderedStarterSides.every((sides) => sides === "away/home"),
+    `${route} ${sectionId} should expose one away/home starter side pair per visible game`,
+  );
+  assert(
     renderedStarterStatuses.length === renderedGameCount &&
       renderedStarterStatuses.every((statuses) => /^(ok|insufficient|tbd)\/(ok|insufficient|tbd)$/.test(statuses)),
     `${route} ${sectionId} should expose one away/home starter status pair per visible game`,
@@ -1493,6 +1500,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterNames.length === renderedGameCount &&
       renderedStarterNames.every((names) => names.split("/").length === 2 && names.split("/").every((name) => name.length > 0)),
     `${route} ${sectionId} should expose one away/home starter name pair per visible game`,
+  );
+  assert(
+    renderedStarterFormHrefs.length === renderedGameCount &&
+      renderedStarterFormHrefs.every((hrefs) => {
+        const pair = hrefs.split("|");
+        return pair.length === 2 && pair.every((href) => href === "none" || /^\/pitchers\/[a-z0-9-]+-\d+\?from=upcoming$/.test(href));
+      }),
+    `${route} ${sectionId} should expose one away/home starter Form href pair per visible game`,
   );
   assert(
     renderedParkRunFactors.length === renderedGameCount &&
@@ -1618,14 +1633,16 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedFirstPitches.join(",") === games.map((game) => game.firstPitch).join(",") &&
       renderedGameStatuses.join(",") === games.map((game) => game.status).join(",") &&
       renderedDetailedStates.join(",") === games.map((game) => game.detailedState).join(",") &&
+      renderedStarterSides.join(",") === games.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") &&
       renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
       renderedStarterPitcherIds.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") &&
       renderedStarterNames.join(",") === games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") &&
+      renderedStarterFormHrefs.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ? expectedStarterFormHref(starter) : "none").join("|")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, starter statuses, starter identities, starter names, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
     );
   }
 

@@ -34,6 +34,16 @@ assert(
 );
 
 assert(
+  bestStartsService.includes('import { inningsFromIP } from "@/lib/innings";') &&
+    bestStartsService.includes("function isEligibleBestStart") &&
+    bestStartsService.includes("inningsFromIP(start.line.inningsPitched) >= 3") &&
+    bestStartsService.includes("function compareBestStarts") &&
+    bestStartsService.includes("b.date.localeCompare(a.date)") &&
+    bestStartsService.includes("b.line.strikeouts - a.line.strikeouts"),
+  "home best-starts service must enforce qualified starts and tie-break by recency, IP, then K",
+);
+
+assert(
   bestStartsService.includes("getArchivedSeasonStartSummaries") &&
     bestStartsService.includes("rankedWindowStarts") &&
     bestStartsService.includes("monthlyStarts.length > 0"),
@@ -62,9 +72,38 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("highlight={weeklyHighlight}") &&
-    homeDeferredSections.includes("highlight={monthlyHighlight}"),
-  "home best-starts cards must pass API highlights into the card renderer",
+  homeDeferredSections.includes('badge: "WEEK + MONTH BEST"') &&
+    homeDeferredSections.includes('badge: "WEEK BEST"') &&
+    homeDeferredSections.includes('badge: "MONTH BEST"') &&
+    homeDeferredSections.includes("visibleCards.length === 0") &&
+    homeDeferredSections.includes('visibleCards.length === 1 ? "" : "md:grid-cols-2"'),
+  "home best-starts cards must derive one combined card or two ordered Week/Month cards from the rolling-window relationship",
+);
+
+assert(
+  homeDeferredSections.includes("monthlyHighlight ?? weeklyHighlight") &&
+    homeDeferredSections.includes("highlight: weeklyHighlight") &&
+    homeDeferredSections.includes("highlight: monthlyHighlight"),
+  "home best-starts cards must pass API highlights into the adaptive card renderer",
+);
+
+assert(
+  homeDeferredSections.includes("Start of the Week & Month") &&
+    homeDeferredSections.includes("The best starts of the last 7 and 30 days, worth revisiting.") &&
+    !homeDeferredSections.includes("Start of the Week / Month") &&
+    !homeDeferredSections.includes("Tops the last 7 and 30 days") &&
+    !homeDeferredSections.includes("7-day best") &&
+    !homeDeferredSections.includes("30-day best"),
+  "home best-starts copy must use cleaned Week/Month vocabulary without duplicate labels",
+);
+
+assert(
+  homeDeferredSections.includes("pitcherHref(start.pitcher, sourceParams(\"home\"))") &&
+    homeDeferredSections.includes("startHref(start, sourceParams(\"home\"))") &&
+    homeDeferredSections.includes("score-bug") &&
+    homeDeferredSections.includes("band={scoreBand(start.gameScorePlus)}") &&
+    homeDeferredSections.includes("whitespace-nowrap"),
+  "home best-starts cards must show GS+ score-bug, thermal headshot, no-wrap badge, profile name link, and start deep-dive card link",
 );
 
 assert(

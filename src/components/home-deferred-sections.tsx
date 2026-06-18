@@ -9,10 +9,11 @@ import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
-import { sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
+import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
+import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
-import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
@@ -69,6 +70,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
 
   const watch = todayWatch?.games.length ? todayWatch : tomorrowWatch;
   const watchDate = todayWatch?.games.length ? today : tomorrow;
+  const watchWord = watch ? slateTimeWord(watch, { today }) : "today";
 
   return (
     <>
@@ -102,9 +104,10 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
         <TonightsMustWatch
           tonight={watch}
           fullSlateHref={upcomingDateHref(watchDate)}
-          fullSlateLabel="See tonight's full slate"
-          eyebrow={todayWatch?.games.length ? "Tonight" : "Tomorrow"}
+          fullSlateLabel={`See ${watchWord}'s full slate`}
+          eyebrow={slateTimeWordTitle(watch, { today })}
           title="Must-Watch Games"
+          rankLabel={watchWord}
           previewLimit={3}
         />
       ) : <HomeDeferredFallback variant="watch" />}
@@ -188,6 +191,15 @@ function BestStartsLite({
 }) {
   const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
   const sameStart = weekly && monthly && weekly.id === monthly.id;
+  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameStart
+    ? [{ badge: "WEEK + MONTH BEST", start: monthly, highlight: monthlyHighlight ?? weeklyHighlight }]
+    : [
+        { badge: "WEEK BEST", start: weekly, highlight: weeklyHighlight },
+        { badge: "MONTH BEST", start: monthly, highlight: monthlyHighlight },
+      ];
+  const visibleCards = cards.flatMap((card) => (card.start ? [{ badge: card.badge, start: card.start, highlight: card.highlight }] : []));
+
+  if (visibleCards.length === 0) return null;
 
   return (
     <section className="border-t border-white/10 bg-[#08080a] px-4 py-10 sm:px-6 lg:px-8">
@@ -195,70 +207,66 @@ function BestStartsLite({
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Evergreen</p>
-            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week / Month</h2>
-            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The daily Spotlight is disposable. These are the rolling-window starts worth revisiting.</p>
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week & Month</h2>
+            <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The best starts of the last 7 and 30 days, worth revisiting.</p>
           </div>
           <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
             Best starts archive
           </a>
         </div>
-        <div className={`grid gap-3 ${sameStart ? "" : "md:grid-cols-2"}`}>
-          {sameStart ? (
-            <BestStartCard title="7-day / 30-day best" badge="Tops the last 7 and 30 days" start={monthly} highlight={monthlyHighlight ?? weeklyHighlight} />
-          ) : (
-            <>
-              <BestStartCard title="7-day best" start={weekly} highlight={weeklyHighlight} />
-              <BestStartCard title="30-day best" start={monthly} highlight={monthlyHighlight} />
-            </>
-          )}
+        <div className={`grid gap-3 ${visibleCards.length === 1 ? "" : "md:grid-cols-2"}`}>
+          {visibleCards.map((card) => (
+            <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} />
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function BestStartCard({ title, start, badge, highlight }: { title: string; start: StartSummary | null; badge?: string; highlight?: FeaturedStartHighlight | null }) {
-  if (!start) {
-    return (
-      <div className="rounded border border-white/10 bg-[#101014] p-5">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{title}</p>
-        <p className="mt-3 text-sm text-zinc-400">Pending a completed start.</p>
-      </div>
-    );
-  }
-
+function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge: string; highlight?: FeaturedStartHighlight | null }) {
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-5">
-      <a href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-3">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative className="ml-1" />
+    <article className="group relative overflow-hidden rounded border border-white/10 bg-[#101014] p-5 transition hover:border-amber-300/40">
+      <a href={startHref(start, sourceParams("home"))} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
+      <div className="relative z-10 grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-center gap-3 pointer-events-none">
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" band={scoreBand(start.gameScorePlus)} decorative className="ml-1" />
         <div className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>
-          {badge ? <p className="mt-1 inline-flex max-w-full rounded border border-amber-300/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">{badge}</p> : null}
-          <h3 className="pitcher-name mt-1 font-serif text-3xl font-bold leading-tight text-zinc-50">{start.pitcher.name}</h3>
+          <p className="inline-flex max-w-full whitespace-nowrap rounded border border-amber-300/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">{badge}</p>
+          <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto mt-2 block font-serif text-3xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            {start.pitcher.name}
+          </a>
           <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">
-            <MetaLine segments={[`${start.pitcher.team} vs ${start.opponent}`, formatLongDate(start.date)]} />
+            <MetaLine segments={[`${start.pitcher.team} vs ${start.opponent}`, formatShortDate(start.date)]} />
           </p>
         </div>
-      </a>
-      <div className="mt-5 border-t border-white/10 pt-4">
-        <p className="font-serif text-5xl font-bold leading-none text-amber-300">{start.gameScorePlus}</p>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
+        <div className="score-bug rounded border border-amber-300/30 bg-amber-300 px-3 py-2 text-center text-zinc-950">
+          <p className="font-serif text-4xl font-bold leading-none">{start.gameScorePlus}</p>
+          <p className="mt-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em]">GS+</p>
+        </div>
       </div>
-      <p className="mt-4 text-sm leading-6 text-zinc-400"><StartLineText line={start.line} /></p>
+      <p className="relative z-10 mt-4 text-sm leading-6 text-zinc-400 pointer-events-none"><StartLineText line={start.line} /></p>
       {highlight ? (
-        <div className="mt-4">
+        <div className="relative z-10 mt-4 pointer-events-auto">
           <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
         </div>
       ) : null}
-    </div>
+    </article>
   );
 }
 
-function formatLongDate(date: string) {
+function scoreBand(score: number): FormTier {
+  if (score >= 69) return "onfire";
+  if (score >= 58) return "hot";
+  if (score >= 46) return "even";
+  if (score >= 30) return "cooling";
+  return "ice";
+}
+
+function formatShortDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", {
-    month: "long",
+    month: "short",
     day: "numeric",
     timeZone: "UTC",
   }).format(parsed);

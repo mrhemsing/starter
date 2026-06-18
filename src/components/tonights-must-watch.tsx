@@ -7,6 +7,7 @@ import { LocalTime } from "@/components/local-time";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
+import { slateTimeWordTitle } from "@/lib/time-words";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
@@ -16,9 +17,9 @@ export function TonightsMustWatch({
   fullSlateHref,
   fullSlateLabel = "Full slate & probables",
   fullSlateAriaLabel,
-  eyebrow = "Tonight",
+  eyebrow,
   title = "Must-Watch",
-  rankLabel = "tonight",
+  rankLabel = "today",
   previewLimit,
   sectionId = "must-watch",
   compactTopPadding = false,
@@ -38,6 +39,7 @@ export function TonightsMustWatch({
   const headliner = shownGames[0];
   const rows = shownGames.slice(1);
   const headingId = `${sectionId}-heading`;
+  const eyebrowLabel = eyebrow ?? slateTimeWordTitle(tonight);
 
   return (
     <section
@@ -56,9 +58,11 @@ export function TonightsMustWatch({
       data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
       data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
       data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
+      data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
+      data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : "none").join("|")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
@@ -94,7 +98,7 @@ export function TonightsMustWatch({
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{eyebrow}</p>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{eyebrowLabel}</p>
             <h2 id={headingId} className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
               Ranked by starter form, pairing quality, and matchup context. Matchup values are shown with a slate rank, never as a bare number.
@@ -394,22 +398,26 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
 function watchHookReason(game: TonightGame, rankLabel: string) {
   const reasonKey = watchHookReasonKey(game, rankLabel);
   if (reasonKey === "fallback-slate" || reasonKey === "fallback-group") {
-    return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+    return isSlateRankLabel(rankLabel) ? "Top watch score on the slate" : "Top watch score in this group";
   }
   if (reasonKey === "best-matchup") return "Best matchup on the board";
   if (reasonKey === "two-heating") return "Two arms trending up";
   if (reasonKey === "strikeout-upside") return "Strikeout upside";
-  return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+  return isSlateRankLabel(rankLabel) ? "Top watch score on the slate" : "Top watch score in this group";
 }
 
 function watchHookReasonKey(game: TonightGame, rankLabel: string) {
   if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext.status === "pending-opponent-splits") {
-    return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+    return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
   }
   if (game.matchupRankTonight === 1) return "best-matchup";
   if (game.starters.every((starter) => starter.trend === "heating")) return "two-heating";
   if (combinedProjectedStrikeouts(game.starters) >= 12) return "strikeout-upside";
-  return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+  return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
+}
+
+function isSlateRankLabel(rankLabel: string) {
+  return rankLabel === "today" || rankLabel === "tomorrow" || rankLabel === "yesterday" || rankLabel.startsWith("on ");
 }
 
 function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {

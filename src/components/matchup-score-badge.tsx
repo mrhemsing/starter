@@ -3,7 +3,7 @@ export function MatchupScoreBadge({
   rank,
   max = 100,
   compact = false,
-  rankLabel = "tonight",
+  rankLabel = "today",
 }: {
   score: number;
   rank?: number;

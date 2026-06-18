@@ -4,6 +4,7 @@ import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visua
 import { Headshot } from "@/components/headshot";
 import { HEAT_BANDS, tierOf } from "@/lib/form-tokens";
 import { duelsPath } from "@/lib/routes";
+import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { PitchingDuel, PitchingDuelsResponse } from "@/lib/types";
 
 export function PitchingDuelsModule({
@@ -54,6 +55,10 @@ function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsRes
   const hasBestDuel = qualifyingDuels.length > 0;
   const topMismatch = duels.mismatches[0] ?? null;
   const boardHref = duels.mode === "settled" ? `${duelsPath(duels.date)}?mode=settled` : duelsPath(duels.date);
+  const slateWord = duels.mode === "settled" ? "last settled" : slateTimeWord({ date: duels.date });
+  const slatePossessive = duels.mode === "settled" ? "the last settled slate" : `${slateWord}'s slate`;
+  const desktopTitle = hasBestDuel ? title : `Closest matchups ${slateWord}`;
+  const mobileTitle = hasBestDuel ? title.replace(/\s+today$/i, "") : "Closest matchups";
 
   if (displayDuels.length === 0 && !topMismatch) return null;
 
@@ -62,10 +67,13 @@ function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsRes
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : "Today"}</p>
-            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{hasBestDuel ? title : "Closest matchups tonight"}</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{duels.mode === "settled" ? "Last settled slate" : slateTimeWordTitle({ date: duels.date })}</p>
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">
+              <span className="sm:hidden">{mobileTitle}</span>
+              <span className="hidden sm:inline">{desktopTitle}</span>
+            </h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              The strongest, most evenly matched matchups on tonight&apos;s slate.
+              The strongest, most evenly matched matchups on {slatePossessive}.
             </p>
           </div>
           <Link href={boardHref} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
@@ -82,7 +90,7 @@ function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsRes
         {topMismatch ? (
           <div className="mt-5 border-t border-white/10 pt-4">
             <Link href={boardHref} className="inline-flex min-h-9 items-center font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 underline-offset-4 hover:text-amber-300 hover:underline">
-              Biggest gap tonight: {topMismatch.label} · {topMismatch.gap}-pt edge to {leadingTeam(topMismatch)}{" ->"}
+              Biggest gap {slateWord}: {topMismatch.label} · {topMismatch.gap}-pt edge to {leadingTeam(topMismatch)}{" ->"}
             </Link>
           </div>
         ) : null}

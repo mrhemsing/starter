@@ -17,6 +17,7 @@ import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
+import { gameTimeWord } from "@/lib/time-words";
 import type { FormSummary, HeatBand, TonightGame } from "@/lib/types";
 import type React from "react";
 
@@ -449,7 +450,7 @@ function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: 
     const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
     return (
       <p className="font-mono text-xs uppercase tracking-[0.12em] text-teal-300">
-        Starts today {matchup} · {formatPacificTime(start.firstPitch)}
+        Starts {gameTimeWord(start)} {matchup} · {formatPacificTime(start.firstPitch)}
       </p>
     );
   }
