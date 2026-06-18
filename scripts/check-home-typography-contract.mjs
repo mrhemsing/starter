@@ -36,6 +36,14 @@ assert(
 );
 
 assert(
+  globals.includes("@media (max-width: 639.98px)") &&
+    globals.includes("h1.font-serif") &&
+    globals.includes("font-size: 2.4rem;") &&
+    globals.includes("line-height: 1;"),
+  "mobile page titles must match the homepage Every MLB start title size",
+);
+
+assert(
   globals.includes(".meta-seg") && globals.includes(".stat-token") && globals.includes(".status-token") && globals.includes("white-space: nowrap;"),
   "global typography must include nowrap units for meta segments, stat tokens, and status tokens",
 );

@@ -41,6 +41,13 @@ p,
   text-wrap: pretty;
 }
 
+@media (max-width: 639.98px) {
+  h1.font-serif {
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+}
+
 .meta-line {
   overflow-wrap: normal;
 }
