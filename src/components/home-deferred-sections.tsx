@@ -10,21 +10,16 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
+import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
-
-type BestStartsHomeResponse = {
-  weekly: StartSummary | null;
-  monthly: StartSummary | null;
-  weeklyHighlight: FeaturedStartHighlight | null;
-  monthlyHighlight: FeaturedStartHighlight | null;
-};
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
   tomorrowWatch?: TonightResponse | null;
   duels?: PitchingDuelsResponse | null;
   ranked?: RankedHomeResponse | null;
+  bestStarts?: BestStartsHomeResponse | null;
 };
 
 export function HomeDeferredSections({ today, tomorrow, initialData }: { today: string; tomorrow: string; initialData?: HomeDeferredInitialData }) {
@@ -33,7 +28,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
   const [duels, setDuels] = useState<PitchingDuelsResponse | null>(initialData?.duels ?? null);
   const [formHome, setFormHome] = useState<FormHomeResponse | null>(null);
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
-  const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(null);
+  const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,12 +58,14 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
     if (!ranked) {
       fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
     }
-    fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
+    if (!bestStarts) {
+      fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
+  }, [bestStarts, duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
   const watch = todayWatch?.games.length ? todayWatch : tomorrowWatch;
   const watchDate = todayWatch?.games.length ? today : tomorrow;

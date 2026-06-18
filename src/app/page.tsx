@@ -3,6 +3,7 @@ import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteNav } from "@/components/site-nav";
 import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
+import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
@@ -33,13 +34,15 @@ export default async function Home() {
   const duelsPromise = todayWatchPromise
     .then((watch) => getPitchingDuels(watch && watch.games.length > 0 ? today : tomorrow, "upcoming"))
     .catch(() => null);
-  const [todaySchedule, todayCompletion, ranked, todayWatch, tomorrowWatch, duels] = await Promise.all([
+  const bestStartsPromise = getBestStartsHome().catch(() => null);
+  const [todaySchedule, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts] = await Promise.all([
     getSlateSchedule({ window: "today", date: today }),
     getRankedSlateCompletionState(today, today),
     getRankedHome().catch(() => null),
     todayWatchPromise,
     tomorrowWatchPromise,
     duelsPromise,
+    bestStartsPromise,
   ]);
   const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
   const slateStatus = getSlateProgressState(todaySchedule);
@@ -119,6 +122,7 @@ export default async function Home() {
           todayWatch,
           tomorrowWatch,
           duels,
+          bestStarts,
         }}
       />
     </main>
