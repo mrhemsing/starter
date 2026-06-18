@@ -66,17 +66,19 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
         <Link href={`/pitchers/${id}/form`} className="ml-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-400">
           Form
         </Link>
-        <header className="mt-6 grid gap-6 border-b border-white/10 pb-8 md:grid-cols-[1fr_240px] lg:grid-cols-[1fr_320px]">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
-              {pitcher.team} / Throws {pitcher.throws}
-            </p>
-            <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl lg:text-7xl">{pitcher.name}</h1>
-            <p className="mt-4 font-mono text-sm text-zinc-400">
-              {pitcher.seasonLine.starts} starts / {pitcher.seasonLine.inningsPitched.toFixed(1)} IP / {pitcher.seasonLine.era.toFixed(2)} ERA / {pitcher.seasonLine.strikeouts} K
-            </p>
+        <header className="mt-6 border-b border-white/10 pb-8">
+          <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
+            <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} size="hero" loading="eager" decorative className="mt-1" />
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
+                {pitcher.team} / Throws {pitcher.throws}
+              </p>
+              <h1 className="mt-3 break-words font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl lg:text-7xl">{pitcher.name}</h1>
+              <p className="mt-4 font-mono text-sm text-zinc-400">
+                {pitcher.seasonLine.starts} starts / {pitcher.seasonLine.inningsPitched.toFixed(1)} IP / {pitcher.seasonLine.era.toFixed(2)} ERA / {pitcher.seasonLine.strikeouts} K
+              </p>
+            </div>
           </div>
-          <Headshot playerId={pitcher.mlbId} name={pitcher.name} team={pitcher.team} size="xl" loading="eager" decorative className="mx-auto" />
         </header>
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_1fr]">

@@ -88,26 +88,38 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>
-        <header className="mt-6 grid gap-6 border-b border-white/10 pb-8 md:grid-cols-[1fr_240px]">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{summary.team} / Last {window} qualified starts</p>
-            <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">{summary.name}</h1>
-            <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
-              Form through {form.formThroughDate ?? "pending"}{form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}
-            </p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <div>
-                <p className={`font-serif text-6xl font-bold ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
-                <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
-                <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-                  ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)}
-                </p>
+        <header className="mt-6 border-b border-white/10 pb-8">
+          <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
+            <Headshot
+              playerId={summary.pitcherId}
+              name={summary.name}
+              team={summary.team}
+              size="hero"
+              band={thermalBand}
+              sampleSufficient={summary.windowCount >= window}
+              loading="eager"
+              decorative
+              className="mt-1"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{summary.team} / Last {window} qualified starts</p>
+              <h1 className="mt-3 break-words font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl lg:text-7xl">{summary.name}</h1>
+              <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
+                Form through {form.formThroughDate ?? "pending"}{form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <div>
+                  <p className={`font-serif text-6xl font-bold ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
+                  <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)}
+                  </p>
+                </div>
+                <TrendChip summary={summary} />
+                <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
               </div>
-              <TrendChip summary={summary} />
-              <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
             </div>
           </div>
-          <Headshot playerId={summary.pitcherId} name={summary.name} team={summary.team} size="xl" band={thermalBand} sampleSufficient={summary.windowCount >= window} loading="eager" decorative className="mx-auto" />
         </header>
 
         <section className="py-8">
