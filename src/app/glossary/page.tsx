@@ -19,7 +19,7 @@ export default function GlossaryPage() {
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>
+        <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
         <header className="mt-6 border-b border-white/10 pb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Reference</p>
           <h1 className="mt-3 font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">Glossary</h1>

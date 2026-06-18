@@ -115,7 +115,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
       <section className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="start-detail-site-header">
-            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
+            <Link href="/" className="site-logo-wordmark">
               Toe the Slab
             </Link>
             <SiteNav active={null} today={today} />
@@ -212,7 +212,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>
+            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
             <SiteNav active="starts" today={today} rankedDate={rankedDate} />
           </div>
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>

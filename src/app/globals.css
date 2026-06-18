@@ -17,6 +17,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-playfair);
+  --font-logo: var(--font-shrikhand);
 }
 
 body {
@@ -42,6 +43,17 @@ p,
 
 .meta-line {
   overflow-wrap: normal;
+}
+
+.site-logo-wordmark {
+  color: #fcd34d;
+  font-family: var(--font-shrikhand), var(--font-playfair), Georgia, serif;
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-transform: uppercase;
 }
 
 .meta-seg,

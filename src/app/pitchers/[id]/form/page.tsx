@@ -100,7 +100,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="pitcher-form-site-header">
-          <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
+          <Link href="/" className="site-logo-wordmark">
             Toe the Slab
           </Link>
           <SiteNav active={null} today={today} />

@@ -137,7 +137,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">Toe the Slab</Link>
+            <Link href="/" className="site-logo-wordmark">Toe the Slab</Link>
             <SiteNav active="heat" today={today} rankedDate={rankedDate} />
           </div>
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50 sm:text-6xl">Heat Check</h1>
