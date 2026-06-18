@@ -57,7 +57,7 @@ export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineP
 
   return (
     <p
-      className="mb-4 block max-w-full font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-amber-200 sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
+      className="mb-4 block max-w-full font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
       data-slate-total-games={slateState.totalGames}
@@ -65,8 +65,8 @@ export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineP
       data-slate-final-games={slateState.finalGames}
     >
       <span className="status-token block sm:inline">{line}</span>
-      <span className="mx-1.5 hidden sm:inline">·</span>
-      <a href={href} className="nowrap-token block underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
+      <span className="mx-1.5 hidden text-amber-200 sm:inline">·</span>
+      <a href={href} className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
         Upcoming{"\u00A0"}starts{"\u00A0"}{"->"}
       </a>
     </p>

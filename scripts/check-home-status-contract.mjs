@@ -79,9 +79,16 @@ assert(
 );
 
 assert(
+  statusLine.includes('text-white') &&
+    statusLine.includes('className="status-token block sm:inline">{line}</span>') &&
+    statusLine.includes('className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
+  "homepage status line must keep the state fact white and the upcoming starts link amber",
+);
+
+assert(
   statusLine.includes('className="status-token block sm:inline">{line}</span>') &&
-    statusLine.includes('className="mx-1.5 hidden sm:inline"') &&
-    statusLine.includes('className="nowrap-token block underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
+    statusLine.includes('className="mx-1.5 hidden text-amber-200 sm:inline"') &&
+    statusLine.includes('className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
   "homepage status line must force the upcoming starts link onto a new line on mobile without the separator dot",
 );
 
