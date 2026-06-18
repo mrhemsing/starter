@@ -1431,9 +1431,13 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
   const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
   const renderedStarterFormHrefs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-hrefs"));
+  const renderedStarterMarketStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-statuses"));
+  const renderedStarterMarketSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-sources"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
+  const renderedParkRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-values"));
   const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
   const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
+  const renderedWeatherRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-run-values"));
   const renderedWeatherTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-tones"));
   const renderedWatchScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-scores"));
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
@@ -1516,18 +1520,29 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one away/home starter Form href pair per visible game`,
   );
   assert(
+    renderedStarterMarketStatuses.length === renderedGameCount &&
+      renderedStarterMarketStatuses.every((statuses) => /^(?:pending-feed|ready|none)\/(?:pending-feed|ready|none)$/.test(statuses)) &&
+      renderedStarterMarketSources.length === renderedGameCount &&
+      renderedStarterMarketSources.every((sources) => /^(?:the-odds-api|not-configured|odds-deferred|none)\/(?:the-odds-api|not-configured|odds-deferred|none)$/.test(sources)),
+    `${route} ${sectionId} should expose one away/home starter market status/source pair per visible game`,
+  );
+  assert(
     renderedParkRunFactors.length === renderedGameCount &&
       renderedParkRunFactors.every((factor) => /^\d+\.\d{2}$/.test(factor) && Number.isFinite(Number(factor))) &&
+      renderedParkRunValues.length === renderedGameCount &&
+      renderedParkRunValues.every((value) => /^-?\d+\.\d$/.test(value) && Number.isFinite(Number(value))) &&
       renderedParkTones.length === renderedGameCount &&
       renderedParkTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
-    `${route} ${sectionId} should expose one park run factor and tone per visible game`,
+    `${route} ${sectionId} should expose one park run factor, run value, and tone per visible game`,
   );
   assert(
     renderedWeatherSources.length === renderedGameCount &&
       renderedWeatherSources.every((source) => ["open-meteo", "indoor", "unavailable"].includes(source)) &&
+      renderedWeatherRunValues.length === renderedGameCount &&
+      renderedWeatherRunValues.every((value) => /^-?\d+\.\d$/.test(value) && Number.isFinite(Number(value))) &&
       renderedWeatherTones.length === renderedGameCount &&
       renderedWeatherTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
-    `${route} ${sectionId} should expose one supported weather source and tone per visible game`,
+    `${route} ${sectionId} should expose one supported weather source, run value, and tone per visible game`,
   );
   assert(
     renderedWatchScores.length === renderedGameCount &&
@@ -1645,11 +1660,15 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterPitcherIds.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") &&
       renderedStarterNames.join(",") === games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") &&
       renderedStarterFormHrefs.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ? expectedStarterFormHref(starter) : "none").join("|")).join(",") &&
+      renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
+      renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
+      renderedParkRunValues.join(",") === games.map((game) => game.parkContext.runValue.toFixed(1)).join(",") &&
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
+      renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
     );
   }
 

@@ -15,6 +15,7 @@ const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
 const PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID: Record<string, string> = {
   "2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam",
+  "2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game",
 };
 
 type TopPerformerImageSource = "action" | "game-content" | "highlight" | "placeholder";

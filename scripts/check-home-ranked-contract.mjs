@@ -190,9 +190,10 @@ assert(
     imageService.includes("if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;") &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     imageService.includes('"2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam"') &&
+    imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID[start.id]") &&
     imageService.includes("if (preferredItem) return preferredItem;"),
-  "home top performer image resolver must pin Nolan McLean to the wider bases-loaded jam image across Nolan starts",
+  "home top performer image resolver must pin hand-picked MLB content stills for known awkward crops",
 );
 
 console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses mobile-safe cover framing");

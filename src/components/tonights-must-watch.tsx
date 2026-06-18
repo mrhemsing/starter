@@ -64,9 +64,13 @@ export function TonightsMustWatch({
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
       data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : "none").join("|")).join(",") : "none"}
+      data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
+      data-visible-park-run-values={shownGames.length ? shownGames.map((game) => game.parkContext.runValue.toFixed(1)).join(",") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
+      data-visible-weather-run-values={shownGames.length ? shownGames.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") : "none"}
       data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
