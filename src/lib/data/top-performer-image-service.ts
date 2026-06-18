@@ -11,6 +11,8 @@ const MLB_CONTENT_REVALIDATE_SECONDS = 5 * 60;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
+const NOLAN_MCLEAN_MLB_ID = 690997;
+const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
 const PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID: Record<string, string> = {
   "2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam",
 };
@@ -108,6 +110,9 @@ type MlbGameContent = {
 export async function resolveTopPerformerImage(start: StartSummary | null, highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
   if (!start) return null;
 
+  const preferredPitcherImage = resolvePreferredPitcherImage(start);
+  if (preferredPitcherImage) return preferredPitcherImage;
+
   const gameContentImage = await resolveMlbGameContentImage(start).catch(() => null);
   if (gameContentImage) return gameContentImage;
 
@@ -127,6 +132,16 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
     source: "placeholder",
     imageUrl: PLACEHOLDER_IMAGE_URL,
     alt: "Pitcher's mound and rubber on a baseball field",
+  };
+}
+
+function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
+  if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;
+
+  return {
+    source: "game-content",
+    imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,
+    alt: "Nolan McLean escapes a bases-loaded jam",
   };
 }
 
