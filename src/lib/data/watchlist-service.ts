@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
-import type { FormNextStart, FormSummary } from "@/lib/types";
+import type { FormNextStart, FormSummary, ProbableStart } from "@/lib/types";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
 const WATCHLIST_IDS_PREFIX = "wlids_";
@@ -12,13 +12,24 @@ type WatchlistStore = {
   users: Record<string, { pitcherIds: string[]; updatedAt: string }>;
 };
 
+export type WatchlistSort = "default" | "form" | "soonest" | "mover";
+
+export type WatchlistNextStart = FormNextStart & {
+  daysAway: number;
+  gamePk: number;
+  gameLabel: string | null;
+  venue: string | null;
+  status: string;
+  projectedGsPlus: number;
+};
+
 export type WatchlistEntry = FormSummary & {
-  nextStart: FormNextStart | null;
+  nextStart: WatchlistNextStart | null;
   digestEvents: WatchlistDigestEvent[];
 };
 
 export type WatchlistDigestEvent = {
-  key: "starting" | "rising" | "rough";
+  key: "starting" | "rising" | "cooling" | "gem" | "rough" | "band";
   label: string;
   detail: string;
 };
@@ -26,7 +37,10 @@ export type WatchlistDigestEvent = {
 export type WatchlistView = {
   accountId: string | null;
   pitcherIds: string[];
+  sort: WatchlistSort;
   entries: WatchlistEntry[];
+  pitchingSoon: WatchlistEntry[];
+  bench: WatchlistEntry[];
   digestEvents: Array<WatchlistDigestEvent & { pitcherId: string; pitcherName: string }>;
 };
 
@@ -83,10 +97,11 @@ export async function unfollowPitcher(accountId: string, pitcherId: string) {
   return user.pitcherIds;
 }
 
-export async function getWatchlistView(accountId: string | null | undefined): Promise<WatchlistView> {
+export async function getWatchlistView(accountId: string | null | undefined, options: { sort?: string | null } = {}): Promise<WatchlistView> {
   const pitcherIds = await getWatchlistPitcherIds(accountId);
+  const sort = parseWatchlistSort(options.sort);
   if (pitcherIds.length === 0) {
-    return { accountId: accountId ?? null, pitcherIds: [], entries: [], digestEvents: [] };
+    return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], pitchingSoon: [], bench: [], digestEvents: [] };
   }
 
   const [leaderboard, nextStarts] = await Promise.all([
@@ -94,7 +109,7 @@ export async function getWatchlistView(accountId: string | null | undefined): Pr
     getNextStartMap(pitcherIds),
   ]);
   const byId = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
-  const entries = pitcherIds
+  const hydratedEntries = pitcherIds
     .map((pitcherId) => byId.get(pitcherId))
     .filter((pitcher): pitcher is FormSummary => Boolean(pitcher))
     .map((pitcher) => {
@@ -105,23 +120,29 @@ export async function getWatchlistView(accountId: string | null | undefined): Pr
         digestEvents: digestEventsForPitcher(pitcher, nextStart),
       };
     });
+  const entries = sortWatchlistEntries(hydratedEntries, sort);
+  const pitchingSoon = entries.filter(isPitchingSoon);
+  const bench = entries.filter((entry) => !isPitchingSoon(entry));
 
   return {
     accountId: accountId ?? null,
     pitcherIds,
+    sort,
     entries,
+    pitchingSoon,
+    bench,
     digestEvents: entries.flatMap((entry) => entry.digestEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name }))),
   };
 }
 
-function digestEventsForPitcher(pitcher: FormSummary, nextStart: FormNextStart | null): WatchlistDigestEvent[] {
+function digestEventsForPitcher(pitcher: FormSummary, nextStart: WatchlistNextStart | null): WatchlistDigestEvent[] {
   const events: WatchlistDigestEvent[] = [];
 
   if (nextStart) {
     events.push({
       key: "starting",
-      label: "Starting soon",
-      detail: `${nextStart.side === "away" ? "@" : "vs"} ${nextStart.opponent} on ${formatShortDate(nextStart.date)}`,
+      label: nextStart.daysAway === 0 ? "Starting today" : "Starting soon",
+      detail: `${nextStart.side === "away" ? "@" : "vs"} ${nextStart.opponent} on ${formatShortDate(nextStart.date)} · Proj GS+ ${nextStart.projectedGsPlus}`,
     });
   }
 
@@ -133,6 +154,22 @@ function digestEventsForPitcher(pitcher: FormSummary, nextStart: FormNextStart |
     });
   }
 
+  if (pitcher.status === "ok" && pitcher.trend === "cooling" && pitcher.deltaForm <= -4) {
+    events.push({
+      key: "cooling",
+      label: "Cooling",
+      detail: `Form down ${formatSigned(pitcher.deltaForm)} over baseline`,
+    });
+  }
+
+  if ((pitcher.lastStart?.gsPlus ?? 0) >= 65) {
+    events.push({
+      key: "gem",
+      label: "Gem last start",
+      detail: `Last GS+ ${pitcher.lastStart?.gsPlus ?? "--"} vs ${pitcher.lastStart?.opp ?? "opponent"}`,
+    });
+  }
+
   if ((pitcher.lastStart?.gsPlus ?? 100) <= 35) {
     events.push({
       key: "rough",
@@ -141,28 +178,82 @@ function digestEventsForPitcher(pitcher: FormSummary, nextStart: FormNextStart |
     });
   }
 
+  if (pitcher.status === "ok" && (pitcher.tier === "onfire" || pitcher.tier === "ice")) {
+    events.push({
+      key: "band",
+      label: pitcher.tier === "onfire" ? "On Fire band" : "Ice Cold band",
+      detail: `Current Form ${Math.round(pitcher.rgs)} across ${pitcher.windowCount} starts`,
+    });
+  }
+
   return events;
 }
 
-async function getNextStartMap(pitcherIds: string[]): Promise<Map<string, FormNextStart>> {
+async function getNextStartMap(pitcherIds: string[]): Promise<Map<string, WatchlistNextStart>> {
   const wanted = new Set(pitcherIds);
   const today = getHomeSlateDate();
   const dates = Array.from({ length: 10 }, (_, index) => addDays(today, index));
   const slates = await Promise.all(dates.map((date) => getTodayProbables(date)));
-  const nextStarts = new Map<string, FormNextStart>();
+  const nextStarts = new Map<string, WatchlistNextStart>();
 
   for (const probables of slates) {
     for (const probable of probables) {
       if (!wanted.has(probable.pitcherId) || nextStarts.has(probable.pitcherId)) continue;
-      nextStarts.set(probable.pitcherId, {
-        date: probable.date,
-        opponent: probable.opponent,
-        side: probable.side,
-      });
+      nextStarts.set(probable.pitcherId, probableToWatchlistNextStart(probable, today));
     }
   }
 
   return nextStarts;
+}
+
+function probableToWatchlistNextStart(probable: ProbableStart, today: string): WatchlistNextStart {
+  return {
+    date: probable.date,
+    opponent: probable.opponent,
+    side: probable.side ?? "home",
+    daysAway: Math.max(0, daysBetween(today, probable.date)),
+    gamePk: probable.gamePk,
+    gameLabel: probable.gameLabel ?? null,
+    venue: probable.venue ?? null,
+    status: probable.status,
+    projectedGsPlus: Math.round(probable.matchupScore),
+  };
+}
+
+function parseWatchlistSort(value: string | null | undefined): WatchlistSort {
+  if (value === "form" || value === "soonest" || value === "mover") return value;
+  return "default";
+}
+
+function sortWatchlistEntries(entries: WatchlistEntry[], sort: WatchlistSort) {
+  return [...entries].sort((a, b) => {
+    if (sort === "soonest") return compareSoonest(a, b) || compareForm(a, b);
+    if (sort === "mover") return Math.abs(b.deltaForm) - Math.abs(a.deltaForm) || compareDefault(a, b);
+    if (sort === "form") return compareForm(a, b) || compareSoonest(a, b);
+    return compareDefault(a, b);
+  });
+}
+
+function compareDefault(a: WatchlistEntry, b: WatchlistEntry) {
+  return Number(isPitchingSoon(b)) - Number(isPitchingSoon(a)) || compareSoonest(a, b) || compareForm(a, b);
+}
+
+function compareSoonest(a: WatchlistEntry, b: WatchlistEntry) {
+  const aDays = a.nextStart?.daysAway ?? Number.POSITIVE_INFINITY;
+  const bDays = b.nextStart?.daysAway ?? Number.POSITIVE_INFINITY;
+  return aDays - bDays || a.name.localeCompare(b.name);
+}
+
+function compareForm(a: WatchlistEntry, b: WatchlistEntry) {
+  return b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name);
+}
+
+function isPitchingSoon(entry: WatchlistEntry) {
+  return typeof entry.nextStart?.daysAway === "number" && entry.nextStart.daysAway <= 2;
+}
+
+function daysBetween(olderDate: string, newerDate: string) {
+  return Math.round((new Date(`${newerDate}T00:00:00.000Z`).getTime() - new Date(`${olderDate}T00:00:00.000Z`).getTime()) / (24 * 60 * 60 * 1000));
 }
 
 async function readStore(): Promise<WatchlistStore> {

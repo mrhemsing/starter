@@ -83,14 +83,30 @@ try {
   const followedJson = await followed.json();
   assert(followedJson.pitcherIds.includes(pitcherId), "follow API should persist pitcher id");
   assert(followedJson.entries.some((entry) => entry.pitcherId === pitcherId), "follow API should hydrate followed pitcher");
+  assert(Array.isArray(followedJson.pitchingSoon), "watchlist API should expose pitchingSoon group");
+  assert(Array.isArray(followedJson.bench), "watchlist API should expose bench group");
+  assert(["default", "form", "soonest", "mover"].includes(followedJson.sort), "watchlist API should expose supported sort mode");
+  assert(
+    followedJson.entries.every((entry) => !entry.nextStart || typeof entry.nextStart.projectedGsPlus === "number"),
+    "watchlist next-start entries should expose projected GS+",
+  );
 
   const page = await fetch(`${baseUrl}/watchlist`, { headers: { cookie } });
   assert(page.ok, `/watchlist returned ${page.status}`);
   const html = await page.text();
   assert(html.includes("Watchlist"), "watchlist page should render");
   assert(html.includes("Digest preview"), "watchlist should render digest preview");
+  assert(html.includes("Sort"), "watchlist should render sort controls");
+  assert(html.includes("Search pitchers to follow"), "watchlist should render inline add-pitcher search");
+  assert(html.includes("Pitching today / soon"), "watchlist should render actionable pitching-soon group");
+  assert(html.includes("Everyone else") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list");
   assert(html.includes("Following"), "watchlist should render following control");
   assert(html.includes(pitcherId) || html.includes("Misiorowski"), "watchlist should render followed pitcher");
+
+  const formSorted = await fetch(`${baseUrl}/watchlist?sort=form`, { headers: { cookie } });
+  assert(formSorted.ok, `/watchlist?sort=form returned ${formSorted.status}`);
+  const formHtml = await formSorted.text();
+  assert(formHtml.includes('data-watchlist-sort="form"'), "watchlist form sort should render sorted rows");
 
   const unfollowed = await fetch(`${baseUrl}/api/watchlist`, {
     method: "DELETE",
