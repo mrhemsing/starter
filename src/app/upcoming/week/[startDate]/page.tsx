@@ -64,6 +64,8 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const bestGame = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game }))).sort((a, b) => b.game.gameWatchScore - a.game.gameWatchScore)[0];
   const jsonLd = jsonLdForUpcomingWeek(upcoming);
   const allGames = upcoming.days.flatMap((day) => day.games);
+  const visibleGameCount = upcoming.days.reduce((count, day) => count + filterAndSortGames(day.games, controls).length, 0);
+  const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -92,7 +94,13 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
               Week&apos;s must-watch: {bestGame.game.label} / {formatUpcomingDate(bestGame.day)} / #1 week pick
             </Link>
           ) : null}
-          <UpcomingControls controls={controls} teams={teamsForGames(allGames)} basePath={upcomingWeekHref(resolvedStartDate)} />
+          <UpcomingControls
+            controls={controls}
+            teams={teamsForGames(allGames)}
+            basePath={upcomingWeekHref(resolvedStartDate)}
+            visibleGameCount={visibleGameCount}
+            scheduledGameCount={scheduledGameCount}
+          />
         </header>
       </div>
 

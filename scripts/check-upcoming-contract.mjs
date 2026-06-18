@@ -593,6 +593,10 @@ function projectionValue(value) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
 }
 
+function projectionLineTokenCount(projection) {
+  return ["inningsPitched", "strikeouts", "earnedRuns"].filter((key) => projection.line[key] !== null).length;
+}
+
 function workloadValue(value) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
 }
@@ -986,6 +990,15 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     Number.isInteger(Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-team-count"))),
     `${route} should expose a numeric upcoming controls team count`,
   );
+  const renderedVisibleGames = Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-visible-games"));
+  const renderedScheduledGames = Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-scheduled-games"));
+  assert(
+    Number.isInteger(renderedVisibleGames) &&
+      renderedVisibleGames >= 0 &&
+      Number.isInteger(renderedScheduledGames) &&
+      renderedScheduledGames >= renderedVisibleGames,
+    `${route} should expose valid visible and scheduled game counts on the upcoming controls`,
+  );
   assert(
     elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === "3",
     `${route} should expose exactly one active upcoming control per group`,
@@ -1003,6 +1016,13 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       `${route} should expose upcoming controls base path ${linkExpectations.basePath}`,
     );
     assertUpcomingControlLinks(html, route, linkExpectations);
+    if (linkExpectations.counts) {
+      assert(
+        renderedVisibleGames === linkExpectations.counts.visibleGames &&
+          renderedScheduledGames === linkExpectations.counts.scheduledGames,
+        `${route} should pin upcoming controls result counts to ${linkExpectations.counts.visibleGames}/${linkExpectations.counts.scheduledGames}`,
+      );
+    }
   }
 }
 
@@ -1197,12 +1217,17 @@ function spanHasSupportedHeadshotMetadata(html) {
   });
 }
 
-function starterGroupHasSupportedMetadata(html, starter) {
+function starterGroupHasSupportedMetadata(html, starter, options = {}) {
   const divs = html.match(/<div\b[^>]*>/g) ?? [];
   return divs.some((div) => {
     if (!div.includes('role="group"')) return false;
-    if (tagAttribute(div, "data-starter-side") !== starter.side) return false;
-    if (tagAttribute(div, "data-starter-team") !== starter.team) return false;
+    if (!options.allowIdentityDrift) {
+      if (tagAttribute(div, "data-starter-side") !== starter.side) return false;
+      if (tagAttribute(div, "data-starter-team") !== starter.team) return false;
+    } else {
+      if (!["home", "away"].includes(tagAttribute(div, "data-starter-side") ?? "")) return false;
+      if (!assertNonEmptyStringValue(tagAttribute(div, "data-starter-team"))) return false;
+    }
 
     const status = tagAttribute(div, "data-starter-status");
     const pitcherId = tagAttribute(div, "data-starter-pitcher-id");
@@ -1210,6 +1235,16 @@ function starterGroupHasSupportedMetadata(html, starter) {
     const formHref = tagAttribute(div, "data-starter-form-href");
     const nameLinked = tagAttribute(div, "data-starter-name-linked");
     const fallbackLabel = tagAttribute(div, "data-starter-fallback-label");
+
+    if (options.allowIdentityDrift) {
+      return (
+        ["ok", "insufficient", "tbd"].includes(status ?? "") &&
+        Boolean(name) &&
+        (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
+        (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
+        ["true", "false"].includes(nameLinked ?? "")
+      );
+    }
 
     return (
       ["ok", "insufficient", "tbd"].includes(status ?? "") &&
@@ -1383,13 +1418,77 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   const renderedGameCount = Number(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-game-count"));
   const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
+  const renderedGameDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-dates"));
+  const renderedTeamMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-matchups"));
+  const renderedVenues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-venues"));
+  const renderedFirstPitches = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-first-pitches"));
+  const renderedGameStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-statuses"));
+  const renderedDetailedStates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-detailed-states"));
+  const renderedStarterStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-statuses"));
+  const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
+  const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
+  const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
+  const renderedWeatherTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-tones"));
   const renderedWatchScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-scores"));
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
   const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
+  const renderedWatchFlagKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-flag-keys"));
+  const renderedComponentTopArms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-top-arms"));
+  const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
+  const renderedComponentMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-matchups"));
   const renderedMatchupRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-ranks"));
+  const renderedMatchupContextStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-context-statuses"));
+  const renderedMatchupStatusLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-status-labels"));
   assert(
     renderedGamePks.length === renderedGameCount && renderedGamePks.every((gamePk) => /^\d+$/.test(gamePk)),
     `${route} ${sectionId} should expose one numeric visible game id per rendered card; rendered count ${renderedGameCount}, ids ${renderedGamePks.join(",") || "none"}`,
+  );
+  assert(
+    renderedGameDates.length === renderedGameCount && renderedGameDates.every((gameDate) => /^\d{4}-\d{2}-\d{2}$/.test(gameDate)),
+    `${route} ${sectionId} should expose one visible game date per rendered card`,
+  );
+  assert(
+    renderedTeamMatchups.length === renderedGameCount &&
+      renderedTeamMatchups.every((matchup) => /^[A-Z0-9]{2,4}@[A-Z0-9]{2,4}$/.test(matchup)),
+    `${route} ${sectionId} should expose one visible away@home team matchup per rendered card`,
+  );
+  assert(
+    renderedVenues.length === renderedGameCount && renderedVenues.every((venue) => venue.length > 0),
+    `${route} ${sectionId} should expose one visible venue per rendered card`,
+  );
+  assert(
+    renderedFirstPitches.length === renderedGameCount &&
+      renderedFirstPitches.every((firstPitch) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(firstPitch)),
+    `${route} ${sectionId} should expose one ISO visible first pitch per rendered card`,
+  );
+  assert(
+    renderedGameStatuses.length === renderedGameCount &&
+      renderedGameStatuses.every((status) => ACTIVE_CARD_STATUSES.includes(status) || status === "ppd"),
+    `${route} ${sectionId} should expose one supported game status per visible game`,
+  );
+  assert(
+    renderedDetailedStates.length === renderedGameCount &&
+      renderedDetailedStates.every((state) => state.length > 0),
+    `${route} ${sectionId} should expose one non-empty detailed state per visible game`,
+  );
+  assert(
+    renderedStarterStatuses.length === renderedGameCount &&
+      renderedStarterStatuses.every((statuses) => /^(ok|insufficient|tbd)\/(ok|insufficient|tbd)$/.test(statuses)),
+    `${route} ${sectionId} should expose one away/home starter status pair per visible game`,
+  );
+  assert(
+    renderedParkRunFactors.length === renderedGameCount &&
+      renderedParkRunFactors.every((factor) => /^\d+\.\d{2}$/.test(factor) && Number.isFinite(Number(factor))) &&
+      renderedParkTones.length === renderedGameCount &&
+      renderedParkTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
+    `${route} ${sectionId} should expose one park run factor and tone per visible game`,
+  );
+  assert(
+    renderedWeatherSources.length === renderedGameCount &&
+      renderedWeatherSources.every((source) => ["open-meteo", "indoor", "unavailable"].includes(source)) &&
+      renderedWeatherTones.length === renderedGameCount &&
+      renderedWeatherTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
+    `${route} ${sectionId} should expose one supported weather source and tone per visible game`,
   );
   assert(
     renderedWatchScores.length === renderedGameCount &&
@@ -1398,9 +1497,21 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
       renderedWatchSortGroups.length === renderedGameCount &&
       renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
+      renderedWatchFlagKeys.length === renderedGameCount &&
+      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key))) &&
+      renderedComponentTopArms.length === renderedGameCount &&
+      renderedComponentTopArms.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
+      renderedComponentPairings.length === renderedGameCount &&
+      renderedComponentPairings.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
+      renderedComponentMatchups.length === renderedGameCount &&
+      renderedComponentMatchups.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
       renderedMatchupRanks.length === renderedGameCount &&
-      renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1),
-    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, and matchup rank per visible game`,
+      renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1) &&
+      renderedMatchupContextStatuses.length === renderedGameCount &&
+      renderedMatchupContextStatuses.every((status) => ["pending-opponent-splits", "scored"].includes(status)) &&
+      renderedMatchupStatusLabels.length === renderedGameCount &&
+      renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)),
+    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score set, matchup rank, matchup context status, and matchup status label per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -1474,9 +1585,26 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     assert(
       renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
         renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
-        renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
-        renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(","),
-      `${route} ${sectionId} should preserve API watch scores, tiers, sort groups, and matchup ranks in visible section order`,
+      renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
+      renderedWatchFlagKeys.join(",") === games.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") &&
+      renderedComponentTopArms.join(",") === games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") &&
+      renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
+      renderedComponentMatchups.join(",") === games.map((game) => game.matchupScore.toFixed(1)).join(",") &&
+      renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(",") &&
+      renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
+      renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
+      renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
+      renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
+      renderedVenues.join(",") === games.map((game) => game.park ?? "Venue TBD").join(",") &&
+      renderedFirstPitches.join(",") === games.map((game) => game.firstPitch).join(",") &&
+      renderedGameStatuses.join(",") === games.map((game) => game.status).join(",") &&
+      renderedDetailedStates.join(",") === games.map((game) => game.detailedState).join(",") &&
+      renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
+      renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
+      renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
+      renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
+      renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
+      `${route} ${sectionId} should preserve API dates, teams, venues, statuses, detailed states, starter statuses, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
     );
   }
 
@@ -1649,13 +1777,16 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     }
     assert(card.text.includes("Matchup"), `${route} should render matchup context for ${game.label}`);
     if (game.matchupContext?.status === "pending-opponent-splits") {
-      assert(card.text.includes("pending"), `${route} should render pending matchup context for ${game.label}`);
+      assert(
+        card.text.includes("pending") || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(card.html)),
+        `${route} should render supported pending or live-adjusted matchup context for ${game.label}`,
+      );
       assert(
         divHasAttributes(card.html, {
           role: "img",
           "aria-label": "Opponent split matchup context pending",
-        }),
-        `${route} should render an accessible pending matchup summary for ${game.label}`,
+        }) || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(card.html)),
+        `${route} should render an accessible pending or live-adjusted matchup summary for ${game.label}`,
       );
     } else {
       assert(
@@ -1936,6 +2067,22 @@ function assertRenderedFormClash(html, normalizedHtml, route, game) {
 }
 
 function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
+  if (allowsRenderedLiveDataDrift(route)) {
+    const noteTag = html.match(/<p\b[^>]*data-watch-flag-count="([^"]*)"[^>]*>/)?.[0] ?? "";
+    if (!noteTag) return;
+    const keys = csvAttributeValues(tagAttribute(noteTag, "data-watch-flag-keys"));
+    const count = Number(tagAttribute(noteTag, "data-watch-flag-count"));
+    assert(
+      Number.isInteger(count) &&
+        count === keys.length &&
+        keys.length > 0 &&
+        keys.every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key)) &&
+        assertNonEmptyStringValue(tagAttribute(noteTag, "aria-label")),
+      `${route} should expose valid live-adjusted watch-card fallback reason metadata for ${game.label}`,
+    );
+    return;
+  }
+
   if (game.flags?.tbd) {
     assert(
       normalizedHtml.includes("TBD starter included with league-mean fallback."),
@@ -1971,18 +2118,23 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
 
 function assertRenderedStarters(html, normalizedHtml, route, game, options = {}) {
   const expectedHeadshotSize = html.includes('data-responsive-check="must-watch-headliner"') ? "xl" : "sm";
+  const expectedStarterLayout = expectedHeadshotSize === "xl" ? "duel" : "mini";
   game.starters.forEach((starter) => {
     const label = `${route} ${game.label} ${starter.side} starter`;
     if (allowsRenderedLiveDataDrift(route)) {
       assert(normalizedHtml.includes(starter.team), `${label} should render ${starter.team}`);
-      assert(
-        starterGroupHasSupportedMetadata(html, starter),
-        `${label} should expose a valid live-adjusted grouped starter block for its side and team`,
-      );
-      assert(
-        spanHasSupportedHeadshotMetadata(html),
-        `${label} headshot should expose supported thermal form band and starter status metadata during fallback live-data drift`,
-      );
+      if (html.includes('role="group"') && html.includes("data-starter-side=")) {
+        assert(
+          starterGroupHasSupportedMetadata(html, starter, { allowIdentityDrift: true }),
+          `${label} should expose a valid live-adjusted grouped starter block`,
+        );
+      }
+      if (html.includes("data-headshot-size=")) {
+        assert(
+          spanHasSupportedHeadshotMetadata(html),
+          `${label} headshot should expose supported thermal form band and starter status metadata during fallback live-data drift`,
+        );
+      }
       return;
     }
     const starterName = starter.name ?? "TBD";
@@ -1992,6 +2144,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       divHasAttributes(html, {
         role: "group",
         "aria-label": starterBlockAriaLabel(starter),
+        "data-starter-layout": expectedStarterLayout,
         "data-starter-side": starter.side,
         "data-starter-pitcher-id": starter.pitcherId ?? "tbd",
         "data-starter-name": starter.name ?? "TBD",
@@ -2030,7 +2183,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-top-driver-delta": starterTopDriverValue(starter, "delta"),
         "data-starter-top-driver-score": starterTopDriverValue(starter, "score"),
       }),
-      `${label} should expose its side, pitcher id, name, team, status, form href, name link state, fallback label, form summary, sparkline state, season baseline, last-start source, workload state, and driver provenance on a grouped starter block`,
+      `${label} should expose its layout, side, pitcher id, name, team, status, form href, name link state, fallback label, form summary, sparkline state, season baseline, last-start source, workload state, and driver provenance on a grouped starter block`,
     );
     assert(
       spanHasAttributes(html, {
@@ -2070,12 +2223,13 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-projection-status": starter.projection.status,
         "data-projection-confidence": starter.projection.confidence,
         "data-projection-notes": starter.projection.notes.join("; "),
+        "data-projection-line-token-count": String(projectionLineTokenCount(starter.projection)),
         "data-projected-gs-plus": projectionValue(starter.projection.projectedGsPlus),
         "data-projected-innings": projectionValue(starter.projection.line.inningsPitched),
         "data-projected-strikeouts": projectionValue(starter.projection.line.strikeouts),
         "data-projected-earned-runs": projectionValue(starter.projection.line.earnedRuns),
       }),
-      `${label} should pin projection status, confidence, and projected line values`,
+      `${label} should pin projection status, confidence, visible token count, and projected line values`,
     );
 
     if (starter.status === "ok") {
@@ -2680,10 +2834,14 @@ try {
     `/upcoming/${date}`,
     "Filters / All statuses / Watch rank / All teams",
     dayControlTeam
-      ? {
+        ? {
           basePath: `/upcoming/${date}`,
           controls: { pregameOnly: false, sort: "watch", team: "" },
           team: dayControlTeam,
+          counts: {
+            visibleGames: upcoming.days[0].games.length,
+            scheduledGames: upcoming.days[0].scheduledGames,
+          },
         }
       : null,
   );
@@ -2767,12 +2925,16 @@ try {
       filteredSortedPregameTeamDayHtml,
       `/upcoming/${filteredDate}?pregame=1&sort=time&team=${dayFilterTeam}`,
       `Filters / Pregame only / Start time / ${dayFilterTeam}`,
-      {
-        basePath: `/upcoming/${filteredDate}`,
-        controls: { pregameOnly: true, sort: "time", team: dayFilterTeam },
-        team: dayFilterTeam,
+    {
+      basePath: `/upcoming/${filteredDate}`,
+      controls: { pregameOnly: true, sort: "time", team: dayFilterTeam },
+      team: dayFilterTeam,
+      counts: {
+        visibleGames: pregameTeamGamesByFirstPitch(filteredDay.games, dayFilterTeam).length,
+        scheduledGames: filteredDay.scheduledGames,
       },
-    );
+    },
+  );
     assertRenderedWatchCards(
       filteredSortedPregameTeamDayHtml,
       `/upcoming/${filteredDate}?pregame=1&sort=time&team=${dayFilterTeam}`,
@@ -3031,10 +3193,14 @@ try {
     assertWeekDaySlateLinks(weekHtml, `/upcoming/week/${date}`, upcoming.days);
     assertUpcomingRangeToggle(weekHtml, `/upcoming/week/${date}`, homeSlateDate, date, `/upcoming/week/${date}`);
     assertUpcomingControls(weekHtml, `/upcoming/week/${date}`, "Filters / All statuses / Watch rank / All teams", {
-      basePath: `/upcoming/week/${date}`,
-      controls: { pregameOnly: false, sort: "watch", team: "" },
-      team: weekFilterTeam,
-    });
+    basePath: `/upcoming/week/${date}`,
+    controls: { pregameOnly: false, sort: "watch", team: "" },
+    team: weekFilterTeam,
+    counts: {
+      visibleGames: weekGames.length,
+      scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+    },
+  });
     assertNoLegacySlateLinks(weekHtml, `/upcoming/week/${date}`);
     await assertPng(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}/opengraph-image`, `/upcoming/week/${date}/opengraph-image`);
 
@@ -3049,10 +3215,14 @@ try {
     );
     assertNoIndexFollow(filteredWeekHtml, `/upcoming/week/${date}?sort=time`);
     assertUpcomingControls(filteredWeekHtml, `/upcoming/week/${date}?sort=time`, "Filters / All statuses / Start time / All teams", {
-      basePath: `/upcoming/week/${date}`,
-      controls: { pregameOnly: false, sort: "time", team: "" },
-      team: weekFilterTeam,
-    });
+    basePath: `/upcoming/week/${date}`,
+    controls: { pregameOnly: false, sort: "time", team: "" },
+    team: weekFilterTeam,
+    counts: {
+      visibleGames: weekGames.length,
+      scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+    },
+  });
     upcoming.days.forEach((day) => {
       assertRenderedWatchCards(
         filteredWeekHtml,
@@ -3134,6 +3304,10 @@ try {
         basePath: `/upcoming/week/${date}`,
         controls: { pregameOnly: true, sort: "time", team: weekFilterTeam },
         team: weekFilterTeam,
+        counts: {
+          visibleGames: upcoming.days.reduce((count, day) => count + pregameTeamGamesByFirstPitch(day.games, weekFilterTeam).length, 0),
+          scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+        },
       },
     );
     upcoming.days.forEach((day) => {

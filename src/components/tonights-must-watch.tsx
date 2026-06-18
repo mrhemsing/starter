@@ -47,13 +47,26 @@ export function TonightsMustWatch({
       data-generated-at={tonight.generatedAt}
       data-game-count={shownGames.length}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
+      data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
       data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
+      data-visible-venues={shownGames.length ? shownGames.map((game) => game.park ?? "Venue TBD").join(",") : "none"}
       data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
       data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
+      data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
+      data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
+      data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
+      data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
+      data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
+      data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
+      data-visible-watch-flag-keys={shownGames.length ? shownGames.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") : "none"}
+      data-visible-component-top-arms={shownGames.length ? shownGames.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") : "none"}
+      data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
+      data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
+      data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
       data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
@@ -581,7 +594,7 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
       detail: game.weatherContext.label,
       source: game.weatherContext.source,
       value: game.weatherContext.runValue.toFixed(1),
-      tone: game.weatherContext.runValue > 0.4 ? "warm" : game.weatherContext.runValue < -0.4 ? "cool" : "muted",
+      tone: weatherContextTone(game),
       metadata: {
         "data-weather-temp-f": weatherMetricValue(game.weatherContext.tempF, 0),
         "data-weather-wind-mph": weatherMetricValue(game.weatherContext.windMph, 0),
@@ -619,6 +632,18 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
 
 function weatherMetricValue(value: number | undefined, precision: number) {
   return typeof value === "number" && Number.isFinite(value) ? value.toFixed(precision) : "pending";
+}
+
+function parkContextTone(game: TonightGame) {
+  if (game.parkContext.runFactor >= 1.06) return "warm";
+  if (game.parkContext.runFactor <= 0.96) return "cool";
+  return "muted";
+}
+
+function weatherContextTone(game: TonightGame) {
+  if (game.weatherContext.runValue > 0.4) return "warm";
+  if (game.weatherContext.runValue < -0.4) return "cool";
+  return "muted";
 }
 
 function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagueMeanGS: number }) {

@@ -78,7 +78,13 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             One card per game, ranked by starter form and matchup context. Probables are grouped head-to-head instead of duplicated by pitcher.
           </p>
           <UpcomingToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
-          <UpcomingControls controls={controls} teams={teamsForGames(upcoming.games)} basePath={upcomingDateHref(resolvedDate)} />
+          <UpcomingControls
+            controls={controls}
+            teams={teamsForGames(upcoming.games)}
+            basePath={upcomingDateHref(resolvedDate)}
+            visibleGameCount={visibleUpcoming.games.length}
+            scheduledGameCount={upcoming.scheduledGames}
+          />
         </header>
       </div>
       <TonightsMustWatch
@@ -122,7 +128,19 @@ export function teamsForGames(games: Array<{ away: string; home: string }>) {
   return [...new Set(games.flatMap((game) => [game.away, game.home]))].sort();
 }
 
-export function UpcomingControls({ controls, teams, basePath }: { controls: UpcomingControlsState; teams: string[]; basePath: string }) {
+export function UpcomingControls({
+  controls,
+  teams,
+  basePath,
+  visibleGameCount,
+  scheduledGameCount,
+}: {
+  controls: UpcomingControlsState;
+  teams: string[];
+  basePath: string;
+  visibleGameCount: number;
+  scheduledGameCount: number;
+}) {
   const controlsLabel = upcomingControlsLabel(controls);
   const activeControlCount = 3;
 
@@ -135,6 +153,8 @@ export function UpcomingControls({ controls, teams, basePath }: { controls: Upco
       data-control-team={controls.team || "all"}
       data-control-base-path={basePath}
       data-control-team-count={teams.length}
+      data-control-visible-games={visibleGameCount}
+      data-control-scheduled-games={scheduledGameCount}
       data-control-active-count={activeControlCount}
     >
       <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
