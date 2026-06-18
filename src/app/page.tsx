@@ -2,7 +2,10 @@ import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteNav } from "@/components/site-nav";
 import type { Metadata } from "next";
+import { getPitchingDuels } from "@/lib/data/duels-service";
+import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
+import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import { getSlateProgressState } from "@/lib/slate-state";
@@ -25,9 +28,18 @@ export default async function Home() {
   const slateNavigation = getHomeSlateNavigation(today);
   const yesterday = slateNavigation[0].date;
   const tomorrow = addDays(today, 1);
-  const [todaySchedule, todayCompletion] = await Promise.all([
+  const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);
+  const tomorrowWatchPromise = getTonightMustWatch({ date: tomorrow, window: 5 }).catch(() => null);
+  const duelsPromise = todayWatchPromise
+    .then((watch) => getPitchingDuels(watch && watch.games.length > 0 ? today : tomorrow, "upcoming"))
+    .catch(() => null);
+  const [todaySchedule, todayCompletion, ranked, todayWatch, tomorrowWatch, duels] = await Promise.all([
     getSlateSchedule({ window: "today", date: today }),
     getRankedSlateCompletionState(today, today),
+    getRankedHome().catch(() => null),
+    todayWatchPromise,
+    tomorrowWatchPromise,
+    duelsPromise,
   ]);
   const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
   const slateStatus = getSlateProgressState(todaySchedule);
@@ -99,7 +111,16 @@ export default async function Home() {
         </div>
       </section>
 
-      <HomeDeferredSections today={today} tomorrow={tomorrow} />
+      <HomeDeferredSections
+        today={today}
+        tomorrow={tomorrow}
+        initialData={{
+          ranked,
+          todayWatch,
+          tomorrowWatch,
+          duels,
+        }}
+      />
     </main>
   );
 }

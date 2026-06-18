@@ -10,26 +10,8 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
-import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
-
-type RankedHomeResponse = {
-  date: string;
-  label: string;
-  starts: StartSummary[];
-  topPerformer: {
-    status: "final" | "live" | "previous";
-    start: StartSummary;
-    slateCount: number;
-    dateLabel: string;
-    image: TopPerformerImage | null;
-    metrics: {
-      topVelo: number | null;
-      whiffRate: number | null;
-      veloSparkline: number[];
-    } | null;
-  } | null;
-};
 
 type BestStartsHomeResponse = {
   weekly: StartSummary | null;
@@ -38,12 +20,19 @@ type BestStartsHomeResponse = {
   monthlyHighlight: FeaturedStartHighlight | null;
 };
 
-export function HomeDeferredSections({ today, tomorrow }: { today: string; tomorrow: string }) {
-  const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(null);
-  const [tomorrowWatch, setTomorrowWatch] = useState<TonightResponse | null>(null);
-  const [duels, setDuels] = useState<PitchingDuelsResponse | null>(null);
+export type HomeDeferredInitialData = {
+  todayWatch?: TonightResponse | null;
+  tomorrowWatch?: TonightResponse | null;
+  duels?: PitchingDuelsResponse | null;
+  ranked?: RankedHomeResponse | null;
+};
+
+export function HomeDeferredSections({ today, tomorrow, initialData }: { today: string; tomorrow: string; initialData?: HomeDeferredInitialData }) {
+  const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(initialData?.todayWatch ?? null);
+  const [tomorrowWatch, setTomorrowWatch] = useState<TonightResponse | null>(initialData?.tomorrowWatch ?? null);
+  const [duels, setDuels] = useState<PitchingDuelsResponse | null>(initialData?.duels ?? null);
   const [formHome, setFormHome] = useState<FormHomeResponse | null>(null);
-  const [ranked, setRanked] = useState<RankedHomeResponse | null>(null);
+  const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(null);
 
   useEffect(() => {
@@ -52,21 +41,34 @@ export function HomeDeferredSections({ today, tomorrow }: { today: string; tomor
       if (!cancelled) setter(value);
     };
 
-    const todayWatchPromise = fetchJson<TonightResponse>(`/api/tonight?date=${today}&window=5`);
-    todayWatchPromise.then(setIfLive(setTodayWatch)).catch(() => undefined);
-    fetchJson<TonightResponse>(`/api/tonight?date=${tomorrow}&window=5`).then(setIfLive(setTomorrowWatch)).catch(() => undefined);
-    todayWatchPromise
-      .then((watch) => fetchJson<PitchingDuelsResponse>(`/api/duels?date=${watch.games.length > 0 ? today : tomorrow}&mode=upcoming`))
-      .then(setIfLive(setDuels))
-      .catch(() => undefined);
+    const todayWatchPromise = todayWatch
+      ? Promise.resolve(todayWatch)
+      : fetchJson<TonightResponse>(`/api/tonight?date=${today}&window=5`).then((value) => {
+          setIfLive(setTodayWatch)(value);
+          return value;
+        });
+
+    if (!tomorrowWatch) {
+      fetchJson<TonightResponse>(`/api/tonight?date=${tomorrow}&window=5`).then(setIfLive(setTomorrowWatch)).catch(() => undefined);
+    }
+
+    if (!duels) {
+      todayWatchPromise
+        .then((watch) => fetchJson<PitchingDuelsResponse>(`/api/duels?date=${watch.games.length > 0 ? today : tomorrow}&mode=upcoming`))
+        .then(setIfLive(setDuels))
+        .catch(() => undefined);
+    }
+
     fetchJson<FormHomeResponse>("/api/form/home?window=5").then(setIfLive(setFormHome)).catch(() => undefined);
-    fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
+    if (!ranked) {
+      fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
+    }
     fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
 
     return () => {
       cancelled = true;
     };
-  }, [today, tomorrow]);
+  }, [duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
   const watch = todayWatch?.games.length ? todayWatch : tomorrowWatch;
   const watchDate = todayWatch?.games.length ? today : tomorrow;

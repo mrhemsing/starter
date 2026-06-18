@@ -7,31 +7,39 @@ function assert(condition, message) {
 }
 
 const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
+const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
-  rankedRoute.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";'),
-  "home ranked API must use the top performer image resolver",
+  rankedRoute.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
+    rankedRoute.includes("return NextResponse.json(await getRankedHome());"),
+  "home ranked API must delegate to the shared ranked-home service",
 );
 
 assert(
-  rankedRoute.includes("resolveTopPerformerImage(topPerformerState?.start ?? null, null),"),
-  "home ranked API must resolve an image for the selected top performer",
+  rankedService.includes('import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";'),
+  "home ranked service must use the top performer image resolver",
 );
 
 assert(
-  rankedRoute.includes("topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null"),
-  "home ranked API must include image in the topPerformer payload",
+  rankedService.includes("resolveTopPerformerImage(topPerformerState?.start ?? null, null),"),
+  "home ranked service must resolve an image for the selected top performer",
 );
 
 assert(
-  rankedRoute.includes("async function resolveTopPerformerMetrics(start: StartSummary | null)") &&
-    rankedRoute.includes("const detail = await getStartDetail(start.id);") &&
-    rankedRoute.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
-  "home ranked API must enrich the top performer with real start-detail velocity metrics",
+  rankedService.includes("topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null"),
+  "home ranked service must include image in the topPerformer payload",
+);
+
+assert(
+  rankedService.includes("async function resolveTopPerformerMetrics(start: StartSummary | null)") &&
+    rankedService.includes("const detail = await getStartDetail(start.id);") &&
+    rankedService.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
+  "home ranked service must enrich the top performer with real start-detail velocity metrics",
 );
 
 assert(
@@ -43,15 +51,30 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("image: TopPerformerImage | null;"),
-  "home ranked client response type must include topPerformer.image",
+  homeDeferredSections.includes('import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";'),
+  "home ranked client response type must use the shared ranked-home response",
 );
 
 assert(
-  homeDeferredSections.includes("metrics: {") &&
-    homeDeferredSections.includes("topVelo: number | null;") &&
-    homeDeferredSections.includes("veloSparkline: number[];"),
-  "home ranked client response type must include topPerformer.metrics",
+  homeDeferredSections.includes("export type HomeDeferredInitialData = {") &&
+    homeDeferredSections.includes("todayWatch?: TonightResponse | null;") &&
+    homeDeferredSections.includes("duels?: PitchingDuelsResponse | null;") &&
+    homeDeferredSections.includes("ranked?: RankedHomeResponse | null;"),
+  "home deferred sections must accept server-prefetched initial data for the top homepage modules",
+);
+
+assert(
+  homePage.includes('import { getPitchingDuels } from "@/lib/data/duels-service";') &&
+    homePage.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
+    homePage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
+    homePage.includes("const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);") &&
+    homePage.includes("const duelsPromise = todayWatchPromise") &&
+    homePage.includes("<HomeDeferredSections") &&
+    homePage.includes("initialData={{") &&
+    homePage.includes("ranked,") &&
+    homePage.includes("todayWatch,") &&
+    homePage.includes("duels,"),
+  "homepage must server-prefetch ranked, must-watch, and duels data before rendering the client sections",
 );
 
 assert(
@@ -114,18 +137,18 @@ assert(
 );
 
 assert(
-  rankedRoute.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
+  rankedService.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
   "home top performer previous-slate label must read the weekday",
 );
 
 assert(
-  rankedRoute.includes('const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);'),
+  rankedService.includes('const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);'),
   "home ranked recap previous-slate label must read the weekday",
 );
 
 assert(
-  rankedRoute.includes("function formatWeekday(date: string)"),
-  "home ranked API must format previous-slate weekday labels",
+  rankedService.includes("function formatWeekday(date: string)"),
+  "home ranked service must format previous-slate weekday labels",
 );
 
 assert(
