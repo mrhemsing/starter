@@ -1215,7 +1215,7 @@ function starterGroupHasSupportedMetadata(html, starter) {
       ["ok", "insufficient", "tbd"].includes(status ?? "") &&
       Boolean(name) &&
       (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
-      (formHref === "none" || /^\/pitchers\/\d+\/form$/.test(formHref ?? "")) &&
+      (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
       ["true", "false"].includes(nameLinked ?? "") &&
       (fallbackLabel === "none" || fallbackLabel === "Limited form sample" || fallbackLabel === "Starter TBD / league baseline used") &&
       ["pending", "unknown", "short", "normal", "extended"].includes(tagAttribute(div, "data-starter-rest-label") ?? "") &&
@@ -1997,7 +1997,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-name": starter.name ?? "TBD",
         "data-starter-team": starter.team,
         "data-starter-status": starter.status,
-        "data-starter-form-href": starter.pitcherId ? `/pitchers/${starter.pitcherId}/form` : "none",
+        "data-starter-form-href": starter.pitcherId ? expectedStarterFormHref(starter) : "none",
         "data-starter-name-linked": String(Boolean(starter.pitcherId)),
         "data-starter-fallback-label": starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter),
         "data-starter-form-tier": starter.tier ?? "none",
@@ -2043,7 +2043,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
     if (starter.pitcherId) {
       assert(
         anchorHasAttributes(html, {
-          href: `/pitchers/${starter.pitcherId}/form`,
+          href: expectedStarterFormHref(starter),
           "aria-label": `View ${starter.name} form`,
         }),
         `${label} starter name link should point to pitcher Form with an accessible label`,
@@ -2058,7 +2058,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       );
       assert(
         anchorHasAttributes(html, {
-          href: `/pitchers/${starter.pitcherId}/form`,
+          href: expectedStarterFormHref(starter),
           "aria-label": `${starter.name} form`,
         }),
         `${label} headshot link should point to pitcher Form with an accessible label`,
@@ -2191,6 +2191,25 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
 function starterBlockAriaLabel(starter) {
   const side = starter.side === "away" ? "Away" : "Home";
   return `${side} starter: ${starter.name ?? "TBD"} (${starter.team})`;
+}
+
+function expectedStarterFormHref(starter) {
+  return `/pitchers/${pitcherSlug(starter.name, starter.pitcherId)}?from=upcoming`;
+}
+
+function starterFormHrefMatches(href, pitcherId) {
+  if (!href || !pitcherId || !/^\d+$/.test(pitcherId)) return false;
+  return new RegExp(`^/pitchers/[a-z0-9-]*-${pitcherId}\\?from=upcoming$`).test(href);
+}
+
+function pitcherSlug(name, fallbackId) {
+  const slug = (name ?? "")
+    .toLowerCase()
+    .replace(/['.]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `${slug || "pitcher"}-${fallbackId}`;
 }
 
 function starterFallbackAriaLabel(starter) {

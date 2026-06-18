@@ -6,7 +6,7 @@ import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
-import { rankedStartsPath, startPath } from "@/lib/routes";
+import { rankedStartsPath, sourceParams, startHref } from "@/lib/routes";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 type RankedStartsRecapProps = {
@@ -142,7 +142,7 @@ function SlateSwarm({ starts, mean }: { starts: StartSummary[]; mean: number }) 
             const labelX = Math.min(width - 74, Math.max(stripPad.left + 6, x + (labelAbove ? 10 : -58)));
             const labelY = labelAbove ? Math.max(18, y - 18 - start.rank * 10) : Math.min(axisY - 10, y + 22);
             return (
-              <a key={start.id} href={startPath(start.id)} aria-label={`${start.pitcher.name}, ${start.pitcher.team}, ${formatStartLine(start.line)}, ${tier.label}, GS+ ${start.gameScorePlus}`}>
+              <a key={start.id} href={startHref(start, sourceParams("home"))} aria-label={`${start.pitcher.name}, ${start.pitcher.team}, ${formatStartLine(start.line)}, ${tier.label}, GS+ ${start.gameScorePlus}`}>
                 <circle cx={x} cy={y} r={starts.length > 24 ? 7.5 : 8.5} fill={tier.color} stroke="#08080a" strokeWidth="2">
                   <title>{`${start.pitcher.name} (${start.pitcher.team}) / ${tier.label} / ${formatStartLine(start.line)} / GS+ ${start.gameScorePlus}`}</title>
                 </circle>
@@ -190,7 +190,7 @@ function SlateSwarm({ starts, mean }: { starts: StartSummary[]; mean: number }) 
             const labelY = Math.min(scatterHeight - scatterPad.bottom - 10, Math.max(scatterPad.top + 16, y + (start.rank <= 2 ? -14 : 22)));
             const line = formatStartLine(start.line);
             return (
-              <a key={start.id} href={startPath(start.id)} aria-label={`${start.pitcher.name}, ${start.pitcher.team}, ${line}, GS+ ${start.gameScorePlus}, ${band.label}`}>
+              <a key={start.id} href={startHref(start, sourceParams("home"))} aria-label={`${start.pitcher.name}, ${start.pitcher.team}, ${line}, GS+ ${start.gameScorePlus}, ${band.label}`}>
                 {isFeatured ? <circle cx={x} cy={y} r="13" fill="none" stroke="#fde68a" strokeWidth="2" opacity="0.9" /> : null}
                 <circle cx={x} cy={y} r={isFeatured ? 8.8 : 7.4} fill={color} stroke="#08080a" strokeWidth="2">
                   <title>{`${start.pitcher.name} (${start.pitcher.team}) / ${line} / GS+ ${start.gameScorePlus} / ${band.label}`}</title>
@@ -237,8 +237,8 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       data-gas={gas ? "true" : "false"}
     >
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
-      <Link href={startPath(start.id)} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
-      <Link href={startPath(start.id)} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+      <Link href={startHref(start, sourceParams("home"))} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
+      <Link href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="ml-1 border-2" />
         <div className="min-w-0">
           <p className="pitcher-name font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
@@ -256,7 +256,7 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
             className="grid h-11 w-11 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           />
         ) : null}
-        <Link href={startPath(start.id)} className="text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <Link href={startHref(start, sourceParams("home"))} className="text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <span className="block font-mono text-3xl font-black tabular-nums leading-none" style={{ color }}>{start.gameScorePlus}</span>
           <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
         </Link>
@@ -319,7 +319,7 @@ function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: 
           const tier = qualityTierOf(start.gameScorePlus);
           const color = tierDisplayColor(tier);
           return (
-            <Link key={start.id} href={startPath(start.id)} className="grid min-h-14 grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/5 bg-[#101014]/70 px-3 py-2 text-sm text-zinc-400">
+            <Link key={start.id} href={startHref(start, sourceParams("home"))} className="grid min-h-14 grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/5 bg-[#101014]/70 px-3 py-2 text-sm text-zinc-400">
               <span className="font-serif text-xl text-zinc-500">#{start.rank}</span>
               <PitcherChip
                 pitcherId={String(start.pitcher.mlbId)}

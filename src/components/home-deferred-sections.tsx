@@ -9,7 +9,7 @@ import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
-import { startPath, upcomingDateHref } from "@/lib/routes";
+import { sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import type { FeaturedStartHighlight, FormHomeResponse, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
@@ -79,7 +79,7 @@ export function HomeDeferredSections({ today, tomorrow }: { today: string; tomor
         <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <TopPerformerCard
-              href={startPath(ranked.topPerformer.start.id)}
+              href={startHref(ranked.topPerformer.start, sourceParams("home"))}
               pitcherName={ranked.topPerformer.start.pitcher.name}
               team={ranked.topPerformer.start.pitcher.team}
               opponent={ranked.topPerformer.start.opponent}
@@ -230,7 +230,7 @@ function BestStartCard({ title, start, badge, highlight }: { title: string; star
 
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-5">
-      <a href={startPath(start.id)} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-3">
+      <a href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)] items-center gap-3">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative className="ml-1" />
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{title}</p>

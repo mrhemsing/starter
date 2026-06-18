@@ -7,7 +7,7 @@ import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
-import { startPath } from "@/lib/routes";
+import { sourceParams, startHref, startPath } from "@/lib/routes";
 import { formatMonth, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
@@ -65,7 +65,7 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
           <h2 className="font-serif text-3xl font-bold text-zinc-50">Monthly leaderboard</h2>
           <div className="mt-4 grid gap-2">
             {starts.slice(0, 20).map((start, index) => (
-              <Link key={start.id} href={startPath(start.id)} className="grid min-h-16 grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-[#101014] px-3 py-2 transition hover:border-amber-300/40">
+              <Link key={start.id} href={startHref(start, sourceParams("starts"))} className="grid min-h-16 grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-[#101014] px-3 py-2 transition hover:border-amber-300/40">
                 <p className="font-serif text-2xl text-zinc-500">#{index + 1}</p>
                 <div className="min-w-0">
                   <p className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</p>
@@ -93,7 +93,7 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
 
   return (
     <div className="grid gap-4 rounded border border-white/10 bg-[#101014] p-5 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center">
-      <Link href={startPath(start.id)} className="contents">
+      <Link href={startHref(start, sourceParams("starts"))} className="contents">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative />
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{label}</p>

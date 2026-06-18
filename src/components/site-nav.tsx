@@ -4,7 +4,7 @@ import { heatCheckPath, rankedStartsPath, upcomingDateHref, watchlistPath } from
 
 type NavKey = "home" | "starts" | "heat" | "upcoming" | "watchlist";
 
-export async function SiteNav({ active, today }: { active: NavKey; today: string; rankedDate?: string }) {
+export async function SiteNav({ active, today }: { active: NavKey | null; today: string; rankedDate?: string }) {
   const { rankedDate, upcomingDate } = await getDefaultSlateDates(today);
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
@@ -18,7 +18,7 @@ export async function SiteNav({ active, today }: { active: NavKey; today: string
     <>
       <nav className="hidden items-center gap-6 font-mono text-xs uppercase tracking-[0.18em] text-zinc-400 md:flex" aria-label="Primary">
         {items.map((item) => (
-          <Link key={item.key} className={item.key === active ? "text-zinc-50" : undefined} href={item.href}>
+          <Link key={item.key} className={active !== null && item.key === active ? "text-zinc-50" : undefined} href={item.href}>
             {item.label}
           </Link>
         ))}
@@ -27,7 +27,7 @@ export async function SiteNav({ active, today }: { active: NavKey; today: string
         {items.map((item) => (
           <Link
             key={item.key}
-            className={`inline-flex min-h-11 shrink-0 items-center rounded border px-3 py-2 ${item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}
+            className={`inline-flex min-h-11 shrink-0 items-center rounded border px-3 py-2 ${active !== null && item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}
             href={item.href}
           >
             {item.label}

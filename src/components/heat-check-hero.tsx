@@ -5,6 +5,7 @@ import { FormSparkline } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
 
 export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
@@ -129,7 +130,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
       data-responsive-check="heat-row"
     >
       <Link
-        href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}
+        href={pitcherHref(pitcher, sourceParams("heat", { window }))}
         scroll
         className="absolute inset-0 z-20 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:rounded"
         aria-label={`Open ${pitcher.name} form page`}

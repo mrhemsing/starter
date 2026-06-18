@@ -11,6 +11,7 @@ type PitcherPageProps = {
     id: string;
   }>;
   searchParams?: Promise<{
+    from?: string;
     window?: string;
   }>;
 };
@@ -60,8 +61,9 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
   if (!form) notFound();
 
   const isDefaultWindow = window === FORM_CONFIG.windowDefault;
-  const canonicalHref = pitcherHref(form.summary, isDefaultWindow ? undefined : { window });
-  const currentHref = `/pitchers/${routeParams.id}${isDefaultWindow ? "" : `?window=${window}`}`;
+  const preservedParams = { from: query?.from, ...(isDefaultWindow ? {} : { window }) };
+  const canonicalHref = pitcherHref(form.summary, preservedParams);
+  const currentHref = `/pitchers/${routeParams.id}${queryString(preservedParams)}`;
   if (currentHref !== canonicalHref) permanentRedirect(canonicalHref);
 
   return (
@@ -70,4 +72,13 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
       searchParams={searchParams}
     />
   );
+}
+
+function queryString(params: Record<string, string | number | null | undefined>) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== "") search.set(key, String(value));
+  }
+  const query = search.toString();
+  return query ? `?${query}` : "";
 }

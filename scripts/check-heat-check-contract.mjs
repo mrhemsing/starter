@@ -68,10 +68,10 @@ assert(
 );
 
 assert(
-  formPage.includes('import { pitcherHref } from "@/lib/routes";') &&
-    formPage.includes("pitcherHref(pitcher, { window })") &&
+  formPage.includes('import { pitcherHref, sourceParams } from "@/lib/routes";') &&
+    formPage.includes('pitcherHref(pitcher, sourceParams("heat", { window }))') &&
     !formPage.includes('href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}'),
-  "Heat Check rows and hero links must use shared canonical pitcherHref links",
+  "Heat Check rows and hero links must use shared canonical pitcherHref links with heat source context",
 );
 
 console.log("heat check contract ok: bar filters, rail jumps, league counts, filter status, and canonical pitcher links are locked");

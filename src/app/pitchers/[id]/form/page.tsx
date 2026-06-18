@@ -6,6 +6,7 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormTrendChart, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { EntityOrientation } from "@/components/entity-orientation";
 import { SiteNav } from "@/components/site-nav";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
@@ -15,7 +16,7 @@ import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
-import { formatUpcomingDate, parsePitcherRouteParam, pitcherHref } from "@/lib/routes";
+import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { ArsenalPitchSummary, FeaturedStartHighlight, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
 
@@ -24,6 +25,7 @@ type PitcherFormPageProps = {
     id: string;
   }>;
   searchParams?: Promise<{
+    from?: string;
     window?: string;
   }>;
 };
@@ -71,6 +73,10 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
   const today = getHomeSlateDate();
+  const source = parseEntitySource(query?.from, "heat");
+  const rankedDate = addDays(today, -1);
+  const sourceInfo = entitySources[source];
+  const sourceHref = entitySourceHref(source, { rankedDate, upcomingDate: today });
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const [form, pitcher] = await Promise.all([
     getPitcherForm(id, { window }),
@@ -97,8 +103,16 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
           <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
             Toe the Slab
           </Link>
-          <SiteNav active="heat" today={today} />
+          <SiteNav active={null} today={today} />
         </header>
+        <div className="mt-6">
+          <EntityOrientation
+            sourceLabel={sourceInfo.label}
+            sourceShortLabel={sourceInfo.shortLabel}
+            sourceHref={sourceHref}
+            entityLabel={summary.name}
+          />
+        </div>
         <section className="mt-6 border-b border-white/10 pb-8" data-responsive-check="pitcher-form-hero">
           <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
             <Headshot
@@ -132,7 +146,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                 <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
               </div>
               {nextStart ? (
-                <Link href={`/starts/${nextStart.startId}`} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
+                <Link href={startHref(nextStart.startId, sourceParams(source))} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
                   NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}
                 </Link>
               ) : (
@@ -152,7 +166,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
             </div>
             <div className="flex flex-wrap gap-2">
               {[3, 5, 10].map((value) => (
-                <Link key={value} href={pitcherHref(summary, value === FORM_CONFIG.windowDefault ? undefined : { window: value })} className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${window === value ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}>
+                <Link key={value} href={pitcherHref(summary, sourceParams(source, value === FORM_CONFIG.windowDefault ? undefined : { window: value }))} className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${window === value ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}>
                   Last {value}
                 </Link>
               ))}
@@ -188,14 +202,15 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                   depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
                   highlight={recentHighlights.get(start.id) ?? null}
                   pitcherName={summary.name}
+                  source={source}
                 />
               ))}
             </div>
           </div>
           <aside className="space-y-3">
             {nextStart ? <NextStartProjectionCard nextStart={nextStart} /> : null}
-            <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={best.startHref} />
-            <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={worst.startHref} />
+            <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
+            <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
             <div className="rounded border border-white/10 bg-[#101014] p-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Current streak</p>
               <p className="mt-2 font-serif text-3xl text-zinc-50">{streak}</p>
@@ -366,29 +381,32 @@ function GameLogRow({
   depth,
   highlight,
   pitcherName,
+  source,
 }: {
   start: { id: string; startHref: string; gameDate: string; opp: string; park: string; ip: number; h: number; er: number; bb: number; k: number; gsPlus: number; tier: HeatBandKey };
   depth: StartDetail | null;
   highlight: FeaturedStartHighlight | null;
   pitcherName: string;
+  source: EntitySource;
 }) {
+  const href = startHref(start.id, sourceParams(source));
   return (
     <details className="group border-b border-white/10 bg-[#101014] p-4 font-mono text-sm transition hover:bg-white/[0.04] last:border-b-0" data-responsive-check="pitcher-game-log-row">
       <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[120px_minmax(0,1fr)_90px_auto] md:items-center">
-        <Link href={start.startHref} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
-        <Link href={start.startHref} className="min-w-0 text-zinc-200 hover:text-amber-300">
+        <Link href={href} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
+        <Link href={href} className="min-w-0 text-zinc-200 hover:text-amber-300">
           <span className="block text-zinc-50">vs {start.opp} / {start.park}</span>
           <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
         </Link>
-        <Link href={start.startHref} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
+        <Link href={href} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
         <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">{depth ? "Depth" : "Summary"}</span>
       </summary>
-      {depth ? <RecentStartCard start={depth} highlight={highlight} pitcherName={pitcherName} /> : null}
+      {depth ? <RecentStartCard start={depth} highlight={highlight} pitcherName={pitcherName} source={source} /> : null}
     </details>
   );
 }
 
-function RecentStartCard({ start, highlight, pitcherName }: { start: StartDetail; highlight?: FeaturedStartHighlight | null; pitcherName: string }) {
+function RecentStartCard({ start, highlight, pitcherName, source }: { start: StartDetail; highlight?: FeaturedStartHighlight | null; pitcherName: string; source: EntitySource }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const whiffs = start.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
   const whiffRate = start.pitchEvents.length ? (whiffs / start.pitchEvents.length) * 100 : 0;
@@ -399,7 +417,7 @@ function RecentStartCard({ start, highlight, pitcherName }: { start: StartDetail
     <article className="mt-4 grid gap-4 rounded border border-white/10 bg-black/20 p-4 transition hover:border-amber-300/40 md:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: tier.color }}>{start.date} / {tier.label}</p>
-        <Link href={`/starts/${start.id}`} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">vs {start.opponent}</Link>
+        <Link href={startHref(start.id, sourceParams(source))} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">vs {start.opponent}</Link>
         <p className="mt-2 font-mono text-xs text-zinc-400">{formatStartLine(start.line)}</p>
         {highlight ? (
           <div className="mt-3">

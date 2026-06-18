@@ -1,6 +1,6 @@
 import { getDailySlate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
-import { startPath } from "@/lib/routes";
+import { pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import type { PitchingDuel, PitchingDuelsResponse, StartSummary, TonightGame } from "@/lib/types";
 
 const BEST_DUEL_MAX_GAP = 10;
@@ -77,7 +77,7 @@ function upcomingGameToDuel(game: TonightGame): PitchingDuel {
     deltaForm: starter.deltaForm,
     tier: starter.tier,
     spark: starter.spark,
-    href: `/pitchers/${starter.pitcherId}/form`,
+    href: pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")),
   })) as PitchingDuel["starters"];
   return buildDuel({
     gamePk: game.gamePk,
@@ -99,7 +99,7 @@ function settledStartsToDuel(date: string, starts: StartSummary[]): PitchingDuel
     score: start.gameScorePlus,
     scoreLabel: "GS+" as const,
     tier: undefined,
-    href: startPath(start.id),
+    href: startHref(start, sourceParams("starts")),
   })) as PitchingDuel["starters"];
   return buildDuel({
     gamePk: String(a.gamePk),

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 
 type TeamPageProps = {
   params: Promise<{ abbr: string }>;
@@ -36,7 +37,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
 
         <section className="grid gap-3 py-8">
           {rotation.map((pitcher, index) => (
-            <Link key={pitcher.pitcherId} href={`/pitchers/${pitcher.pitcherId}/form?window=5`} className="grid gap-3 rounded border border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04] md:grid-cols-[70px_minmax(0,1fr)_120px_120px] md:items-center">
+            <Link key={pitcher.pitcherId} href={pitcherHref(pitcher, sourceParams("heat", { window: 5 }))} className="grid gap-3 rounded border border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04] md:grid-cols-[70px_minmax(0,1fr)_120px_120px] md:items-center">
               <span className="font-serif text-2xl text-zinc-500">#{index + 1}</span>
               <span>
                 <span className="block text-lg font-semibold text-zinc-50">{pitcher.name}</span>

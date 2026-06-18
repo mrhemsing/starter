@@ -6,7 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
-import { pitcherHref } from "@/lib/routes";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
@@ -976,7 +976,7 @@ function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "sm
 }
 
 function pitcherFormHref(pitcherId: string, name?: string | null) {
-  return pitcherHref({ pitcherId, name });
+  return pitcherHref({ pitcherId, name }, sourceParams("upcoming"));
 }
 
 function gameStatusLabel(status: TonightGame["status"]) {

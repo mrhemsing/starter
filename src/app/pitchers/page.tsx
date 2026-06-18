@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 
 export const metadata = {
   title: "Pitcher Directory",
@@ -23,7 +24,7 @@ export default async function PitchersIndexPage() {
 
         <section className="grid gap-3 py-8 sm:grid-cols-2 lg:grid-cols-3">
           {pitchers.map((pitcher) => (
-            <Link key={pitcher.pitcherId} href={`/pitchers/${pitcher.pitcherId}/form?window=5`} className="rounded border border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04]">
+            <Link key={pitcher.pitcherId} href={pitcherHref(pitcher, sourceParams("heat", { window: 5 }))} className="rounded border border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04]">
               <p className="font-serif text-2xl font-bold text-zinc-50">{pitcher.name}</p>
               <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} / Form {pitcher.rgs.toFixed(1)} / Avg {pitcher.bgs.toFixed(1)}</p>
             </Link>

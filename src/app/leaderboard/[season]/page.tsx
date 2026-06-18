@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 
 type PageProps = {
   params: Promise<{ season: string }>;
@@ -46,7 +47,7 @@ export default async function SeasonLeaderboardPage({ params }: PageProps) {
             {pitchers.map((pitcher, index) => (
               <Link
                 key={pitcher.pitcherId}
-                href={`/pitchers/${pitcher.pitcherId}/form?window=5`}
+                href={pitcherHref(pitcher, sourceParams("heat", { window: 5 }))}
                 className="grid gap-3 border-b border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04] last:border-b-0 md:grid-cols-[70px_minmax(0,1fr)_repeat(4,110px)] md:items-center"
               >
                 <span className="font-serif text-2xl text-zinc-500">#{index + 1}</span>

@@ -9,7 +9,7 @@ import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components
 import { getPitcherFormMap } from "@/lib/data/form-service";
 import { getDailySlate, getSlateSchedule, getTodayProbables, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { formatPct, formatSigned, formatStartLine } from "@/lib/format";
-import { formatUpcomingDate, isSlateWindow, pitcherPath, startPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { formatUpcomingDate, isSlateWindow, pitcherHref, sourceParams, startHref, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import type { FormSummary, ProbableStart, StartSummary } from "@/lib/types";
 
 type SlatePageProps = {
@@ -129,10 +129,10 @@ export default async function SlatePage({ params }: SlatePageProps) {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 border-t border-white/10 p-5 font-mono text-xs uppercase tracking-[0.16em]" data-responsive-check="slate-card-actions">
-                    <Link href={startPath(start.id)} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">
+                    <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">
                       Start page
                     </Link>
-                    <Link href={pitcherPath(start.pitcher.id)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">
+                    <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">
                       Pitcher
                     </Link>
                   </div>
@@ -183,7 +183,7 @@ function ProbableCard({
         </div>
       ) : null}
       <Link
-        href={pitcherPath(probable.pitcherId)}
+        href={pitcherHref({ pitcherId: probable.pitcherId, name: probable.pitcherName }, sourceParams("upcoming"))}
         className="mt-5 inline-flex min-h-11 items-center rounded border border-white/10 px-3 font-mono text-xs uppercase tracking-[0.16em] text-zinc-300"
         data-responsive-check="probable-pitcher-affordance"
       >

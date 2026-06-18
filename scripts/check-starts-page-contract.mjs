@@ -7,6 +7,8 @@ function assert(condition, message) {
 }
 
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
+const routes = await readFile("src/lib/routes.ts", "utf8");
+const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 
 assert(
   startsPage.includes("return `${formatWeekday(state.date)} · ${formatMetadataDate(state.date)} · final`;"),
@@ -28,4 +30,24 @@ assert(
   "ranked starts card CTA must read Pitcher Profile instead of the terse Pitcher label",
 );
 
-console.log("starts page contract ok: completed date chips include weekday, and ranked cards link to Pitcher Profile");
+assert(
+  routes.includes("export function startHref") &&
+    startsPage.includes("startHref(start, sourceParams(\"starts\"))") &&
+    startsPage.includes("pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(\"starts\"))"),
+  "ranked starts list cards must carry starts source context to start and pitcher entity pages",
+);
+
+assert(
+  startsPage.includes('const source = parseEntitySource(query?.from, "starts");') &&
+    startsPage.includes("<EntityOrientation") &&
+    startsPage.includes("<SiteNav active={null} today={today} />") &&
+    siteNav.includes("active: NavKey | null"),
+  "start detail pages must render neutral nav and source-aware back/breadcrumb orientation",
+);
+
+assert(
+  startsPage.includes("pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(source))"),
+  "start detail pitcher links must preserve the current source context",
+);
+
+console.log("starts page contract ok: completed date chips include weekday, ranked cards source-link entities, and start detail pages show neutral source orientation");

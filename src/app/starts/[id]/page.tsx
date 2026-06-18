@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { Headshot, type HeadshotSize } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { EntityOrientation } from "@/components/entity-orientation";
 import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
@@ -16,7 +17,7 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStar
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
-import { pitcherPath, rankedStartsPath, startPath, startShareImagePath } from "@/lib/routes";
+import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
@@ -26,6 +27,7 @@ type StartPageProps = {
   }>;
   searchParams?: Promise<{
     band?: string;
+    from?: string;
     openers?: string;
     team?: string;
     sort?: string;
@@ -90,8 +92,17 @@ export default async function StartPage({ params, searchParams }: StartPageProps
   const { id } = await params;
   if (/^\d{4}-\d{2}-\d{2}$/.test(id)) return <RankedStartsDate date={id} searchParams={searchParams} />;
 
+  const query = await searchParams;
   const start = await getStartDetail(id);
   if (!start) notFound();
+  const today = getHomeSlateDate();
+  const source = parseEntitySource(query?.from, "starts");
+  const sourceInfo = entitySources[source];
+  const sourceHref = source === "starts"
+    ? rankedStartsPath(start.date)
+    : source === "upcoming"
+      ? upcomingDateHref(start.date)
+      : entitySourceHref(source, { rankedDate: addDays(today, -1), upcomingDate: today });
   const highlight = await resolveFeaturedStartHighlight(start);
   const jsonLd = jsonLdForStartDetail(start);
   const lineSourceLabel = getLineSourceLabel(start.source?.line);
@@ -103,9 +114,20 @@ export default async function StartPage({ params, searchParams }: StartPageProps
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <section className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
-            Toe the Slab
-          </Link>
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5" data-responsive-check="start-detail-site-header">
+            <Link href="/" className="font-mono text-2xl uppercase tracking-[0.18em] text-amber-300">
+              Toe the Slab
+            </Link>
+            <SiteNav active={null} today={today} />
+          </header>
+          <div className="mt-6">
+            <EntityOrientation
+              sourceLabel={sourceInfo.label}
+              sourceShortLabel={sourceInfo.shortLabel}
+              sourceHref={sourceHref}
+              entityLabel={`${start.pitcher.name} / ${start.game.awayTeam.abbreviation} at ${start.game.homeTeam.abbreviation}`}
+            />
+          </div>
           <div className="mt-6 grid gap-6 border-b border-white/10 pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
@@ -132,7 +154,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
                   {start.gameScorePlusBreakdown.gradeBand.label} / {start.gameScorePlusBreakdown.gradeBand.percentileLabel}
                 </p>
               ) : null}
-              <Link href={pitcherPath(start.pitcher.id)} className="mt-4 inline-block font-mono text-xs uppercase tracking-[0.16em] text-zinc-300">
+              <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(source))} className="mt-4 inline-block font-mono text-xs uppercase tracking-[0.16em] text-zinc-300">
                 Pitcher page
               </Link>
             </div>
@@ -410,8 +432,8 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               <ScoreReasonList reasons={visibleRankingReasons(start.gameScorePlusBreakdown?.rankingReasons ?? [])} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.16em]">
-              <Link href={startPath(start.id)} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
-              <Link href={pitcherPath(start.pitcher.id)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Pitcher Profile</Link>
+              <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
+              <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Pitcher Profile</Link>
               {pairedStart ? <Link href={`#${pairedStart.id}`} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Same game starter</Link> : null}
             </div>
           </div>
@@ -435,11 +457,13 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       <span className={`inline-flex min-h-7 w-fit items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${badge === "OPENER" ? "border-amber-300/35 bg-amber-300/10 text-amber-200" : "border-sky-300/25 bg-sky-300/10 text-sky-200"}`}>
         {badge}
       </span>
-      <Link href={startPath(start.id)} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${start.pitcher.name} start log`}>
+      <Link href={startHref(start, sourceParams("starts"))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${start.pitcher.name} start log`}>
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="md" band={thermalBand} decorative className="ml-1" />
       </Link>
       <div className="min-w-0">
-        <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
+        <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="block min-w-0 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
+        </Link>
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent} / not ranked</p>
       </div>
       <div className="font-mono text-xs text-zinc-400 sm:text-right">

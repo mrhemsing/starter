@@ -14,7 +14,7 @@ import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-s
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import { pitcherHref } from "@/lib/routes";
+import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { FormSummary, HeatBand, TonightGame } from "@/lib/types";
 import type React from "react";
@@ -404,7 +404,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
       <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
       <div className="relative grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)] sm:items-center">
         <Link
-          href={pitcherHref(pitcher, { window })}
+          href={pitcherHref(pitcher, sourceParams("heat", { window }))}
           className="relative mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mx-0"
           aria-label={`Open ${pitcher.name} form page`}
         >
@@ -415,7 +415,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
             <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
           </div>
-          <Link href={pitcherHref(pitcher, { window })} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="mt-3 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
             <h2 className="truncate font-serif text-3xl font-bold leading-none text-zinc-50">{pitcher.name}</h2>
             <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
           </Link>
@@ -502,10 +502,10 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
-      <Link href={pitcherHref(pitcher, { window })} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
+      <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </Link>
-      <Link href={pitcherHref(pitcher, { window })} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+      <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
@@ -530,7 +530,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <div>
           <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
         </div>
-        <Link href={pitcherHref(pitcher, { window })} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
           <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
         </Link>

@@ -11,6 +11,8 @@ const headshotComponent = await readFile("src/components/headshot.tsx", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
+const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
+const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 
@@ -28,14 +30,35 @@ assert(
 );
 
 assert(routes.includes("export function pitcherHref"), "routes must expose one shared pitcherHref helper");
+assert(routes.includes("export function startHref"), "routes must expose one shared startHref helper");
+assert(routes.includes('export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist";'), "routes must define supported entity source keys");
+assert(routes.includes("export function parseEntitySource"), "routes must parse entity source query params");
+assert(routes.includes("export function sourceParams"), "routes must expose a helper for source-aware entity links");
 assert(routes.includes("export function parsePitcherRouteParam"), "routes must resolve canonical slug routes by trailing pitcher ID");
 assert(routes.includes("export function pitcherSlug"), "routes must build readable slug-ID pitcher URLs");
 assert(pitcherPage.includes("parsePitcherRouteParam(routeParams.id)"), "canonical profile route must resolve by trailing ID");
 assert(pitcherPage.includes("permanentRedirect(canonicalHref)"), "numeric or mismatched pitcher profile routes must permanently redirect");
+assert(pitcherPage.includes("queryString(preservedParams)"), "canonical profile redirects must preserve source/window query params");
 assert(pitcherPage.includes("<PitcherFormPage"), "canonical profile route must render the rich Heat Check profile");
 assert(pitcherFormPage.includes("parsePitcherRouteParam(routeParams.id)"), "legacy /form route must resolve slug or numeric params by trailing ID");
-assert(watchlistPage.includes("pitcherHref(entry)") && watchlistPage.includes("pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName })"), "watchlist links must use shared canonical pitcherHref helper");
-assert(mustWatch.includes("import { pitcherHref } from") && mustWatch.includes("return pitcherHref({ pitcherId, name });"), "Must-Watch starter links must use shared canonical pitcherHref helper");
+assert(watchlistPage.includes('sourceParams("watchlist")'), "watchlist links must carry watchlist source context");
+assert(mustWatch.includes("import { pitcherHref, sourceParams } from") && mustWatch.includes('sourceParams("upcoming")'), "Must-Watch starter links must use shared canonical pitcherHref helper with upcoming source context");
+
+assert(
+  entityOrientation.includes("router.back()") &&
+    entityOrientation.includes("window.history.state") &&
+    entityOrientation.includes("document.referrer") &&
+    entityOrientation.includes('data-entity-back-control="true"') &&
+    entityOrientation.includes("← Back to {sourceLabel}") &&
+    entityOrientation.includes('aria-label="Breadcrumb"'),
+  "entity orientation must render a visible source-aware back control and breadcrumb while preserving router back",
+);
+
+assert(
+  siteNav.includes("active: NavKey | null") &&
+    siteNav.includes("active !== null && item.key === active"),
+  "site nav must support neutral entity pages without falsely highlighting a section",
+);
 
 for (const [label, source] of [
   ["pitcher form", pitcherFormPage],
@@ -51,8 +74,18 @@ for (const [label, source] of [
 
 assert(
   pitcherFormPage.includes('data-responsive-check="pitcher-form-site-header"') &&
-    pitcherFormPage.includes('<SiteNav active="heat" today={today} />'),
-  "pitcher form must render the shared header with the Heat Check nav context",
+    pitcherFormPage.includes("<SiteNav active={null} today={today} />") &&
+    pitcherFormPage.includes("<EntityOrientation"),
+  "pitcher form must render the shared header with neutral nav and source-aware orientation",
+);
+
+assert(
+  pitcherFormPage.includes('const source = parseEntitySource(query?.from, "heat");') &&
+    pitcherFormPage.includes("entitySourceHref(source") &&
+    pitcherFormPage.includes("sourceParams(source") &&
+    pitcherFormPage.includes("startHref(nextStart.startId, sourceParams(source))") &&
+    pitcherFormPage.includes("startHref(start.id, sourceParams(source))"),
+  "pitcher form links must preserve source context across profile tabs and start deep dives",
 );
 
 assert(pitcherFormPage.includes('data-responsive-check="pitcher-form-score-summary"'), "pitcher form score block must expose a stable layout hook");

@@ -10,7 +10,7 @@ import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type Watchlist
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import { heatCheckPath, pitcherHref, upcomingDateHref } from "@/lib/routes";
+import { heatCheckPath, pitcherHref, sourceParams, upcomingDateHref } from "@/lib/routes";
 import type { FormSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -145,7 +145,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               ) : (
                 <div className="mt-4 grid gap-2">
                   {watchlist.digestEvents.slice(0, 10).map((event) => (
-                    <Link key={`${event.pitcherId}-${event.key}-${event.detail}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName })} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
+                    <Link key={`${event.pitcherId}-${event.key}-${event.detail}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
                       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
                       <p className="mt-1 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
                       <p className="mt-1 text-xs text-zinc-500">{event.detail}</p>
@@ -181,7 +181,7 @@ function PitchingSoonStrip({ entries }: { entries: WatchlistEntry[] }) {
       </div>
       <div className="mt-4 grid gap-2">
         {entries.map((entry) => (
-          <Link key={entry.pitcherId} href={pitcherHref(entry)} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="min-w-0">
               <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
               <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
@@ -232,7 +232,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
       <div className="grid min-w-0 grid-cols-[52px_minmax(0,1fr)] gap-3">
         <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok"} decorative className="ml-1" />
         <div className="min-w-0">
-          <Link href={pitcherHref(entry)} className="block min-w-0">
+          <Link href={pitcherHref(entry, sourceParams("watchlist"))} className="block min-w-0">
             <h2 className="truncate font-serif text-2xl font-bold leading-tight text-zinc-50">{entry.name}</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {tierLabel(entry.tier)} · {entry.windowCount} starts</p>
           </Link>
@@ -268,7 +268,7 @@ function FollowSearchResults({ results, followedIds, query }: { results: FormSum
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {results.map((pitcher) => (
           <div key={pitcher.pitcherId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-black/20 p-3">
-            <Link href={pitcherHref(pitcher)} className="min-w-0">
+            <Link href={pitcherHref(pitcher, sourceParams("watchlist"))} className="min-w-0">
               <p className="truncate font-serif text-lg font-bold text-zinc-50">{pitcher.name}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} · Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}</p>
             </Link>
