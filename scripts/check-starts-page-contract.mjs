@@ -23,4 +23,9 @@ assert(
   "starts page must keep the weekday formatter for completed slate labels",
 );
 
-console.log("starts page contract ok: completed date chips include weekday for every non-today final slate");
+assert(
+  startsPage.includes(">Pitcher Profile</Link>") && !startsPage.includes(">Pitcher</Link>"),
+  "ranked starts card CTA must read Pitcher Profile instead of the terse Pitcher label",
+);
+
+console.log("starts page contract ok: completed date chips include weekday, and ranked cards link to Pitcher Profile");
