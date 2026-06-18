@@ -60,7 +60,7 @@ p,
 }
 
 .site-logo-wordmark {
-  color: var(--level-onfire);
+  color: #D50032;
   font-family: var(--font-shrikhand), var(--font-playfair), Georgia, serif;
   font-size: clamp(2.08rem, 5.2vw, 2.6rem);
   font-style: normal;

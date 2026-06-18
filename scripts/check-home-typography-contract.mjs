@@ -74,8 +74,8 @@ assert(
 
 assert(
   globals.includes("--level-onfire: #D85A30;") &&
-    globals.includes(".site-logo-wordmark {\n  color: var(--level-onfire);"),
-  "site logo wordmark must use the shared fire red color token",
+    globals.includes(".site-logo-wordmark {\n  color: #D50032;"),
+  "site logo wordmark must use the requested red logo color",
 );
 
 assert(
