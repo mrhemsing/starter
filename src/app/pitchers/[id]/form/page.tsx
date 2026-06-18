@@ -114,11 +114,13 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
                 Form through {form.formThroughDate ?? "pending"}{form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}
               </p>
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <div>
-                  <p className={`font-serif text-6xl font-bold ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
-                  <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+              <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+                <div className="min-w-0" data-responsive-check="pitcher-form-score-summary">
+                  <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                    <p className={`font-serif text-6xl font-bold leading-none ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
+                    <p className="pb-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
+                  </div>
+                  <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
                     ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)}
                   </p>
                 </div>
