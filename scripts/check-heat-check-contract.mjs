@@ -111,7 +111,7 @@ assert(
 );
 
 assert(
-  formPage.includes('className="relative grid grid-cols-[96px_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center"') &&
+  formPage.includes('className="relative grid grid-cols-[64px_minmax(0,1fr)] items-start gap-x-2 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center"') &&
     formPage.includes('className="relative col-start-1 row-start-1 block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:hidden"') &&
     formPage.includes('size="xl" band={thermalBand}') &&
     formPage.includes('className="relative hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:block"') &&
@@ -121,7 +121,7 @@ assert(
     formPage.includes('className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1"') &&
     formPage.includes('className="font-mono text-[34px] font-black leading-none tabular-nums sm:text-5xl"') &&
     formPage.includes('className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400 sm:pb-1 sm:text-xs sm:tracking-[0.14em]"'),
-  "Heat Check momentum hero must use a true mobile two-column first row, with identity/delta beside the headshot and trace/footer full-width beneath",
+  "Heat Check momentum hero must use a tight true mobile two-column first row, with identity/delta beside the headshot and trace/footer full-width beneath",
 );
 
 assert(

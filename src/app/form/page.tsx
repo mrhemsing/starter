@@ -421,7 +421,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
   return (
     <article className="relative overflow-hidden bg-[#101014] p-4 sm:p-5" data-form-hero-card data-momentum-role={role}>
       <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
-      <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center">
+      <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-start gap-x-2 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center">
         <Link
           href={pitcherHref(pitcher, sourceParams("heat", { window }))}
           className="relative col-start-1 row-start-1 block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:hidden"

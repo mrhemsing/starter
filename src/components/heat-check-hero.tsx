@@ -118,7 +118,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
       ? ({ "--chill": intensity.value } as CSSProperties)
       : undefined;
   const cardClassName = [
-    "heat-intensity-card group relative grid grid-cols-[92px_minmax(0,1fr)] gap-x-3.5 gap-y-3 overflow-hidden rounded-2xl border border-[#26262c] bg-[#141418] p-3.5 transition hover:border-white/20 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 sm:grid-cols-[92px_minmax(0,1fr)] sm:rounded lg:min-h-[267px]",
+    "heat-intensity-card group relative grid grid-cols-[64px_minmax(0,1fr)] gap-x-2 gap-y-3 overflow-hidden rounded-2xl border border-[#26262c] bg-[#141418] p-3.5 transition hover:border-white/20 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-x-3.5 sm:rounded lg:min-h-[267px]",
     intensity.mode === "fire" ? "fire" : "",
     intensity.mode === "ice" ? "ice" : "",
   ].filter(Boolean).join(" ");

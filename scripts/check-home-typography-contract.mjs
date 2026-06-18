@@ -85,6 +85,12 @@ assert(
 );
 
 assert(
+  heatCheckHero.includes("grid-cols-[64px_minmax(0,1fr)] gap-x-2 gap-y-3") &&
+    heatCheckHero.includes("sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-x-3.5"),
+  "homepage Heat Check cards must keep headshot/text spacing tight on mobile while preserving desktop spacing",
+);
+
+assert(
   upcomingPage.includes('<span className="block">One card per game, ranked by starter form and matchup context.</span>') &&
     upcomingPage.includes('<span className="block lg:whitespace-nowrap">Probables are grouped head-to-head instead of duplicated by pitcher.</span>'),
   "upcoming page deck must force a break after the first sentence and keep the second sentence unwrapped on desktop",
