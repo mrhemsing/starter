@@ -13,12 +13,13 @@ import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherFormMap } from "@/lib/data/form-service";
-import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
+import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
 import { slateTimeWord } from "@/lib/time-words";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
@@ -177,10 +178,12 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const params = await searchParams;
   const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
-  const [slateStarts, completionState] = await Promise.all([
+  const [slateStarts, completionState, schedule] = await Promise.all([
     getDailySlate({ window: "yesterday", date }),
     getRankedSlateCompletionState(date, today),
+    getSlateSchedule({ window: "yesterday", date }),
   ]);
+  const slateProgress = getSlateProgressState(schedule);
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
   const qualifiedStarts = starts.filter(isQualifiedRankedStart);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
@@ -209,10 +212,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
         <header className="mb-6 pb-6">
           <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>
-          <div className="mt-3 flex flex-col items-start gap-3">
-            <span className="-ml-[13px] inline-flex min-h-8 items-center rounded border border-amber-300/30 bg-amber-300/10 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200" role="status" aria-label={`Slate completion: ${completionStatusLabel(completionState)}`}>
-              {completionStatusLabel(completionState)}
-            </span>
+          <div className="mt-3 flex flex-col items-start gap-2">
+            <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
             <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology">How rankings work</Link>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]">
@@ -355,10 +356,11 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
       id={start.id}
       className={`group relative overflow-hidden border-l-4 px-4 sm:px-5 ${profile.paddingClass} ${profile.cardClass}`}
       style={{
+        "--ranked-band-color": profile.railColor,
         background: profile.background,
         boxShadow: profile.shadow,
         borderLeftColor: profile.railColor,
-      }}
+      } as React.CSSProperties}
       data-responsive-check="ranked-start-card"
       data-band={qualityBandSlug(tier.label)}
       data-gas={gas ? "true" : "false"}
@@ -912,11 +914,23 @@ function addDays(date: string, days: number) {
   return value.toISOString().slice(0, 10);
 }
 
-function completionStatusLabel(state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }) {
-  if (state.isPartialToday) return `Live ranked starts · Today · ${state.finalGames} of ${state.totalGames} final · updating`;
-  if (state.isToday && state.isFinal) return "Completed recap · Today · final";
-  if (state.isToday) return `Live ranked starts · Today · ${state.finalGames} of ${state.totalGames} final`;
-  return `Completed recap · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)} · final`;
+function RankedSlateStatus({ state, slateProgress }: { state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }; slateProgress: SlateProgressState }) {
+  const isLive = state.isToday && (state.isPartialToday || slateProgress.state === "in-progress" || slateProgress.state === "partial-final");
+  const label = completionStatusLabel(state, slateProgress);
+
+  return (
+    <p className="inline-flex min-h-6 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300" role="status" aria-label={`Slate completion: ${label}`}>
+      {isLive ? <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" aria-hidden="true" /> : null}
+      <span>{label}</span>
+    </p>
+  );
+}
+
+function completionStatusLabel(state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
+  if (state.isToday && (state.isPartialToday || slateProgress.state === "in-progress" || slateProgress.state === "partial-final")) return `Live · Today · ${state.finalGames} of ${state.totalGames} final`;
+  if (state.isToday && state.isFinal) return `Final · Today · ${formatMetadataDate(state.date)}`;
+  if (state.isToday) return `Probables · Today · first pitch ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;
+  return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -945,4 +959,15 @@ function formatWeekday(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed);
+}
+
+function formatFirstPitchStamp(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return "soon";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(parsed).replace("PDT", "PT").replace("PST", "PT");
 }

@@ -171,6 +171,7 @@ p,
 .ranked-start-plate {
   aspect-ratio: 4 / 5;
   background: #15181C !important;
+  border: 1.5px solid color-mix(in srgb, var(--ranked-band-color, #878D97) 45%, transparent) !important;
   border-radius: 12px;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
 }
@@ -212,13 +213,18 @@ p,
 }
 
 .ranked-start-details > summary > span {
-  bottom: 7px;
   position: absolute;
-  right: 4px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .ranked-start-details[open] > summary > span {
-  transform: rotate(180deg);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.ranked-live-dot {
+  box-shadow: 0 0 0 0 rgb(255 90 31 / 0.32);
 }
 
 @media (min-width: 640px) {
@@ -252,6 +258,23 @@ p,
     transform-origin: center;
   }
 
+  .ranked-live-dot {
+    animation: ranked-live-dot-pulse 2s ease-in-out infinite;
+  }
+
+}
+
+@keyframes ranked-live-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 90 31 / 0.18);
+    opacity: 0.74;
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgb(255 90 31 / 0);
+    opacity: 1;
+  }
 }
 
 @keyframes heat-badge-pulse {

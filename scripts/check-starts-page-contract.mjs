@@ -12,8 +12,8 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 
 assert(
-  startsPage.includes("return `Completed recap · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)} · final`;"),
-  "completed non-today starts pages must include weekday and completed recap in the slate completion chip",
+  startsPage.includes("return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;"),
+  "completed non-today starts pages must include weekday and final state in the slate completion line",
 );
 
 assert(
@@ -59,16 +59,21 @@ assert(
 );
 
 assert(
-  startsPage.includes('return `Live ranked starts · Today · ${state.finalGames} of ${state.totalGames} final · updating`;') &&
-    startsPage.includes('return "Completed recap · Today · final";') &&
+  startsPage.includes("function RankedSlateStatus") &&
+    startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
+    startsPage.includes('return `Live · Today · ${state.finalGames} of ${state.totalGames} final`;') &&
+    startsPage.includes('return `Final · Today · ${formatMetadataDate(state.date)}`;') &&
+    startsPage.includes('return `Probables · Today · first pitch ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;') &&
     !startsPage.includes("{date} / completed starts recap"),
-  "ranked starts header must use state-aware live/completed copy and remove the redundant ISO date line",
+  "ranked starts header must use a no-box state-aware live/final/probables indicator and remove the redundant ISO date line",
 );
 
 assert(
-  startsPage.includes('className="-ml-[13px] inline-flex min-h-8 items-center rounded border border-amber-300/30 bg-amber-300/10 px-3') &&
-    startsPage.includes('className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology"'),
-  "ranked starts header status badge text and methodology link must share the title left edge",
+  startsPage.includes('className="mt-3 flex flex-col items-start gap-2"') &&
+    startsPage.includes('className="inline-flex min-h-6 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300"') &&
+    startsPage.includes('className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology"') &&
+    !startsPage.includes("border-amber-300/30 bg-amber-300/10 px-3"),
+  "ranked starts header status and methodology link must share the title left edge without a bordered badge box",
 );
 
 assert(
@@ -96,9 +101,21 @@ assert(
 assert(
   globals.includes(".ranked-start-plate") &&
     globals.includes("background: #15181C !important;") &&
+    globals.includes("border: 1.5px solid color-mix(in srgb, var(--ranked-band-color, #878D97) 45%, transparent) !important;") &&
     globals.includes("object-fit: cover;") &&
     globals.includes("object-position: center 18%;"),
-  "ranked starts headshot plates must use neutral backgrounds and consistent cover crop",
+  "ranked starts headshot plates must use neutral backgrounds, band-tinted rings, and consistent cover crop",
+);
+
+assert(
+  startsPage.includes('"--ranked-band-color": profile.railColor') &&
+    globals.includes(".ranked-start-details > summary > span") &&
+    globals.includes("right: 12px;") &&
+    globals.includes("top: 50%;") &&
+    globals.includes("transform: translateY(-50%);") &&
+    globals.includes("@keyframes ranked-live-dot-pulse") &&
+    globals.includes("animation: ranked-live-dot-pulse 2s ease-in-out infinite;"),
+  "ranked starts rows must expose band ring color, center the row chevron, and pulse the live dot only through CSS",
 );
 
 console.log("starts page contract ok: completed date chips include weekday, ranked cards source-link entities, and start detail pages show neutral source orientation");
