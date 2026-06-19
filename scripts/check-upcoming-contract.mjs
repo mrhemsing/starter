@@ -1493,6 +1493,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterAccentColors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-colors"));
   const renderedStarterMarketStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-statuses"));
   const renderedStarterMarketSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-sources"));
+  const renderedStarterProjectionStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-statuses"));
+  const renderedStarterProjectionConfidences = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-confidences"));
+  const renderedStarterProjectionGs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-gs"));
+  const renderedStarterProjectionTokenCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-token-counts"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
   const renderedParkRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-values"));
   const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
@@ -1603,6 +1607,17 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterMarketSources.length === renderedGameCount &&
       renderedStarterMarketSources.every((sources) => /^(?:the-odds-api|not-configured|odds-deferred|none)\/(?:the-odds-api|not-configured|odds-deferred|none)$/.test(sources)),
     `${route} ${sectionId} should expose one away/home starter market status/source pair per visible game`,
+  );
+  assert(
+    renderedStarterProjectionStatuses.length === renderedGameCount &&
+      renderedStarterProjectionStatuses.every((statuses) => /^(?:line-backed|pending|none)\/(?:line-backed|pending|none)$/.test(statuses)) &&
+      renderedStarterProjectionConfidences.length === renderedGameCount &&
+      renderedStarterProjectionConfidences.every((confidences) => /^(?:low|medium|high|none)\/(?:low|medium|high|none)$/.test(confidences)) &&
+      renderedStarterProjectionGs.length === renderedGameCount &&
+      renderedStarterProjectionGs.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))) &&
+      renderedStarterProjectionTokenCounts.length === renderedGameCount &&
+      renderedStarterProjectionTokenCounts.every((counts) => /^[0-3]\/[0-3]$/.test(counts)),
+    `${route} ${sectionId} should expose one away/home starter projection status, confidence, GS+, and visible line-token count pair per visible game`,
   );
   assert(
     renderedParkRunFactors.length === renderedGameCount &&
@@ -1761,13 +1776,17 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterAccentColors.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).color).join("/")).join(",") &&
       renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
       renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
+      renderedStarterProjectionStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") &&
+      renderedStarterProjectionConfidences.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") &&
+      renderedStarterProjectionGs.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.projectedGsPlus)).join("/")).join(",") &&
+      renderedStarterProjectionTokenCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starter.projection ? projectionLineTokenCount(starter.projection) : 0)).join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
       renderedParkRunValues.join(",") === games.map((game) => game.parkContext.runValue.toFixed(1)).join(",") &&
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter form-band accent state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter form-band accent state, starter market context, starter projection state, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -2449,8 +2468,9 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       }
       if (starter.seasonStats?.era !== null && starter.seasonStats?.inningsPitched >= 10) {
         assert(
-          normalizedHtml.includes(`${starter.seasonStats.era.toFixed(2)} ERA`),
-          `${label} should render ERA anchor ${starter.seasonStats.era.toFixed(2)}`,
+          normalizedHtml.includes(`${starter.seasonStats.era.toFixed(2)} L5 ERA`) &&
+            normalizedHtml.includes("ERA over the selected recent-start form window"),
+          `${label} should render recent-window ERA anchor ${starter.seasonStats.era.toFixed(2)}`,
         );
       }
       starter.driverChips?.slice(0, 1).forEach((chip) => {

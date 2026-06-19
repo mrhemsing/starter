@@ -73,6 +73,10 @@ export function TonightsMustWatch({
       data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-projection-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-projection-confidences={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-projection-gs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.projectedGsPlus)).join("/")).join(",") : "none"}
+      data-visible-starter-projection-token-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionLineTokenCount(starter)).join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
       data-visible-park-run-values={shownGames.length ? shownGames.map((game) => game.parkContext.runValue.toFixed(1)).join(",") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
@@ -906,6 +910,20 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
   );
 }
 
+function projectionDisplayValue(value: number | null | undefined) {
+  return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function projectionLineTokenCount(starter: TonightStarter) {
+  const projection = starter.projection;
+  if (!projection) return 0;
+  return [
+    projection.line.inningsPitched,
+    projection.line.strikeouts,
+    projection.line.earnedRuns,
+  ].filter((value) => value !== null).length;
+}
+
 function OpponentSplitLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
   const split = starter.opponentSplit;
   if (!split) return null;
@@ -973,7 +991,7 @@ function EraAnchor({ starter }: { starter: TonightStarter }) {
   const ip = starter.seasonStats?.inningsPitched ?? 0;
   if (typeof era !== "number") return <span className="text-zinc-500"> · —</span>;
   if (ip < 10) return null;
-  return <span className="font-normal text-zinc-500"> · {era.toFixed(2)} ERA</span>;
+  return <span className="font-normal text-zinc-500" title="ERA over the selected recent-start form window"> · {era.toFixed(2)} L5 ERA</span>;
 }
 
 function formatSigned(value: number) {
