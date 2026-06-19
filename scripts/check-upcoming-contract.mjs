@@ -1262,6 +1262,26 @@ function tagAttribute(tag, name) {
   return tag.match(new RegExp(`\\b${escapeRegExp(name)}="([^"]*)"`))?.[1] ?? null;
 }
 
+function linkHrefCounts(html, expectedHrefs) {
+  const counts = new Map(expectedHrefs.map((href) => [href, 0]));
+  const anchors = html.match(/<a\b[^>]*>/g) ?? [];
+  anchors.forEach((anchor) => {
+    const href = tagAttribute(anchor, "href");
+    if (href && counts.has(href)) counts.set(href, (counts.get(href) ?? 0) + 1);
+  });
+  return counts;
+}
+
+function divAttributeValues(html, attributeName, requiredAttributes = {}) {
+  const divs = html.match(/<div\b[^>]*>/g) ?? [];
+  return divs
+    .filter((div) =>
+      Object.entries(requiredAttributes).every(([name, value]) => div.includes(`${name}="${escapeHtmlAttribute(value)}"`)),
+    )
+    .map((div) => tagAttribute(div, attributeName))
+    .filter((value) => value !== null);
+}
+
 function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabel) {
   const article = html.match(/<article\b[^>]*>/)?.[0] ?? "";
   const attr = (name) => tagAttribute(article, name);
@@ -1496,6 +1516,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
   const renderedWeatherRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-run-values"));
   const renderedWeatherTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-tones"));
+  const renderedWatchRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-ranks"));
   const renderedWatchScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-scores"));
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
   const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
@@ -1583,6 +1604,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         return pair.length === 2 && pair.every((href) => href === "none" || /^\/pitchers\/[a-z0-9-]+-\d+\?from=upcoming$/.test(href));
       }),
     `${route} ${sectionId} should expose one away/home starter Form href pair per visible game`,
+  );
+  const renderedStarterFormLinks = renderedStarterFormHrefs
+    .flatMap((hrefs) => hrefs.split("|"))
+    .filter((href) => href !== "none");
+  const renderedStarterFormLinkCounts = linkHrefCounts(sectionHtml, renderedStarterFormLinks);
+  assert(
+    renderedStarterFormLinks.every((href) => (renderedStarterFormLinkCounts.get(href) ?? 0) >= 1),
+    `${route} ${sectionId} should render every source-aware starter Form href as an actual card link`,
   );
   assert(
     renderedStarterFormTiers.length === renderedGameCount &&
@@ -1688,7 +1717,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one supported weather source, run value, and tone per visible game`,
   );
   assert(
-    renderedWatchScores.length === renderedGameCount &&
+    renderedWatchRanks.length === renderedGameCount &&
+      renderedWatchRanks.every((rank) => rank === "-" || (Number.isInteger(Number(rank)) && Number(rank) >= 1)) &&
+      renderedWatchScores.length === renderedGameCount &&
       renderedWatchScores.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
       renderedWatchTiers.length === renderedGameCount &&
       renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
@@ -1720,7 +1751,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)) &&
       renderedHookReasonKeys.length === renderedGameCount &&
       renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)),
-    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score/detail set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
+    `${route} ${sectionId} should expose one rendered watch rank, score, tier, sort group, fallback flag set, component score/detail set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -1792,6 +1823,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       `${route} ${sectionId} should preserve API watch-card order in data-visible-game-pks`,
     );
     assert(
+      renderedWatchRanks.join(",") === games.map((game, index) => game.status === "ppd" && index === 0 ? "-" : String(index + 1)).join(",") &&
       renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
       renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
@@ -1857,7 +1889,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter teams, starter Form hrefs, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state, starter workload rest labels/days-rest/averages/flags, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter teams, starter Form hrefs, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state, starter workload rest labels/days-rest/averages/flags, park context, weather context, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -1865,6 +1897,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   assert(
     renderedArticles.length === renderedGames.length,
     `${route} should render exactly ${renderedGames.length} watch-card article${renderedGames.length === 1 ? "" : "s"} in ${sectionId}`,
+  );
+  assert(
+    renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-matchup-label")).join(",") === renderedMatchupLabels.join(",") &&
+      renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-game-pk")).join(",") === renderedGamePks.join(",") &&
+      renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-watch-rank")).join(",") === renderedWatchRanks.join(","),
+    `${route} ${sectionId} should keep section-level visible game metadata and watch ranks in the same order as the rendered watch-card articles`,
   );
 
   renderedGames.forEach((game, index) => {
@@ -1943,6 +1981,23 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       Number.isFinite(renderedWatchScore) && renderedWatchScore >= WATCH_SCORE_RANGE.min && renderedWatchScore <= WATCH_SCORE_RANGE.max,
       `${route} should pin watch score on the watch-card article for ${game.label}`,
     );
+    const expectedStarterHrefs = game.starters.map((starter) =>
+      starter.pitcherId ? expectedStarterFormHref(starter) : "none",
+    );
+    const renderedStarterHrefs = divAttributeValues(card.html, "data-starter-form-href", {
+      role: "group",
+    });
+    assert(
+      renderedStarterHrefs.join(",") === expectedStarterHrefs.join(","),
+      `${route} should pin named starter Form hrefs on the watch-card starter blocks for ${game.label}`,
+    );
+    const cardLinkCounts = linkHrefCounts(card.html, expectedStarterHrefs.filter((href) => href !== "none"));
+    assert(
+      expectedStarterHrefs
+        .filter((href) => href !== "none")
+        .every((href) => (cardLinkCounts.get(href) ?? 0) >= 1),
+      `${route} should render each named starter Form href as a link inside the ${game.label} watch card`,
+    );
     const summaryAttributes = {
       id: summaryId,
       "data-first-pitch": game.firstPitch,
@@ -2010,7 +2065,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       ["Must-watch", "Worth it", "Background"].some((label) => card.text.includes(label)),
       `${route} should render visible watch tier for ${game.label}`,
     );
-    assertRenderedWatchRank(card.html, card.text, route, game, rank);
+    assertRenderedWatchRank(card.html, card.text, route, game, renderedWatchRank);
     if (card.html.includes('data-responsive-check="must-watch-headliner"')) {
       assertRenderedWatchHook(card.html, card.text, route, game, rankLabel);
       assertRenderedFormClash(card.html, card.text, route, game);
@@ -2024,7 +2079,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       );
     } else if (!allowsRenderedLiveDataDrift(route)) {
       assert(
-        hasSlateWatchRank(card.text, rank, scheduledGames),
+        hasSlateWatchRank(card.text, Number(renderedWatchRank), scheduledGames),
         `${route} should render visible slate-relative watch rank for ${game.label}`,
       );
     }
@@ -2264,12 +2319,8 @@ function expectedWeatherContextTone(weatherContext) {
   return "muted";
 }
 
-function assertRenderedWatchRank(html, normalizedHtml, route, game, rank) {
-  const tierLabel = expectedWatchTierLabelForRank(rank);
-  const visibleRank = `#${rank}`;
-  const visibleRankPattern = new RegExp(`#\\s*${rank}\\b`);
+function assertRenderedWatchRank(html, normalizedHtml, route, game, renderedWatchRank) {
   if (allowsRenderedLiveDataDrift(route)) {
-    const renderedWatchRank = elementAttributeValue(html, "article", { "data-game-pk": game.gamePk }, "data-watch-rank");
     const renderedWatchTier = elementAttributeValue(html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
     assert(
       (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) &&
@@ -2278,6 +2329,12 @@ function assertRenderedWatchRank(html, normalizedHtml, route, game, rank) {
     );
     return;
   }
+
+  const rank = Number(renderedWatchRank);
+  assert(Number.isInteger(rank) && rank >= 1, `${route} should expose a numeric rendered watch rank for ${game.label}`);
+  const tierLabel = expectedWatchTierLabelForRank(rank);
+  const visibleRank = `#${rank}`;
+  const visibleRankPattern = new RegExp(`#\\s*${rank}\\b`);
   assert(
     visibleRankPattern.test(normalizedHtml) && normalizedHtml.includes(tierLabel),
     `${route} should render visible watch rank ${visibleRank} with tier ${tierLabel} for ${game.label}`,

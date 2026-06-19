@@ -104,6 +104,7 @@ export function TonightsMustWatch({
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
       data-visible-weather-run-values={shownGames.length ? shownGames.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") : "none"}
       data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
+      data-visible-watch-ranks={shownGames.length ? shownGames.map((game, index) => watchCardRankValue(game, index)).join(",") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
@@ -273,6 +274,10 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       </div>
     </article>
   );
+}
+
+function watchCardRankValue(game: TonightGame, index: number) {
+  return game.status === "ppd" && index === 0 ? "-" : String(index + 1);
 }
 
 function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string }) {
@@ -492,7 +497,7 @@ function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
 
 function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightStarter; leagueMeanGS: number; align: "away" | "home" }) {
   const name = starter.name ?? "TBD";
-  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId) : null;
+  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : null;
   const accent = starterFormAccent(starter);
   const teamColor = teamAccentColor(starter.team);
 
@@ -762,7 +767,7 @@ function weatherContextTone(game: TonightGame) {
 
 function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagueMeanGS: number }) {
   const name = starter.name ?? "TBD";
-  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId) : null;
+  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : null;
   const accent = starterFormAccent(starter);
 
   return (

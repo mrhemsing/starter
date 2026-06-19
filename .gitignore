@@ -62,5 +62,6 @@ next-env.d.ts
 /*.png
 /homepage-*.html
 /prod-homepage.html
+/.openclaw-logs/
 
 .vercel
