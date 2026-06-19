@@ -64,6 +64,9 @@ export function TonightsMustWatch({
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
       data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : "none").join("|")).join(",") : "none"}
+      data-visible-starter-form-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
@@ -107,7 +110,7 @@ export function TonightsMustWatch({
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{eyebrowLabel}</p>
             <h2 id={headingId} className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              Ranked by starter form, pairing quality, and matchup context. Matchup values are shown with a slate rank, never as a bare number.
+              One card per game, ranked by starter form and matchup context.
             </p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">
               <MetaLine
@@ -473,7 +476,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
               <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
               {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
               <StarterStatusChips starter={starter} />
-              <FormDriverChips chips={starter.driverChips} limit={1} compact />
+              <FormDriverChips chips={starter.driverChips} limit={3} compact />
             </div>
           ) : (
             <LimitedStarterLine starter={starter} />
@@ -718,7 +721,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       {starter.status === "ok" ? (
         <div className="col-span-full -mt-1">
           <StarterStatusChips starter={starter} />
-          <FormDriverChips chips={starter.driverChips} limit={1} compact />
+          <FormDriverChips chips={starter.driverChips} limit={3} compact />
           <StarterProjectionLine starter={starter} compact />
           <OpponentSplitLine starter={starter} compact />
           <MarketContextLine starter={starter} compact />
@@ -979,7 +982,7 @@ function starterLastStartData(starter: TonightStarter) {
 
 function starterDriverData(starter: TonightStarter) {
   const topDriver = starter.driverChips?.[0];
-  const visibleDriverCount = Math.min(starter.driverChips?.length ?? 0, 1);
+  const visibleDriverCount = Math.min(starter.driverChips?.length ?? 0, 3);
   return {
     "data-starter-driver-count": String(starter.driverChips?.length ?? 0),
     "data-starter-visible-driver-count": String(visibleDriverCount),

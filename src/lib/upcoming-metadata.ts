@@ -6,7 +6,7 @@ import { absoluteUrl } from "@/lib/seo";
 type StarterWithIdentity = TonightGame["starters"][number] & { name: string; pitcherId: string };
 
 export function upcomingDayTitle(date: string) {
-  return `MLB Probable Pitchers & Matchups - ${formatUpcomingDate(date)}`;
+  return `MLB Upcoming Matchups - ${formatUpcomingDate(date)}`;
 }
 
 export function upcomingDayDescription(upcoming: Pick<TonightResponse, "date" | "scheduledGames" | "games">) {
@@ -16,7 +16,7 @@ export function upcomingDayDescription(upcoming: Pick<TonightResponse, "date" | 
 }
 
 export function upcomingWeekTitle(startDate: string) {
-  return `MLB Probable Pitchers - Week of ${formatUpcomingDate(startDate)}`;
+  return `MLB Upcoming Matchups - Week of ${formatUpcomingDate(startDate)}`;
 }
 
 export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range" | "days">) {

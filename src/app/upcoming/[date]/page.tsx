@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import type React from "react";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
+import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
 import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingDatePageProps = {
@@ -61,6 +62,8 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   const rankedDate = addDays(today, -1);
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const resolvedDate = upcoming.date;
+  const schedule = await getSlateSchedule({ window: "today", date: resolvedDate });
+  const slateState = getSlateProgressState(schedule);
   const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };
   const jsonLd = jsonLdForUpcomingDay(upcoming);
 
@@ -70,10 +73,12 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 pb-6">
           <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            <span className="block">One card per game, ranked by starter form and matchup context.</span>
-            <span className="block lg:whitespace-nowrap">Probables are grouped head-to-head instead of duplicated by pitcher.</span>
+            One card per game, ranked by starter form and matchup context.
+          </p>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp" data-slate-state={slateState.state}>
+            {formatUpcomingSlateStamp(slateState, today)}
           </p>
           <UpcomingToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
           <UpcomingControls
@@ -91,12 +96,32 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
         fullSlateLabel="Week view"
         fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
         eyebrow={formatUpcomingSectionDate(resolvedDate)}
-        title="Must-Watch Games"
+        title="Matchup Board"
         rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
         compactTopPadding
       />
     </main>
   );
+}
+
+function formatUpcomingSlateStamp(state: SlateProgressState, today: string) {
+  const dayLabel = state.date === today ? "Today" : formatUpcomingDate(state.date);
+  if (state.state === "no-games") return `${formatUpcomingDate(state.date)} · no games today`;
+  if (state.state === "all-final") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalGames} final`;
+  if (state.state === "partial-final") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.finalGames} of ${state.totalGames} games final · updating`;
+  if (state.state === "in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.liveGames} of ${state.totalGames} in progress`;
+  return `${dayLabel} · ${formatUpcomingDate(state.date)} · first pitch ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
+}
+
+function formatFirstPitchStamp(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return "soon";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(parsed);
 }
 
 type UpcomingControlsState = {

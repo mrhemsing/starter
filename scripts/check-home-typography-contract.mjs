@@ -97,9 +97,11 @@ assert(
 );
 
 assert(
-  upcomingPage.includes('<span className="block">One card per game, ranked by starter form and matchup context.</span>') &&
-    upcomingPage.includes('<span className="block lg:whitespace-nowrap">Probables are grouped head-to-head instead of duplicated by pitcher.</span>'),
-  "upcoming page deck must force a break after the first sentence and keep the second sentence unwrapped on desktop",
+  upcomingPage.includes("Upcoming Matchups") &&
+    upcomingPage.includes("One card per game, ranked by starter form and matchup context.") &&
+    !upcomingPage.includes("Upcoming Starting Matchups") &&
+    !upcomingPage.includes("Probables are grouped head-to-head instead of duplicated by pitcher."),
+  "upcoming page deck must use the shortened title and one-line orient-only subhead",
 );
 
 assert(

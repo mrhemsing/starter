@@ -43,7 +43,7 @@ export default async function Image({ params }: UpcomingImageProps) {
           <div style={{ color: "#a1a1aa", display: "flex", fontSize: 24 }}>{formatUpcomingDate(upcoming.date)}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ color: "#71717a", display: "flex", fontSize: 34, letterSpacing: 6, textTransform: "uppercase" }}>Upcoming Starter Watch</div>
+          <div style={{ color: "#71717a", display: "flex", fontSize: 34, letterSpacing: 6, textTransform: "uppercase" }}>Upcoming Matchups</div>
           <div style={{ display: "flex", fontSize: 88, fontWeight: 800, lineHeight: 0.95 }}>Must-watch games</div>
           {topGame ? (
             <div style={{ alignItems: "center", display: "flex", gap: 28, marginTop: 18 }}>

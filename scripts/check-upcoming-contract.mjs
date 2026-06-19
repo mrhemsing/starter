@@ -644,30 +644,38 @@ function round1(value) {
 function assertMetadata(html, route, title, description) {
   const absoluteUrl = absoluteSiteUrl(route);
   const imageUrl = `${absoluteUrl}/opengraph-image`;
-  const escapedTitle = escapeHtmlAttribute(title);
   const actualDescription = renderedMetaDescription(html);
-  const escapedDescription = escapeHtmlAttribute(actualDescription ?? description);
+  const actualOgTitle = renderedMetaContent(html, { property: "og:title" });
+  const actualOgDescription = renderedMetaContent(html, { property: "og:description" });
+  const actualOgImageAlt = renderedMetaContent(html, { property: "og:image:alt" });
+  const actualTwitterTitle = renderedMetaContent(html, { name: "twitter:title" });
+  const actualTwitterDescription = renderedMetaContent(html, { name: "twitter:description" });
+  const actualTwitterImageAlt = renderedMetaContent(html, { name: "twitter:image:alt" });
+  const expectedDescription = actualDescription ?? description;
 
   assert(html.includes(`<link rel="canonical" href="${absoluteUrl}"/>`), `${route} should render canonical metadata`);
   assert(actualDescription && actualDescription.length > 0, `${route} should render description metadata`);
   assert(html.includes(`<meta property="og:url" content="${absoluteUrl}"/>`), `${route} should render Open Graph URL metadata`);
-  assert(html.includes(`<meta property="og:title" content="${escapedTitle}"/>`), `${route} should render Open Graph title metadata`);
-  assert(
-    html.includes(`<meta property="og:description" content="${escapedDescription}"/>`),
-    `${route} should render Open Graph description metadata matching the standard description`,
-  );
+  assert(actualOgTitle === title, `${route} should render Open Graph title metadata: expected "${title}", got "${actualOgTitle ?? "missing"}"`);
+  assert(actualOgDescription === expectedDescription, `${route} should render Open Graph description metadata matching the standard description`);
   assert(html.includes(`<meta property="og:image" content="${imageUrl}"/>`), `${route} should render Open Graph image metadata`);
   assert(html.includes(`<meta property="og:image:width" content="1200"/>`), `${route} should render Open Graph image width metadata`);
   assert(html.includes(`<meta property="og:image:height" content="630"/>`), `${route} should render Open Graph image height metadata`);
-  assert(html.includes(`<meta property="og:image:alt" content="${escapedTitle}"/>`), `${route} should render Open Graph image alt metadata`);
+  assert(actualOgImageAlt === title, `${route} should render Open Graph image alt metadata`);
   assert(html.includes(`<meta name="twitter:card" content="summary_large_image"/>`), `${route} should render Twitter large image card metadata`);
-  assert(html.includes(`<meta name="twitter:title" content="${escapedTitle}"/>`), `${route} should render Twitter title metadata`);
-  assert(
-    html.includes(`<meta name="twitter:description" content="${escapedDescription}"/>`),
-    `${route} should render Twitter description metadata matching the standard description`,
-  );
+  assert(actualTwitterTitle === title, `${route} should render Twitter title metadata`);
+  assert(actualTwitterDescription === expectedDescription, `${route} should render Twitter description metadata matching the standard description`);
   assert(html.includes(`<meta name="twitter:image" content="${imageUrl}"/>`), `${route} should render Twitter image metadata`);
-  assert(html.includes(`<meta name="twitter:image:alt" content="${escapedTitle}"/>`), `${route} should render Twitter image alt metadata`);
+  assert(actualTwitterImageAlt === title, `${route} should render Twitter image alt metadata`);
+}
+
+function renderedMetaContent(html, attributes) {
+  const metas = html.match(/<meta\b[^>]*>/g) ?? [];
+  const tag = metas.find((candidate) =>
+    Object.entries(attributes).every(([name, value]) => tagAttribute(candidate, name) === value),
+  );
+  const content = tag ? tagAttribute(tag, "content") : null;
+  return content ? unescapeHtmlAttribute(content) : null;
 }
 
 function assertNoIndexFollow(html, route) {
@@ -710,7 +718,7 @@ function expectedUpcomingDayDescription(day) {
 }
 
 function expectedUpcomingDayTitle(dateToFormat) {
-  return `MLB Probable Pitchers & Matchups - ${formatUpcomingDate(dateToFormat)}`;
+  return `MLB Upcoming Matchups - ${formatUpcomingDate(dateToFormat)}`;
 }
 
 function expectedUpcomingWeekDescription(upcoming) {
@@ -726,7 +734,7 @@ function expectedUpcomingWeekDescription(upcoming) {
 }
 
 function expectedUpcomingWeekTitle(startDate) {
-  return `MLB Probable Pitchers - Week of ${formatUpcomingDate(startDate)}`;
+  return `MLB Upcoming Matchups - Week of ${formatUpcomingDate(startDate)}`;
 }
 
 async function assertPng(url, label) {
@@ -1341,6 +1349,21 @@ function assertWeekDaySlateLinks(html, route, days) {
   });
 }
 
+function assertUpcomingPageHeader(html, route) {
+  const normalized = normalizeHtmlText(html);
+  assert(normalized.includes("Upcoming Matchups"), `${route} should render the shortened Upcoming Matchups page title`);
+  assert(!normalized.includes("Upcoming Starting Matchups"), `${route} should not render the redundant Starting page title`);
+  assert(
+    normalized.includes("One card per game, ranked by starter form and matchup context."),
+    `${route} should render the trimmed one-line upcoming subhead`,
+  );
+  assert(
+    !normalized.includes("Probables are grouped head-to-head instead of duplicated by pitcher"),
+    `${route} should not document the self-evident head-to-head layout`,
+  );
+  assert(html.includes('data-responsive-check="upcoming-slate-stamp"'), `${route} should render the state-aware upcoming slate stamp`);
+}
+
 function countOccurrences(value, needle) {
   let count = 0;
   let index = value.indexOf(needle);
@@ -1413,8 +1436,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} should render exactly one watch-list heading id for ${sectionId}`,
   );
   assert(
-    elementWithTextHasAttributes(sectionHtml, "h2", { id: headingId }, "Must-Watch Games"),
-    `${route} should label watch-list section ${sectionId} with its visible heading`,
+    elementWithTextHasAttributes(sectionHtml, "h2", { id: headingId }, "Matchup Board"),
+    `${route} should label watch-list section ${sectionId} as the matchup board`,
+  );
+  assert(
+    normalized.includes("One card per game, ranked by starter form and matchup context."),
+    `${route} should render the orient-only matchup board subhead`,
   );
   const renderedGameCount = Number(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-game-count"));
   const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
@@ -1431,6 +1458,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
   const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
   const renderedStarterFormHrefs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-hrefs"));
+  const renderedStarterFormTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-tiers"));
+  const renderedStarterFormTrends = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-trends"));
+  const renderedStarterFormScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-scores"));
   const renderedStarterMarketStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-statuses"));
   const renderedStarterMarketSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-sources"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
@@ -1519,6 +1549,15 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         return pair.length === 2 && pair.every((href) => href === "none" || /^\/pitchers\/[a-z0-9-]+-\d+\?from=upcoming$/.test(href));
       }),
     `${route} ${sectionId} should expose one away/home starter Form href pair per visible game`,
+  );
+  assert(
+    renderedStarterFormTiers.length === renderedGameCount &&
+      renderedStarterFormTiers.every((tiers) => tiers.split("/").length === 2 && tiers.split("/").every((tier) => [...FORM_TIER_KEYS, "none"].includes(tier))) &&
+      renderedStarterFormTrends.length === renderedGameCount &&
+      renderedStarterFormTrends.every((trends) => trends.split("/").length === 2 && trends.split("/").every((trend) => ["heating", "steady", "cooling", "none"].includes(trend))) &&
+      renderedStarterFormScores.length === renderedGameCount &&
+      renderedStarterFormScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))),
+    `${route} ${sectionId} should expose one away/home starter form tier, trend, and score pair per visible game`,
   );
   assert(
     renderedStarterMarketStatuses.length === renderedGameCount &&
@@ -1664,6 +1703,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterPitcherIds.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") &&
       renderedStarterNames.join(",") === games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") &&
       renderedStarterFormHrefs.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ? expectedStarterFormHref(starter) : "none").join("|")).join(",") &&
+      renderedStarterFormTiers.join(",") === games.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") &&
+      renderedStarterFormTrends.join(",") === games.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") &&
+      renderedStarterFormScores.join(",") === games.map((game) => game.starters.map((starter) => starterFormValue(starter.rgs)).join("/")).join(",") &&
       renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
       renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
@@ -1672,7 +1714,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -2252,7 +2294,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-limited-sample": String(starter.flags?.limitedSample === true),
         "data-starter-rust": String(starter.flags?.rust === true),
         "data-starter-driver-count": String(starter.driverChips?.length ?? 0),
-        "data-starter-visible-driver-count": String(Math.min(starter.driverChips?.length ?? 0, 1)),
+        "data-starter-visible-driver-count": String(Math.min(starter.driverChips?.length ?? 0, 3)),
         "data-starter-top-driver-key": starterTopDriverValue(starter, "key"),
         "data-starter-top-driver-label": starterTopDriverValue(starter, "label"),
         "data-starter-top-driver-direction": starterTopDriverValue(starter, "direction"),
@@ -2880,13 +2922,13 @@ try {
   assert(dayPage.ok, `/upcoming/${date} returned HTTP ${dayPage.status}`);
   const dayHtml = await dayPage.text();
   const dayControlTeam = upcoming.days[0].games[0]?.away ?? null;
-  assert(dayHtml.includes(escapeHtmlAttribute(expectedUpcomingDayTitle(date))), `/upcoming/${date} should render route metadata`);
   assertMetadata(
     dayHtml,
     `/upcoming/${date}`,
     expectedUpcomingDayTitle(date),
     expectedUpcomingDayDescription(upcoming.days[0]),
   );
+  assertUpcomingPageHeader(dayHtml, `/upcoming/${date}`);
   assertJsonLd(
     dayHtml,
     `/upcoming/${date}`,
@@ -3038,6 +3080,7 @@ try {
     expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
   );
+  assertUpcomingPageHeader(invalidDayHtml, "/upcoming/not-a-date");
   assertJsonLd(
     invalidDayHtml,
     "/upcoming/not-a-date",
@@ -3085,6 +3128,7 @@ try {
     expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
   );
+  assertUpcomingPageHeader(upcomingIndexHtml, "/upcoming");
   assertJsonLd(
     upcomingIndexHtml,
     "/upcoming",
@@ -3232,13 +3276,13 @@ try {
     const weekHtml = await weekPage.text();
     const weekGames = upcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
     const weekFilterTeam = firstPregameTeam(weekGames, `/upcoming/week/${date}`);
-    assert(weekHtml.includes(escapeHtmlAttribute(expectedUpcomingWeekTitle(date))), `/upcoming/week/${date} should render route metadata`);
     assertMetadata(
       weekHtml,
       `/upcoming/week/${date}`,
       expectedUpcomingWeekTitle(date),
       expectedUpcomingWeekDescription(upcoming),
     );
+    assertUpcomingPageHeader(weekHtml, `/upcoming/week/${date}`);
     assertJsonLd(
       weekHtml,
       `/upcoming/week/${date}`,
@@ -3415,6 +3459,7 @@ try {
       expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
     );
+    assertUpcomingPageHeader(invalidWeekHtml, "/upcoming/week/not-a-date");
     assertJsonLd(
       invalidWeekHtml,
       "/upcoming/week/not-a-date",
@@ -3458,13 +3503,13 @@ try {
     assert(upcomingWeekIndex.ok, "/upcoming/week returned HTTP " + upcomingWeekIndex.status);
     const upcomingWeekIndexHtml = await upcomingWeekIndex.text();
     const defaultWeekFilterTeam = firstPregameTeam(defaultWeekGames, "/upcoming/week");
-    assert(upcomingWeekIndexHtml.includes("Upcoming"), "/upcoming/week should render the primary weekly watch surface");
     assertMetadata(
       upcomingWeekIndexHtml,
       "/upcoming/week",
       expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
     );
+    assertUpcomingPageHeader(upcomingWeekIndexHtml, "/upcoming/week");
     assertJsonLd(
       upcomingWeekIndexHtml,
       "/upcoming/week",

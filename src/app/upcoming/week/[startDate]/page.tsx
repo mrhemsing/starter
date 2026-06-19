@@ -73,9 +73,12 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 pb-6">
           <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Starting Matchups</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            This week&apos;s probable slates grouped by date. Each game is ranked once, by watchability, with both starters shown head-to-head.
+            One card per game, ranked by starter form and matchup context.
+          </p>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp">
+            Week of {formatUpcomingDate(resolvedStartDate)} · {visibleGameCount} of {scheduledGameCount} games shown
           </p>
           <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
             <Link className={toggleClass(false)} href={upcomingDateHref(today)} aria-label={`View today slate for ${formatUpcomingDate(today)}`}>Today</Link>
@@ -110,7 +113,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             fullSlateLabel="Day slate"
             fullSlateAriaLabel={`View day slate for ${formatUpcomingDate(day.date)}`}
             eyebrow={formatUpcomingDate(day.date)}
-            title="Must-Watch Games"
+            title="Matchup Board"
             rankLabel={`on ${formatUpcomingDate(day.date)}`}
             sectionId={`must-watch-${day.date}`}
           />
