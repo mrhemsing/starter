@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
 
@@ -18,7 +18,12 @@ type FastFilterLinkProps = {
 
 export function FastFilterLink({ href, className, children, prefetch = true, ariaCurrent, ariaLabel, style, "data-control-link-active": dataControlLinkActive }: FastFilterLinkProps) {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSearch = searchParams.toString();
+  const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;
+  const [pendingIntent, setPendingIntent] = useState<{ href: string; from: string } | null>(null);
+  const pending = pendingIntent?.href === href && pendingIntent.from === currentHref;
 
   useEffect(() => {
     if (prefetch) router.prefetch(href);
@@ -32,7 +37,7 @@ export function FastFilterLink({ href, className, children, prefetch = true, ari
     <Link
       href={href}
       prefetch={prefetch}
-      className={`${className}${pending ? " pointer-events-none opacity-70" : ""}`}
+      className={`${className}${pending ? " opacity-70" : ""}`}
       aria-current={ariaCurrent}
       aria-label={ariaLabel}
       style={style}
@@ -41,7 +46,7 @@ export function FastFilterLink({ href, className, children, prefetch = true, ari
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}
-      onClick={() => setPending(true)}
+      onClick={() => setPendingIntent({ href, from: currentHref })}
     >
       {children}
     </Link>

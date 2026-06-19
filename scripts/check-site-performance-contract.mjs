@@ -94,11 +94,18 @@ for (const [label, source, ttlConstant, staleWindow] of cacheRoutes) {
 assert(
   fastFilterLink.includes('"use client";') &&
     fastFilterLink.includes("router.prefetch(href)") &&
+    fastFilterLink.includes("usePathname") &&
+    fastFilterLink.includes("useSearchParams") &&
+    fastFilterLink.includes("const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : \"\"}`;") &&
+    fastFilterLink.includes("pendingIntent?.href === href && pendingIntent.from === currentHref") &&
+    fastFilterLink.includes("setPendingIntent({ href, from: currentHref })") &&
+    fastFilterLink.includes('pending ? " opacity-70" : ""') &&
+    !fastFilterLink.includes("pointer-events-none opacity-70") &&
     fastFilterLink.includes("onPointerEnter={warmRoute}") &&
     fastFilterLink.includes("onPointerDown={warmRoute}") &&
     fastFilterLink.includes("onFocus={warmRoute}") &&
     fastFilterLink.includes("data-fast-filter-link"),
-  "Filter links must prefetch on mount and warm routes on pointer/focus for snappy sports-site filtering",
+  "Filter links must prefetch on mount, warm routes on pointer/focus, and keep route buttons clickable after navigation",
 );
 
 assert(
