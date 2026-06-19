@@ -49,9 +49,6 @@ export const metadata: Metadata = {
     description: "Daily starting-pitcher rankings, rolling form, probable matchups, and GS+ scores for every MLB start.",
     images: [{ url: "/opengraph-image", alt: "Toe the Slab MLB starting pitcher rankings" }],
   },
-  icons: {
-    icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%BE%3C/text%3E%3C/svg%3E",
-  },
 };
 
 export default function RootLayout({
