@@ -73,11 +73,13 @@ assert(
 );
 
 assert(
-  globals.includes("--level-onfire: #D85A30;") &&
+    globals.includes("--level-onfire: #D85A30;") &&
     globals.includes("--font-logo: var(--font-tourney);") &&
     globals.includes(".site-logo-wordmark {\n  color: #fcd34d;") &&
-    globals.includes("font-family: var(--font-logo),"),
-  "site logo wordmark must use the yellow Tourney logo font",
+    globals.includes("font-size: clamp(2.875rem, 6.24vw, 3.12rem);") &&
+    globals.includes("font-family: var(--font-logo),") &&
+    globals.includes("margin-bottom: 8px;"),
+  "site logo wordmark must force a visibly larger mobile yellow Tourney logo with 8px bottom margin",
 );
 
 assert(

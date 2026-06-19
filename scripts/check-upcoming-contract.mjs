@@ -19,6 +19,7 @@ const WATCH_SCORE_WEIGHTS = {
 const WATCH_SORT_POLICY = "status-then-watch-score";
 const WATCH_SCORE_RANGE = { min: 0, max: 100 };
 const WATCH_SCORE_PRECISION = 1;
+const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"];
 
 function assert(condition, message) {
   if (!condition) {
@@ -1473,6 +1474,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
   const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
   const renderedWatchFlagKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-flag-keys"));
+  const renderedComponentKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-keys"));
   const renderedComponentTopArms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-top-arms"));
   const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
   const renderedComponentMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-matchups"));
@@ -1593,6 +1595,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
       renderedWatchFlagKeys.length === renderedGameCount &&
       renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key))) &&
+      renderedComponentKeys.length === renderedGameCount &&
+      renderedComponentKeys.every((keys) => keys === WATCH_COMPONENT_KEYS.join("/")) &&
       renderedComponentTopArms.length === renderedGameCount &&
       renderedComponentTopArms.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
       renderedComponentPairings.length === renderedGameCount &&
@@ -1680,9 +1684,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     );
     assert(
       renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
-        renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
+      renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
       renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
       renderedWatchFlagKeys.join(",") === games.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") &&
+      renderedComponentKeys.join(",") === games.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") &&
       renderedComponentTopArms.join(",") === games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") &&
       renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
       renderedComponentMatchups.join(",") === games.map((game) => game.matchupScore.toFixed(1)).join(",") &&
@@ -1714,7 +1719,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 

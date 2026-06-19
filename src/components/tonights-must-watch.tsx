@@ -11,6 +11,7 @@ import { slateTimeWordTitle } from "@/lib/time-words";
 import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
+const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"] as const;
 
 export function TonightsMustWatch({
   tonight,
@@ -79,6 +80,7 @@ export function TonightsMustWatch({
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
       data-visible-watch-flag-keys={shownGames.length ? shownGames.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") : "none"}
+      data-visible-component-keys={shownGames.length ? shownGames.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") : "none"}
       data-visible-component-top-arms={shownGames.length ? shownGames.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") : "none"}
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
       data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}

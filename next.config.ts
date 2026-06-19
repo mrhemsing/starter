@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "lindy.b-average.com",
+    "soma.b-average.com",
+    "soma1.b-average.com",
+    "soma2.b-average.com",
+    "soma3.b-average.com",
+    "soma4.b-average.com",
+    "127.0.0.1",
+  ],
   images: {
+    qualities: [75, 86],
     remotePatterns: [
       {
         protocol: "https",
