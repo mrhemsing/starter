@@ -74,10 +74,10 @@ assert(
 
 assert(
   globals.includes("--level-onfire: #D85A30;") &&
-    globals.includes("--font-logo: var(--font-faster-one);") &&
+    globals.includes("--font-logo: var(--font-tourney);") &&
     globals.includes(".site-logo-wordmark {\n  color: #ffffff;") &&
     globals.includes("font-family: var(--font-logo),"),
-  "site logo wordmark must use the white Faster One logo font",
+  "site logo wordmark must use the white Tourney logo font",
 );
 
 assert(

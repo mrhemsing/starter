@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Faster_One, Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Tourney } from "next/font/google";
 import { BAverageBadge } from "@/components/b-average-badge";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
@@ -19,8 +19,8 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-const fasterOne = Faster_One({
-  variable: "--font-faster-one",
+const tourney = Tourney({
+  variable: "--font-tourney",
   subsets: ["latin"],
   weight: "400",
 });
@@ -62,7 +62,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${fasterOne.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${tourney.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}
