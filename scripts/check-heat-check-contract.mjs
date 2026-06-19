@@ -76,8 +76,10 @@ assert(
     formPage.includes('activeFilterLabel !== "All arms"') &&
     !formPage.includes('<p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>') &&
     formPage.includes('const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;') &&
-    formPage.includes('Showing {activeFilterLabel} · {filteredCountLabel} · {"✕"} Show all'),
-  "Heat Check must replace the inactive hint box with only the filtered-list status and avoid N of N in full team views",
+    formPage.includes('<span>Showing {activeFilterLabel} · {filteredCountLabel}</span>') &&
+    formPage.includes('className="mt-1 block sm:mt-0 sm:inline"') &&
+    formPage.includes('{"✕"} Show all teams'),
+  "Heat Check must replace the inactive hint box with only the filtered-list status, avoid N of N in full team views, and put Show all teams on its own mobile line",
 );
 
 assert(
@@ -146,6 +148,7 @@ assert(
     formPage.includes('data-responsive-check="heat-window-controls"') &&
     formPage.includes('data-responsive-check="heat-team-window-controls"') &&
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
+    formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&

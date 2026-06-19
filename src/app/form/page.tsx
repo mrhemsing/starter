@@ -191,7 +191,11 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           {activeFilterLabel !== "All arms" ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
               <Link href={clearFilterHref} className="text-amber-300 hover:text-amber-200">
-                Showing {activeFilterLabel} · {filteredCountLabel} · {"✕"} Show all
+                <span>Showing {activeFilterLabel} · {filteredCountLabel}</span>
+                <span className="mt-1 block sm:mt-0 sm:inline">
+                  <span className="hidden sm:inline"> · </span>
+                  {"✕"} Show all teams
+                </span>
               </Link>
             </div>
           ) : null}
@@ -719,7 +723,7 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
       </div>
       <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
       {activeTeam ? (
-        <div className="mt-3 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
+        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
           <WindowControlLinks window={window} params={params} />
         </div>
       ) : null}
