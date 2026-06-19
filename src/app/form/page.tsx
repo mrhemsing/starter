@@ -143,7 +143,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
@@ -186,7 +186,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </section>
         ) : null}
 
-        <section className={`sticky top-0 z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">
+        <section className={`z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur sm:sticky sm:top-0 ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">
           <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
           {activeFilterLabel !== "All arms" ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
@@ -574,7 +574,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
 
 function BandHeader({ band, count }: { band: HeatBand; count: number }) {
   return (
-    <div className="sticky top-0 z-10 mt-6 mb-3 flex items-center gap-3 bg-[#08080a]/92 py-2 backdrop-blur" data-heat-band-header={band.key}>
+    <div className="z-10 mt-6 mb-3 flex items-center gap-3 bg-[#08080a]/92 py-2 backdrop-blur sm:sticky sm:top-0" data-heat-band-header={band.key}>
       <p className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: band.color }}>{band.label} · {count}</p>
       <span className="h-px flex-1" style={{ backgroundColor: band.color }} />
     </div>

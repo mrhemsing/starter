@@ -77,7 +77,7 @@ function TemperatureRail({ bands, total, activeKey }: { bands: BandWithCount[]; 
 
 function MobileBandJumper({ bands, active }: { bands: BandWithCount[]; active: BandWithCount | null }) {
   return (
-    <nav className="sticky top-[76px] z-10 col-span-full -mx-1 flex self-start overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump" data-active-heat-band={active?.key ?? ""}>
+    <nav className="z-10 col-span-full -mx-1 flex self-start overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump" data-active-heat-band={active?.key ?? ""}>
       {bands.map((band) => {
         const selected = active?.key === band.key;
         return (

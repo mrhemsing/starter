@@ -50,7 +50,7 @@ assert(
 assert(
   formPage.includes("<HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} />") &&
     bandNav.includes('"use client";') &&
-    formPage.includes('className="min-h-screen overflow-x-clip bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
+    formPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
     bandNav.includes('data-temperature-job="jump"') &&
     bandNav.includes('aria-label="Jump to heat zones"') &&
     bandNav.includes('href={`#band-${band.key}`}') &&
@@ -66,8 +66,9 @@ assert(
     bandNav.includes('aria-label="Jump to heat band"') &&
     bandNav.includes("data-active-heat-band={active?.key ?? \"\"}") &&
     bandNav.includes('aria-current={selected ? "location" : undefined}') &&
+    !bandNav.includes('className="sticky top-[76px]') &&
     !bandNav.includes('{active.label} · {active.count}'),
-  "mobile Heat Check must replace the rail with a sticky band jumper that tracks the active band without duplicating the first section count",
+  "mobile Heat Check must replace the rail with a non-sticky band jumper that tracks the active band without duplicating the first section count",
 );
 
 assert(
@@ -136,7 +137,7 @@ assert(
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className={`sticky top-0 z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">') &&
+    formPage.includes('<section className={`z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur sm:sticky sm:top-0 ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">') &&
     formPage.includes("{leagueView ? <details>") &&
     formPage.includes("</details> : null}") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
@@ -150,6 +151,13 @@ assert(
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
   "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, lower filters, band jumper, league heat-map header, and band sections without hiding Even arms",
+);
+
+assert(
+  formPage.includes('bg-[#08080a]/92 py-2 backdrop-blur sm:sticky sm:top-0" data-heat-band-header={band.key}') &&
+    !formPage.includes('className="sticky top-0 z-10 mt-6 mb-3') &&
+    !bandNav.includes('sticky top-[76px]'),
+  "Heat Check must not use sticky controls, mobile band chips, or mobile band headers on phone widths",
 );
 
 assert(
