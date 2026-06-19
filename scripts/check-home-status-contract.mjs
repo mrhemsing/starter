@@ -44,7 +44,7 @@ assert(
 );
 
 assert(
-  slateState.includes('return `TODAY · ${dateLabel} · ${state.finalGames} OF ${state.totalGames} FINAL`;'),
+  slateState.includes('return `TODAY · ${dateLabel} · ${state.finalGames} OF ${state.totalGames} GAMES FINAL`;'),
   "homepage partial-final line must render one state fact",
 );
 
