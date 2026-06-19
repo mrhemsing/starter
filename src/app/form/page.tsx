@@ -156,7 +156,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
               <span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>
             </p>
           ) : (
-            <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form.</p>
+            <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form · {pitchers.length} shown.</p>
           )}
           <p className={`${team ? "mt-2" : "mt-3"} font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
             Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
@@ -188,13 +188,13 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
 
         <section className={`z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur sm:sticky sm:top-0 ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">
           <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
-          {activeFilterLabel !== "All arms" ? (
+          {!team && activeFilterLabel !== "All arms" ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
               <Link href={clearFilterHref} className="text-amber-300 hover:text-amber-200">
                 <span>Showing {activeFilterLabel} · {filteredCountLabel}</span>
                 <span className="mt-1 block sm:mt-0 sm:inline">
                   <span className="hidden sm:inline"> · </span>
-                  {"✕"} Show all teams
+                  {"✕"} Show all
                 </span>
               </Link>
             </div>
@@ -711,10 +711,22 @@ function WindowControlLinks({ window, params }: { window: number; params: Record
 }
 
 function TeamFilterControl({ teams, activeTeam, params, window }: { teams: string[]; activeTeam: string; params: Record<string, string | undefined>; window: number }) {
+  const clearTeamHref = heatCheckHref({ ...params, team: "" });
+
   return (
     <div className="mb-4" data-responsive-check="heat-team-filter">
       <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
         <HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />
+        {activeTeam ? (
+          <Link
+            href={clearTeamHref}
+            className="mb-0 inline-flex min-h-11 items-center justify-center rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
+            aria-label="Clear team filter"
+            data-responsive-check="heat-team-clear"
+          >
+            {"✕"}
+          </Link>
+        ) : null}
         {activeTeam ? (
           <div className="pb-0" data-responsive-check="heat-team-window-controls">
             <WindowControlLinks window={window} params={params} />

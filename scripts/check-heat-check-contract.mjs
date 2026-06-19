@@ -43,8 +43,8 @@ assert(
   formPage.includes("{leagueView ? (") &&
     formPage.includes('<span className="block">Furnace to freezer across the last {window} qualified starts.</span>') &&
     formPage.includes('<span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>') &&
-    formPage.includes('{team} starters by recent form.'),
-  "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy in team mode",
+    formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
+  "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy with shown count in team mode",
 );
 
 assert(
@@ -73,13 +73,14 @@ assert(
 
 assert(
   formPage.includes('data-responsive-check="heat-filter-status"') &&
-    formPage.includes('activeFilterLabel !== "All arms"') &&
+    formPage.includes('!team && activeFilterLabel !== "All arms"') &&
     !formPage.includes('<p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>') &&
     formPage.includes('const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;') &&
     formPage.includes('<span>Showing {activeFilterLabel} · {filteredCountLabel}</span>') &&
     formPage.includes('className="mt-1 block sm:mt-0 sm:inline"') &&
-    formPage.includes('{"✕"} Show all teams'),
-  "Heat Check must replace the inactive hint box with only the filtered-list status, avoid N of N in full team views, and put Show all teams on its own mobile line",
+    formPage.includes('{"✕"} Show all') &&
+    !formPage.includes("Show all teams"),
+  "Heat Check must keep the filtered-list status for league filters only and avoid a separate team status clear box",
 );
 
 assert(
@@ -150,10 +151,12 @@ assert(
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
     formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
+    formPage.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
+    formPage.includes('data-responsive-check="heat-team-clear"') &&
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
-  "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, lower filters, band jumper, league heat-map header, and band sections without hiding Even arms",
+  "Heat Check must own the team filter in the controls row, attach team clearing to the picker, and team views must show all team pitchers while hiding league-only surfaces",
 );
 
 assert(
@@ -198,6 +201,9 @@ assert(
 assert(
   teamDrawer.includes('"use client";') &&
     teamDrawer.includes('data-responsive-check="heat-team-bottom-drawer"') &&
+    teamDrawer.includes('data-responsive-check="heat-team-picker-row"') &&
+    teamDrawer.includes('data-responsive-check="heat-team-clear"') &&
+    teamDrawer.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
     teamDrawer.includes('createPortal(') &&
     teamDrawer.includes("document.body") &&
     teamDrawer.includes('role="dialog" aria-label="Heat Check team filter"') &&

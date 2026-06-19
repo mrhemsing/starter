@@ -13,6 +13,7 @@ type HeatTeamDrawerProps = {
 export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProps) {
   const [open, setOpen] = useState(false);
   const closeDrawer = () => setOpen(false);
+  const clearTeamHref = heatCheckHref({ ...params, team: "" });
 
   useEffect(() => {
     if (!open) return;
@@ -25,19 +26,31 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
 
   return (
     <div className="sm:hidden" data-responsive-check="heat-team-bottom-drawer">
-      <button
-        type="button"
-        className="flex min-h-11 w-full items-center justify-between rounded border border-amber-300/70 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-      >
-        <span className="flex min-w-0 items-center gap-2">
-          <TeamLogo team={activeTeam} />
-          <span className="truncate">{activeTeam ? teamDisplayName(activeTeam) : "All teams"}</span>
-        </span>
-        <span>Open</span>
-      </button>
+      <div className="flex items-center gap-2" data-responsive-check="heat-team-picker-row">
+        <button
+          type="button"
+          className="flex min-h-11 min-w-0 flex-1 items-center justify-between rounded border border-amber-300/70 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <TeamLogo team={activeTeam} />
+            <span className="truncate">{activeTeam ? teamDisplayName(activeTeam) : "All teams"}</span>
+          </span>
+          <span>Open</span>
+        </button>
+        {activeTeam ? (
+          <Link
+            href={clearTeamHref}
+            className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded border border-white/10 bg-black/20 font-mono text-xs uppercase tracking-[0.14em] text-amber-300"
+            aria-label="Clear team filter"
+            data-responsive-check="heat-team-clear"
+          >
+            {"✕"}
+          </Link>
+        ) : null}
+      </div>
       {open && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[90] flex items-end bg-black/65 px-3 pb-3 pt-16 backdrop-blur-sm" data-team-drawer-overlay>
