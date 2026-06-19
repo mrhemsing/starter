@@ -1,6 +1,7 @@
 import type { DecisionParkContext, DecisionWeatherContext } from "@/lib/types";
 
 const NEUTRAL_PARK_RUN_FACTOR = 1;
+const WEATHER_REVALIDATE_SECONDS = 15 * 60;
 
 export const VENUE_RUN_FACTORS: Record<string, number> = {
   "Angel Stadium": 0.98,
@@ -162,7 +163,9 @@ async function fetchOpenMeteoWeather(profile: VenueWeatherProfile, gameDate: str
     start_date: date,
     end_date: date,
   });
-  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { cache: "no-store" });
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
+    next: { revalidate: WEATHER_REVALIDATE_SECONDS },
+  });
   if (!response.ok) {
     return {
       source: "unavailable",

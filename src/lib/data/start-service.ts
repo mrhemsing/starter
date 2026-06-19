@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
@@ -17,6 +18,7 @@ const NEUTRAL_PARK_RUN_FACTOR = 1;
 const PITCHER_SEASON_LOG_SORTS: PitcherApiSeasonLogSort[] = ["date-desc", "gs-desc", "ip-desc"];
 const PITCHER_SEASON_LOG_RESULTS: PitcherApiSeasonLogResultFilter[] = ["all", "W", "L", "ND"];
 const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;
+export const PITCHER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
 
 type CompletedPitchingLineSource = "archive-gamefeed" | "live-gamefeed";
 type CompletedPitchingLineEntry = MlbCompletedPitchingLine & {
@@ -681,7 +683,17 @@ export async function getPitcherDetail(pitcherId: string) {
     : null;
 }
 
+const getCachedPitcherApiResponse = unstable_cache(
+  async (pitcherId: string, sort: string | null, result: string | null) => buildPitcherApiResponse(pitcherId, { sort, result }),
+  ["pitcher-api-response", "v1"],
+  { revalidate: PITCHER_PROFILE_REVALIDATE_SECONDS },
+);
+
 export async function getPitcherApiResponse(pitcherId: string, controls: { sort?: string | null; result?: string | null } = {}): Promise<PitcherApiResponse | null> {
+  return getCachedPitcherApiResponse(pitcherId, controls.sort ?? null, controls.result ?? null);
+}
+
+async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: string | null; result?: string | null } = {}): Promise<PitcherApiResponse | null> {
   const pitcher = await getPitcherDetail(pitcherId);
   if (!pitcher) return null;
   const isLiveProfile = "source" in pitcher && pitcher.source === "live-people-stats";

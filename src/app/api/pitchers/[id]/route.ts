@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPitcherApiResponse } from "@/lib/data/start-service";
+import { getPitcherApiResponse, PITCHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/data/start-service";
 
 type PitcherRouteApiContext = {
   params: Promise<{
@@ -19,5 +19,9 @@ export async function GET(request: Request, { params }: PitcherRouteApiContext) 
     return NextResponse.json({ error: "Unknown pitcher" }, { status: 404 });
   }
 
-  return NextResponse.json(pitcher);
+  return NextResponse.json(pitcher, {
+    headers: {
+      "Cache-Control": `public, s-maxage=${PITCHER_PROFILE_REVALIDATE_SECONDS}, stale-while-revalidate=3600`,
+    },
+  });
 }

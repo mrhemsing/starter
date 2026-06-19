@@ -19,6 +19,7 @@
     "check:upcoming-default-date": "node scripts/check-upcoming-default-date-contract.mjs",
     "check:publish-prep": "node scripts/check-publish-prep.mjs",
     "check:daily-social": "node scripts/check-daily-social-contract.mjs",
+    "check:site-performance": "node scripts/check-site-performance-contract.mjs",
     "check:home-ranked": "node scripts/check-home-ranked-contract.mjs",
     "check:home-status": "node scripts/check-home-status-contract.mjs",
     "check:home-best-starts": "node scripts/check-home-best-starts-contract.mjs",

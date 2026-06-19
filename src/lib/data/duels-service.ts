@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { getDailySlate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { pitcherHref, sourceParams, startHref } from "@/lib/routes";
@@ -8,6 +9,7 @@ const BEST_DUEL_MIN_STARTER_FORM = 55;
 const MISMATCH_MIN_GAP = 12;
 const BEST_DUEL_MIN_COMBINED_QUALITY = 90;
 const DUELS_CACHE_TTL_MS = 60 * 1000;
+export const DUELS_REVALIDATE_SECONDS = 60;
 
 type CachedDuels = {
   expiresAt: number;
@@ -16,12 +18,18 @@ type CachedDuels = {
 
 const duelsCache = new Map<string, CachedDuels>();
 
+const getCachedPitchingDuels = unstable_cache(
+  async (date: string, mode: "upcoming" | "settled") => buildPitchingDuels(date, mode),
+  ["pitching-duels", "v1"],
+  { revalidate: DUELS_REVALIDATE_SECONDS },
+);
+
 export async function getPitchingDuels(date: string, mode: "upcoming" | "settled" = "upcoming"): Promise<PitchingDuelsResponse> {
   const cacheKey = `${date}:${mode}`;
   const cached = duelsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = buildPitchingDuels(date, mode);
+  const promise = getCachedPitchingDuels(date, mode);
   duelsCache.set(cacheKey, {
     expiresAt: Date.now() + DUELS_CACHE_TTL_MS,
     promise,

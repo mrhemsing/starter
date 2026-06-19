@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
+import { getUpcomingMustWatch, UPCOMING_REVALIDATE_SECONDS } from "@/lib/data/tonight-service";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,5 +15,9 @@ export async function GET(request: Request) {
     window: window === 3 || window === 10 ? window : 5,
   });
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": `public, s-maxage=${UPCOMING_REVALIDATE_SECONDS}, stale-while-revalidate=300`,
+    },
+  });
 }

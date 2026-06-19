@@ -17,8 +17,9 @@ const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
-  rankedRoute.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
-    rankedRoute.includes("return NextResponse.json(await getRankedHome());"),
+  rankedRoute.includes('import { getRankedHome, HOME_RANKED_REVALIDATE_SECONDS } from "@/lib/data/home-ranked-service";') &&
+    rankedRoute.includes("return NextResponse.json(await getRankedHome(), {") &&
+    rankedRoute.includes('"Cache-Control": `public, s-maxage=${HOME_RANKED_REVALIDATE_SECONDS}, stale-while-revalidate=300`'),
   "home ranked API must delegate to the shared ranked-home service",
 );
 

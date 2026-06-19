@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPitchingDuels } from "@/lib/data/duels-service";
+import { getPitchingDuels, DUELS_REVALIDATE_SECONDS } from "@/lib/data/duels-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 
 export async function GET(request: Request) {
@@ -8,5 +8,9 @@ export async function GET(request: Request) {
   const mode = searchParams.get("mode") === "settled" ? "settled" : "upcoming";
   const data = await getPitchingDuels(date, mode);
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": `public, s-maxage=${DUELS_REVALIDATE_SECONDS}, stale-while-revalidate=300`,
+    },
+  });
 }

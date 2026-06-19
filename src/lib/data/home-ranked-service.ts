@@ -1,9 +1,11 @@
+import { unstable_cache } from "next/cache";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { getSlateProgressState } from "@/lib/slate-state";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 58;
+export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
 export type RankedHomeResponse = {
   date: string;
@@ -23,8 +25,17 @@ export type RankedHomeResponse = {
   } | null;
 };
 
+const getCachedRankedHome = unstable_cache(
+  async (today: string) => buildRankedHome(today),
+  ["home-ranked", "v1"],
+  { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
+);
+
 export async function getRankedHome(): Promise<RankedHomeResponse> {
-  const today = getHomeSlateDate();
+  return getCachedRankedHome(getHomeSlateDate());
+}
+
+async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const yesterday = addDays(today, -1);
   const [todayCompletion, todaySchedule] = await Promise.all([
     getRankedSlateCompletionState(today, today),
