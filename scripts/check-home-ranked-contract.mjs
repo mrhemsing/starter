@@ -90,6 +90,16 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;") &&
+    homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number)") &&
+    homeDeferredSections.includes('if (game.status !== "live") return true;') &&
+    homeDeferredSections.includes("return nowMs - firstPitchMs <= HOME_MUST_WATCH_LIVE_MAX_AGE_MS;") &&
+    homeDeferredSections.includes("const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);") &&
+    homeDeferredSections.includes("const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;"),
+  "home must-watch should remove live games once first pitch is more than one hour old before choosing today vs tomorrow",
+);
+
+assert(
   mustWatch.includes("card-title mt-2 font-serif text-[1.8rem] font-bold text-zinc-50 lg:text-[2.4rem]") &&
     mustWatch.includes("card-title font-serif text-[1.2rem] font-bold text-zinc-50") &&
     !mustWatch.includes("card-title mt-2 font-serif text-4xl font-bold text-zinc-50 lg:text-5xl") &&

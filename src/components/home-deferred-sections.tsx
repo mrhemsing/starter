@@ -15,6 +15,8 @@ import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
+const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
+
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
   tomorrowWatch?: TonightResponse | null;
@@ -30,6 +32,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
   const [formHome, setFormHome] = useState<FormHomeResponse | null>(null);
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -66,15 +69,21 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
     const rankedRefresh = window.setInterval(() => {
       fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
     }, 60 * 1000);
+    const homeClockRefresh = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 60 * 1000);
 
     return () => {
       cancelled = true;
       window.clearInterval(rankedRefresh);
+      window.clearInterval(homeClockRefresh);
     };
   }, [bestStarts, duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
-  const watch = todayWatch?.games.length ? todayWatch : tomorrowWatch;
-  const watchDate = todayWatch?.games.length ? today : tomorrow;
+  const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);
+  const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch, nowMs);
+  const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;
+  const watchDate = activeTodayWatch?.games.length ? today : tomorrow;
   const watchWord = watch ? slateTimeWord(watch, { today }) : "today";
 
   return (
@@ -130,6 +139,17 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
       ) : <HomeDeferredFallback variant="best" />}
     </>
   );
+}
+
+function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number) {
+  if (!watch) return null;
+  const games = watch.games.filter((game) => {
+    if (game.status !== "live") return true;
+    const firstPitchMs = new Date(game.firstPitch).getTime();
+    if (Number.isNaN(firstPitchMs)) return true;
+    return nowMs - firstPitchMs <= HOME_MUST_WATCH_LIVE_MAX_AGE_MS;
+  });
+  return { ...watch, games };
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
