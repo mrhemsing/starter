@@ -136,7 +136,7 @@ assert(
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
-    formPage.includes("<HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />"),
+    formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
   "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, and lower filters without hiding Even arms",
 );
 
@@ -179,8 +179,11 @@ assert(
     teamDrawer.includes("document.body") &&
     teamDrawer.includes('role="dialog" aria-label="Heat Check team filter"') &&
     teamDrawer.includes("TeamLogo team={activeTeam}") &&
+    teamDrawer.includes("const closeDrawer = () => setOpen(false);") &&
     teamDrawer.includes("teamDisplayName(activeTeam)") &&
     teamDrawer.includes("TeamDrawerLink") &&
+    teamDrawer.includes("onClick={onSelect}") &&
+    teamDrawer.includes("onSelect={closeDrawer}") &&
     teamDrawer.includes("data-team-drawer-link") &&
     teamDrawer.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&
     teamDrawer.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&

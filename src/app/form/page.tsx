@@ -719,7 +719,7 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
           </div>
         ) : null}
       </div>
-      <HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />
+      <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
     </div>
   );
 }

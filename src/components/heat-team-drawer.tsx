@@ -12,6 +12,7 @@ type HeatTeamDrawerProps = {
 
 export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProps) {
   const [open, setOpen] = useState(false);
+  const closeDrawer = () => setOpen(false);
 
   useEffect(() => {
     if (!open) return;
@@ -40,21 +41,21 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
       {open && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[90] flex items-end bg-black/65 px-3 pb-3 pt-16 backdrop-blur-sm" data-team-drawer-overlay>
-              <button className="absolute inset-0 cursor-default" type="button" aria-label="Close team filter" onClick={() => setOpen(false)} />
+              <button className="absolute inset-0 cursor-default" type="button" aria-label="Close team filter" onClick={closeDrawer} />
               <div className="relative max-h-[78vh] w-full overflow-hidden rounded-t border border-white/10 bg-[#101014] shadow-2xl" role="dialog" aria-label="Heat Check team filter">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Teams filter</p>
                     <p className="mt-1 font-serif text-2xl font-bold text-zinc-50">{activeTeam ? teamDisplayName(activeTeam) : "All teams"}</p>
                   </div>
-                  <button type="button" className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300" onClick={() => setOpen(false)}>
+                  <button type="button" className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300" onClick={closeDrawer}>
                     Close
                   </button>
                 </div>
                 <div className="grid max-h-[62vh] grid-cols-1 gap-2 overflow-y-auto p-3">
-                  <TeamDrawerLink active={!activeTeam} href={heatCheckHref({ ...params, team: "" })} team="" label="All teams" />
+                  <TeamDrawerLink active={!activeTeam} href={heatCheckHref({ ...params, team: "" })} team="" label="All teams" onSelect={closeDrawer} />
                   {teams.map((candidate) => (
-                    <TeamDrawerLink key={candidate} active={activeTeam === candidate} href={heatCheckHref({ ...params, team: candidate })} team={candidate} label={teamDisplayName(candidate)} />
+                    <TeamDrawerLink key={candidate} active={activeTeam === candidate} href={heatCheckHref({ ...params, team: candidate })} team={candidate} label={teamDisplayName(candidate)} onSelect={closeDrawer} />
                   ))}
                 </div>
               </div>
@@ -66,7 +67,7 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
   );
 }
 
-function TeamDrawerLink({ active, href, team, label }: { active: boolean; href: string; team: string; label: string }) {
+function TeamDrawerLink({ active, href, team, label, onSelect }: { active: boolean; href: string; team: string; label: string; onSelect: () => void }) {
   return (
     <Link
       href={href}
@@ -74,6 +75,7 @@ function TeamDrawerLink({ active, href, team, label }: { active: boolean; href: 
       data-team-drawer-link
       data-team={team || "all"}
       aria-current={active ? "page" : undefined}
+      onClick={onSelect}
     >
       <TeamLogo team={team} />
       <span className="min-w-0 flex-1">
