@@ -119,11 +119,16 @@ assert(
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const leagueView = !team;") &&
+    formPage.includes('const showBandHeaders = leagueView && sort === "form";') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
     formPage.includes("{leagueView ? (") &&
     formPage.includes("{leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}") &&
     formPage.includes("{leagueView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("{leagueView ? <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} /> : null}") &&
+    formPage.includes('className={`grid gap-4 scroll-mt-8 ${leagueView ? "lg:grid-cols-[80px_minmax(0,1fr)]" : ""}`}') &&
+    formPage.includes("{leagueView ? <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} /> : null}") &&
+    formPage.includes('{leagueView ? <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">') &&
+    formPage.includes("</div> : null}") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
     formPage.includes('<section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">\n          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />') &&
     formPage.includes("{leagueView ? <details>") &&
@@ -137,7 +142,7 @@ assert(
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
-  "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, and lower filters without hiding Even arms",
+  "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, lower filters, band jumper, league heat-map header, and band sections without hiding Even arms",
 );
 
 assert(

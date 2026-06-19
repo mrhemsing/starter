@@ -131,15 +131,15 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const biggestRiser = riserCandidates[0] ?? null;
   const biggestFaller = fallerCandidates[0] ?? null;
   const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
+  const leagueView = !team;
   const boardPitchers = pitchers;
   const groupedBoard = groupPitchersByBand(boardPitchers);
-  const showBandHeaders = sort === "form";
+  const showBandHeaders = leagueView && sort === "form";
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
-  const leagueView = !team;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -245,15 +245,15 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             </p>
           </section>
         ) : (
-          <div id="full-board" className="grid gap-4 scroll-mt-8 lg:grid-cols-[80px_minmax(0,1fr)]" data-responsive-check="form-leaderboard">
-            <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} />
+          <div id="full-board" className={`grid gap-4 scroll-mt-8 ${leagueView ? "lg:grid-cols-[80px_minmax(0,1fr)]" : ""}`} data-responsive-check="form-leaderboard">
+            {leagueView ? <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} /> : null}
             <section className="grid gap-2">
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+              {leagueView ? <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Full board</p>
                   <h2 className="font-serif text-3xl font-bold text-zinc-50">League heat map</h2>
                 </div>
-              </div>
+              </div> : null}
               {showBandHeaders ? (
                 groupedBoard.map((group) => (
                   <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">
