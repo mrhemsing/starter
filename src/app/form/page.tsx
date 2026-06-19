@@ -720,6 +720,11 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
         ) : null}
       </div>
       <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
+      {activeTeam ? (
+        <div className="mt-3 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
+          <WindowControlLinks window={window} params={params} />
+        </div>
+      ) : null}
     </div>
   );
 }

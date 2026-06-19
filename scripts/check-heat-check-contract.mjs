@@ -138,6 +138,7 @@ assert(
     formPage.includes('function WindowControlLinks({ window, params }') &&
     formPage.includes('data-responsive-check="heat-window-controls"') &&
     formPage.includes('data-responsive-check="heat-team-window-controls"') &&
+    formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
