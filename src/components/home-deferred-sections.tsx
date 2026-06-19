@@ -63,8 +63,13 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
       fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
     }
 
+    const rankedRefresh = window.setInterval(() => {
+      fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
+    }, 60 * 1000);
+
     return () => {
       cancelled = true;
+      window.clearInterval(rankedRefresh);
     };
   }, [bestStarts, duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 

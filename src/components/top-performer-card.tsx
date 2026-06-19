@@ -50,7 +50,7 @@ export function TopPerformerCard({
   const isPlaceholderImage = image?.source === "placeholder";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const eyebrow = isProvisional ? "The one to beat" : "Start of the day";
+  const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the night";
   const statusLabel = formatTopPerformerStatusLabel(eyebrow, dateLabel);
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
@@ -247,12 +247,10 @@ export function TopPerformerCard({
 }
 
 function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string) {
-  const livePrefix = "Live leader · ";
-  if (dateLabel.startsWith(livePrefix)) {
-    const liveDetail = dateLabel.slice(livePrefix.length).replace(/^(\d+\s+of\s+\d+)\s+final$/i, "$1 games final");
+  if (eyebrow.toLowerCase().includes("live leader")) {
     return {
-      eyebrow: `${eyebrow} · Live leader`,
-      detail: liveDetail,
+      eyebrow,
+      detail: dateLabel,
     };
   }
 

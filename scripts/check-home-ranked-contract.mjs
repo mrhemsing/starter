@@ -105,6 +105,14 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes('window.setInterval(() => {') &&
+    homeDeferredSections.includes('fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);') &&
+    homeDeferredSections.includes("}, 60 * 1000);") &&
+    homeDeferredSections.includes("window.clearInterval(rankedRefresh);"),
+  "home ranked hero must revalidate in-session so hidden/live/final states update without manual reload",
+);
+
+assert(
   !homeDeferredSections.includes("image={null}"),
   "home deferred top performer card must not hardcode a null image",
 );
@@ -115,16 +123,16 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat" : "Start of the day";'),
-  "home top performer final card eyebrow must read Start of the day",
+  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the night";'),
+  "home top performer must use provisional live-leader copy and final Start of the Night copy",
 );
 
 assert(
   topPerformerCard.includes("function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string)") &&
-    topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
-    topPerformerCard.includes('eyebrow: `${eyebrow} · Live leader`,') &&
-    topPerformerCard.includes('"$1 games final"'),
-  "home top performer live label must combine the eyebrow with Live leader, then force the games-final detail onto the next line",
+    topPerformerCard.includes('if (eyebrow.toLowerCase().includes("live leader"))') &&
+    !topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
+    !topPerformerCard.includes("games final"),
+  "home top performer live label must not repeat the slate final-count detail",
 );
 
 assert(
@@ -151,6 +159,29 @@ assert(
 assert(
   !topPerformerCard.includes("top velo pending"),
   "home top performer card must not render an empty pending velocity chart",
+);
+
+assert(
+  rankedService.includes('const [todayCompletion, todaySchedule] = await Promise.all([') &&
+    rankedService.includes('getSlateSchedule({ window: "today", date: today }),') &&
+    rankedService.includes("const slateProgress = getSlateProgressState(todaySchedule);") &&
+    rankedService.includes('isTodaySlateStarted: slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games",'),
+  "home top performer gating must use shared first-pitch slate progress, not completed-start count",
+);
+
+assert(
+  rankedService.includes("if (isTodaySlateStarted)") &&
+    rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
+    rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 58;"),
+  "home top performer must unmount after first pitch until a qualifying GS+ 58 contender posts",
+);
+
+assert(
+  rankedService.includes('if (todayCompletion.isFinal)') &&
+    rankedService.includes("if (!todayLeader) return null;") &&
+    rankedService.includes("status: \"final\" as const,") &&
+    rankedService.includes("dateLabel: formatLongDate(today),"),
+  "home top performer must crown the best qualifying start once the slate is final",
 );
 
 assert(

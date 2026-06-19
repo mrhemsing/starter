@@ -1,5 +1,6 @@
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { getSlateProgressState } from "@/lib/slate-state";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 58;
@@ -25,7 +26,11 @@ export type RankedHomeResponse = {
 export async function getRankedHome(): Promise<RankedHomeResponse> {
   const today = getHomeSlateDate();
   const yesterday = addDays(today, -1);
-  const todayCompletion = await getRankedSlateCompletionState(today, today);
+  const [todayCompletion, todaySchedule] = await Promise.all([
+    getRankedSlateCompletionState(today, today),
+    getSlateSchedule({ window: "today", date: today }),
+  ]);
+  const slateProgress = getSlateProgressState(todaySchedule);
   const todaySlateStarts = todayCompletion.finalGames > 0 ? await getDailySlate({ window: "today", date: today }) : [];
   const yesterdayArchivedSlateStarts = await getArchivedSlateStarts(yesterday);
   const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
@@ -38,7 +43,7 @@ export async function getRankedHome(): Promise<RankedHomeResponse> {
     today,
     yesterday,
     todayCompletion,
-    isTodaySlateStarted: todayCompletion.finalGames > 0,
+    isTodaySlateStarted: slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games",
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
@@ -100,7 +105,7 @@ function resolveTopPerformerState({
       status: "final" as const,
       start: todayLeader,
       slateCount: todayCompletedSlateStarts.length,
-      dateLabel: `Final · ${formatLongDate(today)}`,
+      dateLabel: formatLongDate(today),
     };
   }
 
@@ -110,7 +115,7 @@ function resolveTopPerformerState({
       status: "live" as const,
       start: todayLeader,
       slateCount: todayCompletedSlateStarts.length,
-      dateLabel: `Live leader · ${todayCompletion.finalGames} of ${todayCompletion.totalGames} final`,
+      dateLabel: formatLongDate(today),
     };
   }
 
