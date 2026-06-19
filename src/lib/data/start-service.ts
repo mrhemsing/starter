@@ -16,6 +16,7 @@ const FALLBACK_ACCENT_COLOR = "#fbbf24";
 const NEUTRAL_PARK_RUN_FACTOR = 1;
 const PITCHER_SEASON_LOG_SORTS: PitcherApiSeasonLogSort[] = ["date-desc", "gs-desc", "ip-desc"];
 const PITCHER_SEASON_LOG_RESULTS: PitcherApiSeasonLogResultFilter[] = ["all", "W", "L", "ND"];
+const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;
 
 type CompletedPitchingLineSource = "archive-gamefeed" | "live-gamefeed";
 type CompletedPitchingLineEntry = MlbCompletedPitchingLine & {
@@ -169,13 +170,33 @@ export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
   return completion.finalGames > 0 ? today : addDays(today, -1);
 }
 
-export async function getDefaultSlateDates(today = getHomeSlateDate()) {
-  const completion = await getRankedSlateCompletionState(today, today);
+export async function getDefaultSlateDates(today = getHomeSlateDate(), now = new Date()) {
+  const [completion, schedule] = await Promise.all([
+    getRankedSlateCompletionState(today, today),
+    fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) }),
+  ]);
 
   return {
     rankedDate: completion.finalGames > 0 ? today : addDays(today, -1),
-    upcomingDate: completion.isFinal ? addDays(today, 1) : today,
+    upcomingDate: shouldDefaultUpcomingToTomorrow(schedule, now) ? addDays(today, 1) : today,
   };
+}
+
+function shouldDefaultUpcomingToTomorrow(schedule: MlbSchedule, now: Date) {
+  const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
+  if (countableGames.length === 0) return false;
+
+  return countableGames.every((game) => !isUpcomingDefaultActiveGame(game, now));
+}
+
+function isUpcomingDefaultActiveGame(game: MlbScheduleGame, now: Date) {
+  if (isFinalGameState(game) || isPostponedGameState(game)) return false;
+  if (!isLiveGameState(game)) return true;
+
+  const firstPitchMs = new Date(game.gameDate).getTime();
+  if (!Number.isFinite(firstPitchMs)) return true;
+
+  return now.getTime() - firstPitchMs <= UPCOMING_LIVE_GAME_MAX_AGE_MS;
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {
