@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 
 type HeatTeamDrawerProps = {
   teams: string[];
@@ -12,8 +13,10 @@ type HeatTeamDrawerProps = {
 
 export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProps) {
   const [open, setOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const closeDrawer = () => setOpen(false);
   const clearTeamHref = heatCheckHref({ ...params, team: "" });
+  const visibleTeam = clearing ? "" : activeTeam;
 
   useEffect(() => {
     if (!open) return;
@@ -35,20 +38,17 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
           aria-expanded={open}
         >
           <span className="flex min-w-0 items-center gap-2">
-            <TeamLogo team={activeTeam} />
-            <span className="truncate">{activeTeam ? teamDisplayName(activeTeam) : "All teams"}</span>
+            <TeamLogo team={visibleTeam} />
+            <span className="truncate">{visibleTeam ? teamDisplayName(visibleTeam) : "All teams"}</span>
           </span>
           <span>Open</span>
         </button>
-        {activeTeam ? (
-          <Link
+        {visibleTeam ? (
+          <HeatTeamClearLink
             href={clearTeamHref}
             className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded border border-white/10 bg-black/20 font-mono text-xs uppercase tracking-[0.14em] text-amber-300"
-            aria-label="Clear team filter"
-            data-responsive-check="heat-team-clear"
-          >
-            {"✕"}
-          </Link>
+            onClear={() => setClearing(true)}
+          />
         ) : null}
       </div>
       {open && typeof document !== "undefined"

@@ -10,6 +10,7 @@ const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
+const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", "utf8");
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
 
@@ -152,7 +153,7 @@ assert(
     formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
-    formPage.includes('data-responsive-check="heat-team-clear"') &&
+    formPage.includes('<HeatTeamClearLink') &&
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
@@ -202,12 +203,15 @@ assert(
   teamDrawer.includes('"use client";') &&
     teamDrawer.includes('data-responsive-check="heat-team-bottom-drawer"') &&
     teamDrawer.includes('data-responsive-check="heat-team-picker-row"') &&
-    teamDrawer.includes('data-responsive-check="heat-team-clear"') &&
+    teamDrawer.includes('const [clearing, setClearing] = useState(false);') &&
+    teamDrawer.includes('const visibleTeam = clearing ? "" : activeTeam;') &&
+    teamDrawer.includes('onClear={() => setClearing(true)}') &&
+    teamDrawer.includes('<HeatTeamClearLink') &&
     teamDrawer.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
     teamDrawer.includes('createPortal(') &&
     teamDrawer.includes("document.body") &&
     teamDrawer.includes('role="dialog" aria-label="Heat Check team filter"') &&
-    teamDrawer.includes("TeamLogo team={activeTeam}") &&
+    teamDrawer.includes("TeamLogo team={visibleTeam}") &&
     teamDrawer.includes("const closeDrawer = () => setOpen(false);") &&
     teamDrawer.includes("teamDisplayName(activeTeam)") &&
     teamDrawer.includes("TeamDrawerLink") &&
@@ -219,6 +223,17 @@ assert(
     teamDrawer.includes("if (!meta) return null;") &&
     teamDrawer.includes("const MLB_TEAMS: Record<string, { id: number; name: string }>"),
   "mobile Heat Check team filter must keep the bottom drawer with team logos and names but no All avatar",
+);
+
+assert(
+  teamClearLink.includes('"use client";') &&
+    teamClearLink.includes('router.prefetch(href)') &&
+    teamClearLink.includes('onPointerDown={warmClearRoute}') &&
+    teamClearLink.includes('onFocus={warmClearRoute}') &&
+    teamClearLink.includes('setPending(true)') &&
+    teamClearLink.includes('onClear?.()') &&
+    teamClearLink.includes('data-responsive-check="heat-team-clear"'),
+  "Heat Check team clear must prefetch the all-teams route and give immediate tap feedback",
 );
 
 assert(

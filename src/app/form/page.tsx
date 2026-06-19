@@ -8,6 +8,7 @@ import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
+import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
 import { SiteHeader } from "@/components/site-header";
@@ -718,14 +719,10 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
       <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
         <HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />
         {activeTeam ? (
-          <Link
+          <HeatTeamClearLink
             href={clearTeamHref}
             className="mb-0 inline-flex min-h-11 items-center justify-center rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
-            aria-label="Clear team filter"
-            data-responsive-check="heat-team-clear"
-          >
-            {"✕"}
-          </Link>
+          />
         ) : null}
         {activeTeam ? (
           <div className="pb-0" data-responsive-check="heat-team-window-controls">
