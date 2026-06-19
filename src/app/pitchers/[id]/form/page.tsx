@@ -3,11 +3,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
-import { FormTrendChart, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
+import { TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
 import { SiteHeader } from "@/components/site-header";
+import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
@@ -165,20 +166,13 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Season form trend</p>
               <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">Rolling GS+</h2>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {[3, 5, 10].map((value) => (
-                <Link key={value} href={pitcherHref(summary, sourceParams(source, value === FORM_CONFIG.windowDefault ? undefined : { window: value }))} className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${window === value ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}>
-                  Last {value}
-                </Link>
-              ))}
-            </div>
           </div>
           {summary.status === "insufficient" ? (
             <div className="rounded border border-white/10 bg-[#101014] p-6">
               <p className="font-mono text-sm text-zinc-300">Insufficient data. This pitcher needs at least two qualified starts after the 2.0 IP floor.</p>
             </div>
           ) : (
-            <FormTrendChart series={series} leagueMeanGS={form.leagueMeanGS} />
+            <PitcherFormWindowPanel initialWindow={window} series={series} leagueMeanGS={form.leagueMeanGS} />
           )}
         </section>
 

@@ -11,6 +11,7 @@ const headshotComponent = await readFile("src/components/headshot.tsx", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
+const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
@@ -145,6 +146,25 @@ assert(
     pitcherFormPage.includes("getProfileNextStart(summary.pitcherId, summary.rgs)") &&
     pitcherFormPage.includes("getWatchlistPitcherIds(accountId)"),
   "pitcher profile must overlap recent-start depth, next-start lookup, and watchlist reads instead of running them sequentially",
+);
+
+assert(
+  pitcherFormPage.includes("PitcherFormWindowPanel") &&
+    pitcherFormPage.includes("initialWindow={window}") &&
+    pitcherFormPage.includes("series={series}") &&
+    !pitcherFormPage.includes("href={pitcherHref(summary, sourceParams(source, value === FORM_CONFIG.windowDefault ? undefined : { window: value }))}"),
+  "pitcher form Last 3/5/10 controls must be local chart toggles, not full profile route reload links",
+);
+
+assert(
+  pitcherFormWindowPanel.includes('"use client";') &&
+    pitcherFormWindowPanel.includes("useState<FormWindow>(initialWindow)") &&
+    pitcherFormWindowPanel.includes("type=\"button\"") &&
+    pitcherFormWindowPanel.includes("aria-pressed={activeWindow === value}") &&
+    pitcherFormWindowPanel.includes("recalculateRollingSeries(series, activeWindow)") &&
+    pitcherFormWindowPanel.includes("FORM_CONFIG.windows.map") &&
+    !pitcherFormWindowPanel.includes("<Link"),
+  "pitcher form window panel must recalculate rolling GS+ in the browser without navigating",
 );
 
 assert(
