@@ -24,6 +24,11 @@ const formHomeRoute = await read("src/app/api/form/home/route.ts");
 const formLeaderboardRoute = await read("src/app/api/form/leaderboard/route.ts");
 const pitcherFormRoute = await read("src/app/api/form/pitcher/[id]/route.ts");
 const pitcherProfileRoute = await read("src/app/api/pitchers/[id]/route.ts");
+const fastFilterLink = await read("src/components/fast-filter-link.tsx");
+const heatCheckWarmup = await read("src/components/heat-check-filter-warmup.tsx");
+const heatCheckPage = await read("src/app/form/page.tsx");
+const upcomingDatePage = await read("src/app/upcoming/[date]/page.tsx");
+const startsPage = await read("src/app/starts/[id]/page.tsx");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -85,5 +90,36 @@ for (const [label, source, ttlConstant, staleWindow] of cacheRoutes) {
     `${label} must emit CDN cache headers`,
   );
 }
+
+assert(
+  fastFilterLink.includes('"use client";') &&
+    fastFilterLink.includes("router.prefetch(href)") &&
+    fastFilterLink.includes("onPointerEnter={warmRoute}") &&
+    fastFilterLink.includes("onPointerDown={warmRoute}") &&
+    fastFilterLink.includes("onFocus={warmRoute}") &&
+    fastFilterLink.includes("data-fast-filter-link"),
+  "Filter links must prefetch on mount and warm routes on pointer/focus for snappy sports-site filtering",
+);
+
+assert(
+  heatCheckPage.includes('import { FastFilterLink } from "@/components/fast-filter-link";') &&
+    startsPage.includes('import { FastFilterLink } from "@/components/fast-filter-link";'),
+  "Heat Check and Ranked Starts filter controls must use FastFilterLink",
+);
+
+assert(
+  upcomingDatePage.includes("data-control-link-active={String(active)}"),
+  "Upcoming filter controls must preserve active-state metadata",
+);
+
+assert(
+  heatCheckWarmup.includes("const HEAT_WINDOWS = [3, 5, 10] as const;") &&
+    heatCheckWarmup.includes("/api/form/leaderboard?window=${window}") &&
+    heatCheckWarmup.includes("/api/form/leaderboard?window=${window}&qualified=false") &&
+    heatCheckWarmup.includes("/api/tonight?window=${window}") &&
+    heatCheckWarmup.includes("requestIdleCallback") &&
+    heatCheckPage.includes("<HeatCheckFilterWarmup />"),
+  "Heat Check must warm common filter-window data after initial render",
+);
 
 console.log("Site performance contract passed");

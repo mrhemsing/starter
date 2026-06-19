@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { FastFilterLink } from "@/components/fast-filter-link";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
+import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
@@ -146,6 +148,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+      <HeatCheckFilterWarmup />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
         <header className={team ? "pb-3" : "pb-6"}>
@@ -313,31 +316,31 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
           const active = activeBand === band.key;
           const dimmed = activeBand && !active;
           return (
-            <Link
+            <FastFilterLink
               key={band.key}
               href={heatCheckHref({ ...params, band: active ? "" : band.key })}
               className={`heat-band-fill flex min-w-[2px] items-center justify-center font-mono text-xs font-semibold text-[#08080a] transition ${active ? "ring-2 ring-white/80 ring-inset" : ""} ${dimmed ? "opacity-35" : ""}`}
               style={{ width: `${width}%`, backgroundColor: band.color }}
-              aria-label={active ? `Show all pitchers, clearing ${band.label} filter` : `Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
+              ariaLabel={active ? `Show all pitchers, clearing ${band.label} filter` : `Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
             >
               {width >= 7 ? band.count : null}
-            </Link>
+            </FastFilterLink>
           );
         })}
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:grid-cols-6">
-        <Link href={heatCheckHref({ ...params, band: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${!activeBand ? "border-white/60 bg-white/10 text-zinc-100" : "border-white/10 text-zinc-400"}`} aria-current={!activeBand ? "page" : undefined}>
+        <FastFilterLink href={heatCheckHref({ ...params, band: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${!activeBand ? "border-white/60 bg-white/10 text-zinc-100" : "border-white/10 text-zinc-400"}`} ariaCurrent={!activeBand ? "page" : undefined}>
           <span>All</span>
           <span className="text-zinc-300">{total}</span>
-        </Link>
+        </FastFilterLink>
         {bands.map((band) => (
-          <Link key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} aria-current={activeBand === band.key ? "page" : undefined}>
+          <FastFilterLink key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} ariaCurrent={activeBand === band.key ? "page" : undefined}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
               {band.label}
             </span>
             <span className="text-zinc-300">{band.count}</span>
-          </Link>
+          </FastFilterLink>
         ))}
       </div>
     </div>
@@ -358,10 +361,10 @@ function MoversStrip({ risers, fallers, params }: { risers: FormSummary[]; falle
           const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
           const marker = direction === "up" ? "↑" : "↓";
           return (
-            <Link key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
+            <FastFilterLink key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
               <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{lastName(pitcher.name)}</span>
               <span style={{ color }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</span>
-            </Link>
+            </FastFilterLink>
           );
         })}
       </div>
@@ -693,9 +696,9 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <Link className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href}>
+    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined}>
       {children}
-    </Link>
+    </FastFilterLink>
   );
 }
 

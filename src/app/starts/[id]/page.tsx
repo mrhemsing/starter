@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
 import { notFound } from "next/navigation";
+import { FastFilterLink } from "@/components/fast-filter-link";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { Headshot, type HeadshotSize } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
@@ -555,13 +556,14 @@ function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
 
 function ControlLink({ active, href, children, color }: { active: boolean; href: string; children: React.ReactNode; color?: string }) {
   return (
-    <Link
+    <FastFilterLink
       className={`inline-flex min-h-9 items-center gap-2 rounded border px-3 py-1.5 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}
       href={href}
       style={active && color ? { borderColor: color, backgroundColor: color } : undefined}
+      ariaCurrent={active ? "page" : undefined}
     >
       {children}
-    </Link>
+    </FastFilterLink>
   );
 }
 

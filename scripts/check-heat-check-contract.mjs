@@ -34,7 +34,7 @@ assert(
     !formPage.includes("{onFire} on fire · {ice} ice cold · {total} qualified") &&
     formPage.includes("Click a segment to filter") &&
     formPage.includes('>All</span>') &&
-    formPage.includes('aria-current={!activeBand ? "page" : undefined}') &&
+    formPage.includes('ariaCurrent={!activeBand ? "page" : undefined}') &&
     formPage.includes("href={heatCheckHref({ ...params, band: active ? \"\" : band.key })}") &&
     formPage.includes("activeBand"),
   "horizontal temperature bar must be the filter surface with visible All state and highlighted active filter",
