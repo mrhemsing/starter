@@ -1898,11 +1898,22 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedArticles.length === renderedGames.length,
     `${route} should render exactly ${renderedGames.length} watch-card article${renderedGames.length === 1 ? "" : "s"} in ${sectionId}`,
   );
+  const renderedArticleTags = renderedArticles.map((article) => article.match(/<article\b[^>]*>/)?.[0] ?? "");
+  const renderedSummaryTags = renderedArticles.map(
+    (article) => (article.match(/<p\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-summary-status-label") !== null) ?? "",
+  );
   assert(
-    renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-matchup-label")).join(",") === renderedMatchupLabels.join(",") &&
-      renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-game-pk")).join(",") === renderedGamePks.join(",") &&
-      renderedArticles.map((article) => tagAttribute(article.match(/<article\b[^>]*>/)?.[0] ?? "", "data-watch-rank")).join(",") === renderedWatchRanks.join(","),
-    `${route} ${sectionId} should keep section-level visible game metadata and watch ranks in the same order as the rendered watch-card articles`,
+    renderedArticleTags.map((article) => tagAttribute(article, "data-game-pk")).join(",") === renderedGamePks.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-game-date")).join(",") === renderedGameDates.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-matchup-label")).join(",") === renderedMatchupLabels.join(",") &&
+      renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-team")}@${tagAttribute(article, "data-home-team")}`).join(",") === renderedTeamMatchups.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-first-pitch")).join(",") === renderedFirstPitches.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-venue")).join(",") === renderedVenues.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-game-status")).join(",") === renderedGameStatuses.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-game-detailed-state")).join(",") === renderedDetailedStates.join(",") &&
+      renderedSummaryTags.map((tag) => tagAttribute(tag, "data-summary-status-label")).join(",") === renderedSummaryStatusLabels.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-watch-rank")).join(",") === renderedWatchRanks.join(","),
+    `${route} ${sectionId} should keep section-level visible game identity, timing, venue, status, summary status, and watch-rank metadata in the same order as the rendered watch-card articles`,
   );
 
   renderedGames.forEach((game, index) => {
