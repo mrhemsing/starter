@@ -40,14 +40,17 @@ assert(
 );
 
 assert(
-  formPage.includes('<span className="block">Furnace to freezer across the last {window} qualified starts.</span>') &&
-    formPage.includes('<span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>'),
-  "Heat Check deck must force a break after the first sentence and keep the second sentence unwrapped on desktop",
+  formPage.includes("{leagueView ? (") &&
+    formPage.includes('<span className="block">Furnace to freezer across the last {window} qualified starts.</span>') &&
+    formPage.includes('<span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>') &&
+    formPage.includes('{team} starters by recent form.'),
+  "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy in team mode",
 );
 
 assert(
   formPage.includes("<HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} />") &&
     bandNav.includes('"use client";') &&
+    formPage.includes('className="min-h-screen overflow-x-clip bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
     bandNav.includes('data-temperature-job="jump"') &&
     bandNav.includes('aria-label="Jump to heat zones"') &&
     bandNav.includes('href={`#band-${band.key}`}') &&
@@ -62,16 +65,18 @@ assert(
     bandNav.includes("function MobileBandJumper") &&
     bandNav.includes('aria-label="Jump to heat band"') &&
     bandNav.includes("data-active-heat-band={active?.key ?? \"\"}") &&
-    bandNav.includes('aria-current="location"'),
-  "mobile Heat Check must replace the rail with a sticky band jumper that tracks the active band",
+    bandNav.includes('aria-current={selected ? "location" : undefined}') &&
+    !bandNav.includes('{active.label} · {active.count}'),
+  "mobile Heat Check must replace the rail with a sticky band jumper that tracks the active band without duplicating the first section count",
 );
 
 assert(
   formPage.includes('data-responsive-check="heat-filter-status"') &&
     formPage.includes('activeFilterLabel !== "All arms"') &&
     !formPage.includes('<p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>') &&
-    formPage.includes('Showing {activeFilterLabel} · {pitchers.length} of {filteredTotal} · {"✕"} Show all'),
-  "Heat Check must replace the inactive hint box with only the filtered-list status and Show all affordance",
+    formPage.includes('const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;') &&
+    formPage.includes('Showing {activeFilterLabel} · {filteredCountLabel} · {"✕"} Show all'),
+  "Heat Check must replace the inactive hint box with only the filtered-list status and avoid N of N in full team views",
 );
 
 assert(
@@ -120,17 +125,18 @@ assert(
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const leagueView = !team;") &&
     formPage.includes('const showBandHeaders = leagueView && sort === "form";') &&
+    formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
     formPage.includes("{leagueView ? (") &&
     formPage.includes("{leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}") &&
     formPage.includes("{leagueView && biggestRiser && biggestFaller ? (") &&
-    formPage.includes("{leagueView ? <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} /> : null}") &&
+    formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className={`grid gap-4 scroll-mt-8 ${leagueView ? "lg:grid-cols-[80px_minmax(0,1fr)]" : ""}`}') &&
     formPage.includes("{leagueView ? <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} /> : null}") &&
-    formPage.includes('{leagueView ? <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">') &&
-    formPage.includes("</div> : null}") &&
+    !formPage.includes("Full board") &&
+    !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">\n          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />') &&
+    formPage.includes('<section className={`sticky top-0 z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">') &&
     formPage.includes("{leagueView ? <details>") &&
     formPage.includes("</details> : null}") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&

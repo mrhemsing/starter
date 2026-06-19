@@ -140,58 +140,62 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
+  const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-clip bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
-        <header className="pb-6">
+        <header className={team ? "pb-3" : "pb-6"}>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            <span className="block">Furnace to freezer across the last {window} qualified starts.</span>
-            <span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>
-          </p>
-          <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
+          {leagueView ? (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+              <span className="block">Furnace to freezer across the last {window} qualified starts.</span>
+              <span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>
+            </p>
+          ) : (
+            <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form.</p>
+          )}
+          <p className={`${team ? "mt-2" : "mt-3"} font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
             Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
           </p>
-          {leagueView ? (
+        </header>
+
+        {leagueView && biggestRiser && biggestFaller ? (
+          <section className="grid gap-4" data-responsive-check="heat-league-pulse">
+            <MomentumHero
+              riser={biggestRiser}
+              faller={biggestFaller}
+              window={window}
+              leagueMeanGS={leaderboard.leagueMeanGS}
+              followedIds={followedIds}
+              startContext={startContext}
+              qualifiedCount={leaderboard.qualifiedCount}
+              heatingCount={leaderboard.heatingCount}
+              coolingCount={leaderboard.coolingCount}
+            />
             <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4" data-responsive-check="heat-league-stat-strip">
               <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
               <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
               <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
               <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
             </div>
-          ) : null}
-          {leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}
-        </header>
-
-        {leagueView && biggestRiser && biggestFaller ? (
-          <MomentumHero
-            riser={biggestRiser}
-            faller={biggestFaller}
-            window={window}
-            leagueMeanGS={leaderboard.leagueMeanGS}
-            followedIds={followedIds}
-            startContext={startContext}
-            qualifiedCount={leaderboard.qualifiedCount}
-            heatingCount={leaderboard.heatingCount}
-            coolingCount={leaderboard.coolingCount}
-          />
+            <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
+          </section>
         ) : null}
 
-        {leagueView ? <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} /> : null}
-
-        <section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">
+        <section className={`sticky top-0 z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">
           <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
           {activeFilterLabel !== "All arms" ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
               <Link href={clearFilterHref} className="text-amber-300 hover:text-amber-200">
-                Showing {activeFilterLabel} · {pitchers.length} of {filteredTotal} · {"✕"} Show all
+                Showing {activeFilterLabel} · {filteredCountLabel} · {"✕"} Show all
               </Link>
             </div>
           ) : null}
+          {leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}
           {leagueView ? <details>
             <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
               Filters / Last {window} / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
@@ -248,12 +252,6 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <div id="full-board" className={`grid gap-4 scroll-mt-8 ${leagueView ? "lg:grid-cols-[80px_minmax(0,1fr)]" : ""}`} data-responsive-check="form-leaderboard">
             {leagueView ? <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} /> : null}
             <section className="grid gap-2">
-              {leagueView ? <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-                <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Full board</p>
-                  <h2 className="font-serif text-3xl font-bold text-zinc-50">League heat map</h2>
-                </div>
-              </div> : null}
               {showBandHeaders ? (
                 groupedBoard.map((group) => (
                   <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">

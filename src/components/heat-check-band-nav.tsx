@@ -77,16 +77,11 @@ function TemperatureRail({ bands, total, activeKey }: { bands: BandWithCount[]; 
 
 function MobileBandJumper({ bands, active }: { bands: BandWithCount[]; active: BandWithCount | null }) {
   return (
-    <nav className="sticky top-[76px] z-10 col-span-full -mx-1 flex gap-2 overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump" data-active-heat-band={active?.key ?? ""}>
-      {active ? (
-        <a href={`#band-${active.key}`} className="shrink-0 rounded bg-black/30 px-2 py-2 text-zinc-50" style={{ borderColor: `${active.color}66`, boxShadow: `inset 0 0 0 1px ${active.color}66` }} aria-current="location">
-          {active.label} · {active.count}
-        </a>
-      ) : null}
+    <nav className="sticky top-[76px] z-10 col-span-full -mx-1 flex self-start overflow-x-auto rounded border border-white/10 bg-[#101014]/95 p-2 font-mono text-[10px] uppercase tracking-[0.14em] backdrop-blur lg:hidden" aria-label="Jump to heat band" data-temperature-job="mobile-jump" data-active-heat-band={active?.key ?? ""}>
       {bands.map((band) => {
         const selected = active?.key === band.key;
         return (
-          <a key={band.key} href={`#band-${band.key}`} className={`shrink-0 rounded border px-2 py-2 ${selected ? "text-zinc-50" : "border-white/10 text-zinc-200"}`} style={{ borderColor: selected ? band.color : `${band.color}66` }}>
+          <a key={band.key} href={`#band-${band.key}`} className={`shrink-0 rounded border px-2 py-2 ${selected ? "text-zinc-50" : "border-white/10 text-zinc-200"}`} style={{ borderColor: selected ? band.color : `${band.color}66` }} aria-current={selected ? "location" : undefined}>
             {band.label}
           </a>
         );
