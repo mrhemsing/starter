@@ -77,6 +77,13 @@ assert(
 );
 
 assert(
+  !startsPage.includes(">Short outings</span>") &&
+    startsPage.includes('data-responsive-check="ranked-starts-openers"') &&
+    startsPage.includes("Openers & short outings · {shortStarts.length}"),
+  "ranked starts opener/short-outing controls must live only in the lower openers section",
+);
+
+assert(
   startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_auto] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]"),

@@ -1,5 +1,6 @@
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import net from "node:net";
 
 const host = "localhost";
@@ -28,6 +29,8 @@ const WATCH_SORT_POLICY = "status-then-watch-score";
 const WATCH_SCORE_RANGE = { min: 0, max: 100 };
 const WATCH_SCORE_PRECISION = 1;
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"];
+const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
+const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
 
 function assert(condition, message) {
   if (!condition) {
@@ -1388,7 +1391,16 @@ function assertUpcomingPageHeader(html, route) {
     !normalized.includes("Probables are grouped head-to-head instead of duplicated by pitcher"),
     `${route} should not document the self-evident head-to-head layout`,
   );
+  assertUpcomingHeaderSpacing(route);
   assert(html.includes('data-responsive-check="upcoming-slate-stamp"'), `${route} should render the state-aware upcoming slate stamp`);
+}
+
+function assertUpcomingHeaderSpacing(route) {
+  const source = route.startsWith("/upcoming/week") ? upcomingWeekPageSource : upcomingDatePageSource;
+  assert(
+    source.includes('<header className="mb-3 pb-3">') && !source.includes('<header className="mb-6 pb-6">'),
+    `${route} should keep the upcoming controls close to the matchup board`,
+  );
 }
 
 function countOccurrences(value, needle) {
@@ -1489,6 +1501,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterFormTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-tiers"));
   const renderedStarterFormTrends = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-trends"));
   const renderedStarterFormScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-scores"));
+  const renderedStarterDeltaForms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-delta-forms"));
+  const renderedStarterSparkCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-spark-counts"));
+  const renderedStarterSparkLatest = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-spark-latest"));
   const renderedStarterSeasonIp = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-season-ip"));
   const renderedStarterSeasonEra = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-season-era"));
   const renderedStarterSeasonWhip = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-season-whip"));
@@ -1616,6 +1631,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterFormTrends.every((trends) => trends.split("/").length === 2 && trends.split("/").every((trend) => ["heating", "steady", "cooling", "none"].includes(trend))) &&
       renderedStarterFormScores.length === renderedGameCount &&
       renderedStarterFormScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))) &&
+      renderedStarterDeltaForms.length === renderedGameCount &&
+      renderedStarterDeltaForms.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "pending" || /^-?\d+\.\d$/.test(value))) &&
+      renderedStarterSparkCounts.length === renderedGameCount &&
+      renderedStarterSparkCounts.every((counts) => counts.split("/").length === 2 && counts.split("/").every((count) => /^\d+$/.test(count))) &&
+      renderedStarterSparkLatest.length === renderedGameCount &&
+      renderedStarterSparkLatest.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "none" || /^-?\d+\.\d$/.test(value))) &&
       renderedStarterSeasonIp.length === renderedGameCount &&
       renderedStarterSeasonIp.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "pending" || /^\d+\.\d$/.test(value))) &&
       renderedStarterSeasonEra.length === renderedGameCount &&
@@ -1644,7 +1665,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterAccentBands.every((bands) => bands.split("/").length === 2 && bands.split("/").every((band) => [...FORM_TIER_KEYS, "neutral"].includes(band))) &&
       renderedStarterAccentColors.length === renderedGameCount &&
       renderedStarterAccentColors.every((colors) => colors.split("/").length === 2 && colors.split("/").every((color) => Object.values(FORM_ACCENT_COLORS).includes(color))),
-    `${route} ${sectionId} should expose one away/home starter form tier, trend, score, season baseline, window count, last-start state, driver-chip state, and form-band accent pair per visible game`,
+    `${route} ${sectionId} should expose one away/home starter form tier, trend, score, delta, spark state, season baseline, window count, last-start state, driver-chip state, and form-band accent pair per visible game`,
   );
   assert(
     renderedStarterMarketStatuses.length === renderedGameCount &&
@@ -1841,6 +1862,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterFormTiers.join(",") === games.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") &&
       renderedStarterFormTrends.join(",") === games.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") &&
       renderedStarterFormScores.join(",") === games.map((game) => game.starters.map((starter) => starterFormValue(starter.rgs)).join("/")).join(",") &&
+      renderedStarterDeltaForms.join(",") === games.map((game) => game.starters.map((starter) => starterFormValue(starter.deltaForm)).join("/")).join(",") &&
+      renderedStarterSparkCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starter.spark?.length ?? 0)).join("/")).join(",") &&
+      renderedStarterSparkLatest.join(",") === games.map((game) => game.starters.map((starter) => starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none").join("/")).join(",") &&
       renderedStarterSeasonIp.join(",") === games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.inningsPitched, 1)).join("/")).join(",") &&
       renderedStarterSeasonEra.join(",") === games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.era, 2)).join("/")).join(",") &&
       renderedStarterSeasonWhip.join(",") === games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.whip, 2)).join("/")).join(",") &&
@@ -1873,7 +1897,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter teams, starter Form hrefs, starter form state/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state, starter workload rest labels/days-rest/averages/flags, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter teams, starter Form hrefs, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state, starter workload rest labels/days-rest/averages/flags, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -2532,7 +2556,8 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
     if (starter.status === "ok") {
       assertNumber(starter.rgs, `${label} rendered rgs`);
       assertNumber(starter.deltaForm, `${label} rendered deltaForm`);
-      assert(normalizedHtml.includes(starter.rgs.toFixed(1)), `${label} should render Form ${starter.rgs.toFixed(1)}`);
+      assert(normalizedHtml.includes(starter.rgs.toFixed(1)), `${label} should render recent-form GS+ ${starter.rgs.toFixed(1)}`);
+      assert(!normalizedHtml.includes(`Form ${starter.rgs.toFixed(1)}`), `${label} should not prefix recent-form GS+ with Form`);
       assert(
         normalizedHtml.includes(`${expectedTrendLabel(starter.trend)} ${formatSignedValue(starter.deltaForm)}`),
         `${label} should render trend ${starter.trend} ${formatSignedValue(starter.deltaForm)}`,

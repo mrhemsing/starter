@@ -69,6 +69,9 @@ export function TonightsMustWatch({
       data-visible-starter-form-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
+      data-visible-starter-delta-forms={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.deltaForm === null || starter.deltaForm === undefined ? "pending" : starter.deltaForm.toFixed(1)).join("/")).join(",") : "none"}
+      data-visible-starter-spark-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starter.spark?.length ?? 0)).join("/")).join(",") : "none"}
+      data-visible-starter-spark-latest={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none").join("/")).join(",") : "none"}
       data-visible-starter-season-ip={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.inningsPitched, 1)).join("/")).join(",") : "none"}
       data-visible-starter-season-era={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.era, 2)).join("/")).join(",") : "none"}
       data-visible-starter-season-whip={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.whip, 2)).join("/")).join(",") : "none"}
@@ -540,7 +543,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           </h4>
           {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
-              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
+              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
               {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
               <StarterStatusChips starter={starter} />
               <FormDriverChips chips={starter.driverChips} limit={3} compact />
@@ -808,7 +811,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       <div className="ml-auto text-right">
         {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
           <>
-            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
+            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
             {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
           </>
         ) : (

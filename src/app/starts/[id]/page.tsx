@@ -245,13 +245,6 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   </ControlLink>
                 ))}
               </div>
-              {shortStarts.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-zinc-500">Short outings</span>
-                  <ControlLink active={!showOpeners} href={rankedStartsHref(date, { band, sort })}>Hide <span className="opacity-60">{shortStarts.length}</span></ControlLink>
-                  <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: true })}>Show openers & short outings</ControlLink>
-                </div>
-              ) : null}
             </div>
           ) : null}
         </header>

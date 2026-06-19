@@ -134,8 +134,9 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the night";'),
-  "home top performer must use provisional live-leader copy and final Start of the Night copy",
+  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the day";') &&
+    !topPerformerCard.includes("Start of the night"),
+  "home top performer must always call the final hero Start of the Day",
 );
 
 assert(

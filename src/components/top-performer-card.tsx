@@ -50,7 +50,7 @@ export function TopPerformerCard({
   const isPlaceholderImage = image?.source === "placeholder";
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the night";
+  const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the day";
   const statusLabel = formatTopPerformerStatusLabel(eyebrow, dateLabel);
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
