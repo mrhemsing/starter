@@ -197,8 +197,9 @@ assert(
 );
 
 assert(
-  rankedService.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
-  "home top performer previous-slate label must read the weekday",
+  rankedService.includes('dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,') &&
+    !rankedService.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
+  "home top performer previous-slate label must read Yesterday after midnight",
 );
 
 assert(

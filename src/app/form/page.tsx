@@ -8,6 +8,7 @@ import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
+import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -205,12 +206,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 <ControlLink active={motion === "rising"} href={heatCheckHref({ ...params, motion: "rising" })}>Rising ({leaderboard.heatingCount})</ControlLink>
                 <ControlLink active={motion === "falling"} href={heatCheckHref({ ...params, motion: "falling" })}>Falling ({leaderboard.coolingCount})</ControlLink>
               </ControlGroup>
-              <ControlGroup label="Team">
-                <ControlLink active={!team} href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>
-                {teams.map((candidate) => (
-                  <ControlLink key={candidate} active={team === candidate} href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>
-                ))}
-              </ControlGroup>
+              <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} />
             </div>
             <div className="grid gap-3" data-control-role="sort-window">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort + window</p>
@@ -694,6 +690,22 @@ function ControlLink({ active, href, children }: { active: boolean; href: string
     <Link className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href}>
       {children}
     </Link>
+  );
+}
+
+function TeamFilterControl({ teams, activeTeam, params }: { teams: string[]; activeTeam: string; params: Record<string, string | undefined> }) {
+  return (
+    <div data-responsive-check="heat-team-filter">
+      <div className="hidden sm:block">
+        <ControlGroup label="Team">
+          <ControlLink active={!activeTeam} href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>
+          {teams.map((candidate) => (
+            <ControlLink key={candidate} active={activeTeam === candidate} href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>
+          ))}
+        </ControlGroup>
+      </div>
+      <HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />
+    </div>
   );
 }
 

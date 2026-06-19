@@ -17,7 +17,6 @@ type UpcomingDatePageProps = {
   searchParams?: Promise<{
     pregame?: string;
     sort?: string;
-    team?: string;
   }>;
 };
 
@@ -83,7 +82,6 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
           <UpcomingToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
           <UpcomingControls
             controls={controls}
-            teams={teamsForGames(upcoming.games)}
             basePath={upcomingDateHref(resolvedDate)}
             visibleGameCount={visibleUpcoming.games.length}
             scheduledGameCount={upcoming.scheduledGames}
@@ -127,46 +125,37 @@ function formatFirstPitchStamp(value: string) {
 type UpcomingControlsState = {
   pregameOnly: boolean;
   sort: "watch" | "time";
-  team: string;
 };
 
-export function normalizeUpcomingControls(params?: { pregame?: string; sort?: string; team?: string }): UpcomingControlsState {
+export function normalizeUpcomingControls(params?: { pregame?: string; sort?: string }): UpcomingControlsState {
   return {
     pregameOnly: params?.pregame === "1",
     sort: params?.sort === "time" ? "time" : "watch",
-    team: params?.team ?? "",
   };
 }
 
-export function filterAndSortGames<T extends { status: string; firstPitch: string; gameWatchScore: number; away: string; home: string }>(games: T[], controls: UpcomingControlsState) {
+export function filterAndSortGames<T extends { status: string; firstPitch: string; gameWatchScore: number }>(games: T[], controls: UpcomingControlsState) {
   return games
     .filter((game) => !controls.pregameOnly || game.status === "pregame")
-    .filter((game) => !controls.team || game.away === controls.team || game.home === controls.team)
     .sort((a, b) => {
       if (controls.sort === "time") return a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore;
       return 0;
     });
 }
 
-export function teamsForGames(games: Array<{ away: string; home: string }>) {
-  return [...new Set(games.flatMap((game) => [game.away, game.home]))].sort();
-}
-
 export function UpcomingControls({
   controls,
-  teams,
   basePath,
   visibleGameCount,
   scheduledGameCount,
 }: {
   controls: UpcomingControlsState;
-  teams: string[];
   basePath: string;
   visibleGameCount: number;
   scheduledGameCount: number;
 }) {
   const controlsLabel = upcomingControlsLabel(controls);
-  const activeControlCount = 3;
+  const activeControlCount = 2;
 
   return (
     <details
@@ -174,9 +163,7 @@ export function UpcomingControls({
       data-responsive-check="upcoming-controls"
       data-control-pregame={String(controls.pregameOnly)}
       data-control-sort={controls.sort}
-      data-control-team={controls.team || "all"}
       data-control-base-path={basePath}
-      data-control-team-count={teams.length}
       data-control-visible-games={visibleGameCount}
       data-control-scheduled-games={scheduledGameCount}
       data-control-active-count={activeControlCount}
@@ -184,7 +171,7 @@ export function UpcomingControls({
       <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
         {controlsLabel}
       </summary>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         <ControlGroup label="Status">
           <ControlLink active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
           <ControlLink active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
@@ -193,17 +180,13 @@ export function UpcomingControls({
           <ControlLink active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
           <ControlLink active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
         </ControlGroup>
-        <ControlGroup label="Team">
-          <ControlLink active={!controls.team} href={upcomingControlHref(basePath, { ...controls, team: "" })}>All teams</ControlLink>
-          {teams.map((team) => <ControlLink key={team} active={controls.team === team} href={upcomingControlHref(basePath, { ...controls, team })}>{team}</ControlLink>)}
-        </ControlGroup>
       </div>
     </details>
   );
 }
 
 function upcomingControlsLabel(controls: UpcomingControlsState) {
-  return `Filters / ${controls.pregameOnly ? "Pregame only" : "All statuses"} / ${controls.sort === "time" ? "Start time" : "Watch rank"} / ${controls.team || "All teams"}`;
+  return `Filters / ${controls.pregameOnly ? "Pregame only" : "All statuses"} / ${controls.sort === "time" ? "Start time" : "Watch rank"}`;
 }
 
 function ControlGroup({ label, children }: { label: string; children: React.ReactNode }) {
@@ -227,7 +210,6 @@ function upcomingControlHref(basePath: string, controls: UpcomingControlsState) 
   const params = new URLSearchParams();
   if (controls.pregameOnly) params.set("pregame", "1");
   if (controls.sort !== "watch") params.set("sort", controls.sort);
-  if (controls.team) params.set("team", controls.team);
   const query = params.toString();
   return `${basePath}${query ? `?${query}` : ""}`;
 }

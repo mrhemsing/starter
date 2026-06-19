@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { filterAndSortGames, normalizeUpcomingControls, teamsForGames, UpcomingControls } from "@/app/upcoming/[date]/page";
+import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
@@ -16,7 +16,6 @@ type UpcomingWeekPageProps = {
   searchParams?: Promise<{
     pregame?: string;
     sort?: string;
-    team?: string;
   }>;
 };
 
@@ -63,7 +62,6 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const resolvedStartDate = upcoming.range.start;
   const bestGame = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game }))).sort((a, b) => b.game.gameWatchScore - a.game.gameWatchScore)[0];
   const jsonLd = jsonLdForUpcomingWeek(upcoming);
-  const allGames = upcoming.days.flatMap((day) => day.games);
   const visibleGameCount = upcoming.days.reduce((count, day) => count + filterAndSortGames(day.games, controls).length, 0);
   const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);
 
@@ -96,7 +94,6 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
           ) : null}
           <UpcomingControls
             controls={controls}
-            teams={teamsForGames(allGames)}
             basePath={upcomingWeekHref(resolvedStartDate)}
             visibleGameCount={visibleGameCount}
             scheduledGameCount={scheduledGameCount}

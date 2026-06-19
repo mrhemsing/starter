@@ -11,7 +11,6 @@ type UpcomingIndexPageProps = {
   searchParams?: Promise<{
     pregame?: string;
     sort?: string;
-    team?: string;
   }>;
 };
 

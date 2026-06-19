@@ -10,6 +10,7 @@ const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
+const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
@@ -108,6 +109,34 @@ assert(
   formPage.includes('data-control-role="filter"') &&
     formPage.includes('data-control-role="sort-window"'),
   "Heat Check controls must separate filter controls from sort/window controls",
+);
+
+assert(
+  formPage.includes("team?: string;") &&
+    formPage.includes('const team = params?.team ?? "";') &&
+    formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
+    formPage.includes('<ControlGroup label="Team">') &&
+    formPage.includes('href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>') &&
+    formPage.includes('href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>') &&
+    formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
+    formPage.includes('data-responsive-check="heat-team-filter"') &&
+    formPage.includes("<HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />"),
+  "Heat Check must own the team filter surface",
+);
+
+assert(
+  teamDrawer.includes('"use client";') &&
+    teamDrawer.includes('data-responsive-check="heat-team-bottom-drawer"') &&
+    teamDrawer.includes('createPortal(') &&
+    teamDrawer.includes("document.body") &&
+    teamDrawer.includes('role="dialog" aria-label="Heat Check team filter"') &&
+    teamDrawer.includes("TeamLogo team={activeTeam}") &&
+    teamDrawer.includes("teamDisplayName(activeTeam)") &&
+    teamDrawer.includes("TeamDrawerLink") &&
+    teamDrawer.includes("data-team-drawer-link") &&
+    teamDrawer.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&
+    teamDrawer.includes("const MLB_TEAMS: Record<string, { id: number; name: string }>"),
+  "mobile Heat Check team filter must use a bottom drawer with team logos and names",
 );
 
 assert(
