@@ -17,6 +17,7 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
@@ -52,11 +53,29 @@ assert(formService.includes("const pitcherFormCache = new Map"), "individual pit
 assert(formService.includes("const getCachedPitcherForm = unstable_cache"), "individual pitcher form pages must use Next cache across requests");
 assert(formService.includes("async function buildPitcherForm"), "pitcher form cache must wrap a single shared builder");
 assert(!formService.includes("getCachedRecentLiveFormStarts"), "recent live form starts must not use Next unstable_cache because the payload can exceed the 2MB data-cache limit");
+assert(
+  formService.includes("const archivedStarts = await getArchivedSeasonStartSummaries(season);") &&
+    formService.includes("getRecentLiveFormStarts(season, archivedStarts)") &&
+    formService.includes('const cacheKey = `${season}:${today}:${latestArchivedDate ?? "none"}`;') &&
+    formService.includes(".filter((date) => !latestArchivedDate || date > latestArchivedDate)") &&
+    formService.includes("if (dates.length === 0) return [];"),
+  "pitcher form must read the stored season archive once and only fetch live slates newer than the archive",
+);
+assert(
+  !formService.includes("Promise.all([\n    getArchivedSeasonStartSummaries(season),\n    getRecentLiveFormStarts(season),") &&
+    !formService.includes("buildRecentLiveFormStarts(season, today)"),
+  "pitcher form must not fan out over the recent live window after already loading archived season starts",
+);
 assert(mlbStatsClient.includes("const MLB_PLAYER_PROFILE_REVALIDATE_SECONDS = 15 * 60;"), "MLB player profile requests must have a snappy shared revalidation window");
 assert(mlbStatsClient.includes("cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)"), "MLB player profile requests must use Next fetch caching instead of no-store on every profile click");
 assert(!mlbStatsClient.includes('people/${pitcherMlbId}", { cache: "no-store"'), "pitcher identity fetch must not no-store on every profile click");
 assert(!mlbStatsClient.includes('stats?${seasonParams.toString()}`, { cache: "no-store"'), "pitcher season stats fetch must not no-store on every profile click");
 assert(!mlbStatsClient.includes('stats?${batterHandParams.toString()}`, { cache: "no-store"'), "pitcher splits fetch must not no-store on every profile click");
+assert(
+  startService.includes('fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" })') &&
+    !startService.includes("fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: true })"),
+  "pitcher API must not force live MLB split calls during normal archived profile renders",
+);
 
 assert(
   types.includes("export type FormVenueSplitLabel") &&

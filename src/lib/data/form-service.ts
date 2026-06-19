@@ -294,10 +294,8 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
 }
 
 async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
-  const [archivedStarts, recentStarts] = await Promise.all([
-    getArchivedSeasonStartSummaries(season),
-    getRecentLiveFormStarts(season),
-  ]);
+  const archivedStarts = await getArchivedSeasonStartSummaries(season);
+  const recentStarts = await getRecentLiveFormStarts(season, archivedStarts);
   const scoredStarts = mergeScoredStarts(archivedStarts, recentStarts);
   const qualifiedStarts = filterQualifiedStarts(scoredStarts);
   const formThroughDate = latestStartDate(qualifiedStarts);
@@ -335,13 +333,14 @@ async function getStableVenueSplitStarts(season: string): Promise<FormStartSet> 
   };
 }
 
-async function getRecentLiveFormStarts(season: string) {
+async function getRecentLiveFormStarts(season: string, archivedStarts: StartSummary[]) {
   const today = getHomeSlateDate();
-  const cacheKey = `${season}:${today}`;
+  const latestArchivedDate = latestStartDate(archivedStarts.filter((start) => start.source?.line !== "fixture"));
+  const cacheKey = `${season}:${today}:${latestArchivedDate ?? "none"}`;
   const cached = recentLiveFormStartsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = buildRecentLiveFormStarts(season, today);
+  const promise = buildRecentLiveFormStarts(season, today, latestArchivedDate);
   recentLiveFormStartsCache.set(cacheKey, {
     expiresAt: Date.now() + FORM_CACHE_TTL_MS,
     promise,
@@ -350,10 +349,13 @@ async function getRecentLiveFormStarts(season: string) {
   return promise;
 }
 
-async function buildRecentLiveFormStarts(season: string, today: string) {
+async function buildRecentLiveFormStarts(season: string, today: string, latestArchivedDate: string | null) {
   const dates = Array.from({ length: RECENT_FORM_LIVE_LOOKBACK_DAYS }, (_, index) => addDays(today, -index))
     .filter((date) => date.startsWith(season))
+    .filter((date) => !latestArchivedDate || date > latestArchivedDate)
     .reverse();
+  if (dates.length === 0) return [];
+
   const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
 
   return slates

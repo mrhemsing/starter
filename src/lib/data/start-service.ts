@@ -690,7 +690,7 @@ export async function getPitcherApiResponse(pitcherId: string, controls: { sort?
   const startHistorySource = "startHistorySource" in pitcher && pitcher.startHistorySource === "archive-gamefeed" ? pitcher.startHistorySource : isLiveProfile ? "live-people-stats" : "fixture";
   const archiveArsenal = "archiveArsenal" in pitcher && pitcher.archiveArsenal ? pitcher.archiveArsenal : null;
   const archiveProfile = "archiveProfile" in pitcher && pitcher.archiveProfile ? pitcher.archiveProfile : null;
-  const liveSplits = await fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: true });
+  const liveSplits = await fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" });
   const splitGroups = liveSplits?.map((split) => ({
     ...split,
     status: "live-people-stat-splits" as const,
