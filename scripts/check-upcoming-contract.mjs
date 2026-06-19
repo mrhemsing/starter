@@ -9,6 +9,14 @@ const days = process.env.THE_BUMP_UPCOMING_CONTRACT_DAYS ?? "1";
 const windowSize = process.env.THE_BUMP_UPCOMING_CONTRACT_WINDOW ?? "5";
 const siteTimeZone = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const FORM_TIER_KEYS = ["onfire", "hot", "even", "cooling", "ice"];
+const FORM_ACCENT_COLORS = {
+  onfire: "#FF5A1F",
+  hot: "#FF7A3D",
+  even: "#888780",
+  cooling: "#8FCBFF",
+  ice: "#5BA8FF",
+  neutral: "#888780",
+};
 const FORM_DRIVER_KEYS = ["k-rate", "walks", "depth", "run-prevention"];
 const ACTIVE_CARD_STATUSES = ["pregame", "live"];
 const WATCH_SCORE_WEIGHTS = {
@@ -604,6 +612,15 @@ function workloadValue(value) {
 
 function starterFormValue(value) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function expectedStarterAccent(starter) {
+  const band = starter.status === "ok" && starter.flags?.limitedSample !== true && starter.tier ? starter.tier : "neutral";
+  return {
+    band,
+    color: FORM_ACCENT_COLORS[band],
+    source: band === "neutral" ? "neutral" : "form-band",
+  };
 }
 
 function starterSeasonValue(value, precision) {
@@ -1244,6 +1261,9 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
     const formHref = tagAttribute(div, "data-starter-form-href");
     const nameLinked = tagAttribute(div, "data-starter-name-linked");
     const fallbackLabel = tagAttribute(div, "data-starter-fallback-label");
+    const accentSource = tagAttribute(div, "data-starter-accent-source");
+    const accentBand = tagAttribute(div, "data-starter-accent-band");
+    const accentColor = tagAttribute(div, "data-starter-accent-color");
 
     if (options.allowIdentityDrift) {
       return (
@@ -1251,7 +1271,10 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
         Boolean(name) &&
         (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
         (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
-        ["true", "false"].includes(nameLinked ?? "")
+        ["true", "false"].includes(nameLinked ?? "") &&
+        ["form-band", "neutral"].includes(accentSource ?? "") &&
+        [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
+        Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "")
       );
     }
 
@@ -1262,6 +1285,9 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
       (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
       ["true", "false"].includes(nameLinked ?? "") &&
       (fallbackLabel === "none" || fallbackLabel === "Limited form sample" || fallbackLabel === "Starter TBD / league baseline used") &&
+      ["form-band", "neutral"].includes(accentSource ?? "") &&
+      [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
+      Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "") &&
       ["pending", "unknown", "short", "normal", "extended"].includes(tagAttribute(div, "data-starter-rest-label") ?? "") &&
       ["true", "false"].includes(tagAttribute(div, "data-starter-limited-sample") ?? "") &&
       ["true", "false"].includes(tagAttribute(div, "data-starter-rust") ?? "")
@@ -1462,6 +1488,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterFormTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-tiers"));
   const renderedStarterFormTrends = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-trends"));
   const renderedStarterFormScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-scores"));
+  const renderedStarterAccentSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-sources"));
+  const renderedStarterAccentBands = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-bands"));
+  const renderedStarterAccentColors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-colors"));
   const renderedStarterMarketStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-statuses"));
   const renderedStarterMarketSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-sources"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
@@ -1478,6 +1507,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedComponentTopArms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-top-arms"));
   const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
   const renderedComponentMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-matchups"));
+  const renderedComponentDetails = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-details"));
   const renderedMatchupRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-ranks"));
   const renderedMatchupContextStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-context-statuses"));
   const renderedMatchupStatusLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-status-labels"));
@@ -1558,8 +1588,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterFormTrends.length === renderedGameCount &&
       renderedStarterFormTrends.every((trends) => trends.split("/").length === 2 && trends.split("/").every((trend) => ["heating", "steady", "cooling", "none"].includes(trend))) &&
       renderedStarterFormScores.length === renderedGameCount &&
-      renderedStarterFormScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))),
-    `${route} ${sectionId} should expose one away/home starter form tier, trend, and score pair per visible game`,
+      renderedStarterFormScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))) &&
+      renderedStarterAccentSources.length === renderedGameCount &&
+      renderedStarterAccentSources.every((sources) => sources.split("/").length === 2 && sources.split("/").every((source) => ["form-band", "neutral"].includes(source))) &&
+      renderedStarterAccentBands.length === renderedGameCount &&
+      renderedStarterAccentBands.every((bands) => bands.split("/").length === 2 && bands.split("/").every((band) => [...FORM_TIER_KEYS, "neutral"].includes(band))) &&
+      renderedStarterAccentColors.length === renderedGameCount &&
+      renderedStarterAccentColors.every((colors) => colors.split("/").length === 2 && colors.split("/").every((color) => Object.values(FORM_ACCENT_COLORS).includes(color))),
+    `${route} ${sectionId} should expose one away/home starter form tier, trend, score, and form-band accent pair per visible game`,
   );
   assert(
     renderedStarterMarketStatuses.length === renderedGameCount &&
@@ -1603,6 +1639,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedComponentPairings.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
       renderedComponentMatchups.length === renderedGameCount &&
       renderedComponentMatchups.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
+      renderedComponentDetails.length === renderedGameCount &&
+      renderedComponentDetails.every((details) => {
+        const detailSet = details.split("/");
+        return detailSet.length === WATCH_COMPONENT_KEYS.length &&
+          detailSet[0] === "none" &&
+          detailSet[1] === "none" &&
+          (detailSet[2] === "pending" || /^\d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(detailSet[2]));
+      }) &&
       renderedMatchupRanks.length === renderedGameCount &&
       renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1) &&
       renderedMatchupContextStatuses.length === renderedGameCount &&
@@ -1611,7 +1655,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)) &&
       renderedHookReasonKeys.length === renderedGameCount &&
       renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)),
-    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
+    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score/detail set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -1691,6 +1735,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedComponentTopArms.join(",") === games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") &&
       renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
       renderedComponentMatchups.join(",") === games.map((game) => game.matchupScore.toFixed(1)).join(",") &&
+      renderedComponentDetails.join(",") === games.map((game) => expectedWatchComponentDetails(game, rankLabel).join("/")).join(",") &&
       renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(",") &&
       renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
       renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
@@ -1711,6 +1756,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterFormTiers.join(",") === games.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") &&
       renderedStarterFormTrends.join(",") === games.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") &&
       renderedStarterFormScores.join(",") === games.map((game) => game.starters.map((starter) => starterFormValue(starter.rgs)).join("/")).join(",") &&
+      renderedStarterAccentSources.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).source).join("/")).join(",") &&
+      renderedStarterAccentBands.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).band).join("/")).join(",") &&
+      renderedStarterAccentColors.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).color).join("/")).join(",") &&
       renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
       renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
@@ -1719,7 +1767,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter form state, starter form-band accent state, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -2040,6 +2088,14 @@ function expectedWatchHookReasonKey(game, rankLabel) {
   return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
 }
 
+function expectedWatchComponentDetails(game, rankLabel) {
+  return [
+    "none",
+    "none",
+    game.matchupContext?.status === "pending-opponent-splits" ? "pending" : `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
+  ];
+}
+
 function supportedWatchHookReasonKeys() {
   return ["best-matchup", "two-heating", "strikeout-upside", "fallback-slate", "fallback-group"];
 }
@@ -2173,15 +2229,24 @@ function assertRenderedFormClash(html, normalizedHtml, route, game) {
   const [away, home] = game.starters;
   const ready = away.status === "ok" && home.status === "ok" && away.spark?.length > 0 && home.spark?.length > 0 && away.tier && home.tier;
   const tagName = ready ? "div" : "p";
+  const awayAccent = expectedStarterAccent(away);
+  const homeAccent = expectedStarterAccent(home);
   assert(
     elementHasAttributes(html, tagName, {
       "data-form-clash-status": ready ? "ready" : "pending",
       "data-form-clash-away-team": away.team,
       "data-form-clash-home-team": home.team,
+      "data-form-clash-away-accent-source": awayAccent.source,
+      "data-form-clash-away-accent-band": awayAccent.band,
+      "data-form-clash-away-accent-color": awayAccent.color,
+      "data-form-clash-home-accent-source": homeAccent.source,
+      "data-form-clash-home-accent-band": homeAccent.band,
+      "data-form-clash-home-accent-color": homeAccent.color,
+      "data-form-clash-same-band": String(awayAccent.band === homeAccent.band),
       "data-form-clash-away-spark-count": String(away.spark?.length ?? 0),
       "data-form-clash-home-spark-count": String(home.spark?.length ?? 0),
     }),
-    `${route} should pin headliner form-clash state and spark counts for ${game.label}`,
+    `${route} should pin headliner form-clash state, form-band accents, and spark counts for ${game.label}`,
   );
   assert(
     normalizedHtml.includes(ready ? "Form clash" : "Form clash pending"),
@@ -2273,6 +2338,9 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-name": starter.name ?? "TBD",
         "data-starter-team": starter.team,
         "data-starter-status": starter.status,
+        "data-starter-accent-source": expectedStarterAccent(starter).source,
+        "data-starter-accent-band": expectedStarterAccent(starter).band,
+        "data-starter-accent-color": expectedStarterAccent(starter).color,
         "data-starter-form-href": starter.pitcherId ? expectedStarterFormHref(starter) : "none",
         "data-starter-name-linked": String(Boolean(starter.pitcherId)),
         "data-starter-fallback-label": starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter),
@@ -2306,7 +2374,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-top-driver-delta": starterTopDriverValue(starter, "delta"),
         "data-starter-top-driver-score": starterTopDriverValue(starter, "score"),
       }),
-      `${label} should expose its layout, side, pitcher id, name, team, status, form href, name link state, fallback label, form summary, sparkline state, season baseline, last-start source, workload state, and driver provenance on a grouped starter block`,
+      `${label} should expose its layout, side, pitcher id, name, team, status, form-band accent, form href, name link state, fallback label, form summary, sparkline state, season baseline, last-start source, workload state, and driver provenance on a grouped starter block`,
     );
     assert(
       spanHasAttributes(html, {
@@ -2494,7 +2562,7 @@ function starterFallbackAriaLabel(starter) {
 }
 
 function starterHeadshotFormBand(starter) {
-  return starter.status === "ok" ? starter.tier ?? "neutral" : "neutral";
+  return starter.status === "ok" && starter.flags?.limitedSample !== true ? starter.tier ?? "neutral" : "neutral";
 }
 
 function watchFlagNoteAriaLabel(game) {

@@ -51,8 +51,8 @@ export function Headshot({
     <span
       className={`headshot thermal-headshot ${thermalHeadshotClass(resolvedBand)} ${sizeClasses[size]} relative grid shrink-0 place-items-center overflow-hidden rounded-xl border bg-[#15181C] ${className}`}
       style={{
-        borderColor: thermalBorderColor(resolvedBand, teamColor(team)),
-        background: thermalBackground(resolvedBand, teamColor(team)),
+        borderColor: thermalBorderColor(resolvedBand),
+        background: thermalBackground(resolvedBand),
       }}
       data-form-band={resolvedBand ?? "neutral"}
       data-headshot-size={size}
@@ -102,58 +102,20 @@ function thermalHeadshotClass(band: FormTier | null) {
   return "headshot--neutral";
 }
 
-function thermalBorderColor(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "#FF3B1F";
-  if (band === "hot") return "#FF8A3D";
-  if (band === "cooling") return "#5BA8FF";
-  if (band === "ice") return "#8FCBFF";
-  return fallback;
+function thermalBorderColor(band: FormTier | null) {
+  if (band === "onfire") return "#FF5A1F";
+  if (band === "hot") return "#FF7A3D";
+  if (band === "cooling") return "#8FCBFF";
+  if (band === "ice") return "#5BA8FF";
+  return "#888780";
 }
 
-function thermalBackground(band: FormTier | null, fallback: string) {
-  if (band === "onfire") return "radial-gradient(circle at 50% 18%, rgba(255, 59, 31, 0.22), rgba(21, 24, 28, 0.96) 62%)";
-  if (band === "ice") return "radial-gradient(circle at 50% 18%, rgba(143, 203, 255, 0.24), rgba(21, 24, 28, 0.96) 62%)";
-  if (band === "hot") return "radial-gradient(circle at 50% 18%, rgba(255, 138, 61, 0.16), rgba(21, 24, 28, 0.96) 62%)";
-  if (band === "cooling") return "radial-gradient(circle at 50% 18%, rgba(91, 168, 255, 0.16), rgba(21, 24, 28, 0.96) 62%)";
-  return `linear-gradient(135deg, ${fallback}22, rgba(21, 24, 28, 0.96) 54%)`;
-}
-
-function teamColor(team?: string | null) {
-  if (!team) return "#3f3f46";
-  const code = team.toUpperCase();
-  const colors: Record<string, string> = {
-    ARI: "#A71930",
-    ATL: "#CE1141",
-    BAL: "#DF4601",
-    BOS: "#BD3039",
-    CHC: "#0E3386",
-    CWS: "#C4CED4",
-    CIN: "#C6011F",
-    CLE: "#E31937",
-    COL: "#33006F",
-    DET: "#0C2340",
-    HOU: "#EB6E1F",
-    KC: "#004687",
-    LAA: "#BA0021",
-    LAD: "#005A9C",
-    MIA: "#00A3E0",
-    MIL: "#FFC52F",
-    MIN: "#002B5C",
-    NYM: "#FF5910",
-    NYY: "#0C2340",
-    OAK: "#003831",
-    PHI: "#E81828",
-    PIT: "#FDB827",
-    SD: "#2F241D",
-    SEA: "#005C5C",
-    SF: "#FD5A1E",
-    STL: "#C41E3A",
-    TB: "#8FBCE6",
-    TEX: "#003278",
-    TOR: "#134A8E",
-    WSH: "#AB0003",
-  };
-  return colors[code] ?? "#3f3f46";
+function thermalBackground(band: FormTier | null) {
+  if (band === "onfire") return "radial-gradient(circle at 50% 18%, rgba(255, 90, 31, 0.22), rgba(21, 24, 28, 0.96) 62%)";
+  if (band === "ice") return "radial-gradient(circle at 50% 18%, rgba(91, 168, 255, 0.24), rgba(21, 24, 28, 0.96) 62%)";
+  if (band === "hot") return "radial-gradient(circle at 50% 18%, rgba(255, 122, 61, 0.16), rgba(21, 24, 28, 0.96) 62%)";
+  if (band === "cooling") return "radial-gradient(circle at 50% 18%, rgba(143, 203, 255, 0.16), rgba(21, 24, 28, 0.96) 62%)";
+  return "linear-gradient(135deg, rgba(136, 135, 128, 0.14), rgba(21, 24, 28, 0.96) 54%)";
 }
 
 function initials(value: string) {

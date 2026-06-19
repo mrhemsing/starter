@@ -8,7 +8,7 @@ import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { slateTimeWordTitle } from "@/lib/time-words";
-import type { TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
+import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"] as const;
@@ -68,6 +68,9 @@ export function TonightsMustWatch({
       data-visible-starter-form-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
+      data-visible-starter-accent-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).source).join("/")).join(",") : "none"}
+      data-visible-starter-accent-bands={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).band).join("/")).join(",") : "none"}
+      data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
@@ -84,6 +87,7 @@ export function TonightsMustWatch({
       data-visible-component-top-arms={shownGames.length ? shownGames.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") : "none"}
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
       data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}
+      data-visible-component-details={shownGames.length ? shownGames.map((game) => watchComponentDetails(game, rankLabel).join("/")).join(",") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
       data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
@@ -168,13 +172,13 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
   const summaryId = watchCardSummaryId(game);
   const awayStarter = game.starters[0];
   const homeStarter = game.starters[1];
-  const awayColor = teamAccentColor(awayStarter.team);
-  const homeColor = teamAccentColor(homeStarter.team);
+  const awayAccent = starterFormAccent(awayStarter);
+  const homeAccent = starterFormAccent(homeStarter);
 
   return (
     <article
       className="heat-glow-card relative overflow-hidden rounded border border-amber-300/25 bg-[#101014] p-5 lg:p-6"
-      style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayColor, homeColor) }}
+      style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayAccent.color, homeAccent.color) }}
       data-responsive-check="must-watch-headliner"
       data-game-pk={game.gamePk}
       data-game-date={game.date}
@@ -200,6 +204,12 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-watch-score={game.gameWatchScore.toFixed(1)}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
+      data-away-accent-source={awayAccent.source}
+      data-away-accent-band={awayAccent.band}
+      data-away-accent-color={awayAccent.color}
+      data-home-accent-source={homeAccent.source}
+      data-home-accent-band={homeAccent.band}
+      data-home-accent-color={homeAccent.color}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
     >
@@ -244,11 +254,13 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
   const tier = watchTierForRank(rank);
   const summaryId = watchCardSummaryId(game);
   const isStarted = game.status === "live";
+  const awayAccent = starterFormAccent(game.starters[0]);
+  const homeAccent = starterFormAccent(game.starters[1]);
 
   return (
     <article
       className={`heat-glow-card relative overflow-hidden rounded border bg-[#101014] p-4 ${isStarted ? "border-sky-300/20 opacity-75" : "border-white/10"}`}
-      style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(teamAccentColor(game.starters[0].team), teamAccentColor(game.starters[1].team)) }}
+      style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayAccent.color, homeAccent.color) }}
       data-responsive-check="must-watch-row"
       data-game-pk={game.gamePk}
       data-game-date={game.date}
@@ -274,6 +286,12 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-watch-score={game.gameWatchScore.toFixed(1)}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={tier.label}
+      data-away-accent-source={awayAccent.source}
+      data-away-accent-band={awayAccent.band}
+      data-away-accent-color={awayAccent.color}
+      data-home-accent-source={homeAccent.source}
+      data-home-accent-band={homeAccent.band}
+      data-home-accent-color={homeAccent.color}
       aria-label={watchCardAriaLabel(game)}
       aria-describedby={summaryId}
     >
@@ -322,17 +340,18 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
 }
 
 function WatchComponentReadout({ game, compact = false, featured = false, rankLabel }: { game: TonightGame; compact?: boolean; featured?: boolean; rankLabel: string }) {
+  const [topArmDetail, pairingDetail, matchupDetail] = watchComponentDetails(game, rankLabel);
   const items = [
-    { key: "top-arm", label: "Top arm", value: game.watchComponents.topArm },
-    { key: "pairing", label: "Pairing", value: game.watchComponents.pairing },
+    { key: "top-arm", label: "Top arm", value: game.watchComponents.topArm, detail: topArmDetail },
+    { key: "pairing", label: "Pairing", value: game.watchComponents.pairing, detail: pairingDetail },
     {
       key: "matchup",
       label: "Matchup",
       value: game.matchupScore,
-      detail: game.matchupContext.status === "pending-opponent-splits" ? "pending" : `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
-      ariaLabel: game.matchupContext.status === "pending-opponent-splits"
+      detail: matchupDetail,
+      ariaLabel: matchupDetail === "pending"
         ? "Opponent split matchup context pending"
-        : `Matchup score ${Math.round(game.matchupScore)}, ranked ${ordinal(game.matchupRankTonight)} ${rankLabel}`,
+        : `Matchup score ${Math.round(game.matchupScore)}, ranked ${matchupDetail}`,
     },
   ];
 
@@ -355,13 +374,13 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
           data-watch-component={item.key}
           data-watch-label={item.label}
           data-watch-value={item.value.toFixed(1)}
-          data-watch-detail={"detail" in item && item.detail ? item.detail : "none"}
+          data-watch-detail={item.detail}
           role={"ariaLabel" in item ? "img" : undefined}
           aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
         >
           <div className="flex items-baseline justify-between gap-3 font-mono">
             <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: componentBarColor(item.value) }}>{item.label}</p>
-            <p className="text-xs font-semibold text-zinc-200">{item.value.toFixed(1)}{"detail" in item && item.detail ? <span className="ml-1 text-zinc-500">{item.detail}</span> : null}</p>
+            <p className="text-xs font-semibold text-zinc-200">{item.value.toFixed(1)}{item.detail !== "none" ? <span className="ml-1 text-zinc-500">{item.detail}</span> : null}</p>
           </div>
           <div className={`${featured ? "h-3.5" : "h-3"} mt-2 overflow-hidden rounded-full border border-white/10 bg-zinc-800/80 shadow-inner`}>
             <span
@@ -377,6 +396,14 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       ))}
     </div>
   );
+}
+
+function watchComponentDetails(game: TonightGame, rankLabel: string) {
+  return [
+    "none",
+    "none",
+    game.matchupContext.status === "pending-opponent-splits" ? "pending" : `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
+  ];
 }
 
 function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; rankLabel: string }) {
@@ -441,12 +468,17 @@ function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
 function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightStarter; leagueMeanGS: number; align: "away" | "home" }) {
   const name = starter.name ?? "TBD";
   const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId) : null;
-  const color = teamAccentColor(starter.team);
+  const accent = starterFormAccent(starter);
+  const teamColor = teamAccentColor(starter.team);
 
   return (
     <div
       className={`relative overflow-hidden rounded border border-white/10 bg-black/25 p-4 ${align === "home" ? "lg:text-right" : ""}`}
-      style={{ borderColor: `${color}66`, boxShadow: `inset ${align === "home" ? "-" : ""}4px 0 0 ${color}` }}
+      style={{
+        borderColor: `${accent.color}${accent.source === "form-band" ? "66" : "33"}`,
+        boxShadow: `inset ${align === "home" ? "-" : ""}4px 0 0 ${accent.color}, 0 0 28px rgb(${accent.rgb} / 0.10)`,
+        background: `linear-gradient(${align === "home" ? "270deg" : "90deg"}, rgb(${accent.rgb} / 0.12), rgba(0,0,0,0.25) 48%)`,
+      }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
       data-starter-layout="duel"
@@ -455,6 +487,9 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       data-starter-name={starter.name ?? "TBD"}
       data-starter-team={starter.team}
       data-starter-status={starter.status}
+      data-starter-accent-source={accent.source}
+      data-starter-accent-band={accent.band}
+      data-starter-accent-color={accent.color}
       data-starter-form-href={formHref ?? "none"}
       data-starter-name-linked={String(formHref !== null)}
       data-starter-fallback-label={starterFallbackDataLabel(starter)}
@@ -468,14 +503,22 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
         <StarterHeadshot starter={starter} size="duel" />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-            <MetaLine segments={[starter.team, starter.side]} />
+            <MetaLine
+              segments={[
+                <span key="team" className={`inline-flex items-center gap-1.5 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamColor }} aria-hidden="true" />
+                  {starter.team}
+                </span>,
+                starter.side,
+              ]}
+            />
           </p>
           <h4 className="pitcher-name mt-1 min-w-0 font-serif text-2xl font-bold leading-tight text-zinc-50 lg:text-3xl">
             {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
           </h4>
           {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
-              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
+              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
               {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
               <StarterStatusChips starter={starter} />
               <FormDriverChips chips={starter.driverChips} limit={3} compact />
@@ -490,7 +533,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       </div>
       {starter.status === "ok" && starter.spark && starter.tier ? (
         <div className="mt-3">
-          <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={color} variant="row" />
+          <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />
         </div>
       ) : null}
     </div>
@@ -510,16 +553,20 @@ function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: T
     );
   }
 
+  const awayAccent = starterFormAccent(away);
+  const homeAccent = starterFormAccent(home);
+  const sameBand = awayAccent.band === homeAccent.band;
+
   return (
     <div className="rounded border border-white/10 bg-black/25 p-3 text-left" {...clashData}>
       <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-        <span style={{ color: teamAccentColor(away.team) }}>{away.team}</span>
+        <TeamEndLabel team={away.team} />
         <span>Form clash</span>
-        <span style={{ color: teamAccentColor(home.team) }}>{home.team}</span>
+        <TeamEndLabel team={home.team} align="end" />
       </div>
       <div className="grid gap-1">
-        <FormSparkline values={away.spark} tier={away.tier} leagueMeanGS={leagueMeanGS} label={`${away.name ?? away.team} recent form GS+: ${away.spark.join(", ")}`} trend={away.trend ?? "steady"} strokeColor={teamAccentColor(away.team)} variant="mini" />
-        <FormSparkline values={home.spark} tier={home.tier} leagueMeanGS={leagueMeanGS} label={`${home.name ?? home.team} recent form GS+: ${home.spark.join(", ")}`} trend={home.trend ?? "steady"} strokeColor={teamAccentColor(home.team)} variant="mini" />
+        <FormSparkline values={away.spark} tier={away.tier} leagueMeanGS={leagueMeanGS} label={`${away.name ?? away.team} recent form GS+: ${away.spark.join(", ")}`} trend={away.trend ?? "steady"} strokeColor={awayAccent.color} variant="mini" />
+        <FormSparkline values={home.spark} tier={home.tier} leagueMeanGS={leagueMeanGS} label={`${home.name ?? home.team} recent form GS+: ${home.spark.join(", ")}`} trend={home.trend ?? "steady"} strokeColor={homeAccent.color} strokeDasharray={sameBand ? "5 4" : undefined} variant="mini" />
       </div>
     </div>
   );
@@ -527,13 +574,31 @@ function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: T
 
 function formClashData(away: TonightStarter, home: TonightStarter) {
   const ready = away.status === "ok" && home.status === "ok" && away.spark && home.spark && away.tier && home.tier;
+  const awayAccent = starterFormAccent(away);
+  const homeAccent = starterFormAccent(home);
   return {
     "data-form-clash-status": ready ? "ready" : "pending",
     "data-form-clash-away-team": away.team,
     "data-form-clash-home-team": home.team,
+    "data-form-clash-away-accent-source": awayAccent.source,
+    "data-form-clash-away-accent-band": awayAccent.band,
+    "data-form-clash-away-accent-color": awayAccent.color,
+    "data-form-clash-home-accent-source": homeAccent.source,
+    "data-form-clash-home-accent-band": homeAccent.band,
+    "data-form-clash-home-accent-color": homeAccent.color,
+    "data-form-clash-same-band": String(awayAccent.band === homeAccent.band),
     "data-form-clash-away-spark-count": String(away.spark?.length ?? 0),
     "data-form-clash-home-spark-count": String(home.spark?.length ?? 0),
   };
+}
+
+function TeamEndLabel({ team, align = "start" }: { team: string; align?: "start" | "end" }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-zinc-400 ${align === "end" ? "flex-row-reverse" : ""}`}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(team) }} aria-hidden="true" />
+      {team}
+    </span>
+  );
 }
 
 function glowColor(value: number, max: number) {
@@ -673,12 +738,16 @@ function weatherContextTone(game: TonightGame) {
 function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagueMeanGS: number }) {
   const name = starter.name ?? "TBD";
   const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId) : null;
-  const color = teamAccentColor(starter.team);
+  const accent = starterFormAccent(starter);
 
   return (
     <div
       className="grid min-w-0 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-3 rounded border border-white/10 bg-black/25 p-3"
-      style={{ borderColor: `${color}44`, boxShadow: `inset 3px 0 0 ${color}` }}
+      style={{
+        borderColor: `${accent.color}${accent.source === "form-band" ? "44" : "2E"}`,
+        boxShadow: `inset 3px 0 0 ${accent.color}`,
+        background: `linear-gradient(90deg, rgb(${accent.rgb} / 0.10), rgba(0,0,0,0.25) 45%)`,
+      }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
       data-starter-layout="mini"
@@ -687,6 +756,9 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       data-starter-name={starter.name ?? "TBD"}
       data-starter-team={starter.team}
       data-starter-status={starter.status}
+      data-starter-accent-source={accent.source}
+      data-starter-accent-band={accent.band}
+      data-starter-accent-color={accent.color}
       data-starter-form-href={formHref ?? "none"}
       data-starter-name-linked={String(formHref !== null)}
       data-starter-fallback-label={starterFallbackDataLabel(starter)}
@@ -701,7 +773,10 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         <p className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100">
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team}</p>
+        <p className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
+          {starter.team}
+        </p>
         {starter.status === "insufficient" && starter.lastStart ? (
           <p className="mt-1 text-[11px] text-zinc-500">
             <MetaLine segments={[`Last: vs ${starter.lastStart.opp}`, `GS+ ${starter.lastStart.gsPlus}`]} />
@@ -711,7 +786,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       <div className="ml-auto text-right">
         {starter.status === "ok" && starter.rgs !== undefined && starter.tier ? (
           <>
-            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
+            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>Form {starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
             {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
           </>
         ) : (
@@ -731,7 +806,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       ) : null}
       {starter.status === "ok" && starter.spark && starter.tier ? (
         <div className="col-span-full -mt-1">
-          <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={color} />
+          <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} />
         </div>
       ) : null}
     </div>
@@ -1125,6 +1200,26 @@ function duelStyle(awayColor: string, homeColor: string) {
     "--away-rgb": colorToRgb(awayColor),
     "--home-rgb": colorToRgb(homeColor),
   } as CSSProperties;
+}
+
+const FORM_ACCENT_COLORS: Record<FormTier | "neutral", string> = {
+  onfire: "#FF5A1F",
+  hot: "#FF7A3D",
+  even: "#888780",
+  cooling: "#8FCBFF",
+  ice: "#5BA8FF",
+  neutral: "#888780",
+};
+
+function starterFormAccent(starter: TonightStarter) {
+  const band = starter.status === "ok" && !starter.flags?.limitedSample && starter.tier ? starter.tier : "neutral";
+  const color = FORM_ACCENT_COLORS[band];
+  return {
+    band,
+    color,
+    rgb: colorToRgb(color),
+    source: band === "neutral" ? "neutral" : "form-band",
+  };
 }
 
 function teamAccentColor(team: string) {
