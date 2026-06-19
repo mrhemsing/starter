@@ -10,6 +10,7 @@ const LIVE_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
 const MLB_SCHEDULE_REVALIDATE_SECONDS = 60;
 const MLB_GAMEFEED_REVALIDATE_SECONDS = 15 * 60;
 const MLB_CONTEXT_REVALIDATE_SECONDS = 60 * 60;
+const MLB_PLAYER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
@@ -537,10 +538,10 @@ export async function fetchMlbPitcherSeasonProfile(pitcherMlbId: number, season:
 
   try {
     const [personResponse, seasonResponse, gameLogResponse, teamsResponse] = await Promise.all([
-      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}`, { cache: "no-store", signal: options.signal }),
-      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${seasonParams.toString()}`, { cache: "no-store", signal: options.signal }),
-      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${gameLogParams.toString()}`, { cache: "no-store", signal: options.signal }),
-      fetch(`${MLB_STATS_API_BASE}/teams?${teamsParams.toString()}`, { cache: "no-store", signal: options.signal }),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${seasonParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${gameLogParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/teams?${teamsParams.toString()}`, cachedRequestInit(options, MLB_CONTEXT_REVALIDATE_SECONDS)),
     ]);
 
     if (!personResponse.ok || !seasonResponse.ok || !gameLogResponse.ok || !teamsResponse.ok) return null;
@@ -566,8 +567,8 @@ export async function fetchMlbPitcherSplits(pitcherMlbId: number, season: string
 
   try {
     const [batterHandResponse, venueResponse] = await Promise.all([
-      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${batterHandParams.toString()}`, { cache: "no-store", signal: options.signal }),
-      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${venueParams.toString()}`, { cache: "no-store", signal: options.signal }),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${batterHandParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${venueParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
     ]);
 
     if (!batterHandResponse.ok || !venueResponse.ok) return null;

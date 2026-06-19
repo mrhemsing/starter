@@ -16,6 +16,7 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
 assert(
@@ -46,7 +47,15 @@ assert(pitcherFormPage.includes("parsePitcherRouteParam(routeParams.id)"), "lega
 assert(watchlistPage.includes('sourceParams("watchlist")'), "watchlist links must carry watchlist source context");
 assert(mustWatch.includes("import { pitcherHref, sourceParams } from") && mustWatch.includes('sourceParams("upcoming")'), "Must-Watch starter links must use shared canonical pitcherHref helper with upcoming source context");
 assert(formService.includes("const recentLiveFormStartsCache = new Map"), "recent live form starts must use a short in-process cache");
+assert(formService.includes("const pitcherFormCache = new Map"), "individual pitcher form pages must use a short in-process cache");
+assert(formService.includes("const getCachedPitcherForm = unstable_cache"), "individual pitcher form pages must use Next cache across requests");
+assert(formService.includes("async function buildPitcherForm"), "pitcher form cache must wrap a single shared builder");
 assert(!formService.includes("getCachedRecentLiveFormStarts"), "recent live form starts must not use Next unstable_cache because the payload can exceed the 2MB data-cache limit");
+assert(mlbStatsClient.includes("const MLB_PLAYER_PROFILE_REVALIDATE_SECONDS = 15 * 60;"), "MLB player profile requests must have a snappy shared revalidation window");
+assert(mlbStatsClient.includes("cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)"), "MLB player profile requests must use Next fetch caching instead of no-store on every profile click");
+assert(!mlbStatsClient.includes('people/${pitcherMlbId}", { cache: "no-store"'), "pitcher identity fetch must not no-store on every profile click");
+assert(!mlbStatsClient.includes('stats?${seasonParams.toString()}`, { cache: "no-store"'), "pitcher season stats fetch must not no-store on every profile click");
+assert(!mlbStatsClient.includes('stats?${batterHandParams.toString()}`, { cache: "no-store"'), "pitcher splits fetch must not no-store on every profile click");
 
 assert(
   types.includes("export type FormVenueSplitLabel") &&
@@ -128,6 +137,14 @@ assert(
     pitcherFormPage.includes("start tailwind") &&
     pitcherFormPage.includes("start headwind"),
   "pitcher profile must surface a next-start projection from probable-start data with contextual home/road tailwind or headwind when the split qualifies",
+);
+
+assert(
+  pitcherFormPage.includes("getRecentStartDepthWithHighlights") &&
+    pitcherFormPage.includes("Promise.all([") &&
+    pitcherFormPage.includes("getProfileNextStart(summary.pitcherId, summary.rgs)") &&
+    pitcherFormPage.includes("getWatchlistPitcherIds(accountId)"),
+  "pitcher profile must overlap recent-start depth, next-start lookup, and watchlist reads instead of running them sequentially",
 );
 
 assert(

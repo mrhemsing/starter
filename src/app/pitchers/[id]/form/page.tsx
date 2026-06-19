@@ -85,12 +85,15 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   if (!form) notFound();
 
   const { summary, series } = form;
-  const recentDepth = await getRecentStartDepth(series.slice(-3).reverse().map((start) => start.id));
-  const recentHighlights = await resolveHighlightsByStartId(recentDepth);
-  const nextStart = await getProfileNextStart(summary.pitcherId, summary.rgs);
+  const recentStartIds = series.slice(-3).reverse().map((start) => start.id);
+  const [recentDepthBundle, nextStart, followedIds] = await Promise.all([
+    getRecentStartDepthWithHighlights(recentStartIds),
+    getProfileNextStart(summary.pitcherId, summary.rgs),
+    getWatchlistPitcherIds(accountId),
+  ]);
+  const { recentDepth, recentHighlights } = recentDepthBundle;
   const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
   const jsonLd = jsonLdForPitcherForm(form);
-  const followedIds = await getWatchlistPitcherIds(accountId);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
   const streak = countCurrentPlusStreak(series);
@@ -224,6 +227,16 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
 async function getRecentStartDepth(startIds: string[]) {
   const starts = await Promise.all(startIds.map((startId) => getStartDetail(startId)));
   return starts.filter((start): start is StartDetail => Boolean(start));
+}
+
+async function getRecentStartDepthWithHighlights(startIds: string[]) {
+  const recentDepth = await getRecentStartDepth(startIds);
+  const recentHighlights = await resolveHighlightsByStartId(recentDepth);
+
+  return {
+    recentDepth,
+    recentHighlights,
+  };
 }
 
 async function resolveHighlightsByStartId(starts: StartDetail[]) {

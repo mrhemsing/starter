@@ -47,6 +47,7 @@ type CachedValue<T> = {
 
 const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse>>();
 const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
+const pitcherFormCache = new Map<string, CachedValue<FormPitcherResponse | null>>();
 const recentLiveFormStartsCache = new Map<string, CachedValue<StartSummary[]>>();
 
 const getCachedFormLeaderboard = unstable_cache(
@@ -58,6 +59,12 @@ const getCachedFormLeaderboard = unstable_cache(
 const getCachedFormHome = unstable_cache(
   async (season: string, window: FormWindow) => buildFormHome({ season, window }),
   ["form-home", FORM_CACHE_VERSION],
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
+);
+
+const getCachedPitcherForm = unstable_cache(
+  async (pitcherId: string, season: string, window: FormWindow) => buildPitcherForm(pitcherId, { season, window }),
+  ["pitcher-form", FORM_CACHE_VERSION],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
 
@@ -116,6 +123,26 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
 }
 
 export async function getPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
+  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const window = parseFormWindow(options.window);
+  const cacheKey = JSON.stringify({
+    pitcherId,
+    season,
+    window,
+  });
+  const cached = pitcherFormCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = getCachedPitcherForm(pitcherId, season, window);
+  pitcherFormCache.set(cacheKey, {
+    expiresAt: Date.now() + FORM_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
+async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
   const [startSet, venueSplitStartSet] = await Promise.all([
