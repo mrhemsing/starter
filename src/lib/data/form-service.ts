@@ -1,8 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
+import { fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
-import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, StartSummary } from "@/lib/types";
+import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
 
@@ -37,6 +38,7 @@ const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
 const FORM_CACHE_VERSION = "form-scored-start-merge-v1";
+const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
 
@@ -66,6 +68,12 @@ const getCachedPitcherForm = unstable_cache(
   async (pitcherId: string, season: string, window: FormWindow) => buildPitcherForm(pitcherId, { season, window }),
   ["pitcher-form", FORM_CACHE_VERSION],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS },
+);
+
+const getCachedPitcherSeasonFallbackStarts = unstable_cache(
+  async (pitcherId: string, season: string) => buildPitcherSeasonFallbackStarts(pitcherId, season),
+  ["pitcher-season-form-fallback", FORM_CACHE_VERSION],
+  { revalidate: PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS },
 );
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {
@@ -149,7 +157,7 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     getQualifiedFormStarts(season),
     getStableVenueSplitStarts(season),
   ]);
-  const starts = startSet.starts;
+  const starts = await getPitcherFormStartsWithFallback(pitcherId, season, window, startSet.starts);
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
@@ -177,6 +185,70 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     leagueMeanGS: round1(leagueMeanGS),
     series,
     summary,
+    };
+}
+
+async function getPitcherFormStartsWithFallback(pitcherId: string, season: string, window: FormWindow, starts: StartSummary[]) {
+  const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
+  if (bucket && bucket.starts.length >= window) return starts;
+
+  const fallbackStarts = await getCachedPitcherSeasonFallbackStarts(pitcherId, season);
+  if (fallbackStarts.length === 0) return starts;
+
+  return mergeScoredStarts(starts, fallbackStarts);
+}
+
+async function buildPitcherSeasonFallbackStarts(pitcherId: string, season: string): Promise<StartSummary[]> {
+  const pitcherMlbId = Number(pitcherId);
+  if (!Number.isInteger(pitcherMlbId)) return [];
+
+  const profile = await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true });
+  if (!profile) return [];
+
+  return profile.starts
+    .map((start, index) => pitcherProfileStartToSummary(profile, start, index))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
+}
+
+function pitcherProfileStartToSummary(profile: MlbPitcherSeasonProfile, start: MlbPitcherSeasonProfile["starts"][number], index: number): StartSummary {
+  const context = {
+    label: `${profile.team} vs ${start.opponent}`,
+    whiffDeltaPct: 0,
+    velocityDeltaMph: 0,
+    parkRunFactor: 1,
+    parkLabel: "MLB game log",
+    opponentQualityRunValue: 0,
+    opponentQualityLabel: `${start.opponent} opponent context pending for MLB game-log fallback.`,
+    opponentOffenseRunValue: 0,
+    opponentOffenseLabel: `${start.opponent} offense context pending for MLB game-log fallback.`,
+  };
+
+  return {
+    id: start.id,
+    gamePk: start.gamePk ?? index,
+    date: start.date,
+    rank: 1,
+    pitcher: {
+      id: profile.id,
+      mlbId: profile.mlbId,
+      name: profile.name,
+      team: profile.team,
+      throws: profile.throws,
+      headshotUrl: profile.headshotUrl,
+    },
+    opponent: start.opponent,
+    result: start.result,
+    line: start.line,
+    gameScorePlus: start.gameScorePlus,
+    gameScorePlusBreakdown: undefined,
+    teamColor: "#27272a",
+    accentColor: "#fbbf24",
+    context,
+    source: {
+      schedule: "live",
+      line: "live-gamefeed",
+      ranking: "schedule-derived-gamefeed-line",
+    },
   };
 }
 

@@ -617,15 +617,15 @@ export async function getPitcherDetail(pitcherId: string) {
       ])
     : [null, null];
 
-  if (Number.isInteger(pitcherMlbId) && process.env.THE_BUMP_LIVE_MLB === "1") {
-    const liveProfile = await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" });
+  if (Number.isInteger(pitcherMlbId) && (process.env.THE_BUMP_LIVE_MLB === "1" || !archivedSeasonProfile)) {
+    const liveProfile = await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true });
     if (liveProfile) {
       const starts = archivedSeasonProfile?.starts ?? liveProfile.starts;
       const recentGamePks = starts
         .map((start) => start.gamePk)
         .filter((gamePk): gamePk is number => typeof gamePk === "number")
         .slice(0, 5);
-      const liveArsenal = archivedArsenal ? null : await fetchMlbPitcherRecentArsenal(pitcherMlbId, recentGamePks, { fetchLive: true });
+      const liveArsenal = archivedArsenal || process.env.THE_BUMP_LIVE_MLB !== "1" ? null : await fetchMlbPitcherRecentArsenal(pitcherMlbId, recentGamePks, { fetchLive: true });
 
       return {
         ...liveProfile,

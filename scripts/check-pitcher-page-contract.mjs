@@ -66,6 +66,17 @@ assert(
     !formService.includes("buildRecentLiveFormStarts(season, today)"),
   "pitcher form must not fan out over the recent live window after already loading archived season starts",
 );
+assert(
+  formService.includes("const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;") &&
+    formService.includes("const getCachedPitcherSeasonFallbackStarts = unstable_cache(") &&
+    formService.includes("getPitcherFormStartsWithFallback(pitcherId, season, window, startSet.starts)") &&
+    formService.includes("if (bucket && bucket.starts.length >= window) return starts;") &&
+    formService.includes("fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true })") &&
+    formService.includes("pitcherProfileStartToSummary(profile, start, index)") &&
+    formService.includes('line: "live-gamefeed"') &&
+    formService.includes('ranking: "schedule-derived-gamefeed-line"'),
+  "pitcher form must use a cached full-season MLB game-log fallback when deployed archive data is too thin for the requested window",
+);
 assert(mlbStatsClient.includes("const MLB_PLAYER_PROFILE_REVALIDATE_SECONDS = 15 * 60;"), "MLB player profile requests must have a snappy shared revalidation window");
 assert(mlbStatsClient.includes("cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)"), "MLB player profile requests must use Next fetch caching instead of no-store on every profile click");
 assert(!mlbStatsClient.includes('people/${pitcherMlbId}", { cache: "no-store"'), "pitcher identity fetch must not no-store on every profile click");
@@ -75,6 +86,12 @@ assert(
   startService.includes('fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" })') &&
     !startService.includes("fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: true })"),
   "pitcher API must not force live MLB split calls during normal archived profile renders",
+);
+assert(
+  startService.includes('process.env.THE_BUMP_LIVE_MLB === "1" || !archivedSeasonProfile') &&
+    startService.includes("fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true })") &&
+    startService.includes('process.env.THE_BUMP_LIVE_MLB !== "1" ? null : await fetchMlbPitcherRecentArsenal'),
+  "pitcher API must use cached MLB season profile as a missing-archive fallback without forcing live arsenal gamefeed fanout",
 );
 
 assert(

@@ -215,7 +215,7 @@ assert(typeof pitcher.seasonLine.inningsPitched === "number" && pitcher.seasonLi
 assert(typeof pitcher.seasonLine.era === "number" && pitcher.seasonLine.era >= 0, "pitcher seasonLine missing era");
 assert(Number.isInteger(pitcher.seasonLine.strikeouts) && pitcher.seasonLine.strikeouts >= 0, "pitcher seasonLine missing strikeouts");
 assert(Number.isInteger(pitcher.seasonLine.walks) && pitcher.seasonLine.walks >= 0, "pitcher seasonLine missing walks");
-assert(pitcher.skillProfile?.source === "archive-gamefeed-line", "pitcher skillProfile must use archived line data");
+assert(["archive-gamefeed-line", "live-people-stats-line"].includes(pitcher.skillProfile?.source), "pitcher skillProfile must use archived line data or the cached MLB season-profile fallback");
 assert(["available", "partial", "pending"].includes(pitcher.skillProfile?.statcastStatus), "pitcher skillProfile must expose pitch-event skill availability");
 assertSkillSnapshot(pitcher.skillProfile?.season, "season");
 assertSkillSnapshot(pitcher.skillProfile?.trailing30, "trailing30");
