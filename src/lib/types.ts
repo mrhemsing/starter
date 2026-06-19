@@ -299,6 +299,7 @@ export type TonightStarter = {
   tier?: FormTier;
   trend?: FormTrend;
   deltaForm?: number;
+  windowCount?: number;
   spark?: number[];
   lastStart?: FormStartPoint | null;
   seasonStats?: FormSeasonStats;

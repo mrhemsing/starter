@@ -247,6 +247,7 @@ function buildTonightStarter(
     tier: form.tier,
     trend: form.trend,
     deltaForm: form.deltaForm,
+    windowCount: form.windowCount,
     spark: form.spark,
     lastStart: form.lastStart,
     seasonStats: form.seasonStats,
