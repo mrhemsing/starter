@@ -59,6 +59,11 @@ assert(
 );
 
 assert(
+  slateState.includes(".format(parsed).toUpperCase()"),
+  "homepage status date label must render uppercase month text like JUN 17",
+);
+
+assert(
   slateState.includes("Math.ceil(durationMs / 60000)") && !slateState.includes("totalSeconds"),
   "homepage countdown must use minute granularity without seconds",
 );
@@ -74,22 +79,17 @@ assert(
 );
 
 assert(
-  statusLine.includes('data-responsive-check="home-slate-status-line"') && statusLine.includes('Upcoming{"\\u00A0"}starts{"\\u00A0"}{"->"}'),
-  "homepage status line must include the upcoming starts link in every state",
+  statusLine.includes('data-responsive-check="home-slate-status-line"') &&
+    statusLine.includes("whitespace-nowrap") &&
+    statusLine.includes("overflow-hidden") &&
+    statusLine.includes("text-ellipsis") &&
+    statusLine.includes("{line}"),
+  "homepage status line must render one nowrap state-aware line",
 );
 
 assert(
-  statusLine.includes('text-white') &&
-    statusLine.includes('className="status-token block sm:inline">{line}</span>') &&
-    statusLine.includes('className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
-  "homepage status line must keep the state fact white and the upcoming starts link amber",
-);
-
-assert(
-  statusLine.includes('className="status-token block sm:inline">{line}</span>') &&
-    statusLine.includes('className="mx-1.5 hidden text-amber-200 sm:inline"') &&
-    statusLine.includes('className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline"'),
-  "homepage status line must force the upcoming starts link onto a new line on mobile without the separator dot",
+  !statusLine.includes("Upcoming") && !statusLine.includes("href") && !statusLine.includes("<a "),
+  "homepage status eyebrow must not include an upcoming starts link",
 );
 
 assert(

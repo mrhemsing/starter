@@ -141,9 +141,12 @@ assert(
 );
 
 assert(
-  homeStatusLine.includes("status-token block sm:inline") &&
-    homeStatusLine.includes('Upcoming{"\\u00A0"}starts{"\\u00A0"}{"->"}'),
-  "homepage status line must keep state text and the upcoming arrow link together",
+  homeStatusLine.includes("whitespace-nowrap") &&
+    homeStatusLine.includes("overflow-hidden") &&
+    homeStatusLine.includes("text-ellipsis") &&
+    homeStatusLine.includes("{line}") &&
+    !homeStatusLine.includes("Upcoming"),
+  "homepage status line must stay one line tall without the upcoming arrow link",
 );
 
 assert(

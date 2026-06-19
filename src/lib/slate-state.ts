@@ -129,5 +129,5 @@ function formatShortDate(date: string) {
     month: "short",
     day: "numeric",
     timeZone: "UTC",
-  }).format(parsed);
+  }).format(parsed).toUpperCase();
 }

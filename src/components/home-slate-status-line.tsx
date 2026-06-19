@@ -5,10 +5,9 @@ import { formatFirstPitchCountdown, formatSlateStatusLine, type SlateProgressSta
 
 type HomeSlateStatusLineProps = {
   initialState: SlateProgressState;
-  href: string;
 };
 
-export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineProps) {
+export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) {
   const [slateState, setSlateState] = useState(initialState);
 
   useEffect(() => {
@@ -57,18 +56,14 @@ export function HomeSlateStatusLine({ initialState, href }: HomeSlateStatusLineP
 
   return (
     <p
-      className="mb-4 block max-w-full font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
+      className="mb-4 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
       data-slate-total-games={slateState.totalGames}
       data-slate-live-games={slateState.liveGames}
       data-slate-final-games={slateState.finalGames}
     >
-      <span className="status-token block sm:inline">{line}</span>
-      <span className="mx-1.5 hidden text-amber-200 sm:inline">·</span>
-      <a href={href} className="nowrap-token block text-amber-300 underline-offset-4 hover:text-amber-100 hover:underline sm:inline">
-        Upcoming{"\u00A0"}starts{"\u00A0"}{"->"}
-      </a>
+      {line}
     </p>
   );
 }

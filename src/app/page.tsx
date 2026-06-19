@@ -7,7 +7,6 @@ import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
-import { upcomingDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import { getSlateProgressState } from "@/lib/slate-state";
 
@@ -93,7 +92,7 @@ export default async function Home() {
 
           <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
-              <HomeSlateStatusLine initialState={slateStatus} href={upcomingDateHref(today)} />
+              <HomeSlateStatusLine initialState={slateStatus} />
               <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
                 <span className="block">Every MLB start,</span>
                 <span className="block">ranked.</span>
