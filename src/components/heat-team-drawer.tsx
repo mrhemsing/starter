@@ -26,16 +26,16 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
     <div className="sm:hidden" data-responsive-check="heat-team-bottom-drawer">
       <button
         type="button"
-        className="flex min-h-11 w-full items-center justify-between rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300"
+        className="flex min-h-11 w-full items-center justify-between rounded border border-amber-300/70 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
         <span className="flex min-w-0 items-center gap-2">
           <TeamLogo team={activeTeam} />
-          <span className="truncate">Team / {activeTeam ? teamDisplayName(activeTeam) : "All teams"}</span>
+          <span className="truncate">{activeTeam ? teamDisplayName(activeTeam) : "All teams"}</span>
         </span>
-        <span className="text-amber-300">Open</span>
+        <span>Open</span>
       </button>
       {open && typeof document !== "undefined"
         ? createPortal(
@@ -86,17 +86,11 @@ function TeamDrawerLink({ active, href, team, label }: { active: boolean; href: 
 
 function TeamLogo({ team }: { team: string }) {
   const meta = teamMeta(team);
-  if (!meta) {
-    return (
-      <span className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/10 font-mono text-[10px] uppercase text-zinc-300">
-        All
-      </span>
-    );
-  }
+  if (!meta) return null;
 
   return (
     <span className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white p-1">
-      <span className="size-6 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
+      <span className="block size-6 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
     </span>
   );
 }

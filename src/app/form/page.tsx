@@ -9,6 +9,7 @@ import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
+import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -95,11 +96,11 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const qualifiedOnly = params?.qualified !== "false";
   const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
   const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
-  const evenExpanded = params?.even === "show" || band === "even" || sort !== "form";
+  const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, tonight] = await Promise.all([
-    getFormLeaderboard({ window, qualifiedOnly }),
+    getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly }),
     getWatchlistPitcherIds(accountId),
     getTonightMustWatch({ date: today, window }),
   ]);
@@ -137,6 +138,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" });
+  const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
+  const leagueView = !team;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -153,16 +156,18 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
             Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
-            <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
-            <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
-            <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
-            <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
-          </div>
-          <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />
+          {leagueView ? (
+            <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4" data-responsive-check="heat-league-stat-strip">
+              <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
+              <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
+              <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
+              <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
+            </div>
+          ) : null}
+          {leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}
         </header>
 
-        {biggestRiser && biggestFaller ? (
+        {leagueView && biggestRiser && biggestFaller ? (
           <MomentumHero
             riser={biggestRiser}
             faller={biggestFaller}
@@ -176,19 +181,18 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           />
         ) : null}
 
-        <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
+        {leagueView ? <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} /> : null}
 
         <section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
-            {activeFilterLabel === "All arms" ? (
-              <p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>
-            ) : (
+          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
+          {activeFilterLabel !== "All arms" ? (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
               <Link href={clearFilterHref} className="text-amber-300 hover:text-amber-200">
-                Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length} · {"✕"} Show all
+                Showing {activeFilterLabel} · {pitchers.length} of {filteredTotal} · {"✕"} Show all
               </Link>
-            )}
-          </div>
-          <details>
+            </div>
+          ) : null}
+          {leagueView ? <details>
             <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
               Filters / Last {window} / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
             </summary>
@@ -206,12 +210,11 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 <ControlLink active={motion === "rising"} href={heatCheckHref({ ...params, motion: "rising" })}>Rising ({leaderboard.heatingCount})</ControlLink>
                 <ControlLink active={motion === "falling"} href={heatCheckHref({ ...params, motion: "falling" })}>Falling ({leaderboard.coolingCount})</ControlLink>
               </ControlGroup>
-              <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} />
             </div>
             <div className="grid gap-3" data-control-role="sort-window">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort + window</p>
             <ControlGroup label="Window">
-              {[3, 5, 10].map((value) => <ControlLink key={value} active={window === value} href={heatCheckHref({ ...params, window: String(value) })}>Last {value}</ControlLink>)}
+              <WindowControlLinks window={window} params={params ?? {}} />
             </ControlGroup>
             <ControlGroup label="Sort">
               {sortOptions.map((option) => <ControlLink key={option.key} active={sort === option.key} href={heatCheckHref({ ...params, sort: option.key })}>{option.label}</ControlLink>)}
@@ -231,7 +234,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             <input name="q" defaultValue={params?.q ?? ""} placeholder="Search pitcher" className="min-h-11 rounded border border-white/10 bg-black/20 px-3 font-mono text-sm text-zinc-100 outline-none focus:border-amber-300" />
             <button className="min-h-11 rounded border border-amber-300/40 px-4 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">Search</button>
             </form>
-          </details>
+          </details> : null}
         </section>
 
         {pitchers.length === 0 ? (
@@ -693,16 +696,28 @@ function ControlLink({ active, href, children }: { active: boolean; href: string
   );
 }
 
-function TeamFilterControl({ teams, activeTeam, params }: { teams: string[]; activeTeam: string; params: Record<string, string | undefined> }) {
+function WindowControlLinks({ window, params }: { window: number; params: Record<string, string | undefined> }) {
   return (
-    <div data-responsive-check="heat-team-filter">
-      <div className="hidden sm:block">
-        <ControlGroup label="Team">
-          <ControlLink active={!activeTeam} href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>
-          {teams.map((candidate) => (
-            <ControlLink key={candidate} active={activeTeam === candidate} href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>
-          ))}
-        </ControlGroup>
+    <div className="flex flex-wrap gap-2" data-responsive-check="heat-window-controls">
+      {[3, 5, 10].map((value) => (
+        <ControlLink key={value} active={window === value} href={heatCheckHref({ ...params, window: String(value) })}>
+          Last {value}
+        </ControlLink>
+      ))}
+    </div>
+  );
+}
+
+function TeamFilterControl({ teams, activeTeam, params, window }: { teams: string[]; activeTeam: string; params: Record<string, string | undefined>; window: number }) {
+  return (
+    <div className="mb-4" data-responsive-check="heat-team-filter">
+      <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
+        <HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />
+        {activeTeam ? (
+          <div className="pb-0" data-responsive-check="heat-team-window-controls">
+            <WindowControlLinks window={window} params={params} />
+          </div>
+        ) : null}
       </div>
       <HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />
     </div>

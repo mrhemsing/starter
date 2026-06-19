@@ -11,6 +11,7 @@ const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
+const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
@@ -67,10 +68,10 @@ assert(
 
 assert(
   formPage.includes('data-responsive-check="heat-filter-status"') &&
-    formPage.includes('activeFilterLabel === "All arms"') &&
-    formPage.includes("Click a segment to filter · league totals stay visible") &&
-    formPage.includes('Showing {activeFilterLabel} · {pitchers.length} of {qualifiedPitchers.length} · {"✕"} Show all'),
-  "Heat Check must swap the hint for a persistent filtered-list status with Show all affordance",
+    formPage.includes('activeFilterLabel !== "All arms"') &&
+    !formPage.includes('<p className="text-zinc-300">Click a segment to filter · league totals stay visible</p>') &&
+    formPage.includes('Showing {activeFilterLabel} · {pitchers.length} of {filteredTotal} · {"✕"} Show all'),
+  "Heat Check must replace the inactive hint box with only the filtered-list status and Show all affordance",
 );
 
 assert(
@@ -114,14 +115,61 @@ assert(
 assert(
   formPage.includes("team?: string;") &&
     formPage.includes('const team = params?.team ?? "";') &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly })") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
-    formPage.includes('<ControlGroup label="Team">') &&
-    formPage.includes('href={heatCheckHref({ ...params, team: "" })}>All teams</ControlLink>') &&
-    formPage.includes('href={heatCheckHref({ ...params, team: candidate })}>{candidate}</ControlLink>') &&
+    formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
+    formPage.includes("const leagueView = !team;") &&
+    formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
+    formPage.includes("{leagueView ? (") &&
+    formPage.includes("{leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}") &&
+    formPage.includes("{leagueView && biggestRiser && biggestFaller ? (") &&
+    formPage.includes("{leagueView ? <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} /> : null}") &&
+    formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
+    formPage.includes('<section className="sticky top-0 z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="form-controls">\n          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />') &&
+    formPage.includes("{leagueView ? <details>") &&
+    formPage.includes("</details> : null}") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
     formPage.includes('data-responsive-check="heat-team-filter"') &&
+    formPage.includes('function WindowControlLinks({ window, params }') &&
+    formPage.includes('data-responsive-check="heat-window-controls"') &&
+    formPage.includes('data-responsive-check="heat-team-window-controls"') &&
+    formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
+    formPage.includes("{activeTeam ? (") &&
+    formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes("<HeatTeamDrawer teams={teams} activeTeam={activeTeam} params={params} />"),
-  "Heat Check must own the team filter surface",
+  "Heat Check must own the team filter in the controls row, and team views must show all team pitchers while hiding league-only hero/movers/stat strip, league temperature, and lower filters without hiding Even arms",
+);
+
+assert(
+  teamJumpMenu.includes('"use client";') &&
+    teamJumpMenu.includes('import { useEffect, useRef } from "react";') &&
+    teamJumpMenu.includes("const detailsRef = useRef<HTMLDetailsElement>(null);") &&
+    teamJumpMenu.includes('document.addEventListener("pointerdown", onPointerDown)') &&
+    teamJumpMenu.includes("details.open = false") &&
+    teamJumpMenu.includes("const closeMenu = () =>") &&
+    teamJumpMenu.includes("onClick={onSelect}") &&
+    teamJumpMenu.includes("details.contains(event.target)") &&
+    teamJumpMenu.includes('data-responsive-check="heat-team-jump-menu"') &&
+    teamJumpMenu.includes('data-team-jump-details') &&
+    teamJumpMenu.includes('data-team-jump-list') &&
+    teamJumpMenu.includes('data-team-jump-link') &&
+    teamJumpMenu.includes('inline-block max-w-full') &&
+    teamJumpMenu.includes('border-amber-300/70 bg-black/20') &&
+    teamJumpMenu.includes('text-amber-300') &&
+    teamJumpMenu.includes('sm:w-auto') &&
+    teamJumpMenu.includes('w-[min(32rem,calc(100vw-2rem))]') &&
+    teamJumpMenu.includes('aria-label="Jump to Heat Check team"') &&
+    teamJumpMenu.includes('href={heatCheckHref({ ...params, team: "" })}') &&
+    teamJumpMenu.includes('href={heatCheckHref({ ...params, team })}') &&
+    teamJumpMenu.includes("teamDisplayName(team)") &&
+    teamJumpMenu.includes("function TeamLogo") &&
+    teamJumpMenu.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&
+    teamJumpMenu.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&
+    teamJumpMenu.includes("if (!meta) return null;") &&
+    !teamJumpMenu.includes(">All</span>") &&
+    teamJumpMenu.includes("const MLB_TEAMS: Record<string, { id: number; name: string }>") &&
+    !teamJumpMenu.includes("<select"),
+  "Heat Check team filter must use a compact yellow custom jump menu with full team names, logos, no All avatar, and close on selection",
 );
 
 assert(
@@ -134,9 +182,11 @@ assert(
     teamDrawer.includes("teamDisplayName(activeTeam)") &&
     teamDrawer.includes("TeamDrawerLink") &&
     teamDrawer.includes("data-team-drawer-link") &&
+    teamDrawer.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&
     teamDrawer.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&
+    teamDrawer.includes("if (!meta) return null;") &&
     teamDrawer.includes("const MLB_TEAMS: Record<string, { id: number; name: string }>"),
-  "mobile Heat Check team filter must use a bottom drawer with team logos and names",
+  "mobile Heat Check team filter must keep the bottom drawer with team logos and names but no All avatar",
 );
 
 assert(
@@ -162,14 +212,14 @@ assert(
 
 assert(
   formPage.includes('even?: string;') &&
-    formPage.includes('const evenExpanded = params?.even === "show" || band === "even" || sort !== "form";') &&
+    formPage.includes('const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";') &&
     formPage.includes('group.band.key === "even" && !evenExpanded') &&
     formPage.includes('<EvenBandCollapsed count={group.pitchers.length} href={heatCheckHref({ ...params, even: "show" })} />') &&
     formPage.includes('<EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} />') &&
     formPage.includes('data-responsive-check="heat-even-collapsed"') &&
     formPage.includes("Show {count} even arms") &&
     formPage.includes("Hide {count} even arms"),
-  "Heat Check Even band must be collapsible by default without hiding explicit Even filters or alternate sorts",
+  "Heat Check Even band must be collapsible by default without hiding team views, explicit Even filters, or alternate sorts",
 );
 
 assert(
