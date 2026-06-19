@@ -119,7 +119,7 @@ function SlateSwarm({ starts, mean }: { starts: StartSummary[]; mean: number }) 
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Slate swarm</p>
-          <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">The night at a glance</h3>
+          <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">The day at a glance</h3>
         </div>
         <p className="font-mono text-xs text-zinc-500">avg {mean.toFixed(1)} GS+</p>
       </div>

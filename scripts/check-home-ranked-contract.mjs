@@ -11,6 +11,7 @@ const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
+const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
@@ -160,6 +161,11 @@ assert(
 assert(
   rankedService.includes('const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);'),
   "home ranked recap previous-slate label must read the weekday",
+);
+
+assert(
+  rankedRecap.includes("The day at a glance") && !rankedRecap.includes("The night at a glance"),
+  "home ranked recap swarm title must read The day at a glance for day-game slates",
 );
 
 assert(

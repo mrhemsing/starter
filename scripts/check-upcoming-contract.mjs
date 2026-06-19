@@ -1449,6 +1449,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedMatchupRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-ranks"));
   const renderedMatchupContextStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-context-statuses"));
   const renderedMatchupStatusLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-status-labels"));
+  const renderedHookReasonKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-hook-reason-keys"));
   assert(
     renderedGamePks.length === renderedGameCount && renderedGamePks.every((gamePk) => /^\d+$/.test(gamePk)),
     `${route} ${sectionId} should expose one numeric visible game id per rendered card; rendered count ${renderedGameCount}, ids ${renderedGamePks.join(",") || "none"}`,
@@ -1564,8 +1565,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupContextStatuses.length === renderedGameCount &&
       renderedMatchupContextStatuses.every((status) => ["pending-opponent-splits", "scored"].includes(status)) &&
       renderedMatchupStatusLabels.length === renderedGameCount &&
-      renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)),
-    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score set, matchup rank, matchup context status, and matchup status label per visible game`,
+      renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)) &&
+      renderedHookReasonKeys.length === renderedGameCount &&
+      renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)),
+    `${route} ${sectionId} should expose one rendered watch score, tier, sort group, fallback flag set, component score set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -1647,6 +1650,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(",") &&
       renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
       renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
+      renderedHookReasonKeys.join(",") === games.map((game) => expectedWatchHookReasonKey(game, rankLabel)).join(",") &&
       renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
       renderedMatchupLabels.join(",") === games.map((game) => game.label).join(",") &&
       renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
@@ -1668,7 +1672,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, and matchup status labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter Form hrefs, starter market context, park context, weather context, first pitches, watch scores, tiers, sort groups, fallback flag sets, component scores, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
     );
   }
 
@@ -1971,22 +1975,30 @@ function assertRenderedWatchHook(html, normalizedHtml, route, game, rankLabel) {
 function expectedWatchHookReason(game, rankLabel) {
   const reasonKey = expectedWatchHookReasonKey(game, rankLabel);
   if (reasonKey === "fallback-slate" || reasonKey === "fallback-group") {
-    return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+    return isSlateRankLabel(rankLabel) ? "Top watch score on the slate" : "Top watch score in this group";
   }
   if (reasonKey === "best-matchup") return "Best matchup on the board";
   if (reasonKey === "two-heating") return "Two arms trending up";
   if (reasonKey === "strikeout-upside") return "Strikeout upside";
-  return rankLabel === "tonight" ? "Top watch score on the slate" : "Top watch score in this group";
+  return isSlateRankLabel(rankLabel) ? "Top watch score on the slate" : "Top watch score in this group";
 }
 
 function expectedWatchHookReasonKey(game, rankLabel) {
   if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
-    return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+    return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
   }
   if (game.matchupRankTonight === 1) return "best-matchup";
   if (game.starters.every((starter) => starter.trend === "heating")) return "two-heating";
   if (combinedProjectedStrikeouts(game.starters) >= 12) return "strikeout-upside";
-  return rankLabel === "tonight" ? "fallback-slate" : "fallback-group";
+  return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
+}
+
+function supportedWatchHookReasonKeys() {
+  return ["best-matchup", "two-heating", "strikeout-upside", "fallback-slate", "fallback-group"];
+}
+
+function isSlateRankLabel(rankLabel) {
+  return rankLabel === "today" || rankLabel === "tomorrow" || rankLabel === "yesterday" || rankLabel.startsWith("on ");
 }
 
 function combinedProjectedStrikeouts(starters) {

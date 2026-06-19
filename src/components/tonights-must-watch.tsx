@@ -82,6 +82,7 @@ export function TonightsMustWatch({
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
       data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
+      data-visible-hook-reason-keys={shownGames.length ? shownGames.map((game) => watchHookReasonKey(game, rankLabel)).join(",") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
       data-active-card-statuses={tonight.activeCardStatuses.join(",")}
