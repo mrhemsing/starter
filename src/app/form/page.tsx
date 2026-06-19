@@ -225,9 +225,11 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             </div>
             <div className="grid gap-3" data-control-role="sort-window">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort + window</p>
-            <ControlGroup label="Window">
-              <WindowControlLinks window={window} params={params ?? {}} />
-            </ControlGroup>
+            <div className="hidden sm:block" data-responsive-check="heat-league-desktop-window-controls">
+              <ControlGroup label="Window">
+                <WindowControlLinks window={window} params={params ?? {}} />
+              </ControlGroup>
+            </div>
             <ControlGroup label="Sort">
               {sortOptions.map((option) => <ControlLink key={option.key} active={sort === option.key} href={heatCheckHref({ ...params, sort: option.key })}>{option.label}</ControlLink>)}
             </ControlGroup>
@@ -322,6 +324,7 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
               className={`heat-band-fill flex min-w-[2px] items-center justify-center font-mono text-xs font-semibold text-[#08080a] transition ${active ? "ring-2 ring-white/80 ring-inset" : ""} ${dimmed ? "opacity-35" : ""}`}
               style={{ width: `${width}%`, backgroundColor: band.color }}
               ariaLabel={active ? `Show all pitchers, clearing ${band.label} filter` : `Filter to ${band.label}: ${band.count} of ${total} qualified pitchers`}
+              scroll={false}
             >
               {width >= 7 ? band.count : null}
             </FastFilterLink>
@@ -329,12 +332,12 @@ function BandDistribution({ bands, total, activeBand, params }: { bands: Array<H
         })}
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:grid-cols-6">
-        <FastFilterLink href={heatCheckHref({ ...params, band: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${!activeBand ? "border-white/60 bg-white/10 text-zinc-100" : "border-white/10 text-zinc-400"}`} ariaCurrent={!activeBand ? "page" : undefined}>
+        <FastFilterLink href={heatCheckHref({ ...params, band: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${!activeBand ? "border-white/60 bg-white/10 text-zinc-100" : "border-white/10 text-zinc-400"}`} ariaCurrent={!activeBand ? "page" : undefined} scroll={false}>
           <span>All</span>
           <span className="text-zinc-300">{total}</span>
         </FastFilterLink>
         {bands.map((band) => (
-          <FastFilterLink key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} ariaCurrent={activeBand === band.key ? "page" : undefined}>
+          <FastFilterLink key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
               {band.label}
@@ -361,7 +364,7 @@ function MoversStrip({ risers, fallers, params }: { risers: FormSummary[]; falle
           const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
           const marker = direction === "up" ? "↑" : "↓";
           return (
-            <FastFilterLink key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30">
+            <FastFilterLink key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30" scroll={false}>
               <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{lastName(pitcher.name)}</span>
               <span style={{ color }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</span>
             </FastFilterLink>
@@ -696,7 +699,7 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined}>
+    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined} scroll={false}>
       {children}
     </FastFilterLink>
   );
@@ -734,11 +737,9 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
         ) : null}
       </div>
       <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
-      {activeTeam ? (
-        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
-          <WindowControlLinks window={window} params={params} />
-        </div>
-      ) : null}
+      <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
+        <WindowControlLinks window={window} params={params} />
+      </div>
     </div>
   );
 }

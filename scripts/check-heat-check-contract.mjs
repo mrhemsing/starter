@@ -148,9 +148,11 @@ assert(
     formPage.includes('data-responsive-check="heat-team-filter"') &&
     formPage.includes('function WindowControlLinks({ window, params }') &&
     formPage.includes('data-responsive-check="heat-window-controls"') &&
+    formPage.includes('data-responsive-check="heat-league-desktop-window-controls"') &&
     formPage.includes('data-responsive-check="heat-team-window-controls"') &&
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
     formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
+    !formPage.includes('{activeTeam ? (\n        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
     formPage.includes('<HeatTeamClearLink') &&
@@ -158,6 +160,14 @@ assert(
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
   "Heat Check must own the team filter in the controls row, attach team clearing to the picker, and team views must show all team pitchers while hiding league-only surfaces",
+);
+
+assert(
+  formPage.includes('href={href} ariaCurrent={active ? "page" : undefined} scroll={false}') &&
+    formPage.includes('ariaCurrent={!activeBand ? "page" : undefined} scroll={false}') &&
+    formPage.includes('ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}') &&
+    formPage.includes('hover:border-amber-300/30" scroll={false}'),
+  "Heat Check filter links must preserve mobile scroll position instead of jumping to the top",
 );
 
 assert(

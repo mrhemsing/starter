@@ -13,10 +13,11 @@ type FastFilterLinkProps = {
   ariaCurrent?: "page" | "location";
   ariaLabel?: string;
   style?: React.CSSProperties;
+  scroll?: boolean;
   "data-control-link-active"?: string;
 };
 
-export function FastFilterLink({ href, className, children, prefetch = true, ariaCurrent, ariaLabel, style, "data-control-link-active": dataControlLinkActive }: FastFilterLinkProps) {
+export function FastFilterLink({ href, className, children, prefetch = true, ariaCurrent, ariaLabel, style, scroll = true, "data-control-link-active": dataControlLinkActive }: FastFilterLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,6 +38,7 @@ export function FastFilterLink({ href, className, children, prefetch = true, ari
     <Link
       href={href}
       prefetch={prefetch}
+      scroll={scroll}
       className={`${className}${pending ? " opacity-70" : ""}`}
       aria-current={ariaCurrent}
       aria-label={ariaLabel}

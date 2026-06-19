@@ -100,6 +100,9 @@ assert(
     fastFilterLink.includes("pendingIntent?.href === href && pendingIntent.from === currentHref") &&
     fastFilterLink.includes("setPendingIntent({ href, from: currentHref })") &&
     fastFilterLink.includes('pending ? " opacity-70" : ""') &&
+    fastFilterLink.includes("scroll?: boolean;") &&
+    fastFilterLink.includes("scroll = true") &&
+    fastFilterLink.includes("scroll={scroll}") &&
     !fastFilterLink.includes("pointer-events-none opacity-70") &&
     fastFilterLink.includes("onPointerEnter={warmRoute}") &&
     fastFilterLink.includes("onPointerDown={warmRoute}") &&
