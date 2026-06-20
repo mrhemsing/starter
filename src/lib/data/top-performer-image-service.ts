@@ -7,6 +7,7 @@ const PUBLIC_CACHE_PATH = "/images/top-performer-action-shots";
 const SPORTRADAR_API_BASE = "https://api.sportradar.com";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
+const MLB_CONTENT_REVALIDATE_SECONDS = 10 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
@@ -14,8 +15,6 @@ const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-image
 const CAM_SCHLITTLER_MLB_ID = 693645;
 const CAM_SCHLITTLER_REDS_ACTION_IMAGE =
   "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_0,w_3227,h_1815/c_fill,w_1440,ar_16:9,f_auto,q_auto,g_auto/images%2FImagnImages%2Fmmsport%2Finside_the_reds%2F01kvhb1zebrbrmepeemw.jpg";
-const CHRIS_SALE_MLB_ID = 519242;
-const CHRIS_SALE_BREWERS_ACTION_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/ebigzjpf6rrj4iawr7vf";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -63,6 +62,38 @@ type SportradarManifest = {
   assetlist?: SportradarAsset[];
 };
 
+type MlbGameContentItem = {
+  type?: string;
+  title?: string;
+  headline?: string;
+  description?: string;
+  blurb?: string;
+  id?: string;
+  slug?: string;
+  image?: {
+    title?: string;
+    cuts?: Array<{
+      aspectRatio?: string;
+      width?: number;
+      height?: number;
+      src?: string;
+    }>;
+  };
+};
+
+type MlbGameContent = {
+  highlights?: {
+    highlights?: {
+      items?: MlbGameContentItem[];
+    };
+  };
+  media?: {
+    epgAlternate?: Array<{
+      items?: MlbGameContentItem[];
+    }>;
+  };
+};
+
 export async function resolveTopPerformerImage(start: StartSummary | null, _highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
   void _highlight;
   if (!start) return null;
@@ -72,6 +103,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 
   const actionShot = await resolveSportradarActionShot(start).catch(() => null);
   if (actionShot) return actionShot;
+
+  const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);
+  if (mlbGameContentAction) return mlbGameContentAction;
 
   return {
     source: "placeholder",
@@ -99,26 +133,17 @@ function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | 
     };
   }
 
-  if (start.pitcher.mlbId === CHRIS_SALE_MLB_ID) {
-    return {
-      source: "action",
-      imageUrl: CHRIS_SALE_BREWERS_ACTION_IMAGE,
-      alt: "Chris Sale delivers a pitch against Milwaukee",
-      objectPosition: "50% 50%",
-    };
-  }
-
   return null;
 }
 
 async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerformerImage | null> {
-  const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;
-  if (!apiKey) return null;
-
   const cached = await readCachedActionShot(start.id);
   if (cached && cached.expiresAt > Date.now()) {
     return { source: "action", imageUrl: cached.imageUrl, alt: cached.alt, attribution: cached.attribution, objectPosition: actionShotObjectPosition() };
   }
+
+  const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;
+  if (!apiKey) return null;
 
   const eventId = await resolveSportradarGameId(start, apiKey);
   if (!eventId) return null;
@@ -140,6 +165,75 @@ async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerf
 
 function actionShotObjectPosition() {
   return "72% 50%";
+}
+
+async function resolveMlbGameContentActionImage(start: StartSummary): Promise<TopPerformerImage | null> {
+  const response = await fetch(`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`, { next: { revalidate: MLB_CONTENT_REVALIDATE_SECONDS } });
+  if (!response.ok) return null;
+
+  const content = await response.json() as MlbGameContent;
+  const item = selectMlbGameContentActionItem(content, start);
+  const cut = selectMlbImageCut(item);
+  if (!item || !cut?.src) return null;
+
+  return {
+    source: "action",
+    imageUrl: normalizeMlbImageUrl(cut.src),
+    alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
+    objectPosition: "50% 50%",
+    playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
+  };
+}
+
+function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary) {
+  const items = [
+    ...(content.highlights?.highlights?.items ?? []),
+    ...content.media?.epgAlternate?.flatMap((group) => group.items ?? []) ?? [],
+  ];
+  const seen = new Set<string>();
+
+  return items
+    .filter((item) => {
+      const key = item.id ?? item.slug ?? item.title ?? "";
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((item) => ({ item, score: mlbGameContentActionScore(item, start) }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.item ?? null;
+}
+
+function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary) {
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.id ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  if (item.type !== "video") return 0;
+  if (!selectMlbImageCut(item)) return 0;
+  if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
+  if (nonActionMlbContentPattern().test(text)) return 0;
+
+  let score = 0;
+  if (text.includes(start.pitcher.name.toLowerCase())) score += 100;
+  if (text.includes("strikes out") || text.includes("fans")) score += 50;
+  if (text.includes("outing") || text.includes("start")) score += 40;
+  if (text.includes("throws") || text.includes("pitch")) score += 25;
+  if (text.includes(start.opponent.toLowerCase())) score += 10;
+  if (text.includes(start.pitcher.team.toLowerCase())) score += 5;
+  return score;
+}
+
+function nonActionMlbContentPattern() {
+  return /\b(all games? highlights?|starting lineups?|fielding alignment|bench availability|bullpen availability|probable pitchers?|breaking down|challenge|overturned|preview|recap)\b/i;
+}
+
+function selectMlbImageCut(item: MlbGameContentItem | null) {
+  const cuts = item?.image?.cuts ?? [];
+  return cuts
+    .filter((cut) => cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && cut.aspectRatio === "16:9")
+    .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0] ?? null;
+}
+
+function normalizeMlbImageUrl(src: string) {
+  return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/");
 }
 
 async function resolveSportradarGameId(start: StartSummary, apiKey: string) {

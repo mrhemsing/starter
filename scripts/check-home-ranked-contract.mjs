@@ -255,12 +255,25 @@ assert(
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
-    imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
-    imageService.includes('const CHRIS_SALE_BREWERS_ACTION_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/ebigzjpf6rrj4iawr7vf";') &&
+    !imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
+    !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
+    imageService.includes("const cached = await readCachedActionShot(start.id);") &&
+    imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("if (actionShot) return actionShot;") &&
+    imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
+    imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
+    imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
+    imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
+    imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes("function nonActionMlbContentPattern()") &&
+    imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
+    imageService.includes("function normalizeMlbImageUrl(src: string)") &&
+    imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
+    imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
+    imageService.includes('cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")') &&
     imageService.includes('objectPosition: actionShotObjectPosition()') &&
     imageService.includes('return "72% 50%";') &&
     !imageService.includes("resolvePitcherHeadshotImage") &&
@@ -268,13 +281,10 @@ assert(
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
     imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
     imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
-    imageService.includes("if (start.pitcher.mlbId === CHRIS_SALE_MLB_ID)") &&
     imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
-    imageService.includes('alt: "Chris Sale delivers a pitch against Milwaukee",') &&
     imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     imageService.includes("imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,") &&
-    imageService.includes("imageUrl: CHRIS_SALE_BREWERS_ACTION_IMAGE,") &&
     !imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     !imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID") &&
     !imageService.includes("resolveMlbGameContentImage") &&
