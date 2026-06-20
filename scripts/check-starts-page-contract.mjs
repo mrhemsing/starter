@@ -7,6 +7,10 @@ function assert(condition, message) {
 }
 
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
+const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
+const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
@@ -81,6 +85,21 @@ assert(
     startsPage.includes('data-responsive-check="ranked-starts-openers"') &&
     startsPage.includes("Openers & short outings · {shortStarts.length}"),
   "ranked starts opener/short-outing controls must live only in the lower openers section",
+);
+
+assert(
+  types.includes("plannedStarter?: boolean;") &&
+    startService.includes("const plannedStarter = probablePitcherIds.has(pitcher.id);") &&
+    startService.includes("plannedStarter,") &&
+    startClassification.includes("export function isRankedRegularStart") &&
+    startClassification.includes("isPlannedStarter(start) || inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR") &&
+    startsPage.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    startsPage.includes("return isRankedRegularStart(start);") &&
+    startsPage.includes("Board ranks planned starters and qualified long starts; openers and short outings are listed separately.") &&
+    startsPage.includes("Unplanned short starts are kept out of the ranked positions but remain visible for slate completeness.") &&
+    formService.includes('import { isScoredStarterSample } from "@/lib/start-classification";') &&
+    formService.includes("isScoredStarterSample(start, FORM_CONFIG.ipFloor)"),
+  "planned probables must stay ranked and scored as regular starters even when pulled before the raw IP floor",
 );
 
 assert(

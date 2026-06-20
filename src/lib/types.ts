@@ -121,6 +121,7 @@ export type StartSummary = {
   gameScorePlus: number;
   expectedGameScorePlus?: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+  plannedStarter?: boolean;
   teamColor: string;
   accentColor: string;
   context: StartContext;

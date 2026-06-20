@@ -21,6 +21,7 @@ import { inningsFromIP } from "@/lib/innings";
 import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
+import { isRankedRegularStart } from "@/lib/start-classification";
 import { slateTimeWord } from "@/lib/time-words";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
@@ -258,7 +259,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
         ) : (
           <>
             <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-              Board ranks qualified starts (3.0+ IP); openers and short outings are listed separately.
+              Board ranks planned starters and qualified long starts; openers and short outings are listed separately.
             </p>
             <StartsDistributionStrip starts={qualifiedStarts} />
             {visibleStarts.length > 0 ? (
@@ -295,7 +296,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Openers & short outings · {shortStarts.length}</p>
-                    <p className="mt-1 text-sm text-zinc-400">Sub-3.0 IP starts are kept out of the ranked positions but remain visible for slate completeness.</p>
+                    <p className="mt-1 text-sm text-zinc-400">Unplanned short starts are kept out of the ranked positions but remain visible for slate completeness.</p>
                   </div>
                   <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })}>
                     {showOpeners ? "Hide short outings" : "Show openers & short outings"}
@@ -780,7 +781,7 @@ function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort
 }
 
 function isQualifiedRankedStart(start: StartSummary) {
-  return inningsFromIP(start.line.inningsPitched) >= 3;
+  return isRankedRegularStart(start);
 }
 
 function shortStartBadge(start: StartSummary): "OPENER" | "SHORT" {

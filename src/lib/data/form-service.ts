@@ -3,6 +3,7 @@ import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTo
 import { fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
+import { isScoredStarterSample } from "@/lib/start-classification";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
@@ -437,7 +438,7 @@ async function buildRecentLiveFormStarts(season: string, today: string, latestAr
 }
 
 function filterQualifiedStarts(starts: StartSummary[]) {
-  return starts.filter((start) => start.source?.line !== "fixture" && inningsToOuts(start.line.inningsPitched) >= inningsToOuts(FORM_CONFIG.ipFloor));
+  return starts.filter((start) => start.source?.line !== "fixture" && isScoredStarterSample(start, FORM_CONFIG.ipFloor));
 }
 
 function mergeScoredStarts(...groups: StartSummary[][]) {

@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const bestStartsRoute = await readFile("src/app/api/home/best-starts/route.ts", "utf8");
 const bestStartsService = await readFile("src/lib/data/home-best-starts-service.ts", "utf8");
+const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 
@@ -35,12 +36,14 @@ assert(
 
 assert(
   bestStartsService.includes('import { inningsFromIP } from "@/lib/innings";') &&
+    bestStartsService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
     bestStartsService.includes("function isEligibleBestStart") &&
-    bestStartsService.includes("inningsFromIP(start.line.inningsPitched) >= 3") &&
+    bestStartsService.includes("start.source?.line !== \"fixture\" && isRankedRegularStart(start)") &&
+    startClassification.includes("export function isRankedRegularStart") &&
     bestStartsService.includes("function compareBestStarts") &&
     bestStartsService.includes("b.date.localeCompare(a.date)") &&
     bestStartsService.includes("b.line.strikeouts - a.line.strikeouts"),
-  "home best-starts service must enforce qualified starts and tie-break by recency, IP, then K",
+  "home best-starts service must enforce planned-starter-aware qualified starts and tie-break by recency, IP, then K",
 );
 
 assert(

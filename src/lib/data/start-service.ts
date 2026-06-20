@@ -1384,6 +1384,7 @@ function scheduledGameToStarts(
       const completedLine = completedLines.get(startLineKey(game.gamePk, pitcher.id));
       const lineSource = completedLine?.source ?? "fixture";
       const line = completedLine?.line ?? fallback.line;
+      const plannedStarter = probablePitcherIds.has(pitcher.id);
       const colors = teamColors[pitcher.teamAbbreviation] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
       const rankSeed = game.gamePk + pitcher.id;
       const opponentQualityContext = teamQualityContexts.get(opponent);
@@ -1419,6 +1420,7 @@ function scheduledGameToStarts(
         line,
         gameScorePlus,
         gameScorePlusBreakdown,
+        plannedStarter,
         teamColor: colors.color,
         accentColor: colors.accent,
         context,

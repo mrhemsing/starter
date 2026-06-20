@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 import { inningsFromIP } from "@/lib/innings";
+import { isRankedRegularStart } from "@/lib/start-classification";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;
@@ -67,7 +68,7 @@ function rankedWindowStarts(starts: StartSummary[], startDate: string, endDate: 
 }
 
 function isEligibleBestStart(start: StartSummary) {
-  return start.source?.line !== "fixture" && inningsFromIP(start.line.inningsPitched) >= 3;
+  return start.source?.line !== "fixture" && isRankedRegularStart(start);
 }
 
 function compareBestStarts(a: StartSummary, b: StartSummary) {
