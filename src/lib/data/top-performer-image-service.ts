@@ -114,6 +114,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
   const preferredPitcherImage = resolvePreferredPitcherImage(start);
   if (preferredPitcherImage) return preferredPitcherImage;
 
+  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
+  if (actionShot) return actionShot;
+
   const gameContentImage = await resolveMlbGameContentImage(start).catch(() => null);
   if (gameContentImage) return gameContentImage;
 
@@ -125,9 +128,6 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
       playUrl: highlight.watchUrl,
     };
   }
-
-  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
-  if (actionShot) return actionShot;
 
   return {
     source: "placeholder",

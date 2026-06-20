@@ -129,8 +129,8 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-center lg:object-[100%_50%]"}'),
-  "home top performer real images must cover the frame, center on mobile, and keep player-side framing on large screens",
+  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-center"}'),
+  "home top performer real images must cover the frame and keep the player centered in the card frame",
 );
 
 assert(
@@ -237,13 +237,16 @@ assert(
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
+    imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
+      imageService.indexOf("const gameContentImage = await resolveMlbGameContentImage(start).catch(() => null);") &&
+    imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes("if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;") &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     imageService.includes('"2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam"') &&
     imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID[start.id]") &&
     imageService.includes("if (preferredItem) return preferredItem;"),
-  "home top performer image resolver must pin hand-picked MLB content stills for known awkward crops",
+  "home top performer image resolver must prefer clean action photos before text-heavy MLB content/highlight thumbnails while preserving hand-picked stills for known awkward crops",
 );
 
-console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses mobile-safe cover framing");
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses centered action-photo framing");
