@@ -29,6 +29,22 @@ assert(
 );
 
 assert(
+  rankedService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    rankedService.includes("const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);") &&
+    rankedService.includes("const yesterdayRankedStarts = yesterdaySlateStarts.filter(isCompletedRankedStart);") &&
+    rankedService.includes("function isCompletedRankedStart(start: StartSummary)") &&
+    rankedService.includes('return start.source?.line !== "fixture" && isRankedRegularStart(start);'),
+  "home Start of the Day must use the shared ranked-start 2.0 IP floor instead of raw completed-start ordering",
+);
+
+assert(
+  rankedRecap.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    rankedRecap.includes('start.source?.line !== "fixture" && isRankedRegularStart(start)') &&
+    rankedRecap.includes("Final 2.0+ inning starter lines only: {settledStarts.length} scored starts from the completed slate, ranked by GS+."),
+  "home ranked recap must apply the same 2.0 IP ranked-start floor",
+);
+
+assert(
   rankedService.includes("resolveTopPerformerImage(topPerformerState?.start ?? null, null),"),
   "home ranked service must resolve an image for the selected top performer",
 );

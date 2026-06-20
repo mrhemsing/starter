@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { getSlateProgressState } from "@/lib/slate-state";
+import { isRankedRegularStart } from "@/lib/start-classification";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 58;
@@ -45,7 +46,7 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const todaySlateStarts = todayCompletion.finalGames > 0 ? await getDailySlate({ window: "today", date: today }) : [];
   const yesterdayArchivedSlateStarts = await getArchivedSlateStarts(yesterday);
   const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
-  const todayCompletedSlateStarts = todaySlateStarts.filter((start) => start.source?.line !== "fixture");
+  const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);
   const useTodaySlate = todayCompletedSlateStarts.length > 0;
   const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
   const rankedDate = useTodaySlate ? today : yesterday;
@@ -130,14 +131,19 @@ function resolveTopPerformerState({
     };
   }
 
-  const yesterdayLeader = yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture")[0] ?? null;
+  const yesterdayRankedStarts = yesterdaySlateStarts.filter(isCompletedRankedStart);
+  const yesterdayLeader = yesterdayRankedStarts[0] ?? null;
   if (!yesterdayLeader) return null;
   return {
     status: "previous" as const,
     start: yesterdayLeader,
-    slateCount: yesterdaySlateStarts.filter((start) => start.source?.line !== "fixture").length,
+    slateCount: yesterdayRankedStarts.length,
     dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
   };
+}
+
+function isCompletedRankedStart(start: StartSummary) {
+  return start.source?.line !== "fixture" && isRankedRegularStart(start);
 }
 
 function formatLongDate(date: string) {

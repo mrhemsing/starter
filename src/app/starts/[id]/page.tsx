@@ -259,7 +259,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
         ) : (
           <>
             <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-              Board ranks planned starters and qualified long starts; openers and short outings are listed separately.
+              Board ranks starts of 2.0+ innings; openers and short outings are listed separately.
             </p>
             <StartsDistributionStrip starts={qualifiedStarts} />
             {visibleStarts.length > 0 ? (
@@ -296,7 +296,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Openers & short outings · {shortStarts.length}</p>
-                    <p className="mt-1 text-sm text-zinc-400">Unplanned short starts are kept out of the ranked positions but remain visible for slate completeness.</p>
+                    <p className="mt-1 text-sm text-zinc-400">Starts under 2.0 innings are kept out of the ranked positions but remain visible for slate completeness.</p>
                   </div>
                   <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })}>
                     {showOpeners ? "Hide short outings" : "Show openers & short outings"}

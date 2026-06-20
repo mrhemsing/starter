@@ -2,6 +2,7 @@ import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { absoluteUrl, formatLongDate } from "@/lib/seo";
+import { isRankedRegularStart } from "@/lib/start-classification";
 import type { StartLine, StartSummary } from "@/lib/types";
 
 export type DailySocialPlatform = "instagram" | "x";
@@ -174,7 +175,7 @@ export function formatDailySocialLine(line: Pick<StartLine, "inningsPitched" | "
 }
 
 function isRealFinalStart(start: StartSummary) {
-  return start.source?.line !== "fixture";
+  return start.source?.line !== "fixture" && isRankedRegularStart(start);
 }
 
 function normalizeResult(result: string): "W" | "L" | "ND" {

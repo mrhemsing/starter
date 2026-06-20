@@ -96,14 +96,16 @@ assert(
     startService.includes("const plannedStarter = probablePitcherIds.has(pitcher.id) || establishedStarterIds.has(pitcher.id);") &&
     startService.includes("plannedStarter,") &&
     startClassification.includes("export function isRankedRegularStart") &&
-    startClassification.includes("isPlannedStarter(start) || inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR") &&
+    startClassification.includes("const RANKED_START_IP_FLOOR = 2;") &&
+    startClassification.includes("return inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR;") &&
+    !startClassification.includes("isPlannedStarter(start) || inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR") &&
     startsPage.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
     startsPage.includes("return isRankedRegularStart(start);") &&
-    startsPage.includes("Board ranks planned starters and qualified long starts; openers and short outings are listed separately.") &&
-    startsPage.includes("Unplanned short starts are kept out of the ranked positions but remain visible for slate completeness.") &&
+    startsPage.includes("Board ranks starts of 2.0+ innings; openers and short outings are listed separately.") &&
+    startsPage.includes("Starts under 2.0 innings are kept out of the ranked positions but remain visible for slate completeness.") &&
     formService.includes('import { isScoredStarterSample } from "@/lib/start-classification";') &&
     formService.includes("isScoredStarterSample(start, FORM_CONFIG.ipFloor)"),
-  "planned probables and established starter workloads must stay ranked and scored as regular starters even when pulled before the raw IP floor",
+  "ranked starts must use a hard 2.0 IP eligibility floor while planned-starter workload remains available for form scoring",
 );
 
 assert(

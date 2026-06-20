@@ -15,6 +15,8 @@ assert.match(service, /type StartOfDay = \{[\s\S]*gamePk: number;[\s\S]*pitcherI
 assert.match(service, /completion\.totalGames === 0/, "Resolver must cleanly no-op off days.");
 assert.match(service, /!completion\.isFinal/, "Resolver must wait until the full slate is final.");
 assert.match(service, /start\.source\?\.line !== "fixture"/, "Resolver must filter out fixture placeholder lines.");
+assert.match(service, /import \{ isRankedRegularStart \} from "@\/lib\/start-classification";/, "Resolver must use ranked-start eligibility for Start of the Day.");
+assert.match(service, /start\.source\?\.line !== "fixture" && isRankedRegularStart\(start\)/, "Resolver must require the shared 2.0 IP ranked-start floor.");
 assert.match(service, /tiedStarts\.length > 1/, "Resolver must skip shared top GS+ ties in v1.");
 assert.match(service, /renderUrls: \{[\s\S]*instagram: absoluteUrl\(dailySocialImagePath\(date, "instagram"\)\),[\s\S]*x: absoluteUrl\(dailySocialImagePath\(date, "x"\)\),[\s\S]*\}/, "Resolver must publish stable absolute URLs for both crops.");
 assert.match(service, /x: `\$\{start\.name\}: Start of the Day\.[\s\S]*\$\{start\.gsPlus\} GS\+\.`/, "X copy must be generated link-free from real start data.");
