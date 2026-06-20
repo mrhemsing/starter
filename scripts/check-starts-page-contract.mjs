@@ -14,6 +14,7 @@ const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
+const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 
 assert(
   startsPage.includes("return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;"),
@@ -83,8 +84,11 @@ assert(
 assert(
   !startsPage.includes(">Short outings</span>") &&
     startsPage.includes('data-responsive-check="ranked-starts-openers"') &&
-    startsPage.includes("Openers & short outings · {shortStarts.length}"),
-  "ranked starts opener/short-outing controls must live only in the lower openers section",
+    startsPage.includes("Openers & short outings · {shortStarts.length}") &&
+    startsPage.includes('<ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })} scroll={false}>') &&
+    startsPage.includes("function ControlLink({ active, href, children, color, scroll = true }") &&
+    startsPage.includes("scroll={scroll}"),
+  "ranked starts opener/short-outing controls must live only in the lower openers section and preserve scroll on toggle",
 );
 
 assert(
@@ -103,6 +107,8 @@ assert(
     startsPage.includes("return isRankedRegularStart(start);") &&
     startsPage.includes("Board ranks starts of 2.0+ innings; openers and short outings are listed separately.") &&
     startsPage.includes("Starts under 2.0 innings are kept out of the ranked positions but remain visible for slate completeness.") &&
+    methodologyPage.includes("Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.") &&
+    !methodologyPage.includes("Daily boards rank qualified starts of at least 3.0 IP;") &&
     formService.includes('import { isScoredStarterSample } from "@/lib/start-classification";') &&
     formService.includes("isScoredStarterSample(start, FORM_CONFIG.ipFloor)"),
   "ranked starts must use a hard 2.0 IP eligibility floor while planned-starter workload remains available for form scoring",

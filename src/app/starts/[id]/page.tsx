@@ -298,7 +298,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                     <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Openers & short outings · {shortStarts.length}</p>
                     <p className="mt-1 text-sm text-zinc-400">Starts under 2.0 innings are kept out of the ranked positions but remain visible for slate completeness.</p>
                   </div>
-                  <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })}>
+                  <ControlLink active={showOpeners} href={rankedStartsHref(date, { band, sort, showOpeners: !showOpeners })} scroll={false}>
                     {showOpeners ? "Hide short outings" : "Show openers & short outings"}
                   </ControlLink>
                 </div>
@@ -555,13 +555,14 @@ function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
   );
 }
 
-function ControlLink({ active, href, children, color }: { active: boolean; href: string; children: React.ReactNode; color?: string }) {
+function ControlLink({ active, href, children, color, scroll = true }: { active: boolean; href: string; children: React.ReactNode; color?: string; scroll?: boolean }) {
   return (
     <FastFilterLink
       className={`inline-flex min-h-9 items-center gap-2 rounded border px-3 py-1.5 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`}
       href={href}
       style={active && color ? { borderColor: color, backgroundColor: color } : undefined}
       ariaCurrent={active ? "page" : undefined}
+      scroll={scroll}
     >
       {children}
     </FastFilterLink>

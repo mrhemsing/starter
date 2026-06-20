@@ -65,7 +65,7 @@ export default async function MethodologyPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           <MethodCard title="GS+" id="gs-plus">
-            GS+ scores a single completed start on a 0-100 style scale, with league-average work around 50. It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 3.0 IP; openers and short outings are listed separately.
+            GS+ scores a single completed start on a 0-100 style scale, with league-average work around 50. It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.
           </MethodCard>
           <MethodCard title="Form" id="form">
             Form is a rolling view of recent GS+ across a pitcher&apos;s qualified starts. Heat Check bands highlight starters who are running above, near, or below their recent baseline.
