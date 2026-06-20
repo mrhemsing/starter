@@ -19,6 +19,7 @@ export type TopPerformerImage = {
   imageUrl: string;
   alt: string;
   attribution?: string;
+  objectPosition?: string;
   playUrl?: string;
 };
 
@@ -103,7 +104,7 @@ async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerf
 
   const cached = await readCachedActionShot(start.id);
   if (cached && cached.expiresAt > Date.now()) {
-    return { source: "action", imageUrl: cached.imageUrl, alt: cached.alt, attribution: cached.attribution };
+    return { source: "action", imageUrl: cached.imageUrl, alt: cached.alt, attribution: cached.attribution, objectPosition: actionShotObjectPosition() };
   }
 
   const eventId = await resolveSportradarGameId(start, apiKey);
@@ -117,11 +118,15 @@ async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerf
 
     const cachedShot = await cacheActionShot(start, asset, link.href, provider, apiKey).catch(() => null);
     if (cachedShot) {
-      return { source: "action", imageUrl: cachedShot.imageUrl, alt: cachedShot.alt, attribution: cachedShot.attribution };
+      return { source: "action", imageUrl: cachedShot.imageUrl, alt: cachedShot.alt, attribution: cachedShot.attribution, objectPosition: actionShotObjectPosition() };
     }
   }
 
   return null;
+}
+
+function actionShotObjectPosition() {
+  return "72% 50%";
 }
 
 async function resolveSportradarGameId(start: StartSummary, apiKey: string) {

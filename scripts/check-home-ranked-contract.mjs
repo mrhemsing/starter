@@ -129,8 +129,10 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('className={isPlaceholderImage ? "object-cover object-[50%_45%]" : "object-cover object-center"}'),
-  "home top performer real images must cover the frame and keep the player centered in the card frame",
+  topPerformerCard.includes('const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");') &&
+    topPerformerCard.includes('className="object-cover"') &&
+    topPerformerCard.includes("style={{ objectPosition: imageObjectPosition }}"),
+  "home top performer real images must cover the frame and honor player-focused image framing",
 );
 
 assert(
@@ -239,6 +241,8 @@ assert(
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("if (actionShot) return actionShot;") &&
+    imageService.includes('objectPosition: actionShotObjectPosition()') &&
+    imageService.includes('return "72% 50%";') &&
     imageService.includes("const pitcherHeadshot = resolvePitcherHeadshotImage(start);") &&
     imageService.includes("if (pitcherHeadshot) return pitcherHeadshot;") &&
     imageService.includes('source: "headshot",') &&
