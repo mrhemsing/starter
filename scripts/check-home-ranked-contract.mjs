@@ -237,6 +237,8 @@ assert(
 assert(
   imageService.includes("const NOLAN_MCLEAN_MLB_ID = 690997;") &&
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
+    imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
+    imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
@@ -246,15 +248,24 @@ assert(
     !imageService.includes("resolvePitcherHeadshotImage") &&
     !imageService.includes('source: "headshot"') &&
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
-    imageService.includes("if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;") &&
+    imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
+    imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
+    imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
     imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
+    imageService.includes("imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,") &&
     !imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     !imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID") &&
     !imageService.includes("resolveMlbGameContentImage") &&
     !imageService.includes('source: "highlight"') &&
     !imageService.includes("highlight.thumbnailUrl"),
   "home top performer image resolver must reject text-heavy MLB content/highlight thumbnails and never fall back to MLB headshots",
+);
+
+assert(
+  (await readFile("next.config.ts", "utf8")).includes('hostname: "images2.minutemediacdn.com"') &&
+    (await readFile("next.config.ts", "utf8")).includes('pathname: "/image/upload/**"'),
+  "home top performer keyed action images from Minute Media must be allowed by Next image config",
 );
 
 console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, uses centered action-photo framing, and never falls back to headshots");

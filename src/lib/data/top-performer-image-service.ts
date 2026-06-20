@@ -11,6 +11,9 @@ const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
+const CAM_SCHLITTLER_MLB_ID = 693645;
+const CAM_SCHLITTLER_REDS_ACTION_IMAGE =
+  "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_0,w_3227,h_1815/c_fill,w_1440,ar_16:9,f_auto,q_auto,g_auto/images%2FImagnImages%2Fmmsport%2Finside_the_reds%2F01kvhb1zebrbrmepeemw.jpg";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -76,13 +79,25 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 }
 
 function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
-  if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;
+  if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID) {
+    return {
+      source: "action",
+      imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,
+      alt: "Nolan McLean escapes a bases-loaded jam",
+    };
+  }
 
-  return {
-    source: "action",
-    imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,
-    alt: "Nolan McLean escapes a bases-loaded jam",
-  };
+  if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID) {
+    return {
+      source: "action",
+      imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,
+      alt: "Cam Schlittler delivers a pitch against Cincinnati",
+      attribution: "CREDIT: Vincent Carchietta-Imagn Images",
+      objectPosition: "48% 50%",
+    };
+  }
+
+  return null;
 }
 
 async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerformerImage | null> {

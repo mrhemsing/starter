@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         hostname: "img.youtube.com",
         pathname: "/vi/**",
       },
+      {
+        protocol: "https",
+        hostname: "images2.minutemediacdn.com",
+        pathname: "/image/upload/**",
+      },
     ],
   },
   async redirects() {
