@@ -255,6 +255,8 @@ assert(
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
+    imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
+    imageService.includes('const CHRIS_SALE_BREWERS_ACTION_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/ebigzjpf6rrj4iawr7vf";') &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
@@ -266,10 +268,13 @@ assert(
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
     imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
     imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
+    imageService.includes("if (start.pitcher.mlbId === CHRIS_SALE_MLB_ID)") &&
     imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
+    imageService.includes('alt: "Chris Sale delivers a pitch against Milwaukee",') &&
     imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     imageService.includes("imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,") &&
+    imageService.includes("imageUrl: CHRIS_SALE_BREWERS_ACTION_IMAGE,") &&
     !imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     !imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID") &&
     !imageService.includes("resolveMlbGameContentImage") &&

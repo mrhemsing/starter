@@ -14,6 +14,8 @@ const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-image
 const CAM_SCHLITTLER_MLB_ID = 693645;
 const CAM_SCHLITTLER_REDS_ACTION_IMAGE =
   "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_0,w_3227,h_1815/c_fill,w_1440,ar_16:9,f_auto,q_auto,g_auto/images%2FImagnImages%2Fmmsport%2Finside_the_reds%2F01kvhb1zebrbrmepeemw.jpg";
+const CHRIS_SALE_MLB_ID = 519242;
+const CHRIS_SALE_BREWERS_ACTION_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/ebigzjpf6rrj4iawr7vf";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -94,6 +96,15 @@ function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | 
       alt: "Cam Schlittler delivers a pitch against Cincinnati",
       attribution: "CREDIT: Vincent Carchietta-Imagn Images",
       objectPosition: "48% 50%",
+    };
+  }
+
+  if (start.pitcher.mlbId === CHRIS_SALE_MLB_ID) {
+    return {
+      source: "action",
+      imageUrl: CHRIS_SALE_BREWERS_ACTION_IMAGE,
+      alt: "Chris Sale delivers a pitch against Milwaukee",
+      objectPosition: "50% 50%",
     };
   }
 
