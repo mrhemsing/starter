@@ -4,21 +4,15 @@ import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 const CACHE_DIR = path.join(process.cwd(), "public", "images", "top-performer-action-shots");
 const PUBLIC_CACHE_PATH = "/images/top-performer-action-shots";
-const MLB_STATS_API_BASE = "https://statsapi.mlb.com";
 const SPORTRADAR_API_BASE = "https://api.sportradar.com";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const MLB_CONTENT_REVALIDATE_SECONDS = 5 * 60;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
-const PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID: Record<string, string> = {
-  "2026-06-12-nym-atl-690997": "Nolan McLean escapes bases-loaded jam",
-  "2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game",
-};
 
-type TopPerformerImageSource = "action" | "game-content" | "highlight" | "placeholder";
+type TopPerformerImageSource = "action" | "game-content" | "headshot" | "placeholder";
 
 export type TopPerformerImage = {
   source: TopPerformerImageSource;
@@ -63,52 +57,8 @@ type SportradarManifest = {
   assetlist?: SportradarAsset[];
 };
 
-type MlbContentKeyword = {
-  type?: string;
-  value?: string;
-  displayName?: string;
-};
-
-type MlbContentImageCut = {
-  aspectRatio?: string;
-  width?: number;
-  height?: number;
-  src?: string;
-};
-
-type MlbContentItem = {
-  type?: string;
-  headline?: string;
-  title?: string;
-  description?: string;
-  keywordsAll?: MlbContentKeyword[];
-  image?: {
-    title?: string;
-    altText?: string | null;
-    cuts?: MlbContentImageCut[];
-  };
-};
-
-type MlbGameContent = {
-  highlights?: {
-    highlights?: {
-      items?: MlbContentItem[];
-    };
-    gameCenter?: {
-      items?: MlbContentItem[];
-    };
-    live?: {
-      items?: MlbContentItem[];
-    };
-  };
-  media?: {
-    featuredMedia?: {
-      items?: MlbContentItem[];
-    };
-  };
-};
-
-export async function resolveTopPerformerImage(start: StartSummary | null, highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
+export async function resolveTopPerformerImage(start: StartSummary | null, _highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
+  void _highlight;
   if (!start) return null;
 
   const preferredPitcherImage = resolvePreferredPitcherImage(start);
@@ -117,22 +67,23 @@ export async function resolveTopPerformerImage(start: StartSummary | null, highl
   const actionShot = await resolveSportradarActionShot(start).catch(() => null);
   if (actionShot) return actionShot;
 
-  const gameContentImage = await resolveMlbGameContentImage(start).catch(() => null);
-  if (gameContentImage) return gameContentImage;
-
-  if (highlight) {
-    return {
-      source: "highlight",
-      imageUrl: highlight.thumbnailUrl,
-      alt: `${start.pitcher.name} MLB highlight thumbnail`,
-      playUrl: highlight.watchUrl,
-    };
-  }
+  const pitcherHeadshot = resolvePitcherHeadshotImage(start);
+  if (pitcherHeadshot) return pitcherHeadshot;
 
   return {
     source: "placeholder",
     imageUrl: PLACEHOLDER_IMAGE_URL,
     alt: "Pitcher's mound and rubber on a baseball field",
+  };
+}
+
+function resolvePitcherHeadshotImage(start: StartSummary): TopPerformerImage | null {
+  if (!start.pitcher.mlbId) return null;
+
+  return {
+    source: "headshot",
+    imageUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_720,q_auto:best/v1/people/${start.pitcher.mlbId}/headshot/67/current`,
+    alt: `${start.pitcher.name} headshot`,
   };
 }
 
@@ -144,74 +95,6 @@ function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | 
     imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,
     alt: "Nolan McLean escapes a bases-loaded jam",
   };
-}
-
-async function resolveMlbGameContentImage(start: StartSummary): Promise<TopPerformerImage | null> {
-  const response = await fetch(`${MLB_STATS_API_BASE}/api/v1/game/${start.gamePk}/content`, {
-    next: { revalidate: MLB_CONTENT_REVALIDATE_SECONDS },
-  });
-  if (!response.ok) return null;
-
-  const content = await response.json() as MlbGameContent;
-  const item = selectMlbContentItem(content, start);
-  const imageUrl = selectMlbContentImageUrl(item);
-  if (!item || !imageUrl) return null;
-
-  const title = item.headline ?? item.title ?? item.image?.title ?? `${start.pitcher.name} game highlight`;
-  return {
-    source: "game-content",
-    imageUrl,
-    alt: item.image?.altText?.trim() || title,
-  };
-}
-
-function selectMlbContentItem(content: MlbGameContent, start: StartSummary) {
-  const items = [
-    ...(content.highlights?.highlights?.items ?? []),
-    ...(content.highlights?.gameCenter?.items ?? []),
-    ...(content.highlights?.live?.items ?? []),
-    ...(content.media?.featuredMedia?.items ?? []),
-  ];
-  const preferredHeadline = PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID[start.id];
-  const preferredItem = preferredHeadline
-    ? items.find((item) => item.headline === preferredHeadline || item.title === preferredHeadline)
-    : null;
-  if (preferredItem) return preferredItem;
-
-  return items
-    .map((item) => ({ item, score: mlbContentItemScore(item, start) }))
-    .filter((candidate) => candidate.score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.item ?? null;
-}
-
-function mlbContentItemScore(item: MlbContentItem, start: StartSummary) {
-  if (item.type && item.type !== "video") return 0;
-
-  const keywords = item.keywordsAll ?? [];
-  const values = keywords.map((keyword) => `${keyword.type ?? ""}:${keyword.value ?? ""}:${keyword.displayName ?? ""}`.toLowerCase());
-  const haystack = `${item.headline ?? ""} ${item.title ?? ""} ${item.description ?? ""} ${item.image?.title ?? ""}`.toLowerCase();
-  const fullName = start.pitcher.name.toLowerCase();
-  const last = lastName(start.pitcher.name).toLowerCase();
-  let score = 0;
-
-  if (values.some((value) => value.includes(`player_id:${start.pitcher.mlbId}`) || value.includes(`playerid-${start.pitcher.mlbId}`))) score += 120;
-  if (values.some((value) => value.includes(`game_pk:${start.gamePk}`) || value.includes(`gamepk-${start.gamePk}`))) score += 80;
-  if (haystack.includes(fullName)) score += 80;
-  if (haystack.includes(last)) score += 40;
-  if (values.some((value) => value.includes("highlight-reel-starting-pitching") || value.includes("highlight-reel-pitching"))) score += 30;
-  if (haystack.includes("strikeout") || haystack.includes("fans ")) score += 15;
-
-  return score;
-}
-
-function selectMlbContentImageUrl(item: MlbContentItem | null) {
-  const cuts = item?.image?.cuts ?? [];
-  const cut = [...cuts]
-    .filter((candidate) => candidate.aspectRatio === "16:9" && candidate.src)
-    .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0]
-    ?? [...cuts].filter((candidate) => candidate.src).sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
-
-  return cut?.src ?? null;
 }
 
 async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerformerImage | null> {
