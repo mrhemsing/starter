@@ -13,10 +13,21 @@ const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8")
 const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", "utf8");
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
+const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
   "/heat-check must render the canonical Heat Check page implementation",
+);
+
+assert(
+  formService.includes("const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);") &&
+    formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);") &&
+    !formService.includes("sort(compareHeatDesc)") &&
+    !formService.includes("sort(compareHeatAsc)") &&
+    !formService.includes("function compareHeatDesc") &&
+    !formService.includes("function compareHeatAsc"),
+  "homepage Who's Hot/Who's Not rails must sort by visible RGS order, hot high-to-low and cold low-to-high",
 );
 
 assert(

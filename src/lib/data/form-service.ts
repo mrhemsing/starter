@@ -287,9 +287,9 @@ async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeRe
     bands[pitcher.tier] += 1;
   }
 
-  const hot = [...qualified].sort(compareHeatDesc).slice(0, HOME_CONFIG.railSize);
+  const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);
   const hotIds = new Set(hot.map((pitcher) => pitcher.pitcherId));
-  const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareHeatAsc).slice(0, HOME_CONFIG.railSize);
+  const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);
   const nextStarts = await getNextStartMap([...hot, ...cold].map((pitcher) => pitcher.pitcherId));
 
   return {
@@ -754,18 +754,6 @@ function compareFormAsc(a: FormSummary, b: FormSummary) {
   if ((aLast?.gsPlus ?? 0) !== (bLast?.gsPlus ?? 0)) return (aLast?.gsPlus ?? 0) - (bLast?.gsPlus ?? 0);
   if ((aLast?.ip ?? 0) !== (bLast?.ip ?? 0)) return (aLast?.ip ?? 0) - (bLast?.ip ?? 0);
   return a.name.localeCompare(b.name);
-}
-
-function compareHeatDesc(a: FormSummary, b: FormSummary) {
-  const heatDelta = (b.heatIndex ?? 0) - (a.heatIndex ?? 0);
-  if (heatDelta !== 0) return heatDelta;
-  return compareFormSummaries(a, b);
-}
-
-function compareHeatAsc(a: FormSummary, b: FormSummary) {
-  const heatDelta = (a.heatIndex ?? 0) - (b.heatIndex ?? 0);
-  if (heatDelta !== 0) return heatDelta;
-  return compareFormAsc(a, b);
 }
 
 function calculateTrendDelta(starts: StartSummary[]) {
