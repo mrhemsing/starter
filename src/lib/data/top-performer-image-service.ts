@@ -12,7 +12,7 @@ const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
 
-type TopPerformerImageSource = "action" | "game-content" | "headshot" | "placeholder";
+type TopPerformerImageSource = "action" | "placeholder";
 
 export type TopPerformerImage = {
   source: TopPerformerImageSource;
@@ -68,9 +68,6 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
   const actionShot = await resolveSportradarActionShot(start).catch(() => null);
   if (actionShot) return actionShot;
 
-  const pitcherHeadshot = resolvePitcherHeadshotImage(start);
-  if (pitcherHeadshot) return pitcherHeadshot;
-
   return {
     source: "placeholder",
     imageUrl: PLACEHOLDER_IMAGE_URL,
@@ -78,21 +75,11 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
   };
 }
 
-function resolvePitcherHeadshotImage(start: StartSummary): TopPerformerImage | null {
-  if (!start.pitcher.mlbId) return null;
-
-  return {
-    source: "headshot",
-    imageUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_720,q_auto:best/v1/people/${start.pitcher.mlbId}/headshot/67/current`,
-    alt: `${start.pitcher.name} headshot`,
-  };
-}
-
 function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
   if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;
 
   return {
-    source: "game-content",
+    source: "action",
     imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,
     alt: "Nolan McLean escapes a bases-loaded jam",
   };

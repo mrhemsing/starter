@@ -243,18 +243,18 @@ assert(
     imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes('objectPosition: actionShotObjectPosition()') &&
     imageService.includes('return "72% 50%";') &&
-    imageService.includes("const pitcherHeadshot = resolvePitcherHeadshotImage(start);") &&
-    imageService.includes("if (pitcherHeadshot) return pitcherHeadshot;") &&
-    imageService.includes('source: "headshot",') &&
-    imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
+    !imageService.includes("resolvePitcherHeadshotImage") &&
+    !imageService.includes('source: "headshot"') &&
+    !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
     imageService.includes("if (start.pitcher.mlbId !== NOLAN_MCLEAN_MLB_ID) return null;") &&
+    imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     !imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     !imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID") &&
     !imageService.includes("resolveMlbGameContentImage") &&
     !imageService.includes('source: "highlight"') &&
     !imageService.includes("highlight.thumbnailUrl"),
-  "home top performer image resolver must reject text-heavy MLB content/highlight thumbnails and fall back to clean centered headshots after true action photos",
+  "home top performer image resolver must reject text-heavy MLB content/highlight thumbnails and never fall back to MLB headshots",
 );
 
-console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, and uses centered action-photo framing");
+console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, uses centered action-photo framing, and never falls back to headshots");
