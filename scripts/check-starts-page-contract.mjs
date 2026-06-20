@@ -89,7 +89,11 @@ assert(
 
 assert(
   types.includes("plannedStarter?: boolean;") &&
-    startService.includes("const plannedStarter = probablePitcherIds.has(pitcher.id);") &&
+    startService.includes("const ESTABLISHED_STARTER_MIN_SEASON_STARTS = 5;") &&
+    startService.includes("const ESTABLISHED_STARTER_MIN_AVG_IP = 4;") &&
+    startService.includes("async function getEstablishedStarterPitcherIds") &&
+    startService.includes("hasEstablishedStarterWorkload(profile)") &&
+    startService.includes("const plannedStarter = probablePitcherIds.has(pitcher.id) || establishedStarterIds.has(pitcher.id);") &&
     startService.includes("plannedStarter,") &&
     startClassification.includes("export function isRankedRegularStart") &&
     startClassification.includes("isPlannedStarter(start) || inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR") &&
@@ -99,7 +103,7 @@ assert(
     startsPage.includes("Unplanned short starts are kept out of the ranked positions but remain visible for slate completeness.") &&
     formService.includes('import { isScoredStarterSample } from "@/lib/start-classification";') &&
     formService.includes("isScoredStarterSample(start, FORM_CONFIG.ipFloor)"),
-  "planned probables must stay ranked and scored as regular starters even when pulled before the raw IP floor",
+  "planned probables and established starter workloads must stay ranked and scored as regular starters even when pulled before the raw IP floor",
 );
 
 assert(

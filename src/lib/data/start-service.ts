@@ -18,6 +18,8 @@ const NEUTRAL_PARK_RUN_FACTOR = 1;
 const PITCHER_SEASON_LOG_SORTS: PitcherApiSeasonLogSort[] = ["date-desc", "gs-desc", "ip-desc"];
 const PITCHER_SEASON_LOG_RESULTS: PitcherApiSeasonLogResultFilter[] = ["all", "W", "L", "ND"];
 const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;
+const ESTABLISHED_STARTER_MIN_SEASON_STARTS = 5;
+const ESTABLISHED_STARTER_MIN_AVG_IP = 4;
 export const PITCHER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
 
 type CompletedPitchingLineSource = "archive-gamefeed" | "live-gamefeed";
@@ -147,8 +149,7 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
-  const scheduledStarts = schedule.games
-    .flatMap((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source))
+  const scheduledStarts = (await buildScheduledStarts(schedule, completedLines, teamQualityContexts))
     .sort((a, b) => b.gameScorePlus - a.gameScorePlus)
     .map((start, index) => ({ ...start, rank: index + 1 }));
 
@@ -368,8 +369,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const slateProbables = probables.filter((probable) => unstartedScheduleGamePks.has(probable.gamePk));
   const starts = archivedStarts.length > 0
     ? archivedStarts
-    : schedule.games
-        .flatMap((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source))
+    : (await buildScheduledStarts(schedule, completedLines, teamQualityContexts))
         .sort((a, b) => b.gameScorePlus - a.gameScorePlus)
         .map((start, index) => ({ ...start, rank: index + 1 }));
   const slateStarts = starts.length > 0 ? starts : demoSlateStarts;
@@ -461,7 +461,7 @@ export async function getStartDetail(startId: string) {
 
   const schedule = await fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
-  const scheduledStarts = schedule.games.flatMap((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source));
+  const scheduledStarts = await buildScheduledStarts(schedule, completedLines, teamQualityContexts);
   const matchedStart = scheduledStarts.find((start) => start.id === startId);
   const matchedGame = matchedStart ? schedule.games.find((game) => game.gamePk === matchedStart.gamePk) : undefined;
 
@@ -1351,12 +1351,57 @@ function formatSignedNumber(value: number) {
   return `${value >= 0 ? "+" : ""}${Number.isInteger(value) ? value : value.toFixed(1)}`;
 }
 
+async function buildScheduledStarts(
+  schedule: MlbSchedule,
+  completedLines = new Map<string, CompletedPitchingLineEntry>(),
+  teamQualityContexts = new Map<string, MlbTeamQualityContext>(),
+) {
+  const establishedStarterIds = await getEstablishedStarterPitcherIds(schedule, completedLines);
+  const starts = schedule.games.map((game) => scheduledGameToStarts(game, schedule.date, completedLines, teamQualityContexts, schedule.source, establishedStarterIds));
+  return starts.flat();
+}
+
+async function getEstablishedStarterPitcherIds(schedule: MlbSchedule, completedLines: Map<string, CompletedPitchingLineEntry>) {
+  if (!shouldFetchLiveSchedule(schedule.date)) return new Set<number>();
+
+  const scheduleGamePks = new Set(schedule.games.map((game) => game.gamePk));
+  const pitcherIds = Array.from(new Set(
+    Array.from(completedLines.values())
+      .filter((line) => scheduleGamePks.has(line.gamePk))
+      .map((line) => line.pitcherMlbId),
+  ));
+
+  const profiles = await Promise.all(
+    pitcherIds.map(async (pitcherId) => ({
+      pitcherId,
+      profile: await fetchMlbPitcherSeasonProfile(pitcherId, schedule.date.slice(0, 4), { fetchLive: true }),
+    })),
+  );
+
+  return new Set(
+    profiles
+      .filter(({ profile }) => hasEstablishedStarterWorkload(profile))
+      .map(({ pitcherId }) => pitcherId),
+  );
+}
+
+function hasEstablishedStarterWorkload(profile: Awaited<ReturnType<typeof fetchMlbPitcherSeasonProfile>>) {
+  if (!profile) return false;
+
+  const starts = profile.seasonLine.starts || profile.starts.length;
+  if (starts < ESTABLISHED_STARTER_MIN_SEASON_STARTS) return false;
+
+  const inningsPitched = profile.seasonLine.inningsPitched;
+  return inningsPitched / starts >= ESTABLISHED_STARTER_MIN_AVG_IP;
+}
+
 function scheduledGameToStarts(
   game: MlbScheduleGame,
   date: string,
   completedLines = new Map<string, CompletedPitchingLineEntry>(),
   teamQualityContexts = new Map<string, MlbTeamQualityContext>(),
   scheduleSource: MlbSchedule["source"] = "fixture",
+  establishedStarterIds = new Set<number>(),
 ): StartSummary[] {
   const probableCandidates = [
     { pitcher: game.probableAwayPitcher, opponent: game.homeTeam.abbreviation },
@@ -1384,7 +1429,7 @@ function scheduledGameToStarts(
       const completedLine = completedLines.get(startLineKey(game.gamePk, pitcher.id));
       const lineSource = completedLine?.source ?? "fixture";
       const line = completedLine?.line ?? fallback.line;
-      const plannedStarter = probablePitcherIds.has(pitcher.id);
+      const plannedStarter = probablePitcherIds.has(pitcher.id) || establishedStarterIds.has(pitcher.id);
       const colors = teamColors[pitcher.teamAbbreviation] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
       const rankSeed = game.gamePk + pitcher.id;
       const opponentQualityContext = teamQualityContexts.get(opponent);
