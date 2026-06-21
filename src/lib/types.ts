@@ -928,6 +928,7 @@ export type StartApiGameScorePlusGradeLabel = "Elite" | "Plus" | "Average" | "Be
 
 export type StartApiGameScorePlusBreakdown = {
   total: number;
+  preciseTotal: number;
   formulaVersion: "context-v7";
   gradeBand: {
     label: StartApiGameScorePlusGradeLabel;

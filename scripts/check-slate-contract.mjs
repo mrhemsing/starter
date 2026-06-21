@@ -343,6 +343,8 @@ async function checkSlate(window, date) {
     assert(start.gameScorePlusBreakdown?.total === start.gameScorePlus, `${window} start ${start.id} GS+ breakdown total mismatch`);
     assert(start.gameScorePlusBreakdown?.formulaVersion === "context-v7", `${window} start ${start.id} GS+ breakdown formula mismatch`);
     assert(start.gameScorePlusBreakdown.total >= 20 && start.gameScorePlusBreakdown.total <= 80, `${window} start ${start.id} GS+ total must use the 20-80 display scale`);
+    assert(typeof start.gameScorePlusBreakdown.preciseTotal === "number", `${window} start ${start.id} GS+ precise total missing`);
+    assert(Math.round(start.gameScorePlusBreakdown.preciseTotal) === start.gameScorePlus, `${window} start ${start.id} GS+ precise total must round to displayed total`);
     assert(previousRankedScore === null || start.gameScorePlus <= previousRankedScore, `${window} start ${start.id} rank order must follow descending GS+`);
     previousRankedScore = start.gameScorePlus;
     assert(typeof start.gameScorePlusBreakdown.gradeBand?.label === "string" && start.gameScorePlusBreakdown.gradeBand.label.length > 0, `${window} start ${start.id} missing GS+ grade label`);

@@ -8,6 +8,7 @@ import { formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { rankedStartsPath, sourceParams, startHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
+import { rankStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 type RankedStartsRecapProps = {
@@ -19,13 +20,12 @@ type RankedStartsRecapProps = {
 
 export function RankedStartsRecap({ date, label = "Yesterday", starts, highlights }: RankedStartsRecapProps) {
   const settledStarts = starts
-    .filter((start) => start.source?.line !== "fixture" && isRankedRegularStart(start))
-    .sort((a, b) => b.gameScorePlus - a.gameScorePlus || inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) || a.pitcher.name.localeCompare(b.pitcher.name))
-    .map((start, index) => ({ ...start, rank: index + 1 }));
-  const topStarts = settledStarts.slice(0, 5);
+    .filter((start) => start.source?.line !== "fixture" && isRankedRegularStart(start));
+  const rankedStarts = rankStarts(settledStarts);
+  const topStarts = rankedStarts.slice(0, 5);
   const listStarts = topStarts;
-  const duds = settledStarts.slice(-3);
-  const slateAverage = average(settledStarts.map((start) => start.gameScorePlus));
+  const duds = rankedStarts.slice(-3);
+  const slateAverage = average(rankedStarts.map((start) => start.gameScorePlus));
 
   return (
     <section id="slate" className="border-y border-white/10 bg-[#0c0b09] px-4 py-10 sm:px-6 lg:px-8">
@@ -35,11 +35,11 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Settled results / {label} / {formatShortDate(date)}</p>
             <h2 className="mt-2 font-serif text-4xl font-bold text-zinc-50">Ranked Starts Recap</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              Final 2.0+ inning starter lines only: {settledStarts.length} scored starts from the completed slate, ranked by GS+.
+              Final 2.0+ inning starter lines only: {rankedStarts.length} scored starts from the completed slate, ranked by GS+.
             </p>
           </div>
           <Link href={rankedStartsPath(date)} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
-            See all {settledStarts.length} starts
+            See all {rankedStarts.length} starts
           </Link>
         </div>
 

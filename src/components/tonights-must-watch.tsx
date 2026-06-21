@@ -139,6 +139,7 @@ export function TonightsMustWatch({
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
       data-visible-watch-flag-keys={shownGames.length ? shownGames.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") : "none"}
+      data-visible-watch-flag-labels={shownGames.length ? shownGames.map((game) => watchFlagNoteDataLabel(game)).join("|") : "none"}
       data-visible-component-keys={shownGames.length ? shownGames.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") : "none"}
       data-visible-component-top-arms={shownGames.length ? shownGames.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") : "none"}
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
@@ -424,6 +425,7 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       data-responsive-check="watch-components"
       data-game-pk={game.gamePk}
       data-watch-component-count={items.length}
+      data-watch-component-keys={items.map((item) => item.key).join("/")}
       data-matchup-rank={game.matchupRankTonight}
       data-matchup-rank-label={rankLabel}
       role="group"
@@ -711,6 +713,7 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
       aria-label={watchFlagNoteAriaLabel(game)}
       data-watch-flag-count={flagKeys.length}
       data-watch-flag-keys={flagKeys.join(",")}
+      data-watch-flag-label={watchFlagNoteDataLabel(game)}
     >
       {game.flags?.tbd ? "TBD starter included with league-mean fallback. " : ""}
       {game.flags?.limitedForm ? "Limited form samples use baseline fallback where needed." : ""}
@@ -725,6 +728,10 @@ function watchFlagNoteKeys(game: TonightGame) {
   if (game.flags?.limitedForm) keys.push("limited-form");
   if (game.matchupContext.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
+}
+
+function watchFlagNoteDataLabel(game: TonightGame) {
+  return watchFlagNoteAriaLabel(game) || "clear";
 }
 
 function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {

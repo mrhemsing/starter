@@ -35,15 +35,15 @@ assert(
 );
 
 assert(
-  bestStartsService.includes('import { inningsFromIP } from "@/lib/innings";') &&
-    bestStartsService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+  bestStartsService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    bestStartsService.includes('import { compareRankedStarts } from "@/lib/start-ranking";') &&
     bestStartsService.includes("function isEligibleBestStart") &&
     bestStartsService.includes("start.source?.line !== \"fixture\" && isRankedRegularStart(start)") &&
     startClassification.includes("export function isRankedRegularStart") &&
     bestStartsService.includes("function compareBestStarts") &&
-    bestStartsService.includes("b.date.localeCompare(a.date)") &&
-    bestStartsService.includes("b.line.strikeouts - a.line.strikeouts"),
-  "home best-starts service must enforce planned-starter-aware qualified starts and tie-break by recency, IP, then K",
+    bestStartsService.includes("compareRankedStarts(a, b)") &&
+    bestStartsService.includes("b.date.localeCompare(a.date)"),
+  "home best-starts service must enforce planned-starter-aware qualified starts and reuse ranked-start tie-breaks before recency",
 );
 
 assert(

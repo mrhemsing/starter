@@ -15,6 +15,22 @@ const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
+const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
+
+assert(
+  startRanking.includes("rankedStartScore(b) - rankedStartScore(a)") &&
+    startRanking.includes("inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched)") &&
+    startRanking.includes("a.line.earnedRuns - b.line.earnedRuns") &&
+    startRanking.includes("b.line.strikeouts - a.line.strikeouts") &&
+    startRanking.includes("a.line.walks - b.line.walks") &&
+    startRanking.includes("a.line.hits - b.line.hits") &&
+    startRanking.includes("start.gameScorePlusBreakdown?.preciseTotal ?? start.gameScorePlus") &&
+    startService.includes('import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";') &&
+    startService.includes("const computedPreciseTotal = Math.max(GAME_SCORE_PLUS_DISPLAY_MIN, Math.min(GAME_SCORE_PLUS_DISPLAY_MAX, scaledTotal));") &&
+    startService.includes("const preciseTotal = Math.round(computedPreciseTotal) === scoredTotal ? computedPreciseTotal : scoredTotal;") &&
+    startService.includes("preciseTotal: Number(preciseTotal.toFixed(3)),"),
+  "ranked starts ties must break by precise GS+, IP, ER, K, walks, hits, then stable slate identity",
+);
 
 assert(
   startsPage.includes("return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;"),

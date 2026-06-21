@@ -1596,6 +1596,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
   const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
   const renderedWatchFlagKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-flag-keys"));
+  const renderedWatchFlagLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-flag-labels"));
   const renderedComponentKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-keys"));
   const renderedComponentTopArms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-top-arms"));
   const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
@@ -1897,6 +1898,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
       renderedWatchFlagKeys.length === renderedGameCount &&
       renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key))) &&
+      renderedWatchFlagLabels.length === renderedGameCount &&
+      renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
       renderedComponentKeys.length === renderedGameCount &&
       renderedComponentKeys.every((keys) => keys === WATCH_COMPONENT_KEYS.join("/")) &&
       renderedComponentTopArms.length === renderedGameCount &&
@@ -1925,7 +1928,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)) &&
       renderedHookReasons.length === renderedGameCount &&
       renderedHookReasons.every((reason) => reason.length > 0 && !reason.includes("|")),
-    `${route} ${sectionId} should expose one rendered watch rank, score, tier, sort group, fallback flag set, component score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game`,
+    `${route} ${sectionId} should expose one rendered watch rank, score, tier, sort group, fallback flag key/label set, component score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -2002,6 +2005,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
       renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
       renderedWatchFlagKeys.join(",") === games.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") &&
+      renderedWatchFlagLabels.join("|") === games.map((game) => escapeHtmlAttribute(watchFlagNoteDataLabel(game))).join("|") &&
       renderedComponentKeys.join(",") === games.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") &&
       renderedComponentTopArms.join(",") === games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") &&
       renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
@@ -2096,7 +2100,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherWindMph.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") &&
       renderedWeatherPrecipProbabilities.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch ranks, scores, tiers, sort groups, fallback flag keys/labels, component keys/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
     );
   }
 
@@ -2598,10 +2602,11 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
     "data-responsive-check": "watch-components",
     "data-game-pk": game.gamePk,
     "data-watch-component-count": "3",
+    "data-watch-component-keys": WATCH_COMPONENT_KEYS.join("/"),
     role: "group",
     "aria-label": watchComponentsAriaLabel(game),
   });
-  assert(componentGroupCount >= 1, `${route} should render a responsive watch-component group for ${game.label}`);
+  assert(componentGroupCount >= 1, `${route} should render a responsive watch-component group with canonical component order for ${game.label}`);
 
   for (const [label, key, value] of [
     ["Top arm", "top-arm", game.watchComponents?.topArm],
@@ -2697,8 +2702,9 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
         "aria-label": watchFlagNoteAriaLabel(game),
         "data-watch-flag-count": String(watchFlagNoteKeys(game).length),
         "data-watch-flag-keys": watchFlagNoteKeys(game).join(","),
+        "data-watch-flag-label": watchFlagNoteDataLabel(game),
       }),
-      `${route} should expose accessible watch-card fallback context and reason keys for ${game.label}`,
+      `${route} should expose accessible watch-card fallback context, reason keys, and public label for ${game.label}`,
     );
   }
 }
@@ -2983,6 +2989,10 @@ function watchFlagNoteKeys(game) {
   if (game.flags?.limitedForm) keys.push("limited-form");
   if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
+}
+
+function watchFlagNoteDataLabel(game) {
+  return watchFlagNoteAriaLabel(game) || "clear";
 }
 
 function watchComponentsAriaLabel(game) {

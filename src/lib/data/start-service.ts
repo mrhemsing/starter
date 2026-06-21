@@ -7,6 +7,7 @@ import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonComplete
 import { fetchMlbCompletedPitchingLines, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
+import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";
 import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -149,9 +150,7 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
-  const scheduledStarts = (await buildScheduledStarts(schedule, completedLines, teamQualityContexts))
-    .sort((a, b) => b.gameScorePlus - a.gameScorePlus)
-    .map((start, index) => ({ ...start, rank: index + 1 }));
+  const scheduledStarts = rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
 
   return scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts;
 }
@@ -369,9 +368,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const slateProbables = probables.filter((probable) => unstartedScheduleGamePks.has(probable.gamePk));
   const starts = archivedStarts.length > 0
     ? archivedStarts
-    : (await buildScheduledStarts(schedule, completedLines, teamQualityContexts))
-        .sort((a, b) => b.gameScorePlus - a.gameScorePlus)
-        .map((start, index) => ({ ...start, rank: index + 1 }));
+    : rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
   const slateStarts = starts.length > 0 ? starts : demoSlateStarts;
   const completedStartStats = summarizeCompletedStartSource(slateStarts);
   const completedStartStatsCoverage = summarizeCompletedStartSourceCoverage(slateStarts);
@@ -771,7 +768,7 @@ function normalizePitcherSeasonLogControls(
 
 function sortPitcherSeasonLog(starts: PitcherApiStartLogEntry[], sort: PitcherApiSeasonLogSort) {
   return [...starts].sort((a, b) => {
-    if (sort === "gs-desc") return b.gameScorePlus - a.gameScorePlus || b.date.localeCompare(a.date);
+    if (sort === "gs-desc") return compareRankedStarts(a, b) || b.date.localeCompare(a.date);
     if (sort === "ip-desc") return b.line.inningsPitched - a.line.inningsPitched || b.date.localeCompare(a.date);
     return b.date.localeCompare(a.date);
   });
@@ -790,7 +787,7 @@ function summarizePitcherSeasonLog(starts: PitcherApiStartLogEntry[]): PitcherAp
 
   const sortedStarts = [...starts].sort((a, b) => b.date.localeCompare(a.date));
   const lastStart = sortedStarts[0];
-  const bestStart = [...starts].sort((a, b) => b.gameScorePlus - a.gameScorePlus)[0];
+  const bestStart = [...starts].sort(compareRankedStarts)[0];
   const averageGameScorePlus = starts.reduce((sum, start) => sum + start.gameScorePlus, 0) / starts.length;
   const averageInningsPitched = starts.reduce((sum, start) => sum + start.line.inningsPitched, 0) / starts.length;
 
@@ -1201,6 +1198,8 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
   const rawTotal = scoringComponents.reduce((sum, component) => sum + component.value, 0);
   const scaledTotal = GAME_SCORE_PLUS_DISPLAY_MIDPOINT + (rawTotal - GAME_SCORE_PLUS_RAW_MIDPOINT) * GAME_SCORE_PLUS_RAW_TO_DISPLAY_MULTIPLIER;
   const scoredTotal = total ?? Math.max(GAME_SCORE_PLUS_DISPLAY_MIN, Math.min(GAME_SCORE_PLUS_DISPLAY_MAX, Math.round(scaledTotal)));
+  const computedPreciseTotal = Math.max(GAME_SCORE_PLUS_DISPLAY_MIN, Math.min(GAME_SCORE_PLUS_DISPLAY_MAX, scaledTotal));
+  const preciseTotal = Math.round(computedPreciseTotal) === scoredTotal ? computedPreciseTotal : scoredTotal;
   const calibration = scoredTotal - Math.round(rawTotal);
   const components = calibration === 0
     ? scoringComponents
@@ -1224,6 +1223,7 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
 
   return {
     total: scoredTotal,
+    preciseTotal: Number(preciseTotal.toFixed(3)),
     formulaVersion: "context-v7",
     gradeBand: getGameScorePlusGradeBand(scoredTotal),
     components,
@@ -1483,7 +1483,7 @@ export async function getArchivedSlateStarts(date: string): Promise<StartSummary
 
   return archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
-    .sort((a, b) => b.gameScorePlus - a.gameScorePlus)
+    .sort(compareRankedStarts)
     .map((start, index) => ({ ...start, rank: index + 1 }));
 }
 

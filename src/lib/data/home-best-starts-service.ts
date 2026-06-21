@@ -1,8 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
-import { inningsFromIP } from "@/lib/innings";
 import { isRankedRegularStart } from "@/lib/start-classification";
+import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;
@@ -73,10 +73,8 @@ function isEligibleBestStart(start: StartSummary) {
 
 function compareBestStarts(a: StartSummary, b: StartSummary) {
   return (
-    b.gameScorePlus - a.gameScorePlus ||
-    b.date.localeCompare(a.date) ||
-    inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) ||
-    b.line.strikeouts - a.line.strikeouts
+    compareRankedStarts(a, b) ||
+    b.date.localeCompare(a.date)
   );
 }
 
