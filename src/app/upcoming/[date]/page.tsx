@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
+import { FastFilterLink } from "@/components/fast-filter-link";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
@@ -200,9 +201,9 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <Link className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} data-control-link-active={String(active)}>
+    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} data-control-link-active={String(active)} scroll={false}>
       {children}
-    </Link>
+    </FastFilterLink>
   );
 }
 

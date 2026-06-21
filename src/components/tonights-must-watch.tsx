@@ -113,6 +113,7 @@ export function TonightsMustWatch({
       data-visible-starter-projection-token-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionLineTokenCount(starter)).join("/")).join(",") : "none"}
       data-visible-starter-opponent-split-teams={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.opponentSplit?.team ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-opponent-splits={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.opponentSplit?.split ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-opponent-split-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.opponentSplit?.label ?? "none").join("|")).join("||") : "none"}
       data-visible-starter-opponent-split-ops={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => splitNumberValue(starter.opponentSplit?.ops, 3)).join("/")).join(",") : "none"}
       data-visible-starter-opponent-split-run-values={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => splitNumberValue(starter.opponentSplit?.matchupRunValue, 1)).join("/")).join(",") : "none"}
       data-visible-starter-rest-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.workload?.restLabel ?? "unknown").join("/")).join(",") : "none"}

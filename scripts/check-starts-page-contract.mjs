@@ -54,8 +54,9 @@ assert(
 assert(
   startsPage.includes('import { slateTimeWord } from "@/lib/time-words";') &&
     startsPage.includes("still to come {slateTimeWord({ date }, { today })}") &&
+    startsPage.includes('href={`${upcomingDateHref(date)}#must-watch`}') &&
     !startsPage.includes("still to come tonight"),
-  "ranked starts partial-slate CTA must use slateTimeWord instead of hardcoded tonight copy",
+  "ranked starts partial-slate CTA must use slateTimeWord and jump directly to the upcoming matchup board instead of the page top",
 );
 
 assert(

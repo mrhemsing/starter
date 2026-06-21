@@ -122,6 +122,11 @@ function pipeAttributeValues(value) {
   return value.split("|").filter(Boolean);
 }
 
+function doublePipeAttributeValues(value) {
+  if (!value || value === "none") return [];
+  return value.split("||").filter(Boolean);
+}
+
 function assertUpcomingEnvelope(upcoming, expectedStart, expectedDays, label) {
   const expectedEnd = addDays(expectedStart, expectedDays - 1);
   assertDateKey(upcoming.range?.start, `${label} range start`);
@@ -1016,6 +1021,12 @@ function assertUpcomingRangeToggle(html, route, today, expectedWeekStart = today
 }
 
 function assertUpcomingControls(html, route, expectedLabel = "Filters / All statuses / Watch rank", linkExpectations = null) {
+  assert(
+    upcomingDatePageSource.includes('import { FastFilterLink } from "@/components/fast-filter-link";') &&
+      upcomingDatePageSource.includes('<FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]') &&
+      upcomingDatePageSource.includes('data-control-link-active={String(active)} scroll={false}'),
+    "upcoming filter controls must use FastFilterLink with scroll disabled so mobile taps do not jump to the page top",
+  );
   assert(html.includes('data-responsive-check="upcoming-controls"'), `${route} should render the upcoming filter controls`);
   assert(
     elementWithTextHasAttributes(html, "summary", { "aria-label": expectedLabel }, expectedLabel),
@@ -1051,6 +1062,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     activeUpcomingControlLinkCount(html) === 2,
     `${route} should render exactly two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
   );
+  assert(
+    upcomingFastFilterLinkCount(html) === 4,
+    `${route} should render all four upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
+  );
   if (linkExpectations) {
     assert(
       elementHasAttributes(html, "details", {
@@ -1074,6 +1089,12 @@ function activeUpcomingControlLinkCount(html) {
   const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
   const controlHtml = controlMatch?.[0] ?? html;
   return (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
+}
+
+function upcomingFastFilterLinkCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  return (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
 }
 
 function controlsFromLabel(label) {
@@ -1549,6 +1570,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterProjectionTokenCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-token-counts"));
   const renderedStarterOpponentSplitTeams = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-teams"));
   const renderedStarterOpponentSplits = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-splits"));
+  const renderedStarterOpponentSplitLabels = doublePipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-labels"));
   const renderedStarterOpponentSplitOps = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-ops"));
   const renderedStarterOpponentSplitRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-run-values"));
   const renderedStarterRestLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-rest-labels"));
@@ -1799,11 +1821,13 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterOpponentSplitTeams.every((teams) => teams.split("/").length === 2 && teams.split("/").every((team) => team === "none" || /^[A-Z0-9]{2,4}$/.test(team))) &&
       renderedStarterOpponentSplits.length === renderedGameCount &&
       renderedStarterOpponentSplits.every((splits) => /^(?:vs-lhp|vs-rhp|none)\/(?:vs-lhp|vs-rhp|none)$/.test(splits)) &&
+      renderedStarterOpponentSplitLabels.length === renderedGameCount &&
+      renderedStarterOpponentSplitLabels.every((labels) => labels.split("|").length === 2 && labels.split("|").every((label) => label === "none" || (label.length > 0 && !label.includes("|")))) &&
       renderedStarterOpponentSplitOps.length === renderedGameCount &&
       renderedStarterOpponentSplitOps.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "none" || /^\d+\.\d{3}$/.test(value))) &&
       renderedStarterOpponentSplitRunValues.length === renderedGameCount &&
       renderedStarterOpponentSplitRunValues.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "none" || /^-?\d+\.\d$/.test(value))),
-    `${route} ${sectionId} should expose one away/home starter opponent split team, handedness, OPS, and run-value pair per visible game`,
+    `${route} ${sectionId} should expose one away/home starter opponent split team, handedness, label, OPS, and run-value pair per visible game`,
   );
   assert(
     renderedStarterRestLabels.length === renderedGameCount &&
@@ -2051,6 +2075,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterProjectionTokenCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starter.projection ? projectionLineTokenCount(starter.projection) : 0)).join("/")).join(",") &&
       renderedStarterOpponentSplitTeams.join(",") === games.map((game) => game.starters.map((starter) => starter.opponentSplit?.team ?? "none").join("/")).join(",") &&
       renderedStarterOpponentSplits.join(",") === games.map((game) => game.starters.map((starter) => starter.opponentSplit?.split ?? "none").join("/")).join(",") &&
+      renderedStarterOpponentSplitLabels.join("||") === games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starter.opponentSplit?.label ?? "none")).join("|")).join("||") &&
       renderedStarterOpponentSplitOps.join(",") === games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.ops, 3)).join("/")).join(",") &&
       renderedStarterOpponentSplitRunValues.join(",") === games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.matchupRunValue, 1)).join("/")).join(",") &&
       renderedStarterRestLabels.join(",") === games.map((game) => game.starters.map((starter) => starter.workload?.restLabel ?? "unknown").join("/")).join(",") &&
@@ -2071,7 +2096,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherWindMph.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") &&
       renderedWeatherPrecipProbabilities.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent splits, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
     );
   }
 
@@ -2215,6 +2240,15 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         .filter((href) => href !== "none")
         .every((href) => (cardLinkCounts.get(href) ?? 0) >= 1),
       `${route} should render each named starter Form href as a link inside the ${game.label} watch card`,
+    );
+    const expectedOpponentSplitLabels = game.starters
+      .map((starter) => starter.opponentSplit?.label ?? "none")
+      .filter((label) => label !== "none")
+      .map(escapeHtmlAttribute);
+    const renderedOpponentSplitLabels = divAttributeValues(card.html, "data-opponent-split-label");
+    assert(
+      renderedOpponentSplitLabels.join("|") === expectedOpponentSplitLabels.join("|"),
+      `${route} should pin rendered opponent split labels inside the ${game.label} watch card`,
     );
     const summaryAttributes = {
       id: summaryId,

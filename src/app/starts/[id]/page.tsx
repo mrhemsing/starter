@@ -314,7 +314,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             {completionState.isPartialToday ? (
               <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
-                <Link href={`/upcoming/${date}`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
+                <Link href={`${upcomingDateHref(date)}#must-watch`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
                   {completionState.remainingGames} {completionState.remainingGames === 1 ? "game" : "games"} still to come {slateTimeWord({ date }, { today })}
                 </Link>
               </section>
