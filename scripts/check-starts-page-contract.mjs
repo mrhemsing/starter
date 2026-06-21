@@ -16,6 +16,8 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
+const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
+const startsLoading = await readFile("src/app/starts/[id]/loading.tsx", "utf8");
 
 const visibleTieBreakerOrder = [
   {
@@ -51,6 +53,18 @@ assert(visibleTieBreakerOrder[0]?.pitcher.name === "Joey Cantillo", "visible GS+
 assert(
   startService.includes('fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) })'),
   "recent completed slates must keep live opponent quality context so GS+ does not drift when today becomes yesterday",
+);
+
+assert(
+  siteNav.includes("PrimaryNavLink") &&
+    primaryNavLink.includes("router.prefetch(href)") &&
+    primaryNavLink.includes("onPointerDown={warmRoute}") &&
+    primaryNavLink.includes("event.preventDefault()") &&
+    primaryNavLink.includes("router.push(href)") &&
+    primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
+    startsLoading.includes('data-responsive-check="ranked-starts-loading"') &&
+    startsLoading.includes('aria-label="Loading ranked starts"'),
+  "ranked starts navigation must prefetch on intent and show an immediate loading shell",
 );
 
 assert(
