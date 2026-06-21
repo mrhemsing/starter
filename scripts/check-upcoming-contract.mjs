@@ -117,6 +117,11 @@ function csvAttributeValues(value) {
   return value.split(",").filter(Boolean);
 }
 
+function pipeAttributeValues(value) {
+  if (!value || value === "none") return [];
+  return value.split("|").filter(Boolean);
+}
+
 function assertUpcomingEnvelope(upcoming, expectedStart, expectedDays, label) {
   const expectedEnd = addDays(expectedStart, expectedDays - 1);
   assertDateKey(upcoming.range?.start, `${label} range start`);
@@ -581,6 +586,14 @@ function expectedGameStatusLabel(status) {
   return "Pregame";
 }
 
+function expectedWatchCardSummaryAriaLabel(game) {
+  return `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
+}
+
+function expectedWatchCardAriaLabel(game) {
+  return `Watch card for ${game.label} on ${formatSlateDate(game.date)}`;
+}
+
 function supportedGameStatusLabels() {
   return ["Pregame", "Live", "Postponed"];
 }
@@ -595,6 +608,10 @@ function marketValue(value) {
 
 function projectionValue(value) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function splitValue(value, precision) {
+  return value === null || value === undefined ? "none" : value.toFixed(precision);
 }
 
 function projectionLineTokenCount(projection) {
@@ -626,7 +643,14 @@ function starterLastStartValue(starter, key) {
   const lastStart = starter.lastStart;
   if (!lastStart) return "none";
   if (key === "gsPlus") return lastStart.gsPlus.toFixed(1);
+  if (key === "line") return starterLastStartLineValue(starter);
   return lastStart[key] ?? "none";
+}
+
+function starterLastStartLineValue(starter) {
+  const lastStart = starter.lastStart;
+  if (!lastStart) return "none";
+  return `${lastStart.ip.toFixed(1)}:${lastStart.h}:${lastStart.er}:${lastStart.bb}:${lastStart.k}`;
 }
 
 function starterSparkLatestValue(starter) {
@@ -1467,17 +1491,23 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedGameDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-dates"));
   const renderedMatchupLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-labels"));
   const renderedTeamMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-matchups"));
+  const renderedTeamNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-names"));
   const renderedVenues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-venues"));
   const renderedFirstPitches = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-first-pitches"));
   const renderedGameStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-statuses"));
   const renderedDetailedStates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-detailed-states"));
+  const renderedCardAriaLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-card-aria-labels"));
   const renderedSummaryStatusLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-summary-status-labels"));
+  const renderedSummaryIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-summary-ids"));
+  const renderedSummaryAriaLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-summary-aria-labels"));
   const renderedStarterSides = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-sides"));
   const renderedStarterStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-statuses"));
+  const renderedStarterFallbackLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-fallback-labels"));
   const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
   const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
   const renderedStarterTeams = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-teams"));
   const renderedStarterFormHrefs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-hrefs"));
+  const renderedStarterNameLinkeds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-name-linkeds"));
   const renderedStarterFormTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-tiers"));
   const renderedStarterFormTrends = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-trends"));
   const renderedStarterFormScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-form-scores"));
@@ -1490,31 +1520,54 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedStarterSeasonK9 = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-season-k9"));
   const renderedStarterWindowCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-window-counts"));
   const renderedStarterLastStartDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-dates"));
+  const renderedStarterLastStartGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-game-pks"));
+  const renderedStarterLastStartOpponents = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-opponents"));
+  const renderedStarterLastStartParks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-parks"));
+  const renderedStarterLastStartLines = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-lines"));
   const renderedStarterLastStartGs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-gs"));
+  const renderedStarterLastStartTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-tiers"));
+  const renderedStarterLastStartHrefs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-last-start-hrefs"));
   const renderedStarterDriverCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-driver-counts"));
   const renderedStarterVisibleDriverCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-visible-driver-counts"));
   const renderedStarterTopDriverKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-top-driver-keys"));
+  const renderedStarterTopDriverLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-top-driver-labels"));
   const renderedStarterTopDriverDirections = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-top-driver-directions"));
+  const renderedStarterTopDriverDeltas = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-top-driver-deltas"));
+  const renderedStarterTopDriverScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-top-driver-scores"));
   const renderedStarterAccentSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-sources"));
   const renderedStarterAccentBands = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-bands"));
   const renderedStarterAccentColors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-accent-colors"));
   const renderedStarterMarketStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-statuses"));
   const renderedStarterMarketSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-sources"));
+  const renderedStarterMarketLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-market-labels"));
   const renderedStarterProjectionStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-statuses"));
   const renderedStarterProjectionConfidences = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-confidences"));
   const renderedStarterProjectionGs = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-gs"));
+  const renderedStarterProjectionInnings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-innings"));
+  const renderedStarterProjectionStrikeouts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-strikeouts"));
+  const renderedStarterProjectionEarnedRuns = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-earned-runs"));
   const renderedStarterProjectionTokenCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-projection-token-counts"));
+  const renderedStarterOpponentSplitTeams = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-teams"));
+  const renderedStarterOpponentSplits = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-splits"));
+  const renderedStarterOpponentSplitOps = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-ops"));
+  const renderedStarterOpponentSplitRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-opponent-split-run-values"));
   const renderedStarterRestLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-rest-labels"));
   const renderedStarterDaysRest = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-days-rest"));
   const renderedStarterAvgPitchesLast5 = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-avg-pitches-last-5"));
   const renderedStarterAvgIpLast5 = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-avg-ip-last-5"));
   const renderedStarterLimitedSamples = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-limited-samples"));
   const renderedStarterRustFlags = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-rust-flags"));
+  const renderedStarterStatusChipCounts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-status-chip-counts"));
   const renderedParkRunFactors = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-factors"));
   const renderedParkRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-run-values"));
+  const renderedParkLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-labels"));
   const renderedParkTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-park-tones"));
   const renderedWeatherSources = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-sources"));
   const renderedWeatherRunValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-run-values"));
+  const renderedWeatherLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-labels"));
+  const renderedWeatherTempF = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-temp-f"));
+  const renderedWeatherWindMph = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-wind-mph"));
+  const renderedWeatherPrecipProbabilities = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-precip-probabilities"));
   const renderedWeatherTones = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-weather-tones"));
   const renderedWatchRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-ranks"));
   const renderedWatchScores = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-scores"));
@@ -1526,10 +1579,13 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
   const renderedComponentMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-matchups"));
   const renderedComponentDetails = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-details"));
+  const renderedComponentAriaLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-aria-labels"));
   const renderedMatchupRanks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-ranks"));
   const renderedMatchupContextStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-context-statuses"));
+  const renderedMatchupContextLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-context-labels"));
   const renderedMatchupStatusLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-status-labels"));
   const renderedHookReasonKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-hook-reason-keys"));
+  const renderedHookReasons = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-hook-reasons"));
   assert(
     renderedGamePks.length === renderedGameCount && renderedGamePks.every((gamePk) => /^\d+$/.test(gamePk)),
     `${route} ${sectionId} should expose one numeric visible game id per rendered card; rendered count ${renderedGameCount}, ids ${renderedGamePks.join(",") || "none"}`,
@@ -1547,6 +1603,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedTeamMatchups.length === renderedGameCount &&
       renderedTeamMatchups.every((matchup) => /^[A-Z0-9]{2,4}@[A-Z0-9]{2,4}$/.test(matchup)),
     `${route} ${sectionId} should expose one visible away@home team matchup per rendered card`,
+  );
+  assert(
+    renderedTeamNames.length === renderedGameCount &&
+      renderedTeamNames.every((names) => names.split("/").length === 2 && names.split("/").every((name) => name.length > 0)),
+    `${route} ${sectionId} should expose one visible away/home full-name team pair per rendered card`,
   );
   assert(
     renderedVenues.length === renderedGameCount && renderedVenues.every((venue) => venue.length > 0),
@@ -1568,9 +1629,29 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one non-empty detailed state per visible game`,
   );
   assert(
+    renderedCardAriaLabels.length === renderedGameCount &&
+      renderedCardAriaLabels.every((label) => label.startsWith("Watch card for ") && !label.includes("|")),
+    `${route} ${sectionId} should expose one accessible card label per visible game`,
+  );
+  assert(
     renderedSummaryStatusLabels.length === renderedGameCount &&
       renderedSummaryStatusLabels.every((label) => supportedGameStatusLabels().includes(label)),
     `${route} ${sectionId} should expose one supported public status summary label per visible game`,
+  );
+  assert(
+    renderedSummaryIds.length === renderedGameCount &&
+      renderedSummaryIds.every((id) => /^watch-card-\d+-summary$/.test(id)),
+    `${route} ${sectionId} should expose one stable summary id per visible game`,
+  );
+  assert(
+    renderedSummaryAriaLabels.length === renderedGameCount &&
+      renderedSummaryAriaLabels.every((label) => label.length > 0 && !label.includes("|")),
+    `${route} ${sectionId} should expose one accessible summary label per visible game`,
+  );
+  assert(
+    renderedMatchupContextLabels.length === renderedGameCount &&
+      renderedMatchupContextLabels.every((label) => label.length > 0),
+    `${route} ${sectionId} should expose one public matchup context label per visible game`,
   );
   assert(
     renderedStarterSides.length === renderedGameCount &&
@@ -1581,6 +1662,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterStatuses.length === renderedGameCount &&
       renderedStarterStatuses.every((statuses) => /^(ok|insufficient|tbd)\/(ok|insufficient|tbd)$/.test(statuses)),
     `${route} ${sectionId} should expose one away/home starter status pair per visible game`,
+  );
+  assert(
+    renderedStarterFallbackLabels.length === renderedGameCount &&
+      renderedStarterFallbackLabels.every((labels) =>
+        labels.split("|").length === 2 &&
+        labels.split("|").every((label) => ["none", "Limited form sample", "Starter TBD / league baseline used"].includes(label)),
+      ),
+    `${route} ${sectionId} should expose one away/home starter fallback label pair per visible game`,
   );
   assert(
     renderedStarterPitcherIds.length === renderedGameCount &&
@@ -1604,6 +1693,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         return pair.length === 2 && pair.every((href) => href === "none" || /^\/pitchers\/[a-z0-9-]+-\d+\?from=upcoming$/.test(href));
       }),
     `${route} ${sectionId} should expose one away/home starter Form href pair per visible game`,
+  );
+  assert(
+    renderedStarterNameLinkeds.length === renderedGameCount &&
+      renderedStarterNameLinkeds.every((flags) => /^(?:true|false)\/(?:true|false)$/.test(flags)),
+    `${route} ${sectionId} should expose one away/home starter linked-name flag pair per visible game`,
   );
   const renderedStarterFormLinks = renderedStarterFormHrefs
     .flatMap((hrefs) => hrefs.split("|"))
@@ -1638,16 +1732,34 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterWindowCounts.every((counts) => counts.split("/").length === 2 && counts.split("/").every((count) => count === "pending" || /^\d+$/.test(count))) &&
       renderedStarterLastStartDates.length === renderedGameCount &&
       renderedStarterLastStartDates.every((dates) => dates.split("/").length === 2 && dates.split("/").every((date) => date === "none" || /^\d{4}-\d{2}-\d{2}$/.test(date))) &&
+      renderedStarterLastStartGamePks.length === renderedGameCount &&
+      renderedStarterLastStartGamePks.every((gamePks) => gamePks.split("/").length === 2 && gamePks.split("/").every((gamePk) => gamePk === "none" || /^\d+$/.test(gamePk))) &&
+      renderedStarterLastStartOpponents.length === renderedGameCount &&
+      renderedStarterLastStartOpponents.every((opponents) => opponents.split("/").length === 2 && opponents.split("/").every((opponent) => opponent === "none" || /^[A-Z0-9]{2,4}$/.test(opponent))) &&
+      renderedStarterLastStartParks.length === renderedGameCount &&
+      renderedStarterLastStartParks.every((parks) => parks.split("/").length === 2 && parks.split("/").every((park) => park.length > 0)) &&
+      renderedStarterLastStartLines.length === renderedGameCount &&
+      renderedStarterLastStartLines.every((lines) => lines.split("/").length === 2 && lines.split("/").every((line) => line === "none" || /^\d+\.\d:\d+:\d+:\d+:\d+$/.test(line))) &&
       renderedStarterLastStartGs.length === renderedGameCount &&
       renderedStarterLastStartGs.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "none" || /^-?\d+\.\d$/.test(score))) &&
+      renderedStarterLastStartTiers.length === renderedGameCount &&
+      renderedStarterLastStartTiers.every((tiers) => tiers.split("/").length === 2 && tiers.split("/").every((tier) => [...FORM_TIER_KEYS, "none"].includes(tier))) &&
+      renderedStarterLastStartHrefs.length === renderedGameCount &&
+      renderedStarterLastStartHrefs.every((hrefs) => hrefs.split("|").length === 2 && hrefs.split("|").every((href) => href === "none" || href.startsWith("/starts/"))) &&
       renderedStarterDriverCounts.length === renderedGameCount &&
       renderedStarterDriverCounts.every((counts) => counts.split("/").length === 2 && counts.split("/").every((count) => /^[0-3]$/.test(count))) &&
       renderedStarterVisibleDriverCounts.length === renderedGameCount &&
       renderedStarterVisibleDriverCounts.every((counts) => counts.split("/").length === 2 && counts.split("/").every((count) => /^[0-3]$/.test(count))) &&
       renderedStarterTopDriverKeys.length === renderedGameCount &&
       renderedStarterTopDriverKeys.every((keys) => keys.split("/").length === 2 && keys.split("/").every((key) => key === "none" || FORM_DRIVER_KEYS.includes(key))) &&
+      renderedStarterTopDriverLabels.length === renderedGameCount &&
+      renderedStarterTopDriverLabels.every((labels) => labels.split("/").length === 2 && labels.split("/").every((label) => label === "none" || (label.length > 0 && !label.includes(",")))) &&
       renderedStarterTopDriverDirections.length === renderedGameCount &&
       renderedStarterTopDriverDirections.every((directions) => directions.split("/").length === 2 && directions.split("/").every((direction) => ["good", "bad", "none"].includes(direction))) &&
+      renderedStarterTopDriverDeltas.length === renderedGameCount &&
+      renderedStarterTopDriverDeltas.every((deltas) => deltas.split("/").length === 2 && deltas.split("/").every((delta) => delta === "none" || /^-?\d+\.\d$/.test(delta))) &&
+      renderedStarterTopDriverScores.length === renderedGameCount &&
+      renderedStarterTopDriverScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "none" || /^-?\d+\.\d$/.test(score))) &&
       renderedStarterAccentSources.length === renderedGameCount &&
       renderedStarterAccentSources.every((sources) => sources.split("/").length === 2 && sources.split("/").every((source) => ["form-band", "neutral"].includes(source))) &&
       renderedStarterAccentBands.length === renderedGameCount &&
@@ -1660,8 +1772,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterMarketStatuses.length === renderedGameCount &&
       renderedStarterMarketStatuses.every((statuses) => /^(?:pending-feed|ready|none)\/(?:pending-feed|ready|none)$/.test(statuses)) &&
       renderedStarterMarketSources.length === renderedGameCount &&
-      renderedStarterMarketSources.every((sources) => /^(?:the-odds-api|not-configured|odds-deferred|none)\/(?:the-odds-api|not-configured|odds-deferred|none)$/.test(sources)),
-    `${route} ${sectionId} should expose one away/home starter market status/source pair per visible game`,
+      renderedStarterMarketSources.every((sources) => /^(?:the-odds-api|not-configured|odds-deferred|none)\/(?:the-odds-api|not-configured|odds-deferred|none)$/.test(sources)) &&
+      renderedStarterMarketLabels.length === renderedGameCount &&
+      renderedStarterMarketLabels.every((labels) => labels.split("|").length === 2 && labels.split("|").every((label) => label === "none" || (label.length > 0 && !label.includes("|")))),
+    `${route} ${sectionId} should expose one away/home starter market status/source/label pair per visible game`,
   );
   assert(
     renderedStarterProjectionStatuses.length === renderedGameCount &&
@@ -1670,9 +1784,26 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterProjectionConfidences.every((confidences) => /^(?:low|medium|high|none)\/(?:low|medium|high|none)$/.test(confidences)) &&
       renderedStarterProjectionGs.length === renderedGameCount &&
       renderedStarterProjectionGs.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "pending" || /^-?\d+\.\d$/.test(score))) &&
+      renderedStarterProjectionInnings.length === renderedGameCount &&
+      renderedStarterProjectionInnings.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "pending" || /^\d+\.\d$/.test(value))) &&
+      renderedStarterProjectionStrikeouts.length === renderedGameCount &&
+      renderedStarterProjectionStrikeouts.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "pending" || /^\d+\.\d$/.test(value))) &&
+      renderedStarterProjectionEarnedRuns.length === renderedGameCount &&
+      renderedStarterProjectionEarnedRuns.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "pending" || /^\d+\.\d$/.test(value))) &&
       renderedStarterProjectionTokenCounts.length === renderedGameCount &&
       renderedStarterProjectionTokenCounts.every((counts) => /^[0-3]\/[0-3]$/.test(counts)),
-    `${route} ${sectionId} should expose one away/home starter projection status, confidence, GS+, and visible line-token count pair per visible game`,
+    `${route} ${sectionId} should expose one away/home starter projection status, confidence, GS+, projected line, and visible line-token count pair per visible game`,
+  );
+  assert(
+    renderedStarterOpponentSplitTeams.length === renderedGameCount &&
+      renderedStarterOpponentSplitTeams.every((teams) => teams.split("/").length === 2 && teams.split("/").every((team) => team === "none" || /^[A-Z0-9]{2,4}$/.test(team))) &&
+      renderedStarterOpponentSplits.length === renderedGameCount &&
+      renderedStarterOpponentSplits.every((splits) => /^(?:vs-lhp|vs-rhp|none)\/(?:vs-lhp|vs-rhp|none)$/.test(splits)) &&
+      renderedStarterOpponentSplitOps.length === renderedGameCount &&
+      renderedStarterOpponentSplitOps.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "none" || /^\d+\.\d{3}$/.test(value))) &&
+      renderedStarterOpponentSplitRunValues.length === renderedGameCount &&
+      renderedStarterOpponentSplitRunValues.every((values) => values.split("/").length === 2 && values.split("/").every((value) => value === "none" || /^-?\d+\.\d$/.test(value))),
+    `${route} ${sectionId} should expose one away/home starter opponent split team, handedness, OPS, and run-value pair per visible game`,
   );
   assert(
     renderedStarterRestLabels.length === renderedGameCount &&
@@ -1699,22 +1830,37 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one away/home starter workload flag pair per visible game`,
   );
   assert(
+    renderedStarterStatusChipCounts.length === renderedGameCount &&
+      renderedStarterStatusChipCounts.every((counts) => /^[0-3]\/[0-3]$/.test(counts)),
+    `${route} ${sectionId} should expose one away/home visible starter status-chip count pair per visible game`,
+  );
+  assert(
     renderedParkRunFactors.length === renderedGameCount &&
       renderedParkRunFactors.every((factor) => /^\d+\.\d{2}$/.test(factor) && Number.isFinite(Number(factor))) &&
       renderedParkRunValues.length === renderedGameCount &&
       renderedParkRunValues.every((value) => /^-?\d+\.\d$/.test(value) && Number.isFinite(Number(value))) &&
+      renderedParkLabels.length === renderedGameCount &&
+      renderedParkLabels.every((label) => label.length > 0 && !label.includes("|")) &&
       renderedParkTones.length === renderedGameCount &&
       renderedParkTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
-    `${route} ${sectionId} should expose one park run factor, run value, and tone per visible game`,
+    `${route} ${sectionId} should expose one park run factor, run value, public label, and tone per visible game`,
   );
   assert(
     renderedWeatherSources.length === renderedGameCount &&
       renderedWeatherSources.every((source) => ["open-meteo", "indoor", "unavailable"].includes(source)) &&
       renderedWeatherRunValues.length === renderedGameCount &&
       renderedWeatherRunValues.every((value) => /^-?\d+\.\d$/.test(value) && Number.isFinite(Number(value))) &&
+      renderedWeatherLabels.length === renderedGameCount &&
+      renderedWeatherLabels.every((label) => label.length > 0 && !label.includes("|")) &&
+      renderedWeatherTempF.length === renderedGameCount &&
+      renderedWeatherTempF.every((value) => value === "pending" || /^-?\d+$/.test(value)) &&
+      renderedWeatherWindMph.length === renderedGameCount &&
+      renderedWeatherWindMph.every((value) => value === "pending" || /^\d+$/.test(value)) &&
+      renderedWeatherPrecipProbabilities.length === renderedGameCount &&
+      renderedWeatherPrecipProbabilities.every((value) => value === "pending" || /^\d+$/.test(value)) &&
       renderedWeatherTones.length === renderedGameCount &&
       renderedWeatherTones.every((tone) => ["warm", "cool", "muted"].includes(tone)),
-    `${route} ${sectionId} should expose one supported weather source, run value, and tone per visible game`,
+    `${route} ${sectionId} should expose one supported weather source, run value, raw metric set, and tone per visible game`,
   );
   assert(
     renderedWatchRanks.length === renderedGameCount &&
@@ -1743,6 +1889,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
           detailSet[1] === "none" &&
           (detailSet[2] === "pending" || /^\d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(detailSet[2]));
       }) &&
+      renderedComponentAriaLabels.length === renderedGameCount &&
+      renderedComponentAriaLabels.every((label) => label.startsWith("Watch components for ") && !label.includes("|")) &&
       renderedMatchupRanks.length === renderedGameCount &&
       renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1) &&
       renderedMatchupContextStatuses.length === renderedGameCount &&
@@ -1750,8 +1898,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedMatchupStatusLabels.length === renderedGameCount &&
       renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)) &&
       renderedHookReasonKeys.length === renderedGameCount &&
-      renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)),
-    `${route} ${sectionId} should expose one rendered watch rank, score, tier, sort group, fallback flag set, component score/detail set, matchup rank, matchup context status, matchup status label, and hook reason key per visible game`,
+      renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)) &&
+      renderedHookReasons.length === renderedGameCount &&
+      renderedHookReasons.every((reason) => reason.length > 0 && !reason.includes("|")),
+    `${route} ${sectionId} should expose one rendered watch rank, score, tier, sort group, fallback flag set, component score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -1833,24 +1983,33 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
       renderedComponentMatchups.join(",") === games.map((game) => game.matchupScore.toFixed(1)).join(",") &&
       renderedComponentDetails.join(",") === games.map((game) => expectedWatchComponentDetails(game, rankLabel).join("/")).join(",") &&
+      renderedComponentAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(watchComponentsAriaLabel(game))).join("|") &&
       renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(",") &&
       renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
+      renderedMatchupContextLabels.join(",") === games.map((game) => escapeHtmlAttribute(game.matchupContext.label)).join(",") &&
       renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
       renderedHookReasonKeys.join(",") === games.map((game) => expectedWatchHookReasonKey(game, rankLabel)).join(",") &&
+      renderedHookReasons.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchHookReason(game, rankLabel))).join("|") &&
       renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
       renderedMatchupLabels.join(",") === games.map((game) => game.label).join(",") &&
       renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
+      renderedTeamNames.join(",") === games.map((game) => `${game.awayName}/${game.homeName}`).join(",") &&
       renderedVenues.join(",") === games.map((game) => game.park ?? "Venue TBD").join(",") &&
       renderedFirstPitches.join(",") === games.map((game) => game.firstPitch).join(",") &&
       renderedGameStatuses.join(",") === games.map((game) => game.status).join(",") &&
       renderedDetailedStates.join(",") === games.map((game) => game.detailedState).join(",") &&
+      renderedCardAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardAriaLabel(game))).join("|") &&
       renderedSummaryStatusLabels.join(",") === games.map((game) => expectedGameStatusLabel(game.status)).join(",") &&
+      renderedSummaryIds.join(",") === games.map((game) => `watch-card-${game.gamePk}-summary`).join(",") &&
+      renderedSummaryAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabel(game))).join("|") &&
       renderedStarterSides.join(",") === games.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") &&
       renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
+      renderedStarterFallbackLabels.join(",") === games.map((game) => game.starters.map((starter) => starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter)).join("|")).join(",") &&
       renderedStarterPitcherIds.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") &&
       renderedStarterNames.join(",") === games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") &&
       renderedStarterTeams.join(",") === games.map((game) => game.starters.map((starter) => starter.team).join("/")).join(",") &&
       renderedStarterFormHrefs.join(",") === games.map((game) => game.starters.map((starter) => starter.pitcherId ? expectedStarterFormHref(starter) : "none").join("|")).join(",") &&
+      renderedStarterNameLinkeds.join(",") === games.map((game) => game.starters.map((starter) => String(Boolean(starter.pitcherId))).join("/")).join(",") &&
       renderedStarterFormTiers.join(",") === games.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") &&
       renderedStarterFormTrends.join(",") === games.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") &&
       renderedStarterFormScores.join(",") === games.map((game) => game.starters.map((starter) => starterFormValue(starter.rgs)).join("/")).join(",") &&
@@ -1863,33 +2022,56 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterSeasonK9.join(",") === games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.k9, 1)).join("/")).join(",") &&
       renderedStarterWindowCounts.join(",") === games.map((game) => game.starters.map((starter) => starter.windowCount === null || starter.windowCount === undefined ? "pending" : String(starter.windowCount)).join("/")).join(",") &&
       renderedStarterLastStartDates.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gameDate")).join("/")).join(",") &&
+      renderedStarterLastStartGamePks.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gamePk")).join("/")).join(",") &&
+      renderedStarterLastStartOpponents.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "opp")).join("/")).join(",") &&
+      renderedStarterLastStartParks.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "park")).join("/")).join(",") &&
+      renderedStarterLastStartLines.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "line")).join("/")).join(",") &&
       renderedStarterLastStartGs.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gsPlus")).join("/")).join(",") &&
+      renderedStarterLastStartTiers.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "tier")).join("/")).join(",") &&
+      renderedStarterLastStartHrefs.join(",") === games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "startHref")).join("|")).join(",") &&
       renderedStarterDriverCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starter.driverChips?.length ?? 0)).join("/")).join(",") &&
       renderedStarterVisibleDriverCounts.join(",") === games.map((game) => game.starters.map((starter) => String(Math.min(starter.driverChips?.length ?? 0, 3))).join("/")).join(",") &&
       renderedStarterTopDriverKeys.join(",") === games.map((game) => game.starters.map((starter) => starterTopDriverValue(starter, "key")).join("/")).join(",") &&
+      renderedStarterTopDriverLabels.join(",") === games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starterTopDriverValue(starter, "label"))).join("/")).join(",") &&
       renderedStarterTopDriverDirections.join(",") === games.map((game) => game.starters.map((starter) => starterTopDriverValue(starter, "direction")).join("/")).join(",") &&
+      renderedStarterTopDriverDeltas.join(",") === games.map((game) => game.starters.map((starter) => starterTopDriverValue(starter, "delta")).join("/")).join(",") &&
+      renderedStarterTopDriverScores.join(",") === games.map((game) => game.starters.map((starter) => starterTopDriverValue(starter, "score")).join("/")).join(",") &&
       renderedStarterAccentSources.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).source).join("/")).join(",") &&
       renderedStarterAccentBands.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).band).join("/")).join(",") &&
       renderedStarterAccentColors.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).color).join("/")).join(",") &&
       renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
       renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
+      renderedStarterMarketLabels.join(",") === games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starter.marketContext?.label ?? "none")).join("|")).join(",") &&
       renderedStarterProjectionStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") &&
       renderedStarterProjectionConfidences.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") &&
       renderedStarterProjectionGs.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.projectedGsPlus)).join("/")).join(",") &&
+      renderedStarterProjectionInnings.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.inningsPitched)).join("/")).join(",") &&
+      renderedStarterProjectionStrikeouts.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.strikeouts)).join("/")).join(",") &&
+      renderedStarterProjectionEarnedRuns.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.earnedRuns)).join("/")).join(",") &&
       renderedStarterProjectionTokenCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starter.projection ? projectionLineTokenCount(starter.projection) : 0)).join("/")).join(",") &&
+      renderedStarterOpponentSplitTeams.join(",") === games.map((game) => game.starters.map((starter) => starter.opponentSplit?.team ?? "none").join("/")).join(",") &&
+      renderedStarterOpponentSplits.join(",") === games.map((game) => game.starters.map((starter) => starter.opponentSplit?.split ?? "none").join("/")).join(",") &&
+      renderedStarterOpponentSplitOps.join(",") === games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.ops, 3)).join("/")).join(",") &&
+      renderedStarterOpponentSplitRunValues.join(",") === games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.matchupRunValue, 1)).join("/")).join(",") &&
       renderedStarterRestLabels.join(",") === games.map((game) => game.starters.map((starter) => starter.workload?.restLabel ?? "unknown").join("/")).join(",") &&
       renderedStarterDaysRest.join(",") === games.map((game) => game.starters.map((starter) => starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest)).join("/")).join(",") &&
       renderedStarterAvgPitchesLast5.join(",") === games.map((game) => game.starters.map((starter) => workloadValue(starter.workload?.avgPitchesLast5)).join("/")).join(",") &&
       renderedStarterAvgIpLast5.join(",") === games.map((game) => game.starters.map((starter) => workloadValue(starter.workload?.avgIpLast5)).join("/")).join(",") &&
       renderedStarterLimitedSamples.join(",") === games.map((game) => game.starters.map((starter) => String(starter.flags?.limitedSample === true)).join("/")).join(",") &&
       renderedStarterRustFlags.join(",") === games.map((game) => game.starters.map((starter) => String(starter.flags?.rust === true)).join("/")).join(",") &&
+      renderedStarterStatusChipCounts.join(",") === games.map((game) => game.starters.map((starter) => String(starterStatusChipCount(starter))).join("/")).join(",") &&
       renderedParkRunFactors.join(",") === games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") &&
       renderedParkRunValues.join(",") === games.map((game) => game.parkContext.runValue.toFixed(1)).join(",") &&
+      renderedParkLabels.join("|") === games.map((game) => escapeHtmlAttribute(game.parkContext.label)).join("|") &&
       renderedParkTones.join(",") === games.map((game) => expectedParkContextTone(game.parkContext)).join(",") &&
       renderedWeatherSources.join(",") === games.map((game) => game.weatherContext.source).join(",") &&
       renderedWeatherRunValues.join(",") === games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") &&
+      renderedWeatherLabels.join("|") === games.map((game) => escapeHtmlAttribute(game.weatherContext.label)).join("|") &&
+      renderedWeatherTempF.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.tempF, 0)).join(",") &&
+      renderedWeatherWindMph.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") &&
+      renderedWeatherPrecipProbabilities.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, venues, statuses, detailed states, summary status labels, starter sides, starter statuses, starter identities, starter names, starter teams, starter Form hrefs, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state, starter workload rest labels/days-rest/averages/flags, park context, weather context, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details, matchup ranks, matchup context statuses, matchup status labels, and hook reason keys in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent splits, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch ranks, scores, tiers, sort groups, fallback flag sets, component keys/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
     );
   }
 
@@ -1902,18 +2084,43 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedSummaryTags = renderedArticles.map(
     (article) => (article.match(/<p\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-summary-status-label") !== null) ?? "",
   );
+  const renderedComponentGroupTags = renderedArticles.map(
+    (article) => (article.match(/<div\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-responsive-check") === "watch-components") ?? "",
+  );
+  const renderedParkChipTags = renderedArticles.map(
+    (article) => (article.match(/<span\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-context-chip") === "park") ?? "",
+  );
+  const renderedWeatherChipTags = renderedArticles.map(
+    (article) => (article.match(/<span\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-context-chip") === "weather") ?? "",
+  );
+  const renderedHeadlinerHookTag =
+    (renderedArticles[0]?.match(/<div\b[^>]*>/g) ?? []).find((tag) => tagAttribute(tag, "data-responsive-check") === "watch-hook") ?? "";
   assert(
     renderedArticleTags.map((article) => tagAttribute(article, "data-game-pk")).join(",") === renderedGamePks.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-game-date")).join(",") === renderedGameDates.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-matchup-label")).join(",") === renderedMatchupLabels.join(",") &&
       renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-team")}@${tagAttribute(article, "data-home-team")}`).join(",") === renderedTeamMatchups.join(",") &&
+      renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-team-name")}/${tagAttribute(article, "data-home-team-name")}`).join(",") === renderedTeamNames.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-first-pitch")).join(",") === renderedFirstPitches.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-venue")).join(",") === renderedVenues.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-game-status")).join(",") === renderedGameStatuses.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-game-detailed-state")).join(",") === renderedDetailedStates.join(",") &&
+      renderedArticleTags.map((article) => tagAttribute(article, "aria-label")).join("|") === renderedCardAriaLabels.join("|") &&
       renderedSummaryTags.map((tag) => tagAttribute(tag, "data-summary-status-label")).join(",") === renderedSummaryStatusLabels.join(",") &&
+      renderedSummaryTags.map((tag) => tagAttribute(tag, "id")).join(",") === renderedSummaryIds.join(",") &&
+      renderedSummaryTags.map((tag) => tagAttribute(tag, "aria-label")).join("|") === renderedSummaryAriaLabels.join("|") &&
+      renderedComponentGroupTags.map((tag) => tagAttribute(tag, "aria-label")).join("|") === renderedComponentAriaLabels.join("|") &&
+      renderedParkChipTags.map((tag) => tagAttribute(tag, "data-context-label")).join("|") === renderedParkLabels.join("|") &&
+      renderedParkChipTags.map((tag) => tagAttribute(tag, "title")).join("|") === renderedParkLabels.join("|") &&
+      renderedWeatherChipTags.map((tag) => tagAttribute(tag, "data-context-label")).join("|") === renderedWeatherLabels.join("|") &&
+      tagAttribute(renderedHeadlinerHookTag, "data-hook-reason-key") === renderedHookReasonKeys[0] &&
+      tagAttribute(renderedHeadlinerHookTag, "data-hook-reason") === renderedHookReasons[0] &&
+      renderedArticleTags.map((article) => tagAttribute(article, "data-matchup-context-label")).join(",") === renderedMatchupContextLabels.join(",") &&
+      renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-accent-source")}/${tagAttribute(article, "data-home-accent-source")}`).join(",") === renderedStarterAccentSources.join(",") &&
+      renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-accent-band")}/${tagAttribute(article, "data-home-accent-band")}`).join(",") === renderedStarterAccentBands.join(",") &&
+      renderedArticleTags.map((article) => `${tagAttribute(article, "data-away-accent-color")}/${tagAttribute(article, "data-home-accent-color")}`).join(",") === renderedStarterAccentColors.join(",") &&
       renderedArticleTags.map((article) => tagAttribute(article, "data-watch-rank")).join(",") === renderedWatchRanks.join(","),
-    `${route} ${sectionId} should keep section-level visible game identity, timing, venue, status, summary status, and watch-rank metadata in the same order as the rendered watch-card articles`,
+    `${route} ${sectionId} should keep section-level visible game identity, team names, timing, venue, status, summary/component accessibility metadata, hook reasons, matchup labels, article accent metadata, and watch-rank metadata in the same order as the rendered watch-card articles`,
   );
 
   renderedGames.forEach((game, index) => {
@@ -2508,6 +2715,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-delta-form": starterFormValue(starter.deltaForm),
         "data-starter-spark-count": String(starter.spark?.length ?? 0),
         "data-starter-spark-latest": starterSparkLatestValue(starter),
+        "data-starter-window-count": starter.windowCount === null || starter.windowCount === undefined ? "pending" : String(starter.windowCount),
         "data-starter-season-ip": starterSeasonValue(starter.seasonStats?.inningsPitched, 1),
         "data-starter-season-era": starterSeasonValue(starter.seasonStats?.era, 2),
         "data-starter-season-whip": starterSeasonValue(starter.seasonStats?.whip, 2),
@@ -2516,8 +2724,10 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         "data-starter-last-start-game-pk": starterLastStartValue(starter, "gamePk"),
         "data-starter-last-start-opponent": starterLastStartValue(starter, "opp"),
         "data-starter-last-start-park": starterLastStartValue(starter, "park"),
+        "data-starter-last-start-line": starterLastStartValue(starter, "line"),
         "data-starter-last-start-gs-plus": starterLastStartValue(starter, "gsPlus"),
         "data-starter-last-start-tier": starterLastStartValue(starter, "tier"),
+        "data-starter-last-start-href": starterLastStartValue(starter, "startHref"),
         "data-starter-days-rest": starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest),
         "data-starter-rest-label": starter.workload?.restLabel ?? "unknown",
         "data-starter-avg-pitches-last-5": workloadValue(starter.workload?.avgPitchesLast5),

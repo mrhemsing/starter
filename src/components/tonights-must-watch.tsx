@@ -55,17 +55,23 @@ export function TonightsMustWatch({
       data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
       data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join(",") : "none"}
       data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
+      data-visible-team-names={shownGames.length ? shownGames.map((game) => `${game.awayName}/${game.homeName}`).join(",") : "none"}
       data-visible-venues={shownGames.length ? shownGames.map((game) => game.park ?? "Venue TBD").join(",") : "none"}
       data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
       data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
       data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
+      data-visible-card-aria-labels={shownGames.length ? shownGames.map((game) => watchCardAriaLabel(game)).join("|") : "none"}
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
+      data-visible-summary-ids={shownGames.length ? shownGames.map((game) => watchCardSummaryId(game)).join(",") : "none"}
+      data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabel(game)).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
+      data-visible-starter-fallback-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFallbackDataLabel(starter)).join("|")).join(",") : "none"}
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
       data-visible-starter-teams={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.team).join("/")).join(",") : "none"}
       data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : "none").join("|")).join(",") : "none"}
+      data-visible-starter-name-linkeds={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(Boolean(starter.pitcherId))).join("/")).join(",") : "none"}
       data-visible-starter-form-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
@@ -78,31 +84,54 @@ export function TonightsMustWatch({
       data-visible-starter-season-k9={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.k9, 1)).join("/")).join(",") : "none"}
       data-visible-starter-window-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.windowCount === null || starter.windowCount === undefined ? "pending" : String(starter.windowCount)).join("/")).join(",") : "none"}
       data-visible-starter-last-start-dates={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.gameDate ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-game-pks={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.gamePk ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-opponents={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.opp ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-parks={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.park ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-lines={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterLastStartLineValue(starter)).join("/")).join(",") : "none"}
       data-visible-starter-last-start-gs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart ? starter.lastStart.gsPlus.toFixed(1) : "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.tier ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-last-start-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.lastStart?.startHref ?? "none").join("|")).join(",") : "none"}
       data-visible-starter-driver-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starter.driverChips?.length ?? 0)).join("/")).join(",") : "none"}
       data-visible-starter-visible-driver-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(Math.min(starter.driverChips?.length ?? 0, 3))).join("/")).join(",") : "none"}
       data-visible-starter-top-driver-keys={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0]?.key ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-top-driver-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0]?.label ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-top-driver-directions={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0]?.direction ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-top-driver-deltas={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0] ? starter.driverChips[0].delta.toFixed(1) : "none").join("/")).join(",") : "none"}
+      data-visible-starter-top-driver-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0] ? starter.driverChips[0].score.toFixed(1) : "none").join("/")).join(",") : "none"}
       data-visible-starter-accent-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).source).join("/")).join(",") : "none"}
       data-visible-starter-accent-bands={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).band).join("/")).join(",") : "none"}
       data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-market-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.label ?? "none").join("|")).join(",") : "none"}
       data-visible-starter-projection-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-confidences={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-gs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.projectedGsPlus)).join("/")).join(",") : "none"}
+      data-visible-starter-projection-innings={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.line.inningsPitched)).join("/")).join(",") : "none"}
+      data-visible-starter-projection-strikeouts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.line.strikeouts)).join("/")).join(",") : "none"}
+      data-visible-starter-projection-earned-runs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.line.earnedRuns)).join("/")).join(",") : "none"}
       data-visible-starter-projection-token-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionLineTokenCount(starter)).join("/")).join(",") : "none"}
+      data-visible-starter-opponent-split-teams={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.opponentSplit?.team ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-opponent-splits={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.opponentSplit?.split ?? "none").join("/")).join(",") : "none"}
+      data-visible-starter-opponent-split-ops={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => splitNumberValue(starter.opponentSplit?.ops, 3)).join("/")).join(",") : "none"}
+      data-visible-starter-opponent-split-run-values={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => splitNumberValue(starter.opponentSplit?.matchupRunValue, 1)).join("/")).join(",") : "none"}
       data-visible-starter-rest-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.workload?.restLabel ?? "unknown").join("/")).join(",") : "none"}
       data-visible-starter-days-rest={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest)).join("/")).join(",") : "none"}
       data-visible-starter-avg-pitches-last-5={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => workloadNumberValue(starter.workload?.avgPitchesLast5)).join("/")).join(",") : "none"}
       data-visible-starter-avg-ip-last-5={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => workloadNumberValue(starter.workload?.avgIpLast5)).join("/")).join(",") : "none"}
       data-visible-starter-limited-samples={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starter.flags?.limitedSample === true)).join("/")).join(",") : "none"}
       data-visible-starter-rust-flags={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starter.flags?.rust === true)).join("/")).join(",") : "none"}
+      data-visible-starter-status-chip-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starterStatusChipCount(starter))).join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
       data-visible-park-run-values={shownGames.length ? shownGames.map((game) => game.parkContext.runValue.toFixed(1)).join(",") : "none"}
+      data-visible-park-labels={shownGames.length ? shownGames.map((game) => game.parkContext.label).join("|") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
       data-visible-weather-run-values={shownGames.length ? shownGames.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") : "none"}
+      data-visible-weather-labels={shownGames.length ? shownGames.map((game) => game.weatherContext.label).join("|") : "none"}
+      data-visible-weather-temp-f={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.tempF, 0)).join(",") : "none"}
+      data-visible-weather-wind-mph={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") : "none"}
+      data-visible-weather-precip-probabilities={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") : "none"}
       data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
       data-visible-watch-ranks={shownGames.length ? shownGames.map((game, index) => watchCardRankValue(game, index)).join(",") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
@@ -114,10 +143,13 @@ export function TonightsMustWatch({
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
       data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}
       data-visible-component-details={shownGames.length ? shownGames.map((game) => watchComponentDetails(game, rankLabel).join("/")).join(",") : "none"}
+      data-visible-component-aria-labels={shownGames.length ? shownGames.map((game) => watchComponentsAriaLabel(game)).join("|") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
+      data-visible-matchup-context-labels={shownGames.length ? shownGames.map((game) => game.matchupContext.label).join(",") : "none"}
       data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
       data-visible-hook-reason-keys={shownGames.length ? shownGames.map((game) => watchHookReasonKey(game, rankLabel)).join(",") : "none"}
+      data-visible-hook-reasons={shownGames.length ? shownGames.map((game) => watchHookReason(game, rankLabel)).join("|") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
       data-active-card-statuses={tonight.activeCardStatuses.join(",")}
@@ -958,6 +990,10 @@ function workloadNumberValue(value: number | null | undefined) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
 }
 
+function splitNumberValue(value: number | null | undefined, precision: number) {
+  return value === null || value === undefined ? "none" : value.toFixed(precision);
+}
+
 function OpponentSplitLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
   const split = starter.opponentSplit;
   if (!split) return null;
@@ -1066,6 +1102,15 @@ function StarterStatusChips({ starter }: { starter: TonightStarter }) {
   );
 }
 
+function starterStatusChipCount(starter: TonightStarter) {
+  let chipCount = 0;
+  if (starter.flags?.limitedSample) chipCount += 1;
+  if (starter.flags?.rust) chipCount += 1;
+  if (starter.workload?.daysRest !== null && starter.workload?.daysRest !== undefined) chipCount += 1;
+  if (typeof starter.workload?.avgPitchesLast5 === "number") chipCount += 1;
+  return Math.min(chipCount, 3);
+}
+
 function starterWorkloadData(starter: TonightStarter) {
   return {
     "data-starter-days-rest": starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest),
@@ -1085,6 +1130,7 @@ function starterFormData(starter: TonightStarter) {
     "data-starter-delta-form": starter.deltaForm === null || starter.deltaForm === undefined ? "pending" : starter.deltaForm.toFixed(1),
     "data-starter-spark-count": String(starter.spark?.length ?? 0),
     "data-starter-spark-latest": starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none",
+    "data-starter-window-count": starter.windowCount === null || starter.windowCount === undefined ? "pending" : String(starter.windowCount),
   };
 }
 
@@ -1104,9 +1150,17 @@ function starterLastStartData(starter: TonightStarter) {
     "data-starter-last-start-game-pk": lastStart?.gamePk ?? "none",
     "data-starter-last-start-opponent": lastStart?.opp ?? "none",
     "data-starter-last-start-park": lastStart?.park ?? "none",
+    "data-starter-last-start-line": starterLastStartLineValue(starter),
     "data-starter-last-start-gs-plus": lastStart ? lastStart.gsPlus.toFixed(1) : "none",
     "data-starter-last-start-tier": lastStart?.tier ?? "none",
+    "data-starter-last-start-href": lastStart?.startHref ?? "none",
   };
+}
+
+function starterLastStartLineValue(starter: TonightStarter) {
+  const lastStart = starter.lastStart;
+  if (!lastStart) return "none";
+  return `${lastStart.ip.toFixed(1)}:${lastStart.h}:${lastStart.er}:${lastStart.bb}:${lastStart.k}`;
 }
 
 function starterDriverData(starter: TonightStarter) {
