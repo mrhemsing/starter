@@ -17,19 +17,50 @@ const globals = await readFile("src/app/globals.css", "utf8");
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 
+const visibleTieBreakerOrder = [
+  {
+    date: "2026-06-20",
+    gamePk: 824909,
+    pitcher: { name: "Chris Sale" },
+    gameScorePlus: 64,
+    gameScorePlusBreakdown: { preciseTotal: 64.216 },
+    line: { inningsPitched: 5.2, earnedRuns: 0, strikeouts: 7, walks: 1, hits: 5 },
+  },
+  {
+    date: "2026-06-20",
+    gamePk: 824902,
+    pitcher: { name: "Joey Cantillo" },
+    gameScorePlus: 64,
+    gameScorePlusBreakdown: { preciseTotal: 63.53 },
+    line: { inningsPitched: 8, earnedRuns: 1, strikeouts: 9, walks: 1, hits: 4 },
+  },
+].sort((a, b) => (
+  b.gameScorePlus - a.gameScorePlus ||
+  b.line.inningsPitched - a.line.inningsPitched ||
+  a.line.earnedRuns - b.line.earnedRuns ||
+  b.line.strikeouts - a.line.strikeouts ||
+  a.line.walks - b.line.walks ||
+  a.line.hits - b.line.hits ||
+  a.date.localeCompare(b.date) ||
+  (a.gamePk ?? 0) - (b.gamePk ?? 0) ||
+  (a.pitcher?.name ?? "").localeCompare(b.pitcher?.name ?? "")
+));
+
+assert(visibleTieBreakerOrder[0]?.pitcher.name === "Joey Cantillo", "visible GS+ ties must break on the displayed-line tiebreakers before hidden decimal precision");
+
 assert(
-  startRanking.includes("rankedStartScore(b) - rankedStartScore(a)") &&
+  startRanking.includes("b.gameScorePlus - a.gameScorePlus") &&
     startRanking.includes("inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched)") &&
     startRanking.includes("a.line.earnedRuns - b.line.earnedRuns") &&
     startRanking.includes("b.line.strikeouts - a.line.strikeouts") &&
     startRanking.includes("a.line.walks - b.line.walks") &&
     startRanking.includes("a.line.hits - b.line.hits") &&
-    startRanking.includes("start.gameScorePlusBreakdown?.preciseTotal ?? start.gameScorePlus") &&
+    !startRanking.includes("preciseTotal") &&
     startService.includes('import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";') &&
     startService.includes("const computedPreciseTotal = Math.max(GAME_SCORE_PLUS_DISPLAY_MIN, Math.min(GAME_SCORE_PLUS_DISPLAY_MAX, scaledTotal));") &&
     startService.includes("const preciseTotal = Math.round(computedPreciseTotal) === scoredTotal ? computedPreciseTotal : scoredTotal;") &&
     startService.includes("preciseTotal: Number(preciseTotal.toFixed(3)),"),
-  "ranked starts ties must break by precise GS+, IP, ER, K, walks, hits, then stable slate identity",
+  "ranked starts must sort by displayed GS+ first, then break visible ties by IP, ER, K, walks, hits, and stable slate identity",
 );
 
 assert(

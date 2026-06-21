@@ -40,7 +40,7 @@ assert(
 assert(
   rankedRecap.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
     rankedRecap.includes('start.source?.line !== "fixture" && isRankedRegularStart(start)') &&
-    rankedRecap.includes("Final 2.0+ inning starter lines only: {settledStarts.length} scored starts from the completed slate, ranked by GS+."),
+    rankedRecap.includes("Final 2.0+ inning starter lines only: {rankedStarts.length} scored starts from the completed slate, ranked by GS+."),
   "home ranked recap must apply the same 2.0 IP ranked-start floor",
 );
 

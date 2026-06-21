@@ -1,14 +1,14 @@
 import { inningsFromIP } from "@/lib/innings";
 import type { StartSummary } from "@/lib/types";
 
-type RankableStart = Pick<StartSummary, "date" | "line" | "gameScorePlus" | "gameScorePlusBreakdown"> & {
+type RankableStart = Pick<StartSummary, "date" | "line" | "gameScorePlus"> & {
   gamePk?: number;
   pitcher?: Pick<StartSummary["pitcher"], "name">;
 };
 
 export function compareRankedStarts(a: RankableStart, b: RankableStart) {
   return (
-    rankedStartScore(b) - rankedStartScore(a) ||
+    b.gameScorePlus - a.gameScorePlus ||
     inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched) ||
     a.line.earnedRuns - b.line.earnedRuns ||
     b.line.strikeouts - a.line.strikeouts ||
@@ -22,8 +22,4 @@ export function compareRankedStarts(a: RankableStart, b: RankableStart) {
 
 export function rankStarts<T extends StartSummary>(starts: T[]) {
   return [...starts].sort(compareRankedStarts).map((start, index) => ({ ...start, rank: index + 1 }));
-}
-
-function rankedStartScore(start: RankableStart) {
-  return start.gameScorePlusBreakdown?.preciseTotal ?? start.gameScorePlus;
 }
