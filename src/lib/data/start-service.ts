@@ -963,7 +963,7 @@ async function getCompletedPitchingLineMap(schedule: MlbSchedule) {
 }
 
 async function getTeamQualityContextMap(date: string) {
-  return fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || date >= getHomeSlateDate() });
+  return fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) });
 }
 
 function startLineKey(gamePk: number, pitcherMlbId: number) {

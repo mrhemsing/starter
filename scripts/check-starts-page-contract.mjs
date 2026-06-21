@@ -49,6 +49,11 @@ const visibleTieBreakerOrder = [
 assert(visibleTieBreakerOrder[0]?.pitcher.name === "Joey Cantillo", "visible GS+ ties must break on the displayed-line tiebreakers before hidden decimal precision");
 
 assert(
+  startService.includes('fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) })'),
+  "recent completed slates must keep live opponent quality context so GS+ does not drift when today becomes yesterday",
+);
+
+assert(
   startRanking.includes("b.gameScorePlus - a.gameScorePlus") &&
     startRanking.includes("inningsFromIP(b.line.inningsPitched) - inningsFromIP(a.line.inningsPitched)") &&
     startRanking.includes("a.line.earnedRuns - b.line.earnedRuns") &&
