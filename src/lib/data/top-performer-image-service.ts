@@ -205,11 +205,13 @@ function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSum
 }
 
 function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.id ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const titleText = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""}`.toLowerCase();
+  const text = `${titleText} ${item.description ?? ""} ${item.id ?? ""} ${item.slug ?? ""}`.toLowerCase();
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
   if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
+  if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
   let score = 0;
   if (text.includes(start.pitcher.name.toLowerCase())) score += 100;
@@ -218,11 +220,20 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (text.includes("throws") || text.includes("pitch")) score += 25;
   if (text.includes(start.opponent.toLowerCase())) score += 10;
   if (text.includes(start.pitcher.team.toLowerCase())) score += 5;
+  if (photoCreditImageTitlePattern().test(item.image?.title ?? "")) score += 35;
   return score;
 }
 
 function nonActionMlbContentPattern() {
   return /\b(all games? highlights?|starting lineups?|fielding alignment|bench availability|bullpen availability|probable pitchers?|breaking down|challenge|overturned|preview|recap)\b/i;
+}
+
+function nonActionMlbTitlePattern() {
+  return /\b(condensed game|animated look|statcast analysis|measuring the stats|fuel(?:s|ed)?\b.*\bwin|win\b.*\bfuel(?:s|ed)?)\b/i;
+}
+
+function photoCreditImageTitlePattern() {
+  return /\b(gettyimages|ap|imagn|usa today|reuters)\b/i;
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {

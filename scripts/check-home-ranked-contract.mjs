@@ -269,10 +269,16 @@ assert(
     imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
     imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function nonActionMlbContentPattern()") &&
+    imageService.includes("function nonActionMlbTitlePattern()") &&
+    imageService.includes("function photoCreditImageTitlePattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
+    imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
+    imageService.includes('if (photoCreditImageTitlePattern().test(item.image?.title ?? "")) score += 35;') &&
+    imageService.includes("fuel(?:s|ed)?\\b.*\\bwin") &&
+    imageService.includes("gettyimages|ap|imagn|usa today|reuters") &&
     imageService.includes('cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")') &&
     imageService.includes('objectPosition: actionShotObjectPosition()') &&
     imageService.includes('return "72% 50%";') &&
