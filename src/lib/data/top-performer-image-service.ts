@@ -210,6 +210,7 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
   if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
+  if (!isPhotoCreditImageTitle(item.image?.title ?? "")) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
   if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
@@ -220,7 +221,7 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (text.includes("throws") || text.includes("pitch")) score += 25;
   if (text.includes(start.opponent.toLowerCase())) score += 10;
   if (text.includes(start.pitcher.team.toLowerCase())) score += 5;
-  if (photoCreditImageTitlePattern().test(item.image?.title ?? "")) score += 35;
+  if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;
   return score;
 }
 
@@ -233,7 +234,11 @@ function nonActionMlbTitlePattern() {
 }
 
 function photoCreditImageTitlePattern() {
-  return /\b(gettyimages|ap|imagn|usa today|reuters)\b/i;
+  return /\b(gettyimages|imagn|usa today|reuters)\b|^ap\d+/i;
+}
+
+function isPhotoCreditImageTitle(title: string) {
+  return photoCreditImageTitlePattern().test(title);
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {
