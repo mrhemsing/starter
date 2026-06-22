@@ -217,10 +217,10 @@ function BestStartsLite({
   const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
   const sameStart = weekly && monthly && weekly.id === monthly.id;
   const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameStart
-    ? [{ badge: "WEEK + MONTH BEST", start: monthly, highlight: monthlyHighlight ?? weeklyHighlight }]
+    ? [{ badge: "7-DAY + 30-DAY BEST", start: monthly, highlight: monthlyHighlight ?? weeklyHighlight }]
     : [
-        { badge: "WEEK BEST", start: weekly, highlight: weeklyHighlight },
-        { badge: "MONTH BEST", start: monthly, highlight: monthlyHighlight },
+        { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
+        { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight },
       ];
   const visibleCards = cards.flatMap((card) => (card.start ? [{ badge: card.badge, start: card.start, highlight: card.highlight }] : []));
 
@@ -232,7 +232,7 @@ function BestStartsLite({
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Evergreen</p>
-            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Start of the Week & Month</h2>
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Recent Gems</h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The best starts of the last 7 and 30 days, worth revisiting.</p>
           </div>
           <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">

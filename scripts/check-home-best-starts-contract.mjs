@@ -75,12 +75,12 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes('badge: "WEEK + MONTH BEST"') &&
-    homeDeferredSections.includes('badge: "WEEK BEST"') &&
-    homeDeferredSections.includes('badge: "MONTH BEST"') &&
+  homeDeferredSections.includes('badge: "7-DAY + 30-DAY BEST"') &&
+    homeDeferredSections.includes('badge: "7-DAY BEST"') &&
+    homeDeferredSections.includes('badge: "30-DAY BEST"') &&
     homeDeferredSections.includes("visibleCards.length === 0") &&
     homeDeferredSections.includes('visibleCards.length === 1 ? "" : "md:grid-cols-2"'),
-  "home best-starts cards must derive one combined card or two ordered Week/Month cards from the rolling-window relationship",
+  "home best-starts cards must derive one combined card or two ordered 7-day/30-day cards from the rolling-window relationship",
 );
 
 assert(
@@ -91,13 +91,16 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("Start of the Week & Month") &&
+  homeDeferredSections.includes("Recent Gems") &&
     homeDeferredSections.includes("The best starts of the last 7 and 30 days, worth revisiting.") &&
+    homeDeferredSections.includes('badge: "7-DAY BEST"') &&
+    homeDeferredSections.includes('badge: "30-DAY BEST"') &&
+    !homeDeferredSections.includes("Start of the Week & Month") &&
     !homeDeferredSections.includes("Start of the Week / Month") &&
     !homeDeferredSections.includes("Tops the last 7 and 30 days") &&
-    !homeDeferredSections.includes("7-day best") &&
-    !homeDeferredSections.includes("30-day best"),
-  "home best-starts copy must use cleaned Week/Month vocabulary without duplicate labels",
+    !homeDeferredSections.includes('badge: "WEEK BEST"') &&
+    !homeDeferredSections.includes('badge: "MONTH BEST"'),
+  "home best-starts copy must use recent rolling-window vocabulary without duplicate Week/Month labels",
 );
 
 assert(
