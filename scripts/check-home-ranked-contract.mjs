@@ -257,14 +257,24 @@ assert(
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
     !imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
     !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
+    !imageService.includes("const BRANDON_WOODRUFF_MLB_ID = 605540;") &&
+    !imageService.includes("BRANDON_WOODRUFF_PERFECT_GAME_IMAGE") &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
+    imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
+    imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
+    imageService.indexOf("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") <
+      imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("const cached = await readCachedActionShot(start.id);") &&
     imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
+    imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
+    imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
+    imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-content.json`);') &&
+    imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
     imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
     imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&

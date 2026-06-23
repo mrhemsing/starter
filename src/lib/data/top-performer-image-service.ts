@@ -6,12 +6,11 @@ const CACHE_DIR = path.join(process.cwd(), "public", "images", "top-performer-ac
 const PUBLIC_CACHE_PATH = "/images/top-performer-action-shots";
 const SPORTRADAR_API_BASE = "https://api.sportradar.com";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const MLB_CONTENT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const MLB_CONTENT_REVALIDATE_SECONDS = 10 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
-const BRANDON_WOODRUFF_MLB_ID = 605540;
-const BRANDON_WOODRUFF_PERFECT_GAME_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/dhys71d1fqg0shgomsak.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
 const CAM_SCHLITTLER_MLB_ID = 693645;
@@ -35,6 +34,15 @@ type CachedActionShot = {
   imageUrl: string;
   alt: string;
   attribution: string;
+  expiresAt: number;
+};
+
+type CachedMlbGameContentActionImage = {
+  startId: string;
+  imageUrl: string;
+  alt: string;
+  objectPosition: string;
+  playUrl?: string;
   expiresAt: number;
 };
 
@@ -103,6 +111,17 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
   const preferredPitcherImage = resolvePreferredPitcherImage(start);
   if (preferredPitcherImage) return preferredPitcherImage;
 
+  const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);
+  if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now()) {
+    return {
+      source: "action",
+      imageUrl: cachedMlbGameContentAction.imageUrl,
+      alt: cachedMlbGameContentAction.alt,
+      objectPosition: cachedMlbGameContentAction.objectPosition,
+      playUrl: cachedMlbGameContentAction.playUrl,
+    };
+  }
+
   const actionShot = await resolveSportradarActionShot(start).catch(() => null);
   if (actionShot) return actionShot;
 
@@ -117,16 +136,6 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 }
 
 function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
-  if (start.pitcher.mlbId === BRANDON_WOODRUFF_MLB_ID) {
-    return {
-      source: "action",
-      imageUrl: BRANDON_WOODRUFF_PERFECT_GAME_IMAGE,
-      alt: "Brandon Woodruff takes perfect game into 6th in start",
-      objectPosition: "50% 50%",
-      playUrl: "https://www.mlb.com/video/brandon-woodruff-takes-perfect-game-into-6th-in-start",
-    };
-  }
-
   if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID) {
     return {
       source: "action",
@@ -188,13 +197,16 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
   const cut = selectMlbImageCut(item);
   if (!item || !cut?.src) return null;
 
-  return {
+  const image = {
     source: "action",
     imageUrl: normalizeMlbImageUrl(cut.src),
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
     objectPosition: "50% 50%",
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
-  };
+  } satisfies TopPerformerImage;
+
+  await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);
+  return image;
 }
 
 function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary) {
@@ -355,8 +367,33 @@ async function readCachedActionShot(startId: string): Promise<CachedActionShot |
   return value.imageUrl && value.attribution ? value : null;
 }
 
+async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage) {
+  await mkdir(CACHE_DIR, { recursive: true });
+  const value: CachedMlbGameContentActionImage = {
+    startId,
+    imageUrl: image.imageUrl,
+    alt: image.alt,
+    objectPosition: image.objectPosition ?? "50% 50%",
+    playUrl: image.playUrl,
+    expiresAt: Date.now() + MLB_CONTENT_CACHE_TTL_MS,
+  };
+  await writeFile(mlbGameContentActionImageCachePath(startId), JSON.stringify(value, null, 2));
+}
+
+async function readCachedMlbGameContentActionImage(startId: string): Promise<CachedMlbGameContentActionImage | null> {
+  const body = await readFile(mlbGameContentActionImageCachePath(startId), "utf8").catch(() => null);
+  if (!body) return null;
+  const value = JSON.parse(body) as CachedMlbGameContentActionImage;
+  if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;
+  return value.imageUrl && value.alt && value.objectPosition ? value : null;
+}
+
 function cacheManifestPath(startId: string) {
   return path.join(CACHE_DIR, `${safeFilePart(startId)}.json`);
+}
+
+function mlbGameContentActionImageCachePath(startId: string) {
+  return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-content.json`);
 }
 
 function requiredCredit(asset: SportradarAsset) {
