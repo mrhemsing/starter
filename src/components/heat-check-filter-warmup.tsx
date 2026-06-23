@@ -23,6 +23,11 @@ export function HeatCheckFilterWarmup({ activeTeam = "" }: HeatCheckFilterWarmup
       }
     };
 
+    if (activeTeam.trim()) {
+      warm();
+      return undefined;
+    }
+
     if ("requestIdleCallback" in window) {
       const idleId = window.requestIdleCallback(warm, { timeout: 1500 });
       return () => window.cancelIdleCallback(idleId);

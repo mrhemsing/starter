@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
@@ -34,6 +35,12 @@ type FormMetricSnapshot = Record<FormMetricKey, number>;
 type FormLeagueContext = {
   average: FormMetricSnapshot;
   stddev: FormMetricSnapshot;
+};
+
+type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "team" | "starts"> & {
+  id?: string;
+  throws?: "R" | "L";
+  headshotUrl?: string;
 };
 
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
@@ -77,6 +84,18 @@ const getCachedPitcherSeasonFallbackStarts = unstable_cache(
   ["pitcher-season-form-fallback", FORM_CACHE_VERSION],
   { revalidate: PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS },
 );
+
+export async function warmFormLeaderboards(options: { teams?: string[]; windows?: FormWindow[] } = {}) {
+  const teams = [...new Set((options.teams ?? []).map((team) => team.trim().toUpperCase()).filter(Boolean))];
+  const windows = options.windows ?? FORM_CONFIG.windows;
+
+  await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: true })));
+  await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false })));
+
+  for (const team of teams) {
+    await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false, team })));
+  }
+}
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {
   const parsed = Number(value ?? FORM_CONFIG.windowDefault);
@@ -220,7 +239,8 @@ async function buildPitcherSeasonFallbackStarts(pitcherId: string, season: strin
   const pitcherMlbId = Number(pitcherId);
   if (!Number.isInteger(pitcherMlbId)) return [];
 
-  const profile = await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true });
+  const profile = await readArchivedPitcherSeasonProfile(pitcherMlbId, season)
+    ?? await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true });
   if (!profile) return [];
 
   return profile.starts
@@ -228,7 +248,7 @@ async function buildPitcherSeasonFallbackStarts(pitcherId: string, season: strin
     .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
 }
 
-function pitcherProfileStartToSummary(profile: MlbPitcherSeasonProfile, start: MlbPitcherSeasonProfile["starts"][number], index: number): StartSummary {
+function pitcherProfileStartToSummary(profile: SeasonFallbackProfile, start: SeasonFallbackProfile["starts"][number], index: number): StartSummary {
   const context = {
     label: `${profile.team} vs ${start.opponent}`,
     whiffDeltaPct: 0,
@@ -247,12 +267,12 @@ function pitcherProfileStartToSummary(profile: MlbPitcherSeasonProfile, start: M
     date: start.date,
     rank: 1,
     pitcher: {
-      id: profile.id,
+      id: profile.id ?? String(profile.mlbId),
       mlbId: profile.mlbId,
       name: profile.name,
       team: profile.team,
-      throws: profile.throws,
-      headshotUrl: profile.headshotUrl,
+      throws: profile.throws ?? "R",
+      headshotUrl: profile.headshotUrl ?? `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${profile.mlbId}/headshot/67/current`,
     },
     opponent: start.opponent,
     result: start.result,

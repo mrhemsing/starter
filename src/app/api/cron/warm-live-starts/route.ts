@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 
@@ -32,6 +33,12 @@ export async function GET(request: Request) {
 
   const starts = await getDailySlate({ window: "today", date: today });
   const completedStarts = starts.filter((start) => start.source?.line !== "fixture");
+  const slateTeams = [
+    ...new Set([
+      ...tonight.games.flatMap((game) => [game.away, game.home]),
+      ...completedStarts.map((start) => start.pitcher.team),
+    ]),
+  ];
 
   if (completedStarts.length > 0) {
     revalidatePath("/");
@@ -42,6 +49,8 @@ export async function GET(request: Request) {
     }
   }
 
+  await warmFormLeaderboards({ teams: slateTeams });
+
   return NextResponse.json({
     warmed: true,
     date: today,
@@ -50,6 +59,7 @@ export async function GET(request: Request) {
     totalGames: completion.totalGames,
     completedStarts: completedStarts.length,
     affectedPitchers: new Set(completedStarts.map((start) => start.pitcher.id)).size,
+    warmedTeams: slateTeams.length,
     revalidated: completedStarts.length > 0,
     generatedAt: new Date().toISOString(),
   });
