@@ -159,6 +159,7 @@ assert(
 );
 
 assert(pitcherFormPage.includes('data-responsive-check="pitcher-form-score-summary"'), "pitcher form score block must expose a stable layout hook");
+assert(pitcherFormPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"'), "pitcher form shell must prevent page-level horizontal scroll on mobile");
 assert(pitcherFormPage.includes("sm:grid-cols-[minmax(0,1fr)_auto_auto]"), "pitcher form score/actions row must keep score text separate from controls");
 assert(pitcherFormPage.includes("font-bold leading-none"), "pitcher form score must use a tight line-height so it cannot collide with its label");
 assert(pitcherFormPage.includes("[overflow-wrap:anywhere]"), "pitcher form stat line must be allowed to wrap inside the header");
@@ -206,6 +207,8 @@ assert(
 assert(
   pitcherFormPage.includes("function ArsenalTable") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-arsenal-table"') &&
+    pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table"') &&
+    pitcherFormPage.includes('className="max-w-full overflow-x-auto"') &&
     pitcherFormPage.includes("Arsenal / pitch mix") &&
     pitcherFormPage.includes("Put-away") &&
     pitcherFormPage.includes("xwOBA") &&
@@ -216,6 +219,7 @@ assert(
 assert(
   pitcherFormPage.includes("function AdvancedPercentilePanel") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-advanced-percentiles"') &&
+    pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles"') &&
     pitcherFormPage.includes("Whiff%") &&
     pitcherFormPage.includes("CSW%") &&
     pitcherFormPage.includes("Barrel%") &&
@@ -226,6 +230,7 @@ assert(
 assert(
   pitcherFormPage.includes("function SplitsPanel") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-splits-panel"') &&
+    pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel"') &&
     pitcherFormPage.includes('data-responsive-check="home-road-split-badge"') &&
     pitcherFormPage.includes('data-responsive-check="home-road-split-evidence"') &&
     pitcherFormPage.includes("<HomeRoadSplitBadge split={summary.venueSplit} />") &&
@@ -233,6 +238,15 @@ assert(
     pitcherFormPage.includes("Times through order") &&
     pitcherFormPage.includes("wOBA"),
   "pitcher profile must render scouting splits, gated home/road evidence when present, and times-through-order placeholder",
+);
+
+assert(
+  pitcherFormPage.includes('className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting"') &&
+    pitcherFormPage.includes('<div className="min-w-0 space-y-5">') &&
+    pitcherFormPage.includes('<section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">') &&
+    pitcherFormWindowPanel.includes('className="max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart"') &&
+    pitcherFormWindowPanel.includes('className="block w-full" viewBox={`0 0 ${width} ${height}`}'),
+  "pitcher form mobile panels must stay constrained while wide chart/table content scrolls inside its own panel",
 );
 
 assert(

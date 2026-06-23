@@ -71,8 +71,8 @@ function FormTrendChart({ series, leagueMeanGS }: { series: FormStartPoint[]; le
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
 
   return (
-    <div className="overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart">
-      <svg width={width} height={height} role="img" aria-label={`Season form chart with ${series.length} starts and league mean ${leagueMeanGS.toFixed(1)} GS+`}>
+    <div className="max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart">
+      <svg className="block w-full" viewBox={`0 0 ${width} ${height}`} height={height} role="img" aria-label={`Season form chart with ${series.length} starts and league mean ${leagueMeanGS.toFixed(1)} GS+`}>
         {[20, 40, 60, 80].map((tick) => (
           <g key={tick}>
             <line x1={pad.left} y1={yFor(tick)} x2={width - pad.right} y2={yFor(tick)} stroke={FORM_CHART_COLORS.grid} />

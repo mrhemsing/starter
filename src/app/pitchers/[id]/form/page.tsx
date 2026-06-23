@@ -101,7 +101,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const thermalBand = summary.status === "ok" && summary.windowCount >= window ? summary.tier : null;
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <SiteHeader active={null} today={today} responsiveCheck="pitcher-form-site-header" />
@@ -177,17 +177,17 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
         </section>
 
         {pitcher ? (
-          <section className="grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
+          <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
             <ArsenalTable pitcher={pitcher} />
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
               <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
               <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
             </div>
           </section>
         ) : null}
 
-        <section className="grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div>
+        <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0">
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
             <div className="overflow-hidden rounded border border-white/10">
               {[...series].reverse().map((start) => (
@@ -202,7 +202,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               ))}
             </div>
           </div>
-          <aside className="space-y-3">
+          <aside className="min-w-0 space-y-3">
             {nextStart ? <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} /> : null}
             <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
             <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
@@ -290,7 +290,7 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
   }, null);
 
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table">
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table">
       <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal / pitch mix</p>
@@ -300,7 +300,7 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
       </div>
 
       {pitches.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className="max-w-full overflow-x-auto">
           <table className="min-w-[680px] w-full border-collapse font-mono text-sm">
             <thead className="text-left text-[10px] uppercase tracking-[0.16em] text-zinc-500">
               <tr className="border-b border-white/10">
@@ -360,7 +360,7 @@ function AdvancedPercentilePanel({ pitcher, summary }: { pitcher: PitcherApiResp
   const metrics = buildAdvancedMetrics(season, summary);
 
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles">
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Advanced / percentiles</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Trust indicators</h2>
       <div className="mt-4 grid gap-3">
@@ -407,7 +407,7 @@ function venueSplitContextForNextStart(split: FormVenueSplitLabel, side: "home" 
 
 function SplitsPanel({ splits, venueSplit }: { splits: PitcherApiSplitGroup[]; venueSplit: FormVenueSplitLabel | null }) {
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel">
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Splits</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Scouting splits</h2>
       {venueSplit ? (
