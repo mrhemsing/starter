@@ -10,6 +10,8 @@ const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const MLB_CONTENT_REVALIDATE_SECONDS = 10 * 60;
 const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
+const BRANDON_WOODRUFF_MLB_ID = 605540;
+const BRANDON_WOODRUFF_PERFECT_GAME_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/mlb/dhys71d1fqg0shgomsak.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
 const CAM_SCHLITTLER_MLB_ID = 693645;
@@ -115,6 +117,16 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 }
 
 function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
+  if (start.pitcher.mlbId === BRANDON_WOODRUFF_MLB_ID) {
+    return {
+      source: "action",
+      imageUrl: BRANDON_WOODRUFF_PERFECT_GAME_IMAGE,
+      alt: "Brandon Woodruff takes perfect game into 6th in start",
+      objectPosition: "50% 50%",
+      playUrl: "https://www.mlb.com/video/brandon-woodruff-takes-perfect-game-into-6th-in-start",
+    };
+  }
+
   if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID) {
     return {
       source: "action",
