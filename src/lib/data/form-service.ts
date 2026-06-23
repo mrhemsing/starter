@@ -12,6 +12,7 @@ type FormBuildOptions = {
   window?: number | string;
   season?: string;
   qualifiedOnly?: boolean;
+  team?: string;
 };
 
 type PitcherBucket = {
@@ -54,7 +55,7 @@ const pitcherFormCache = new Map<string, CachedValue<FormPitcherResponse | null>
 const recentLiveFormStartsCache = new Map<string, CachedValue<StartSummary[]>>();
 
 const getCachedFormLeaderboard = unstable_cache(
-  async (season: string, window: FormWindow, qualifiedOnly: boolean) => buildFormLeaderboard({ season, window, qualifiedOnly }),
+  async (season: string, window: FormWindow, qualifiedOnly: boolean, team?: string) => buildFormLeaderboard({ season, window, qualifiedOnly, team }),
   ["form-leaderboard", FORM_CACHE_VERSION],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS },
 );
@@ -90,11 +91,12 @@ export async function getFormLeaderboard(options: FormBuildOptions = {}): Promis
     season,
     window,
     qualifiedOnly,
+    team: options.team ?? "",
   });
   const cached = formLeaderboardCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = getCachedFormLeaderboard(season, window, qualifiedOnly);
+  const promise = getCachedFormLeaderboard(season, window, qualifiedOnly, options.team);
   formLeaderboardCache.set(cacheKey, {
     expiresAt: Date.now() + FORM_CACHE_TTL_MS,
     promise,
@@ -107,7 +109,7 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
   const startSet = await getQualifiedFormStarts(season);
-  const starts = startSet.starts;
+  const starts = options.team ? await getTeamAugmentedFormStarts(season, window, startSet.starts, options.team) : startSet.starts;
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const summaries = buildPitcherBuckets(starts)
@@ -129,6 +131,21 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
     coolingCount: qualifiedPitchers.filter((summary) => summary.trend === "cooling").length,
     pitchers,
   };
+}
+
+async function getTeamAugmentedFormStarts(season: string, window: FormWindow, starts: StartSummary[], team: string) {
+  const normalizedTeam = team.trim().toUpperCase();
+  if (!normalizedTeam) return starts;
+
+  const teamBuckets = buildPitcherBuckets(starts).filter((bucket) => bucket.starts.at(-1)?.pitcher.team === normalizedTeam);
+  const thinBuckets = teamBuckets.filter((bucket) => bucket.starts.length < window);
+  if (thinBuckets.length === 0) return starts;
+
+  const fallbackGroups = await Promise.all(thinBuckets.map((bucket) => getCachedPitcherSeasonFallbackStarts(bucket.pitcherId, season)));
+  const teamFallbackStarts = fallbackGroups.flat().filter((start) => start.pitcher.team === normalizedTeam);
+  if (teamFallbackStarts.length === 0) return starts;
+
+  return mergeScoredStarts(starts, teamFallbackStarts);
 }
 
 export async function getPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {

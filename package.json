@@ -25,6 +25,7 @@
     "check:home-best-starts": "node scripts/check-home-best-starts-contract.mjs",
     "check:home-typography": "node scripts/check-home-typography-contract.mjs",
     "check:time-words": "node scripts/check-time-words-contract.mjs",
+    "check:heat-team-windows": "node scripts/check-heat-team-window-contract.mjs",
     "check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs",
     "check:starts-page": "node scripts/check-starts-page-contract.mjs",
     "test:contracts": "npm run test:slate-contract && npm run test:start-contract && npm run test:pitcher-contract && npm run check:home-ranked && npm run check:home-status && npm run check:home-best-starts && npm run check:pitcher-pages && npm run check:starts-page",

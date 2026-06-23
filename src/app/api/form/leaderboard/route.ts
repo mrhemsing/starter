@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const leaderboard = await getFormLeaderboard({
     window: searchParams.get("window") ?? undefined,
     qualifiedOnly: qualified === null ? true : qualified !== "false",
+    team: searchParams.get("team") ?? undefined,
   });
 
   return NextResponse.json(leaderboard, {
