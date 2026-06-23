@@ -20,6 +20,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
   const countableGames = schedule.games.filter((game) => normalizeScheduleStatus(game) !== "ppd");
   const liveGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "live").length;
   const finalGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "final").length;
+  const delayedGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "delayed").length;
   const totalGames = countableGames.length;
   const totalStarts = totalGames * 2;
   const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));
@@ -76,7 +77,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
     totalStarts,
     completedStarts: completedStartCount,
     firstPitchAt,
-    countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - now.getTime()) : "SOON",
+    countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - now.getTime(), delayedGames > 0) : "STARTING SOON",
   };
 }
 
@@ -87,12 +88,13 @@ export function formatSlateStatusLine(state: SlateProgressState) {
   if (state.state === "all-starts-complete") return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS COMPLETE`;
   if (state.state === "starts-in-progress") return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS DONE`;
 
-  const countdown = state.countdownLabel === "SOON" ? "SOON" : `IN ${state.countdownLabel}`;
+  const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;
   return `TODAY · ${dateLabel} · FIRST STARTER TOES THE SLAB ${countdown}`;
 }
 
-export function formatFirstPitchCountdown(durationMs: number) {
-  if (durationMs <= 5 * 60 * 1000) return "SOON";
+export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
+  if (durationMs < 0 && delayed) return "DELAYED";
+  if (durationMs <= 5 * 60 * 1000) return "STARTING SOON";
 
   const totalMinutes = Math.max(0, Math.ceil(durationMs / 60000));
   if (totalMinutes < 60) return `${totalMinutes}M`;

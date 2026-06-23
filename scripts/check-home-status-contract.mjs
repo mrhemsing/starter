@@ -69,8 +69,12 @@ assert(
 );
 
 assert(
-  slateState.includes("Math.ceil(durationMs / 60000)") && !slateState.includes("totalSeconds"),
-  "homepage countdown must use minute granularity without seconds",
+  slateState.includes("Math.ceil(durationMs / 60000)") &&
+    slateState.includes('return "STARTING SOON";') &&
+    slateState.includes('return "DELAYED";') &&
+    slateState.includes('state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED"') &&
+    !slateState.includes("totalSeconds"),
+  "homepage countdown must use minute granularity with starting-soon and delayed guards",
 );
 
 assert(
