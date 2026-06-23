@@ -134,8 +134,12 @@ assert(
   startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     startsPage.includes('return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts done`;') &&
-    startsPage.includes('return `Final · Today · ${formatMetadataDate(state.date)}`;') &&
-    startsPage.includes('return `Probables · Today · first starter toes the slab ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;') &&
+    startsPage.includes('return `All starts complete · Today · ${formatShortStatusDate(state.date)}`;') &&
+    startsPage.includes('return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;') &&
+    startsPage.includes("function formatSlateCountdownLabel") &&
+    startsPage.includes('return `in ${countdownLabel}`;') &&
+    startsPage.includes("function formatShortStatusDate") &&
+    !startsPage.includes("function formatFirstPitchStamp") &&
     !startsPage.includes("{date} / completed starts recap"),
   "ranked starts header must use a no-box state-aware live/final/probables indicator and remove the redundant ISO date line",
 );

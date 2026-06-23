@@ -924,9 +924,14 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
 
 function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
   if (state.isToday && slateProgress.state === "starts-in-progress") return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts done`;
-  if (state.isToday && state.isFinal) return `Final · Today · ${formatMetadataDate(state.date)}`;
-  if (state.isToday) return `Probables · Today · first starter toes the slab ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;
+  if (state.isToday && state.isFinal) return `All starts complete · Today · ${formatShortStatusDate(state.date)}`;
+  if (state.isToday) return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;
   return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;
+}
+
+function formatSlateCountdownLabel(countdownLabel: string | null) {
+  if (!countdownLabel || countdownLabel === "STARTING SOON" || countdownLabel === "DELAYED") return (countdownLabel ?? "STARTING SOON").toLowerCase();
+  return `in ${countdownLabel}`;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -951,19 +956,14 @@ function formatMetadataDate(date: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
+function formatShortStatusDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
 function formatWeekday(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed);
-}
-
-function formatFirstPitchStamp(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.valueOf())) return "soon";
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles",
-    timeZoneName: "short",
-  }).format(parsed).replace("PDT", "PT").replace("PST", "PT");
 }
