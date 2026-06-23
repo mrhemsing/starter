@@ -48,13 +48,13 @@ assert(
 
 assert(
   slateState.includes('state: "starts-in-progress"') &&
-    slateState.includes('return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS DONE`;'),
+    slateState.includes('return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
   "homepage in-progress line must render completed starts",
 );
 
 assert(
   slateState.includes('state: "all-starts-complete"') &&
-    slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS COMPLETE`;'),
+    slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS FINAL`;'),
   "homepage all-final line must render completed starts",
 );
 

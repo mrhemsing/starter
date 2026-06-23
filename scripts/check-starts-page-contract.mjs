@@ -133,8 +133,8 @@ assert(
 assert(
   startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
-    startsPage.includes('return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts done`;') &&
-    startsPage.includes('return `All starts complete · Today · ${formatShortStatusDate(state.date)}`;') &&
+    startsPage.includes('return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts final`;') &&
+    startsPage.includes('return `All starts final · Today · ${formatShortStatusDate(state.date)}`;') &&
     startsPage.includes('return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;') &&
     startsPage.includes("function formatSlateCountdownLabel") &&
     startsPage.includes('return `in ${countdownLabel}`;') &&

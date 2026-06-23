@@ -923,8 +923,8 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
 }
 
 function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
-  if (state.isToday && slateProgress.state === "starts-in-progress") return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts done`;
-  if (state.isToday && state.isFinal) return `All starts complete · Today · ${formatShortStatusDate(state.date)}`;
+  if (state.isToday && slateProgress.state === "starts-in-progress") return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts final`;
+  if (state.isToday && state.isFinal) return `All starts final · Today · ${formatShortStatusDate(state.date)}`;
   if (state.isToday) return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;
   return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;
 }

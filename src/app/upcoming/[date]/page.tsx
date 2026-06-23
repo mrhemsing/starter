@@ -105,8 +105,8 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
 function formatUpcomingSlateStamp(state: SlateProgressState, today: string) {
   const dayLabel = state.date === today ? "Today" : formatUpcomingDate(state.date);
   if (state.state === "no-games") return `${formatUpcomingDate(state.date)} · no games today`;
-  if (state.state === "all-starts-complete") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalStarts} starts complete`;
-  if (state.state === "starts-in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.completedStarts} of ${state.totalStarts} starts done`;
+  if (state.state === "all-starts-complete") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalStarts} starts final`;
+  if (state.state === "starts-in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.completedStarts} of ${state.totalStarts} starts final`;
   return `${dayLabel} · ${formatUpcomingDate(state.date)} · first starter toes the slab ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
 }
 
