@@ -153,8 +153,12 @@ export default async function StartPage({ params, searchParams }: StartPageProps
                   {start.gameScorePlusBreakdown.gradeBand.label} / {start.gameScorePlusBreakdown.gradeBand.percentileLabel}
                 </p>
               ) : null}
-              <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(source))} className="mt-4 inline-block font-mono text-xs uppercase tracking-[0.16em] text-zinc-300">
+              <Link
+                href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(source))}
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.16em] text-amber-300 transition hover:border-amber-200 hover:bg-amber-300 hover:text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
                 Pitcher page
+                <span aria-hidden="true">-&gt;</span>
               </Link>
             </div>
           </div>
