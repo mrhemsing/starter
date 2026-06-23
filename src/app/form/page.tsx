@@ -148,7 +148,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <HeatCheckFilterWarmup />
+      <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
         <header className={team ? "pb-3" : "pb-6"}>

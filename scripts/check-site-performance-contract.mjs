@@ -126,9 +126,10 @@ assert(
   heatCheckWarmup.includes("const HEAT_WINDOWS = [3, 5, 10] as const;") &&
     heatCheckWarmup.includes("/api/form/leaderboard?window=${window}") &&
     heatCheckWarmup.includes("/api/form/leaderboard?window=${window}&qualified=false") &&
+    heatCheckWarmup.includes("/api/form/leaderboard?window=${window}&qualified=false&team=${teamParam}") &&
     heatCheckWarmup.includes("/api/tonight?window=${window}") &&
     heatCheckWarmup.includes("requestIdleCallback") &&
-    heatCheckPage.includes("<HeatCheckFilterWarmup />"),
+    heatCheckPage.includes("<HeatCheckFilterWarmup activeTeam={team} />"),
   "Heat Check must warm common filter-window data after initial render",
 );
 

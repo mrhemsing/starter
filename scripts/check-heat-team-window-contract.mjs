@@ -9,6 +9,7 @@ function assert(condition, message) {
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const leaderboardApi = await readFile("src/app/api/form/leaderboard/route.ts", "utf8");
+const heatCheckWarmup = await readFile("src/components/heat-check-filter-warmup.tsx", "utf8");
 
 assert(
   formService.includes("team?: string;") &&
@@ -27,4 +28,12 @@ assert(
   "Heat Check page and API must pass team filters into the form leaderboard builder",
 );
 
-console.log("heat team window contract ok: team-filtered Last 10 can augment thin archive samples");
+assert(
+  heatCheckWarmup.includes("activeTeam?: string;") &&
+    heatCheckWarmup.includes("const team = activeTeam.trim().toUpperCase();") &&
+    heatCheckWarmup.includes("fetch(`/api/form/leaderboard?window=${window}&qualified=false&team=${teamParam}`)") &&
+    formPage.includes("<HeatCheckFilterWarmup activeTeam={team} />"),
+  "Heat Check must warm team-specific leaderboard windows so Last 10 uses a cached team response after the team page loads",
+);
+
+console.log("heat team window contract ok: team-filtered Last 10 can augment thin archive samples and warm team cache");
