@@ -20,7 +20,7 @@ type TopPerformerCardProps = {
   slateCount: number;
   image: TopPerformerImage | null;
   highlight?: FeaturedStartHighlight | null;
-  isProvisional: boolean;
+  status: "final" | "live" | "previous";
   whiffRate?: number | null;
   topVelo?: number | null;
   veloSparkline?: number[];
@@ -38,7 +38,7 @@ export function TopPerformerCard({
   slateCount,
   image,
   highlight,
-  isProvisional,
+  status,
   whiffRate,
   topVelo,
   veloSparkline = [],
@@ -51,8 +51,7 @@ export function TopPerformerCard({
   const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the day";
-  const statusLabel = formatTopPerformerStatusLabel(eyebrow, dateLabel);
+  const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -116,7 +115,7 @@ export function TopPerformerCard({
       className={`top-performer-card top-performer-scorebug relative overflow-hidden rounded border border-[#4A3E1C] bg-[#0A0B0D] text-[#F5F2EA] transition duration-700 lg:min-h-[500px] ${isVisible ? "is-visible" : ""}`}
       style={{ "--heat-glow-color": "246 196 69", "--heat-glow-opacity": "0.3" } as CSSProperties}
       data-responsive-check="home-top-performer-marquee"
-      aria-label={`${pitcherName}, Start of the Day, ${score} GS+`}
+      aria-label={`${pitcherName}, ${statusLabel.eyebrow}, ${score} GS+`}
     >
       <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">
         {finalScoreText}
@@ -248,16 +247,16 @@ export function TopPerformerCard({
   );
 }
 
-function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string) {
-  if (eyebrow.toLowerCase().includes("live leader")) {
+function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string) {
+  if (status === "live") {
     return {
-      eyebrow,
+      eyebrow: "The one to beat · Live leader",
       detail: dateLabel,
     };
   }
 
   return {
-    eyebrow,
+    eyebrow: "Start of the night",
     detail: dateLabel,
   };
 }

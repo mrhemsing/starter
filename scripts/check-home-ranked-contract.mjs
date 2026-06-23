@@ -152,14 +152,17 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('const eyebrow = isProvisional ? "The one to beat · Live leader" : "Start of the day";') &&
-    !topPerformerCard.includes("Start of the night"),
-  "home top performer must always call the final hero Start of the Day",
+  topPerformerCard.includes('status: "final" | "live" | "previous";') &&
+    topPerformerCard.includes('eyebrow: "The one to beat · Live leader"') &&
+    topPerformerCard.includes('eyebrow: "Start of the night"') &&
+    homeDeferredSections.includes("status={ranked.topPerformer.status}") &&
+    !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
+  "home top performer must label live leaders as provisional and final/previous winners as Start of the Night",
 );
 
 assert(
-  topPerformerCard.includes("function formatTopPerformerStatusLabel(eyebrow: string, dateLabel: string)") &&
-    topPerformerCard.includes('if (eyebrow.toLowerCase().includes("live leader"))') &&
+  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string)') &&
+    topPerformerCard.includes('if (status === "live")') &&
     !topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
     !topPerformerCard.includes("games final"),
   "home top performer live label must not repeat the slate final-count detail",
