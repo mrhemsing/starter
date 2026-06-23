@@ -89,13 +89,24 @@ assert(
 
 assert(
   statusLine.includes('data-responsive-check="home-slate-status-line"') &&
-    statusLine.includes("whitespace-nowrap") &&
+    statusLine.includes("sm:whitespace-nowrap") &&
     statusLine.includes("overflow-hidden") &&
-    statusLine.includes("text-ellipsis") &&
+    statusLine.includes("sm:text-ellipsis") &&
     statusLine.includes("data-slate-total-starts={slateState.totalStarts}") &&
     statusLine.includes("data-slate-completed-starts={slateState.completedStarts}") &&
-    statusLine.includes("{line}"),
-  "homepage status line must render one nowrap state-aware line",
+    statusLine.includes("aria-label={line}"),
+  "homepage status line must keep the full state-aware line available",
+);
+
+assert(
+  statusLine.includes('const marker = " · FIRST ";') &&
+    statusLine.includes('state !== "pre-first-pitch"') &&
+    statusLine.includes("mobilePreFirstPitchLine.prefix") &&
+    statusLine.includes("mobilePreFirstPitchLine.detail") &&
+    statusLine.includes("<br />") &&
+    statusLine.includes('className="hidden sm:inline"') &&
+    statusLine.includes("`FIRST ${line.slice(markerIndex + marker.length)}`"),
+  "homepage pre-first-pitch status must force a mobile break before FIRST without the leading dot",
 );
 
 assert(

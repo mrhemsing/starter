@@ -53,16 +53,44 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
   }, [slateState.firstPitchAt, slateState.state]);
 
   const line = useMemo(() => formatSlateStatusLine(slateState), [slateState]);
+  const mobilePreFirstPitchLine = splitPreFirstPitchStatusLine(line, slateState.state);
 
   return (
     <p
-      className="mb-4 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
+      className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
       data-slate-total-starts={slateState.totalStarts}
       data-slate-completed-starts={slateState.completedStarts}
+      aria-label={line}
     >
-      {line}
+      {mobilePreFirstPitchLine ? (
+        <>
+          <span className="sm:hidden" aria-hidden="true">
+            <span>{mobilePreFirstPitchLine.prefix}</span>
+            <br />
+            <span>{mobilePreFirstPitchLine.detail}</span>
+          </span>
+          <span className="hidden sm:inline" aria-hidden="true">
+            {line}
+          </span>
+        </>
+      ) : (
+        line
+      )}
     </p>
   );
+}
+
+function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {
+  if (state !== "pre-first-pitch") return null;
+
+  const marker = " · FIRST ";
+  const markerIndex = line.indexOf(marker);
+  if (markerIndex === -1) return null;
+
+  return {
+    prefix: line.slice(0, markerIndex),
+    detail: `FIRST ${line.slice(markerIndex + marker.length)}`,
+  };
 }
