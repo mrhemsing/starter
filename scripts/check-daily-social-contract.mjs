@@ -12,7 +12,7 @@ const vercel = JSON.parse(await read("vercel.json"));
 const packageJson = JSON.parse(await read("package.json"));
 
 assert.match(service, /type StartOfDay = \{[\s\S]*gamePk: number;[\s\S]*pitcherId: number;[\s\S]*homeAway: "home" \| "away";[\s\S]*gsPlus: number;[\s\S]*headshotUrl: string;/, "StartOfDay type must expose the required social payload fields.");
-assert.match(service, /completion\.totalGames === 0/, "Resolver must cleanly no-op off days.");
+assert.match(service, /completion\.totalStarts === 0/, "Resolver must cleanly no-op off days.");
 assert.match(service, /!completion\.isFinal/, "Resolver must wait until the full slate is final.");
 assert.match(service, /start\.source\?\.line !== "fixture"/, "Resolver must filter out fixture placeholder lines.");
 assert.match(service, /import \{ isRankedRegularStart \} from "@\/lib\/start-classification";/, "Resolver must use ranked-start eligibility for Start of the Day.");

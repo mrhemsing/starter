@@ -59,9 +59,8 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
       className="mb-4 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
-      data-slate-total-games={slateState.totalGames}
-      data-slate-live-games={slateState.liveGames}
-      data-slate-final-games={slateState.finalGames}
+      data-slate-total-starts={slateState.totalStarts}
+      data-slate-completed-starts={slateState.completedStarts}
     >
       {line}
     </p>

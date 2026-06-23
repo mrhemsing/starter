@@ -1,7 +1,6 @@
 import { unstable_cache } from "next/cache";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
-import { getSlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
@@ -38,12 +37,11 @@ export async function getRankedHome(): Promise<RankedHomeResponse> {
 
 async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const yesterday = addDays(today, -1);
-  const [todayCompletion, todaySchedule] = await Promise.all([
+  const [todayCompletion, slateProgress] = await Promise.all([
     getRankedSlateCompletionState(today, today),
-    getSlateSchedule({ window: "today", date: today }),
+    getSlateStartProgress({ window: "today", date: today }),
   ]);
-  const slateProgress = getSlateProgressState(todaySchedule);
-  const todaySlateStarts = todayCompletion.finalGames > 0 ? await getDailySlate({ window: "today", date: today }) : [];
+  const todaySlateStarts = todayCompletion.completedStarts > 0 ? await getDailySlate({ window: "today", date: today }) : [];
   const yesterdayArchivedSlateStarts = await getArchivedSlateStarts(yesterday);
   const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
   const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);
@@ -54,8 +52,8 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const topPerformerState = resolveTopPerformerState({
     today,
     yesterday,
-    todayCompletion,
     isTodaySlateStarted: slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games",
+    areTodayStartsComplete: slateProgress.state === "all-starts-complete",
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
@@ -97,21 +95,21 @@ function isSwing(pitch: PitchEvent) {
 function resolveTopPerformerState({
   today,
   yesterday,
-  todayCompletion,
   isTodaySlateStarted,
+  areTodayStartsComplete,
   todayCompletedSlateStarts,
   yesterdaySlateStarts,
 }: {
   today: string;
   yesterday: string;
-  todayCompletion: Awaited<ReturnType<typeof getRankedSlateCompletionState>>;
   isTodaySlateStarted: boolean;
+  areTodayStartsComplete: boolean;
   todayCompletedSlateStarts: StartSummary[];
   yesterdaySlateStarts: StartSummary[];
 }) {
   const todayLeader = todayCompletedSlateStarts[0] ?? null;
 
-  if (todayCompletion.isFinal) {
+  if (areTodayStartsComplete) {
     if (!todayLeader) return null;
     return {
       status: "final" as const,

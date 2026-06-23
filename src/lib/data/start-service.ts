@@ -7,6 +7,7 @@ import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonComplete
 import { fetchMlbCompletedPitchingLines, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
+import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
 import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";
 import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
@@ -159,7 +160,10 @@ export type RankedSlateCompletionState = {
   date: string;
   totalGames: number;
   finalGames: number;
+  totalStarts: number;
+  completedStarts: number;
   remainingGames: number;
+  remainingStarts: number;
   isToday: boolean;
   isPast: boolean;
   isFinal: boolean;
@@ -169,7 +173,7 @@ export type RankedSlateCompletionState = {
 
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
   const completion = await getRankedSlateCompletionState(today, today);
-  return completion.finalGames > 0 ? today : addDays(today, -1);
+  return completion.completedStarts > 0 ? today : addDays(today, -1);
 }
 
 export async function getDefaultSlateDates(today = getHomeSlateDate(), now = new Date()) {
@@ -179,7 +183,7 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), now = new
   ]);
 
   return {
-    rankedDate: completion.finalGames > 0 ? today : addDays(today, -1),
+    rankedDate: completion.completedStarts > 0 ? today : addDays(today, -1),
     upcomingDate: shouldDefaultUpcomingToTomorrow(schedule, now) ? addDays(today, 1) : today,
   };
 }
@@ -207,28 +211,40 @@ export async function getRankedSlateCompletionState(date: string, today = getHom
     readArchivedSchedule(date),
   ]);
   const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
+  const completedLines = await getCompletedPitchingLineMap(schedule);
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
   const finalGames = countableGames.filter(isFinalGameState).length;
   const totalGames = countableGames.length;
+  const totalStarts = totalGames * 2;
+  const completedStarts = Math.min(totalStarts, Math.max(completedLines.size, finalGames * 2));
   const isToday = date === today;
   const isPast = date < today;
-  const isFinal = totalGames > 0 && finalGames >= totalGames;
+  const isFinal = totalStarts > 0 && completedStarts >= totalStarts;
 
   return {
     date,
     totalGames,
     finalGames,
+    totalStarts,
+    completedStarts,
     remainingGames: Math.max(0, totalGames - finalGames),
+    remainingStarts: Math.max(0, totalStarts - completedStarts),
     isToday,
     isPast,
     isFinal,
-    isPartialToday: isToday && finalGames > 0 && !isFinal,
+    isPartialToday: isToday && completedStarts > 0 && !isFinal,
     scheduleSource: liveSchedule.source === "live" ? liveSchedule.source : archivedSchedule ? "archive" : liveSchedule.source,
   };
 }
 
 export async function getSlateSchedule(params: SlateRouteParams) {
   return fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
+}
+
+export async function getSlateStartProgress(params: SlateRouteParams): Promise<SlateProgressState> {
+  const schedule = await getSlateSchedule(params);
+  const completedLines = await getCompletedPitchingLineMap(schedule);
+  return getSlateProgressState(schedule, completedLines.size);
 }
 
 export async function getTodayProbables(date?: string) {

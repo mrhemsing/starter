@@ -192,11 +192,13 @@ assert(
 );
 
 assert(
-  rankedService.includes('const [todayCompletion, todaySchedule] = await Promise.all([') &&
-    rankedService.includes('getSlateSchedule({ window: "today", date: today }),') &&
-    rankedService.includes("const slateProgress = getSlateProgressState(todaySchedule);") &&
-    rankedService.includes('isTodaySlateStarted: slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games",'),
-  "home top performer gating must use shared first-pitch slate progress, not completed-start count",
+  rankedService.includes('const [todayCompletion, slateProgress] = await Promise.all([') &&
+    rankedService.includes('getSlateStartProgress({ window: "today", date: today }),') &&
+    rankedService.includes("todayCompletion.completedStarts > 0") &&
+    rankedService.includes('areTodayStartsComplete: slateProgress.state === "all-starts-complete",') &&
+    rankedService.includes("if (areTodayStartsComplete)") &&
+    !rankedService.includes("const slateProgress = getSlateProgressState(todaySchedule);"),
+  "home top performer gating must use shared starter-outing progress",
 );
 
 assert(
@@ -207,11 +209,11 @@ assert(
 );
 
 assert(
-  rankedService.includes('if (todayCompletion.isFinal)') &&
+  rankedService.includes("if (areTodayStartsComplete)") &&
     rankedService.includes("if (!todayLeader) return null;") &&
     rankedService.includes("status: \"final\" as const,") &&
     rankedService.includes("dateLabel: formatLongDate(today),"),
-  "home top performer must crown the best qualifying start once the slate is final",
+  "home top performer must crown the best qualifying start once all starts are complete",
 );
 
 assert(

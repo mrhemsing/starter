@@ -39,18 +39,23 @@ assert(
 );
 
 assert(
-  slateState.includes('return `TODAY · ${dateLabel} · ${state.liveGames} OF ${state.totalGames} IN PROGRESS`;'),
-  "homepage in-progress line must render one state fact",
+  slateState.includes('totalStarts: number;') &&
+    slateState.includes('completedStarts: number;') &&
+    slateState.includes("const totalStarts = totalGames * 2;") &&
+    slateState.includes("const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));"),
+  "homepage slate state must count starter outings with a playable-game fallback",
 );
 
 assert(
-  slateState.includes('return `TODAY · ${dateLabel} · ${state.finalGames} OF ${state.totalGames} GAMES FINAL`;'),
-  "homepage partial-final line must render one state fact",
+  slateState.includes('state: "starts-in-progress"') &&
+    slateState.includes('return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS DONE`;'),
+  "homepage in-progress line must render completed starts",
 );
 
 assert(
-  slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalGames} FINAL`;'),
-  "homepage all-final line must render one state fact",
+  slateState.includes('state: "all-starts-complete"') &&
+    slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS COMPLETE`;'),
+  "homepage all-final line must render completed starts",
 );
 
 assert(
@@ -83,6 +88,8 @@ assert(
     statusLine.includes("whitespace-nowrap") &&
     statusLine.includes("overflow-hidden") &&
     statusLine.includes("text-ellipsis") &&
+    statusLine.includes("data-slate-total-starts={slateState.totalStarts}") &&
+    statusLine.includes("data-slate-completed-starts={slateState.completedStarts}") &&
     statusLine.includes("{line}"),
   "homepage status line must render one nowrap state-aware line",
 );
@@ -93,7 +100,7 @@ assert(
 );
 
 assert(
-  statusRoute.includes("getSlateProgressState(schedule)"),
+  statusRoute.includes("getSlateStartProgress({ window: \"today\", date })"),
   "homepage status API must return the shared slate progress state",
 );
 

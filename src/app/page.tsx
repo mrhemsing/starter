@@ -5,10 +5,9 @@ import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
-import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateSchedule } from "@/lib/data/start-service";
+import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
-import { getSlateProgressState } from "@/lib/slate-state";
 
 export const revalidate = 60;
 
@@ -34,8 +33,8 @@ export default async function Home() {
     .then((watch) => getPitchingDuels(watch && watch.games.length > 0 ? today : tomorrow, "upcoming"))
     .catch(() => null);
   const bestStartsPromise = getBestStartsHome().catch(() => null);
-  const [todaySchedule, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts] = await Promise.all([
-    getSlateSchedule({ window: "today", date: today }),
+  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts] = await Promise.all([
+    getSlateStartProgress({ window: "today", date: today }),
     getRankedSlateCompletionState(today, today),
     getRankedHome().catch(() => null),
     todayWatchPromise,
@@ -43,8 +42,7 @@ export default async function Home() {
     duelsPromise,
     bestStartsPromise,
   ]);
-  const rankedDate = todayCompletion.finalGames > 0 ? today : yesterday;
-  const slateStatus = getSlateProgressState(todaySchedule);
+  const rankedDate = todayCompletion.completedStarts > 0 ? today : yesterday;
   const jsonLd = [
     {
       "@context": "https://schema.org",

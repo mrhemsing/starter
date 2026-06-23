@@ -4,11 +4,11 @@ import type React from "react";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
+import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
+import type { SlateProgressState } from "@/lib/slate-state";
 import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingDatePageProps = {
@@ -62,8 +62,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   const rankedDate = addDays(today, -1);
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const resolvedDate = upcoming.date;
-  const schedule = await getSlateSchedule({ window: "today", date: resolvedDate });
-  const slateState = getSlateProgressState(schedule);
+  const slateState = await getSlateStartProgress({ window: "today", date: resolvedDate });
   const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };
   const jsonLd = jsonLdForUpcomingDay(upcoming);
 
@@ -106,10 +105,9 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
 function formatUpcomingSlateStamp(state: SlateProgressState, today: string) {
   const dayLabel = state.date === today ? "Today" : formatUpcomingDate(state.date);
   if (state.state === "no-games") return `${formatUpcomingDate(state.date)} · no games today`;
-  if (state.state === "all-final") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalGames} final`;
-  if (state.state === "partial-final") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.finalGames} of ${state.totalGames} games final · updating`;
-  if (state.state === "in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.liveGames} of ${state.totalGames} in progress`;
-  return `${dayLabel} · ${formatUpcomingDate(state.date)} · first pitch ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
+  if (state.state === "all-starts-complete") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalStarts} starts complete`;
+  if (state.state === "starts-in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.completedStarts} of ${state.totalStarts} starts done`;
+  return `${dayLabel} · ${formatUpcomingDate(state.date)} · first starter toes the slab ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
 }
 
 function formatFirstPitchStamp(value: string) {

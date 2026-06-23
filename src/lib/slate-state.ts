@@ -2,7 +2,7 @@ import type { MlbSchedule } from "@/lib/types";
 
 export type NormalizedScheduleStatus = "pregame" | "delayed" | "live" | "final" | "ppd" | "suspended";
 
-export type SlateProgressStateKey = "pre-first-pitch" | "in-progress" | "partial-final" | "all-final" | "no-games";
+export type SlateProgressStateKey = "pre-first-pitch" | "starts-in-progress" | "all-starts-complete" | "no-games";
 
 export type SlateProgressState = {
   date: string;
@@ -10,15 +10,19 @@ export type SlateProgressState = {
   totalGames: number;
   liveGames: number;
   finalGames: number;
+  totalStarts: number;
+  completedStarts: number;
   firstPitchAt: string | null;
   countdownLabel: string | null;
 };
 
-export function getSlateProgressState(schedule: MlbSchedule, now = new Date()): SlateProgressState {
+export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0, now = new Date()): SlateProgressState {
   const countableGames = schedule.games.filter((game) => normalizeScheduleStatus(game) !== "ppd");
   const liveGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "live").length;
   const finalGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "final").length;
   const totalGames = countableGames.length;
+  const totalStarts = totalGames * 2;
+  const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));
   const firstPitchAt = resolveFirstPitchAt(countableGames);
 
   if (totalGames === 0) {
@@ -28,42 +32,36 @@ export function getSlateProgressState(schedule: MlbSchedule, now = new Date()): 
       totalGames,
       liveGames,
       finalGames,
+      totalStarts,
+      completedStarts: 0,
       firstPitchAt,
       countdownLabel: null,
     };
   }
 
-  if (finalGames >= totalGames) {
+  if (completedStartCount >= totalStarts) {
     return {
       date: schedule.date,
-      state: "all-final",
+      state: "all-starts-complete",
       totalGames,
       liveGames,
       finalGames,
+      totalStarts,
+      completedStarts: completedStartCount,
       firstPitchAt,
       countdownLabel: null,
     };
   }
 
-  if (finalGames > 0) {
+  if (completedStartCount > 0 || liveGames > 0 || finalGames > 0) {
     return {
       date: schedule.date,
-      state: "partial-final",
+      state: "starts-in-progress",
       totalGames,
       liveGames,
       finalGames,
-      firstPitchAt,
-      countdownLabel: null,
-    };
-  }
-
-  if (liveGames > 0) {
-    return {
-      date: schedule.date,
-      state: "in-progress",
-      totalGames,
-      liveGames,
-      finalGames,
+      totalStarts,
+      completedStarts: completedStartCount,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -75,6 +73,8 @@ export function getSlateProgressState(schedule: MlbSchedule, now = new Date()): 
     totalGames,
     liveGames,
     finalGames,
+    totalStarts,
+    completedStarts: completedStartCount,
     firstPitchAt,
     countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - now.getTime()) : "SOON",
   };
@@ -84,12 +84,11 @@ export function formatSlateStatusLine(state: SlateProgressState) {
   const dateLabel = formatShortDate(state.date);
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
-  if (state.state === "all-final") return `TODAY · ${dateLabel} · ALL ${state.totalGames} FINAL`;
-  if (state.state === "partial-final") return `TODAY · ${dateLabel} · ${state.finalGames} OF ${state.totalGames} GAMES FINAL`;
-  if (state.state === "in-progress") return `TODAY · ${dateLabel} · ${state.liveGames} OF ${state.totalGames} IN PROGRESS`;
+  if (state.state === "all-starts-complete") return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS COMPLETE`;
+  if (state.state === "starts-in-progress") return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS DONE`;
 
   const countdown = state.countdownLabel === "SOON" ? "SOON" : `IN ${state.countdownLabel}`;
-  return `TODAY · ${dateLabel} · ${state.totalGames} GAMES · FIRST PITCH ${countdown}`;
+  return `TODAY · ${dateLabel} · FIRST STARTER TOES THE SLAB ${countdown}`;
 }
 
 export function formatFirstPitchCountdown(durationMs: number) {

@@ -61,7 +61,7 @@ export async function getDailySocialPostDraft(date = previousDate(getHomeSlateDa
   }
 
   const completion = await getRankedSlateCompletionState(date);
-  if (completion.totalGames === 0) {
+  if (completion.totalStarts === 0) {
     return {
       status: "noop",
       date,
@@ -75,7 +75,7 @@ export async function getDailySocialPostDraft(date = previousDate(getHomeSlateDa
       status: "noop",
       date,
       reason: "not-final",
-      message: `${completion.finalGames} of ${completion.totalGames} games are final. Daily social posts wait for the full slate.`,
+      message: `${completion.completedStarts} of ${completion.totalStarts} starts are done. Daily social posts wait for the full slate.`,
     };
   }
 

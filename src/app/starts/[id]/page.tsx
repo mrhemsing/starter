@@ -14,13 +14,13 @@ import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherFormMap } from "@/lib/data/form-service";
-import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateSchedule, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
-import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
+import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import { slateTimeWord } from "@/lib/time-words";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
@@ -180,12 +180,11 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const params = await searchParams;
   const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
-  const [slateStarts, completionState, schedule] = await Promise.all([
+  const [slateStarts, completionState, slateProgress] = await Promise.all([
     getDailySlate({ window: "yesterday", date }),
     getRankedSlateCompletionState(date, today),
-    getSlateSchedule({ window: "yesterday", date }),
+    getSlateStartProgress({ window: "yesterday", date }),
   ]);
-  const slateProgress = getSlateProgressState(schedule);
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
   const qualifiedStarts = starts.filter(isQualifiedRankedStart);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
@@ -315,7 +314,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
                 <Link href={`${upcomingDateHref(date)}#must-watch`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
-                  {completionState.remainingGames} {completionState.remainingGames === 1 ? "game" : "games"} still to come {slateTimeWord({ date }, { today })}
+                  {completionState.remainingStarts} {completionState.remainingStarts === 1 ? "start" : "starts"} still to come {slateTimeWord({ date }, { today })}
                 </Link>
               </section>
             ) : null}
@@ -911,8 +910,8 @@ function addDays(date: string, days: number) {
   return value.toISOString().slice(0, 10);
 }
 
-function RankedSlateStatus({ state, slateProgress }: { state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }; slateProgress: SlateProgressState }) {
-  const isLive = state.isToday && (state.isPartialToday || slateProgress.state === "in-progress" || slateProgress.state === "partial-final");
+function RankedSlateStatus({ state, slateProgress }: { state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }; slateProgress: SlateProgressState }) {
+  const isLive = state.isToday && slateProgress.state === "starts-in-progress";
   const label = completionStatusLabel(state, slateProgress);
 
   return (
@@ -923,10 +922,10 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; fi
   );
 }
 
-function completionStatusLabel(state: { date: string; finalGames: number; totalGames: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
-  if (state.isToday && (state.isPartialToday || slateProgress.state === "in-progress" || slateProgress.state === "partial-final")) return `Live · Today · ${state.finalGames} of ${state.totalGames} final`;
+function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
+  if (state.isToday && slateProgress.state === "starts-in-progress") return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts done`;
   if (state.isToday && state.isFinal) return `Final · Today · ${formatMetadataDate(state.date)}`;
-  if (state.isToday) return `Probables · Today · first pitch ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;
+  if (state.isToday) return `Probables · Today · first starter toes the slab ${slateProgress.firstPitchAt ? formatFirstPitchStamp(slateProgress.firstPitchAt) : "soon"}`;
   return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;
 }
 
