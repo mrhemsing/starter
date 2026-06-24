@@ -11,6 +11,7 @@ const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
+const pitchingDuels = await readFile("src/components/pitching-duels.tsx", "utf8");
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
@@ -104,8 +105,19 @@ assert(
 assert(
   duelsService.includes('["pitching-duels", "v2"]') &&
     duelsService.includes('game.status === "pregame"') &&
+    duelsService.includes("firstPitch: game.firstPitch,") &&
     !duelsService.includes('game.status === "pregame" || game.status === "live"'),
   "homepage upcoming duels must only include true pregame matchups so live/final starts do not remain under Closest Matchups",
+);
+
+assert(
+  pitchingDuels.includes('import { LocalTime } from "@/components/local-time";') &&
+    pitchingDuels.includes("data-first-pitch={duel.firstPitch ?? undefined}") &&
+    pitchingDuels.includes("Start{\" \"}") &&
+    pitchingDuels.includes("<LocalTime value={duel.firstPitch} fallback={formatFirstPitch(duel.firstPitch)} />") &&
+    pitchingDuels.includes("function formatFirstPitch(value: string)") &&
+    pitchingDuels.includes('timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles"'),
+  "homepage closest matchup duel cards must render scheduled start time from firstPitch",
 );
 
 assert(

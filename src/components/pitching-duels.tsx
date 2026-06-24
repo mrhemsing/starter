@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { LocalTime } from "@/components/local-time";
 import { HEAT_BANDS, tierOf } from "@/lib/form-tokens";
 import { duelsPath } from "@/lib/routes";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
@@ -115,12 +116,25 @@ function DuelCard({ duel, rank, kind }: { duel: PitchingDuel; rank: number; kind
   const glowValue = kind === "mismatch" ? duel.gap : duel.combinedQuality;
   const glowMax = kind === "mismatch" ? 50 : 160;
   return (
-    <article className="heat-glow-card rounded border border-white/10 bg-[#101014] p-4" style={duelGlowStyle(glowValue, glowMax)}>
+    <article
+      className="heat-glow-card rounded border border-white/10 bg-[#101014] p-4"
+      data-first-pitch={duel.firstPitch ?? undefined}
+      style={duelGlowStyle(glowValue, glowMax)}
+    >
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 md:flex-row md:items-start">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">#{rank} {rankLabel}</p>
           <h3 className="card-title mt-1 font-serif text-2xl font-bold text-zinc-50">{duel.label}</h3>
-          <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-500">{duel.park ?? "Venue TBD"}</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-500">
+            {duel.park ?? "Venue TBD"}
+            {duel.firstPitch ? (
+              <>
+                <span className="mx-2 text-zinc-700">/</span>
+                Start{" "}
+                <LocalTime value={duel.firstPitch} fallback={formatFirstPitch(duel.firstPitch)} />
+              </>
+            ) : null}
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-2 font-mono text-xs">
           <Stat label="Combined" value={String(duel.combinedQuality)} />
@@ -194,6 +208,17 @@ function leadingTeam(duel: PitchingDuel) {
   const [a, b] = duel.starters;
   if (a.score === b.score) return "EVEN";
   return a.score > b.score ? a.team : b.team;
+}
+
+function formatFirstPitch(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return "Time TBD";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(date).replace("PDT", "PT").replace("PST", "PT");
 }
 
 function colorToRgb(color: string) {
