@@ -24,7 +24,7 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
   const rankedStarts = rankStarts(settledStarts);
   const topStarts = rankedStarts.slice(0, 5);
   const listStarts = topStarts;
-  const duds = rankedStarts.slice(-3);
+  const duds = roughStarts(rankedStarts).slice(-3);
   const slateAverage = average(rankedStarts.map((start) => start.gameScorePlus));
 
   return (
@@ -268,6 +268,13 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
 
 function isRecapGasStart(start: StartSummary, bandLabel: string) {
   return (bandLabel === "Elite" || bandLabel === "Plus") && (start.line.strikeouts >= 8 || inningsFromIP(start.line.inningsPitched) >= 7);
+}
+
+function roughStarts(starts: StartSummary[]) {
+  return starts.filter((start) => {
+    const label = qualityTierOf(start.gameScorePlus).label;
+    return label === "Below" || label === "Poor";
+  });
 }
 
 function recapBandProfile(label: string) {

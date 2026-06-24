@@ -248,6 +248,14 @@ assert(
 );
 
 assert(
+  rankedRecap.includes("const duds = roughStarts(rankedStarts).slice(-3);") &&
+    rankedRecap.includes("function roughStarts(starts: StartSummary[])") &&
+    rankedRecap.includes('return label === "Below" || label === "Poor";') &&
+    !rankedRecap.includes("const duds = rankedStarts.slice(-3);"),
+  "home ranked recap Rough ones must only show below-solid starts and must not repeat solid top starts on small slates",
+);
+
+assert(
   rankedService.includes("function formatWeekday(date: string)"),
   "home ranked service must format previous-slate weekday labels",
 );
