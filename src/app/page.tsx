@@ -8,6 +8,7 @@ import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
+import type { TonightResponse } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -30,7 +31,7 @@ export default async function Home() {
   const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);
   const tomorrowWatchPromise = getTonightMustWatch({ date: tomorrow, window: 5 }).catch(() => null);
   const duelsPromise = todayWatchPromise
-    .then((watch) => getPitchingDuels(watch && watch.games.length > 0 ? today : tomorrow, "upcoming"))
+    .then((watch) => getPitchingDuels(hasPregameWatchGames(watch) ? today : tomorrow, "upcoming"))
     .catch(() => null);
   const bestStartsPromise = getBestStartsHome().catch(() => null);
   const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts] = await Promise.all([
@@ -125,4 +126,8 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+function hasPregameWatchGames(watch: TonightResponse | null) {
+  return watch?.games.some((game) => game.status === "pregame") ?? false;
 }

@@ -14,6 +14,7 @@ const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
+const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
@@ -86,14 +87,25 @@ assert(
   homePage.includes('import { getPitchingDuels } from "@/lib/data/duels-service";') &&
     homePage.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
     homePage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
+    homePage.includes('import type { TonightResponse } from "@/lib/types";') &&
     homePage.includes("const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);") &&
     homePage.includes("const duelsPromise = todayWatchPromise") &&
+    homePage.includes('getPitchingDuels(hasPregameWatchGames(watch) ? today : tomorrow, "upcoming")') &&
+    homePage.includes("function hasPregameWatchGames(watch: TonightResponse | null)") &&
+    homePage.includes('watch?.games.some((game) => game.status === "pregame") ?? false') &&
     homePage.includes("<HomeDeferredSections") &&
     homePage.includes("initialData={{") &&
     homePage.includes("ranked,") &&
     homePage.includes("todayWatch,") &&
     homePage.includes("duels,"),
   "homepage must server-prefetch ranked, must-watch, and duels data before rendering the client sections",
+);
+
+assert(
+  duelsService.includes('["pitching-duels", "v2"]') &&
+    duelsService.includes('game.status === "pregame"') &&
+    !duelsService.includes('game.status === "pregame" || game.status === "live"'),
+  "homepage upcoming duels must only include true pregame matchups so live/final starts do not remain under Closest Matchups",
 );
 
 assert(

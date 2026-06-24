@@ -20,7 +20,7 @@ const duelsCache = new Map<string, CachedDuels>();
 
 const getCachedPitchingDuels = unstable_cache(
   async (date: string, mode: "upcoming" | "settled") => buildPitchingDuels(date, mode),
-  ["pitching-duels", "v1"],
+  ["pitching-duels", "v2"],
   { revalidate: DUELS_REVALIDATE_SECONDS },
 );
 
@@ -55,7 +55,7 @@ async function buildPitchingDuels(date: string, mode: "upcoming" | "settled"): P
 async function getUpcomingDuels(date: string) {
   const tonight = await getTonightMustWatch({ date, window: 5 });
   return tonight.games
-    .filter((game) => (game.status === "pregame" || game.status === "live")
+    .filter((game) => game.status === "pregame"
       && game.starters.every((starter) => starter.pitcherId && starter.status === "ok" && starter.rgs !== undefined && !isLikelyOpener(starter)))
     .map(upcomingGameToDuel);
 }
