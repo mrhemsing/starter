@@ -231,8 +231,9 @@ assert(
 assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
-    rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 58;"),
-  "home top performer must unmount after first pitch until a qualifying GS+ 58 contender posts",
+    rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
+    rankedService.includes('["home-ranked", "v2"]'),
+  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
 );
 
 assert(

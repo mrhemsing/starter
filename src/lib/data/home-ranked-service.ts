@@ -4,7 +4,7 @@ import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
-const LIVE_TOP_PERFORMER_FLOOR = 58;
+const LIVE_TOP_PERFORMER_FLOOR = 50;
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
 export type RankedHomeResponse = {
@@ -27,7 +27,7 @@ export type RankedHomeResponse = {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v1"],
+  ["home-ranked", "v2"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 
