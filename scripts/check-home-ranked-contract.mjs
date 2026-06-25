@@ -184,30 +184,32 @@ assert(
 
 assert(
   topPerformerCard.includes('status: "final" | "live" | "previous";') &&
-    topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel, line);") &&
-    topPerformerCard.includes('eyebrow: `The one to beat · ${formatLiveLeaderLine(line)}`') &&
-    topPerformerCard.includes("function formatLiveLeaderLine(line: StartLine)") &&
-    topPerformerCard.includes("return `${line.strikeouts} K, ${formatRunTotal(line.earnedRuns)}`;") &&
-    topPerformerCard.includes('if (runs === 1) return "one run";') &&
+    topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
+    topPerformerCard.includes('const isLiveLeader = status === "live";') &&
+    topPerformerCard.includes('eyebrow: "Live leader"') &&
+    topPerformerCard.includes('detail: `Today, ${dateLabel}`') &&
+    topPerformerCard.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     topPerformerCard.includes('eyebrow: "Start of the night"') &&
     homeDeferredSections.includes("status={ranked.topPerformer.status}") &&
     !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
-  "home top performer must label live leaders with the current strikeout/run line and final/previous winners as Start of the Night",
+  "home top performer must label live leaders with broadcast live copy and final/previous winners as Start of the Night",
 );
 
 assert(
-  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string, line: StartLine)') &&
+  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string)') &&
     topPerformerCard.includes('if (status === "live")') &&
     !topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
-    !topPerformerCard.includes("Live leader") &&
+    !topPerformerCard.includes("The one to beat") &&
     !topPerformerCard.includes("games final"),
   "home top performer live label must not repeat the slate final-count detail",
 );
 
 assert(
   topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.22em] text-[#F6C445]') &&
+    topPerformerCard.includes('<TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} />') &&
     topPerformerCard.includes('<span className="mt-1 block">{statusLabel.detail}</span>') &&
     topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.16em] text-[#F6C445]') &&
+    topPerformerCard.includes('<TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} compact />') &&
     topPerformerCard.includes('<span className="mt-1 block nowrap-token">{statusLabel.detail}</span>'),
   "home top performer status detail must render on a forced tight new line on desktop and mobile",
 );
