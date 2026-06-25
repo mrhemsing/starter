@@ -86,6 +86,7 @@ export function formatSlateStatusLine(state: SlateProgressState) {
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
   if (state.state === "all-starts-complete") return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "starts-in-progress" && state.liveGames > 0) return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
   if (state.state === "starts-in-progress") return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
 
   const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;

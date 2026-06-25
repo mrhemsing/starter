@@ -1,6 +1,6 @@
 import { demoProbableStarts } from "@/lib/data/demo";
 import { inningsFromIP } from "@/lib/innings";
-import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine } from "@/lib/types";
+import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine } from "@/lib/types";
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
@@ -30,6 +30,7 @@ type CachedValue<T> = {
 
 const scheduleCache = new Map<string, CachedSchedule>();
 const completedPitchingLineCache = new Map<string, CachedValue<MlbCompletedPitchingLine[]>>();
+const livePitchingLineCache = new Map<string, CachedValue<MlbLivePitchingLine[]>>();
 const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQualityContext>>>();
 const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
 const teamHandednessSplitCache = new Map<string, CachedValue<Map<string, MlbTeamHandednessSplitContext>>>();
@@ -273,6 +274,11 @@ type MlbGameFeedResponse = {
       winner?: { id?: number };
       loser?: { id?: number };
     };
+    linescore?: {
+      currentInningOrdinal?: string;
+      inningState?: string;
+      outs?: number;
+    };
     plays?: {
       allPlays?: MlbGameFeedPlay[];
     };
@@ -388,6 +394,24 @@ export async function fetchMlbCompletedPitchingLines(gamePk: number, options: Ml
   return promise;
 }
 
+export async function fetchMlbLivePitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbLivePitchingLine[]> {
+  if (!options.fetchLive) return [];
+  const gamefeedRevalidateSeconds = options.gamefeedRevalidateSeconds ?? MLB_GAMEFEED_REVALIDATE_SECONDS;
+  const cacheKey = `${gamePk}:live-lines:${gamefeedRevalidateSeconds}`;
+  const cached = livePitchingLineCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = fetchLiveMlbPitchingLines(gamePk, options);
+  if (!options.signal) {
+    livePitchingLineCache.set(cacheKey, {
+      expiresAt: Date.now() + LIVE_GAMEFEED_CACHE_TTL_MS,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
 async function fetchLiveMlbCompletedPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbCompletedPitchingLine[]> {
   try {
     const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, options.gamefeedRevalidateSeconds ?? MLB_GAMEFEED_REVALIDATE_SECONDS));
@@ -396,6 +420,19 @@ async function fetchLiveMlbCompletedPitchingLines(gamePk: number, options: MlbSc
 
     const payload = (await response.json()) as MlbGameFeedResponse;
     return parseCompletedPitchingLines(gamePk, payload);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchLiveMlbPitchingLines(gamePk: number, options: MlbScheduleClientOptions = {}): Promise<MlbLivePitchingLine[]> {
+  try {
+    const response = await fetch(`${MLB_GAME_FEED_BASE}/${gamePk}/feed/live`, cachedRequestInit(options, options.gamefeedRevalidateSeconds ?? MLB_GAMEFEED_REVALIDATE_SECONDS));
+
+    if (!response.ok) return [];
+
+    const payload = (await response.json()) as MlbGameFeedResponse;
+    return parseLivePitchingLines(gamePk, payload);
   } catch {
     return [];
   }
@@ -1018,6 +1055,40 @@ function parseCompletedPitchingLines(gamePk: number, payload: MlbGameFeedRespons
   ];
 }
 
+function parseLivePitchingLines(gamePk: number, payload: MlbGameFeedResponse): MlbLivePitchingLine[] {
+  const awayTeam = payload.liveData?.boxscore?.teams?.away;
+  const homeTeam = payload.liveData?.boxscore?.teams?.home;
+  const awayAbbreviation = awayTeam?.team?.abbreviation ?? payload.gameData?.teams?.away?.abbreviation;
+  const homeAbbreviation = homeTeam?.team?.abbreviation ?? payload.gameData?.teams?.home?.abbreviation;
+  const isFinal = isFinalGameFeedState(payload);
+  const inningLabel = readInningLabel(payload);
+
+  return [
+    ...parseTeamLivePitchingLines(gamePk, "away", awayTeam, awayAbbreviation, homeAbbreviation, payload, isFinal, inningLabel),
+    ...parseTeamLivePitchingLines(gamePk, "home", homeTeam, homeAbbreviation, awayAbbreviation, payload, isFinal, inningLabel),
+  ];
+}
+
+function parseTeamLivePitchingLines(
+  gamePk: number,
+  side: "home" | "away",
+  team: MlbGameFeedTeam | undefined,
+  teamAbbreviation: string | undefined,
+  opponentAbbreviation: string | undefined,
+  payload: MlbGameFeedResponse,
+  isFinal: boolean,
+  inningLabel: string | null,
+): MlbLivePitchingLine[] {
+  if (!team?.players || !teamAbbreviation || !opponentAbbreviation) return [];
+
+  const starterMlbId = team.pitchers?.[0];
+  const starterIsOut = isFinal || (team.pitchers?.length ?? 0) > 1;
+
+  return Object.values(team.players)
+    .map((player) => readLivePitchingLine(gamePk, side, teamAbbreviation, opponentAbbreviation, player, payload, starterMlbId, starterIsOut, inningLabel))
+    .filter((line): line is MlbLivePitchingLine => Boolean(line));
+}
+
 function parseTeamPitchingLines(
   gamePk: number,
   side: "home" | "away",
@@ -1035,6 +1106,39 @@ function parseTeamPitchingLines(
   return Object.values(team.players)
     .map((player) => readCompletedPitchingLine(gamePk, side, teamAbbreviation, opponentAbbreviation, player, payload, starterMlbId, starterIsOut))
     .filter((line): line is MlbCompletedPitchingLine => Boolean(line));
+}
+
+function readLivePitchingLine(
+  gamePk: number,
+  side: "home" | "away",
+  teamAbbreviation: string,
+  opponentAbbreviation: string,
+  player: MlbGameFeedPlayer,
+  payload: MlbGameFeedResponse,
+  starterMlbId: number | undefined,
+  starterIsOut: boolean,
+  inningLabel: string | null,
+): MlbLivePitchingLine | undefined {
+  const pitcherMlbId = player.person?.id;
+  const stats = player.stats?.pitching;
+  if (!pitcherMlbId || !stats || stats.gamesStarted !== 1) return undefined;
+  if (pitcherMlbId !== starterMlbId) return undefined;
+
+  const line = readStartLine(stats);
+  const status = readLiveLineStatus(payload, starterIsOut, line);
+  return {
+    gamePk,
+    pitcherMlbId,
+    pitcherName: player.person?.fullName,
+    teamAbbreviation,
+    opponentAbbreviation,
+    side,
+    result: readPitchingDecision(pitcherMlbId, payload),
+    line: line ?? { inningsPitched: 0, hits: 0, earnedRuns: 0, walks: 0, strikeouts: 0, pitches: 0 },
+    gameStatus: status,
+    starterIsOut,
+    inningLabel,
+  };
 }
 
 function readCompletedPitchingLine(
@@ -1065,6 +1169,23 @@ function readCompletedPitchingLine(
     result: readPitchingDecision(pitcherMlbId, payload),
     line,
   };
+}
+
+function readLiveLineStatus(payload: MlbGameFeedResponse, starterIsOut: boolean, line: StartLine | undefined): MlbLivePitchingLine["gameStatus"] {
+  const status = `${payload.gameData?.status?.abstractGameState ?? ""} ${payload.gameData?.status?.detailedState ?? ""}`.toLowerCase();
+  if (/\b(delayed|suspended)\b/.test(status)) return "delay";
+  if (starterIsOut || isFinalGameFeedState(payload)) return "final";
+  if (line && (line.pitches > 0 || line.inningsPitched > 0)) return "live";
+  return "warming";
+}
+
+function readInningLabel(payload: MlbGameFeedResponse) {
+  const linescore = payload.liveData?.linescore;
+  const inning = linescore?.currentInningOrdinal;
+  const state = linescore?.inningState;
+  if (!inning && !state) return null;
+  const outs = typeof linescore?.outs === "number" ? `, ${linescore.outs} out${linescore.outs === 1 ? "" : "s"}` : "";
+  return `${state ? `${state} ` : ""}${inning ?? ""}${outs}`.trim();
 }
 
 function isFinalGameFeedState(payload: MlbGameFeedResponse) {

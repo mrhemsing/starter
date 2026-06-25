@@ -48,8 +48,9 @@ assert(
 
 assert(
   slateState.includes('state: "starts-in-progress"') &&
+    slateState.includes('return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
     slateState.includes('return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
-  "homepage in-progress line must render completed starts",
+  "homepage in-progress line must render live and completed starts",
 );
 
 assert(
@@ -110,8 +111,10 @@ assert(
 );
 
 assert(
-  !statusLine.includes("Upcoming") && !statusLine.includes("href") && !statusLine.includes("<a "),
-  "homepage status eyebrow must not include an upcoming starts link",
+  !statusLine.includes("Upcoming") &&
+    statusLine.includes("liveDateHref(slateState.date)") &&
+    statusLine.includes('className="ranked-live-dot h-2 w-2 shrink-0 rounded-full bg-[#FF5A1F]"'),
+  "homepage status eyebrow must use the live board as its only ambient link during games",
 );
 
 assert(

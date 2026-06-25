@@ -262,7 +262,7 @@ function TopPerformerEyebrow({ live, label, compact = false }: { live: boolean; 
 function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string) {
   if (status === "live") {
     return {
-      eyebrow: "Live leader",
+      eyebrow: "Live GS+ leader",
       detail: `Today, ${dateLabel}`,
     };
   }

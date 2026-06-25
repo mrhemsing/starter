@@ -1292,7 +1292,7 @@ function getGameScorePlusGradeBand(score: number): StartApiGameScorePlusBreakdow
   };
 }
 
-function scoreCompletedLine(line: StartLine, context?: StartContext) {
+export function scoreCompletedLine(line: StartLine, context?: StartContext) {
   return summarizeGameScorePlus(line, undefined, context).total;
 }
 

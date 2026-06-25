@@ -23,6 +23,7 @@
     "check:site-performance": "node scripts/check-site-performance-contract.mjs",
     "check:home-ranked": "node scripts/check-home-ranked-contract.mjs",
     "check:home-status": "node scripts/check-home-status-contract.mjs",
+    "check:live-scoreboard": "node scripts/check-live-scoreboard-contract.mjs",
     "check:home-best-starts": "node scripts/check-home-best-starts-contract.mjs",
     "check:home-typography": "node scripts/check-home-typography-contract.mjs",
     "check:time-words": "node scripts/check-time-words-contract.mjs",

@@ -565,6 +565,12 @@ export type MlbCompletedPitchingLine = {
   line: StartLine;
 };
 
+export type MlbLivePitchingLine = MlbCompletedPitchingLine & {
+  gameStatus: "live" | "final" | "warming" | "delay";
+  starterIsOut: boolean;
+  inningLabel: string | null;
+};
+
 export type StartPitchDetailSource = "fixture" | "archive-gamefeed" | "live-gamefeed" | "statcast-savant";
 
 export type ArsenalPitchSummary = {

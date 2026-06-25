@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { liveDateHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, formatSlateStatusLine, type SlateProgressState } from "@/lib/slate-state";
 
 type HomeSlateStatusLineProps = {
@@ -54,9 +56,24 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
 
   const line = useMemo(() => formatSlateStatusLine(slateState), [slateState]);
   const mobilePreFirstPitchLine = splitPreFirstPitchStatusLine(line, slateState.state);
+  const liveHref = slateState.liveGames > 0 ? liveDateHref(slateState.date) : null;
+  const content = mobilePreFirstPitchLine ? (
+    <>
+      <span className="sm:hidden" aria-hidden="true">
+        <span>{mobilePreFirstPitchLine.prefix}</span>
+        <br />
+        <span>{mobilePreFirstPitchLine.detail}</span>
+      </span>
+      <span className="hidden sm:inline" aria-hidden="true">
+        {line}
+      </span>
+    </>
+  ) : (
+    line
+  );
 
   return (
-    <p
+    <div
       className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-state={slateState.state}
@@ -64,21 +81,15 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
       data-slate-completed-starts={slateState.completedStarts}
       aria-label={line}
     >
-      {mobilePreFirstPitchLine ? (
-        <>
-          <span className="sm:hidden" aria-hidden="true">
-            <span>{mobilePreFirstPitchLine.prefix}</span>
-            <br />
-            <span>{mobilePreFirstPitchLine.detail}</span>
-          </span>
-          <span className="hidden sm:inline" aria-hidden="true">
-            {line}
-          </span>
-        </>
+      {liveHref ? (
+        <Link href={liveHref} className="inline-flex max-w-full items-center gap-2 text-white transition hover:text-[#FF9A62] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <span className="ranked-live-dot h-2 w-2 shrink-0 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
+          <span className="truncate">{content}</span>
+        </Link>
       ) : (
-        line
+        content
       )}
-    </p>
+    </div>
   );
 }
 

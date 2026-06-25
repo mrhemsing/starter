@@ -10,7 +10,7 @@ export function startPath(startId: string) {
   return `/starts/${startId}`;
 }
 
-export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist";
+export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist" | "live";
 
 export const entitySources: Record<EntitySource, { label: string; shortLabel: string; fallbackHref: string }> = {
   home: { label: "Home", shortLabel: "Home", fallbackHref: "/" },
@@ -18,6 +18,7 @@ export const entitySources: Record<EntitySource, { label: string; shortLabel: st
   heat: { label: "Heat Check", shortLabel: "Heat Check", fallbackHref: "/heat-check" },
   upcoming: { label: "Upcoming", shortLabel: "Upcoming", fallbackHref: "/upcoming" },
   watchlist: { label: "Watchlist", shortLabel: "Watchlist", fallbackHref: "/watchlist" },
+  live: { label: "Live GS+", shortLabel: "Live", fallbackHref: "/live" },
 };
 
 export function parseEntitySource(value: string | null | undefined, fallback: EntitySource): EntitySource {
@@ -95,6 +96,10 @@ export function slatePath({ window, date }: SlateRouteParams) {
 
 export function rankedStartsPath(date: string) {
   return `/starts/${date}`;
+}
+
+export function liveDateHref(date: string) {
+  return `/live/${date}`;
 }
 
 export function heatCheckPath(params?: Record<string, string>) {

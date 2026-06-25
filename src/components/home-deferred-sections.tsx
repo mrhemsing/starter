@@ -96,7 +96,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
         <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <TopPerformerCard
-              href={startHref(ranked.topPerformer.start, sourceParams("home"))}
+              href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams("home"))}
               pitcherName={ranked.topPerformer.start.pitcher.name}
               team={ranked.topPerformer.start.pitcher.team}
               opponent={ranked.topPerformer.start.opponent}

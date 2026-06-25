@@ -186,7 +186,7 @@ assert(
   topPerformerCard.includes('status: "final" | "live" | "previous";') &&
     topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
     topPerformerCard.includes('const isLiveLeader = status === "live";') &&
-    topPerformerCard.includes('eyebrow: "Live leader"') &&
+    topPerformerCard.includes('eyebrow: "Live GS+ leader"') &&
     topPerformerCard.includes('detail: `Today, ${dateLabel}`') &&
     topPerformerCard.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     topPerformerCard.includes('eyebrow: "Start of the night"') &&
@@ -248,6 +248,15 @@ assert(
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
     rankedService.includes('["home-ranked", "v2"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
+);
+
+assert(
+  rankedService.includes('import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+    rankedService.includes("const liveBoard = slateProgress.state === \"starts-in-progress\" ? await getLiveScoreboard({ date: today }) : null;") &&
+    rankedService.includes("const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);") &&
+    rankedService.includes("href: liveDateHref(today),") &&
+    homeDeferredSections.includes("href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams(\"home\"))}"),
+  "home top performer must promote the provisional live GS+ leader into the hero and link to the live board",
 );
 
 assert(

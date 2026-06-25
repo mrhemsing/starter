@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
+import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { liveDateHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { PitchEvent, StartSummary } from "@/lib/types";
 
@@ -19,6 +21,7 @@ type TopPerformerState = {
   start: StartSummary;
   slateCount: number;
   dateLabel: string;
+  href?: string;
 };
 
 type TopPerformerPayload = TopPerformerState & {
@@ -46,7 +49,9 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
     getRankedSlateCompletionState(today, today),
     getSlateStartProgress({ window: "today", date: today }),
   ]);
-  const todaySlateStarts = todayCompletion.completedStarts > 0 ? await getDailySlate({ window: "today", date: today }) : [];
+  const isTodaySlateStarted = slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games";
+  const todaySlateStarts = todayCompletion.completedStarts > 0 || isTodaySlateStarted ? await getDailySlate({ window: "today", date: today }) : [];
+  const liveBoard = slateProgress.state === "starts-in-progress" ? await getLiveScoreboard({ date: today }) : null;
   const yesterdayArchivedSlateStarts = await getArchivedSlateStarts(yesterday);
   const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
   const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);
@@ -57,8 +62,10 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const topPerformerState = resolveTopPerformerState({
     today,
     yesterday,
-    isTodaySlateStarted: slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games",
+    isTodaySlateStarted,
     areTodayStartsComplete: slateProgress.state === "all-starts-complete",
+    liveBoard,
+    todaySlateStarts,
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
@@ -110,6 +117,8 @@ function resolveTopPerformerState({
   yesterday,
   isTodaySlateStarted,
   areTodayStartsComplete,
+  liveBoard,
+  todaySlateStarts,
   todayCompletedSlateStarts,
   yesterdaySlateStarts,
 }: {
@@ -117,6 +126,8 @@ function resolveTopPerformerState({
   yesterday: string;
   isTodaySlateStarted: boolean;
   areTodayStartsComplete: boolean;
+  liveBoard: LiveScoreboard | null;
+  todaySlateStarts: StartSummary[];
   todayCompletedSlateStarts: StartSummary[];
   yesterdaySlateStarts: StartSummary[];
 }) {
@@ -129,6 +140,17 @@ function resolveTopPerformerState({
       start: todayLeader,
       slateCount: todayCompletedSlateStarts.length,
       dateLabel: formatLongDate(today),
+    };
+  }
+
+  const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);
+  if (liveLeader) {
+    return {
+      status: "live" as const,
+      start: liveLeader,
+      slateCount: liveBoard?.totalStarts ?? todaySlateStarts.length,
+      dateLabel: formatLongDate(today),
+      href: liveDateHref(today),
     };
   }
 
@@ -150,6 +172,25 @@ function resolveTopPerformerState({
     start: yesterdayLeader,
     slateCount: yesterdayRankedStarts.length,
     dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
+  };
+}
+
+function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStarts: StartSummary[]) {
+  const leader = liveBoard?.leader;
+  if (!leader || !liveBoard?.hasActiveStarts || leader.gsPlus === null) return null;
+
+  const baseline = todaySlateStarts.find((start) => start.id === leader.startId);
+  if (!baseline) return null;
+
+  return {
+    ...baseline,
+    line: leader.line,
+    gameScorePlus: leader.gsPlus,
+    source: {
+      schedule: baseline.source?.schedule ?? "live",
+      line: "live-gamefeed" as const,
+      ranking: "schedule-derived-gamefeed-line" as const,
+    },
   };
 }
 
