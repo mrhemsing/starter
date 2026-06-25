@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const bestStartsRoute = await readFile("src/app/api/home/best-starts/route.ts", "utf8");
 const bestStartsService = await readFile("src/lib/data/home-best-starts-service.ts", "utf8");
+const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
@@ -32,6 +33,13 @@ assert(
     bestStartsService.includes("weeklyHighlight") &&
     bestStartsService.includes("monthlyHighlight"),
   "home best-starts service must include weekly and monthly highlight payload fields",
+);
+
+assert(
+  featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
+    featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
+    featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
+  "featured highlights must keep quota-safe dynamic search disabled by default and manually map Cam Schlittler's 13-K MLB video",
 );
 
 assert(

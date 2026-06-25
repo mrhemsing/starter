@@ -12,6 +12,7 @@ const ALL_GAME_HIGHLIGHTS_TITLE_PATTERN = /\ball\s+games(?:\s+highlights?)?\b/i;
 const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-06-12-mil-phi-694819": "MaAOy8pY36c",
   "2026-06-14-sf-chc-657277": "WfT4TJqUs_E",
+  "2026-06-19-nyy-cin-693645": "JkWrVSnrgB4",
 };
 
 type CachedResolution = {
