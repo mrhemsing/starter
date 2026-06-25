@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type FollowPitcherButtonProps = {
   pitcherId: string;
@@ -8,6 +9,7 @@ type FollowPitcherButtonProps = {
   initialFollowing?: boolean;
   compact?: boolean;
   labeled?: boolean;
+  refreshOnChange?: boolean;
 };
 
 const followState = new Map<string, boolean>();
@@ -16,7 +18,8 @@ const FOLLOW_STATE_EVENT = "toe-the-slab-follow-state";
 
 type FollowStateEvent = CustomEvent<{ pitcherId: string; following: boolean }>;
 
-export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing = false, compact = false, labeled = false }: FollowPitcherButtonProps) {
+export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing = false, compact = false, labeled = false, refreshOnChange = false }: FollowPitcherButtonProps) {
+  const router = useRouter();
   const [following, setFollowing] = useState(() => followState.get(pitcherId) ?? initialFollowing);
   const [error, setError] = useState<string | null>(null);
   const [pulse, setPulse] = useState(false);
@@ -70,6 +73,7 @@ export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing =
       if (!response.ok) throw new Error("watchlist update failed");
       persisted.current = target;
       setError(null);
+      if (refreshOnChange) router.refresh();
     } catch {
       latestIntent.current = persisted.current;
       setSharedFollowing(persisted.current);

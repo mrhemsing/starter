@@ -5,6 +5,7 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { SiteHeader } from "@/components/site-header";
+import { WatchlistSearchForm } from "@/components/watchlist-search-form";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -94,18 +95,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
                     ))}
                   </div>
                 </div>
-                <form className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" action="/watchlist" data-responsive-check="watchlist-search">
-                  <input type="hidden" name="sort" value={watchlist.sort} />
-                  <input
-                    name="q"
-                    defaultValue={query}
-                    placeholder="Search pitchers"
-                    className="min-h-11 rounded border border-white/10 bg-black/20 px-3 font-mono text-sm text-zinc-100 outline-none focus:border-amber-300"
-                  />
-                  <button className="min-h-11 rounded border border-amber-300/40 px-4 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
-                    Search
-                  </button>
-                </form>
+                <WatchlistSearchForm query={query} sort={watchlist.sort} />
               </div>
               <FollowSearchResults results={searchResults} followedIds={followedIds} query={query} />
             </section>
@@ -243,7 +233,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
       </div>
       <div className="space-y-3">
         <FormSparkline values={entry.spark} tier={entry.tier} leagueMeanGS={entry.bgs} label={`${entry.name} recent form GS+: ${entry.spark.join(", ")}`} />
-        <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact />
+        <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
       </div>
     </article>
   );
@@ -265,7 +255,7 @@ function FollowSearchResults({ results, followedIds, query }: { results: FormSum
               <p className="truncate font-serif text-lg font-bold text-zinc-50">{pitcher.name}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} · Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}</p>
             </Link>
-            <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followedIds.has(pitcher.pitcherId)} compact />
+            <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followedIds.has(pitcher.pitcherId)} compact refreshOnChange />
           </div>
         ))}
       </div>

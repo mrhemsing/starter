@@ -1,13 +1,36 @@
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import net from "node:net";
 
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
 
+const [watchlistPageSource, searchFormSource, followButtonSource] = await Promise.all([
+  readFile("src/app/watchlist/page.tsx", "utf8"),
+  readFile("src/components/watchlist-search-form.tsx", "utf8"),
+  readFile("src/components/follow-pitcher-button.tsx", "utf8"),
+]);
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
+
+assert(
+  watchlistPageSource.includes("<WatchlistSearchForm query={query} sort={watchlist.sort} />"),
+  "watchlist page should render the no-scroll client search form",
+);
+assert(
+  searchFormSource.includes("event.preventDefault()") &&
+    searchFormSource.includes("router.replace(nextPath, { scroll: false })"),
+  "watchlist search should update query results without resetting scroll",
+);
+assert(
+  watchlistPageSource.includes("compact refreshOnChange") &&
+    followButtonSource.includes("refreshOnChange?: boolean") &&
+    followButtonSource.includes("if (refreshOnChange) router.refresh()"),
+  "watchlist follow buttons should refresh rows after successful API updates",
+);
 
 async function reservePort() {
   const server = net.createServer();
