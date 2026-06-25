@@ -31,6 +31,7 @@ const WATCH_SCORE_PRECISION = 1;
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"];
 const WATCH_COMPONENT_LABELS = ["Top arm", "Pairing", "Matchup"];
 const WATCH_COMPONENT_LAYOUTS = ["featured", "compact", "standard"];
+const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
 
@@ -1007,22 +1008,25 @@ function assertUpcomingRangeToggle(html, route, today, expectedWeekStart = today
     anchorWithTextHasAttributes(html, "Today", {
       href: `/upcoming/${todayToggleDate}`,
       "aria-label": `View today slate for ${formatUpcomingDate(todayToggleDate)}`,
+      "data-range-option": "today",
     }),
-    `${route} should link the Today toggle to the rendered home slate with an accessible label`,
+    `${route} should link the Today toggle to the rendered home slate with an accessible label and stable range key`,
   );
   assert(
     anchorWithTextHasAttributes(html, "Tomorrow", {
       href: `/upcoming/${tomorrow}`,
       "aria-label": `View tomorrow slate for ${formatUpcomingDate(tomorrow)}`,
+      "data-range-option": "tomorrow",
     }),
-    `${route} should link the Tomorrow toggle to the next slate with an accessible label`,
+    `${route} should link the Tomorrow toggle to the next slate with an accessible label and stable range key`,
   );
   assert(
     anchorWithTextHasAttributes(html, "This week", {
       href: `/upcoming/week/${expectedWeekStart}`,
       "aria-label": `View week of ${formatUpcomingDate(expectedWeekStart)}`,
+      "data-range-option": "week",
     }),
-    `${route} should link the This week toggle to the expected weekly slate with an accessible label`,
+    `${route} should link the This week toggle to the expected weekly slate with an accessible label and stable range key`,
   );
   if (expectedActiveHref) {
     assert(
@@ -1036,8 +1040,44 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
     upcomingDatePageSource.includes('import { FastFilterLink } from "@/components/fast-filter-link";') &&
       upcomingDatePageSource.includes('<FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]') &&
-      upcomingDatePageSource.includes('data-control-link-active={String(active)} scroll={false}'),
-    "upcoming filter controls must use FastFilterLink with scroll disabled so mobile taps do not jump to the page top",
+      upcomingDatePageSource.includes('ariaCurrent={active ? "location" : undefined}') &&
+      upcomingDatePageSource.includes('data-control-link-active={String(active)} data-control-link-key={controlKey} scroll={false}'),
+    "upcoming filter controls must use FastFilterLink with stable link keys, active current-state semantics, and scroll disabled so mobile taps do not jump to the page top",
+  );
+  assert(
+    UPCOMING_CONTROL_LINK_KEYS.every((key) => upcomingDatePageSource.includes(`controlKey="${key}"`)),
+    "upcoming filter controls must keep stable public option keys for status and sort links",
+  );
+  assert(
+    upcomingDatePageSource.includes('role="group" aria-label={`${label} filters`}') &&
+      upcomingDatePageSource.includes('<ControlGroup label="Status">') &&
+      upcomingDatePageSource.includes('<ControlGroup label="Sort">'),
+    "upcoming filter controls must keep grouped Status and Sort semantics",
+  );
+  assert(
+      upcomingDatePageSource.includes("const controlsEmpty = visibleGameCount === 0;") &&
+      upcomingDatePageSource.includes("data-control-empty={String(controlsEmpty)}"),
+    "upcoming filter controls must expose empty-result state derived from visible game count",
+  );
+  assert(
+    upcomingDatePageSource.includes("const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);") &&
+      upcomingDatePageSource.includes("data-control-hidden-games={hiddenGameCount}"),
+    "upcoming filter controls must expose hidden game count derived from scheduled minus visible games",
+  );
+  assert(
+    countOccurrences(upcomingDatePageSource, "data-control-hidden-games={hiddenGameCount}") === 1,
+    "upcoming filter controls must expose exactly one hidden game count telemetry hook",
+  );
+  assert(
+    upcomingDatePageSource.includes("data-control-label={controlsLabel}"),
+    "upcoming filter controls must expose the normalized visible label as stable telemetry",
+  );
+  assert(
+    upcomingDatePageSource.includes('slateRange: "day" | "week";') &&
+      upcomingDatePageSource.includes("data-slate-range={slateRange}") &&
+      upcomingDatePageSource.includes('slateRange="day"') &&
+      upcomingWeekPageSource.includes('slateRange="week"'),
+    "upcoming filter controls must expose whether they are rendering the day or week slate range",
   );
   assert(html.includes('data-responsive-check="upcoming-controls"'), `${route} should render the upcoming filter controls`);
   assert(
@@ -1045,13 +1085,16 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     `${route} should expose the current upcoming filter state on the controls summary`,
   );
   const expectedControls = controlsFromLabel(expectedLabel);
+  const expectedSlateRange = route.startsWith("/upcoming/week") ? "week" : "day";
   assert(
     elementHasAttributes(html, "details", {
       "data-responsive-check": "upcoming-controls",
+      "data-slate-range": expectedSlateRange,
+      "data-control-key": `${expectedControls.pregameOnly ? "pregame" : "all"}-${expectedControls.sort}`,
       "data-control-pregame": String(expectedControls.pregameOnly),
       "data-control-sort": expectedControls.sort,
     }),
-    `${route} should expose normalized upcoming controls state`,
+    `${route} should expose normalized upcoming controls state and slate range`,
   );
   assert(
     !html.includes('data-control-team=') && !html.includes(">All teams<"),
@@ -1067,6 +1110,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     `${route} should expose valid visible and scheduled game counts on the upcoming controls`,
   );
   assert(
+    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-empty") === String(renderedVisibleGames === 0),
+    `${route} should expose control empty-state telemetry that matches visible game count`,
+  );
+  assert(
     elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === "2",
     `${route} should expose exactly one active upcoming control per group`,
   );
@@ -1075,9 +1122,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     `${route} should render exactly two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
   );
   assert(
+    activeUpcomingControlCurrentLinkCount(html) === 2,
+    `${route} should expose native current-state semantics on the two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+  );
+  assert(
     upcomingFastFilterLinkCount(html) === 4,
     `${route} should render all four upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
   );
+  assertUpcomingControlLinkKeys(html, route);
   if (linkExpectations) {
     assert(
       elementHasAttributes(html, "details", {
@@ -1103,10 +1155,25 @@ function activeUpcomingControlLinkCount(html) {
   return (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
 }
 
+function activeUpcomingControlCurrentLinkCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  return (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
+}
+
 function upcomingFastFilterLinkCount(html) {
   const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
   const controlHtml = controlMatch?.[0] ?? html;
   return (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
+}
+
+function assertUpcomingControlLinkKeys(html, route) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  for (const key of UPCOMING_CONTROL_LINK_KEYS) {
+    const count = (controlHtml.match(new RegExp(`<a\\b(?=[^>]*data-control-link-key="${key}")[^>]*>`, "g")) ?? []).length;
+    assert(count === 1, `${route} should render exactly one upcoming control link key ${key}; rendered controls: ${controlAnchorSummary(html)}`);
+  }
 }
 
 function controlsFromLabel(label) {
@@ -1397,6 +1464,33 @@ function assertWeekMustWatchCallout(html, route, games) {
     }),
     `${route} weekly must-watch callout should link to the featured game's day slate with an accessible label`,
   );
+  assert(
+    upcomingWeekPageSource.includes('data-responsive-check="upcoming-week-feature"') &&
+      upcomingWeekPageSource.includes("data-feature-date={bestGame.day}") &&
+      upcomingWeekPageSource.includes("data-feature-game-id={bestGame.game.gamePk}") &&
+      upcomingWeekPageSource.includes("data-feature-watch-score={bestGame.game.gameWatchScore}") &&
+      upcomingWeekPageSource.includes('data-feature-rank="1"'),
+    "weekly upcoming must-watch CTA must keep stable source-pinned feature telemetry",
+  );
+  assert(
+    upcomingWeekPageSource.includes("const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));") &&
+      upcomingWeekPageSource.includes("const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);") &&
+      upcomingWeekPageSource.includes("{filteredDays.map((day) => (") &&
+      upcomingWeekPageSource.includes("tonight={day}"),
+    "weekly upcoming page must derive filtered day games once and render the same filtered data used for counts",
+  );
+  for (const featureTelemetry of [
+    'data-responsive-check="upcoming-week-feature"',
+    "data-feature-date={bestGame.day}",
+    "data-feature-game-id={bestGame.game.gamePk}",
+    "data-feature-watch-score={bestGame.game.gameWatchScore}",
+    'data-feature-rank="1"',
+  ]) {
+    assert(
+      countOccurrences(upcomingWeekPageSource, featureTelemetry) === 1,
+      `weekly upcoming must-watch CTA must expose exactly one ${featureTelemetry} source hook`,
+    );
+  }
   assert(
     normalized.includes("#1 week pick"),
     `${route} weekly must-watch callout should use slate-relative watch copy`,
@@ -4086,6 +4180,14 @@ try {
       filteredPregameTeamWeekHtml,
       `/upcoming/week/${date}?pregame=1`,
       "Filters / Pregame only / Watch rank",
+      {
+        basePath: `/upcoming/week/${date}`,
+        controls: { pregameOnly: true, sort: "watch" },
+        counts: {
+          visibleGames: upcoming.days.reduce((count, day) => count + pregameGames(day.games).length, 0),
+          scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+        },
+      },
     );
     upcoming.days.forEach((day) => {
       assertRenderedWatchCards(
@@ -4350,6 +4452,14 @@ try {
       filteredUpcomingWeekIndexTeamHtml,
       "/upcoming/week?pregame=1",
       "Filters / Pregame only / Watch rank",
+      {
+        basePath: `/upcoming/week/${defaultDateUpcoming.range.start}`,
+        controls: { pregameOnly: true, sort: "watch" },
+        counts: {
+          visibleGames: defaultWeekUpcoming.days.reduce((count, day) => count + pregameGames(day.games).length, 0),
+          scheduledGames: defaultWeekUpcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+        },
+      },
     );
     defaultWeekUpcoming.days.forEach((day) => {
       assertRenderedWatchCards(

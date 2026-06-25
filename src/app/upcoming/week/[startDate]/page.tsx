@@ -62,7 +62,8 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const resolvedStartDate = upcoming.range.start;
   const bestGame = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game }))).sort((a, b) => b.game.gameWatchScore - a.game.gameWatchScore)[0];
   const jsonLd = jsonLdForUpcomingWeek(upcoming);
-  const visibleGameCount = upcoming.days.reduce((count, day) => count + filterAndSortGames(day.games, controls).length, 0);
+  const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));
+  const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);
   const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);
 
   return (
@@ -79,15 +80,20 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             Week of {formatUpcomingDate(resolvedStartDate)} · {visibleGameCount} of {scheduledGameCount} games shown
           </p>
           <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
-            <Link className={toggleClass(false)} href={upcomingDateHref(today)} aria-label={`View today slate for ${formatUpcomingDate(today)}`}>Today</Link>
-            <Link className={toggleClass(false)} href={upcomingDateHref(tomorrow)} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`}>Tomorrow</Link>
-            <Link className={toggleClass(true)} href={upcomingWeekHref(resolvedStartDate)} aria-current="page" aria-label={`View week of ${formatUpcomingDate(resolvedStartDate)}`}>This week</Link>
+            <Link className={toggleClass(false)} href={upcomingDateHref(today)} aria-label={`View today slate for ${formatUpcomingDate(today)}`} data-range-option="today">Today</Link>
+            <Link className={toggleClass(false)} href={upcomingDateHref(tomorrow)} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`} data-range-option="tomorrow">Tomorrow</Link>
+            <Link className={toggleClass(true)} href={upcomingWeekHref(resolvedStartDate)} aria-current="page" aria-label={`View week of ${formatUpcomingDate(resolvedStartDate)}`} data-range-option="week">This week</Link>
           </nav>
           {bestGame ? (
             <Link
               href={upcomingDateHref(bestGame.day)}
               className="mt-4 inline-flex rounded border border-amber-300/30 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
               aria-label={`View featured game day slate for ${formatUpcomingDate(bestGame.day)}`}
+              data-responsive-check="upcoming-week-feature"
+              data-feature-date={bestGame.day}
+              data-feature-game-id={bestGame.game.gamePk}
+              data-feature-watch-score={bestGame.game.gameWatchScore}
+              data-feature-rank="1"
             >
               Week&apos;s must-watch: {bestGame.game.label} / {formatUpcomingDate(bestGame.day)} / #1 week pick
             </Link>
@@ -95,6 +101,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
           <UpcomingControls
             controls={controls}
             basePath={upcomingWeekHref(resolvedStartDate)}
+            slateRange="week"
             visibleGameCount={visibleGameCount}
             scheduledGameCount={scheduledGameCount}
           />
@@ -102,10 +109,10 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
       </div>
 
       <div className="space-y-8">
-        {upcoming.days.map((day) => (
+        {filteredDays.map((day) => (
           <TonightsMustWatch
             key={day.date}
-            tonight={{ ...day, games: filterAndSortGames(day.games, controls) }}
+            tonight={day}
             fullSlateHref={upcomingDateHref(day.date)}
             fullSlateLabel="Day slate"
             fullSlateAriaLabel={`View day slate for ${formatUpcomingDate(day.date)}`}

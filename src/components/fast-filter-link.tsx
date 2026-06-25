@@ -15,9 +15,21 @@ type FastFilterLinkProps = {
   style?: React.CSSProperties;
   scroll?: boolean;
   "data-control-link-active"?: string;
+  "data-control-link-key"?: string;
 };
 
-export function FastFilterLink({ href, className, children, prefetch = true, ariaCurrent, ariaLabel, style, scroll = true, "data-control-link-active": dataControlLinkActive }: FastFilterLinkProps) {
+export function FastFilterLink({
+  href,
+  className,
+  children,
+  prefetch = true,
+  ariaCurrent,
+  ariaLabel,
+  style,
+  scroll = true,
+  "data-control-link-active": dataControlLinkActive,
+  "data-control-link-key": dataControlLinkKey,
+}: FastFilterLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -45,6 +57,7 @@ export function FastFilterLink({ href, className, children, prefetch = true, ari
       style={style}
       data-fast-filter-link
       data-control-link-active={dataControlLinkActive}
+      data-control-link-key={dataControlLinkKey}
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}

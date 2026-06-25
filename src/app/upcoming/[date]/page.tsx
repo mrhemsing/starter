@@ -83,6 +83,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
           <UpcomingControls
             controls={controls}
             basePath={upcomingDateHref(resolvedDate)}
+            slateRange="day"
             visibleGameCount={visibleUpcoming.games.length}
             scheduledGameCount={upcoming.scheduledGames}
           />
@@ -145,26 +146,36 @@ export function filterAndSortGames<T extends { status: string; firstPitch: strin
 export function UpcomingControls({
   controls,
   basePath,
+  slateRange,
   visibleGameCount,
   scheduledGameCount,
 }: {
   controls: UpcomingControlsState;
   basePath: string;
+  slateRange: "day" | "week";
   visibleGameCount: number;
   scheduledGameCount: number;
 }) {
   const controlsLabel = upcomingControlsLabel(controls);
+  const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;
+  const controlsEmpty = visibleGameCount === 0;
+  const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);
   const activeControlCount = 2;
 
   return (
     <details
       className="mt-5 rounded border border-white/10 bg-[#101014] p-3"
       data-responsive-check="upcoming-controls"
+      data-slate-range={slateRange}
+      data-control-key={controlsKey}
+      data-control-label={controlsLabel}
       data-control-pregame={String(controls.pregameOnly)}
       data-control-sort={controls.sort}
+      data-control-empty={String(controlsEmpty)}
       data-control-base-path={basePath}
       data-control-visible-games={visibleGameCount}
       data-control-scheduled-games={scheduledGameCount}
+      data-control-hidden-games={hiddenGameCount}
       data-control-active-count={activeControlCount}
     >
       <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
@@ -172,12 +183,12 @@ export function UpcomingControls({
       </summary>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <ControlGroup label="Status">
-          <ControlLink active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
-          <ControlLink active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
+          <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
+          <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
         </ControlGroup>
         <ControlGroup label="Sort">
-          <ControlLink active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
-          <ControlLink active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
+          <ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
+          <ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
         </ControlGroup>
       </div>
     </details>
@@ -190,16 +201,16 @@ function upcomingControlsLabel(controls: UpcomingControlsState) {
 
 function ControlGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div role="group" aria-label={`${label} filters`}>
       <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }
 
-function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
+function ControlLink({ controlKey, active, href, children }: { controlKey: string; active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} data-control-link-active={String(active)} scroll={false}>
+    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "location" : undefined} data-control-link-active={String(active)} data-control-link-key={controlKey} scroll={false}>
       {children}
     </FastFilterLink>
   );
@@ -219,9 +230,9 @@ function UpcomingToggle({ activeDate, today, tomorrow }: { activeDate: string; t
 
   return (
     <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
-      <Link className={toggleClass(todayActive)} href={upcomingDateHref(today)} aria-current={todayActive ? "page" : undefined} aria-label={`View today slate for ${formatUpcomingDate(today)}`}>Today</Link>
-      <Link className={toggleClass(tomorrowActive)} href={upcomingDateHref(tomorrow)} aria-current={tomorrowActive ? "page" : undefined} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`}>Tomorrow</Link>
-      <Link className={toggleClass(false)} href={upcomingWeekHref(activeDate)} aria-label={`View week of ${formatUpcomingDate(activeDate)}`}>This week</Link>
+      <Link className={toggleClass(todayActive)} href={upcomingDateHref(today)} aria-current={todayActive ? "page" : undefined} aria-label={`View today slate for ${formatUpcomingDate(today)}`} data-range-option="today">Today</Link>
+      <Link className={toggleClass(tomorrowActive)} href={upcomingDateHref(tomorrow)} aria-current={tomorrowActive ? "page" : undefined} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`} data-range-option="tomorrow">Tomorrow</Link>
+      <Link className={toggleClass(false)} href={upcomingWeekHref(activeDate)} aria-label={`View week of ${formatUpcomingDate(activeDate)}`} data-range-option="week">This week</Link>
     </nav>
   );
 }
