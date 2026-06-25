@@ -125,7 +125,7 @@ export function TopPerformerCard({
       <div className="grid lg:min-h-[500px] lg:grid-cols-[45%_55%]">
         <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#4A3E1C] bg-[#0A0B0D] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
           <div className="hidden lg:block">
-            <p className="font-mono text-[10px] uppercase leading-[1.05] tracking-[0.22em] text-[#F6C445]">
+            <p className="font-mono text-[10px] uppercase leading-[1.25] tracking-[0.22em] text-[#F6C445]">
               <TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} />
               <span className="mt-1 block">{statusLabel.detail}</span>
             </p>
@@ -199,7 +199,7 @@ export function TopPerformerCard({
           )}
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.05)_38%,rgba(10,11,13,0.86)_100%)] lg:bg-[linear-gradient(90deg,rgba(10,11,13,0.44)_0%,rgba(10,11,13,0.02)_38%,rgba(10,11,13,0.66)_100%)]" />
           <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4 sm:p-5 lg:hidden">
-            <p className="max-w-[68%] font-mono text-[10px] uppercase leading-[1.05] tracking-[0.16em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+            <p className="max-w-[68%] font-mono text-[10px] uppercase leading-[1.25] tracking-[0.16em] text-[#F6C445] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
               <TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} compact />
               <span className="mt-1 block nowrap-token">{statusLabel.detail}</span>
             </p>

@@ -205,10 +205,10 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.22em] text-[#F6C445]') &&
+  topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.25] tracking-[0.22em] text-[#F6C445]') &&
     topPerformerCard.includes('<TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} />') &&
     topPerformerCard.includes('<span className="mt-1 block">{statusLabel.detail}</span>') &&
-    topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.05] tracking-[0.16em] text-[#F6C445]') &&
+    topPerformerCard.includes('font-mono text-[10px] uppercase leading-[1.25] tracking-[0.16em] text-[#F6C445]') &&
     topPerformerCard.includes('<TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} compact />') &&
     topPerformerCard.includes('<span className="mt-1 block nowrap-token">{statusLabel.detail}</span>'),
   "home top performer status detail must render on a forced tight new line on desktop and mobile",
