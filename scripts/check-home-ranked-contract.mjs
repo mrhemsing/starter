@@ -184,17 +184,22 @@ assert(
 
 assert(
   topPerformerCard.includes('status: "final" | "live" | "previous";') &&
-    topPerformerCard.includes('eyebrow: "The one to beat · Live leader"') &&
+    topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel, line);") &&
+    topPerformerCard.includes('eyebrow: `The one to beat · ${formatLiveLeaderLine(line)}`') &&
+    topPerformerCard.includes("function formatLiveLeaderLine(line: StartLine)") &&
+    topPerformerCard.includes("return `${line.strikeouts} K, ${formatRunTotal(line.earnedRuns)}`;") &&
+    topPerformerCard.includes('if (runs === 1) return "one run";') &&
     topPerformerCard.includes('eyebrow: "Start of the night"') &&
     homeDeferredSections.includes("status={ranked.topPerformer.status}") &&
     !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
-  "home top performer must label live leaders as provisional and final/previous winners as Start of the Night",
+  "home top performer must label live leaders with the current strikeout/run line and final/previous winners as Start of the Night",
 );
 
 assert(
-  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string)') &&
+  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string, line: StartLine)') &&
     topPerformerCard.includes('if (status === "live")') &&
     !topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
+    !topPerformerCard.includes("Live leader") &&
     !topPerformerCard.includes("games final"),
   "home top performer live label must not repeat the slate final-count detail",
 );

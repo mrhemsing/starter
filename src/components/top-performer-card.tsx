@@ -51,7 +51,7 @@ export function TopPerformerCard({
   const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
+  const statusLabel = formatTopPerformerStatusLabel(status, dateLabel, line);
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -247,10 +247,10 @@ export function TopPerformerCard({
   );
 }
 
-function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string) {
+function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string, line: StartLine) {
   if (status === "live") {
     return {
-      eyebrow: "The one to beat · Live leader",
+      eyebrow: `The one to beat · ${formatLiveLeaderLine(line)}`,
       detail: dateLabel,
     };
   }
@@ -259,6 +259,16 @@ function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", da
     eyebrow: "Start of the night",
     detail: dateLabel,
   };
+}
+
+function formatLiveLeaderLine(line: StartLine) {
+  return `${line.strikeouts} K, ${formatRunTotal(line.earnedRuns)}`;
+}
+
+function formatRunTotal(runs: number) {
+  if (runs === 0) return "no runs";
+  if (runs === 1) return "one run";
+  return `${runs} runs`;
 }
 
 function ScoreBug({ score, compact = false }: { score: string; compact?: boolean }) {
