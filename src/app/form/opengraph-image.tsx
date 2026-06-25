@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
-import { bandOf, HEAT_BANDS } from "@/lib/form-tokens";
+import { HEAT_BANDS } from "@/lib/form-tokens";
 
 type FormImageProps = {
   searchParams?: Promise<{
@@ -21,7 +21,7 @@ export default async function Image({ searchParams }: FormImageProps) {
   const window = parseFormWindow(params?.window);
   const leaderboard = await getFormLeaderboard({ window });
   const topPitcher = leaderboard.pitchers[0];
-  const bandCounts = HEAT_BANDS.map((band) => ({ ...band, count: leaderboard.pitchers.filter((pitcher) => bandOf(pitcher.heatIndex ?? 0).key === band.key).length }));
+  const bandCounts = HEAT_BANDS.map((band) => ({ ...band, count: leaderboard.pitchers.filter((pitcher) => pitcher.tier === band.key).length }));
 
   return new ImageResponse(
     (

@@ -16,8 +16,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Rolling form trend</p>
-            <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Hot, Who&apos;s Not</h2>
-            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Last {home.window} qualified starts, movement, and next probable start context.</p>
+            <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Moving</h2>
+            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Last {home.window} qualified starts, direction, and next probable start context.</p>
             <p className={`mt-2 font-mono text-[10px] uppercase tracking-[0.16em] ${home.stale ? "text-amber-300" : "text-zinc-500"}`} title={home.latestScoredStartDate ? `Latest scored start date: ${home.latestScoredStartDate}` : undefined}>
               Form through {home.formThroughDate ?? "pending"}{home.stale ? " / updating" : ""}
             </p>
@@ -35,8 +35,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <>
             <LeagueTempStrip home={home} />
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <HeatRail title="On fire & hot" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
-              <HeatRail title="Cooling & ice cold" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="On fire & heating up" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="Cooling down & ice cold" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
             </div>
             {home.totalQualified < HOME_CONFIG.railSize * 4 ? (
               <p className="mt-4 font-mono text-xs text-zinc-500">Form stabilizes after a few starts. Sample is still small.</p>
@@ -202,7 +202,6 @@ function nextStartDetails(pitcher: FormSummary) {
 
 function statusLabel(band: HeatBand) {
   if (band.key === "onfire") return "🔥 ON FIRE";
-  if (band.key === "hot") return "HOT";
   return band.label;
 }
 

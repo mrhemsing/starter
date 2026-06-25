@@ -20,7 +20,7 @@ import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
-import { HEAT_BANDS } from "@/lib/form-tokens";
+import { FORM_CONFIG, HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -34,16 +34,17 @@ type FormPageProps = {
     sort?: string;
     team?: string;
     q?: string;
-    hot?: string;
     qualified?: string;
     band?: string;
     motion?: string;
     even?: string;
+    hot?: string;
+    cooling?: string;
   }>;
 };
 
 const sortOptions = [
-  { key: "form", label: "Form" },
+  { key: "form", label: "Direction" },
   { key: "risers", label: "Risers" },
   { key: "fallers", label: "Fallers" },
 ] as const;
@@ -101,6 +102,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
   const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
   const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
+  const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
+  const coolingExpanded = Boolean(team) || params?.cooling === "show" || band === "cooling" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, tonight] = await Promise.all([
@@ -122,7 +125,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       const bLimited = b.windowCount < window;
       if (sort === "risers") return Number(aLimited) - Number(bLimited) || b.deltaForm - a.deltaForm || b.rgs - a.rgs;
       if (sort === "fallers") return Number(aLimited) - Number(bLimited) || a.deltaForm - b.deltaForm || b.rgs - a.rgs;
-      return b.rgs - a.rgs || b.deltaForm - a.deltaForm;
+      return Number(aLimited) - Number(bLimited) || b.deltaForm - a.deltaForm || b.rgs - a.rgs;
     });
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
   const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
@@ -142,7 +145,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
-  const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "" });
+  const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
 
@@ -157,8 +160,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           {leagueView ? (
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-              <span className="block">Furnace to freezer across the last {window} qualified starts.</span>
-              <span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>
+              <span className="block">Who&apos;s gaining and losing form fastest over their last {window} starts.</span>
+              <span className="block lg:whitespace-nowrap">Level lives on Ranked Starts. This page is about which way arms are trending.</span>
             </p>
           ) : (
             <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form · {pitchers.length} shown.</p>
@@ -182,9 +185,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
               coolingCount={leaderboard.coolingCount}
             />
             <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4" data-responsive-check="heat-league-stat-strip">
-              <SummaryStat label="Qualified" value={String(leaderboard.qualifiedCount)} />
               <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
               <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
+              <SummaryStat label="Even" value={String(leagueBandCounts.find((candidate) => candidate.key === "even")?.count ?? 0)} />
               <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
             </div>
             <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
@@ -272,7 +275,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                     ) : (
                       <>
                         {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
-                        {group.pitchers.map((pitcher, index) => (
+                        {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
+                        {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { heatingExpanded, coolingExpanded })}
+                        {visibleBandPitchers(group.band.key, group.pitchers, { heatingExpanded, coolingExpanded }).map((pitcher, index) => (
                           <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={pitchers.indexOf(pitcher) + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
                         ))}
                       </>
@@ -517,6 +522,20 @@ function compareFallers(a: FormSummary, b: FormSummary, startContext: Map<string
   return a.deltaForm - b.deltaForm || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId)) || b.rgs - a.rgs || a.name.localeCompare(b.name);
 }
 
+function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
+  const rising = pitcher.tier === "onfire" || pitcher.tier === "hot";
+  const falling = pitcher.tier === "cooling" || pitcher.tier === "ice";
+  const buyLow = rising && pitcher.rgs < FORM_CONFIG.buyLowGsPlusMax;
+  const sellHigh = falling && pitcher.rgs >= FORM_CONFIG.sellHighGsPlusMin;
+  if (!buyLow && !sellHigh) return null;
+
+  return (
+    <span className={`inline-flex items-center rounded border px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] ${buyLow ? "border-teal-300/35 text-teal-300" : "border-amber-300/35 text-amber-300"}`}>
+      {buyLow ? "BUY-LOW" : "SELL-HIGH"}
+    </span>
+  );
+}
+
 function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string }) {
   const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
   const treatment = rowTreatment(pitcher);
@@ -549,6 +568,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         </p>
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
         <div className="flex min-w-0 flex-wrap gap-1.5">
+          <CrossoverPill pitcher={pitcher} />
           <FormDriverChips chips={pitcher.driverChips} compact />
         </div>
       </Link>
@@ -615,11 +635,57 @@ function EvenBandExpanded({ count, href }: { count: number; href: string }) {
   );
 }
 
+function BandEmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded border border-white/10 bg-black/20 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+      {message}
+    </div>
+  );
+}
+
+function bandEmptyMessage(band: HeatBand, count: number) {
+  if (count > 0) return null;
+  if (band.key === "onfire") return "Nobody's on fire today.";
+  if (band.key === "ice") return "Nobody's in free fall today.";
+  return null;
+}
+
+function bandExpandableControl(bandKey: HeatBand["key"], count: number, params: Record<string, string | undefined>, state: { heatingExpanded: boolean; coolingExpanded: boolean }) {
+  const cap = 12;
+  if (bandKey !== "hot" && bandKey !== "cooling") return null;
+  if (count <= cap) return null;
+
+  const expanded = bandKey === "hot" ? state.heatingExpanded : state.coolingExpanded;
+  const key = bandKey === "hot" ? "hot" : "cooling";
+  const label = bandKey === "hot" ? "heating up" : "cooling down";
+  const hidden = count - cap;
+
+  return (
+    <div className="flex justify-end">
+      <Link href={heatCheckHref({ ...params, [key]: expanded ? "" : "show" })} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 hover:border-amber-300/40 hover:text-amber-300">
+        {expanded ? `Show fewer ${label}` : `Show ${hidden} more ${label}`}
+      </Link>
+    </div>
+  );
+}
+
+function visibleBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[], state: { heatingExpanded: boolean; coolingExpanded: boolean }) {
+  if (bandKey === "hot" && !state.heatingExpanded) return pitchers.slice(0, 12);
+  if (bandKey === "cooling" && !state.coolingExpanded) return pitchers.slice(0, 12);
+  return pitchers;
+}
+
 function groupPitchersByBand(pitchers: FormSummary[]) {
   return HEAT_BANDS.map((band) => ({
     band,
-    pitchers: pitchers.filter((pitcher) => pitcher.tier === band.key),
-  })).filter((group) => group.pitchers.length > 0);
+    pitchers: sortBandPitchers(band.key, pitchers.filter((pitcher) => pitcher.tier === band.key)),
+  }));
+}
+
+function sortBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[]) {
+  if (bandKey === "cooling" || bandKey === "ice") return [...pitchers].sort((a, b) => a.deltaForm - b.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
+  if (bandKey === "even") return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
+  return [...pitchers].sort((a, b) => b.deltaForm - a.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
 }
 
 function buildActiveFilterLabel({ band, motion, team, query }: { band: string; motion: string; team: string; query: string }) {
@@ -648,19 +714,19 @@ function rowTreatment(pitcher: FormSummary): {
     return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "hot") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
+    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "cooling") {
-    return { padding: "py-3", opacity: "opacity-90", rankClass: "text-xl", gridClass: "grid-cols-[44px_36px_minmax(0,1fr)_auto] sm:grid-cols-[44px_36px_minmax(0,1fr)_132px_auto]", headshotSize: "sm", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-lg", scoreClass: "text-[30px]", metaClass: "text-zinc-500" };
+    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "ice") {
-    return { padding: "py-2.5", opacity: "opacity-85", rankClass: "text-lg", gridClass: "grid-cols-[44px_31px_minmax(0,1fr)_auto] sm:grid-cols-[44px_31px_minmax(0,1fr)_120px_auto]", headshotSize: "xs", borderClass: "border-white/5 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-base sm:text-lg", scoreClass: "text-[28px]", metaClass: "text-zinc-500" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "opacity-95", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
 function isPoleTier(pitcher: FormSummary) {
-  return pitcher.tier === "onfire" || pitcher.tier === "hot" || pitcher.tier === "ice";
+  return pitcher.tier === "onfire" || pitcher.tier === "ice";
 }
 
 function FormDeltaLabel({ summary }: { summary: Pick<FormSummary, "trend" | "deltaForm"> }) {

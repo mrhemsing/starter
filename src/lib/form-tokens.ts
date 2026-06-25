@@ -11,8 +11,12 @@ export const FORM_CONFIG = {
   minStartsToQualify: 3,
   minStartsInWindow: 2,
   ipFloor: 2.0,
-  heatingDelta: 4,
-  coolingDelta: -4,
+  heatingDelta: 1.5,
+  coolingDelta: -1.5,
+  onFireDelta: 5.5,
+  iceColdDelta: -9,
+  buyLowGsPlusMax: 50,
+  sellHighGsPlusMin: 58,
   heatIndexBase: 50,
   heatIndexRgsWeight: 1.6,
   heatIndexTrendWeight: 0.7,
@@ -20,9 +24,9 @@ export const FORM_CONFIG = {
 
 export const LEVEL_BANDS: LevelBandToken[] = [
   { key: "onfire", label: "On fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
-  { key: "hot", label: "Hot", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },
+  { key: "hot", label: "Heating Up", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },
   { key: "even", label: "Even", min: 43, color: "#888780", cssVar: "--level-even", textCssVar: "--level-even-text", textClass: "text-[var(--level-even-text)]" },
-  { key: "cooling", label: "Cooling", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
+  { key: "cooling", label: "Cooling Down", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
   { key: "ice", label: "Ice cold", min: 0, color: "#378ADD", cssVar: "--level-ice", textClass: "text-[var(--level-ice)]" },
 ];
 
@@ -94,6 +98,14 @@ export function tierOf(gs: number) {
 export function bandOf(heatIndex: number) {
   const displayedValue = Math.round(heatIndex);
   return LEVEL_BANDS.find((band) => displayedValue >= band.min) ?? LEVEL_BANDS[LEVEL_BANDS.length - 1];
+}
+
+export function directionBandOf(deltaForm: number) {
+  if (deltaForm >= FORM_CONFIG.onFireDelta) return LEVEL_BANDS[0];
+  if (deltaForm >= FORM_CONFIG.heatingDelta) return LEVEL_BANDS[1];
+  if (deltaForm <= FORM_CONFIG.iceColdDelta) return LEVEL_BANDS[4];
+  if (deltaForm <= FORM_CONFIG.coolingDelta) return LEVEL_BANDS[3];
+  return LEVEL_BANDS[2];
 }
 
 export function formBandOf(rgs: number) {

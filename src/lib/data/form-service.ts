@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
+import { directionBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-scored-start-merge-v2";
+const FORM_CACHE_VERSION = "form-direction-bands-v1";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -539,7 +539,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
   const seasonStats = buildSeasonStats(starts);
-  const tier = tierOf(Math.round(rgs)).key;
+  const tier = directionBandOf(deltaForm).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
 
@@ -790,6 +790,7 @@ function buildStartPoint(starts: StartSummary[], index: number, window: FormWind
 }
 
 function compareFormSummaries(a: FormSummary, b: FormSummary) {
+  if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
   if (b.rgs !== a.rgs) return b.rgs - a.rgs;
   const aLast = a.lastStart;
   const bLast = b.lastStart;
@@ -799,6 +800,7 @@ function compareFormSummaries(a: FormSummary, b: FormSummary) {
 }
 
 function compareFormAsc(a: FormSummary, b: FormSummary) {
+  if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;
   if (a.rgs !== b.rgs) return a.rgs - b.rgs;
   const aLast = a.lastStart;
   const bLast = b.lastStart;

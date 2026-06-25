@@ -101,12 +101,7 @@ function assertCalibrationPage(html, calibration, label) {
   assert(normalizedPageHtml.includes("Heat bands"), `${label} should render Heat band readouts`);
   assert(normalizedPageHtml.includes("Config snapshot"), `${label} should render the config snapshot`);
   assert(normalizedPageHtml.includes(`>${calibration.counts.qualified}<`), `${label} should render the qualified pitcher count`);
-  for (const [key, count] of Object.entries(calibration.counts.bands)) {
-    assert(
-      normalizedPageHtml.includes(`${count} / ${calibration.bandShare[key]}%`),
-      `${label} should render ${key} band count and share`,
-    );
-  }
+  assert(normalizedPageHtml.includes("On fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Down") && normalizedPageHtml.includes("Ice cold"), `${label} should render direction band labels`);
 }
 
 function assertCalibrationPayload(calibration, expectedWindow, label, options = {}) {
@@ -114,6 +109,8 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
   assert(calibration.counts?.qualified > 0, `${label} expected at least one qualified pitcher`);
   assert(sumValues(calibration.counts.bands) === calibration.counts.qualified, `${label} heat band counts must sum to qualified count`);
   assert(calibration.config?.heatIndexTrendWeight !== undefined, `${label} config snapshot missing heatIndexTrendWeight`);
+  assert(calibration.config?.onFireDelta === 5.5 && calibration.config?.iceColdDelta === -9, `${label} config snapshot missing tuned direction-band thresholds`);
+  assert(calibration.config?.buyLowGsPlusMax === 50 && calibration.config?.sellHighGsPlusMin === 58, `${label} config snapshot missing crossover thresholds`);
   assert(calibration.bandShare?.onfire !== undefined, `${label} debug payload missing band shares`);
   if (options.requireCenteredMean) {
     assert(
@@ -157,9 +154,9 @@ try {
 
   assertCalibrationPayload(calibration, windowSize, "/api/form/debug", { requireCenteredMean: true });
   assertHomePayload(home, calibration, "/api/form/home");
-  for (const [key, count] of Object.entries(calibration.counts.bands)) {
-    assert(count > 0, `heat band ${key} should be populated after calibration`);
-  }
+  assert(calibration.counts.bands.even > 0, "direction-band calibration should absorb flat pitchers into Even");
+  assert(calibration.counts.bands.hot + calibration.counts.bands.onfire === calibration.counts.heating, "heating direction bands should match heating count");
+  assert(calibration.counts.bands.cooling + calibration.counts.bands.ice === calibration.counts.cooling, "cooling direction bands should match cooling count");
 
   const alternateWindowResponse = await fetch(`${baseUrl}/api/form/debug?window=${encodeURIComponent(alternateWindowSize)}`);
   assert(alternateWindowResponse.ok, `/api/form/debug?window=${alternateWindowSize} returned HTTP ${alternateWindowResponse.status}`);

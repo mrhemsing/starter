@@ -23,11 +23,14 @@ assert(
 assert(
   formService.includes("const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);") &&
     formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);") &&
+    formService.includes("const tier = directionBandOf(deltaForm).key;") &&
+    formService.includes("if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;") &&
+    formService.includes("if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;") &&
     !formService.includes("sort(compareHeatDesc)") &&
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&
     !formService.includes("function compareHeatAsc"),
-  "homepage Who's Hot/Who's Not rails must sort by visible RGS order, hot high-to-low and cold low-to-high",
+  "Heat Check rails and bands must sort by direction delta, not GS+ level",
 );
 
 assert(
@@ -53,8 +56,8 @@ assert(
 
 assert(
   formPage.includes("{leagueView ? (") &&
-    formPage.includes('<span className="block">Furnace to freezer across the last {window} qualified starts.</span>') &&
-    formPage.includes('<span className="block lg:whitespace-nowrap">The trace shows where every arm is moving; the glow is reserved for the poles.</span>') &&
+    formPage.includes("<span className=\"block\">Who&apos;s gaining and losing form fastest over their last {window} starts.</span>") &&
+    formPage.includes('<span className="block lg:whitespace-nowrap">Level lives on Ranked Starts. This page is about which way arms are trending.</span>') &&
     formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
   "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy with shown count in team mode",
 );
@@ -136,7 +139,7 @@ assert(
 assert(
   formPage.includes("team?: string;") &&
     formPage.includes('const team = params?.team ?? "";') &&
-    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly })") &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly, team })") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const leagueView = !team;") &&
