@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-direction-bands-v1";
+const FORM_CACHE_VERSION = "form-direction-bands-v4";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -534,12 +534,12 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const bgs = mean(starts.map((start) => start.gameScorePlus));
   const deltaForm = rgs - bgs;
   const trendDelta = calculateTrendDelta(windowStarts);
-  const trend = classifyTrend(deltaForm);
+  const trend = classifyTrend(deltaForm, window);
   const status = windowCount >= FORM_CONFIG.minStartsInWindow ? "ok" : "insufficient";
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
   const seasonStats = buildSeasonStats(starts);
-  const tier = directionBandOf(deltaForm).key;
+  const tier = directionBandOf(deltaForm, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
 
@@ -816,9 +816,10 @@ function calculateTrendDelta(starts: StartSummary[]) {
   return mean(recent.map((start) => start.gameScorePlus)) - mean(prior.map((start) => start.gameScorePlus));
 }
 
-function classifyTrend(deltaForm: number): FormTrend {
-  if (deltaForm >= FORM_CONFIG.heatingDelta) return "heating";
-  if (deltaForm <= FORM_CONFIG.coolingDelta) return "cooling";
+function classifyTrend(deltaForm: number, window: FormWindow): FormTrend {
+  const thresholds = FORM_CONFIG.directionBandThresholds[window];
+  if (deltaForm >= thresholds.heatingDelta) return "heating";
+  if (deltaForm <= thresholds.coolingDelta) return "cooling";
   return "steady";
 }
 

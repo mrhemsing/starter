@@ -23,7 +23,7 @@ assert(
 assert(
   formService.includes("const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);") &&
     formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);") &&
-    formService.includes("const tier = directionBandOf(deltaForm).key;") &&
+    formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
     formService.includes("if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;") &&
     formService.includes("if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;") &&
     !formService.includes("sort(compareHeatDesc)") &&

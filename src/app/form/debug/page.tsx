@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormCalibration, parseFormWindow } from "@/lib/data/form-service";
-import { FORM_CONFIG, HEAT_BANDS } from "@/lib/form-tokens";
+import { directionThresholdsForWindow, HEAT_BANDS } from "@/lib/form-tokens";
 
 type FormDebugPageProps = {
   searchParams?: Promise<{
@@ -44,7 +44,7 @@ export default async function FormDebugPage({ searchParams }: FormDebugPageProps
             <div className="mt-4 space-y-3">
               {HEAT_BANDS.map((band) => (
                 <div key={band.key} className="grid grid-cols-[112px_1fr_74px] items-center gap-3 font-mono text-xs">
-                  <span style={{ color: band.color }}>{band.label} {directionThresholdLabel(band.key)}</span>
+                  <span style={{ color: band.color }}>{band.label} {directionThresholdLabel(band.key, calibration.window)}</span>
                   <div className="h-2 overflow-hidden rounded bg-black/40">
                     <div className="h-full" style={{ width: `${bandPercent(calibration.counts.bands[band.key], calibration.counts.qualified)}%`, backgroundColor: band.color }} />
                   </div>
@@ -79,12 +79,13 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function directionThresholdLabel(key: string) {
-  if (key === "onfire") return `>= +${FORM_CONFIG.onFireDelta}`;
-  if (key === "hot") return `>= +${FORM_CONFIG.heatingDelta}`;
+function directionThresholdLabel(key: string, window: number) {
+  const thresholds = directionThresholdsForWindow(window);
+  if (key === "onfire") return `>= +${thresholds.onFireDelta}`;
+  if (key === "hot") return `>= +${thresholds.heatingDelta}`;
   if (key === "even") return "flat";
-  if (key === "cooling") return `<= ${FORM_CONFIG.coolingDelta}`;
-  if (key === "ice") return `<= ${FORM_CONFIG.iceColdDelta}`;
+  if (key === "cooling") return `<= ${thresholds.coolingDelta}`;
+  if (key === "ice") return `<= ${thresholds.iceColdDelta}`;
   return "";
 }
 

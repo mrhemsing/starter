@@ -11,10 +11,15 @@ export const FORM_CONFIG = {
   minStartsToQualify: 3,
   minStartsInWindow: 2,
   ipFloor: 2.0,
-  heatingDelta: 1.5,
-  coolingDelta: -1.5,
+  heatingDelta: 0.75,
+  coolingDelta: -0.75,
   onFireDelta: 5.5,
-  iceColdDelta: -9,
+  iceColdDelta: -8,
+  directionBandThresholds: {
+    3: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 8, iceColdDelta: -8 },
+    5: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 5.5, iceColdDelta: -8 },
+    10: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 3.5, iceColdDelta: -3.5 },
+  },
   buyLowGsPlusMax: 50,
   sellHighGsPlusMin: 58,
   heatIndexBase: 50,
@@ -100,11 +105,16 @@ export function bandOf(heatIndex: number) {
   return LEVEL_BANDS.find((band) => displayedValue >= band.min) ?? LEVEL_BANDS[LEVEL_BANDS.length - 1];
 }
 
-export function directionBandOf(deltaForm: number) {
-  if (deltaForm >= FORM_CONFIG.onFireDelta) return LEVEL_BANDS[0];
-  if (deltaForm >= FORM_CONFIG.heatingDelta) return LEVEL_BANDS[1];
-  if (deltaForm <= FORM_CONFIG.iceColdDelta) return LEVEL_BANDS[4];
-  if (deltaForm <= FORM_CONFIG.coolingDelta) return LEVEL_BANDS[3];
+export function directionThresholdsForWindow(window: number = FORM_CONFIG.windowDefault) {
+  return FORM_CONFIG.directionBandThresholds[window as keyof typeof FORM_CONFIG.directionBandThresholds] ?? FORM_CONFIG;
+}
+
+export function directionBandOf(deltaForm: number, window: number = FORM_CONFIG.windowDefault) {
+  const thresholds = directionThresholdsForWindow(window);
+  if (deltaForm >= thresholds.onFireDelta) return LEVEL_BANDS[0];
+  if (deltaForm >= thresholds.heatingDelta) return LEVEL_BANDS[1];
+  if (deltaForm <= thresholds.iceColdDelta) return LEVEL_BANDS[4];
+  if (deltaForm <= thresholds.coolingDelta) return LEVEL_BANDS[3];
   return LEVEL_BANDS[2];
 }
 

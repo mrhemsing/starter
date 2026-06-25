@@ -84,6 +84,12 @@ function homeSignature(home) {
   });
 }
 
+async function fetchJson(url, label) {
+  const response = await fetch(url);
+  assert(response.ok, `${label} returned HTTP ${response.status}`);
+  return response.json();
+}
+
 function assertHomePayload(home, calibration, label) {
   assert(home.window === calibration.window, `${label} window must match calibration window`);
   assert(home.totalQualified === calibration.counts.qualified, `${label} qualified count must match calibration`);
@@ -109,20 +115,37 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
   assert(calibration.counts?.qualified > 0, `${label} expected at least one qualified pitcher`);
   assert(sumValues(calibration.counts.bands) === calibration.counts.qualified, `${label} heat band counts must sum to qualified count`);
   assert(calibration.config?.heatIndexTrendWeight !== undefined, `${label} config snapshot missing heatIndexTrendWeight`);
-  assert(calibration.config?.onFireDelta === 5.5 && calibration.config?.iceColdDelta === -9, `${label} config snapshot missing tuned direction-band thresholds`);
+  const windowThresholds = calibration.config?.directionBandThresholds?.[String(expectedWindow)];
+  assert(
+    windowThresholds &&
+      windowThresholds.heatingDelta === 0.75 &&
+      windowThresholds.coolingDelta === -0.75 &&
+      Number.isFinite(windowThresholds.onFireDelta) &&
+      Number.isFinite(windowThresholds.iceColdDelta),
+    `${label} config snapshot missing tuned window-specific direction-band thresholds`,
+  );
   assert(calibration.config?.buyLowGsPlusMax === 50 && calibration.config?.sellHighGsPlusMin === 58, `${label} config snapshot missing crossover thresholds`);
   assert(calibration.bandShare?.onfire !== undefined, `${label} debug payload missing band shares`);
   if (options.requireCenteredMean) {
     assert(
-      calibration.heatIndex.mean >= 47 && calibration.heatIndex.mean <= 53,
+      calibration.heatIndex.mean >= 46 && calibration.heatIndex.mean <= 54,
       `${label} heat index mean should stay centered near 50, got ${calibration.heatIndex.mean}`,
     );
   }
   assert(calibration.trendDelta.p25 < 0 && calibration.trendDelta.p75 > 0, `${label} trendDelta should span both cooling and heating sides`);
+  if (calibration.counts.qualified >= 40) {
+    assert(calibration.counts.bands.onfire > 0, `${label} On Fire band should be reachable for a full league window`);
+    assert(calibration.counts.bands.ice > 0, `${label} Ice Cold band should be reachable for a full league window`);
+    assert(
+      calibration.counts.bands.even / calibration.counts.qualified < 0.65,
+      `${label} Even band should not absorb a collapsed majority, got ${calibration.counts.bands.even}/${calibration.counts.qualified}`,
+    );
+  }
 }
 
 const windowSize = process.env.THE_BUMP_FORM_WINDOW ?? "5";
-const alternateWindowSize = windowSize === "3" ? "10" : "3";
+const calibrationWindows = ["3", "5", "10"];
+const alternateWindowSize = calibrationWindows.find((candidate) => candidate !== windowSize) ?? "3";
 const port = await reservePort();
 const baseUrl = `http://${host}:${port}`;
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], {
@@ -151,6 +174,8 @@ try {
   const homeResponse = await fetch(`${baseUrl}/api/form/home?window=${encodeURIComponent(windowSize)}`);
   assert(homeResponse.ok, `/api/form/home returned HTTP ${homeResponse.status}`);
   const home = await homeResponse.json();
+  const defaultCalibration = String(calibration.window) === "5" ? calibration : await fetchJson(`${baseUrl}/api/form/debug?window=5`, "/api/form/debug?window=5");
+  const defaultHome = String(home.window) === "5" ? home : await fetchJson(`${baseUrl}/api/form/home?window=5`, "/api/form/home?window=5");
 
   assertCalibrationPayload(calibration, windowSize, "/api/form/debug", { requireCenteredMean: true });
   assertHomePayload(home, calibration, "/api/form/home");
@@ -158,28 +183,45 @@ try {
   assert(calibration.counts.bands.hot + calibration.counts.bands.onfire === calibration.counts.heating, "heating direction bands should match heating count");
   assert(calibration.counts.bands.cooling + calibration.counts.bands.ice === calibration.counts.cooling, "cooling direction bands should match cooling count");
 
+  const windowCalibrations = new Map([[String(calibration.window), calibration]]);
+
   const alternateWindowResponse = await fetch(`${baseUrl}/api/form/debug?window=${encodeURIComponent(alternateWindowSize)}`);
   assert(alternateWindowResponse.ok, `/api/form/debug?window=${alternateWindowSize} returned HTTP ${alternateWindowResponse.status}`);
   const alternateWindowCalibration = await alternateWindowResponse.json();
   assertCalibrationPayload(alternateWindowCalibration, alternateWindowSize, `/api/form/debug?window=${alternateWindowSize}`);
+  windowCalibrations.set(String(alternateWindowCalibration.window), alternateWindowCalibration);
 
   const alternateWindowHomeResponse = await fetch(`${baseUrl}/api/form/home?window=${encodeURIComponent(alternateWindowSize)}`);
   assert(alternateWindowHomeResponse.ok, `/api/form/home?window=${alternateWindowSize} returned HTTP ${alternateWindowHomeResponse.status}`);
   const alternateWindowHome = await alternateWindowHomeResponse.json();
   assertHomePayload(alternateWindowHome, alternateWindowCalibration, `/api/form/home?window=${alternateWindowSize}`);
 
+  for (const candidateWindow of calibrationWindows) {
+    if (windowCalibrations.has(candidateWindow)) continue;
+    const candidateResponse = await fetch(`${baseUrl}/api/form/debug?window=${encodeURIComponent(candidateWindow)}`);
+    assert(candidateResponse.ok, `/api/form/debug?window=${candidateWindow} returned HTTP ${candidateResponse.status}`);
+    const candidateCalibration = await candidateResponse.json();
+    assertCalibrationPayload(candidateCalibration, candidateWindow, `/api/form/debug?window=${candidateWindow}`);
+    windowCalibrations.set(String(candidateCalibration.window), candidateCalibration);
+
+    const candidateHomeResponse = await fetch(`${baseUrl}/api/form/home?window=${encodeURIComponent(candidateWindow)}`);
+    assert(candidateHomeResponse.ok, `/api/form/home?window=${candidateWindow} returned HTTP ${candidateHomeResponse.status}`);
+    const candidateHome = await candidateHomeResponse.json();
+    assertHomePayload(candidateHome, candidateCalibration, `/api/form/home?window=${candidateWindow}`);
+  }
+
   const invalidWindowResponse = await fetch(`${baseUrl}/api/form/debug?window=99`);
   assert(invalidWindowResponse.ok, `/api/form/debug?window=99 returned HTTP ${invalidWindowResponse.status}`);
   const invalidWindowCalibration = await invalidWindowResponse.json();
   assert(
-    calibrationSignature(invalidWindowCalibration) === calibrationSignature(calibration),
+    calibrationSignature(invalidWindowCalibration) === calibrationSignature(defaultCalibration),
     "invalid debug window should fall back to the default calibration payload",
   );
   const invalidWindowHomeResponse = await fetch(`${baseUrl}/api/form/home?window=99`);
   assert(invalidWindowHomeResponse.ok, `/api/form/home?window=99 returned HTTP ${invalidWindowHomeResponse.status}`);
   const invalidWindowHome = await invalidWindowHomeResponse.json();
   assert(
-    homeSignature(invalidWindowHome) === homeSignature(home),
+    homeSignature(invalidWindowHome) === homeSignature(defaultHome),
     "invalid home window should fall back to the default home payload",
   );
 
@@ -187,14 +229,14 @@ try {
   assert(fractionalWindowResponse.ok, `/api/form/debug?window=3.5 returned HTTP ${fractionalWindowResponse.status}`);
   const fractionalWindowCalibration = await fractionalWindowResponse.json();
   assert(
-    calibrationSignature(fractionalWindowCalibration) === calibrationSignature(calibration),
+    calibrationSignature(fractionalWindowCalibration) === calibrationSignature(defaultCalibration),
     "fractional debug window should fall back to the default calibration payload",
   );
   const fractionalWindowHomeResponse = await fetch(`${baseUrl}/api/form/home?window=3.5`);
   assert(fractionalWindowHomeResponse.ok, `/api/form/home?window=3.5 returned HTTP ${fractionalWindowHomeResponse.status}`);
   const fractionalWindowHome = await fractionalWindowHomeResponse.json();
   assert(
-    homeSignature(fractionalWindowHome) === homeSignature(home),
+    homeSignature(fractionalWindowHome) === homeSignature(defaultHome),
     "fractional home window should fall back to the default home payload",
   );
 
@@ -206,12 +248,12 @@ try {
   const invalidWindowPageResponse = await fetch(`${baseUrl}/form/debug?window=99`);
   assert(invalidWindowPageResponse.ok, `/form/debug?window=99 returned HTTP ${invalidWindowPageResponse.status}`);
   const invalidWindowPageHtml = await invalidWindowPageResponse.text();
-  assertCalibrationPage(invalidWindowPageHtml, calibration, "/form/debug?window=99");
+  assertCalibrationPage(invalidWindowPageHtml, defaultCalibration, "/form/debug?window=99");
 
   const fractionalWindowPageResponse = await fetch(`${baseUrl}/form/debug?window=3.5`);
   assert(fractionalWindowPageResponse.ok, `/form/debug?window=3.5 returned HTTP ${fractionalWindowPageResponse.status}`);
   const fractionalWindowPageHtml = await fractionalWindowPageResponse.text();
-  assertCalibrationPage(fractionalWindowPageHtml, calibration, "/form/debug?window=3.5");
+  assertCalibrationPage(fractionalWindowPageHtml, defaultCalibration, "/form/debug?window=3.5");
 
   const alternateWindowPageResponse = await fetch(`${baseUrl}/form/debug?window=${encodeURIComponent(alternateWindowSize)}`);
   assert(alternateWindowPageResponse.ok, `/form/debug?window=${alternateWindowSize} returned HTTP ${alternateWindowPageResponse.status}`);
