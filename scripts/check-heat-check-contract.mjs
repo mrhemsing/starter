@@ -26,11 +26,13 @@ assert(
     formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
     formService.includes("if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;") &&
     formService.includes("if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;") &&
+    formPage.includes('if (bandKey === "onfire") return [...pitchers].sort((a, b) => (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
+    formPage.includes('return [...pitchers].sort((a, b) => b.deltaForm - a.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));') &&
     !formService.includes("sort(compareHeatDesc)") &&
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&
     !formService.includes("function compareHeatAsc"),
-  "Heat Check rails and bands must sort by direction delta, not GS+ level",
+  "Heat Check must band by direction delta while ranking On Fire by Heat Index and middle warm/cool bands by direction",
 );
 
 assert(

@@ -684,6 +684,7 @@ function groupPitchersByBand(pitchers: FormSummary[]) {
 
 function sortBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[]) {
   if (bandKey === "cooling" || bandKey === "ice") return [...pitchers].sort((a, b) => a.deltaForm - b.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
+  if (bandKey === "onfire") return [...pitchers].sort((a, b) => (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
   if (bandKey === "even") return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
   return [...pitchers].sort((a, b) => b.deltaForm - a.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
 }
