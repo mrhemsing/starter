@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
@@ -33,6 +33,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const bestStartsRefreshAttemptedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +63,8 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
     if (!ranked) {
       fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
     }
-    if (!bestStarts) {
+    if ((!bestStarts || hasMissingBestStartHighlight(bestStarts)) && !bestStartsRefreshAttemptedRef.current) {
+      bestStartsRefreshAttemptedRef.current = true;
       fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
     }
 
@@ -139,6 +141,13 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
       ) : <HomeDeferredFallback variant="best" />}
     </>
   );
+}
+
+function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {
+  const weeklyMissing = Boolean(bestStarts.weekly && !bestStarts.weeklyHighlight);
+  const monthlyIsWeekly = bestStarts.monthly?.id === bestStarts.weekly?.id;
+  const monthlyMissing = Boolean(bestStarts.monthly && !monthlyIsWeekly && !bestStarts.monthlyHighlight);
+  return weeklyMissing || monthlyMissing;
 }
 
 function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number) {

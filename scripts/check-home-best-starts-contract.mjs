@@ -27,8 +27,9 @@ assert(
   bestStartsService.includes('import { unstable_cache } from "next/cache";') &&
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;") &&
     bestStartsService.includes("unstable_cache(") &&
+    bestStartsService.includes('["home-best-starts-v2"]') &&
     bestStartsService.includes('{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS }'),
-  "home best-starts service must cache rolling-window winners for six hours",
+  "home best-starts service must cache rolling-window winners for six hours with a versioned key for highlight payload changes",
 );
 
 assert(
@@ -92,11 +93,13 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes('import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";') &&
+    homeDeferredSections.includes('import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";') &&
     homeDeferredSections.includes("bestStarts?: BestStartsHomeResponse | null;") &&
     homeDeferredSections.includes("initialData?.bestStarts ?? null") &&
-    homeDeferredSections.includes('if (!bestStarts) {'),
-  "home best-starts client must use server-prefetched initial data and only fetch the API as a fallback",
+    homeDeferredSections.includes("bestStartsRefreshAttemptedRef") &&
+    homeDeferredSections.includes("hasMissingBestStartHighlight(bestStarts)") &&
+    homeDeferredSections.includes("function hasMissingBestStartHighlight"),
+  "home best-starts client must use server-prefetched initial data and refresh once when stale payloads are missing highlights",
 );
 
 assert(
