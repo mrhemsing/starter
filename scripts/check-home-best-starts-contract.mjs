@@ -9,6 +9,9 @@ function assert(condition, message) {
 const bestStartsRoute = await readFile("src/app/api/home/best-starts/route.ts", "utf8");
 const bestStartsService = await readFile("src/lib/data/home-best-starts-service.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
+const highlightIngestScript = await readFile("scripts/ingest-featured-start-highlights.mjs", "utf8");
+const packageJson = await readFile("package.json", "utf8");
+const readme = await readFile("README.md", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
@@ -40,6 +43,20 @@ assert(
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map Cam Schlittler's 13-K MLB video",
+);
+
+assert(
+  packageJson.includes('"ingest:featured-highlights": "node scripts/ingest-featured-start-highlights.mjs"') &&
+    highlightIngestScript.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
+    highlightIngestScript.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    highlightIngestScript.includes("readStoredHighlightStartIds") &&
+    highlightIngestScript.includes("searchHighlightCandidates") &&
+    highlightIngestScript.includes("upsertHighlights(rows)") &&
+    highlightIngestScript.includes('source: "youtube-search"') &&
+    highlightIngestScript.includes('if (ALL_GAME_HIGHLIGHTS_TITLE_PATTERN.test(title) || NON_START_TITLE_PATTERN.test(title)) return null;') &&
+    readme.includes("npm run ingest:featured-highlights") &&
+    readme.includes("without page-render search"),
+  "Recent Gems must have a quota-safe background MLB YouTube ingestion path that stores validated highlight IDs in Supabase",
 );
 
 assert(

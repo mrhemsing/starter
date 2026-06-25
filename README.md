@@ -20,6 +20,17 @@ Set `THE_BUMP_ODDS_API_KEY` to hydrate K props, team totals, and game totals fro
 
 YouTube highlights use checked-in manual video IDs or stored Supabase highlight rows by default. Dynamic YouTube search is disabled unless `YOUTUBE_SEARCH_ENABLED=1` because `search.list` is quota-expensive and page renders can otherwise exhaust a small API budget quickly.
 
+Use the background ingestion command after completed starts are archived and synced when Recent Gems needs automatic MLB YouTube discovery without page-render search:
+
+```bash
+$env:YOUTUBE_API_KEY="..."
+$env:THE_BUMP_SUPABASE_URL="..."
+$env:THE_BUMP_SUPABASE_SERVICE_ROLE_KEY="..."
+npm run ingest:featured-highlights -- --date=2026-06-19
+```
+
+The ingester ranks archived completed starts, skips highlights already stored in Supabase, searches the official MLB YouTube channel for a small candidate set, validates pitcher/date/title matches, and upserts into `toetheslab_featured_start_highlights`. Use `--dry-run`, `--start=YYYY-MM-DD --end=YYYY-MM-DD`, `--lookback-days=7`, `--limit=8`, or `--min-score=58` to tune cron runs.
+
 For durable local season storage, use the MLB archive commands. They write normalized schedule, completed starting-pitcher lines, arsenal summaries, and pitch events into ignored local JSON files under `data/mlb-archive/[season]/`.
 
 ```bash
