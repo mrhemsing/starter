@@ -13,6 +13,7 @@ import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -452,6 +453,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
           <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="mt-2 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mt-3">
             <h2 className="truncate font-serif text-xl font-bold leading-none text-zinc-50 sm:text-3xl">{pitcher.name}</h2>
             <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
+            <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
           </Link>
           <div className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1">
             <p className="font-mono text-[34px] font-black leading-none tabular-nums sm:text-5xl" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
@@ -545,6 +547,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Starting today</span> : null}
         </p>
+        <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
         <div className="flex min-w-0 flex-wrap gap-1.5">
           <FormDriverChips chips={pitcher.driverChips} compact />
         </div>

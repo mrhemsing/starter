@@ -4,6 +4,7 @@ import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
@@ -159,6 +160,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
               ) : null}
             </div>
             <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.12em] text-[#7d7d86]">{pitcher.team} · {handednessLabel(pitcher.throws)}</span>
+            <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
           </div>
           <span className="inline-flex shrink-0 items-center rounded-full border px-2 py-1 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: tone.accent, borderColor: tone.border, backgroundColor: tone.background }}>
             {statusLabel(band)}

@@ -200,6 +200,16 @@ export type FormWorkload = {
   avgIpLast5: number | null;
 };
 
+export type PitcherAvailability = {
+  status: "injured-list";
+  code: string;
+  label: string;
+  statusDate: string | null;
+  blurb: string;
+  transactionDescription: string | null;
+  source: "mlb-roster-entries";
+};
+
 export type FormVenueSplitLabel = {
   label: "HOME FORTRESS" | "ROAD WARRIOR";
   strongSide: "home" | "away";
@@ -238,6 +248,7 @@ export type FormSummary = {
   driverChips: FormDriverChip[];
   workload: FormWorkload;
   venueSplit?: FormVenueSplitLabel | null;
+  availability?: PitcherAvailability | null;
   nextStart?: FormNextStart | null;
   highlight?: FeaturedStartHighlight | null;
   flags?: { rust?: boolean; limitedSample?: boolean };
@@ -330,6 +341,7 @@ export type TonightStarter = {
     daysRest: number | null;
     restLabel: "short" | "normal" | "extended" | "unknown";
   };
+  availability?: PitcherAvailability | null;
   flags?: FormSummary["flags"];
 };
 

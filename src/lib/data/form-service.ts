@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
-import { fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
+import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-scored-start-merge-v1";
+const FORM_CACHE_VERSION = "form-scored-start-merge-v2";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -134,8 +134,10 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const summaries = buildPitcherBuckets(starts)
     .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext))
     .sort(compareFormSummaries);
-  const qualifiedPitchers = summaries.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
-  const pitchers = options.qualifiedOnly === false ? summaries : qualifiedPitchers;
+  const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true });
+  const summariesWithAvailability = attachAvailability(summaries, availabilityStatuses);
+  const qualifiedPitchers = summariesWithAvailability.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
+  const pitchers = options.qualifiedOnly === false ? summariesWithAvailability : qualifiedPitchers;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -205,15 +207,20 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     ...summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext),
     venueSplit: buildVenueSplitLabel(venueSplitStarts),
   };
+  const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses([Number(summary.pitcherId)], { fetchLive: true });
+  const summaryWithAvailability = {
+    ...summary,
+    availability: availabilityStatuses.get(summary.pitcherId) ?? null,
+  };
   const series = buildStartPoints(bucket.starts, window);
 
   return {
     pitcher: {
-      pitcherId: summary.pitcherId,
-      name: summary.name,
-      team: summary.team,
-      throws: summary.throws,
-      status: summary.status,
+      pitcherId: summaryWithAvailability.pitcherId,
+      name: summaryWithAvailability.name,
+      team: summaryWithAvailability.team,
+      throws: summaryWithAvailability.throws,
+      status: summaryWithAvailability.status,
     },
     formThroughDate: startSet.formThroughDate,
     latestScoredStartDate: startSet.latestScoredStartDate,
@@ -221,7 +228,7 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     window,
     leagueMeanGS: round1(leagueMeanGS),
     series,
-    summary,
+    summary: summaryWithAvailability,
     };
 }
 
@@ -370,6 +377,13 @@ function attachNextStarts(pitchers: FormSummary[], nextStarts: Map<string, FormN
   return pitchers.map((pitcher) => ({
     ...pitcher,
     nextStart: nextStarts.get(pitcher.pitcherId) ?? null,
+  }));
+}
+
+function attachAvailability(pitchers: FormSummary[], availabilityStatuses: Awaited<ReturnType<typeof fetchMlbPitcherAvailabilityStatuses>>) {
+  return pitchers.map((pitcher) => ({
+    ...pitcher,
+    availability: availabilityStatuses.get(pitcher.pitcherId) ?? null,
   }));
 }
 

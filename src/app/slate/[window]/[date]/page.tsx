@@ -7,6 +7,7 @@ import { ScoreExplainer } from "@/components/score-explainer";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { SiteHeader } from "@/components/site-header";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { getPitcherFormMap } from "@/lib/data/form-service";
 import { addDays, getDailySlate, getHomeSlateDate, getSlateSchedule, getTodayProbables, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { formatPct, formatSigned, formatStartLine } from "@/lib/format";
@@ -111,6 +112,7 @@ export default async function SlatePage({ params }: SlatePageProps) {
                           Form {Math.round(formByPitcher.get(String(start.pitcher.mlbId))!.rgs)} / {tierLabel(formByPitcher.get(String(start.pitcher.mlbId))!.tier)}
                         </span>
                         <TrendChip summary={formByPitcher.get(String(start.pitcher.mlbId))!} compact />
+                        <PitcherAvailabilityNote availability={formByPitcher.get(String(start.pitcher.mlbId))!.availability} compact />
                       </div>
                     ) : null}
                   </div>
@@ -177,6 +179,7 @@ function ProbableCard({
               Form {Math.round(form.rgs)} / {tierLabel(form.tier)}
             </span>
             <TrendChip summary={form} compact />
+            <PitcherAvailabilityNote availability={form.availability} compact />
           </div>
           <div className="mt-3">
             <FormSparkline values={form.spark} tier={form.tier} leagueMeanGS={form.bgs} label={`${form.name} recent form GS+: ${form.spark.join(", ")}`} />

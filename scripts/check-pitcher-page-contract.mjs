@@ -12,6 +12,7 @@ const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
 const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
+const pitcherAvailability = await readFile("src/components/pitcher-availability.tsx", "utf8");
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
@@ -83,6 +84,13 @@ assert(!mlbStatsClient.includes('people/${pitcherMlbId}", { cache: "no-store"'),
 assert(!mlbStatsClient.includes('stats?${seasonParams.toString()}`, { cache: "no-store"'), "pitcher season stats fetch must not no-store on every profile click");
 assert(!mlbStatsClient.includes('stats?${batterHandParams.toString()}`, { cache: "no-store"'), "pitcher splits fetch must not no-store on every profile click");
 assert(
+  mlbStatsClient.includes("export async function fetchMlbPitcherAvailabilityStatuses") &&
+    mlbStatsClient.includes('hydrate: "currentTeam,rosterEntries,transactions"') &&
+    mlbStatsClient.includes("isInjuredListStatus(statusCode, statusDescription)") &&
+    mlbStatsClient.includes("source: \"mlb-roster-entries\""),
+  "MLB roster-entry availability must batch-fetch pitcher IL status from the official people API",
+);
+assert(
   startService.includes('fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" })') &&
     !startService.includes("fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: true })"),
   "pitcher API must not force live MLB split calls during normal archived profile renders",
@@ -100,6 +108,26 @@ assert(
     types.includes('window: "current-plus-prior";') &&
     types.includes('side?: "home" | "away";'),
   "types must expose conservative home/road split labels and preserve start side for venue splits",
+);
+assert(
+  types.includes("export type PitcherAvailability") &&
+    types.includes('status: "injured-list";') &&
+    types.includes("availability?: PitcherAvailability | null;"),
+  "types must expose a shared current pitcher availability payload on form/upcoming surfaces",
+);
+
+assert(
+  formService.includes("fetchMlbPitcherAvailabilityStatuses") &&
+    formService.includes("attachAvailability(summaries, availabilityStatuses)") &&
+    formService.includes("availability: availabilityStatuses.get(summary.pitcherId) ?? null"),
+  "form service must attach MLB IL status once at the shared FormSummary layer",
+);
+
+assert(
+  pitcherAvailability.includes('data-responsive-check="pitcher-availability-note"') &&
+    pitcherAvailability.includes("availability.blurb") &&
+    pitcherAvailability.includes(">IL</span>"),
+  "pitcher availability component must render a compact IL badge with the MLB-derived blurb",
 );
 
 assert(
@@ -159,6 +187,7 @@ assert(
 );
 
 assert(pitcherFormPage.includes('data-responsive-check="pitcher-form-score-summary"'), "pitcher form score block must expose a stable layout hook");
+assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
 assert(pitcherFormPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"'), "pitcher form shell must prevent page-level horizontal scroll on mobile");
 assert(pitcherFormPage.includes("sm:grid-cols-[minmax(0,1fr)_auto_auto]"), "pitcher form score/actions row must keep score text separate from controls");
 assert(pitcherFormPage.includes("font-bold leading-none"), "pitcher form score must use a tight line-height so it cannot collide with its label");

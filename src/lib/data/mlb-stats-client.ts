@@ -1,6 +1,6 @@
 import { demoProbableStarts } from "@/lib/data/demo";
 import { inningsFromIP } from "@/lib/innings";
-import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, StartLine } from "@/lib/types";
+import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine } from "@/lib/types";
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
@@ -109,10 +109,39 @@ type MlbPeopleApiResponse = {
   people?: Array<{
     id?: number;
     fullName?: string;
+    currentTeam?: {
+      id?: number;
+      name?: string;
+    };
     pitchHand?: {
       code?: string;
     };
+    rosterEntries?: MlbPersonRosterEntry[];
+    transactions?: MlbPersonTransaction[];
   }>;
+};
+
+type MlbPersonRosterEntry = {
+  status?: {
+    code?: string;
+    description?: string;
+  };
+  team?: {
+    id?: number;
+    abbreviation?: string;
+  };
+  isActive?: boolean;
+  startDate?: string;
+  endDate?: string;
+  statusDate?: string;
+};
+
+type MlbPersonTransaction = {
+  date?: string;
+  effectiveDate?: string;
+  typeCode?: string;
+  typeDesc?: string;
+  description?: string;
 };
 
 type MlbPersonStatsApiResponse = {
@@ -559,6 +588,27 @@ export async function fetchMlbPitcherSeasonProfile(pitcherMlbId: number, season:
   }
 }
 
+export async function fetchMlbPitcherAvailabilityStatuses(pitcherMlbIds: number[], options: MlbScheduleClientOptions = {}): Promise<Map<string, PitcherAvailability>> {
+  if (!options.fetchLive) return new Map();
+  const uniqueIds = Array.from(new Set(pitcherMlbIds.filter((id) => Number.isInteger(id) && id > 0)));
+  if (uniqueIds.length === 0) return new Map();
+
+  const params = new URLSearchParams({
+    personIds: uniqueIds.join(","),
+    hydrate: "currentTeam,rosterEntries,transactions",
+  });
+
+  try {
+    const response = await fetch(`${MLB_STATS_API_BASE}/people?${params.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS));
+    if (!response.ok) return new Map();
+
+    const payload = (await response.json()) as MlbPeopleApiResponse;
+    return parsePitcherAvailabilityStatuses(payload);
+  } catch {
+    return new Map();
+  }
+}
+
 export async function fetchMlbPitcherSplits(pitcherMlbId: number, season: string, options: MlbScheduleClientOptions = {}): Promise<MlbPitcherSplitGroup[] | null> {
   if (!options.fetchLive) return null;
 
@@ -583,6 +633,87 @@ export async function fetchMlbPitcherSplits(pitcherMlbId: number, season: string
   } catch {
     return null;
   }
+}
+
+function parsePitcherAvailabilityStatuses(payload: MlbPeopleApiResponse) {
+  const statuses = new Map<string, PitcherAvailability>();
+
+  for (const person of payload.people ?? []) {
+    const id = person.id;
+    if (!id) continue;
+
+    const currentTeamId = person.currentTeam?.id;
+    const rosterEntry = readCurrentRosterEntry(person.rosterEntries ?? [], currentTeamId);
+    const statusCode = rosterEntry?.status?.code;
+    const statusDescription = rosterEntry?.status?.description;
+    if (!statusCode || !statusDescription || !isInjuredListStatus(statusCode, statusDescription)) continue;
+
+    const transaction = readLatestInjuredListTransaction(person.transactions ?? [], rosterEntry?.statusDate);
+    const statusDate = rosterEntry?.statusDate ?? transaction?.effectiveDate ?? transaction?.date ?? null;
+    const label = availabilityLabel(statusCode, statusDescription);
+    const reason = transaction?.description ? injuryReasonFromTransaction(transaction.description) : null;
+    const dateLabel = statusDate ? ` since ${formatMonthDay(statusDate)}` : "";
+    const blurb = `${label}${dateLabel}${reason ? `: ${reason}` : ""}.`;
+
+    statuses.set(String(id), {
+      status: "injured-list",
+      code: statusCode,
+      label,
+      statusDate,
+      blurb,
+      transactionDescription: transaction?.description ?? null,
+      source: "mlb-roster-entries",
+    });
+  }
+
+  return statuses;
+}
+
+function readCurrentRosterEntry(entries: MlbPersonRosterEntry[], currentTeamId: number | undefined) {
+  return entries.find((entry) => entry.isActive && (!currentTeamId || entry.team?.id === currentTeamId))
+    ?? entries.find((entry) => entry.isActive)
+    ?? entries.find((entry) => !entry.endDate)
+    ?? entries[0];
+}
+
+function isInjuredListStatus(code: string, description: string) {
+  const normalizedCode = code.trim().toUpperCase();
+  const normalizedDescription = description.trim().toLowerCase();
+  return /^D\d+$/.test(normalizedCode) || normalizedDescription.includes("injured");
+}
+
+function readLatestInjuredListTransaction(transactions: MlbPersonTransaction[], statusDate: string | undefined) {
+  const injuredTransactions = transactions
+    .filter((transaction) => transaction.description && /\bplaced\b/i.test(transaction.description) && /\binjured list\b/i.test(transaction.description))
+    .sort((a, b) => (b.effectiveDate ?? b.date ?? "").localeCompare(a.effectiveDate ?? a.date ?? ""));
+
+  if (!statusDate) return injuredTransactions[0] ?? null;
+  return injuredTransactions.find((transaction) => (transaction.effectiveDate ?? transaction.date) === statusDate)
+    ?? injuredTransactions.find((transaction) => transaction.date === statusDate)
+    ?? injuredTransactions[0]
+    ?? null;
+}
+
+function availabilityLabel(code: string, description: string) {
+  const normalized = `${code} ${description}`.toLowerCase();
+  if (normalized.includes("60")) return "60-day IL";
+  if (normalized.includes("15")) return "15-day IL";
+  if (normalized.includes("10")) return "10-day IL";
+  if (normalized.includes("7")) return "7-day IL";
+  return "IL";
+}
+
+function injuryReasonFromTransaction(description: string) {
+  const parts = description.split(".").map((part) => part.trim()).filter(Boolean);
+  const reason = parts.at(-1);
+  if (!reason || /\binjured list\b/i.test(reason) || /\bdisabled list\b/i.test(reason)) return null;
+  return reason.charAt(0).toUpperCase() + reason.slice(1);
+}
+
+function formatMonthDay(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
 function parseSchedulePayload(date: string, payload: MlbScheduleApiResponse, source: MlbSchedule["source"]): MlbSchedule {

@@ -7,6 +7,7 @@ import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlig
 import { Headshot, type HeadshotSize } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
@@ -382,6 +383,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="flex min-w-0 flex-wrap gap-1.5">
             {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
             {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
+            <PitcherAvailabilityNote availability={formSummary?.availability} compact />
           </div>
         </div>
         <div className={`order-4 min-w-0 sm:order-none ${profile.lineClass}`}>
@@ -453,6 +455,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
           <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
         </Link>
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent} / not ranked</p>
+        <PitcherAvailabilityNote availability={formSummary?.availability} compact className="mt-1" />
       </div>
       <div className="font-mono text-xs text-zinc-400 sm:text-right">
         <p>{formatStartLine(start.line)}</p>

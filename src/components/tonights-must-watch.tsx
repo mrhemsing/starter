@@ -4,6 +4,7 @@ import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
@@ -651,6 +652,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           ) : (
             <LimitedStarterLine starter={starter} />
           )}
+          <PitcherAvailabilityNote availability={starter.availability} compact className={align === "home" ? "mt-2 lg:ml-auto" : "mt-2"} />
           <StarterProjectionLine starter={starter} align={align} />
           <OpponentSplitLine starter={starter} align={align} />
           <MarketContextLine starter={starter} align={align} />
@@ -928,6 +930,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       {starter.status === "ok" ? (
         <div className="col-span-full -mt-1">
           <StarterStatusChips starter={starter} />
+          <PitcherAvailabilityNote availability={starter.availability} compact className="mt-1" />
           <FormDriverChips chips={starter.driverChips} limit={3} compact />
           <StarterProjectionLine starter={starter} compact />
           <OpponentSplitLine starter={starter} compact />

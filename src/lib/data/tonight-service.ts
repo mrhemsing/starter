@@ -260,6 +260,7 @@ function buildTonightStarter(
       daysRest,
       restLabel: restLabel(daysRest),
     },
+    availability: form.availability ?? null,
     flags: form.flags,
   };
 }

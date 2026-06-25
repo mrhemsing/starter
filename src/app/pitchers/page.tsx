@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
@@ -31,6 +32,7 @@ export default async function PitchersIndexPage() {
             <Link key={pitcher.pitcherId} href={pitcherHref(pitcher, sourceParams("heat", { window: 5 }))} className="rounded border border-white/10 bg-[#101014] p-4 transition hover:bg-white/[0.04]">
               <p className="font-serif text-2xl font-bold text-zinc-50">{pitcher.name}</p>
               <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} / Form {pitcher.rgs.toFixed(1)} / Avg {pitcher.bgs.toFixed(1)}</p>
+              <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
             </Link>
           ))}
         </section>

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { WatchlistSearchForm } from "@/components/watchlist-search-form";
 import { getFormLeaderboard } from "@/lib/data/form-service";
@@ -220,6 +221,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {tierLabel(entry.tier)} · {entry.windowCount} starts</p>
           </Link>
           <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
+          <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
           <p className="mt-2 font-mono text-xs text-zinc-300">{entry.nextStart ? `NEXT: ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent} · ${formatShortDate(entry.nextStart.date)} · Proj GS+ ${entry.nextStart.projectedGsPlus}` : "NEXT: TBD"}</p>
         </div>
       </div>
@@ -254,6 +256,7 @@ function FollowSearchResults({ results, followedIds, query }: { results: FormSum
             <Link href={pitcherHref(pitcher, sourceParams("watchlist"))} className="min-w-0">
               <p className="truncate font-serif text-lg font-bold text-zinc-50">{pitcher.name}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} · Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}</p>
+              <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
             </Link>
             <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followedIds.has(pitcher.pitcherId)} compact refreshOnChange />
           </div>

@@ -31,6 +31,12 @@ assert(
     followButtonSource.includes("if (refreshOnChange) router.refresh()"),
   "watchlist follow buttons should refresh rows after successful API updates",
 );
+assert(
+  watchlistPageSource.includes("PitcherAvailabilityNote") &&
+    watchlistPageSource.includes("availability={entry.availability}") &&
+    watchlistPageSource.includes("availability={pitcher.availability}"),
+  "watchlist rows and search results should surface current MLB IL availability when present",
+);
 
 async function reservePort() {
   const server = net.createServer();

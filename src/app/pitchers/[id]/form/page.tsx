@@ -7,6 +7,7 @@ import { TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
@@ -132,6 +133,7 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
               <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
                 Form through {form.formThroughDate ?? "pending"}{form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}
               </p>
+              <PitcherAvailabilityNote availability={summary.availability} className="mt-3" />
               <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
                 <div className="min-w-0" data-responsive-check="pitcher-form-score-summary">
                   <div className="flex flex-wrap items-end gap-x-3 gap-y-1">

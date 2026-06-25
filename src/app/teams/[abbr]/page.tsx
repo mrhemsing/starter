@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
@@ -46,6 +47,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
               <span>
                 <span className="block text-lg font-semibold text-zinc-50">{pitcher.name}</span>
                 <span className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.throws ?? "-"}HP / {pitcher.status}</span>
+                <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
               </span>
               <Metric label="Avg GS+" value={pitcher.bgs.toFixed(1)} />
               <Metric label="Form" value={pitcher.rgs.toFixed(1)} />
