@@ -234,18 +234,20 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
   if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
-  if (!isPhotoCreditImageTitle(item.image?.title ?? "")) return 0;
+  if (!isMlbActionImageCandidate(item, start)) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
   if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
   let score = 0;
   if (text.includes(start.pitcher.name.toLowerCase())) score += 100;
+  if (pitcherActionHighlightPattern().test(text)) score += 75;
   if (text.includes("strikes out") || text.includes("fans")) score += 50;
-  if (text.includes("outing") || text.includes("start")) score += 40;
+  if (text.includes("outing") || text.includes("start")) score += 20;
   if (text.includes("throws") || text.includes("pitch")) score += 25;
   if (text.includes(start.opponent.toLowerCase())) score += 10;
   if (text.includes(start.pitcher.team.toLowerCase())) score += 5;
   if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;
+  if (isPitcherActionHighlight(item, start)) score += 30;
   return score;
 }
 
@@ -263,6 +265,20 @@ function photoCreditImageTitlePattern() {
 
 function isPhotoCreditImageTitle(title: string) {
   return photoCreditImageTitlePattern().test(title);
+}
+
+function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
+  return isPhotoCreditImageTitle(item.image?.title ?? "") || isPitcherActionHighlight(item, start);
+}
+
+function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const last = lastName(start.pitcher.name).toLowerCase();
+  return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
+}
+
+function pitcherActionHighlightPattern() {
+  return /\b(k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k)\b/i;
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {

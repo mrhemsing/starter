@@ -320,13 +320,19 @@ assert(
     imageService.includes("function nonActionMlbTitlePattern()") &&
     imageService.includes("function photoCreditImageTitlePattern()") &&
     imageService.includes("function isPhotoCreditImageTitle(title: string)") &&
+    imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes("function pitcherActionHighlightPattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
-    imageService.includes('if (!isPhotoCreditImageTitle(item.image?.title ?? "")) return 0;') &&
+    imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
+    imageService.includes("if (isPitcherActionHighlight(item, start)) score += 30;") &&
+    imageService.includes("pitcherActionHighlightPattern().test(text)") &&
+    imageService.includes("k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k") &&
     imageService.includes("fuel(?:s|ed)?\\b.*\\bwin") &&
     imageService.includes("gettyimages|imagn|usa today|reuters") &&
     imageService.includes("^ap\\d+") &&
