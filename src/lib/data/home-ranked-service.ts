@@ -11,17 +11,22 @@ export type RankedHomeResponse = {
   date: string;
   label: string;
   starts: StartSummary[];
-  topPerformer: {
-    status: "final" | "live" | "previous";
-    start: StartSummary;
-    slateCount: number;
-    dateLabel: string;
-    image: TopPerformerImage | null;
-    metrics: {
-      topVelo: number | null;
-      whiffRate: number | null;
-      veloSparkline: number[];
-    } | null;
+  topPerformer: TopPerformerPayload | null;
+};
+
+type TopPerformerState = {
+  status: "final" | "live" | "previous";
+  start: StartSummary;
+  slateCount: number;
+  dateLabel: string;
+};
+
+type TopPerformerPayload = TopPerformerState & {
+  image: TopPerformerImage | null;
+  metrics: {
+    topVelo: number | null;
+    whiffRate: number | null;
+    veloSparkline: number[];
   } | null;
 };
 
@@ -57,17 +62,25 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
     todayCompletedSlateStarts,
     yesterdaySlateStarts,
   });
-  const [topPerformerImage, topPerformerMetrics] = await Promise.all([
-    resolveTopPerformerImage(topPerformerState?.start ?? null, null),
-    resolveTopPerformerMetrics(topPerformerState?.start ?? null),
-  ]);
+  const topPerformer = await resolveTopPerformerPayload(topPerformerState);
 
   return {
     date: rankedDate,
     label: rankedLabel,
     starts: slateStarts,
-    topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null,
+    topPerformer,
   };
+}
+
+async function resolveTopPerformerPayload(state: TopPerformerState | null): Promise<TopPerformerPayload | null> {
+  if (!state) return null;
+
+  const [image, metrics] = await Promise.all([
+    resolveTopPerformerImage(state.start, null),
+    resolveTopPerformerMetrics(state.start),
+  ]);
+
+  return { ...state, image, metrics };
 }
 
 async function resolveTopPerformerMetrics(start: StartSummary | null) {

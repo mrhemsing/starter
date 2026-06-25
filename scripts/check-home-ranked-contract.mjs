@@ -47,12 +47,19 @@ assert(
 );
 
 assert(
-  rankedService.includes("resolveTopPerformerImage(topPerformerState?.start ?? null, null),"),
-  "home ranked service must resolve an image for the selected top performer",
+  rankedService.includes("const topPerformer = await resolveTopPerformerPayload(topPerformerState);") &&
+    rankedService.includes("async function resolveTopPerformerPayload(state: TopPerformerState | null): Promise<TopPerformerPayload | null>") &&
+    rankedService.includes("if (!state) return null;") &&
+    rankedService.includes("resolveTopPerformerImage(state.start, null),") &&
+    rankedService.includes("resolveTopPerformerMetrics(state.start),"),
+  "home ranked service must resolve action-photo imagery every time a selected top performer is exposed",
 );
 
 assert(
-  rankedService.includes("topPerformer: topPerformerState ? { ...topPerformerState, image: topPerformerImage, metrics: topPerformerMetrics } : null"),
+  rankedService.includes("topPerformer: TopPerformerPayload | null;") &&
+    rankedService.includes("type TopPerformerPayload = TopPerformerState &") &&
+    rankedService.includes("return { ...state, image, metrics };") &&
+    rankedService.includes("topPerformer,"),
   "home ranked service must include image in the topPerformer payload",
 );
 
