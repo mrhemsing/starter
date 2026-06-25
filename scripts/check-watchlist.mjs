@@ -97,7 +97,7 @@ try {
   assert(html.includes("Watchlist"), "watchlist page should render");
   assert(html.includes("Digest preview"), "watchlist should render digest preview");
   assert(html.includes("Sort"), "watchlist should render sort controls");
-  assert(html.includes("Search pitchers to follow"), "watchlist should render inline add-pitcher search");
+  assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
   assert(html.includes("Pitching today / soon"), "watchlist should render actionable pitching-soon group");
   assert(html.includes("Everyone else") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list");
   assert(html.includes("Following"), "watchlist should render following control");

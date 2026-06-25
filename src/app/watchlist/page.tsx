@@ -99,7 +99,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
                   <input
                     name="q"
                     defaultValue={query}
-                    placeholder="Search pitchers to follow"
+                    placeholder="Search pitchers"
                     className="min-h-11 rounded border border-white/10 bg-black/20 px-3 font-mono text-sm text-zinc-100 outline-none focus:border-amber-300"
                   />
                   <button className="min-h-11 rounded border border-amber-300/40 px-4 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
