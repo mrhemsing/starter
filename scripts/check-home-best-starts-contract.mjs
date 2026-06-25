@@ -9,8 +9,10 @@ function assert(condition, message) {
 const bestStartsRoute = await readFile("src/app/api/home/best-starts/route.ts", "utf8");
 const bestStartsService = await readFile("src/lib/data/home-best-starts-service.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
+const featuredHighlightsCron = await readFile("src/app/api/cron/featured-highlights/route.ts", "utf8");
 const highlightIngestScript = await readFile("scripts/ingest-featured-start-highlights.mjs", "utf8");
 const packageJson = await readFile("package.json", "utf8");
+const vercelJson = JSON.parse(await readFile("vercel.json", "utf8"));
 const readme = await readFile("README.md", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
@@ -26,9 +28,10 @@ assert(
 assert(
   bestStartsService.includes('import { unstable_cache } from "next/cache";') &&
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;") &&
+    bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
     bestStartsService.includes('["home-best-starts-v2"]') &&
-    bestStartsService.includes('{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS }'),
+    bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners for six hours with a versioned key for highlight payload changes",
 );
 
@@ -58,6 +61,23 @@ assert(
     readme.includes("npm run ingest:featured-highlights") &&
     readme.includes("without page-render search"),
   "Recent Gems must have a quota-safe background MLB YouTube ingestion path that stores validated highlight IDs in Supabase",
+);
+
+assert(
+  featuredHighlightsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
+    featuredHighlightsCron.includes('import { HOME_BEST_STARTS_CACHE_TAG } from "@/lib/data/home-best-starts-service";') &&
+    featuredHighlightsCron.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    featuredHighlightsCron.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
+    featuredHighlightsCron.includes("process.env.YOUTUBE_API_KEY") &&
+    featuredHighlightsCron.includes("getArchivedSeasonStartSummaries") &&
+    featuredHighlightsCron.includes("readStoredHighlightStartIds") &&
+    featuredHighlightsCron.includes("resolveYouTubeHighlight") &&
+    featuredHighlightsCron.includes("upsertHighlights") &&
+    featuredHighlightsCron.includes('revalidateTag(HOME_BEST_STARTS_CACHE_TAG, "max")') &&
+    featuredHighlightsCron.includes('source: "youtube-search"') &&
+    vercelJson.crons.some((cron) => cron.path === "/api/cron/featured-highlights" && cron.schedule === "0 15 * * *") &&
+    readme.includes("Vercel runs `/api/cron/featured-highlights` daily at 15:00 UTC"),
+  "Recent Gems highlight ingestion must run automatically as a quota-safe Vercel cron and revalidate home best-starts cache after matches",
 );
 
 assert(

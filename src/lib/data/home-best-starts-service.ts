@@ -6,6 +6,7 @@ import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;
+export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";
 
 export type BestStartsHomeResponse = {
   weekly: StartSummary | null;
@@ -35,7 +36,7 @@ const getCachedBestStartsHome = unstable_cache(
     };
   },
   ["home-best-starts-v2"],
-  { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS },
+  { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] },
 );
 
 async function getBestStarts(anchorDate: string) {
