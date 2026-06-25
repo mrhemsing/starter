@@ -82,8 +82,7 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
       aria-label={line}
     >
       {liveHref ? (
-        <Link href={liveHref} className="inline-flex max-w-full items-center gap-2 text-white transition hover:text-[#FF9A62] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-          <span className="ranked-live-dot h-2 w-2 shrink-0 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
+        <Link href={liveHref} className="inline-flex max-w-full text-white transition hover:text-[#FF9A62] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <span className="truncate">{content}</span>
         </Link>
       ) : (

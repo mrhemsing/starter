@@ -113,8 +113,9 @@ assert(
 assert(
   !statusLine.includes("Upcoming") &&
     statusLine.includes("liveDateHref(slateState.date)") &&
-    statusLine.includes('className="ranked-live-dot h-2 w-2 shrink-0 rounded-full bg-[#FF5A1F]"'),
-  "homepage status eyebrow must use the live board as its only ambient link during games",
+    !statusLine.includes("ranked-live-dot") &&
+    !statusLine.includes('rounded-full bg-[#FF5A1F]"'),
+  "homepage status eyebrow must link to the live board during games without adding a redundant live dot",
 );
 
 assert(

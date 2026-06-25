@@ -47,7 +47,7 @@ export async function SiteNav({ active, today }: { active: NavKey | null; today:
 function LiveNavLabel() {
   return (
     <span className="inline-flex items-center gap-2 text-[#FF9A62]">
-      <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
+      <span className="h-1.5 w-1.5 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
       Live
     </span>
   );

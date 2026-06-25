@@ -66,8 +66,10 @@ assert(
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
     siteNav.includes("slateProgress.liveGames > 0") &&
     siteNav.includes("href: liveDateHref(today)") &&
-    siteNav.includes("<LiveNavLabel />"),
-  "primary nav must add a conditional LIVE pill only while games are live",
+    siteNav.includes("<LiveNavLabel />") &&
+    siteNav.includes('className="h-1.5 w-1.5 rounded-full bg-[#FF5A1F]"') &&
+    !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
+  "primary nav must add a conditional static LIVE wayfinding dot only while games are live",
 );
 
 assert(
