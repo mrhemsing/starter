@@ -135,12 +135,11 @@ export function normalizeUpcomingControls(params?: { pregame?: string; sort?: st
 }
 
 export function filterAndSortGames<T extends { status: string; firstPitch: string; gameWatchScore: number }>(games: T[], controls: UpcomingControlsState) {
-  return games
-    .filter((game) => !controls.pregameOnly || game.status === "pregame")
-    .sort((a, b) => {
-      if (controls.sort === "time") return a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore;
-      return 0;
-    });
+  const visibleGames = games.filter((game) => !controls.pregameOnly || game.status === "pregame");
+  if (controls.sort === "time") {
+    return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);
+  }
+  return visibleGames;
 }
 
 export function UpcomingControls({

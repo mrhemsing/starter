@@ -1045,14 +1045,21 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must use FastFilterLink with stable link keys, active current-state semantics, and scroll disabled so mobile taps do not jump to the page top",
   );
   assert(
-    UPCOMING_CONTROL_LINK_KEYS.every((key) => upcomingDatePageSource.includes(`controlKey="${key}"`)),
-    "upcoming filter controls must keep stable public option keys for status and sort links",
+    UPCOMING_CONTROL_LINK_KEYS.every((key) => countOccurrences(upcomingDatePageSource, `controlKey="${key}"`) === 1),
+    "upcoming filter controls must keep each stable public option key exactly once for status and sort links",
   );
   assert(
     upcomingDatePageSource.includes('role="group" aria-label={`${label} filters`}') &&
       upcomingDatePageSource.includes('<ControlGroup label="Status">') &&
       upcomingDatePageSource.includes('<ControlGroup label="Sort">'),
     "upcoming filter controls must keep grouped Status and Sort semantics",
+  );
+  assert(
+    upcomingDatePageSource.includes("const visibleGames = games.filter((game) => !controls.pregameOnly || game.status === \"pregame\");") &&
+      upcomingDatePageSource.includes('if (controls.sort === "time") {') &&
+      upcomingDatePageSource.includes("return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);") &&
+      upcomingDatePageSource.includes("return visibleGames;"),
+    "upcoming filter controls must preserve API watch-rank order and only copy-sort the Start time view",
   );
   assert(
       upcomingDatePageSource.includes("const controlsEmpty = visibleGameCount === 0;") &&
@@ -1069,8 +1076,27 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must expose exactly one hidden game count telemetry hook",
   );
   assert(
+    upcomingDatePageSource.includes("visibleGameCount={visibleUpcoming.games.length}") &&
+      upcomingDatePageSource.includes("scheduledGameCount={upcoming.scheduledGames}") &&
+      upcomingWeekPageSource.includes("visibleGameCount={visibleGameCount}") &&
+      upcomingWeekPageSource.includes("scheduledGameCount={scheduledGameCount}"),
+    "upcoming filter controls must receive visible and scheduled game counts from both day and week surfaces",
+  );
+  assert(
+    upcomingDatePageSource.includes("const activeControlCount = 2;") &&
+      countOccurrences(upcomingDatePageSource, "<ControlGroup label=") === 2 &&
+      countOccurrences(upcomingDatePageSource, "data-control-active-count={activeControlCount}") === 1,
+    "upcoming filter controls must expose exactly one active-count telemetry hook for the Status and Sort groups",
+  );
+  assert(
     upcomingDatePageSource.includes("data-control-label={controlsLabel}"),
     "upcoming filter controls must expose the normalized visible label as stable telemetry",
+  );
+  assert(
+    upcomingDatePageSource.includes("if (controls.pregameOnly) params.set(\"pregame\", \"1\");") &&
+      upcomingDatePageSource.includes('if (controls.sort !== "watch") params.set("sort", controls.sort);') &&
+      upcomingDatePageSource.includes('return `${basePath}${query ? `?${query}` : ""}`;'),
+    "upcoming filter controls must keep canonical query links that omit default all-status/watch-rank state",
   );
   assert(
     upcomingDatePageSource.includes('slateRange: "day" | "week";') &&
@@ -2880,6 +2906,28 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
   componentValues.forEach((value, index) =>
     assertNumber(value, `${route} ${game.label} ${WATCH_COMPONENT_LABELS[index]} watch component`),
   );
+  if (allowsRenderedLiveDataDrift(route)) {
+    const componentGroupTag = (html.match(/<div\b[^>]*>/g) ?? []).find((tag) =>
+      tag.includes('data-responsive-check="watch-components"') &&
+        tag.includes(`data-game-pk="${escapeHtmlAttribute(game.gamePk)}"`),
+    ) ?? "";
+    const renderedValues = (tagAttribute(componentGroupTag, "data-watch-component-values") ?? "").split("/");
+    assert(
+      tagAttribute(componentGroupTag, "data-watch-component-count") === String(WATCH_COMPONENT_KEYS.length) &&
+        tagAttribute(componentGroupTag, "data-watch-component-keys") === WATCH_COMPONENT_KEYS.join("/") &&
+        tagAttribute(componentGroupTag, "data-watch-component-layout") === expectedLayout &&
+        tagAttribute(componentGroupTag, "data-watch-component-labels") === WATCH_COMPONENT_LABELS.join("/") &&
+        renderedValues.length === WATCH_COMPONENT_KEYS.length &&
+        renderedValues.every((value) => Number.isFinite(Number(value))) &&
+        assertNonEmptyStringValue(tagAttribute(componentGroupTag, "data-watch-component-details")) &&
+        assertNonEmptyStringValue(tagAttribute(componentGroupTag, "data-watch-component-item-aria-labels")) &&
+        assertNonEmptyStringValue(tagAttribute(componentGroupTag, "data-watch-component-aria-label")) &&
+        tagAttribute(componentGroupTag, "role") === "group" &&
+        assertNonEmptyStringValue(tagAttribute(componentGroupTag, "aria-label")),
+      `${route} should render a live-safe responsive watch-component group with canonical layout, component order, labels, values, details, and aria labels for ${game.label}`,
+    );
+    return;
+  }
   const componentGroupCount = countDivsWithAttributes(html, {
     "data-responsive-check": "watch-components",
     "data-game-pk": game.gamePk,
@@ -4161,6 +4209,46 @@ try {
     });
     assertWeekDaySlateLinks(filteredWeekHtml, `/upcoming/week/${date}?sort=time`, upcoming.days);
     assertNoLegacySlateLinks(filteredWeekHtml, `/upcoming/week/${date}?sort=time`);
+
+    const invalidWeekControlsPath = `/upcoming/week/${encodeURIComponent(date)}?pregame=0&sort=bogus`;
+    const invalidWeekControlsPage = await fetch(`${baseUrl}${invalidWeekControlsPath}`);
+    assert(
+      invalidWeekControlsPage.ok,
+      `/upcoming/week/${date}?pregame=0&sort=bogus returned HTTP ${invalidWeekControlsPage.status}`,
+    );
+    const invalidWeekControlsHtml = await invalidWeekControlsPage.text();
+    assertMetadata(
+      invalidWeekControlsHtml,
+      `/upcoming/week/${date}`,
+      expectedUpcomingWeekTitle(date),
+      expectedUpcomingWeekDescription(upcoming),
+    );
+    assertNoIndexFollow(invalidWeekControlsHtml, `/upcoming/week/${date}?pregame=0&sort=bogus`);
+    assertUpcomingControls(
+      invalidWeekControlsHtml,
+      `/upcoming/week/${date}?pregame=0&sort=bogus`,
+      "Filters / All statuses / Watch rank",
+      {
+        basePath: `/upcoming/week/${date}`,
+        controls: { pregameOnly: false, sort: "watch" },
+        counts: {
+          visibleGames: weekGames.length,
+          scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
+        },
+      },
+    );
+    upcoming.days.forEach((day) => {
+      assertRenderedWatchCards(
+        invalidWeekControlsHtml,
+        `/upcoming/week/${date}?pregame=0&sort=bogus day ${day.date}`,
+        day.games,
+        `on ${formatUpcomingDate(day.date)}`,
+        `must-watch-${day.date}`,
+        day.scheduledGames,
+      );
+    });
+    assertWeekDaySlateLinks(invalidWeekControlsHtml, `/upcoming/week/${date}?pregame=0&sort=bogus`, upcoming.days);
+    assertNoLegacySlateLinks(invalidWeekControlsHtml, `/upcoming/week/${date}?pregame=0&sort=bogus`);
 
     const filteredPregameTeamWeekPath = `/upcoming/week/${encodeURIComponent(date)}?pregame=1`;
     const filteredPregameTeamWeekPage = await fetch(`${baseUrl}${filteredPregameTeamWeekPath}`);
