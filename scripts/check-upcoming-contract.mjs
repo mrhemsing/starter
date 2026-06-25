@@ -1140,6 +1140,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     `${route} should expose control empty-state telemetry that matches visible game count`,
   );
   assert(
+    Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-hidden-games")) === Math.max(0, renderedScheduledGames - renderedVisibleGames),
+    `${route} should expose hidden-game telemetry that matches scheduled minus visible games`,
+  );
+  assert(
     elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === "2",
     `${route} should expose exactly one active upcoming control per group`,
   );
@@ -3814,6 +3818,10 @@ try {
   const filteredDay = upcoming.days.find((candidate) => candidate.games.some((game) => game.status === "pregame"));
   if (filteredDay) {
     const filteredDate = filteredDay.date;
+    const filteredDateResponse = await fetch(`${baseUrl}/api/tonight?date=${encodeURIComponent(filteredDate)}&window=${encodeURIComponent(windowSize)}`);
+    assert(filteredDateResponse.ok, `/api/tonight?date=${filteredDate} returned HTTP ${filteredDateResponse.status}`);
+    const currentFilteredDay = await filteredDateResponse.json();
+    assertDay(currentFilteredDay, filteredDate, { requireCompleteStarter: true });
 
     const filteredPregameTeamDayPath = `/upcoming/${encodeURIComponent(filteredDate)}?pregame=1`;
     const filteredPregameTeamDayPage = await fetch(`${baseUrl}${filteredPregameTeamDayPath}`);
@@ -3823,7 +3831,7 @@ try {
       filteredPregameTeamDayHtml,
       `/upcoming/${filteredDate}`,
       expectedUpcomingDayTitle(filteredDate),
-      expectedUpcomingDayDescription(filteredDay),
+      expectedUpcomingDayDescription(currentFilteredDay),
     );
     assertNoIndexFollow(filteredPregameTeamDayHtml, `/upcoming/${filteredDate}?pregame=1`);
     assertUpcomingControls(
@@ -3834,10 +3842,10 @@ try {
     assertRenderedWatchCards(
       filteredPregameTeamDayHtml,
       `/upcoming/${filteredDate}?pregame=1`,
-      pregameGames(filteredDay.games),
+      pregameGames(currentFilteredDay.games),
       `on ${formatUpcomingDate(filteredDate)}`,
       "must-watch",
-      filteredDay.scheduledGames,
+      currentFilteredDay.scheduledGames,
     );
     assertPrimarySlateCta(
       filteredPregameTeamDayHtml,
@@ -3859,7 +3867,7 @@ try {
       filteredSortedPregameTeamDayHtml,
       `/upcoming/${filteredDate}`,
       expectedUpcomingDayTitle(filteredDate),
-      expectedUpcomingDayDescription(filteredDay),
+      expectedUpcomingDayDescription(currentFilteredDay),
     );
     assertNoIndexFollow(filteredSortedPregameTeamDayHtml, `/upcoming/${filteredDate}?pregame=1&sort=time`);
     assertUpcomingControls(
@@ -3870,18 +3878,18 @@ try {
         basePath: `/upcoming/${filteredDate}`,
         controls: { pregameOnly: true, sort: "time" },
         counts: {
-          visibleGames: pregameGamesByFirstPitch(filteredDay.games).length,
-          scheduledGames: filteredDay.scheduledGames,
+          visibleGames: pregameGamesByFirstPitch(currentFilteredDay.games).length,
+          scheduledGames: currentFilteredDay.scheduledGames,
         },
       },
     );
     assertRenderedWatchCards(
       filteredSortedPregameTeamDayHtml,
       `/upcoming/${filteredDate}?pregame=1&sort=time`,
-      pregameGamesByFirstPitch(filteredDay.games),
+      pregameGamesByFirstPitch(currentFilteredDay.games),
       `on ${formatUpcomingDate(filteredDate)}`,
       "must-watch",
-      filteredDay.scheduledGames,
+      currentFilteredDay.scheduledGames,
     );
     assertPrimarySlateCta(
       filteredSortedPregameTeamDayHtml,
