@@ -71,6 +71,12 @@ p,
   text-transform: uppercase;
 }
 
+@media (max-width: 639.98px) {
+  .site-logo-wordmark {
+    font-size: clamp(3.1625rem, 6.864vw, 3.432rem);
+  }
+}
+
 .meta-seg,
 .stat-token,
 .nowrap-token,
