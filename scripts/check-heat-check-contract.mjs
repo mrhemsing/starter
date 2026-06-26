@@ -208,6 +208,15 @@ assert(
 );
 
 assert(
+  formPage.includes("function MobileStackedPitcherName") &&
+    formPage.includes("<MobileStackedPitcherName name={pitcher.name} />") &&
+    formPage.includes('className="block lg:inline"') &&
+    formPage.includes('className="hidden lg:inline"') &&
+    formPage.includes("pitcher-name break-words"),
+  "Heat Check row names must stack first/rest and last name on mobile so long names do not collide with the score",
+);
+
+assert(
   formPage.includes('bg-[#08080a]/92 py-2 backdrop-blur sm:sticky sm:top-0" data-heat-band-header={band.key}') &&
     !formPage.includes('className="sticky top-0 z-10 mt-6 mb-3') &&
     !bandNav.includes('sticky top-[76px]'),

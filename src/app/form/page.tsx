@@ -570,7 +570,9 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </Link>
       <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
+        <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
+          <MobileStackedPitcherName name={pitcher.name} />
+        </h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Scheduled starter</span> : null}
@@ -612,6 +614,22 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         />
       </div>
     </article>
+  );
+}
+
+function MobileStackedPitcherName({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  const lastName = parts.pop();
+  const firstNames = parts.join(" ");
+
+  if (!firstNames || !lastName) return <>{name}</>;
+
+  return (
+    <>
+      <span className="block lg:inline">{firstNames}</span>
+      <span className="hidden lg:inline"> </span>
+      <span className="block lg:inline">{lastName}</span>
+    </>
   );
 }
 
