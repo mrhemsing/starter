@@ -69,6 +69,9 @@ function calibrationSignature(calibration) {
     trendDelta: calibration.trendDelta,
     heatIndex: calibration.heatIndex,
     bandShare: calibration.bandShare,
+    misiorowski: calibration.misiorowski,
+    topForm: calibration.topForm,
+    bottomForm: calibration.bottomForm,
     config: calibration.config,
   });
 }
@@ -107,7 +110,8 @@ function assertCalibrationPage(html, calibration, label) {
   assert(normalizedPageHtml.includes("Heat bands"), `${label} should render Heat band readouts`);
   assert(normalizedPageHtml.includes("Config snapshot"), `${label} should render the config snapshot`);
   assert(normalizedPageHtml.includes(`>${calibration.counts.qualified}<`), `${label} should render the qualified pitcher count`);
-  assert(normalizedPageHtml.includes("On fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Down") && normalizedPageHtml.includes("Ice cold"), `${label} should render direction band labels`);
+  assert(normalizedPageHtml.includes("On Fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Down") && normalizedPageHtml.includes("Ice Cold"), `${label} should render FORM band labels`);
+  assert(normalizedPageHtml.includes("Misiorowski") && normalizedPageHtml.includes("Top FORM") && normalizedPageHtml.includes("Bottom FORM"), `${label} should render FORM diagnostic leaderboards`);
 }
 
 function assertCalibrationPayload(calibration, expectedWindow, label, options = {}) {
@@ -115,17 +119,26 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
   assert(calibration.counts?.qualified > 0, `${label} expected at least one qualified pitcher`);
   assert(sumValues(calibration.counts.bands) === calibration.counts.qualified, `${label} heat band counts must sum to qualified count`);
   assert(calibration.config?.heatIndexTrendWeight !== undefined, `${label} config snapshot missing heatIndexTrendWeight`);
-  const windowThresholds = calibration.config?.directionBandThresholds?.[String(expectedWindow)];
+  const windowThresholds = calibration.config?.formBandThresholds?.[String(expectedWindow)];
   assert(
     windowThresholds &&
-      windowThresholds.heatingDelta === 0.75 &&
-      windowThresholds.coolingDelta === -0.75 &&
-      Number.isFinite(windowThresholds.onFireDelta) &&
-      Number.isFinite(windowThresholds.iceColdDelta),
-    `${label} config snapshot missing tuned window-specific direction-band thresholds`,
+      Number.isFinite(windowThresholds.onFireMin) &&
+      Number.isFinite(windowThresholds.heatingMin) &&
+      Number.isFinite(windowThresholds.coolingMax) &&
+      Number.isFinite(windowThresholds.iceColdMax),
+    `${label} config snapshot missing tuned window-specific FORM-band thresholds`,
   );
+  assert(windowThresholds.onFireMin <= calibration.rgs.max, `${label} On Fire FORM cutoff ${windowThresholds.onFireMin} must be reachable by max FORM ${calibration.rgs.max}`);
+  assert(windowThresholds.iceColdMax >= calibration.rgs.min, `${label} Ice Cold FORM cutoff ${windowThresholds.iceColdMax} must be reachable by min FORM ${calibration.rgs.min}`);
   assert(calibration.config?.buyLowGsPlusMax === 50 && calibration.config?.sellHighGsPlusMin === 58, `${label} config snapshot missing crossover thresholds`);
   assert(calibration.bandShare?.onfire !== undefined, `${label} debug payload missing band shares`);
+  for (const key of ["min", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95", "max", "mean", "stddev"]) {
+    assert(Number.isFinite(calibration.rgs[key]), `${label} FORM distribution missing ${key}`);
+  }
+  assert(calibration.misiorowski?.present, `${label} Misiorowski must be present in qualified FORM population`);
+  assert(Array.isArray(calibration.misiorowski.gsPlusInputs) && calibration.misiorowski.gsPlusInputs.length > 0, `${label} Misiorowski diagnostic must include per-start GS+ inputs`);
+  assert(Array.isArray(calibration.topForm) && calibration.topForm.length === 5, `${label} must report top 5 FORM pitchers`);
+  assert(Array.isArray(calibration.bottomForm) && calibration.bottomForm.length === 5, `${label} must report bottom 5 FORM pitchers`);
   if (options.requireCenteredMean) {
     assert(
       calibration.heatIndex.mean >= 46 && calibration.heatIndex.mean <= 54,
@@ -139,6 +152,13 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
     assert(
       calibration.counts.bands.even / calibration.counts.qualified < 0.65,
       `${label} Even band should not absorb a collapsed majority, got ${calibration.counts.bands.even}/${calibration.counts.qualified}`,
+    );
+  }
+  if (String(expectedWindow) === "5") {
+    assert(calibration.misiorowski.band === "onfire", `${label} Misiorowski must land in On Fire for Last 5`);
+    assert(
+      calibration.topForm.slice(0, 3).some((pitcher) => pitcher.name.includes("Misiorowski")),
+      `${label} Misiorowski must rank near the top of Last 5 FORM`,
     );
   }
 }
@@ -179,9 +199,7 @@ try {
 
   assertCalibrationPayload(calibration, windowSize, "/api/form/debug", { requireCenteredMean: true });
   assertHomePayload(home, calibration, "/api/form/home");
-  assert(calibration.counts.bands.even > 0, "direction-band calibration should absorb flat pitchers into Even");
-  assert(calibration.counts.bands.hot + calibration.counts.bands.onfire === calibration.counts.heating, "heating direction bands should match heating count");
-  assert(calibration.counts.bands.cooling + calibration.counts.bands.ice === calibration.counts.cooling, "cooling direction bands should match cooling count");
+  assert(calibration.counts.bands.even > 0, "FORM-band calibration should leave a populated middle band");
 
   const windowCalibrations = new Map([[String(calibration.window), calibration]]);
 
@@ -265,7 +283,7 @@ try {
     .join(", ");
 
   console.log(
-    `form debug ok: window ${calibration.window}, qualified ${calibration.counts.qualified}, heating ${calibration.counts.heating}, cooling ${calibration.counts.cooling}, RGS p10/p50/p90 ${calibration.rgs.p10}/${calibration.rgs.p50}/${calibration.rgs.p90}, trendDelta p25/p50/p75 ${calibration.trendDelta.p25}/${calibration.trendDelta.p50}/${calibration.trendDelta.p75}, heat min/p25/p50/p75/max ${calibration.heatIndex.min}/${calibration.heatIndex.p25}/${calibration.heatIndex.p50}/${calibration.heatIndex.p75}/${calibration.heatIndex.max}, heat mean ${calibration.heatIndex.mean}, bands ${bands}`,
+    `form debug ok: window ${calibration.window}, qualified ${calibration.counts.qualified}, heating ${calibration.counts.heating}, cooling ${calibration.counts.cooling}, FORM min/p10/p20/p30/p40/p50/p60/p70/p80/p90/p95/max/mean/stddev ${calibration.rgs.min}/${calibration.rgs.p10}/${calibration.rgs.p20}/${calibration.rgs.p30}/${calibration.rgs.p40}/${calibration.rgs.p50}/${calibration.rgs.p60}/${calibration.rgs.p70}/${calibration.rgs.p80}/${calibration.rgs.p90}/${calibration.rgs.p95}/${calibration.rgs.max}/${calibration.rgs.mean}/${calibration.rgs.stddev}, trendDelta p25/p50/p75 ${calibration.trendDelta.p25}/${calibration.trendDelta.p50}/${calibration.trendDelta.p75}, Misiorowski FORM ${calibration.misiorowski.form} inputs ${calibration.misiorowski.gsPlusInputs.join("/")}, top FORM ${calibration.topForm.map((pitcher) => `${pitcher.name}:${pitcher.form}`).join(" | ")}, bottom FORM ${calibration.bottomForm.map((pitcher) => `${pitcher.name}:${pitcher.form}`).join(" | ")}, bands ${bands}`,
   );
 } catch (error) {
   if (output.trim()) {

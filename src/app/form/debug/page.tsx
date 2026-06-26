@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormCalibration, parseFormWindow } from "@/lib/data/form-service";
-import { directionThresholdsForWindow, HEAT_BANDS } from "@/lib/form-tokens";
+import { formThresholdsForWindow, HEAT_BANDS } from "@/lib/form-tokens";
 
 type FormDebugPageProps = {
   searchParams?: Promise<{
@@ -25,7 +25,7 @@ export default async function FormDebugPage({ searchParams }: FormDebugPageProps
           <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Form calibration</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Internal readout for tuning rolling form, trend, and Heat Index thresholds against the live archive.
+            Internal readout for tuning rolling FORM bands against the live archive.
           </p>
         </header>
 
@@ -44,7 +44,7 @@ export default async function FormDebugPage({ searchParams }: FormDebugPageProps
             <div className="mt-4 space-y-3">
               {HEAT_BANDS.map((band) => (
                 <div key={band.key} className="grid grid-cols-[112px_1fr_74px] items-center gap-3 font-mono text-xs">
-                  <span style={{ color: band.color }}>{band.label} {directionThresholdLabel(band.key, calibration.window)}</span>
+                  <span style={{ color: band.color }}>{band.label} {formThresholdLabel(band.key, calibration.window)}</span>
                   <div className="h-2 overflow-hidden rounded bg-black/40">
                     <div className="h-full" style={{ width: `${bandPercent(calibration.counts.bands[band.key], calibration.counts.qualified)}%`, backgroundColor: band.color }} />
                   </div>
@@ -59,6 +59,12 @@ export default async function FormDebugPage({ searchParams }: FormDebugPageProps
             <Distribution title="Trend delta" values={calibration.trendDelta} />
             <Distribution title="Heat Index" values={calibration.heatIndex} />
           </div>
+        </section>
+
+        <section className="mt-5 grid gap-5 lg:grid-cols-3">
+          <PitcherDiagnostic title="Misiorowski" pitcher={calibration.misiorowski} />
+          <PitcherList title="Top FORM" pitchers={calibration.topForm} />
+          <PitcherList title="Bottom FORM" pitchers={calibration.bottomForm} />
         </section>
 
         <section className="mt-5 rounded border border-white/10 bg-[#101014] p-5">
@@ -79,14 +85,38 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function directionThresholdLabel(key: string, window: number) {
-  const thresholds = directionThresholdsForWindow(window);
-  if (key === "onfire") return `>= +${thresholds.onFireDelta}`;
-  if (key === "hot") return `>= +${thresholds.heatingDelta}`;
-  if (key === "even") return "flat";
-  if (key === "cooling") return `<= ${thresholds.coolingDelta}`;
-  if (key === "ice") return `<= ${thresholds.iceColdDelta}`;
+function formThresholdLabel(key: string, window: number) {
+  const thresholds = formThresholdsForWindow(window);
+  if (key === "onfire") return `>= ${thresholds.onFireMin}`;
+  if (key === "hot") return `>= ${thresholds.heatingMin}`;
+  if (key === "even") return "middle FORM";
+  if (key === "cooling") return `<= ${thresholds.coolingMax}`;
+  if (key === "ice") return `<= ${thresholds.iceColdMax}`;
   return "";
+}
+
+function PitcherDiagnostic({ title, pitcher }: { title: string; pitcher: Record<string, unknown> }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-5">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{title}</p>
+      <pre className="mt-4 overflow-x-auto rounded bg-black/30 p-4 text-xs text-zinc-300">{JSON.stringify(pitcher, null, 2)}</pre>
+    </div>
+  );
+}
+
+function PitcherList({ title, pitchers }: { title: string; pitchers: Array<Record<string, unknown>> }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-5">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{title}</p>
+      <ol className="mt-4 space-y-2 font-mono text-xs">
+        {pitchers.map((pitcher) => (
+          <li key={String(pitcher.pitcherId)} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-zinc-300">
+            {pitcher.name as string} · FORM {pitcher.form as number} · {pitcher.band as string}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 function Distribution({ title, values }: { title: string; values: Record<string, number> }) {

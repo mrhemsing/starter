@@ -20,6 +20,11 @@ export const FORM_CONFIG = {
     5: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 5.5, iceColdDelta: -8 },
     10: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 3.5, iceColdDelta: -3.5 },
   },
+  formBandThresholds: {
+    3: { onFireMin: 55, heatingMin: 49, coolingMax: 39, iceColdMax: 34 },
+    5: { onFireMin: 53, heatingMin: 49, coolingMax: 41, iceColdMax: 36 },
+    10: { onFireMin: 52, heatingMin: 49, coolingMax: 42, iceColdMax: 39 },
+  },
   buyLowGsPlusMax: 50,
   sellHighGsPlusMin: 58,
   heatIndexBase: 50,
@@ -28,11 +33,11 @@ export const FORM_CONFIG = {
 };
 
 export const LEVEL_BANDS: LevelBandToken[] = [
-  { key: "onfire", label: "On fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
+  { key: "onfire", label: "On Fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
   { key: "hot", label: "Heating Up", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },
   { key: "even", label: "Even", min: 43, color: "#888780", cssVar: "--level-even", textCssVar: "--level-even-text", textClass: "text-[var(--level-even-text)]" },
   { key: "cooling", label: "Cooling Down", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
-  { key: "ice", label: "Ice cold", min: 0, color: "#378ADD", cssVar: "--level-ice", textClass: "text-[var(--level-ice)]" },
+  { key: "ice", label: "Ice Cold", min: 0, color: "#378ADD", cssVar: "--level-ice", textClass: "text-[var(--level-ice)]" },
 ];
 
 export const QUALITY_BANDS: LevelBandToken[] = [
@@ -118,8 +123,21 @@ export function directionBandOf(deltaForm: number, window: number = FORM_CONFIG.
   return LEVEL_BANDS[2];
 }
 
-export function formBandOf(rgs: number) {
-  return tierOf(rgs);
+export function formThresholdsForWindow(window: number = FORM_CONFIG.windowDefault) {
+  return FORM_CONFIG.formBandThresholds[window as keyof typeof FORM_CONFIG.formBandThresholds] ?? FORM_CONFIG.formBandThresholds[FORM_CONFIG.windowDefault];
+}
+
+export function formHeatBandOf(rgs: number, window: number = FORM_CONFIG.windowDefault) {
+  const thresholds = formThresholdsForWindow(window);
+  if (rgs >= thresholds.onFireMin) return LEVEL_BANDS[0];
+  if (rgs >= thresholds.heatingMin) return LEVEL_BANDS[1];
+  if (rgs <= thresholds.iceColdMax) return LEVEL_BANDS[4];
+  if (rgs <= thresholds.coolingMax) return LEVEL_BANDS[3];
+  return LEVEL_BANDS[2];
+}
+
+export function formBandOf(rgs: number, window: number = FORM_CONFIG.windowDefault) {
+  return formHeatBandOf(rgs, window);
 }
 
 export function qualityTierOf(gs: number) {

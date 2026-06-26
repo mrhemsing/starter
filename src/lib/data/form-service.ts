@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { directionBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
+import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-direction-bands-v4";
+const FORM_CACHE_VERSION = "form-level-bands-v1";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -414,6 +414,9 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
     rgs: describeDistribution(qualified.map((pitcher) => pitcher.rgs)),
     trendDelta: describeDistribution(qualified.map((pitcher) => pitcher.trendDelta)),
     heatIndex: describeDistribution(qualified.map((pitcher) => pitcher.heatIndex ?? 0)),
+    misiorowski: describePitcherCalibration(qualified, "misiorowski"),
+    topForm: [...qualified].sort(compareFormLevelDesc).slice(0, 5).map(calibrationPitcherRow),
+    bottomForm: [...qualified].sort(compareFormLevelAsc).slice(0, 5).map(calibrationPitcherRow),
   };
 }
 
@@ -539,7 +542,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
   const seasonStats = buildSeasonStats(starts);
-  const tier = directionBandOf(deltaForm, window).key;
+  const tier = formHeatBandOf(rgs, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
 
@@ -790,22 +793,24 @@ function buildStartPoint(starts: StartSummary[], index: number, window: FormWind
 }
 
 function compareFormSummaries(a: FormSummary, b: FormSummary) {
-  if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
-  if (b.rgs !== a.rgs) return b.rgs - a.rgs;
-  const aLast = a.lastStart;
-  const bLast = b.lastStart;
-  if ((bLast?.gsPlus ?? 0) !== (aLast?.gsPlus ?? 0)) return (bLast?.gsPlus ?? 0) - (aLast?.gsPlus ?? 0);
-  if ((bLast?.ip ?? 0) !== (aLast?.ip ?? 0)) return (bLast?.ip ?? 0) - (aLast?.ip ?? 0);
-  return a.name.localeCompare(b.name);
+  return compareFormLevelDesc(a, b);
 }
 
 function compareFormAsc(a: FormSummary, b: FormSummary) {
-  if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;
+  return compareFormLevelAsc(a, b);
+}
+
+function compareFormLevelDesc(a: FormSummary, b: FormSummary) {
+  if (b.rgs !== a.rgs) return b.rgs - a.rgs;
+  if ((b.heatIndex ?? 0) !== (a.heatIndex ?? 0)) return (b.heatIndex ?? 0) - (a.heatIndex ?? 0);
+  if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
+  return a.name.localeCompare(b.name);
+}
+
+function compareFormLevelAsc(a: FormSummary, b: FormSummary) {
   if (a.rgs !== b.rgs) return a.rgs - b.rgs;
-  const aLast = a.lastStart;
-  const bLast = b.lastStart;
-  if ((aLast?.gsPlus ?? 0) !== (bLast?.gsPlus ?? 0)) return (aLast?.gsPlus ?? 0) - (bLast?.gsPlus ?? 0);
-  if ((aLast?.ip ?? 0) !== (bLast?.ip ?? 0)) return (aLast?.ip ?? 0) - (bLast?.ip ?? 0);
+  if ((a.heatIndex ?? 0) !== (b.heatIndex ?? 0)) return (a.heatIndex ?? 0) - (b.heatIndex ?? 0);
+  if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;
   return a.name.localeCompare(b.name);
 }
 
@@ -846,13 +851,43 @@ function describeDistribution(values: number[]) {
   return {
     min: round1(sorted[0] ?? 0),
     p10: round1(percentile(sorted, 10)),
+    p20: round1(percentile(sorted, 20)),
     p25: round1(percentile(sorted, 25)),
+    p30: round1(percentile(sorted, 30)),
+    p40: round1(percentile(sorted, 40)),
     p50: round1(percentile(sorted, 50)),
+    p60: round1(percentile(sorted, 60)),
+    p70: round1(percentile(sorted, 70)),
     p75: round1(percentile(sorted, 75)),
+    p80: round1(percentile(sorted, 80)),
     p90: round1(percentile(sorted, 90)),
+    p95: round1(percentile(sorted, 95)),
     max: round1(sorted.at(-1) ?? 0),
     mean: round1(mean(sorted)),
+    stddev: round1(sampleStddev(sorted)),
   };
+}
+
+function calibrationPitcherRow(pitcher: FormSummary) {
+  return {
+    pitcherId: pitcher.pitcherId,
+    name: pitcher.name,
+    team: pitcher.team,
+    form: pitcher.rgs,
+    deltaForm: pitcher.deltaForm,
+    trendDelta: pitcher.trendDelta,
+    heatIndex: pitcher.heatIndex,
+    band: pitcher.tier,
+    gsPlusInputs: pitcher.spark,
+  };
+}
+
+function describePitcherCalibration(pitchers: FormSummary[], nameNeedle: string) {
+  const normalized = nameNeedle.toLowerCase();
+  const pitcher = pitchers.find((candidate) => candidate.name.toLowerCase().includes(normalized));
+  return pitcher
+    ? { present: true, ...calibrationPitcherRow(pitcher) }
+    : { present: false, name: nameNeedle, gsPlusInputs: [] };
 }
 
 function describeBandShare(bands: Record<HeatBandKey, number>, total: number) {

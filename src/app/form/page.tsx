@@ -160,8 +160,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           {leagueView ? (
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-              <span className="block">Who&apos;s gaining and losing form fastest over their last {window} starts.</span>
-              <span className="block lg:whitespace-nowrap">Level lives on Ranked Starts. This page is about which way arms are trending.</span>
+              <span className="block">Starting-pitcher FORM over the last {window} starts.</span>
+              <span className="block lg:whitespace-nowrap">A season-wide rolling view with movement called out in the Movers strip.</span>
             </p>
           ) : (
             <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form · {pitchers.length} shown.</p>
@@ -564,7 +564,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <h2 className={`${treatment.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{pitcher.name}</h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
-          {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Starting today</span> : null}
+          {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Scheduled starter</span> : null}
         </p>
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
         <div className="flex min-w-0 flex-wrap gap-1.5">
@@ -645,8 +645,8 @@ function BandEmptyState({ message }: { message: string }) {
 
 function bandEmptyMessage(band: HeatBand, count: number) {
   if (count > 0) return null;
-  if (band.key === "onfire") return "Nobody's on fire today.";
-  if (band.key === "ice") return "Nobody's in free fall today.";
+  if (band.key === "onfire") return "FORM band unavailable - check FORM data.";
+  if (band.key === "ice") return "FORM cold band unavailable - check FORM data.";
   return null;
 }
 
@@ -683,10 +683,10 @@ function groupPitchersByBand(pitchers: FormSummary[]) {
 }
 
 function sortBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[]) {
-  if (bandKey === "cooling" || bandKey === "ice") return [...pitchers].sort((a, b) => a.deltaForm - b.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
-  if (bandKey === "onfire") return [...pitchers].sort((a, b) => (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
+  if (bandKey === "cooling" || bandKey === "ice") return [...pitchers].sort((a, b) => a.rgs - b.rgs || a.deltaForm - b.deltaForm || a.name.localeCompare(b.name));
+  if (bandKey === "onfire") return [...pitchers].sort((a, b) => b.rgs - a.rgs || (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
   if (bandKey === "even") return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
-  return [...pitchers].sort((a, b) => b.deltaForm - a.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));
+  return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
 }
 
 function buildActiveFilterLabel({ band, motion, team, query }: { band: string; motion: string; team: string; query: string }) {

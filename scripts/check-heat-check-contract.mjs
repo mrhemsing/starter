@@ -23,16 +23,18 @@ assert(
 assert(
   formService.includes("const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);") &&
     formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);") &&
-    formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
-    formService.includes("if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;") &&
-    formService.includes("if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;") &&
-    formPage.includes('if (bandKey === "onfire") return [...pitchers].sort((a, b) => (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
-    formPage.includes('return [...pitchers].sort((a, b) => b.deltaForm - a.deltaForm || b.rgs - a.rgs || a.name.localeCompare(b.name));') &&
+    formService.includes("const tier = formHeatBandOf(rgs, window).key;") &&
+    formService.includes("function compareFormLevelDesc") &&
+    formService.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
+    formService.includes("function compareFormLevelAsc") &&
+    formService.includes("if (a.rgs !== b.rgs) return a.rgs - b.rgs;") &&
+    formPage.includes('if (bandKey === "onfire") return [...pitchers].sort((a, b) => b.rgs - a.rgs || (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
+    formPage.includes('return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
     !formService.includes("sort(compareHeatDesc)") &&
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&
     !formService.includes("function compareHeatAsc"),
-  "Heat Check must band by direction delta while ranking On Fire by Heat Index and middle warm/cool bands by direction",
+  "Heat Check must band and rank by rolling FORM level while keeping movement separate for Movers",
 );
 
 assert(
@@ -58,8 +60,14 @@ assert(
 
 assert(
   formPage.includes("{leagueView ? (") &&
-    formPage.includes("<span className=\"block\">Who&apos;s gaining and losing form fastest over their last {window} starts.</span>") &&
-    formPage.includes('<span className="block lg:whitespace-nowrap">Level lives on Ranked Starts. This page is about which way arms are trending.</span>') &&
+    formPage.includes("<span className=\"block\">Starting-pitcher FORM over the last {window} starts.</span>") &&
+    formPage.includes('<span className="block lg:whitespace-nowrap">A season-wide rolling view with movement called out in the Movers strip.</span>') &&
+    formPage.includes('FORM band unavailable - check FORM data.') &&
+    formPage.includes('FORM cold band unavailable - check FORM data.') &&
+    formPage.includes('Scheduled starter') &&
+    !formPage.includes("Nobody's on fire today.") &&
+    !formPage.includes("Nobody's in free fall today.") &&
+    !formPage.includes(">Starting today<") &&
     formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
   "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy with shown count in team mode",
 );
