@@ -56,7 +56,7 @@ export function HeatHighlightModal({ highlight, pitcherName, label, className }:
                 ×
               </button>
             </div>
-            <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={pitcherName} />
+            <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={pitcherName} loadImmediately />
           </div>
         </div>,
         modalRoot,

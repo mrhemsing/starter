@@ -6,20 +6,22 @@ import type { FeaturedStartHighlight } from "@/lib/types";
 type FeaturedStartHighlightEmbedProps = {
   highlight: FeaturedStartHighlight;
   pitcherName: string;
+  loadImmediately?: boolean;
 };
 
-export function FeaturedStartHighlightEmbed({ highlight, pitcherName }: FeaturedStartHighlightEmbedProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmediately = false }: FeaturedStartHighlightEmbedProps) {
+  const [isLoaded, setIsLoaded] = useState(loadImmediately);
   const [isHidden, setIsHidden] = useState(false);
 
   if (isHidden) return null;
 
+  const shouldLoadPlayer = loadImmediately || isLoaded;
   const aspectClass = highlight.isShort ? "mx-auto aspect-[9/16] w-full max-w-[280px] sm:max-w-[320px]" : "aspect-video";
 
   return (
     <div className="rounded border border-white/10 bg-black/20 p-2" data-responsive-check="featured-start-highlight">
       <div className={`relative overflow-hidden rounded bg-black ${aspectClass}`}>
-        {isLoaded ? (
+        {shouldLoadPlayer ? (
           <iframe
             src={highlight.embedUrl}
             title={`${pitcherName} highlight via MLB on YouTube`}

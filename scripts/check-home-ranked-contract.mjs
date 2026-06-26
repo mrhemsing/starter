@@ -10,6 +10,8 @@ const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
+const heatHighlightModal = await readFile("src/components/heat-highlight-modal.tsx", "utf8");
+const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const pitchingDuels = await readFile("src/components/pitching-duels.tsx", "utf8");
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
@@ -248,6 +250,13 @@ assert(
     !topPerformerCard.includes("View log") &&
     !topPerformerCard.includes("justify-center rounded border border-white/15"),
   "home top performer must show Video highlights beside Game log in a two-column mobile CTA row with the yellow slate button treatment",
+);
+
+assert(
+  featuredStartHighlight.includes("loadImmediately?: boolean;") &&
+    featuredStartHighlight.includes("const shouldLoadPlayer = loadImmediately || isLoaded;") &&
+    heatHighlightModal.includes("<FeaturedStartHighlightEmbed highlight={highlight} pitcherName={pitcherName} loadImmediately />"),
+  "highlight modal must skip the local fake poster and open directly to the YouTube player",
 );
 
 assert(
