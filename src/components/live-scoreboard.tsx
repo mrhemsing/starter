@@ -119,8 +119,8 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
             {row.team} vs {row.opponent}
           </p>
         </div>
-        <Link href={row.startHref} className="mt-1 block truncate font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-          {row.pitcherName}
+        <Link href={row.startHref} className="pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [overflow-wrap:anywhere]">
+          <MobileStackedPitcherName name={row.pitcherName} />
         </Link>
         <p className="mt-1 font-mono text-xs text-zinc-400">
           {liveOrFinalScore ? formatLine(row) : projectionLabel(row)}
@@ -145,6 +145,22 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
         </div>
       )}
     </article>
+  );
+}
+
+function MobileStackedPitcherName({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  const lastName = parts.pop();
+  const firstNames = parts.join(" ");
+
+  if (!firstNames || !lastName) return <>{name}</>;
+
+  return (
+    <>
+      <span className="block sm:inline">{firstNames}</span>
+      <span className="hidden sm:inline"> </span>
+      <span className="block sm:inline">{lastName}</span>
+    </>
   );
 }
 

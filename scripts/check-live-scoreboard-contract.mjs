@@ -92,7 +92,12 @@ assert(
     liveComponent.includes("First pitch") &&
     liveComponent.includes("{row.scoreLabel}") &&
     liveComponent.includes('{row.qualityLabel ?') &&
-    liveComponent.includes('row.provisional ? " · Prov." : ""'),
+    liveComponent.includes('row.provisional ? " · Prov." : ""') &&
+    liveComponent.includes("function MobileStackedPitcherName") &&
+    liveComponent.includes('<MobileStackedPitcherName name={row.pitcherName} />') &&
+    liveComponent.includes("pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight") &&
+    liveComponent.includes('className="block sm:inline"') &&
+    !liveComponent.includes('className="mt-1 block truncate font-serif text-2xl font-bold text-zinc-50'),
   "live scoreboard component must refresh while active, show starter headshots, and mark provisional quality bands",
 );
 
