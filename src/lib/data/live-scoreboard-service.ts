@@ -48,7 +48,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v1"],
+  ["live-scoreboard", "v2"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
@@ -65,10 +65,12 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   const liveLinesByStart = await getLiveLinesByStart(schedule.games);
   const gamesByPk = new Map(schedule.games.map((game) => [game.gamePk, game]));
 
-  const rows = slate.map((start) => {
+  const rows = slate.flatMap((start) => {
     const game = gamesByPk.get(start.gamePk);
+    if (game && normalizeScheduleStatus(game) === "ppd") return [];
+
     const liveLine = liveLinesByStart.get(lineKey(start.gamePk, start.pitcher.mlbId));
-    return buildLiveRow(date, start, liveLine, game);
+    return [buildLiveRow(date, start, liveLine, game)];
   });
 
   rows.sort(compareLiveRows);

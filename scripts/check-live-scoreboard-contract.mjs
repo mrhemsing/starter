@@ -37,6 +37,8 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
+    liveService.includes('["live-scoreboard", "v2"]') &&
+    liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
     liveService.includes('const gsPlus = liveLine && status !== "warming" ? scoreCompletedLine(line, start.context) : null;') &&
     liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
