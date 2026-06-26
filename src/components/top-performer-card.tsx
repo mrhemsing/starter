@@ -169,6 +169,7 @@ export function TopPerformerCard({
                   highlight={highlight}
                   pitcherName={pitcherName}
                   label="Video highlights"
+                  eyebrow={statusLabel.eyebrow}
                   className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded border border-[#F6C445]/50 bg-[#F6C445] px-2 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-[#0A0B0D] transition hover:bg-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] sm:gap-2 sm:px-3 sm:text-xs sm:tracking-[0.14em] lg:w-auto"
                 />
               ) : null}
@@ -211,6 +212,7 @@ export function TopPerformerCard({
                 highlight={highlight}
                 pitcherName={pitcherName}
                 label=""
+                eyebrow={statusLabel.eyebrow}
                 className="grid h-14 w-14 place-items-center rounded-full border border-white/50 bg-black/65 text-[#F6C445] shadow-[0_16px_42px_rgba(0,0,0,0.46)] backdrop-blur-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445]"
               />
             </div>
@@ -233,6 +235,7 @@ export function TopPerformerCard({
                 highlight={highlight}
                 pitcherName={pitcherName}
                 label=""
+                eyebrow={statusLabel.eyebrow}
                 className="grid h-14 w-14 place-items-center rounded-full border border-white/50 bg-black/65 text-[#F6C445] shadow-[0_16px_42px_rgba(0,0,0,0.46)] backdrop-blur-sm transition hover:scale-105 hover:border-[#F6C445] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445]"
               />
             </div>

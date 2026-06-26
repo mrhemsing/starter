@@ -9,10 +9,11 @@ type HeatHighlightModalProps = {
   highlight: FeaturedStartHighlight;
   pitcherName: string;
   label?: string;
+  eyebrow?: string;
   className?: string;
 };
 
-export function HeatHighlightModal({ highlight, pitcherName, label, className }: HeatHighlightModalProps) {
+export function HeatHighlightModal({ highlight, pitcherName, label, eyebrow = "Recent MLB highlight", className }: HeatHighlightModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const modalRoot = typeof document === "undefined" ? null : document.body;
@@ -44,7 +45,7 @@ export function HeatHighlightModal({ highlight, pitcherName, label, className }:
           <div className="relative max-h-[calc(100svh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded border border-white/10 bg-[#101014] p-3 shadow-2xl sm:p-4" onClick={(event) => event.stopPropagation()}>
             <div className="mb-3 pr-12">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Recent MLB highlight</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">{eyebrow}</p>
                 <h3 id={titleId} className="mt-1 font-serif text-2xl font-bold leading-none text-zinc-50 sm:text-3xl">{pitcherName}</h3>
               </div>
               <button

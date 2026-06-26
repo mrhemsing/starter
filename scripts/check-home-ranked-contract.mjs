@@ -260,6 +260,14 @@ assert(
 );
 
 assert(
+  heatHighlightModal.includes('eyebrow = "Recent MLB highlight"') &&
+    heatHighlightModal.includes("{eyebrow}") &&
+    topPerformerCard.includes("eyebrow={statusLabel.eyebrow}") &&
+    topPerformerCard.includes('eyebrow: "Start of the night"'),
+  "home top performer highlight modal must use the Start of the Night eyebrow instead of the generic recent-highlight label",
+);
+
+assert(
   topPerformerCard.includes('const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";'),
   "home top performer card must detect real velocity data before rendering the velocity panel",
 );
