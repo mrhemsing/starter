@@ -10,7 +10,8 @@ export async function SiteNav({ active, today }: { active: NavKey | null; today:
     getDefaultSlateDates(today),
     getSlateStartProgress({ window: "today", date: today }),
   ]);
-  const liveItem = slateProgress.liveGames > 0 ? [{ key: "live" as const, label: <LiveNavLabel />, href: liveDateHref(today) }] : [];
+  const hasActiveLiveStarts = slateProgress.state === "starts-in-progress" && slateProgress.liveGames > 0;
+  const liveItem = hasActiveLiveStarts ? [{ key: "live" as const, label: <LiveNavLabel />, href: liveDateHref(today) }] : [];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
     { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(rankedDate) },

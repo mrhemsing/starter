@@ -48,10 +48,7 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
   return (
     <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
-        <p>
-          {board.liveStarts > 0 ? <span className="text-[#FF9A62]">{board.liveStarts} live</span> : <span>{board.warmingStarts} warming</span>}
-          <span> · {board.finalStarts} final · {board.totalStarts} starters</span>
-        </p>
+        <p>{scoreboardSummaryLabel(board)}</p>
         <p>{updatedLabel}</p>
       </div>
 
@@ -62,6 +59,21 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
       </div>
     </section>
   );
+}
+
+function scoreboardSummaryLabel(board: LiveScoreboardData) {
+  if (board.liveStarts > 0) {
+    return (
+      <>
+        <span className="text-[#FF9A62]">{board.liveStarts} live</span>
+        <span> · {board.finalStarts} final · {board.totalStarts} starters</span>
+      </>
+    );
+  }
+
+  if (board.warmingStarts > 0) return `${board.warmingStarts} warming · ${board.finalStarts} final · ${board.totalStarts} starters`;
+  if (board.totalStarts > 0 && board.finalStarts >= board.totalStarts) return `All ${board.totalStarts} starters final`;
+  return `${board.finalStarts} final · ${board.totalStarts} starters`;
 }
 
 function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number }) {

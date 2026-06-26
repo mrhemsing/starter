@@ -22,6 +22,10 @@ export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
   const today = getHomeSlateDate();
   const board = await getLiveScoreboard({ date });
+  const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";
+  const boardDescription = board.hasActiveStarts
+    ? "Provisional GS+ for starters as games are being played. Live rows move with the official gamefeed; Ranked Starts remains settled-only."
+    : "The settled GS+ board for this slate. Postponed games are removed from the count; completed starter lines are final.";
 
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
@@ -33,12 +37,12 @@ export default async function LivePage({ params }: LivePageProps) {
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">
                 {board.hasActiveStarts ? "Live board" : "Daily board"}
               </p>
-              <h1 className="mt-2 font-serif text-4xl font-black tracking-normal text-zinc-50 sm:text-6xl">Live GS+ Scoreboard</h1>
+              <h1 className="mt-2 font-serif text-4xl font-black tracking-normal text-zinc-50 sm:text-6xl">{boardTitle}</h1>
             </div>
             <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{formatPageDate(date)}</p>
           </div>
           <p className="max-w-3xl text-sm leading-6 text-zinc-400">
-            Provisional GS+ for starters as games are being played. Live rows move with the official gamefeed; Ranked Starts remains settled-only.
+            {boardDescription}
           </p>
         </section>
         <LiveScoreboard initialBoard={board} />

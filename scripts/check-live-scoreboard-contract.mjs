@@ -49,6 +49,8 @@ assert(
 
 assert(
   livePage.includes('active="live"') &&
+    livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
+    livePage.includes("Postponed games are removed from the count; completed starter lines are final.") &&
     livePage.includes("<LiveScoreboard initialBoard={board} />") &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
@@ -64,6 +66,8 @@ assert(
     liveComponent.includes("band={headshotBand}") &&
     liveComponent.includes("sampleSufficient={scored}") &&
     liveComponent.includes("function scoreBand") &&
+    liveComponent.includes("function scoreboardSummaryLabel") &&
+    liveComponent.includes("return `All ${board.totalStarts} starters final`;") &&
     liveComponent.includes('{row.qualityLabel ?') &&
     liveComponent.includes('row.provisional ? " · Prov." : ""'),
   "live scoreboard component must refresh while active, show starter headshots, and mark provisional quality bands",
@@ -72,7 +76,8 @@ assert(
 assert(
   routes.includes("export function liveDateHref(date: string)") &&
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
-    siteNav.includes("slateProgress.liveGames > 0") &&
+    siteNav.includes('const hasActiveLiveStarts = slateProgress.state === "starts-in-progress" && slateProgress.liveGames > 0;') &&
+    siteNav.includes("const liveItem = hasActiveLiveStarts ?") &&
     siteNav.includes("href: liveDateHref(today)") &&
     siteNav.includes("<LiveNavLabel />") &&
     siteNav.includes('className="h-1.5 w-1.5 rounded-full bg-[#FF5A1F]"') &&
