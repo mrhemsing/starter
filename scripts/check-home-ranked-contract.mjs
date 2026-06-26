@@ -239,13 +239,15 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445]') &&
+  topPerformerCard.includes('className="grid grid-cols-2 gap-2 lg:flex"') &&
+    topPerformerCard.includes('inline-flex min-h-11 w-full items-center justify-center gap-1 rounded border border-[#F6C445]/50 bg-[#F6C445] px-2 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-[#0A0B0D]') &&
+    topPerformerCard.includes('inline-flex min-h-11 items-center justify-center rounded border border-[#F6C445]/40 px-2 text-center font-mono text-[10px] uppercase tracking-[0.1em] text-[#F6C445]') &&
     topPerformerCard.includes('label="Video highlights"') &&
     topPerformerCard.includes("Game log") &&
     !topPerformerCard.includes("View game log") &&
     !topPerformerCard.includes("View log") &&
     !topPerformerCard.includes("justify-center rounded border border-white/15"),
-  "home top performer must show Video highlights beside Game log with the left-aligned yellow slate button treatment",
+  "home top performer must show Video highlights beside Game log in a two-column mobile CTA row with the yellow slate button treatment",
 );
 
 assert(

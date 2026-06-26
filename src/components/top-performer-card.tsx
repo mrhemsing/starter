@@ -163,18 +163,18 @@ export function TopPerformerCard({
               </div>
             ) : null}
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:flex">
+            <div className="grid grid-cols-2 gap-2 lg:flex">
               {highlight ? (
                 <HeatHighlightModal
                   highlight={highlight}
                   pitcherName={pitcherName}
                   label="Video highlights"
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-[#F6C445]/50 bg-[#F6C445] px-3 font-mono text-xs uppercase tracking-[0.14em] text-[#0A0B0D] transition hover:bg-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] lg:w-auto"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded border border-[#F6C445]/50 bg-[#F6C445] px-2 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-[#0A0B0D] transition hover:bg-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] sm:gap-2 sm:px-3 sm:text-xs sm:tracking-[0.14em] lg:w-auto"
                 />
               ) : null}
               <Link
                 href={href}
-                className={`inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445] transition hover:border-[#F6C445]/70 hover:text-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] ${highlight ? "" : "sm:col-span-2 lg:w-auto"}`}
+                className={`inline-flex min-h-11 items-center justify-center rounded border border-[#F6C445]/40 px-2 text-center font-mono text-[10px] uppercase tracking-[0.1em] text-[#F6C445] transition hover:border-[#F6C445]/70 hover:text-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] sm:px-3 sm:text-xs sm:tracking-[0.16em] ${highlight ? "" : "col-span-2 lg:w-auto"}`}
               >
                 Game log
               </Link>
