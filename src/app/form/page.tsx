@@ -128,6 +128,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       return Number(aLimited) - Number(bLimited) || b.deltaForm - a.deltaForm || b.rgs - a.rgs;
     });
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
+  const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);
   const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
     count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
@@ -278,7 +279,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                         {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
                         {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { heatingExpanded, coolingExpanded })}
                         {visibleBandPitchers(group.band.key, group.pitchers, { heatingExpanded, coolingExpanded }).map((pitcher, index) => (
-                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={pitchers.indexOf(pitcher) + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
+                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
                         ))}
                       </>
                     )}
@@ -286,7 +287,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 ))
               ) : (
                 boardPitchers.map((pitcher, index) => (
-                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} />
+                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} />
                 ))
               )}
             </section>
@@ -682,11 +683,24 @@ function groupPitchersByBand(pitchers: FormSummary[]) {
   }));
 }
 
-function sortBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[]) {
-  if (bandKey === "cooling" || bandKey === "ice") return [...pitchers].sort((a, b) => a.rgs - b.rgs || a.deltaForm - b.deltaForm || a.name.localeCompare(b.name));
-  if (bandKey === "onfire") return [...pitchers].sort((a, b) => b.rgs - a.rgs || (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
-  if (bandKey === "even") return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
-  return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));
+function sortBandPitchers(_bandKey: HeatBand["key"], pitchers: FormSummary[]) {
+  return sortPitchersByGlobalFormRank(pitchers);
+}
+
+function buildGlobalFormRankMap(pitchers: FormSummary[]) {
+  return new Map(sortPitchersByGlobalFormRank(pitchers).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
+}
+
+function sortPitchersByGlobalFormRank(pitchers: FormSummary[]) {
+  return [...pitchers].sort(compareGlobalFormRank);
+}
+
+function compareGlobalFormRank(a: FormSummary, b: FormSummary) {
+  if (b.rgs !== a.rgs) return b.rgs - a.rgs;
+  if ((b.lastStart?.gsPlus ?? 0) !== (a.lastStart?.gsPlus ?? 0)) return (b.lastStart?.gsPlus ?? 0) - (a.lastStart?.gsPlus ?? 0);
+  if ((b.heatIndex ?? 0) !== (a.heatIndex ?? 0)) return (b.heatIndex ?? 0) - (a.heatIndex ?? 0);
+  if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
+  return a.pitcherId.localeCompare(b.pitcherId);
 }
 
 function buildActiveFilterLabel({ band, motion, team, query }: { band: string; motion: string; team: string; query: string }) {

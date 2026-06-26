@@ -28,8 +28,13 @@ assert(
     formService.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
     formService.includes("function compareFormLevelAsc") &&
     formService.includes("if (a.rgs !== b.rgs) return a.rgs - b.rgs;") &&
-    formPage.includes('if (bandKey === "onfire") return [...pitchers].sort((a, b) => b.rgs - a.rgs || (b.heatIndex ?? 0) - (a.heatIndex ?? 0) || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
-    formPage.includes('return [...pitchers].sort((a, b) => b.rgs - a.rgs || b.deltaForm - a.deltaForm || a.name.localeCompare(b.name));') &&
+    formPage.includes("const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);") &&
+    formPage.includes("rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0}") &&
+    formPage.includes("function sortPitchersByGlobalFormRank") &&
+    formPage.includes("function compareGlobalFormRank") &&
+    formPage.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
+    formPage.includes("return a.pitcherId.localeCompare(b.pitcherId);") &&
+    !formPage.includes("rank={pitchers.indexOf(pitcher) + 1}") &&
     !formService.includes("sort(compareHeatDesc)") &&
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&

@@ -6,11 +6,11 @@ export const FORM_SITE_TITLE = "Toe the Slab";
 export const FORM_PAGE_TITLE = "Heat Check";
 
 export function formPageTitle(window: number) {
-  return window === 5 ? "MLB Pitcher Heat Check - Who's Rising & Falling" : `MLB Pitcher Heat Check - Last ${window} Starts`;
+  return window === 5 ? "MLB Pitcher Heat Check - Rolling FORM Leaders" : `MLB Pitcher Heat Check - Last ${window} Starts`;
 }
 
 export function formPageDescription(leaderboard: Pick<FormLeaderboardResponse, "window" | "qualifiedCount" | "heatingCount" | "coolingCount" | "leagueMeanGS">) {
-  return `Every qualified MLB starter ranked by form direction. See who's heating up and cooling down over their last ${leaderboard.window} starts.`;
+  return `Every qualified MLB starter ranked by rolling FORM over their last ${leaderboard.window} starts, with movement called out separately.`;
 }
 
 export function pitcherFormTitle(form: Pick<FormPitcherResponse, "window" | "summary">) {
@@ -20,7 +20,7 @@ export function pitcherFormTitle(form: Pick<FormPitcherResponse, "window" | "sum
 export function pitcherFormDescription(form: Pick<FormPitcherResponse, "window" | "summary" | "leagueMeanGS">) {
   const band = HEAT_BANDS.find((candidate) => candidate.key === form.summary.tier) ?? HEAT_BANDS[2];
   const trend = TREND_STYLES[form.summary.trend].label;
-  return `${form.summary.name} (${form.summary.team}) recent starting-pitcher form: last-${form.window} GS+, ${band.label.toLowerCase()} direction band, ${trend.toLowerCase()} trend, and full game log.`;
+  return `${form.summary.name} (${form.summary.team}) recent starting-pitcher form: last-${form.window} GS+, ${band.label.toLowerCase()} FORM band, ${trend.toLowerCase()} trend, and full game log.`;
 }
 
 export function jsonLdForFormPage(leaderboard: FormLeaderboardResponse) {
