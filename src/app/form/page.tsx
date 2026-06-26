@@ -211,7 +211,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           {leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}
           {leagueView ? <details>
             <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
-              Filters / Last {window} / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
+              Filters / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
             </summary>
             <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
             <div className="grid gap-3" data-control-role="filter">
@@ -229,12 +229,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
               </ControlGroup>
             </div>
             <div className="grid gap-3" data-control-role="sort-window">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort + window</p>
-            <div className="hidden sm:block" data-responsive-check="heat-league-desktop-window-controls">
-              <ControlGroup label="Window">
-                <WindowControlLinks window={window} params={params ?? {}} />
-              </ControlGroup>
-            </div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Sort</p>
             <ControlGroup label="Sort">
               {sortOptions.map((option) => <ControlLink key={option.key} active={sort === option.key} href={heatCheckHref({ ...params, sort: option.key })}>{option.label}</ControlLink>)}
             </ControlGroup>
@@ -840,11 +835,11 @@ function TeamFilterControl({ teams, activeTeam, params, window }: { teams: strin
             className="mb-0 inline-flex min-h-11 items-center justify-center rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
           />
         ) : null}
-        {activeTeam ? (
-          <div className="pb-0" data-responsive-check="heat-team-window-controls">
+        <div className="pb-0" data-responsive-check="heat-desktop-window-controls">
+          <ControlGroup label="Window">
             <WindowControlLinks window={window} params={params} />
-          </div>
-        ) : null}
+          </ControlGroup>
+        </div>
       </div>
       <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
       <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">

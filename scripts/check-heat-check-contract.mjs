@@ -185,8 +185,12 @@ assert(
     formPage.includes('data-responsive-check="heat-team-filter"') &&
     formPage.includes('function WindowControlLinks({ window, params }') &&
     formPage.includes('data-responsive-check="heat-window-controls"') &&
-    formPage.includes('data-responsive-check="heat-league-desktop-window-controls"') &&
-    formPage.includes('data-responsive-check="heat-team-window-controls"') &&
+    formPage.includes('data-responsive-check="heat-desktop-window-controls"') &&
+    formPage.includes('<ControlGroup label="Window">') &&
+    formPage.includes('<WindowControlLinks window={window} params={params} />') &&
+    !formPage.includes('data-responsive-check="heat-league-desktop-window-controls"') &&
+    !formPage.includes('data-responsive-check="heat-team-window-controls"') &&
+    !formPage.includes('Filters / Last {window}') &&
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
     formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     !formPage.includes('{activeTeam ? (\n        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
@@ -196,7 +200,7 @@ assert(
     formPage.includes("{activeTeam ? (") &&
     formPage.includes("<HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />") &&
     formPage.includes('<HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />'),
-  "Heat Check must own the team filter in the controls row, attach team clearing to the picker, and team views must show all team pitchers while hiding league-only surfaces",
+  "Heat Check must own the team filter in the controls row, keep desktop window controls beside it for all teams, attach team clearing to the picker, and team views must show all team pitchers while hiding league-only surfaces",
 );
 
 assert(
