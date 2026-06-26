@@ -79,13 +79,14 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number }) {
   const scored = row.gsPlus !== null;
   const statusTone = statusClass(row.status);
+  const liveOrFinalScore = scored && row.scoreLabel !== "PROJ";
   const headshotBand = scored ? scoreBand(row.gsPlus ?? 0) : null;
 
   return (
     <article className="grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4">
       <p className="font-serif text-2xl font-bold text-zinc-500">#{rank}</p>
       <Link href={row.startHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} start page`}>
-        <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={scored} decorative className="ml-0" />
+        <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={liveOrFinalScore} decorative className="ml-0" />
       </Link>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -98,13 +99,13 @@ function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number
           {row.pitcherName}
         </Link>
         <p className="mt-1 font-mono text-xs text-zinc-400">
-          {scored ? formatLine(row) : `Projected GS+ ${row.projectedGsPlus}`}
+          {liveOrFinalScore ? formatLine(row) : `Projected GS+ ${formatScore(row.gsPlus ?? row.projectedGsPlus)}`}
           {row.inningLabel ? <span className="text-zinc-600"> · {row.inningLabel}</span> : null}
         </p>
       </div>
       <div className="text-right">
-        <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{scored ? row.gsPlus : "--"}</p>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
+        <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{formatScore(row.gsPlus)}</p>
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
         {row.qualityLabel ? (
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
             {row.qualityLabel}
@@ -148,6 +149,11 @@ function formatLine(row: LiveScoreboardRow) {
   const line = row.line;
   const pitches = typeof row.pitchCount === "number" ? `, ${row.pitchCount} pitches` : "";
   return `${line.inningsPitched.toFixed(1)} IP, ${line.strikeouts} K, ${line.earnedRuns} ER${pitches}`;
+}
+
+function formatScore(score: number | null) {
+  if (score === null) return "--";
+  return Number.isInteger(score) ? String(score) : score.toFixed(1);
 }
 
 function formatUpdatedLabel(iso: string) {

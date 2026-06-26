@@ -23,9 +23,7 @@ export default async function LivePage({ params }: LivePageProps) {
   const today = getHomeSlateDate();
   const board = await getLiveScoreboard({ date });
   const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";
-  const boardDescription = board.hasActiveStarts
-    ? "Provisional GS+ for starters as games are being played. Live rows move with the official gamefeed; Ranked Starts remains settled-only."
-    : "The settled GS+ board for this slate. Postponed games are removed from the count; completed starter lines are final.";
+  const boardDescription = "Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
 
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">

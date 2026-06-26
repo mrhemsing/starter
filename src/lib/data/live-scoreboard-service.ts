@@ -1,9 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
+import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { liveDateHref, sourceParams, startHref } from "@/lib/routes";
 import { normalizeScheduleStatus } from "@/lib/slate-state";
-import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary } from "@/lib/types";
+import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
 
@@ -23,7 +24,8 @@ export type LiveScoreboardRow = {
   status: LiveScoreboardStatus;
   line: StartLine;
   gsPlus: number | null;
-  projectedGsPlus: number;
+  projectedGsPlus: number | null;
+  scoreLabel: "PROJ" | "LIVE" | "FINAL";
   qualityLabel: "Elite" | "Plus" | "Solid" | "Below" | "Poor" | null;
   provisional: boolean;
   inningLabel: string | null;
@@ -57,25 +59,27 @@ export async function getLiveScoreboard({ date = getHomeSlateDate() }: { date?: 
 }
 
 async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
-  const [slate, schedule] = await Promise.all([
+  const [slate, schedule, upcoming] = await Promise.all([
     getDailySlate({ window: "today", date }),
     fetchMlbSchedule(date, { fetchLive: true, gamefeedRevalidateSeconds: LIVE_SCOREBOARD_REVALIDATE_SECONDS }),
+    getTonightMustWatch({ date, window: 5 }),
   ]);
 
   const liveLinesByStart = await getLiveLinesByStart(schedule.games);
   const gamesByPk = new Map(schedule.games.map((game) => [game.gamePk, game]));
+  const projectionsByStart = getUpcomingProjectionMap(upcoming);
 
   const rows = slate.flatMap((start) => {
     const game = gamesByPk.get(start.gamePk);
     if (game && normalizeScheduleStatus(game) === "ppd") return [];
 
     const liveLine = liveLinesByStart.get(lineKey(start.gamePk, start.pitcher.mlbId));
-    return [buildLiveRow(date, start, liveLine, game)];
+    return [buildLiveRow(date, start, liveLine, game, projectionsByStart)];
   });
 
   rows.sort(compareLiveRows);
 
-  const scoredRows = rows.filter((row) => row.gsPlus !== null);
+  const scoredRows = rows.filter((row) => row.gsPlus !== null && row.scoreLabel !== "PROJ");
   const liveStarts = rows.filter((row) => row.status === "live").length;
   const finalStarts = rows.filter((row) => row.status === "final").length;
   const warmingStarts = rows.filter((row) => row.status === "warming").length;
@@ -113,13 +117,22 @@ async function getLiveLinesByStart(games: MlbScheduleGame[]) {
   return lines;
 }
 
-function buildLiveRow(date: string, start: StartSummary, liveLine: MlbLivePitchingLine | undefined, game: MlbScheduleGame | undefined): LiveScoreboardRow {
+function buildLiveRow(
+  date: string,
+  start: StartSummary,
+  liveLine: MlbLivePitchingLine | undefined,
+  game: MlbScheduleGame | undefined,
+  projectionsByStart: Map<string, number | null>,
+): LiveScoreboardRow {
   const scheduleStatus = game ? normalizeScheduleStatus(game) : "pregame";
   const rawStatus = normalizeLiveStatus(liveLine?.gameStatus, scheduleStatus);
   const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;
   const line = liveLine?.line ?? start.line;
-  const gsPlus = liveLine && status !== "warming" ? scoreCompletedLine(line, start.context) : null;
-  const pitchCount = status === "warming" ? null : line.pitches;
+  const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
+  const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
+  const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "LIVE";
+  const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : projectedGsPlus;
+  const pitchCount = hasRealLine ? line.pitches : null;
 
   return {
     id: `${start.gamePk}-${start.pitcher.mlbId}`,
@@ -135,14 +148,32 @@ function buildLiveRow(date: string, start: StartSummary, liveLine: MlbLivePitchi
     status,
     line,
     gsPlus,
-    projectedGsPlus: start.expectedGameScorePlus ?? start.gameScorePlus,
+    projectedGsPlus,
+    scoreLabel,
     qualityLabel: gsPlus === null ? null : qualityLabel(gsPlus),
-    provisional: status === "live" || status === "delay",
+    provisional: scoreLabel === "LIVE",
     inningLabel: liveLine?.inningLabel ?? null,
     pitchCount,
     startHref: startHref(start, sourceParams("live")),
     liveHref: liveDateHref(date),
   };
+}
+
+function getUpcomingProjectionMap(upcoming: TonightResponse) {
+  const projections = new Map<string, number | null>();
+
+  for (const game of upcoming.games) {
+    for (const starter of game.starters) {
+      if (!starter.pitcherId) continue;
+      projections.set(lineKey(Number(game.gamePk), Number(starter.pitcherId)), starter.projection?.projectedGsPlus ?? null);
+    }
+  }
+
+  return projections;
+}
+
+function hasNonEmptyLine(line: StartLine) {
+  return line.pitches > 0 || line.inningsPitched > 0 || line.hits > 0 || line.earnedRuns > 0 || line.walks > 0 || line.strikeouts > 0;
 }
 
 function normalizeLiveStatus(liveStatus: MlbLivePitchingLine["gameStatus"] | undefined, scheduleStatus: ReturnType<typeof normalizeScheduleStatus>): LiveScoreboardStatus {
@@ -156,7 +187,9 @@ function compareLiveRows(a: LiveScoreboardRow, b: LiveScoreboardRow) {
   if (a.gsPlus !== null && b.gsPlus !== null && b.gsPlus !== a.gsPlus) return b.gsPlus - a.gsPlus;
   if (a.gsPlus !== null && b.gsPlus === null) return -1;
   if (a.gsPlus === null && b.gsPlus !== null) return 1;
-  if (b.projectedGsPlus !== a.projectedGsPlus) return b.projectedGsPlus - a.projectedGsPlus;
+  if (a.projectedGsPlus !== null && b.projectedGsPlus !== null && b.projectedGsPlus !== a.projectedGsPlus) return b.projectedGsPlus - a.projectedGsPlus;
+  if (a.projectedGsPlus !== null && b.projectedGsPlus === null) return -1;
+  if (a.projectedGsPlus === null && b.projectedGsPlus !== null) return 1;
   return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();
 }
 

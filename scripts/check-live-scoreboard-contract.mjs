@@ -30,8 +30,13 @@ assert(
 assert(
   startService.includes("export function scoreCompletedLine(line: StartLine, context?: StartContext)") &&
     liveService.includes('import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";') &&
-    liveService.includes("scoreCompletedLine(line, start.context)"),
-  "live scoreboard must reuse the existing GS+ function without feeding provisional scores into ranked starts",
+    liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
+    liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
+    liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
+    liveService.includes("const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : projectedGsPlus;") &&
+    liveService.includes("function hasNonEmptyLine(line: StartLine)") &&
+    !liveService.includes("start.expectedGameScorePlus ?? start.gameScorePlus"),
+  "live scoreboard must use Upcoming projected GS+ before a real live line and never compute from empty lines",
 );
 
 assert(
@@ -40,17 +45,20 @@ assert(
     liveService.includes('["live-scoreboard", "v2"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
-    liveService.includes('const gsPlus = liveLine && status !== "warming" ? scoreCompletedLine(line, start.context) : null;') &&
+    liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
+    liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
+    liveService.includes('scoreLabel: "PROJ" | "LIVE" | "FINAL";') &&
+    liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "LIVE";') &&
     liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
     liveService.includes("rows.sort(compareLiveRows)") &&
     liveService.includes("leader: scoredRows[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, sort scored rows by GS+, and expose a live leader",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, sort displayed GS+, and expose a live leader",
 );
 
 assert(
   livePage.includes('active="live"') &&
     livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
-    livePage.includes("Postponed games are removed from the count; completed starter lines are final.") &&
+    livePage.includes("Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.") &&
     livePage.includes("<LiveScoreboard initialBoard={board} />") &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
@@ -64,10 +72,13 @@ assert(
     liveComponent.includes('grid-cols-[42px_35px_minmax(0,1fr)_auto]') &&
     liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
     liveComponent.includes("band={headshotBand}") &&
-    liveComponent.includes("sampleSufficient={scored}") &&
+    liveComponent.includes("sampleSufficient={liveOrFinalScore}") &&
     liveComponent.includes("function scoreBand") &&
+    liveComponent.includes("function formatScore") &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
     liveComponent.includes("return `All ${board.totalStarts} starters final`;") &&
+    liveComponent.includes('{liveOrFinalScore ? formatLine(row) : `Projected GS+ ${formatScore(row.gsPlus ?? row.projectedGsPlus)}`}') &&
+    liveComponent.includes("{row.scoreLabel}") &&
     liveComponent.includes('{row.qualityLabel ?') &&
     liveComponent.includes('row.provisional ? " · Prov." : ""'),
   "live scoreboard component must refresh while active, show starter headshots, and mark provisional quality bands",
