@@ -246,7 +246,7 @@ assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes('["home-ranked", "v4"]'),
+    rankedService.includes('["home-ranked", "v6"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
 );
 
@@ -334,7 +334,7 @@ assert(
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
-    imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v2.json`);') &&
+    imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
     imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
     imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
@@ -343,22 +343,28 @@ assert(
     imageService.includes("function nonActionMlbTitlePattern()") &&
     imageService.includes("function photoCreditImageTitlePattern()") &&
     imageService.includes("function isPhotoCreditImageTitle(title: string)") &&
-    imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem)") &&
+    imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes("function isSinglePitchMlbActionFrame(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function pitcherActionHighlightPattern()") &&
+    imageService.includes("function singlePitchActionFramePattern()") &&
+    imageService.includes("function broadSummaryMlbTitlePattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
-    imageService.includes("if (!isMlbActionImageCandidate(item)) return 0;") &&
-    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "");') &&
+    imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
+    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start);') &&
     !imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isPitcherActionHighlight(item, start);') &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
     imageService.includes("if (isPitcherActionHighlight(item, start)) score += 30;") &&
     imageService.includes("pitcherActionHighlightPattern().test(text)") &&
+    imageService.includes("singlePitchActionFramePattern().test(text)") &&
+    imageService.includes("!broadSummaryMlbTitlePattern().test(text)") &&
     imageService.includes('${item.description ?? ""}') &&
-    imageService.includes("k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|outing") &&
+    imageService.includes("first k|first strikeout|called out on strikes|strikes out swinging|swinging strike") &&
+    imageService.includes("dominant start|quality start|outing|game highlights?|win|strikes? out \\d+|fans? \\d+") &&
     imageService.includes("fuel(?:s|ed)?\\b.*\\bwin") &&
     imageService.includes("gettyimages|imagn|usa today|reuters") &&
     imageService.includes("^ap\\d+") &&

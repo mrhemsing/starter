@@ -234,7 +234,7 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
   if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
-  if (!isMlbActionImageCandidate(item)) return 0;
+  if (!isMlbActionImageCandidate(item, start)) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
   if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
@@ -267,8 +267,8 @@ function isPhotoCreditImageTitle(title: string) {
   return photoCreditImageTitlePattern().test(title);
 }
 
-function isMlbActionImageCandidate(item: MlbGameContentItem) {
-  return isPhotoCreditImageTitle(item.image?.title ?? "");
+function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
+  return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start);
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
@@ -277,8 +277,22 @@ function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)
   return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
 }
 
+function isSinglePitchMlbActionFrame(item: MlbGameContentItem, start: StartSummary) {
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const last = lastName(start.pitcher.name).toLowerCase();
+  return text.includes(last) && singlePitchActionFramePattern().test(text) && !broadSummaryMlbTitlePattern().test(text);
+}
+
 function pitcherActionHighlightPattern() {
   return /\b(k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|outing)\b/i;
+}
+
+function singlePitchActionFramePattern() {
+  return /\b(first k|first strikeout|called out on strikes|strikes out swinging|swinging strike)\b/i;
+}
+
+function broadSummaryMlbTitlePattern() {
+  return /\b(dominant start|quality start|outing|game highlights?|win|strikes? out \d+|fans? \d+)\b|\d+\s*-\s*\d+/i;
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {
@@ -409,7 +423,7 @@ function cacheManifestPath(startId: string) {
 }
 
 function mlbGameContentActionImageCachePath(startId: string) {
-  return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v2.json`);
+  return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);
 }
 
 function requiredCredit(asset: SportradarAsset) {
