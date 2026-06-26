@@ -246,7 +246,7 @@ assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes('["home-ranked", "v2"]'),
+    rankedService.includes('["home-ranked", "v3"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
 );
 
@@ -355,7 +355,8 @@ assert(
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
     imageService.includes("if (isPitcherActionHighlight(item, start)) score += 30;") &&
     imageService.includes("pitcherActionHighlightPattern().test(text)") &&
-    imageService.includes("k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k") &&
+    imageService.includes('${item.description ?? ""}') &&
+    imageService.includes("k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|outing") &&
     imageService.includes("fuel(?:s|ed)?\\b.*\\bwin") &&
     imageService.includes("gettyimages|imagn|usa today|reuters") &&
     imageService.includes("^ap\\d+") &&

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
+import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 
@@ -49,7 +50,11 @@ export async function GET(request: Request) {
     }
   }
 
-  await warmFormLeaderboards({ teams: slateTeams });
+  const [rankedHome] = await Promise.all([
+    getRankedHome(),
+    warmFormLeaderboards({ teams: slateTeams }),
+  ]);
+  const topPerformer = rankedHome.topPerformer;
 
   return NextResponse.json({
     warmed: true,
@@ -60,6 +65,13 @@ export async function GET(request: Request) {
     completedStarts: completedStarts.length,
     affectedPitchers: new Set(completedStarts.map((start) => start.pitcher.id)).size,
     warmedTeams: slateTeams.length,
+    topPerformer: topPerformer
+      ? {
+          startId: topPerformer.start.id,
+          pitcherName: topPerformer.start.pitcher.name,
+          imageSource: topPerformer.image?.source ?? null,
+        }
+      : null,
     revalidated: completedStarts.length > 0,
     generatedAt: new Date().toISOString(),
   });

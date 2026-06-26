@@ -272,13 +272,13 @@ function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
 }
 
 function pitcherActionHighlightPattern() {
-  return /\b(k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k)\b/i;
+  return /\b(k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|outing)\b/i;
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {

@@ -42,10 +42,13 @@ assert(
 assert(
   formService.includes("export async function warmFormLeaderboards") &&
     warmCron.includes('import { warmFormLeaderboards } from "@/lib/data/form-service";') &&
+    warmCron.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
     warmCron.includes("...tonight.games.flatMap((game) => [game.away, game.home]),") &&
-    warmCron.includes("await warmFormLeaderboards({ teams: slateTeams });") &&
+    warmCron.includes("getRankedHome(),") &&
+    warmCron.includes("warmFormLeaderboards({ teams: slateTeams }),") &&
+    warmCron.includes("imageSource: topPerformer.image?.source ?? null") &&
     warmCron.includes("warmedTeams: slateTeams.length"),
-  "Live-start cron must prebuild active-slate team Heat Check windows before users click them",
+  "Live-start cron must prebuild active-slate team Heat Check windows and warm current top-performer imagery",
 );
 
 console.log("heat team window contract ok: team-filtered windows use stored fallbacks and warm team caches");
