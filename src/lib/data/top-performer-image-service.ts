@@ -185,7 +185,7 @@ async function resolveSportradarActionShot(start: StartSummary): Promise<TopPerf
 }
 
 function actionShotObjectPosition() {
-  return "72% 50%";
+  return "50% 50%";
 }
 
 async function resolveMlbGameContentActionImage(start: StartSummary): Promise<TopPerformerImage | null> {
@@ -234,7 +234,7 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
   if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
-  if (!isMlbActionImageCandidate(item, start)) return 0;
+  if (!isMlbActionImageCandidate(item)) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
   if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
@@ -267,8 +267,8 @@ function isPhotoCreditImageTitle(title: string) {
   return photoCreditImageTitlePattern().test(title);
 }
 
-function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
-  return isPhotoCreditImageTitle(item.image?.title ?? "") || isPitcherActionHighlight(item, start);
+function isMlbActionImageCandidate(item: MlbGameContentItem) {
+  return isPhotoCreditImageTitle(item.image?.title ?? "");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
@@ -409,7 +409,7 @@ function cacheManifestPath(startId: string) {
 }
 
 function mlbGameContentActionImageCachePath(startId: string) {
-  return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-content.json`);
+  return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v2.json`);
 }
 
 function requiredCredit(asset: SportradarAsset) {

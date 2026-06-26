@@ -246,7 +246,7 @@ assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes('["home-ranked", "v3"]'),
+    rankedService.includes('["home-ranked", "v4"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
 );
 
@@ -334,7 +334,7 @@ assert(
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
-    imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-content.json`);') &&
+    imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v2.json`);') &&
     imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
     imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
@@ -343,13 +343,15 @@ assert(
     imageService.includes("function nonActionMlbTitlePattern()") &&
     imageService.includes("function photoCreditImageTitlePattern()") &&
     imageService.includes("function isPhotoCreditImageTitle(title: string)") &&
-    imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem)") &&
     imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function pitcherActionHighlightPattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
-    imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
+    imageService.includes("if (!isMlbActionImageCandidate(item)) return 0;") &&
+    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "");') &&
+    !imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isPitcherActionHighlight(item, start);') &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
@@ -362,7 +364,7 @@ assert(
     imageService.includes("^ap\\d+") &&
     imageService.includes('cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")') &&
     imageService.includes('objectPosition: actionShotObjectPosition()') &&
-    imageService.includes('return "72% 50%";') &&
+    imageService.includes('return "50% 50%";') &&
     !imageService.includes("resolvePitcherHeadshotImage") &&
     !imageService.includes('source: "headshot"') &&
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
