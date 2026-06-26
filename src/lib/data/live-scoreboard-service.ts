@@ -25,7 +25,7 @@ export type LiveScoreboardRow = {
   line: StartLine;
   gsPlus: number | null;
   projectedGsPlus: number | null;
-  scoreLabel: "PROJ" | "LIVE" | "FINAL";
+  scoreLabel: "PROJ" | "PROV" | "FINAL";
   qualityLabel: "Elite" | "Plus" | "Solid" | "Below" | "Poor" | null;
   provisional: boolean;
   inningLabel: string | null;
@@ -50,7 +50,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v2"],
+  ["live-scoreboard", "v3"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
@@ -79,7 +79,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
 
   rows.sort(compareLiveRows);
 
-  const scoredRows = rows.filter((row) => row.gsPlus !== null && row.scoreLabel !== "PROJ");
+  const scoredRows = rows.filter(isScoredRow);
   const liveStarts = rows.filter((row) => row.status === "live").length;
   const finalStarts = rows.filter((row) => row.status === "final").length;
   const warmingStarts = rows.filter((row) => row.status === "warming").length;
@@ -130,8 +130,8 @@ function buildLiveRow(
   const line = liveLine?.line ?? start.line;
   const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
   const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
-  const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "LIVE";
-  const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : projectedGsPlus;
+  const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";
+  const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
 
   return {
@@ -151,7 +151,7 @@ function buildLiveRow(
     projectedGsPlus,
     scoreLabel,
     qualityLabel: gsPlus === null ? null : qualityLabel(gsPlus),
-    provisional: scoreLabel === "LIVE",
+    provisional: scoreLabel === "PROV",
     inningLabel: liveLine?.inningLabel ?? null,
     pitchCount,
     startHref: startHref(start, sourceParams("live")),
@@ -184,13 +184,22 @@ function normalizeLiveStatus(liveStatus: MlbLivePitchingLine["gameStatus"] | und
 }
 
 function compareLiveRows(a: LiveScoreboardRow, b: LiveScoreboardRow) {
-  if (a.gsPlus !== null && b.gsPlus !== null && b.gsPlus !== a.gsPlus) return b.gsPlus - a.gsPlus;
-  if (a.gsPlus !== null && b.gsPlus === null) return -1;
-  if (a.gsPlus === null && b.gsPlus !== null) return 1;
-  if (a.projectedGsPlus !== null && b.projectedGsPlus !== null && b.projectedGsPlus !== a.projectedGsPlus) return b.projectedGsPlus - a.projectedGsPlus;
-  if (a.projectedGsPlus !== null && b.projectedGsPlus === null) return -1;
-  if (a.projectedGsPlus === null && b.projectedGsPlus !== null) return 1;
+  const aScored = isScoredRow(a);
+  const bScored = isScoredRow(b);
+  if (aScored && !bScored) return -1;
+  if (!aScored && bScored) return 1;
+
+  if (aScored && bScored) {
+    if (a.gsPlus !== null && b.gsPlus !== null && b.gsPlus !== a.gsPlus) return b.gsPlus - a.gsPlus;
+    if (a.gsPlus !== null && b.gsPlus === null) return -1;
+    if (a.gsPlus === null && b.gsPlus !== null) return 1;
+  }
+
   return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();
+}
+
+function isScoredRow(row: LiveScoreboardRow) {
+  return row.scoreLabel !== "PROJ";
 }
 
 function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {

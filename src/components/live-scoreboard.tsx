@@ -45,6 +45,9 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
     );
   }
 
+  const scoredRows = board.rows.filter(isScoredRow);
+  const warmingRows = board.rows.filter((row) => !isScoredRow(row));
+
   return (
     <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
@@ -53,37 +56,58 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
       </div>
 
       <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
-        {board.rows.map((row, index) => (
-          <LiveScoreboardRow key={row.id} row={row} rank={index + 1} />
-        ))}
+        {scoredRows.length > 0 ? (
+          <LiveScoreboardSection title="In progress" rows={scoredRows} startRank={1} />
+        ) : null}
+        {warmingRows.length > 0 ? (
+          <LiveScoreboardSection title="Warming up" rows={warmingRows} startRank={scoredRows.length + 1} muted={scoredRows.length > 0} />
+        ) : null}
       </div>
     </section>
   );
 }
 
 function scoreboardSummaryLabel(board: LiveScoreboardData) {
-  if (board.liveStarts > 0) {
-    return (
-      <>
-        <span className="text-[#FF9A62]">{board.liveStarts} live</span>
-        <span> · {board.finalStarts} final · {board.totalStarts} starters</span>
-      </>
-    );
-  }
-
-  if (board.warmingStarts > 0) return `${board.warmingStarts} warming · ${board.finalStarts} final · ${board.totalStarts} starters`;
-  if (board.totalStarts > 0 && board.finalStarts >= board.totalStarts) return `All ${board.totalStarts} starters final`;
-  return `${board.finalStarts} final · ${board.totalStarts} starters`;
+  return (
+    <>
+      <span className={board.liveStarts > 0 ? "text-[#FF9A62]" : undefined}>{board.liveStarts} live</span>
+      <span> · {board.finalStarts} final · {board.warmingStarts} warming · {board.totalStarts} starters</span>
+    </>
+  );
 }
 
-function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number }) {
+function LiveScoreboardSection({
+  title,
+  rows,
+  startRank,
+  muted = false,
+}: {
+  title: string;
+  rows: LiveScoreboardRow[];
+  startRank: number;
+  muted?: boolean;
+}) {
+  return (
+    <div className={muted ? "border-t border-white/10 bg-white/[0.025]" : ""}>
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500 sm:px-4">
+        <p>{title}</p>
+        <p>{rows.length} starters</p>
+      </div>
+      {rows.map((row, index) => (
+        <LiveScoreboardRow key={row.id} row={row} rank={startRank + index} muted={muted} />
+      ))}
+    </div>
+  );
+}
+
+function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRow; rank: number; muted?: boolean }) {
   const scored = row.gsPlus !== null;
   const statusTone = statusClass(row.status);
-  const liveOrFinalScore = scored && row.scoreLabel !== "PROJ";
-  const headshotBand = scored ? scoreBand(row.gsPlus ?? 0) : null;
+  const liveOrFinalScore = isScoredRow(row);
+  const headshotBand = liveOrFinalScore && scored ? scoreBand(row.gsPlus ?? 0) : null;
 
   return (
-    <article className="grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4">
+    <article className={`grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
       <p className="font-serif text-2xl font-bold text-zinc-500">#{rank}</p>
       <Link href={row.startHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} start page`}>
         <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={liveOrFinalScore} decorative className="ml-0" />
@@ -99,20 +123,27 @@ function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number
           {row.pitcherName}
         </Link>
         <p className="mt-1 font-mono text-xs text-zinc-400">
-          {liveOrFinalScore ? formatLine(row) : `Projected GS+ ${formatScore(row.gsPlus ?? row.projectedGsPlus)}`}
+          {liveOrFinalScore ? formatLine(row) : projectionLabel(row)}
           {row.inningLabel ? <span className="text-zinc-600"> · {row.inningLabel}</span> : null}
         </p>
       </div>
-      <div className="text-right">
-        <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{formatScore(row.gsPlus)}</p>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
-        {row.qualityLabel ? (
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-            {row.qualityLabel}
-            {row.provisional ? " · Prov." : ""}
-          </p>
-        ) : null}
-      </div>
+      {liveOrFinalScore ? (
+        <div className="text-right">
+          <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{formatScore(row.gsPlus)}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
+          {row.qualityLabel ? (
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+              {row.qualityLabel}
+              {row.provisional ? " · Prov." : ""}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="text-right">
+          <p className="font-mono text-xl font-black tabular-nums leading-none text-zinc-300 sm:text-2xl">{formatFirstPitch(row.firstPitch)}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">First pitch</p>
+        </div>
+      )}
     </article>
   );
 }
@@ -154,6 +185,24 @@ function formatLine(row: LiveScoreboardRow) {
 function formatScore(score: number | null) {
   if (score === null) return "--";
   return Number.isInteger(score) ? String(score) : score.toFixed(1);
+}
+
+function projectionLabel(row: LiveScoreboardRow) {
+  return `Projected GS+ ${formatScore(row.projectedGsPlus)}`;
+}
+
+function formatFirstPitch(iso: string) {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.valueOf())) return "TBD";
+  return `${new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+  }).format(parsed)} PT`;
+}
+
+function isScoredRow(row: LiveScoreboardRow) {
+  return row.scoreLabel !== "PROJ";
 }
 
 function formatUpdatedLabel(iso: string) {

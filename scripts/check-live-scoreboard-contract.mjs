@@ -33,26 +33,31 @@ assert(
     liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
     liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
-    liveService.includes("const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : projectedGsPlus;") &&
+    liveService.includes("const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : null;") &&
     liveService.includes("function hasNonEmptyLine(line: StartLine)") &&
     !liveService.includes("start.expectedGameScorePlus ?? start.gameScorePlus"),
-  "live scoreboard must use Upcoming projected GS+ before a real live line and never compute from empty lines",
+  "live scoreboard must keep Upcoming projected GS+ as context before a real live line and never compute scores from empty lines",
 );
 
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v2"]') &&
+    liveService.includes('["live-scoreboard", "v3"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
     liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
     liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
-    liveService.includes('scoreLabel: "PROJ" | "LIVE" | "FINAL";') &&
-    liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "LIVE";') &&
+    liveService.includes('scoreLabel: "PROJ" | "PROV" | "FINAL";') &&
+    liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";') &&
+    liveService.includes('provisional: scoreLabel === "PROV",') &&
+    liveService.includes("const scoredRows = rows.filter(isScoredRow);") &&
+    liveService.includes("function isScoredRow(row: LiveScoreboardRow)") &&
+    liveService.includes("if (aScored && !bScored) return -1;") &&
+    liveService.includes("return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();") &&
     liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
     liveService.includes("rows.sort(compareLiveRows)") &&
     liveService.includes("leader: scoredRows[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, sort displayed GS+, and expose a live leader",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, keep warming out of scored sorting, and expose a live leader",
 );
 
 assert(
@@ -75,9 +80,16 @@ assert(
     liveComponent.includes("sampleSufficient={liveOrFinalScore}") &&
     liveComponent.includes("function scoreBand") &&
     liveComponent.includes("function formatScore") &&
+    liveComponent.includes('const scoredRows = board.rows.filter(isScoredRow);') &&
+    liveComponent.includes('const warmingRows = board.rows.filter((row) => !isScoredRow(row));') &&
+    liveComponent.includes('title="In progress"') &&
+    liveComponent.includes('title="Warming up"') &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
-    liveComponent.includes("return `All ${board.totalStarts} starters final`;") &&
-    liveComponent.includes('{liveOrFinalScore ? formatLine(row) : `Projected GS+ ${formatScore(row.gsPlus ?? row.projectedGsPlus)}`}') &&
+    liveComponent.includes('{board.finalStarts} final · {board.warmingStarts} warming · {board.totalStarts} starters') &&
+    liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&
+    liveComponent.includes("formatFirstPitch(row.firstPitch)") &&
+    liveComponent.includes("function formatFirstPitch") &&
+    liveComponent.includes("First pitch") &&
     liveComponent.includes("{row.scoreLabel}") &&
     liveComponent.includes('{row.qualityLabel ?') &&
     liveComponent.includes('row.provisional ? " · Prov." : ""'),
