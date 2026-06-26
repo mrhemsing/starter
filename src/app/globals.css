@@ -71,7 +71,7 @@ p,
   text-transform: uppercase;
 }
 
-@media (max-width: 639.98px) {
+@media (min-width: 640px) {
   .site-logo-wordmark {
     font-size: clamp(3.1625rem, 6.864vw, 3.432rem);
   }
