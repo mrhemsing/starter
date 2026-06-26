@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Headshot } from "@/components/headshot";
+import type { FormTier } from "@/lib/types";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 
 type LiveScoreboardProps = {
@@ -65,10 +67,14 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
 function LiveScoreboardRow({ row, rank }: { row: LiveScoreboardRow; rank: number }) {
   const scored = row.gsPlus !== null;
   const statusTone = statusClass(row.status);
+  const headshotBand = scored ? scoreBand(row.gsPlus ?? 0) : null;
 
   return (
-    <article className="grid min-h-[88px] grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_minmax(0,1fr)_120px] sm:px-4">
+    <article className="grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4">
       <p className="font-serif text-2xl font-bold text-zinc-500">#{rank}</p>
+      <Link href={row.startHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} start page`}>
+        <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={scored} decorative className="ml-0" />
+      </Link>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <StatusChip status={row.status} />
@@ -116,6 +122,14 @@ function statusClass(status: LiveScoreboardRow["status"]) {
   if (status === "live" || status === "delay") return "text-[#F6C445]";
   if (status === "final") return "text-zinc-100";
   return "text-zinc-600";
+}
+
+function scoreBand(score: number): FormTier {
+  if (score >= 69) return "onfire";
+  if (score >= 58) return "hot";
+  if (score >= 46) return "even";
+  if (score >= 30) return "cooling";
+  return "ice";
 }
 
 function formatLine(row: LiveScoreboardRow) {

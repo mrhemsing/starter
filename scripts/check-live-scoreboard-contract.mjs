@@ -56,9 +56,15 @@ assert(
 assert(
   liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
+    liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
+    liveComponent.includes('grid-cols-[42px_35px_minmax(0,1fr)_auto]') &&
+    liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
+    liveComponent.includes("band={headshotBand}") &&
+    liveComponent.includes("sampleSufficient={scored}") &&
+    liveComponent.includes("function scoreBand") &&
     liveComponent.includes('{row.qualityLabel ?') &&
     liveComponent.includes('row.provisional ? " · Prov." : ""'),
-  "live scoreboard component must refresh while active and mark provisional quality bands",
+  "live scoreboard component must refresh while active, show starter headshots, and mark provisional quality bands",
 );
 
 assert(
