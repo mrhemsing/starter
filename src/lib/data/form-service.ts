@@ -133,7 +133,7 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const leagueContext = buildLeagueContext(starts);
   const summaries = buildPitcherBuckets(starts)
     .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext))
-    .sort(compareFormSummaries);
+    .sort(compareRollingFormLevelDesc);
   const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true });
   const summariesWithAvailability = attachAvailability(summaries, availabilityStatuses);
   const qualifiedPitchers = summariesWithAvailability.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
@@ -331,9 +331,9 @@ async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeRe
     bands[pitcher.tier] += 1;
   }
 
-  const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);
+  const hot = [...qualified].sort(compareRollingFormLevelDesc).slice(0, HOME_CONFIG.railSize);
   const hotIds = new Set(hot.map((pitcher) => pitcher.pitcherId));
-  const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);
+  const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareRollingFormLevelAsc).slice(0, HOME_CONFIG.railSize);
   const nextStarts = await getNextStartMap([...hot, ...cold].map((pitcher) => pitcher.pitcherId));
 
   return {
@@ -415,8 +415,8 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
     trendDelta: describeDistribution(qualified.map((pitcher) => pitcher.trendDelta)),
     heatIndex: describeDistribution(qualified.map((pitcher) => pitcher.heatIndex ?? 0)),
     misiorowski: describePitcherCalibration(qualified, "misiorowski"),
-    topForm: [...qualified].sort(compareFormLevelDesc).slice(0, 5).map(calibrationPitcherRow),
-    bottomForm: [...qualified].sort(compareFormLevelAsc).slice(0, 5).map(calibrationPitcherRow),
+    topForm: [...qualified].sort(compareRollingFormLevelDesc).slice(0, 5).map(calibrationPitcherRow),
+    bottomForm: [...qualified].sort(compareRollingFormLevelAsc).slice(0, 5).map(calibrationPitcherRow),
   };
 }
 
@@ -792,22 +792,14 @@ function buildStartPoint(starts: StartSummary[], index: number, window: FormWind
   };
 }
 
-function compareFormSummaries(a: FormSummary, b: FormSummary) {
-  return compareFormLevelDesc(a, b);
-}
-
-function compareFormAsc(a: FormSummary, b: FormSummary) {
-  return compareFormLevelAsc(a, b);
-}
-
-function compareFormLevelDesc(a: FormSummary, b: FormSummary) {
+function compareRollingFormLevelDesc(a: FormSummary, b: FormSummary) {
   if (b.rgs !== a.rgs) return b.rgs - a.rgs;
   if ((b.heatIndex ?? 0) !== (a.heatIndex ?? 0)) return (b.heatIndex ?? 0) - (a.heatIndex ?? 0);
   if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
   return a.name.localeCompare(b.name);
 }
 
-function compareFormLevelAsc(a: FormSummary, b: FormSummary) {
+function compareRollingFormLevelAsc(a: FormSummary, b: FormSummary) {
   if (a.rgs !== b.rgs) return a.rgs - b.rgs;
   if ((a.heatIndex ?? 0) !== (b.heatIndex ?? 0)) return (a.heatIndex ?? 0) - (b.heatIndex ?? 0);
   if (a.deltaForm !== b.deltaForm) return a.deltaForm - b.deltaForm;

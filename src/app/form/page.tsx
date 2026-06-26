@@ -123,9 +123,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
     .sort((a, b) => {
       const aLimited = a.windowCount < window;
       const bLimited = b.windowCount < window;
-      if (sort === "risers") return Number(aLimited) - Number(bLimited) || b.deltaForm - a.deltaForm || b.rgs - a.rgs;
-      if (sort === "fallers") return Number(aLimited) - Number(bLimited) || a.deltaForm - b.deltaForm || b.rgs - a.rgs;
-      return Number(aLimited) - Number(bLimited) || b.deltaForm - a.deltaForm || b.rgs - a.rgs;
+      if (sort === "risers") return Number(aLimited) - Number(bLimited) || compareMovementRise(a, b);
+      if (sort === "fallers") return Number(aLimited) - Number(bLimited) || compareMovementFall(a, b);
+      return Number(aLimited) - Number(bLimited) || compareRollingFormLevelRank(a, b);
     });
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
   const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);
@@ -134,8 +134,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
     count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
   }));
   const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);
-  const riserCandidates = [...heroCandidates].sort((a, b) => compareRisers(a, b, startContext));
-  const fallerCandidates = [...heroCandidates].sort((a, b) => compareFallers(a, b, startContext));
+  const riserCandidates = [...heroCandidates].sort((a, b) => compareMovementRisers(a, b, startContext));
+  const fallerCandidates = [...heroCandidates].sort((a, b) => compareMovementFallers(a, b, startContext));
   const biggestRiser = riserCandidates[0] ?? null;
   const biggestFaller = fallerCandidates[0] ?? null;
   const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
@@ -515,12 +515,20 @@ function buildTodayStartContext(games: TonightGame[]) {
   return context;
 }
 
-function compareRisers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
-  return b.deltaForm - a.deltaForm || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId)) || b.rgs - a.rgs || a.name.localeCompare(b.name);
+function compareMovementRisers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
+  return compareMovementRise(a, b) || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId));
 }
 
-function compareFallers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
-  return a.deltaForm - b.deltaForm || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId)) || b.rgs - a.rgs || a.name.localeCompare(b.name);
+function compareMovementFallers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
+  return compareMovementFall(a, b) || Number(startContext.has(b.pitcherId)) - Number(startContext.has(a.pitcherId));
+}
+
+function compareMovementRise(a: FormSummary, b: FormSummary) {
+  return b.deltaForm - a.deltaForm || compareRollingFormLevelRank(a, b);
+}
+
+function compareMovementFall(a: FormSummary, b: FormSummary) {
+  return a.deltaForm - b.deltaForm || compareRollingFormLevelRank(a, b);
 }
 
 function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
@@ -692,10 +700,10 @@ function buildGlobalFormRankMap(pitchers: FormSummary[]) {
 }
 
 function sortPitchersByGlobalFormRank(pitchers: FormSummary[]) {
-  return [...pitchers].sort(compareGlobalFormRank);
+  return [...pitchers].sort(compareRollingFormLevelRank);
 }
 
-function compareGlobalFormRank(a: FormSummary, b: FormSummary) {
+function compareRollingFormLevelRank(a: FormSummary, b: FormSummary) {
   if (b.rgs !== a.rgs) return b.rgs - a.rgs;
   if ((b.lastStart?.gsPlus ?? 0) !== (a.lastStart?.gsPlus ?? 0)) return (b.lastStart?.gsPlus ?? 0) - (a.lastStart?.gsPlus ?? 0);
   if ((b.heatIndex ?? 0) !== (a.heatIndex ?? 0)) return (b.heatIndex ?? 0) - (a.heatIndex ?? 0);

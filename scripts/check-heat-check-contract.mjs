@@ -21,20 +21,28 @@ assert(
 );
 
 assert(
-  formService.includes("const hot = [...qualified].sort(compareFormSummaries).slice(0, HOME_CONFIG.railSize);") &&
-    formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareFormAsc).slice(0, HOME_CONFIG.railSize);") &&
+  formService.includes("const hot = [...qualified].sort(compareRollingFormLevelDesc).slice(0, HOME_CONFIG.railSize);") &&
+    formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareRollingFormLevelAsc).slice(0, HOME_CONFIG.railSize);") &&
     formService.includes("const tier = formHeatBandOf(rgs, window).key;") &&
-    formService.includes("function compareFormLevelDesc") &&
+    formService.includes("function compareRollingFormLevelDesc") &&
     formService.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
-    formService.includes("function compareFormLevelAsc") &&
+    formService.includes("function compareRollingFormLevelAsc") &&
     formService.includes("if (a.rgs !== b.rgs) return a.rgs - b.rgs;") &&
     formPage.includes("const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);") &&
     formPage.includes("rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0}") &&
     formPage.includes("function sortPitchersByGlobalFormRank") &&
-    formPage.includes("function compareGlobalFormRank") &&
+    formPage.includes("function compareRollingFormLevelRank") &&
     formPage.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
     formPage.includes("return a.pitcherId.localeCompare(b.pitcherId);") &&
+    formPage.includes('if (sort === "risers") return Number(aLimited) - Number(bLimited) || compareMovementRise(a, b);') &&
+    formPage.includes('if (sort === "fallers") return Number(aLimited) - Number(bLimited) || compareMovementFall(a, b);') &&
+    formPage.includes("return Number(aLimited) - Number(bLimited) || compareRollingFormLevelRank(a, b);") &&
+    formPage.includes("function compareMovementRisers") &&
+    formPage.includes("function compareMovementFallers") &&
     !formPage.includes("rank={pitchers.indexOf(pitcher) + 1}") &&
+    !formService.includes("function compareFormSummaries") &&
+    !formService.includes("function compareFormAsc") &&
+    !formPage.includes("function compareGlobalFormRank") &&
     !formService.includes("sort(compareHeatDesc)") &&
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&
