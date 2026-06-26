@@ -168,7 +168,7 @@ export function TopPerformerCard({
                 <HeatHighlightModal
                   highlight={highlight}
                   pitcherName={pitcherName}
-                  label="Watch highlights"
+                  label="Video highlights"
                   className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-[#F6C445]/50 bg-[#F6C445] px-3 font-mono text-xs uppercase tracking-[0.14em] text-[#0A0B0D] transition hover:bg-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] lg:w-auto"
                 />
               ) : null}
@@ -176,7 +176,7 @@ export function TopPerformerCard({
                 href={href}
                 className={`inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445] transition hover:border-[#F6C445]/70 hover:text-[#ffd76a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] ${highlight ? "" : "sm:col-span-2 lg:w-auto"}`}
               >
-                View game log
+                Game log
               </Link>
             </div>
           </div>

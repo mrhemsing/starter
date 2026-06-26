@@ -17,6 +17,7 @@ const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
 const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
+const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 
 assert(
   rankedRoute.includes('import { getRankedHome, HOME_RANKED_REVALIDATE_SECONDS } from "@/lib/data/home-ranked-service";') &&
@@ -28,6 +29,23 @@ assert(
 assert(
   rankedService.includes('import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";'),
   "home ranked service must use the top performer image resolver",
+);
+
+assert(
+  rankedService.includes('import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";') &&
+    rankedService.includes('import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";') &&
+    rankedService.includes("highlight: FeaturedStartHighlight | null;") &&
+    rankedService.includes("resolveFeaturedStartHighlight(state.start),") &&
+    homeDeferredSections.includes("highlight={ranked.topPerformer.highlight}") &&
+    featuredHighlightService.includes('"2026-06-25-hou-det-837227": "fSu5y2kmChE"') &&
+    featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
+    featuredHighlightService.includes("readSupabaseFeaturedStartHighlight(start.id)") &&
+    featuredHighlightService.includes("resolveYouTubeHighlight(start)") &&
+    featuredHighlightService.includes('source,') &&
+    featuredHighlightService.includes('embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`') &&
+    featuredHighlightService.includes('watchUrl: `https://www.youtube.com/watch?v=${videoId}`'),
+  "home top performer must resolve MLB YouTube highlights from manual seeds, stored ingest, or official-channel search and pass them into the Start of the Night card",
 );
 
 assert(
@@ -50,17 +68,18 @@ assert(
   rankedService.includes("const topPerformer = await resolveTopPerformerPayload(topPerformerState);") &&
     rankedService.includes("async function resolveTopPerformerPayload(state: TopPerformerState | null): Promise<TopPerformerPayload | null>") &&
     rankedService.includes("if (!state) return null;") &&
+    rankedService.includes("resolveFeaturedStartHighlight(state.start),") &&
     rankedService.includes("resolveTopPerformerImage(state.start, null),") &&
     rankedService.includes("resolveTopPerformerMetrics(state.start),"),
-  "home ranked service must resolve action-photo imagery every time a selected top performer is exposed",
+  "home ranked service must resolve highlight, action-photo imagery, and metrics every time a selected top performer is exposed",
 );
 
 assert(
   rankedService.includes("topPerformer: TopPerformerPayload | null;") &&
     rankedService.includes("type TopPerformerPayload = TopPerformerState &") &&
-    rankedService.includes("return { ...state, image, metrics };") &&
+    rankedService.includes("return { ...state, highlight, image, metrics };") &&
     rankedService.includes("topPerformer,"),
-  "home ranked service must include image in the topPerformer payload",
+  "home ranked service must include highlight and image in the topPerformer payload",
 );
 
 assert(
@@ -176,6 +195,11 @@ assert(
 );
 
 assert(
+  !homeDeferredSections.includes("highlight={null}"),
+  "home deferred top performer card must not hardcode a null highlight",
+);
+
+assert(
   topPerformerCard.includes('const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");') &&
     topPerformerCard.includes('className="object-cover"') &&
     topPerformerCard.includes("style={{ objectPosition: imageObjectPosition }}"),
@@ -216,10 +240,12 @@ assert(
 
 assert(
   topPerformerCard.includes('inline-flex min-h-11 items-center rounded border border-[#F6C445]/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#F6C445]') &&
-    topPerformerCard.includes("View game log") &&
+    topPerformerCard.includes('label="Video highlights"') &&
+    topPerformerCard.includes("Game log") &&
+    !topPerformerCard.includes("View game log") &&
     !topPerformerCard.includes("View log") &&
     !topPerformerCard.includes("justify-center rounded border border-white/15"),
-  "home top performer View game log CTA must match the left-aligned yellow slate button treatment",
+  "home top performer must show Video highlights beside Game log with the left-aligned yellow slate button treatment",
 );
 
 assert(
@@ -246,7 +272,7 @@ assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes('["home-ranked", "v6"]'),
+    rankedService.includes('["home-ranked", "v7"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
 );
 

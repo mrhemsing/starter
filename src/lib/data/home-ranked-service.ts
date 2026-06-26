@@ -1,10 +1,11 @@
 import { unstable_cache } from "next/cache";
+import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { liveDateHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
-import type { PitchEvent, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 50;
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
@@ -26,6 +27,7 @@ type TopPerformerState = {
 
 type TopPerformerPayload = TopPerformerState & {
   image: TopPerformerImage | null;
+  highlight: FeaturedStartHighlight | null;
   metrics: {
     topVelo: number | null;
     whiffRate: number | null;
@@ -35,7 +37,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v6"],
+  ["home-ranked", "v7"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 
@@ -82,12 +84,13 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
 async function resolveTopPerformerPayload(state: TopPerformerState | null): Promise<TopPerformerPayload | null> {
   if (!state) return null;
 
-  const [image, metrics] = await Promise.all([
+  const [highlight, image, metrics] = await Promise.all([
+    resolveFeaturedStartHighlight(state.start),
     resolveTopPerformerImage(state.start, null),
     resolveTopPerformerMetrics(state.start),
   ]);
 
-  return { ...state, image, metrics };
+  return { ...state, highlight, image, metrics };
 }
 
 async function resolveTopPerformerMetrics(start: StartSummary | null) {

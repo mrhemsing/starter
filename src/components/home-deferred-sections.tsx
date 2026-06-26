@@ -106,7 +106,7 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
               rank={1}
               slateCount={ranked.topPerformer.slateCount}
               image={ranked.topPerformer.image}
-              highlight={null}
+              highlight={ranked.topPerformer.highlight}
               status={ranked.topPerformer.status}
               whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}
               topVelo={ranked.topPerformer.metrics?.topVelo ?? null}
