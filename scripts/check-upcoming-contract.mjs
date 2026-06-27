@@ -1098,11 +1098,16 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must preserve API watch-rank order and only copy-sort the Start time view",
   );
   assert(
-    tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
+      tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
       tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
-      !tonightServiceSource.includes('["tonight-must-watch", "v2"]'),
-    "upcoming probable starters must use scheduled game slot teams and the refreshed v3 cache namespace",
+      !tonightServiceSource.includes('["tonight-must-watch", "v2"]') &&
+      tonightServiceSource.includes("const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;") &&
+      tonightServiceSource.includes("const candidates = builtGames.filter((game) => isActiveUpcomingCardGame(game, now));") &&
+      tonightServiceSource.includes("function isActiveUpcomingCardGame(game: TonightGame, now: Date)") &&
+      tonightServiceSource.includes('if (game.status !== "live") return true;') &&
+      tonightServiceSource.includes("return now.getTime() - firstPitchMs <= UPCOMING_LIVE_GAME_MAX_AGE_MS;"),
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v3 cache namespace, and the same one-hour live-card cutoff as home",
   );
   assert(
       tonightsMustWatchSource.includes("data-visible-starter-spark-readies=") &&
