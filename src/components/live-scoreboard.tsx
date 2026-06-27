@@ -124,7 +124,7 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
         </Link>
         <p className="mt-1 font-mono text-xs text-zinc-400">
           {liveOrFinalScore ? formatLine(row) : projectionLabel(row)}
-          {row.inningLabel ? <span className="text-zinc-600"> · {row.inningLabel}</span> : null}
+          {row.inningLabel ? <InningLabel label={row.inningLabel} /> : null}
         </p>
       </div>
       {liveOrFinalScore ? (
@@ -145,6 +145,19 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
         </div>
       )}
     </article>
+  );
+}
+
+function InningLabel({ label }: { label: string }) {
+  const forceMobileBreak = /^(top|bottom)\b/i.test(label);
+
+  if (!forceMobileBreak) return <span className="text-zinc-600"> · {label}</span>;
+
+  return (
+    <>
+      <span className="hidden text-zinc-600 sm:inline"> · </span>
+      <span className="block text-zinc-600 sm:inline">{label}</span>
+    </>
   );
 }
 

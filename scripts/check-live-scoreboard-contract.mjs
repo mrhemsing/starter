@@ -93,6 +93,10 @@ assert(
     liveComponent.includes("{row.scoreLabel}") &&
     liveComponent.includes('{row.qualityLabel ?') &&
     liveComponent.includes('row.provisional ? " · Prov." : ""') &&
+    liveComponent.includes("function InningLabel") &&
+    liveComponent.includes("<InningLabel label={row.inningLabel} />") &&
+    liveComponent.includes("/^(top|bottom)\\b/i.test(label)") &&
+    liveComponent.includes('className="block text-zinc-600 sm:inline"') &&
     liveComponent.includes("function MobileStackedPitcherName") &&
     liveComponent.includes('<MobileStackedPitcherName name={row.pitcherName} />') &&
     liveComponent.includes("pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight") &&
