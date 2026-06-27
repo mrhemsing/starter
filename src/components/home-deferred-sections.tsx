@@ -114,6 +114,8 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
             />
           </div>
         </section>
+      ) : ranked.liveLeaderboard ? (
+        <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
       ) : null}
 
       {watch ? (
@@ -140,6 +142,35 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
         />
       ) : <HomeDeferredFallback variant="best" />}
     </>
+  );
+}
+
+function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResponse["liveLeaderboard"]> }) {
+  const liveHref = entries[0]?.href ?? "/live";
+
+  return (
+    <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-responsive-check="home-live-leaderboard-strip">
+      <div className="mx-auto max-w-7xl">
+        <div className="max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3">
+          <div className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-mono text-xs uppercase tracking-[0.16em]">
+            <p className="flex shrink-0 items-center gap-2 text-amber-300">
+              <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" />
+              <span>Live leaderboard</span>
+            </p>
+            {entries.map((entry, index) => (
+              <a key={entry.id} href={entry.href} className="shrink-0 rounded border border-white/10 px-2 py-1 text-zinc-300 transition hover:border-amber-300/50 hover:text-amber-200">
+                <span className="text-zinc-500">{index + 1}</span>{" "}
+                <span className="text-zinc-100">{entry.pitcherLastName}</span>{" "}
+                <span className="text-amber-300">{entry.score.toFixed(1)}</span>
+              </a>
+            ))}
+            <a href={liveHref} className="shrink-0 text-amber-300 underline-offset-4 hover:underline">
+              Full live results
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
-import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";
+import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { inningsFromIP } from "@/lib/innings";
@@ -17,6 +17,15 @@ export type RankedHomeResponse = {
   label: string;
   starts: StartSummary[];
   topPerformer: TopPerformerPayload | null;
+  liveLeaderboard: LiveLeaderboardEntry[] | null;
+};
+
+export type LiveLeaderboardEntry = {
+  id: string;
+  pitcherLastName: string;
+  team: string;
+  score: number;
+  href: string;
 };
 
 type TopPerformerState = {
@@ -39,7 +48,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v9"],
+  ["home-ranked", "v10"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 
@@ -74,12 +83,14 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
     yesterdaySlateStarts,
   });
   const topPerformer = await resolveTopPerformerPayload(topPerformerState);
+  const liveLeaderboard = topPerformer?.status === "live" ? null : resolveLiveLeaderboard(liveBoard);
 
   return {
     date: rankedDate,
     label: rankedLabel,
     starts: slateStarts,
     topPerformer,
+    liveLeaderboard,
   };
 }
 
@@ -199,6 +210,24 @@ function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStar
   };
 }
 
+function resolveLiveLeaderboard(liveBoard: LiveScoreboard | null): LiveLeaderboardEntry[] | null {
+  if (!liveBoard?.hasActiveStarts) return null;
+
+  const leaders = liveBoard.rows.filter(isLiveLeaderboardRow).slice(0, 5).map((row) => ({
+    id: row.id,
+    pitcherLastName: lastName(row.pitcherName),
+    team: row.team,
+    score: row.gsPlus ?? 0,
+    href: row.liveHref,
+  }));
+
+  return leaders.length > 0 ? leaders : null;
+}
+
+function isLiveLeaderboardRow(row: LiveScoreboardRow) {
+  return row.scoreLabel !== "PROJ" && row.gsPlus !== null;
+}
+
 function isCompletedRankedStart(start: StartSummary) {
   return start.source?.line !== "fixture" && isRankedRegularStart(start);
 }
@@ -230,4 +259,9 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+function lastName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts.at(-1) ?? name;
 }

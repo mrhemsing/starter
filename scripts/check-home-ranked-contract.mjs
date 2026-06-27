@@ -78,10 +78,12 @@ assert(
 
 assert(
   rankedService.includes("topPerformer: TopPerformerPayload | null;") &&
+    rankedService.includes("liveLeaderboard: LiveLeaderboardEntry[] | null;") &&
+    rankedService.includes("export type LiveLeaderboardEntry =") &&
     rankedService.includes("type TopPerformerPayload = TopPerformerState &") &&
     rankedService.includes("return { ...state, highlight, image, metrics };") &&
     rankedService.includes("topPerformer,"),
-  "home ranked service must include highlight and image in the topPerformer payload",
+  "home ranked service must include highlight and image in the topPerformer payload and expose the provisional live leaderboard slot",
 );
 
 assert(
@@ -294,18 +296,37 @@ assert(
     rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v9"]'),
+    rankedService.includes('["home-ranked", "v10"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 
 assert(
-  rankedService.includes('import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+  rankedService.includes('import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
     rankedService.includes('import { inningsFromIP } from "@/lib/innings";') &&
     rankedService.includes("const liveBoard = slateProgress.state === \"starts-in-progress\" ? await getLiveScoreboard({ date: today }) : null;") &&
     rankedService.includes("const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);") &&
     rankedService.includes("href: liveDateHref(today),") &&
     homeDeferredSections.includes("href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams(\"home\"))}"),
   "home top performer must promote the provisional live GS+ leader into the hero and link to the live board",
+);
+
+assert(
+  rankedService.includes('import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
+    rankedService.includes('const liveLeaderboard = topPerformer?.status === "live" ? null : resolveLiveLeaderboard(liveBoard);') &&
+    rankedService.includes("liveLeaderboard,") &&
+    rankedService.includes("function resolveLiveLeaderboard(liveBoard: LiveScoreboard | null): LiveLeaderboardEntry[] | null") &&
+    rankedService.includes("const leaders = liveBoard.rows.filter(isLiveLeaderboardRow).slice(0, 5).map((row) => ({") &&
+    rankedService.includes("pitcherLastName: lastName(row.pitcherName),") &&
+    rankedService.includes("href: row.liveHref,") &&
+    rankedService.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null;') &&
+    rankedService.includes("function lastName(name: string)") &&
+    homeDeferredSections.includes("ranked.liveLeaderboard ? (") &&
+    homeDeferredSections.includes("<LiveLeaderboardStrip entries={ranked.liveLeaderboard} />") &&
+    homeDeferredSections.includes('data-responsive-check="home-live-leaderboard-strip"') &&
+    homeDeferredSections.includes("<span>Live leaderboard</span>") &&
+    homeDeferredSections.includes("{entry.pitcherLastName}") &&
+    homeDeferredSections.includes("Full live results"),
+  "home must show a compact top-five live leaderboard stripe with last names only until a qualified live leader replaces it",
 );
 
 assert(
