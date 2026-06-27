@@ -289,14 +289,18 @@ assert(
 
 assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
-    rankedService.includes("if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;") &&
+    rankedService.includes("if (!todayLeader || !isLiveTopPerformerEligibleStart(todayLeader)) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes('["home-ranked", "v7"]'),
-  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender posts",
+    rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 4;") &&
+    rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
+    rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
+    rankedService.includes('["home-ranked", "v8"]'),
+  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 4.0 IP posts",
 );
 
 assert(
   rankedService.includes('import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+    rankedService.includes('import { inningsFromIP } from "@/lib/innings";') &&
     rankedService.includes("const liveBoard = slateProgress.state === \"starts-in-progress\" ? await getLiveScoreboard({ date: today }) : null;") &&
     rankedService.includes("const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);") &&
     rankedService.includes("href: liveDateHref(today),") &&

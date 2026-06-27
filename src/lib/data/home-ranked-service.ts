@@ -3,11 +3,13 @@ import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-ser
 import { getLiveScoreboard, type LiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 50;
+const LIVE_TOP_PERFORMER_MIN_INNINGS = 4;
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
 export type RankedHomeResponse = {
@@ -37,7 +39,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v7"],
+  ["home-ranked", "v8"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 
@@ -158,7 +160,7 @@ function resolveTopPerformerState({
   }
 
   if (isTodaySlateStarted) {
-    if (!todayLeader || todayLeader.gameScorePlus < LIVE_TOP_PERFORMER_FLOOR) return null;
+    if (!todayLeader || !isLiveTopPerformerEligibleStart(todayLeader)) return null;
     return {
       status: "live" as const,
       start: todayLeader,
@@ -199,6 +201,10 @@ function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStar
 
 function isCompletedRankedStart(start: StartSummary) {
   return start.source?.line !== "fixture" && isRankedRegularStart(start);
+}
+
+function isLiveTopPerformerEligibleStart(start: StartSummary) {
+  return start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS;
 }
 
 function formatLongDate(date: string) {

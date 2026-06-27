@@ -2,11 +2,13 @@ import { unstable_cache } from "next/cache";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, sourceParams, startHref } from "@/lib/routes";
 import { normalizeScheduleStatus } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
+const LIVE_LEADER_MIN_INNINGS = 4;
 
 export type LiveScoreboardStatus = "live" | "final" | "warming" | "delay";
 
@@ -50,7 +52,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v3"],
+  ["live-scoreboard", "v4"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
@@ -80,6 +82,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   rows.sort(compareLiveRows);
 
   const scoredRows = rows.filter(isScoredRow);
+  const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);
   const liveStarts = rows.filter((row) => row.status === "live").length;
   const finalStarts = rows.filter((row) => row.status === "final").length;
   const warmingStarts = rows.filter((row) => row.status === "warming").length;
@@ -96,7 +99,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     warmingStarts,
     delayStarts,
     rows,
-    leader: scoredRows[0] ?? null,
+    leader: leaderRows[0] ?? null,
   };
 }
 
@@ -200,6 +203,10 @@ function compareLiveRows(a: LiveScoreboardRow, b: LiveScoreboardRow) {
 
 function isScoredRow(row: LiveScoreboardRow) {
   return row.scoreLabel !== "PROJ";
+}
+
+function isLiveLeaderEligibleRow(row: LiveScoreboardRow) {
+  return isScoredRow(row) && row.gsPlus !== null && inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS;
 }
 
 function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
