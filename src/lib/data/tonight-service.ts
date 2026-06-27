@@ -28,7 +28,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
-  ["tonight-must-watch", "v2"],
+  ["tonight-must-watch", "v3"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS },
 );
 
@@ -221,7 +221,7 @@ function buildTonightStarter(
     return {
       pitcherId: String(probable.id),
       name: probable.fullName,
-      team: probable.teamAbbreviation,
+      team,
       side,
       status: "insufficient",
       projection,
@@ -240,7 +240,7 @@ function buildTonightStarter(
   return {
     pitcherId: form.pitcherId,
     name: form.name,
-    team: form.team,
+    team,
     side,
     status: form.status,
     rgs: form.rgs,

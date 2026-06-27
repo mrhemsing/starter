@@ -78,8 +78,10 @@ export function TonightsMustWatch({
       data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
       data-visible-starter-delta-forms={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.deltaForm === null || starter.deltaForm === undefined ? "pending" : starter.deltaForm.toFixed(1)).join("/")).join(",") : "none"}
-      data-visible-starter-spark-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starter.spark?.length ?? 0)).join("/")).join(",") : "none"}
-      data-visible-starter-spark-latest={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none").join("/")).join(",") : "none"}
+      data-visible-starter-spark-counts={shownGames.length ? shownGames.map(gameSparkCountPairValue).join(",") : "none"}
+      data-visible-starter-spark-readies={shownGames.length ? shownGames.map(gameSparkReadyPairValue).join(",") : "none"}
+      data-visible-starter-spark-ready-counts={shownGames.length ? shownGames.map(gameSparkReadyCountValue).join(",") : "none"}
+      data-visible-starter-spark-latest={shownGames.length ? shownGames.map(gameSparkLatestPairValue).join(",") : "none"}
       data-visible-starter-season-ip={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.inningsPitched, 1)).join("/")).join(",") : "none"}
       data-visible-starter-season-era={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.era, 2)).join("/")).join(",") : "none"}
       data-visible-starter-season-whip={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => seasonNumberValue(starter.seasonStats?.whip, 2)).join("/")).join(",") : "none"}
@@ -658,7 +660,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           <MarketContextLine starter={starter} align={align} />
         </div>
       </div>
-      {starter.status === "ok" && starter.spark && starter.tier ? (
+      {hasStarterSparkForm(starter) ? (
         <div className="mt-3">
           <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />
         </div>
@@ -669,7 +671,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
 
 function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: TonightStarter; leagueMeanGS: number }) {
   const clashData = formClashData(away, home);
-  if (away.status !== "ok" || home.status !== "ok" || !away.spark || !home.spark || !away.tier || !home.tier) {
+  if (!hasStarterSparkForm(away) || !hasStarterSparkForm(home)) {
     return (
       <p
         className="rounded border border-white/10 bg-black/25 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
@@ -700,7 +702,7 @@ function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: T
 }
 
 function formClashData(away: TonightStarter, home: TonightStarter) {
-  const ready = away.status === "ok" && home.status === "ok" && away.spark && home.spark && away.tier && home.tier;
+  const ready = hasStarterSparkForm(away) && hasStarterSparkForm(home);
   const awayAccent = starterFormAccent(away);
   const homeAccent = starterFormAccent(home);
   return {
@@ -714,9 +716,43 @@ function formClashData(away: TonightStarter, home: TonightStarter) {
     "data-form-clash-home-accent-band": homeAccent.band,
     "data-form-clash-home-accent-color": homeAccent.color,
     "data-form-clash-same-band": String(awayAccent.band === homeAccent.band),
-    "data-form-clash-away-spark-count": String(away.spark?.length ?? 0),
-    "data-form-clash-home-spark-count": String(home.spark?.length ?? 0),
+    "data-form-clash-away-spark-count": starterSparkCountValue(away),
+    "data-form-clash-home-spark-count": starterSparkCountValue(home),
+    "data-form-clash-away-spark-ready": starterSparkReadyValue(away),
+    "data-form-clash-home-spark-ready": starterSparkReadyValue(home),
   };
+}
+
+function hasStarterSparkForm(starter: TonightStarter): starter is TonightStarter & { spark: number[]; tier: FormTier } {
+  return starter.status === "ok" && Boolean(starter.spark?.length && starter.tier);
+}
+
+function starterSparkCountValue(starter: TonightStarter) {
+  return String(starter.spark?.length ?? 0);
+}
+
+function gameSparkCountPairValue(game: TonightGame) {
+  return game.starters.map(starterSparkCountValue).join("/");
+}
+
+function starterSparkReadyValue(starter: TonightStarter) {
+  return String(hasStarterSparkForm(starter));
+}
+
+function gameSparkReadyPairValue(game: TonightGame) {
+  return game.starters.map(starterSparkReadyValue).join("/");
+}
+
+function gameSparkReadyCountValue(game: TonightGame) {
+  return String(game.starters.filter(hasStarterSparkForm).length);
+}
+
+function starterSparkLatestValue(starter: TonightStarter) {
+  return starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none";
+}
+
+function gameSparkLatestPairValue(game: TonightGame) {
+  return game.starters.map(starterSparkLatestValue).join("/");
 }
 
 function TeamEndLabel({ team, align = "start" }: { team: string; align?: "start" | "end" }) {
@@ -937,7 +973,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           <MarketContextLine starter={starter} compact />
         </div>
       ) : null}
-      {starter.status === "ok" && starter.spark && starter.tier ? (
+      {hasStarterSparkForm(starter) ? (
         <div className="col-span-full -mt-1">
           <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} />
         </div>
@@ -1199,8 +1235,9 @@ function starterFormData(starter: TonightStarter) {
     "data-starter-form-trend": starter.trend ?? "none",
     "data-starter-rgs": starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1),
     "data-starter-delta-form": starter.deltaForm === null || starter.deltaForm === undefined ? "pending" : starter.deltaForm.toFixed(1),
-    "data-starter-spark-count": String(starter.spark?.length ?? 0),
-    "data-starter-spark-latest": starter.spark?.length ? starter.spark[starter.spark.length - 1].toFixed(1) : "none",
+    "data-starter-spark-count": starterSparkCountValue(starter),
+    "data-starter-spark-ready": starterSparkReadyValue(starter),
+    "data-starter-spark-latest": starterSparkLatestValue(starter),
     "data-starter-window-count": starter.windowCount === null || starter.windowCount === undefined ? "pending" : String(starter.windowCount),
   };
 }
