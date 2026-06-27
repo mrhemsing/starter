@@ -152,19 +152,17 @@ function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResp
     <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-responsive-check="home-live-leaderboard-strip">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3">
-          <div className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-mono text-xs uppercase tracking-[0.16em]">
-            <p className="flex shrink-0 items-center gap-2 text-amber-300">
-              <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" />
+          <div className="flex max-w-full min-w-0 items-center gap-3 overflow-x-auto pb-1">
+            <p className="shrink-0 font-mono text-xs uppercase tracking-[0.2em] text-amber-300">
               <span>Live leaderboard</span>
             </p>
-            {entries.map((entry, index) => (
-              <a key={entry.id} href={entry.href} className="shrink-0 rounded border border-white/10 px-2 py-1 text-zinc-300 transition hover:border-amber-300/50 hover:text-amber-200">
-                <span className="text-zinc-500">{index + 1}</span>{" "}
-                <span className="text-zinc-100">{entry.pitcherLastName}</span>{" "}
-                <span className="text-amber-300">{entry.score.toFixed(1)}</span>
+            {entries.map((entry) => (
+              <a key={entry.id} href={entry.href} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-300 transition hover:border-amber-300/30 hover:text-amber-200">
+                <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{entry.pitcherLastName}</span>
+                <span className="text-[#FF7A3D]">Live {entry.score.toFixed(1)}</span>
               </a>
             ))}
-            <a href={liveHref} className="shrink-0 text-amber-300 underline-offset-4 hover:underline">
+            <a href={liveHref} className="flex shrink-0 items-center whitespace-nowrap rounded border border-amber-300/25 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-amber-300 transition hover:border-amber-300/50 hover:text-amber-200">
               Full live results
             </a>
           </div>
