@@ -398,8 +398,7 @@ assert(
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
     imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
-    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start);') &&
-    !imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isPitcherActionHighlight(item, start);') &&
+    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start) || isPitcherActionHighlight(item, start);') &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&

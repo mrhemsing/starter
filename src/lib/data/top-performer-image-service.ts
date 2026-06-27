@@ -268,7 +268,7 @@ function isPhotoCreditImageTitle(title: string) {
 }
 
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
-  return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start);
+  return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start) || isPitcherActionHighlight(item, start);
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
