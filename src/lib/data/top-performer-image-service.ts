@@ -16,6 +16,8 @@ const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-image
 const CAM_SCHLITTLER_MLB_ID = 693645;
 const CAM_SCHLITTLER_REDS_ACTION_IMAGE =
   "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_0,w_3227,h_1815/c_fill,w_1440,ar_16:9,f_auto,q_auto,g_auto/images%2FImagnImages%2Fmmsport%2Finside_the_reds%2F01kvhb1zebrbrmepeemw.jpg";
+const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";
+const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -136,6 +138,16 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 }
 
 function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | null {
+  if (start.id === PAYTON_TOLLE_YANKEES_START_ID) {
+    return {
+      source: "action",
+      imageUrl: PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE,
+      alt: "Payton Tolle reacts after getting the third out against the Yankees",
+      attribution: "CREDIT: Mary Schwalm/AP Photo",
+      objectPosition: "50% 45%",
+    };
+  }
+
   if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID) {
     return {
       source: "action",

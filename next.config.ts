@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
         hostname: "images2.minutemediacdn.com",
         pathname: "/image/upload/**",
       },
+      {
+        protocol: "https",
+        hostname: "s.hdnux.com",
+        pathname: "/photos/**",
+      },
     ],
   },
   async redirects() {

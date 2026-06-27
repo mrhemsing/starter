@@ -361,6 +361,8 @@ assert(
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
+    imageService.includes('const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";') &&
+    imageService.includes('const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";') &&
     !imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
     !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
     !imageService.includes("const BRANDON_WOODRUFF_MLB_ID = 605540;") &&
@@ -422,6 +424,9 @@ assert(
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
     imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
     imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
+    imageService.includes("if (start.id === PAYTON_TOLLE_YANKEES_START_ID)") &&
+    imageService.includes("imageUrl: PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE,") &&
+    imageService.includes('attribution: "CREDIT: Mary Schwalm/AP Photo",') &&
     imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
     imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
@@ -436,8 +441,10 @@ assert(
 
 assert(
   (await readFile("next.config.ts", "utf8")).includes('hostname: "images2.minutemediacdn.com"') &&
-    (await readFile("next.config.ts", "utf8")).includes('pathname: "/image/upload/**"'),
-  "home top performer keyed action images from Minute Media must be allowed by Next image config",
+    (await readFile("next.config.ts", "utf8")).includes('pathname: "/image/upload/**"') &&
+    (await readFile("next.config.ts", "utf8")).includes('hostname: "s.hdnux.com"') &&
+    (await readFile("next.config.ts", "utf8")).includes('pathname: "/photos/**"'),
+  "home top performer keyed action images from Minute Media and AP/Hearst CDN must be allowed by Next image config",
 );
 
 console.log("home ranked contract ok: top performer image resolves, passes to the homepage card, uses centered action-photo framing, and never falls back to headshots");
