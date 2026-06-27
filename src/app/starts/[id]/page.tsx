@@ -353,7 +353,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
   return (
     <article
       id={start.id}
-      className={`group relative scroll-mt-28 overflow-hidden border-l-4 px-4 sm:px-5 ${profile.paddingClass} ${profile.cardClass}`}
+      className={`group relative overflow-hidden border-l-4 px-4 sm:px-5 ${profile.paddingClass} ${profile.cardClass}`}
       style={{
         "--ranked-band-color": profile.railColor,
         background: profile.background,
@@ -370,7 +370,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           #{start.rank}
         </div>
       ) : null}
-      <div className={`relative grid items-center gap-x-4 gap-y-2 sm:pr-36 ${profile.gridClass}`}>
+      <div className={`relative grid items-center gap-x-4 gap-y-2 ${profile.gridClass}`}>
         <div className="min-w-0">
           <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
@@ -412,8 +412,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         </div>
       </div>
       <details className="ranked-start-details">
-        <summary className="cursor-pointer list-none rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [&::-webkit-details-marker]:hidden" aria-label={`Toggle breakdown for ${start.pitcher.name}`}>
-          <span className="ranked-start-toggle-label">Breakdown</span>
+        <summary className="cursor-pointer list-none rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [&::-webkit-details-marker]:hidden" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
           <span aria-hidden="true" className="ranked-start-toggle-icon">
             <span className="ranked-start-toggle-chevron" />
           </span>
