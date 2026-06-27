@@ -14,6 +14,7 @@ const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
+const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
@@ -224,17 +225,30 @@ assert(
 
 assert(
   startsPage.includes('"--ranked-band-color": profile.railColor') &&
+    startsPage.includes("relative scroll-mt-28 overflow-hidden") &&
+    startsPage.includes("sm:pr-36") &&
     startsPage.includes("[&::-webkit-details-marker]:hidden") &&
+    startsPage.includes("Toggle breakdown for ${start.pitcher.name}") &&
+    startsPage.includes('className="ranked-start-toggle-label"') &&
+    startsPage.includes(">Breakdown</span>") &&
     startsPage.includes('className="ranked-start-toggle-icon"') &&
     startsPage.includes('className="ranked-start-toggle-chevron"') &&
     !startsPage.includes("⌄") &&
+    !globals.includes(".ranked-start-details[open] > summary") &&
+    !globals.includes("border-top-color: rgb(255 255 255 / 0.1);") &&
     globals.includes(".ranked-start-toggle-icon") &&
+    globals.includes(".ranked-start-toggle-label") &&
     globals.includes(".ranked-start-toggle-chevron") &&
     globals.includes(".ranked-start-details > summary::marker") &&
     globals.includes(".ranked-start-details > summary::-webkit-details-marker") &&
-    globals.includes("right: 12px;") &&
-    globals.includes("top: 50%;") &&
-    globals.includes("transform: translateY(-50%);") &&
+    globals.includes("position: relative;") &&
+    globals.includes("margin-left: auto;") &&
+    globals.includes("right: 16px;") &&
+    globals.includes("top: 14px;") &&
+    globals.includes("min-height: 44px;") &&
+    globals.includes("min-width: 116px;") &&
+    !rankedStartSummaryRule.includes("width: 100%;") &&
+    !rankedStartSummaryRule.includes("height: 100%;") &&
     globals.includes("border-bottom: 2px solid currentColor;") &&
     globals.includes("border-right: 2px solid currentColor;") &&
     globals.includes("transform: translateY(-1px) rotate(45deg);") &&
