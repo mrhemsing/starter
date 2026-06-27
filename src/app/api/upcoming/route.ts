@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUpcomingMustWatch, UPCOMING_REVALIDATE_SECONDS } from "@/lib/data/tonight-service";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date") ?? undefined;

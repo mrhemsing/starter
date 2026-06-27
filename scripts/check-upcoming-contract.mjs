@@ -19,7 +19,7 @@ const FORM_ACCENT_COLORS = {
   neutral: "#888780",
 };
 const FORM_DRIVER_KEYS = ["k-rate", "walks", "depth", "run-prevention"];
-const ACTIVE_CARD_STATUSES = ["pregame", "live"];
+const ACTIVE_CARD_STATUSES = ["pregame"];
 const WATCH_SCORE_WEIGHTS = {
   topArm: 0.5,
   pairAvg: 0.3,
@@ -34,8 +34,11 @@ const WATCH_COMPONENT_LAYOUTS = ["featured", "compact", "standard"];
 const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
+const tonightApiSource = readFileSync("src/app/api/tonight/route.ts", "utf8");
+const upcomingApiSource = readFileSync("src/app/api/upcoming/route.ts", "utf8");
 const tonightsMustWatchSource = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
 const tonightServiceSource = readFileSync("src/lib/data/tonight-service.ts", "utf8");
+const typesSource = readFileSync("src/lib/types.ts", "utf8");
 
 function assert(condition, message) {
   if (!condition) {
@@ -1100,14 +1103,19 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v5"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v2"]') &&
-      tonightServiceSource.includes("const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;") &&
-      tonightServiceSource.includes("const candidates = builtGames.filter((game) => isActiveUpcomingCardGame(game, now));") &&
-      tonightServiceSource.includes("function isActiveUpcomingCardGame(game: TonightGame, now: Date)") &&
-      tonightServiceSource.includes('if (game.status !== "live") return true;') &&
-      tonightServiceSource.includes("return now.getTime() - firstPitchMs <= UPCOMING_LIVE_GAME_MAX_AGE_MS;"),
-    "upcoming probable starters must use scheduled game slot teams, the refreshed v3 cache namespace, and the same one-hour live-card cutoff as home",
+      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];') &&
+      typesSource.includes('export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame">;') &&
+      tonightApiSource.includes('export const dynamic = "force-dynamic";') &&
+      upcomingApiSource.includes('export const dynamic = "force-dynamic";') &&
+      tonightServiceSource.includes("const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));") &&
+      !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
+      !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v6 cache namespace, and only pregame-typed cards now that live has its own section",
   );
   assert(
       tonightsMustWatchSource.includes("data-visible-starter-spark-readies=") &&

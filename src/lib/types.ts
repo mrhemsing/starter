@@ -346,7 +346,7 @@ export type TonightStarter = {
 };
 
 export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
-export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame" | "live">;
+export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame">;
 
 export type TonightGame = {
   gamePk: string;

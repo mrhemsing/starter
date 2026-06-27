@@ -19,7 +19,6 @@ const FALLBACK_ACCENT_COLOR = "#fbbf24";
 const NEUTRAL_PARK_RUN_FACTOR = 1;
 const PITCHER_SEASON_LOG_SORTS: PitcherApiSeasonLogSort[] = ["date-desc", "gs-desc", "ip-desc"];
 const PITCHER_SEASON_LOG_RESULTS: PitcherApiSeasonLogResultFilter[] = ["all", "W", "L", "ND"];
-const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;
 const ESTABLISHED_STARTER_MIN_SEASON_STARTS = 5;
 const ESTABLISHED_STARTER_MIN_AVG_IP = 4;
 export const PITCHER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
@@ -176,7 +175,9 @@ export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
   return completion.completedStarts > 0 ? today : addDays(today, -1);
 }
 
-export async function getDefaultSlateDates(today = getHomeSlateDate(), now = new Date()) {
+export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = new Date()) {
+  void _now;
+
   const [completion, schedule] = await Promise.all([
     getRankedSlateCompletionState(today, today),
     fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) }),
@@ -184,25 +185,20 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), now = new
 
   return {
     rankedDate: completion.completedStarts > 0 ? today : addDays(today, -1),
-    upcomingDate: shouldDefaultUpcomingToTomorrow(schedule, now) ? addDays(today, 1) : today,
+    upcomingDate: shouldDefaultUpcomingToTomorrow(schedule) ? addDays(today, 1) : today,
   };
 }
 
-function shouldDefaultUpcomingToTomorrow(schedule: MlbSchedule, now: Date) {
+function shouldDefaultUpcomingToTomorrow(schedule: MlbSchedule) {
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
   if (countableGames.length === 0) return false;
 
-  return countableGames.every((game) => !isUpcomingDefaultActiveGame(game, now));
+  return countableGames.every((game) => !isUpcomingDefaultActiveGame(game));
 }
 
-function isUpcomingDefaultActiveGame(game: MlbScheduleGame, now: Date) {
+function isUpcomingDefaultActiveGame(game: MlbScheduleGame) {
   if (isFinalGameState(game) || isPostponedGameState(game)) return false;
-  if (!isLiveGameState(game)) return true;
-
-  const firstPitchMs = new Date(game.gameDate).getTime();
-  if (!Number.isFinite(firstPitchMs)) return true;
-
-  return now.getTime() - firstPitchMs <= UPCOMING_LIVE_GAME_MAX_AGE_MS;
+  return !isLiveGameState(game);
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {

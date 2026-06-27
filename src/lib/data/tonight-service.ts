@@ -20,8 +20,7 @@ type CachedTonight = {
 const TONIGHT_CACHE_TTL_MS = 60 * 1000;
 export const TONIGHT_REVALIDATE_SECONDS = 60;
 export const UPCOMING_REVALIDATE_SECONDS = 60;
-const UPCOMING_LIVE_GAME_MAX_AGE_MS = 60 * 60 * 1000;
-const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "live"];
+const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
 const WATCH_SCORE_RANGE = { min: 0, max: 100 };
 const WATCH_SCORE_PRECISION = 1;
@@ -29,7 +28,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
-  ["tonight-must-watch", "v3"],
+  ["tonight-must-watch", "v6"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS },
 );
 
@@ -64,8 +63,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
   const builtGames = await Promise.all(
     schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null)),
   );
-  const now = new Date();
-  const candidates = builtGames.filter((game) => isActiveUpcomingCardGame(game, now));
+  const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
   const matchupRanks = rankMatchups(candidates);
   const games = candidates
     .map((game) => ({
@@ -188,16 +186,6 @@ function watchSortGroup(status: TonightGameStatus) {
 
 function isUpcomingCardStatus(status: TonightGameStatus) {
   return ACTIVE_UPCOMING_CARD_STATUSES.includes(status as UpcomingCardStatus);
-}
-
-function isActiveUpcomingCardGame(game: TonightGame, now: Date) {
-  if (!isUpcomingCardStatus(game.status)) return false;
-  if (game.status !== "live") return true;
-
-  const firstPitchMs = new Date(game.firstPitch).getTime();
-  if (!Number.isFinite(firstPitchMs)) return true;
-
-  return now.getTime() - firstPitchMs <= UPCOMING_LIVE_GAME_MAX_AGE_MS;
 }
 
 function buildTonightStarter(
