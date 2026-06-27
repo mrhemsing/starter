@@ -303,7 +303,7 @@ function selectMlbImageCut(item: MlbGameContentItem | null) {
 }
 
 function normalizeMlbImageUrl(src: string) {
-  return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/");
+  return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/");
 }
 
 async function resolveSportradarGameId(start: StartSummary, apiKey: string) {

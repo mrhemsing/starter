@@ -396,6 +396,8 @@ assert(
     imageService.includes("function broadSummaryMlbTitlePattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
+    imageService.includes('/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/') &&
+    !imageService.includes('/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/') &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
     imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
     imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start) || isPitcherActionHighlight(item, start);') &&
