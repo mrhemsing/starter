@@ -18,8 +18,6 @@ Reviewed after the fixture and live responsive runs:
 
 No obvious visual regression found in the refreshed captures. The longest live slate is tall as expected because the screenshot is full-page, but card density and action targets remain usable.
 
-Manual ranked-start accordion check on 2026-06-27: `ranked-start-toggle-mobile.png` and `ranked-start-toggle-desktop.png` show the fixed `Breakdown` control staying in the same spot while open and closed, with a 125px by 44px target. The heat-highlight button opened its modal on the collapsed card.
-
 ## Next Visual Risk
 
 Recheck this file after any change that affects slate-card density, mobile start-page controls, pitcher hero sizing, or the responsive screenshot target list.
