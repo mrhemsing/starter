@@ -26,8 +26,8 @@ export default async function LivePage({ params }: LivePageProps) {
   const boardDescription = "Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
 
   return (
-    <main className="min-h-screen bg-[#08080a] text-zinc-100">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <SiteHeader active="live" today={today} />
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-4">

@@ -66,12 +66,15 @@ assert(
 
 assert(
   livePage.includes('active="live"') &&
+    livePage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
+    livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
+    !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
     livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
     livePage.includes("Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.") &&
     livePage.includes("<LiveScoreboard initialBoard={board} />") &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
-  "/live/[date] route and API must render and serve the cached live board",
+  "/live/[date] route and API must render the cached live board at the shared site width",
 );
 
 assert(
