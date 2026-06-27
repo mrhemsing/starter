@@ -224,13 +224,25 @@ assert(
 
 assert(
   startsPage.includes('"--ranked-band-color": profile.railColor') &&
-    globals.includes(".ranked-start-details > summary > span") &&
+    startsPage.includes("[&::-webkit-details-marker]:hidden") &&
+    startsPage.includes('className="ranked-start-toggle-icon"') &&
+    startsPage.includes('className="ranked-start-toggle-chevron"') &&
+    !startsPage.includes("⌄") &&
+    globals.includes(".ranked-start-toggle-icon") &&
+    globals.includes(".ranked-start-toggle-chevron") &&
+    globals.includes(".ranked-start-details > summary::marker") &&
+    globals.includes(".ranked-start-details > summary::-webkit-details-marker") &&
     globals.includes("right: 12px;") &&
     globals.includes("top: 50%;") &&
     globals.includes("transform: translateY(-50%);") &&
+    globals.includes("border-bottom: 2px solid currentColor;") &&
+    globals.includes("border-right: 2px solid currentColor;") &&
+    globals.includes("transform: translateY(-1px) rotate(45deg);") &&
+    globals.includes(".ranked-start-details[open] .ranked-start-toggle-chevron") &&
+    globals.includes("transform: translateY(2px) rotate(225deg);") &&
     globals.includes("@keyframes ranked-live-dot-pulse") &&
     globals.includes("animation: ranked-live-dot-pulse 2s ease-in-out infinite;"),
-  "ranked starts rows must expose band ring color, center the row chevron, and pulse the live dot only through CSS",
+  "ranked starts rows must expose band ring color, use a styled CSS chevron accordion control, and pulse the live dot only through CSS",
 );
 
 console.log("starts page contract ok: completed date chips include weekday, ranked cards source-link entities, and start detail pages show neutral source orientation");

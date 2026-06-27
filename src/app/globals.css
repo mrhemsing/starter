@@ -210,6 +210,11 @@ p,
   z-index: 5;
 }
 
+.ranked-start-details > summary::marker,
+.ranked-start-details > summary::-webkit-details-marker {
+  display: none;
+}
+
 .ranked-start-details[open] > summary {
   bottom: 0;
   height: 44px;
@@ -218,15 +223,43 @@ p,
   width: 44px;
 }
 
-.ranked-start-details > summary > span {
+.ranked-start-toggle-icon {
+  align-items: center;
+  background: linear-gradient(180deg, rgb(246 196 69 / 0.14), rgb(0 0 0 / 0.34));
+  border: 1px solid color-mix(in srgb, var(--ranked-band-color, #F6C445) 54%, transparent);
+  border-radius: 9999px;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  color: #F6C445;
+  display: grid;
+  height: 30px;
+  justify-items: center;
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+  width: 30px;
 }
 
-.ranked-start-details[open] > summary > span {
-  transform: translateY(-50%) rotate(180deg);
+.ranked-start-toggle-chevron {
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  display: block;
+  height: 8px;
+  transform: translateY(-1px) rotate(45deg);
+  transition: transform 160ms ease;
+  width: 8px;
+}
+
+.ranked-start-details > summary:hover .ranked-start-toggle-icon,
+.ranked-start-details > summary:focus-visible .ranked-start-toggle-icon {
+  background: linear-gradient(180deg, rgb(246 196 69 / 0.2), rgb(0 0 0 / 0.26));
+  border-color: color-mix(in srgb, var(--ranked-band-color, #F6C445) 78%, transparent);
+  color: #FFE082;
+}
+
+.ranked-start-details[open] .ranked-start-toggle-chevron {
+  transform: translateY(2px) rotate(225deg);
 }
 
 .ranked-live-dot {

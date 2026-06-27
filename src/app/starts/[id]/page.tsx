@@ -412,8 +412,10 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         </div>
       </div>
       <details className="ranked-start-details">
-        <summary className="flex min-h-11 w-11 cursor-pointer list-none items-center justify-center rounded text-zinc-400 marker:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
-          <span aria-hidden="true" className="font-mono text-lg leading-none text-amber-300 transition group-open:rotate-180">⌄</span>
+        <summary className="cursor-pointer list-none rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [&::-webkit-details-marker]:hidden" aria-label={`Show breakdown and links for ${start.pitcher.name}`}>
+          <span aria-hidden="true" className="ranked-start-toggle-icon">
+            <span className="ranked-start-toggle-chevron" />
+          </span>
         </summary>
         <div className="grid gap-4 pb-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]" data-responsive-check="starts-score-breakdown">
           <div>
