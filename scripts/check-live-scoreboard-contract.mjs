@@ -42,7 +42,7 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v4"]') &&
+    liveService.includes('["live-scoreboard", "v5"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
     liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
@@ -53,7 +53,7 @@ assert(
     liveService.includes("const scoredRows = rows.filter(isScoredRow);") &&
     liveService.includes("const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);") &&
     liveService.includes("function isScoredRow(row: LiveScoreboardRow)") &&
-    liveService.includes("const LIVE_LEADER_MIN_INNINGS = 4;") &&
+    liveService.includes("const LIVE_LEADER_MIN_INNINGS = 3;") &&
     liveService.includes("function isLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
     liveService.includes("inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS") &&
     liveService.includes("if (aScored && !bScored) return -1;") &&
@@ -61,7 +61,7 @@ assert(
     liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
     liveService.includes("rows.sort(compareLiveRows)") &&
     liveService.includes("leader: leaderRows[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, keep warming out of scored sorting, and expose only 4.0+ IP live leaders",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
 );
 
 assert(

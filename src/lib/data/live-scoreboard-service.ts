@@ -8,7 +8,7 @@ import { normalizeScheduleStatus } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
-const LIVE_LEADER_MIN_INNINGS = 4;
+const LIVE_LEADER_MIN_INNINGS = 3;
 
 export type LiveScoreboardStatus = "live" | "final" | "warming" | "delay";
 
@@ -52,7 +52,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v4"],
+  ["live-scoreboard", "v5"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 

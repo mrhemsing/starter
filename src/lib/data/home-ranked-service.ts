@@ -9,7 +9,7 @@ import { isRankedRegularStart } from "@/lib/start-classification";
 import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";
 
 const LIVE_TOP_PERFORMER_FLOOR = 50;
-const LIVE_TOP_PERFORMER_MIN_INNINGS = 4;
+const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
 export type RankedHomeResponse = {
@@ -39,7 +39,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v8"],
+  ["home-ranked", "v9"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 

@@ -291,11 +291,11 @@ assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || !isLiveTopPerformerEligibleStart(todayLeader)) return null;") &&
     rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 4;") &&
+    rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v8"]'),
-  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 4.0 IP posts",
+    rankedService.includes('["home-ranked", "v9"]'),
+  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 
 assert(
