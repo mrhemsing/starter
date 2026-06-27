@@ -113,9 +113,6 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
   void _highlight;
   if (!start) return null;
 
-  const preferredPitcherImage = resolvePreferredPitcherImage(start);
-  if (preferredPitcherImage) return preferredPitcherImage;
-
   const actionShot = await resolveSportradarActionShot(start).catch(() => null);
   if (actionShot) return actionShot;
 
@@ -132,6 +129,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 
   const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);
   if (mlbGameContentAction) return mlbGameContentAction;
+
+  const preferredPitcherImage = resolvePreferredPitcherImage(start);
+  if (preferredPitcherImage) return preferredPitcherImage;
 
   return {
     source: "placeholder",

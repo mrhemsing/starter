@@ -296,7 +296,7 @@ assert(
     rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v11"]'),
+    rankedService.includes('["home-ranked", "v12"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 
@@ -395,8 +395,6 @@ assert(
     !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
     !imageService.includes("const BRANDON_WOODRUFF_MLB_ID = 605540;") &&
     !imageService.includes("BRANDON_WOODRUFF_PERFECT_GAME_IMAGE") &&
-    imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
-    imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
@@ -407,6 +405,12 @@ assert(
     imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
     imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
+    imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
+    imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
+    imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
+      imageService.indexOf("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
+    imageService.indexOf("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") <
+      imageService.indexOf("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
