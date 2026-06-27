@@ -357,7 +357,8 @@ assert(
 );
 
 assert(
-  imageService.includes("const NOLAN_MCLEAN_MLB_ID = 690997;") &&
+    imageService.includes("const NOLAN_MCLEAN_MLB_ID = 690997;") &&
+    imageService.includes('const PROVIDERS = ["ap", "getty", "usat", "reuters"] as const;') &&
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
@@ -369,14 +370,14 @@ assert(
     !imageService.includes("BRANDON_WOODRUFF_PERFECT_GAME_IMAGE") &&
     imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
-    imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
-    imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
-    imageService.indexOf("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") <
-      imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
-    imageService.includes("const cached = await readCachedActionShot(start.id);") &&
-    imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
     imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     imageService.includes("if (actionShot) return actionShot;") &&
+    imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
+    imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
+    imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
+      imageService.indexOf("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
+    imageService.includes("const cached = await readCachedActionShot(start.id);") &&
+    imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
     imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&

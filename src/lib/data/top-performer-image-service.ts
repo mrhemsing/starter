@@ -9,7 +9,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MLB_CONTENT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const SPORTRADAR_REVALIDATE_SECONDS = 24 * 60 * 60;
 const MLB_CONTENT_REVALIDATE_SECONDS = 10 * 60;
-const PROVIDERS = ["usat", "getty", "ap", "reuters"] as const;
+const PROVIDERS = ["ap", "getty", "usat", "reuters"] as const;
 const PLACEHOLDER_IMAGE_URL = "/images/top-performer-placeholder.jpg";
 const NOLAN_MCLEAN_MLB_ID = 690997;
 const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";
@@ -113,6 +113,9 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
   const preferredPitcherImage = resolvePreferredPitcherImage(start);
   if (preferredPitcherImage) return preferredPitcherImage;
 
+  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
+  if (actionShot) return actionShot;
+
   const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);
   if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now()) {
     return {
@@ -123,9 +126,6 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
       playUrl: cachedMlbGameContentAction.playUrl,
     };
   }
-
-  const actionShot = await resolveSportradarActionShot(start).catch(() => null);
-  if (actionShot) return actionShot;
 
   const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);
   if (mlbGameContentAction) return mlbGameContentAction;
