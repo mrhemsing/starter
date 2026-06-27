@@ -48,7 +48,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v10"],
+  ["home-ranked", "v11"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
 );
 

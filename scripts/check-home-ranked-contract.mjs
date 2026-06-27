@@ -296,7 +296,7 @@ assert(
     rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v10"]'),
+    rankedService.includes('["home-ranked", "v11"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 
@@ -389,6 +389,8 @@ assert(
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
     imageService.includes('const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";') &&
     imageService.includes('const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";') &&
+    imageService.includes("const JAKE_BENNETT_MLB_ID = 687562;") &&
+    imageService.includes("const JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE =") &&
     !imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
     !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
     !imageService.includes("const BRANDON_WOODRUFF_MLB_ID = 605540;") &&
@@ -451,9 +453,13 @@ assert(
     imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
     imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
     imageService.includes("if (start.id === PAYTON_TOLLE_YANKEES_START_ID)") &&
+    imageService.includes("if (start.pitcher.mlbId === JAKE_BENNETT_MLB_ID)") &&
     imageService.includes("imageUrl: PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE,") &&
     imageService.includes('attribution: "CREDIT: Mary Schwalm/AP Photo",') &&
     imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
+    imageService.includes("imageUrl: JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE,") &&
+    imageService.includes('alt: "Jake Bennett delivers a pitch for the Red Sox",') &&
+    imageService.includes('playUrl: "https://www.mlb.com/redsox/video/jake-bennett-fans-five-against-blue-jays",') &&
     imageService.includes('source: "action",') &&
     imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
     imageService.includes("imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,") &&

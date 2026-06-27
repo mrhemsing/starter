@@ -18,6 +18,9 @@ const CAM_SCHLITTLER_REDS_ACTION_IMAGE =
   "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_0,w_3227,h_1815/c_fill,w_1440,ar_16:9,f_auto,q_auto,g_auto/images%2FImagnImages%2Fmmsport%2Finside_the_reds%2F01kvhb1zebrbrmepeemw.jpg";
 const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";
 const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";
+const JAKE_BENNETT_MLB_ID = 687562;
+const JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE =
+  "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/pem1abrn3e0vkdnje4mc.jpg";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -163,6 +166,17 @@ function resolvePreferredPitcherImage(start: StartSummary): TopPerformerImage | 
       alt: "Cam Schlittler delivers a pitch against Cincinnati",
       attribution: "CREDIT: Vincent Carchietta-Imagn Images",
       objectPosition: "48% 50%",
+    };
+  }
+
+  if (start.pitcher.mlbId === JAKE_BENNETT_MLB_ID) {
+    return {
+      source: "action",
+      imageUrl: JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE,
+      alt: "Jake Bennett delivers a pitch for the Red Sox",
+      attribution: "CREDIT: Getty Images",
+      objectPosition: "50% 45%",
+      playUrl: "https://www.mlb.com/redsox/video/jake-bennett-fans-five-against-blue-jays",
     };
   }
 
