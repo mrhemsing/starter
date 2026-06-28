@@ -14,6 +14,7 @@ const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", 
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
 const scrollReset = await readFile("src/components/heat-check-scroll-reset.tsx", "utf8");
+const heatPitcherProfileLink = await readFile("src/components/heat-pitcher-profile-link.tsx", "utf8");
 const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
@@ -23,6 +24,20 @@ const globals = await readFile("src/app/globals.css", "utf8");
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
   "/heat-check must render the canonical Heat Check page implementation",
+);
+
+assert(
+  formPage.includes('import { HeatPitcherProfileLink } from "@/components/heat-pitcher-profile-link";') &&
+    formPage.includes("<HeatPitcherProfileLink") &&
+    formPage.includes("const profileHref = pitcherHref(pitcher, sourceParams(\"heat\", { window }));") &&
+    heatPitcherProfileLink.includes('"use client";') &&
+    heatPitcherProfileLink.includes("router.prefetch(href);") &&
+    heatPitcherProfileLink.includes("event.preventDefault();") &&
+    heatPitcherProfileLink.includes("router.push(href);") &&
+    heatPitcherProfileLink.includes('data-responsive-check="heat-pitcher-profile-pending"') &&
+    heatPitcherProfileLink.includes("Loading pitcher profile") &&
+    heatPitcherProfileLink.includes("Fetching data..."),
+  "Heat Check pitcher profile links must prefetch and show immediate loading feedback during slow profile navigation",
 );
 
 assert(

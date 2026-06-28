@@ -11,6 +11,7 @@ import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
 import { HeatCheckScrollReset } from "@/components/heat-check-scroll-reset";
+import { HeatPitcherProfileLink } from "@/components/heat-pitcher-profile-link";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
@@ -429,35 +430,36 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
   const accent = isRiser ? "#FF7A3D" : "#8FCBFF";
   const marker = isRiser ? "↑" : "↓";
   const thermalBand = pitcher.windowCount >= window ? pitcher.tier : null;
+  const profileHref = pitcherHref(pitcher, sourceParams("heat", { window }));
 
   return (
     <article className="relative overflow-hidden bg-[#101014] p-4 sm:p-5" data-form-hero-card data-momentum-role={role}>
       <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
       <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-start gap-x-2 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center">
-        <Link
-          href={pitcherHref(pitcher, sourceParams("heat", { window }))}
+        <HeatPitcherProfileLink
+          href={profileHref}
           className="relative col-start-1 row-start-1 block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:hidden"
-          aria-label={`Open ${pitcher.name} form page`}
+          ariaLabel={`Open ${pitcher.name} form page`}
         >
           <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative />
-        </Link>
-        <Link
-          href={pitcherHref(pitcher, sourceParams("heat", { window }))}
+        </HeatPitcherProfileLink>
+        <HeatPitcherProfileLink
+          href={profileHref}
           className="relative hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:block"
-          aria-label={`Open ${pitcher.name} form page`}
+          ariaLabel={`Open ${pitcher.name} form page`}
         >
           <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="xl" band={thermalBand} sampleSufficient={pitcher.windowCount >= window} loading="eager" decorative className="ml-1" />
-        </Link>
+        </HeatPitcherProfileLink>
         <div className="col-start-2 row-start-1 min-w-0 sm:col-start-auto sm:row-start-auto">
           <div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
             <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
           </div>
-          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="mt-2 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mt-3">
+          <HeatPitcherProfileLink href={profileHref} className="mt-2 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mt-3">
             <h2 className="truncate font-serif text-xl font-bold leading-none text-zinc-50 sm:text-3xl">{pitcher.name}</h2>
             <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
             <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
-          </Link>
+          </HeatPitcherProfileLink>
           <div className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1">
             <p className="font-mono text-[34px] font-black leading-none tabular-nums sm:text-5xl" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
             <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400 sm:pb-1 sm:text-xs sm:tracking-[0.14em]">
@@ -550,6 +552,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
     : "Last start unavailable";
   const fullWindow = pitcher.windowCount >= window;
   const thermalBand = fullWindow ? pitcher.tier : null;
+  const profileHref = pitcherHref(pitcher, sourceParams("heat", { window }));
 
   return (
     <article
@@ -563,10 +566,10 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
       </div>
-      <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${pitcher.name} form page`}>
+      <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
-      </Link>
-      <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+      </HeatPitcherProfileLink>
+      <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
         <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
           <MobileStackedPitcherName name={pitcher.name} />
         </h2>
@@ -582,7 +585,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           <CrossoverPill pitcher={pitcher} />
           <FormDriverChips chips={pitcher.driverChips} compact />
         </div>
-      </Link>
+      </HeatPitcherProfileLink>
       <div className="col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:grid sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-3">
         <div className="hidden min-w-0 sm:block">
           <FormSparkline
@@ -599,11 +602,11 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         </div>
         <div className="flex items-start justify-end gap-2">
           <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
-          <Link href={pitcherHref(pitcher, sourceParams("heat", { window }))} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`${pitcher.name} Form ${Math.round(pitcher.rgs)}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
+          <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`${pitcher.name} Form ${Math.round(pitcher.rgs)}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
             <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
             {fullWindow ? <FormDeltaLabel summary={pitcher} /> : null}
-          </Link>
+          </HeatPitcherProfileLink>
         </div>
       </div>
       <div className="col-span-full row-start-2 min-w-0 sm:hidden">
