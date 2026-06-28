@@ -246,7 +246,9 @@ assert(
 assert(
     pitcherLoadingPage.includes("export default function PitcherProfileLoading") &&
     pitcherLoadingPage.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
+    pitcherLoadingPage.includes('import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";') &&
     pitchersLoadingPage.includes('export { default } from "./[id]/loading";') &&
+    pitcherLoadingPage.includes("<PitcherProfileScrollReset />") &&
     pitcherLoadingPage.includes('responsiveCheck="pitcher-profile-loading"') &&
     pitcherLoadingPage.includes('activeLabel="Heat Check"') &&
     pitcherLoadingPage.includes("Loading pitcher profile") &&

@@ -1,8 +1,10 @@
 import { RouteLoadingShell } from "@/components/route-loading-shell";
+import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";
 
 export default function PitcherProfileLoading() {
   return (
     <RouteLoadingShell activeLabel="Heat Check" label="Loading pitcher profile" responsiveCheck="pitcher-profile-loading">
+      <PitcherProfileScrollReset />
       <section className="mt-6 border-b border-white/10 pb-8" aria-label="Loading pitcher profile">
         <div className="flex max-w-5xl items-start gap-4 sm:gap-6">
           <div className="h-[112px] w-[75px] shrink-0 animate-pulse rounded bg-white/10 sm:h-[132px] sm:w-[88px] lg:h-[148px] lg:w-[99px]" />
