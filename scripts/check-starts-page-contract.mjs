@@ -155,6 +155,7 @@ assert(
     startsPage.includes('data-responsive-check="ranked-starts-board-heading"') &&
     startsPage.includes("formatBoardEyebrowDate(date)") &&
     startsPage.includes(">Ranked Board</h2>") &&
+    startsPage.indexOf(">Ranked Board</h2>") < startsPage.indexOf("{formatBoardEyebrowDate(date)}") &&
     startsPage.includes("Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant") &&
     !startsPage.includes(">Previous day</Link>") &&
     !startsPage.includes(">Next day</Link>") &&
