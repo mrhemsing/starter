@@ -358,6 +358,15 @@ assert(
 );
 
 assert(
+  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v2";') &&
+    formService.includes("const [availabilityStatuses, nextStarts] = await Promise.all([") &&
+    formService.includes("getNextStartMap(summaries.map((summary) => summary.pitcherId)),") &&
+    formService.includes("const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);") &&
+    formService.includes("pitchers: pitchersWithNextStarts,"),
+  "Heat Check full leaderboard payload must attach nextStart for every rendered row, not only the homepage rail",
+);
+
+assert(
   formPage.includes("function FormDeltaLabel") &&
     formPage.includes('const label = steady ? "steady" : `${marker} ${formatSignedDelta(summary.deltaForm)}`') &&
     formPage.includes("text-cyan-300") &&

@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-level-bands-v1";
+const FORM_CACHE_VERSION = "form-level-bands-v2";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -134,10 +134,14 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const summaries = buildPitcherBuckets(starts)
     .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext))
     .sort(compareRollingFormLevelDesc);
-  const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true });
+  const [availabilityStatuses, nextStarts] = await Promise.all([
+    fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true }),
+    getNextStartMap(summaries.map((summary) => summary.pitcherId)),
+  ]);
   const summariesWithAvailability = attachAvailability(summaries, availabilityStatuses);
   const qualifiedPitchers = summariesWithAvailability.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
   const pitchers = options.qualifiedOnly === false ? summariesWithAvailability : qualifiedPitchers;
+  const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -146,11 +150,11 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
     stale: startSet.stale,
     window,
     leagueMeanGS: round1(leagueMeanGS),
-    count: pitchers.length,
+    count: pitchersWithNextStarts.length,
     qualifiedCount: qualifiedPitchers.length,
     heatingCount: qualifiedPitchers.filter((summary) => summary.trend === "heating").length,
     coolingCount: qualifiedPitchers.filter((summary) => summary.trend === "cooling").length,
-    pitchers,
+    pitchers: pitchersWithNextStarts,
   };
 }
 
