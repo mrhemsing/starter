@@ -230,7 +230,6 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             latestDate={archiveNavigation.latestDate}
             previousDate={archiveNavigation.previousDate}
             nextDate={archiveNavigation.nextDate}
-            availableDates={archiveNavigation.availableDates}
             isLatest={archiveNavigation.isLatest}
           />
           {starts.length > 0 ? (

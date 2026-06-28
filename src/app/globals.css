@@ -286,12 +286,6 @@ p,
   transform: translateY(2px) rotate(225deg);
 }
 
-.ranked-start-date-picker-summary {
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 .ranked-live-dot {
   box-shadow: 0 0 0 0 rgb(255 90 31 / 0.32);
 }

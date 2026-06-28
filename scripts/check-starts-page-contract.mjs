@@ -143,7 +143,6 @@ assert(
     startsPage.includes("latestDate={archiveNavigation.latestDate}") &&
     startsPage.includes("previousDate={archiveNavigation.previousDate}") &&
     startsPage.includes("nextDate={archiveNavigation.nextDate}") &&
-    startsPage.includes("availableDates={archiveNavigation.availableDates}") &&
     startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />') &&
     siteHeader.includes("hideUpcoming = false") &&
     siteHeader.includes("hideUpcoming={hideUpcoming}") &&
@@ -175,12 +174,9 @@ assert(
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
     slateDateNav.includes('data-latest-state="latest"') &&
     slateDateNav.includes(">Jump to latest</RankedStartsArchiveLink>") &&
-    slateDateNav.includes('className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}') &&
-    slateDateNav.includes(">Pick a date</summary>") &&
-    globals.includes(".ranked-start-date-picker-summary") &&
-    globals.includes("touch-action: manipulation;") &&
-    globals.includes("user-select: none;") &&
-    globals.includes("-webkit-user-select: none;") &&
+    !slateDateNav.includes("ranked-start-date-picker") &&
+    !slateDateNav.includes("Pick a date") &&
+    !globals.includes(".ranked-start-date-picker-summary") &&
     slateDateNav.includes('className={slateRangeToggleClass(option.active)}') &&
     slateDateNav.includes('"border-amber-300 bg-amber-300 text-zinc-950"'),
   "ranked starts header must use archive-only latest slate navigation, promote the date eyebrow, and remove relative Upcoming-style range pills",

@@ -68,17 +68,14 @@ export function RankedStartsArchiveNav({
   latestDate,
   previousDate,
   nextDate,
-  availableDates,
   isLatest,
 }: {
   activeDate: string;
   latestDate: string;
   previousDate: string | null;
   nextDate: string | null;
-  availableDates: string[];
   isLatest: boolean;
 }) {
-  const datesDescending = [...availableDates].sort().reverse();
   const previousHref = previousDate ? rankedStartsPath(previousDate) : null;
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
   const latestHref = rankedStartsPath(latestDate);
@@ -112,21 +109,6 @@ export function RankedStartsArchiveNav({
       ) : (
         <RankedStartsArchiveLink className={slateRangeToggleClass(false)} href={latestHref} dataLatestState="jump">Jump to latest</RankedStartsArchiveLink>
       )}
-      <details className="relative" data-responsive-check="ranked-starts-date-picker">
-        <summary className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}>Pick a date</summary>
-        <div className="absolute left-0 z-30 mt-2 grid max-h-80 min-w-52 gap-1 overflow-auto rounded border border-white/10 bg-[#101014] p-2 shadow-2xl">
-          {datesDescending.map((date) => (
-            <Link
-              key={date}
-              className={`rounded px-3 py-2 text-left ${date === activeDate ? "bg-amber-300 text-zinc-950" : "text-zinc-300 hover:bg-white/10 hover:text-amber-300"}`}
-              href={rankedStartsPath(date)}
-              aria-current={date === activeDate ? "page" : undefined}
-            >
-              {formatRankedPickerDate(date)}
-            </Link>
-          ))}
-        </div>
-      </details>
     </nav>
   );
 }
@@ -139,10 +121,4 @@ function formatRankedEyebrowDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(parsed);
-}
-
-function formatRankedPickerDate(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
 }
