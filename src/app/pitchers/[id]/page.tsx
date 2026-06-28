@@ -68,6 +68,7 @@ export default async function PitcherPage({ params, searchParams }: PitcherPageP
 
   return (
     <PitcherFormPage
+      initialForm={form}
       params={Promise.resolve({ id })}
       searchParams={searchParams}
     />

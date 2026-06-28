@@ -11,6 +11,8 @@ const headshotComponent = await readFile("src/components/headshot.tsx", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
+const pitcherLoadingPage = await readFile("src/app/pitchers/[id]/loading.tsx", "utf8");
+const pitchersLoadingPage = await readFile("src/app/pitchers/loading.tsx", "utf8");
 const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
 const pitcherAvailability = await readFile("src/components/pitcher-availability.tsx", "utf8");
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
@@ -37,7 +39,7 @@ assert(
 
 assert(routes.includes("export function pitcherHref"), "routes must expose one shared pitcherHref helper");
 assert(routes.includes("export function startHref"), "routes must expose one shared startHref helper");
-assert(routes.includes('export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist";'), "routes must define supported entity source keys");
+assert(routes.includes('export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist" | "live";'), "routes must define supported entity source keys");
 assert(routes.includes("export function parseEntitySource"), "routes must parse entity source query params");
 assert(routes.includes("export function sourceParams"), "routes must expose a helper for source-aware entity links");
 assert(routes.includes("export function parsePitcherRouteParam"), "routes must resolve canonical slug routes by trailing pitcher ID");
@@ -46,7 +48,9 @@ assert(pitcherPage.includes("parsePitcherRouteParam(routeParams.id)"), "canonica
 assert(pitcherPage.includes("permanentRedirect(canonicalHref)"), "numeric or mismatched pitcher profile routes must permanently redirect");
 assert(pitcherPage.includes("queryString(preservedParams)"), "canonical profile redirects must preserve source/window query params");
 assert(pitcherPage.includes("<PitcherFormPage"), "canonical profile route must render the rich Heat Check profile");
+assert(pitcherPage.includes("initialForm={form}"), "canonical profile route must pass its canonical form payload into the rich profile to avoid a duplicate form lookup");
 assert(pitcherFormPage.includes("parsePitcherRouteParam(routeParams.id)"), "legacy /form route must resolve slug or numeric params by trailing ID");
+assert(pitcherFormPage.includes("initialForm?: FormPitcherResponse | null;") && pitcherFormPage.includes("const form = initialForm ?? await getPitcherForm(id, { window });"), "rich pitcher form page must reuse an initial form payload when the canonical profile route already loaded it");
 assert(watchlistPage.includes('sourceParams("watchlist")'), "watchlist links must carry watchlist source context");
 assert(mustWatch.includes("import { pitcherHref, sourceParams } from") && mustWatch.includes('sourceParams("upcoming")'), "Must-Watch starter links must use shared canonical pitcherHref helper with upcoming source context");
 assert(formService.includes("const recentLiveFormStartsCache = new Map"), "recent live form starts must use a short in-process cache");
@@ -208,10 +212,32 @@ assert(
 
 assert(
   pitcherFormPage.includes("getRecentStartDepthWithHighlights") &&
-    pitcherFormPage.includes("Promise.all([") &&
-    pitcherFormPage.includes("getProfileNextStart(summary.pitcherId, summary.rgs)") &&
-    pitcherFormPage.includes("getWatchlistPitcherIds(accountId)"),
-  "pitcher profile must overlap recent-start depth, next-start lookup, and watchlist reads instead of running them sequentially",
+    pitcherFormPage.includes("const pitcherPromise = getPitcherApiResponse(id);") &&
+    pitcherFormPage.includes("const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);") &&
+    pitcherFormPage.includes("const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);") &&
+    pitcherFormPage.includes("const followedIdsPromise = getWatchlistPitcherIds(accountId);"),
+  "pitcher profile must start slower profile, recent-start, next-start, and watchlist reads without serializing them",
+);
+
+assert(
+  pitcherFormPage.includes('import { Suspense } from "react";') &&
+    pitcherFormPage.includes("<ProfileNextStartPill nextStartPromise={nextStartPromise}") &&
+    pitcherFormPage.includes("<PitcherScoutingSection pitcherPromise={pitcherPromise}") &&
+    pitcherFormPage.includes("<PitcherGameLogSection") &&
+    pitcherFormPage.includes("<NextStartPillSkeleton />") &&
+    pitcherFormPage.includes("<PitcherScoutingSkeleton />") &&
+    pitcherFormPage.includes("<PitcherGameLogSkeleton />"),
+  "pitcher profile must stream slower below-the-fold sections behind Suspense fallbacks so the hero can appear first",
+);
+
+assert(
+  pitcherLoadingPage.includes("export default function PitcherProfileLoading") &&
+    pitchersLoadingPage.includes('export { default } from "./[id]/loading";') &&
+    pitcherLoadingPage.includes('data-responsive-check="pitcher-profile-loading"') &&
+    pitcherLoadingPage.includes('aria-busy="true"') &&
+    pitcherLoadingPage.includes("Loading pitcher profile") &&
+    pitcherLoadingPage.includes("Heat Check"),
+  "canonical pitcher profile route must provide an immediate loading shell during in-app navigation",
 );
 
 assert(

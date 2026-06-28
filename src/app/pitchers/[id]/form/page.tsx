@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
@@ -20,12 +21,13 @@ import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
     id: string;
   }>;
+  initialForm?: FormPitcherResponse | null;
   searchParams?: Promise<{
     from?: string;
     window?: string;
@@ -69,7 +71,7 @@ export async function generateMetadata({ params, searchParams }: PitcherFormPage
   };
 }
 
-export default async function PitcherFormPage({ params, searchParams }: PitcherFormPageProps) {
+export default async function PitcherFormPage({ params, initialForm, searchParams }: PitcherFormPageProps) {
   const routeParams = await params;
   const id = parsePitcherRouteParam(routeParams.id);
   const query = await searchParams;
@@ -80,21 +82,16 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
   const sourceInfo = entitySources[source];
   const sourceHref = entitySourceHref(source, { rankedDate, upcomingDate: today });
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
-  const [form, pitcher] = await Promise.all([
-    getPitcherForm(id, { window }),
-    getPitcherApiResponse(id),
-  ]);
+  const followedIdsPromise = getWatchlistPitcherIds(accountId);
+  const form = initialForm ?? await getPitcherForm(id, { window });
   if (!form) notFound();
 
   const { summary, series } = form;
   const recentStartIds = series.slice(-3).reverse().map((start) => start.id);
-  const [recentDepthBundle, nextStart, followedIds] = await Promise.all([
-    getRecentStartDepthWithHighlights(recentStartIds),
-    getProfileNextStart(summary.pitcherId, summary.rgs),
-    getWatchlistPitcherIds(accountId),
-  ]);
-  const { recentDepth, recentHighlights } = recentDepthBundle;
-  const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
+  const pitcherPromise = getPitcherApiResponse(id);
+  const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);
+  const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);
+  const followedIds = await followedIdsPromise;
   const jsonLd = jsonLdForPitcherForm(form);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
@@ -148,16 +145,9 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
                 <TrendChip summary={summary} />
                 <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
               </div>
-              {nextStart ? (
-                <Link href={startHref(nextStart.startId, sourceParams(source))} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
-                  NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}
-                  {venueSplitContext ? <span className={venueSplitContext.toneClass}> · {venueSplitContext.label}</span> : null}
-                </Link>
-              ) : (
-                <p className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-                  Next start pending
-                </p>
-              )}
+              <Suspense fallback={<NextStartPillSkeleton />}>
+                <ProfileNextStartPill nextStartPromise={nextStartPromise} source={source} venueSplit={summary.venueSplit ?? null} />
+              </Suspense>
             </div>
           </div>
         </section>
@@ -178,45 +168,159 @@ export default async function PitcherFormPage({ params, searchParams }: PitcherF
           )}
         </section>
 
-        {pitcher ? (
-          <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
-            <ArsenalTable pitcher={pitcher} />
-            <div className="min-w-0 space-y-5">
-              <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
-              <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
-            </div>
-          </section>
-        ) : null}
+        <Suspense fallback={<PitcherScoutingSkeleton />}>
+          <PitcherScoutingSection pitcherPromise={pitcherPromise} summary={summary} />
+        </Suspense>
 
-        <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0">
-            <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
-            <div className="overflow-hidden rounded border border-white/10">
-              {[...series].reverse().map((start) => (
-                <GameLogRow
-                  key={start.id}
-                  start={start}
-                  depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
-                  highlight={recentHighlights.get(start.id) ?? null}
-                  pitcherName={summary.name}
-                  source={source}
-                />
-              ))}
-            </div>
-          </div>
-          <aside className="min-w-0 space-y-3">
-            {nextStart ? <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} /> : null}
-            <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
-            <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
-            <div className="rounded border border-white/10 bg-[#101014] p-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Current streak</p>
-              <p className="mt-2 font-serif text-3xl text-zinc-50">{streak}</p>
-              <p className="mt-1 font-mono text-xs text-zinc-500">straight starts of GS+ 55+</p>
-            </div>
-          </aside>
-        </section>
+        <Suspense fallback={<PitcherGameLogSkeleton />}>
+          <PitcherGameLogSection
+            series={series}
+            recentDepthBundlePromise={recentDepthBundlePromise}
+            nextStartPromise={nextStartPromise}
+            summary={summary}
+            source={source}
+            best={best}
+            worst={worst}
+            streak={streak}
+          />
+        </Suspense>
       </div>
     </main>
+  );
+}
+
+async function ProfileNextStartPill({
+  nextStartPromise,
+  source,
+  venueSplit,
+}: {
+  nextStartPromise: Promise<ProfileNextStart | null>;
+  source: EntitySource;
+  venueSplit: FormVenueSplitLabel | null;
+}) {
+  const nextStart = await nextStartPromise;
+  const venueSplitContext = nextStart && venueSplit ? venueSplitContextForNextStart(venueSplit, nextStart.side) : null;
+
+  if (!nextStart) {
+    return (
+      <p className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+        Next start pending
+      </p>
+    );
+  }
+
+  return (
+    <Link href={startHref(nextStart.startId, sourceParams(source))} className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-200">
+      NEXT: {nextStart.label} · Proj GS+ {nextStart.projectedGsPlus}
+      {venueSplitContext ? <span className={venueSplitContext.toneClass}> · {venueSplitContext.label}</span> : null}
+    </Link>
+  );
+}
+
+function NextStartPillSkeleton() {
+  return (
+    <p className="mt-5 inline-flex h-9 w-56 max-w-full animate-pulse rounded border border-white/10 bg-white/[0.03]" aria-label="Loading next start" />
+  );
+}
+
+async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherPromise: Promise<PitcherApiResponse | null>; summary: FormSummary }) {
+  const pitcher = await pitcherPromise;
+  if (!pitcher) return null;
+
+  return (
+    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
+      <ArsenalTable pitcher={pitcher} />
+      <div className="min-w-0 space-y-5">
+        <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
+        <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
+      </div>
+    </section>
+  );
+}
+
+function PitcherScoutingSkeleton() {
+  return (
+    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label="Loading pitcher scouting">
+      <div className="min-h-56 animate-pulse rounded border border-white/10 bg-[#101014]" />
+      <div className="min-w-0 space-y-5">
+        <div className="min-h-48 animate-pulse rounded border border-white/10 bg-[#101014]" />
+        <div className="min-h-48 animate-pulse rounded border border-white/10 bg-[#101014]" />
+      </div>
+    </section>
+  );
+}
+
+async function PitcherGameLogSection({
+  series,
+  recentDepthBundlePromise,
+  nextStartPromise,
+  summary,
+  source,
+  best,
+  worst,
+  streak,
+}: {
+  series: FormStartPoint[];
+  recentDepthBundlePromise: Promise<Awaited<ReturnType<typeof getRecentStartDepthWithHighlights>>>;
+  nextStartPromise: Promise<ProfileNextStart | null>;
+  summary: FormSummary;
+  source: EntitySource;
+  best: FormStartPoint;
+  worst: FormStartPoint;
+  streak: number;
+}) {
+  const [recentDepthBundle, nextStart] = await Promise.all([recentDepthBundlePromise, nextStartPromise]);
+  const { recentDepth, recentHighlights } = recentDepthBundle;
+  const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
+
+  return (
+    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="min-w-0">
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
+        <div className="overflow-hidden rounded border border-white/10">
+          {[...series].reverse().map((start) => (
+            <GameLogRow
+              key={start.id}
+              start={start}
+              depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
+              highlight={recentHighlights.get(start.id) ?? null}
+              pitcherName={summary.name}
+              source={source}
+            />
+          ))}
+        </div>
+      </div>
+      <aside className="min-w-0 space-y-3">
+        {nextStart ? <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} /> : null}
+        <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
+        <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
+        <div className="rounded border border-white/10 bg-[#101014] p-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Current streak</p>
+          <p className="mt-2 font-serif text-3xl text-zinc-50">{streak}</p>
+          <p className="mt-1 font-mono text-xs text-zinc-500">straight starts of GS+ 55+</p>
+        </div>
+      </aside>
+    </section>
+  );
+}
+
+function PitcherGameLogSkeleton() {
+  return (
+    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label="Loading pitcher game log">
+      <div className="min-w-0">
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
+        <div className="overflow-hidden rounded border border-white/10">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="h-20 animate-pulse border-b border-white/10 bg-[#101014] last:border-b-0" />
+          ))}
+        </div>
+      </div>
+      <aside className="min-w-0 space-y-3">
+        <div className="h-28 animate-pulse rounded border border-white/10 bg-[#101014]" />
+        <div className="h-24 animate-pulse rounded border border-white/10 bg-[#101014]" />
+        <div className="h-24 animate-pulse rounded border border-white/10 bg-[#101014]" />
+      </aside>
+    </section>
   );
 }
 
