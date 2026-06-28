@@ -189,9 +189,12 @@ assert(
     rankedStartsArchiveLink.includes("router.push(href);") &&
     rankedStartsArchiveLink.includes('event.key === "ArrowLeft" ? previousHref : event.key === "ArrowRight" ? nextHref : null') &&
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
-    slateDateNav.includes('data-latest-state="latest"') &&
+    !slateDateNav.includes('data-latest-state="latest"') &&
+    !slateDateNav.includes(">Latest</span>") &&
     !slateDateNav.includes("Jump to latest") &&
     !slateDateNav.includes('dataLatestState="jump"') &&
+    !rankedStartsArchiveLink.includes("dataLatestState") &&
+    !rankedStartsArchiveLink.includes("data-latest-state") &&
     !slateDateNav.includes("ranked-start-date-picker") &&
     !slateDateNav.includes("Pick a date") &&
     !slateDateNav.includes('className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]"') &&

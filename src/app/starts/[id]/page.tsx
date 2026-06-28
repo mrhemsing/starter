@@ -227,7 +227,6 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   activeDate={archiveNavigation.activeDate}
                   previousDate={archiveNavigation.previousDate}
                   nextDate={archiveNavigation.nextDate}
-                  isLatest={archiveNavigation.isLatest}
                 />
                 <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
               </div>

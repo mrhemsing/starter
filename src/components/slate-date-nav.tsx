@@ -67,12 +67,10 @@ export function RankedStartsArchiveNav({
   activeDate,
   previousDate,
   nextDate,
-  isLatest,
 }: {
   activeDate: string;
   previousDate: string | null;
   nextDate: string | null;
-  isLatest: boolean;
 }) {
   const previousHref = previousDate ? rankedStartsPath(previousDate) : null;
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
@@ -101,9 +99,6 @@ export function RankedStartsArchiveNav({
           </span>
         )}
       </span>
-      {isLatest ? (
-        <span className={slateRangeToggleClass(true)} data-latest-state="latest">Latest</span>
-      ) : null}
     </nav>
   );
 }

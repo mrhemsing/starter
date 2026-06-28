@@ -10,7 +10,6 @@ type RankedStartsArchiveLinkProps = {
   className: string;
   ariaLabel?: string;
   children: React.ReactNode;
-  dataLatestState?: "jump";
   dataArchiveStep?: "previous" | "next";
 };
 
@@ -19,7 +18,6 @@ export function RankedStartsArchiveLink({
   className,
   ariaLabel,
   children,
-  dataLatestState,
   dataArchiveStep,
 }: RankedStartsArchiveLinkProps) {
   const router = useRouter();
@@ -47,7 +45,6 @@ export function RankedStartsArchiveLink({
       prefetch
       className={`${className}${pending ? " opacity-80" : ""}`}
       aria-label={ariaLabel}
-      data-latest-state={dataLatestState}
       data-archive-step={dataArchiveStep}
       data-nav-pending={pending ? "true" : undefined}
       onPointerEnter={warmRoute}
