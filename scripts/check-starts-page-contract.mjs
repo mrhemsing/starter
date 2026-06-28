@@ -17,6 +17,7 @@ const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
+const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
@@ -162,9 +163,18 @@ assert(
     slateDateNav.includes("export function SlateRangeToggle") &&
     slateDateNav.includes("export function UpcomingSlateRangeToggle") &&
     slateDateNav.includes("export function RankedStartsArchiveNav") &&
+    slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";') &&
+    slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
+    slateDateNav.includes('dataArchiveStep="previous"') &&
+    slateDateNav.includes('dataArchiveStep="next"') &&
+    rankedStartsArchiveLink.includes('"use client";') &&
+    rankedStartsArchiveLink.includes("router.prefetch(href);") &&
+    rankedStartsArchiveLink.includes("event.preventDefault();") &&
+    rankedStartsArchiveLink.includes("router.push(href);") &&
+    rankedStartsArchiveLink.includes('event.key === "ArrowLeft" ? previousHref : event.key === "ArrowRight" ? nextHref : null') &&
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
     slateDateNav.includes('data-latest-state="latest"') &&
-    slateDateNav.includes(">Jump to latest</Link>") &&
+    slateDateNav.includes(">Jump to latest</RankedStartsArchiveLink>") &&
     slateDateNav.includes('className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}') &&
     slateDateNav.includes(">Pick a date</summary>") &&
     globals.includes(".ranked-start-date-picker-summary") &&

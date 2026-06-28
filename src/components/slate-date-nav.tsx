@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";
 import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 
 type SlateRangeOption = {
@@ -78,24 +79,28 @@ export function RankedStartsArchiveNav({
   isLatest: boolean;
 }) {
   const datesDescending = [...availableDates].sort().reverse();
+  const previousHref = previousDate ? rankedStartsPath(previousDate) : null;
+  const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
+  const latestHref = rankedStartsPath(latestDate);
 
   return (
     <nav className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
+      <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">{formatRankedEyebrowDate(activeDate)}</span>
       <span className="inline-flex overflow-hidden rounded border border-white/10" aria-label="Step ranked starts slates">
         {previousDate ? (
-          <Link className="inline-flex min-h-11 min-w-11 items-center justify-center text-zinc-300 transition hover:bg-white/10 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" href={rankedStartsPath(previousDate)} aria-label={`Previous completed slate, ${formatRankedEyebrowDate(previousDate)}`}>
+          <RankedStartsArchiveLink className="inline-flex min-h-11 min-w-11 items-center justify-center text-zinc-300 transition hover:bg-white/10 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" href={previousHref ?? rankedStartsPath(previousDate)} ariaLabel={`Previous completed slate, ${formatRankedEyebrowDate(previousDate)}`} dataArchiveStep="previous">
             <span aria-hidden="true">&lt;</span>
-          </Link>
+          </RankedStartsArchiveLink>
         ) : (
           <span className="inline-flex min-h-11 min-w-11 items-center justify-center text-zinc-700" aria-disabled="true" aria-label="No previous completed slate">
             &lt;
           </span>
         )}
         {nextDate ? (
-          <Link className="inline-flex min-h-11 min-w-11 items-center justify-center border-l border-white/10 text-zinc-300 transition hover:bg-white/10 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" href={rankedStartsPath(nextDate)} aria-label={`Next completed slate, ${formatRankedEyebrowDate(nextDate)}`}>
+          <RankedStartsArchiveLink className="inline-flex min-h-11 min-w-11 items-center justify-center border-l border-white/10 text-zinc-300 transition hover:bg-white/10 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next completed slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
             <span aria-hidden="true">&gt;</span>
-          </Link>
+          </RankedStartsArchiveLink>
         ) : (
           <span className="inline-flex min-h-11 min-w-11 items-center justify-center border-l border-white/10 text-zinc-700" aria-disabled="true" aria-label="No newer completed slate">
             &gt;
@@ -105,7 +110,7 @@ export function RankedStartsArchiveNav({
       {isLatest ? (
         <span className={slateRangeToggleClass(true)} data-latest-state="latest">Latest</span>
       ) : (
-        <Link className={slateRangeToggleClass(false)} href={rankedStartsPath(latestDate)} data-latest-state="jump">Jump to latest</Link>
+        <RankedStartsArchiveLink className={slateRangeToggleClass(false)} href={latestHref} dataLatestState="jump">Jump to latest</RankedStartsArchiveLink>
       )}
       <details className="relative" data-responsive-check="ranked-starts-date-picker">
         <summary className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}>Pick a date</summary>
