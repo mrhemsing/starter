@@ -30,7 +30,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v2"]') &&
+    bestStartsService.includes('["home-best-starts-v3"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners for six hours with a versioned key for highlight payload changes",
 );
@@ -45,14 +45,17 @@ assert(
 assert(
   featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
+    featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
-  "featured highlights must keep quota-safe dynamic search disabled by default and manually map Cam Schlittler's 13-K MLB video",
+  "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );
 
 assert(
   packageJson.includes('"ingest:featured-highlights": "node scripts/ingest-featured-start-highlights.mjs"') &&
     highlightIngestScript.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
     highlightIngestScript.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    highlightIngestScript.includes("const DEFAULT_LOOKBACK_DAYS = 30;") &&
+    highlightIngestScript.includes("const DEFAULT_CANDIDATE_LIMIT = 16;") &&
     highlightIngestScript.includes("readStoredHighlightStartIds") &&
     highlightIngestScript.includes("searchHighlightCandidates") &&
     highlightIngestScript.includes("upsertHighlights(rows)") &&
@@ -60,13 +63,15 @@ assert(
     highlightIngestScript.includes('if (ALL_GAME_HIGHLIGHTS_TITLE_PATTERN.test(title) || NON_START_TITLE_PATTERN.test(title)) return null;') &&
     readme.includes("npm run ingest:featured-highlights") &&
     readme.includes("without page-render search"),
-  "Recent Gems must have a quota-safe background MLB YouTube ingestion path that stores validated highlight IDs in Supabase",
+  "Recent Gems must have a quota-safe 30-day background MLB YouTube ingestion path that stores validated highlight IDs in Supabase",
 );
 
 assert(
   featuredHighlightsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
     featuredHighlightsCron.includes('import { HOME_BEST_STARTS_CACHE_TAG } from "@/lib/data/home-best-starts-service";') &&
     featuredHighlightsCron.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    featuredHighlightsCron.includes("const DEFAULT_LOOKBACK_DAYS = 30;") &&
+    featuredHighlightsCron.includes("const DEFAULT_CANDIDATE_LIMIT = 16;") &&
     featuredHighlightsCron.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
     featuredHighlightsCron.includes("process.env.YOUTUBE_API_KEY") &&
     featuredHighlightsCron.includes("getArchivedSeasonStartSummaries") &&
