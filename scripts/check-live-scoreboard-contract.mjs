@@ -42,7 +42,7 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v6"]') &&
+    liveService.includes('["live-scoreboard", "v7"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
     liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
@@ -52,6 +52,9 @@ assert(
     liveService.includes('provisional: scoreLabel === "PROV",') &&
     liveService.includes("const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;") &&
     liveService.includes("inningLabel,") &&
+    liveService.includes("pitcherHref: string;") &&
+    liveService.includes('import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";') &&
+    liveService.includes('pitcherHref: pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("live"))') &&
     !liveService.includes("inningLabel: liveLine?.inningLabel ?? null") &&
     liveService.includes("const scoredRows = rows.filter(isScoredRow);") &&
     liveService.includes("const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);") &&
@@ -109,10 +112,12 @@ assert(
     liveComponent.includes('className="block text-zinc-600 sm:inline"') &&
     liveComponent.includes("function MobileStackedPitcherName") &&
     liveComponent.includes('<MobileStackedPitcherName name={row.pitcherName} />') &&
+    liveComponent.includes('href={row.pitcherHref}') &&
+    liveComponent.includes('aria-label={`Open ${row.pitcherName} pitcher page`}') &&
     liveComponent.includes("pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight") &&
     liveComponent.includes('className="block sm:inline"') &&
     !liveComponent.includes('className="mt-1 block truncate font-serif text-2xl font-bold text-zinc-50'),
-  "live scoreboard component must refresh while active, show starter headshots, and mark provisional quality bands",
+  "live scoreboard component must refresh while active, show starter headshots, link pitcher names to profiles, and mark provisional quality bands",
 );
 
 assert(

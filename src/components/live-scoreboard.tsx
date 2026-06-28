@@ -109,7 +109,7 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
   return (
     <article className={`grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
       <p className="font-serif text-2xl font-bold text-zinc-500">#{rank}</p>
-      <Link href={row.startHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} start page`}>
+      <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
         <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={liveOrFinalScore} decorative className="ml-0" />
       </Link>
       <div className="min-w-0">
@@ -119,7 +119,7 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
             {row.team} vs {row.opponent}
           </p>
         </div>
-        <Link href={row.startHref} className="pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [overflow-wrap:anywhere]">
+        <Link href={row.pitcherHref} className="pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [overflow-wrap:anywhere]">
           <MobileStackedPitcherName name={row.pitcherName} />
         </Link>
         <p className="mt-1 font-mono text-xs text-zinc-400">

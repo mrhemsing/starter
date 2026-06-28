@@ -16,6 +16,7 @@ const pitchersLoadingPage = await readFile("src/app/pitchers/loading.tsx", "utf8
 const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
 const pitcherAvailability = await readFile("src/components/pitcher-availability.tsx", "utf8");
+const pitcherProfileScrollReset = await readFile("src/components/pitcher-profile-scroll-reset.tsx", "utf8");
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
@@ -193,6 +194,17 @@ assert(
 
 assert(pitcherFormPage.includes('data-responsive-check="pitcher-form-score-summary"'), "pitcher form score block must expose a stable layout hook");
 assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
+assert(
+  pitcherFormPage.includes('import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";') &&
+    pitcherFormPage.includes("<PitcherProfileScrollReset />") &&
+    pitcherProfileScrollReset.includes('"use client";') &&
+    pitcherProfileScrollReset.includes('pathname.startsWith("/pitchers/")') &&
+    pitcherProfileScrollReset.includes("window.scrollTo(0, 0)") &&
+    pitcherProfileScrollReset.includes("document.documentElement.scrollTop = 0") &&
+    pitcherProfileScrollReset.includes("window.requestAnimationFrame") &&
+    pitcherProfileScrollReset.includes("[100, 350, 800]"),
+  "pitcher profile route must force top-of-page placement after client navigation from long boards",
+);
 assert(pitcherFormPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"'), "pitcher form shell must prevent page-level horizontal scroll on mobile");
 assert(pitcherFormPage.includes("sm:grid-cols-[minmax(0,1fr)_auto_auto]"), "pitcher form score/actions row must keep score text separate from controls");
 assert(pitcherFormPage.includes("font-bold leading-none"), "pitcher form score must use a tight line-height so it cannot collide with its label");

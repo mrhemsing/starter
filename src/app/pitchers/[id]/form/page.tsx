@@ -9,6 +9,7 @@ import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
+import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";
 import { SiteHeader } from "@/components/site-header";
 import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
@@ -100,6 +101,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+      <PitcherProfileScrollReset />
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <SiteHeader active={null} today={today} responsiveCheck="pitcher-form-site-header" />

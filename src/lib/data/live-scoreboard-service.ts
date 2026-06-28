@@ -3,7 +3,7 @@ import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stat
 import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
-import { liveDateHref, sourceParams, startHref } from "@/lib/routes";
+import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import { normalizeScheduleStatus } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
@@ -32,6 +32,7 @@ export type LiveScoreboardRow = {
   provisional: boolean;
   inningLabel: string | null;
   pitchCount: number | null;
+  pitcherHref: string;
   startHref: string;
   liveHref: string;
 };
@@ -52,7 +53,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v6"],
+  ["live-scoreboard", "v7"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
@@ -158,6 +159,7 @@ function buildLiveRow(
     provisional: scoreLabel === "PROV",
     inningLabel,
     pitchCount,
+    pitcherHref: pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("live")),
     startHref: startHref(start, sourceParams("live")),
     liveHref: liveDateHref(date),
   };
