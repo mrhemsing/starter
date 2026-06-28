@@ -156,7 +156,7 @@ function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResp
             <p className="shrink-0 font-mono text-xs uppercase leading-5 tracking-[0.2em] text-amber-300 sm:whitespace-nowrap">
               <span className="block sm:inline">Live</span>
               <span className="hidden sm:inline"> </span>
-              <span className="block sm:inline">Leaderboard</span>
+              <span className="block sm:inline">Leaders</span>
             </p>
             {entries.map((entry) => (
               <a key={entry.id} href={entry.href} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-300 transition hover:border-amber-300/30 hover:text-amber-200">
