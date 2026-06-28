@@ -31,6 +31,7 @@ const WATCH_SCORE_PRECISION = 1;
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"];
 const WATCH_COMPONENT_LABELS = ["Top arm", "Pairing", "Matchup"];
 const WATCH_COMPONENT_LAYOUTS = ["featured", "compact", "standard"];
+const WATCH_TIER_LABELS = ["Must-watch", "Worth it", "Background"];
 const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
@@ -45,6 +46,32 @@ function assert(condition, message) {
     throw new Error(message);
   }
 }
+
+const nativeFetch = globalThis.fetch;
+
+function isTransientFetchError(error) {
+  return (
+    error?.cause?.code === "ECONNRESET" ||
+    error?.code === "ECONNRESET" ||
+    error?.message === "terminated"
+  );
+}
+
+globalThis.fetch = async (...args) => {
+  let lastError;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await nativeFetch(...args);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientFetchError(error) || attempt === 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+
+  throw lastError;
+};
 
 async function reservePort() {
   const server = net.createServer();
@@ -569,7 +596,7 @@ function expectedGameWatchScore(game, weights) {
 }
 
 function expectedWatchScoreLabel(game) {
-  return `Watch score ${game.gameWatchScore.toFixed(1)}`;
+  return `Watch score ${expectedWatchScoreValue(game)}`;
 }
 
 function expectedWatchTier(score) {
@@ -597,10 +624,34 @@ function expectedStatusSortGroupLabel(status) {
   return "Fallback sort bucket";
 }
 
+function expectedWatchSortGroupValue(game) {
+  return String(game.watchSortGroup);
+}
+
+function expectedWatchSortGroupValueForStatus(status) {
+  return String(expectedStatusSortGroup(status));
+}
+
+function expectedWatchSortGroupLabelValue(game) {
+  return expectedStatusSortGroupLabel(game.status);
+}
+
+function expectedWatchSortGroupLabelValueForStatus(status) {
+  return expectedStatusSortGroupLabel(status);
+}
+
+function expectedWatchFlagNoteKeysValue(game) {
+  return watchFlagNoteKeys(game).join("+") || "clear";
+}
+
+function expectedWatchFlagNoteLabelValue(game) {
+  return watchFlagNoteDataLabel(game);
+}
+
 function expectedWatchTierLabelForRank(rank) {
-  if (rank <= 3) return "Must-watch";
-  if (rank <= 8) return "Worth it";
-  return "Background";
+  if (rank <= 3) return WATCH_TIER_LABELS[0];
+  if (rank <= 8) return WATCH_TIER_LABELS[1];
+  return WATCH_TIER_LABELS[2];
 }
 
 function expectedTrendLabel(trend) {
@@ -617,6 +668,14 @@ function expectedGameStatusLabel(status) {
 
 function expectedWatchCardSummaryAriaLabel(game) {
   return `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
+}
+
+function expectedWatchCardSummaryIdValue(game) {
+  return `watch-card-${game.gamePk}-summary`;
+}
+
+function expectedWatchCardSummaryAriaLabelValue(game) {
+  return expectedWatchCardSummaryAriaLabel(game);
 }
 
 function expectedWatchCardAriaLabel(game) {
@@ -708,6 +767,62 @@ function expectedGameSparkReadyPair(game) {
 
 function expectedGameSparkReadyCount(game) {
   return String(game.starters.filter((starter) => expectedStarterSparkReady(starter) === "true").length);
+}
+
+function expectedWatchScoreValue(game) {
+  return game.gameWatchScore.toFixed(WATCH_SCORE_PRECISION);
+}
+
+function expectedWatchRankValue(game, index) {
+  return game.status === "ppd" && index === 0 ? "-" : String(index + 1);
+}
+
+function expectedWatchRankLabelValue(rankLabel) {
+  return rankLabel;
+}
+
+function expectedWatchCardKind(index) {
+  return index === 0 ? "headliner" : "row";
+}
+
+function expectedWatchComponentCountValue() {
+  return String(WATCH_COMPONENT_KEYS.length);
+}
+
+function expectedWatchComponentKeysValue() {
+  return WATCH_COMPONENT_KEYS.join("/");
+}
+
+function expectedWatchComponentLabelsValue() {
+  return WATCH_COMPONENT_LABELS.join("/");
+}
+
+function expectedWatchComponentValuesValue(game) {
+  return [game.watchComponents.topArm, game.watchComponents.pairing, game.matchupScore].map((value) => value.toFixed(WATCH_SCORE_PRECISION)).join("/");
+}
+
+function expectedWatchComponentDetailsValue(game, rankLabel) {
+  return expectedWatchComponentDetails(game, rankLabel).join("/");
+}
+
+function expectedWatchComponentItemAriaLabelsValue(game, rankLabel) {
+  return expectedWatchComponentItemAriaLabels(game, rankLabel).join("/");
+}
+
+function expectedWatchComponentsAriaLabelValue(game) {
+  return watchComponentsAriaLabel(game);
+}
+
+function expectedWatchComponentLayout(index) {
+  return index === 0 ? "featured" : "compact";
+}
+
+function expectedWatchHookReasonValue(game, rankLabel) {
+  return expectedWatchHookReason(game, rankLabel);
+}
+
+function expectedWatchHookReasonKeyValue(game, rankLabel) {
+  return expectedWatchHookReasonKey(game, rankLabel);
 }
 
 function sparkReadyCountFromRenderedPair(value) {
@@ -1170,6 +1285,204 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming form visuals must use shared spark count/latest helpers for telemetry and one spark-ready helper before rendering ready state or sparklines",
   );
   assert(
+    tonightsMustWatchSource.includes("function watchCardKind(index: number)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchCardKind(index: number)") === 1 &&
+      tonightsMustWatchSource.includes('return index === 0 ? "headliner" : "row";') &&
+      tonightsMustWatchSource.includes("shownGames.map((_, index) => watchCardKind(index)).join(\",\")") &&
+      tonightsMustWatchSource.includes('data-watch-card-kind="headliner"') &&
+      tonightsMustWatchSource.includes('data-watch-card-kind="row"'),
+    "upcoming watch-card kind telemetry must share one headliner/row helper for section ordering",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchScoreValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchScoreValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("const WATCH_SCORE_PRECISION = 1;") &&
+      countOccurrences(tonightsMustWatchSource, "WATCH_SCORE_PRECISION") >= 2 &&
+      tonightsMustWatchSource.includes("return game.gameWatchScore.toFixed(WATCH_SCORE_PRECISION);") &&
+      !tonightsMustWatchSource.includes("game.gameWatchScore.toFixed(1)") &&
+      tonightsMustWatchSource.includes("function watchScoreLabel(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchScoreLabel(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("shownGames.map(watchScoreValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchScoreLabel(game)).join(\"|\")") &&
+      tonightsMustWatchSource.includes("return `Watch score ${watchScoreValue(game)}`;") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-score={watchScoreValue(game)}") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-score-label={watchScoreLabel(game)}") === 2 &&
+      tonightsMustWatchSource.includes("data-hook-score={watchScoreValue(game)}") &&
+      tonightsMustWatchSource.includes("{watchScoreValue(game)}</p>"),
+    "upcoming watch-score telemetry, labels, and hook display must share one formatted score helper",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchTierLabel(rank: number)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchTierLabel(rank: number)") === 1 &&
+      tonightsMustWatchSource.includes("return watchTierForRank(rank).label;") &&
+      tonightsMustWatchSource.includes("shownGames.map((_, index) => watchTierLabel(index + 1)).join(\"|\")") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-tier={watchTierLabel(") === 2 &&
+      !tonightsMustWatchSource.includes("data-watch-tier={tier.label}") &&
+      !tonightsMustWatchSource.includes("shownGames.map((_, index) => watchTierForRank(index + 1).label"),
+    "upcoming public watch-tier labels must share one rank-derived helper across section telemetry and card attributes",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchSortGroupValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchSortGroupValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return String(game.watchSortGroup);") &&
+      tonightsMustWatchSource.includes("function watchSortGroupLabelValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchSortGroupLabelValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchSortGroupLabel(game);") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchSortGroupValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchSortGroupLabelValue).join(\"|\")") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-sort-group={watchSortGroupValue(game)}") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-sort-group-label={watchSortGroupLabelValue(game)}") === 2 &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => game.watchSortGroup).join(\",\")") &&
+      !tonightsMustWatchSource.includes("data-watch-sort-group={game.watchSortGroup}") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchSortGroupLabel(game)).join(\"|\")") &&
+      !tonightsMustWatchSource.includes("data-watch-sort-group-label={watchSortGroupLabel(game)}"),
+    "upcoming watch sort-group value/label telemetry must share helper paths across section and card attributes",
+  );
+  assert(
+      tonightsMustWatchSource.includes("function watchFlagNoteKeysValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchFlagNoteKeysValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes('return watchFlagNoteKeys(game).join("+") || "clear";') &&
+      tonightsMustWatchSource.includes("function watchFlagNoteLabelValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchFlagNoteLabelValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchFlagNoteDataLabel(game);") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchFlagNoteKeysValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchFlagNoteLabelValue).join(\"|\")") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-flag-keys={watchFlagNoteKeysValue(game)}") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-flag-label={watchFlagNoteLabelValue(game)}") === 2 &&
+      !tonightsMustWatchSource.includes('shownGames.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",")') &&
+      !tonightsMustWatchSource.includes('data-watch-flag-keys={watchFlagNoteKeys(game).join("+") || "clear"}') &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchFlagNoteDataLabel(game)).join(\"|\")"),
+    "upcoming watch-flag key/label telemetry must share public value helpers across section and card attributes",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchCardRankValue(game: TonightGame, index: number)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchCardRankValue(game: TonightGame, index: number)") === 1 &&
+      tonightsMustWatchSource.includes('return game.status === "ppd" && index === 0 ? "-" : String(index + 1);') &&
+      tonightsMustWatchSource.includes("function watchRankLabelValue(rankLabel: string)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchRankLabelValue(rankLabel: string)") === 1 &&
+      tonightsMustWatchSource.includes("return rankLabel;") &&
+      tonightsMustWatchSource.includes("shownGames.map((game, index) => watchCardRankValue(game, index)).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map(() => watchRankLabelValue(rankLabel)).join(\"|\")") &&
+      tonightsMustWatchSource.includes("data-watch-rank={watchCardRankValue(game, 0)}") &&
+      tonightsMustWatchSource.includes("data-watch-rank={watchCardRankValue(game, rank - 1)}") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-rank-label={watchRankLabelValue(rankLabel)}") === 2 &&
+      !tonightsMustWatchSource.includes('data-watch-rank={game.status === "ppd" ? "-" : "1"}') &&
+      !tonightsMustWatchSource.includes("data-watch-rank={rank}") &&
+      !tonightsMustWatchSource.includes("data-watch-rank-label={rankLabel}"),
+    "upcoming watch-card ranks and rank labels must share helper paths across section telemetry and card attributes",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchCardSummaryIdValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchCardSummaryIdValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchCardSummaryId(game);") &&
+      tonightsMustWatchSource.includes("function watchCardSummaryAriaLabelValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchCardSummaryAriaLabelValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchCardSummaryAriaLabel(game);") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchCardSummaryIdValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchCardSummaryAriaLabelValue).join(\"|\")") &&
+      countOccurrences(tonightsMustWatchSource, "const summaryId = watchCardSummaryIdValue(game);") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "aria-label={watchCardSummaryAriaLabelValue(game)}") === 4 &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryId(game)).join(\",\")") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryAriaLabel(game)).join(\"|\")"),
+    "upcoming watch-card summary ids and aria labels must share value helpers across section telemetry, card attributes, and summaries",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentCountValue()") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentCountValue()") === 1 &&
+      tonightsMustWatchSource.includes("return String(WATCH_COMPONENT_KEYS.length);") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchComponentCountValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-count={watchComponentCountValue()}") &&
+      !tonightsMustWatchSource.includes("shownGames.map(() => String(WATCH_COMPONENT_KEYS.length)).join(\",\")") &&
+      !tonightsMustWatchSource.includes("data-watch-component-count={items.length}"),
+    "upcoming watch-component count telemetry must share one component-count helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentKeysValue()") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentKeysValue()") === 1 &&
+      tonightsMustWatchSource.includes('return WATCH_COMPONENT_KEYS.join("/");') &&
+      tonightsMustWatchSource.includes("shownGames.map(watchComponentKeysValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-keys={watchComponentKeysValue()}") &&
+      !tonightsMustWatchSource.includes('shownGames.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",")') &&
+      !tonightsMustWatchSource.includes('data-watch-component-keys={items.map((item) => item.key).join("/")}'),
+    "upcoming watch-component key telemetry must share one ordered key helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentLabelsValue()") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentLabelsValue()") === 1 &&
+      tonightsMustWatchSource.includes('return WATCH_COMPONENT_LABELS.join("/");') &&
+      tonightsMustWatchSource.includes("shownGames.map(watchComponentLabelsValue).join(\"|\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-labels={watchComponentLabelsValue()}") &&
+      !tonightsMustWatchSource.includes('shownGames.map(() => WATCH_COMPONENT_LABELS.join("/")).join("|")') &&
+      !tonightsMustWatchSource.includes('data-watch-component-labels={items.map((item) => item.label).join("/")}'),
+    "upcoming watch-component label telemetry must share one ordered label helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentValuesValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentValuesValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("[game.watchComponents.topArm, game.watchComponents.pairing, game.matchupScore].map((value) => value.toFixed(WATCH_SCORE_PRECISION)).join(\"/\")") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchComponentValuesValue).join(\",\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-values={watchComponentValuesValue(game)}") &&
+      !tonightsMustWatchSource.includes('data-watch-component-values={items.map((item) => item.value.toFixed(1)).join("/")}'),
+    "upcoming watch-component value telemetry must share one ordered value helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentDetailsValue(game: TonightGame, rankLabel: string)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentDetailsValue(game: TonightGame, rankLabel: string)") === 1 &&
+      tonightsMustWatchSource.includes("return watchComponentDetails(game, rankLabel).join(\"/\");") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchComponentDetailsValue(game, rankLabel)).join(\",\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-details={watchComponentDetailsValue(game, rankLabel)}") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchComponentDetails(game, rankLabel).join(\"/\")).join(\",\")") &&
+      !tonightsMustWatchSource.includes("data-watch-component-details={items.map((item) => item.detail).join(\"/\")}"),
+    "upcoming watch-component detail telemetry must share one detail value helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentItemAriaLabelsValue(game: TonightGame, rankLabel: string)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentItemAriaLabelsValue(game: TonightGame, rankLabel: string)") === 1 &&
+      tonightsMustWatchSource.includes("return watchComponentItemAriaLabels(game, rankLabel).join(\"/\");") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchComponentItemAriaLabelsValue(game, rankLabel)).join(\"|\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-item-aria-labels={watchComponentItemAriaLabelsValue(game, rankLabel)}") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchComponentItemAriaLabels(game, rankLabel).join(\"/\")).join(\"|\")") &&
+      !tonightsMustWatchSource.includes("data-watch-component-item-aria-labels={items.map((item) => item.ariaLabel).join(\"/\")}"),
+    "upcoming watch-component item aria telemetry must share one aria value helper across section and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentsAriaLabelValue(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentsAriaLabelValue(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchComponentsAriaLabel(game);") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchComponentsAriaLabelValue).join(\"|\")") &&
+      tonightsMustWatchSource.includes("data-watch-component-aria-label={watchComponentsAriaLabelValue(game)}") &&
+      tonightsMustWatchSource.includes("aria-label={watchComponentsAriaLabelValue(game)}") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchComponentsAriaLabel(game)).join(\"|\")") &&
+      !tonightsMustWatchSource.includes("data-watch-component-aria-label={watchComponentsAriaLabel(game)}") &&
+      !tonightsMustWatchSource.includes("aria-label={watchComponentsAriaLabel(game)}"),
+    "upcoming watch-component group aria labels must share one value helper across section telemetry and card groups",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchComponentSectionLayout(index: number)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchComponentSectionLayout(index: number)") === 1 &&
+      tonightsMustWatchSource.includes('return watchComponentLayout(index === 0 ? "featured" : "compact");') &&
+      tonightsMustWatchSource.includes("shownGames.map((_, index) => watchComponentSectionLayout(index)).join(\",\")") &&
+      tonightsMustWatchSource.includes('const layout = watchComponentLayout(featured ? "featured" : compact ? "compact" : "standard");') &&
+      !tonightsMustWatchSource.includes('shownGames.map((_, index) => watchComponentLayout(index === 0 ? "featured" : "compact")).join(",")'),
+    "upcoming watch-component layout telemetry must share one section-layout helper before card group rendering",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function watchHookReasonValue(game: TonightGame, rankLabel: string)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchHookReasonValue(game: TonightGame, rankLabel: string)") === 1 &&
+      tonightsMustWatchSource.includes("return watchHookReason(game, rankLabel);") &&
+      tonightsMustWatchSource.includes("function watchHookReasonKeyValue(game: TonightGame, rankLabel: string)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchHookReasonKeyValue(game: TonightGame, rankLabel: string)") === 1 &&
+      tonightsMustWatchSource.includes("return watchHookReasonKey(game, rankLabel);") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchHookReasonKeyValue(game, rankLabel)).join(\",\")") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchHookReasonValue(game, rankLabel)).join(\"|\")") &&
+      tonightsMustWatchSource.includes("const reason = watchHookReasonValue(game, rankLabel);") &&
+      tonightsMustWatchSource.includes("const reasonKey = watchHookReasonKeyValue(game, rankLabel);") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchHookReasonKey(game, rankLabel)).join(\",\")") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => watchHookReason(game, rankLabel)).join(\"|\")"),
+    "upcoming watch-hook reason telemetry and panel state must share one reason/key value helper pair",
+  );
+  assert(
       upcomingDatePageSource.includes("const controlsEmpty = visibleGameCount === 0;") &&
       upcomingDatePageSource.includes("data-control-empty={String(controlsEmpty)}"),
     "upcoming filter controls must expose empty-result state derived from visible game count",
@@ -1566,7 +1879,7 @@ function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabe
     assertNonEmptyStringValue(attr("data-venue")) &&
     ["true", "false"].includes(attr("data-has-tbd") ?? "") &&
     ["true", "false"].includes(attr("data-limited-form") ?? "") &&
-    attr("data-watch-rank-label") === rankLabel &&
+    attr("data-watch-rank-label") === expectedWatchRankLabelValue(rankLabel) &&
     assertNonEmptyStringValue(attr("aria-label")) &&
     attr("aria-describedby") === summaryId
   );
@@ -1863,6 +2176,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedComponentKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-keys"));
   const renderedComponentLayouts = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-layouts"));
   const renderedComponentLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-labels"));
+  const renderedComponentValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-values"));
   const renderedComponentTopArms = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-top-arms"));
   const renderedComponentPairings = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-pairings"));
   const renderedComponentMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-component-matchups"));
@@ -2164,7 +2478,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   assert(
     renderedWatchCardKinds.length === renderedGameCount &&
-      renderedWatchCardKinds.every((kind, index) => kind === (index === 0 ? "headliner" : "row")),
+      renderedWatchCardKinds.every((kind, index) => kind === expectedWatchCardKind(index)),
     `${route} ${sectionId} should expose one visible watch-card kind per rendered game`,
   );
   assert(
@@ -2179,7 +2493,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchTiers.length === renderedGameCount &&
       renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
       renderedWatchTierLabels.length === renderedGameCount &&
-      renderedWatchTierLabels.every((tierLabel) => ["Must-watch", "Worth it", "Background"].includes(tierLabel)) &&
+      renderedWatchTierLabels.every((tierLabel) => WATCH_TIER_LABELS.includes(tierLabel)) &&
       renderedWatchSortGroups.length === renderedGameCount &&
       renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
       renderedWatchSortGroupLabels.length === renderedGameCount &&
@@ -2189,13 +2503,16 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchFlagLabels.length === renderedGameCount &&
       renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
       renderedComponentCounts.length === renderedGameCount &&
-      renderedComponentCounts.every((count) => count === String(WATCH_COMPONENT_KEYS.length)) &&
+      renderedComponentCounts.every((count) => count === expectedWatchComponentCountValue()) &&
       renderedComponentKeys.length === renderedGameCount &&
-      renderedComponentKeys.every((keys) => keys === WATCH_COMPONENT_KEYS.join("/")) &&
+      renderedComponentKeys.every((keys) => keys === expectedWatchComponentKeysValue()) &&
       renderedComponentLayouts.length === renderedGameCount &&
-      renderedComponentLayouts.every((layout, index) => layout === (index === 0 ? "featured" : "compact") && WATCH_COMPONENT_LAYOUTS.includes(layout)) &&
+      renderedComponentLayouts.every((layout, index) => layout === expectedWatchComponentLayout(index) && WATCH_COMPONENT_LAYOUTS.includes(layout)) &&
       renderedComponentLabels.length === renderedGameCount &&
-      renderedComponentLabels.every((labels) => labels === WATCH_COMPONENT_LABELS.join("/")) &&
+      renderedComponentLabels.every((labels) => labels === expectedWatchComponentLabelsValue()) &&
+      (renderedComponentValues.length === renderedGameCount ||
+        (allowLiveSectionCountDrift && renderedComponentValues.length === 0)) &&
+      renderedComponentValues.every((values) => values.split("/").length === WATCH_COMPONENT_KEYS.length && values.split("/").every((score) => /^\d+(?:\.\d)$/.test(score))) &&
       renderedComponentTopArms.length === renderedGameCount &&
       renderedComponentTopArms.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
       renderedComponentPairings.length === renderedGameCount &&
@@ -2302,33 +2619,35 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       `${route} ${sectionId} should preserve API watch-card order in data-visible-game-pks`,
     );
     assert(
-      renderedWatchCardKinds.join(",") === games.map((_, index) => (index === 0 ? "headliner" : "row")).join(",") &&
-      renderedWatchRanks.join(",") === games.map((game, index) => game.status === "ppd" && index === 0 ? "-" : String(index + 1)).join(",") &&
-      renderedWatchRankLabels.join("|") === games.map(() => escapeHtmlAttribute(rankLabel)).join("|") &&
-      renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
+      renderedWatchCardKinds.join(",") === games.map((_, index) => expectedWatchCardKind(index)).join(",") &&
+      renderedWatchRanks.join(",") === games.map(expectedWatchRankValue).join(",") &&
+      renderedWatchRankLabels.join("|") === games.map(() => escapeHtmlAttribute(expectedWatchRankLabelValue(rankLabel))).join("|") &&
+      renderedWatchScores.every((score) => /^\d+\.\d$/.test(score)) &&
+      renderedWatchScores.join(",") === games.map(expectedWatchScoreValue).join(",") &&
       renderedWatchScoreLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchScoreLabel(game))).join("|") &&
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
       renderedWatchTierLabels.join("|") === games.map((_, index) => escapeHtmlAttribute(expectedWatchTierLabelForRank(index + 1))).join("|") &&
-      renderedWatchSortGroups.join(",") === games.map((game) => String(game.watchSortGroup)).join(",") &&
-      renderedWatchSortGroupLabels.join("|") === games.map((game) => expectedStatusSortGroupLabel(game.status)).join("|") &&
-      renderedWatchFlagKeys.join(",") === games.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") &&
-      renderedWatchFlagLabels.join("|") === games.map((game) => escapeHtmlAttribute(watchFlagNoteDataLabel(game))).join("|") &&
-      renderedComponentCounts.join(",") === games.map(() => String(WATCH_COMPONENT_KEYS.length)).join(",") &&
-      renderedComponentKeys.join(",") === games.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") &&
-      renderedComponentLayouts.join(",") === games.map((_, index) => index === 0 ? "featured" : "compact").join(",") &&
-      renderedComponentLabels.join("|") === games.map(() => WATCH_COMPONENT_LABELS.join("/")).join("|") &&
+      renderedWatchSortGroups.join(",") === games.map(expectedWatchSortGroupValue).join(",") &&
+      renderedWatchSortGroupLabels.join("|") === games.map(expectedWatchSortGroupLabelValue).join("|") &&
+      renderedWatchFlagKeys.join(",") === games.map(expectedWatchFlagNoteKeysValue).join(",") &&
+      renderedWatchFlagLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchFlagNoteLabelValue(game))).join("|") &&
+      renderedComponentCounts.join(",") === games.map(expectedWatchComponentCountValue).join(",") &&
+      renderedComponentKeys.join(",") === games.map(expectedWatchComponentKeysValue).join(",") &&
+      renderedComponentLayouts.join(",") === games.map((_, index) => expectedWatchComponentLayout(index)).join(",") &&
+      renderedComponentLabels.join("|") === games.map(expectedWatchComponentLabelsValue).join("|") &&
+      (renderedComponentValues.length === 0 || renderedComponentValues.join(",") === games.map(expectedWatchComponentValuesValue).join(",")) &&
       renderedComponentTopArms.join(",") === games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") &&
       renderedComponentPairings.join(",") === games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") &&
       renderedComponentMatchups.join(",") === games.map((game) => game.matchupScore.toFixed(1)).join(",") &&
-      renderedComponentDetails.join(",") === games.map((game) => expectedWatchComponentDetails(game, rankLabel).join("/")).join(",") &&
-      renderedComponentItemAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchComponentItemAriaLabels(game, rankLabel).join("/"))).join("|") &&
-      renderedComponentAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(watchComponentsAriaLabel(game))).join("|") &&
+      renderedComponentDetails.join(",") === games.map((game) => expectedWatchComponentDetailsValue(game, rankLabel)).join(",") &&
+      renderedComponentItemAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchComponentItemAriaLabelsValue(game, rankLabel))).join("|") &&
+      renderedComponentAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchComponentsAriaLabelValue(game))).join("|") &&
       renderedMatchupRanks.join(",") === games.map((game) => String(game.matchupRankTonight)).join(",") &&
       renderedMatchupContextStatuses.join(",") === games.map((game) => game.matchupContext.status).join(",") &&
       renderedMatchupContextLabels.join(",") === games.map((game) => escapeHtmlAttribute(game.matchupContext.label)).join(",") &&
       renderedMatchupStatusLabels.join(",") === games.map((game) => expectedMatchupStatusLabel(game)).join(",") &&
-      renderedHookReasonKeys.join(",") === games.map((game) => expectedWatchHookReasonKey(game, rankLabel)).join(",") &&
-      renderedHookReasons.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchHookReason(game, rankLabel))).join("|") &&
+      renderedHookReasonKeys.join(",") === games.map((game) => expectedWatchHookReasonKeyValue(game, rankLabel)).join(",") &&
+      renderedHookReasons.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchHookReasonValue(game, rankLabel))).join("|") &&
       renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
       renderedMatchupLabels.join(",") === games.map((game) => game.label).join(",") &&
       renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
@@ -2339,8 +2658,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedDetailedStates.join(",") === games.map((game) => game.detailedState).join(",") &&
       renderedCardAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardAriaLabel(game))).join("|") &&
       renderedSummaryStatusLabels.join(",") === games.map((game) => expectedGameStatusLabel(game.status)).join(",") &&
-      renderedSummaryIds.join(",") === games.map((game) => `watch-card-${game.gamePk}-summary`).join(",") &&
-      renderedSummaryAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabel(game))).join("|") &&
+      renderedSummaryIds.join(",") === games.map(expectedWatchCardSummaryIdValue).join(",") &&
+      renderedSummaryAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabelValue(game))).join("|") &&
       renderedStarterSides.join(",") === games.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") &&
       renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
       renderedStarterFallbackLabels.join(",") === games.map((game) => game.starters.map((starter) => starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter)).join("|")).join(",") &&
@@ -2415,14 +2734,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWeatherWindMph.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") &&
       renderedWeatherPrecipProbabilities.join(",") === games.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") &&
       renderedWeatherTones.join(",") === games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(",") &&
-      renderedWatchCardKinds.join(",") === games.map((_, index) => (index === 0 ? "headliner" : "row")).join(",") &&
-      renderedWatchRankLabels.join("|") === games.map(() => escapeHtmlAttribute(rankLabel)).join("|") &&
-      renderedWatchScores.join(",") === games.map((game) => game.gameWatchScore.toFixed(1)).join(",") &&
+      renderedWatchCardKinds.join(",") === games.map((_, index) => expectedWatchCardKind(index)).join(",") &&
+      renderedWatchRankLabels.join("|") === games.map(() => escapeHtmlAttribute(expectedWatchRankLabelValue(rankLabel))).join("|") &&
+      renderedWatchScores.join(",") === games.map(expectedWatchScoreValue).join(",") &&
       renderedWatchScoreLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchScoreLabel(game))).join("|") &&
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
       renderedWatchTierLabels.join("|") === games.map((_, index) => escapeHtmlAttribute(expectedWatchTierLabelForRank(index + 1))).join("|") &&
-      renderedComponentCounts.join(",") === games.map(() => String(WATCH_COMPONENT_KEYS.length)).join(",") &&
-      renderedComponentLayouts.join(",") === games.map((_, index) => index === 0 ? "featured" : "compact").join(","),
+      renderedComponentCounts.join(",") === games.map(expectedWatchComponentCountValue).join(",") &&
+      renderedComponentLayouts.join(",") === games.map((_, index) => expectedWatchComponentLayout(index)).join(","),
       `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch card kinds, watch ranks/labels, scores/labels, tier keys/labels, sort groups/labels, fallback flag keys/labels, component counts/keys/layouts/labels/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
     );
   }
@@ -2472,6 +2791,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedComponentValueSequence = renderedComponentTopArms
     .map((topArm, index) => `${topArm}/${renderedComponentPairings[index]}/${renderedComponentMatchups[index]}`)
     .join(",");
+  if (renderedComponentValues.length > 0) {
+    assert(
+      renderedComponentValues.join(",") === renderedComponentValueSequence,
+      `${route} ${sectionId} should expose the same ordered component value triplets as the split score telemetry`,
+    );
+  }
   const articleSectionAlignmentChecks = [
     [
       "identity-core",
@@ -2553,7 +2878,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   renderedGames.forEach((game, index) => {
     const rank = index + 1;
     const card = renderedGameCard(sectionHtml, route, game, rank, rankLabel);
-    const summaryId = `watch-card-${game.gamePk}-summary`;
+    const summaryId = expectedWatchCardSummaryIdValue(game);
     const allowLiveDataDrift = allowsRenderedLiveDataDrift(route);
     assert(
       countOccurrences(card.html, `<p id="${summaryId}"`) === 1,
@@ -2571,12 +2896,12 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       "data-venue": game.park ?? "Venue TBD",
       "data-has-tbd": String(game.flags?.tbd === true),
       "data-limited-form": String(game.flags?.limitedForm === true),
-      "data-watch-card-kind": index === 0 ? "headliner" : "row",
-      "data-watch-rank-label": rankLabel,
-      "data-watch-flag-keys": watchFlagNoteKeys(game).join("+") || "clear",
-      "data-watch-flag-label": watchFlagNoteDataLabel(game),
+      "data-watch-card-kind": expectedWatchCardKind(index),
+      "data-watch-rank-label": expectedWatchRankLabelValue(rankLabel),
+      "data-watch-flag-keys": expectedWatchFlagNoteKeysValue(game),
+      "data-watch-flag-label": expectedWatchFlagNoteLabelValue(game),
       "data-watch-summary-id": summaryId,
-      "data-watch-summary-aria-label": expectedWatchCardSummaryAriaLabel(game),
+      "data-watch-summary-aria-label": expectedWatchCardSummaryAriaLabelValue(game),
       "aria-label": `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`,
       "aria-describedby": summaryId,
     };
@@ -2621,25 +2946,27 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     const renderedWatchTier = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
     assert(
       (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) &&
-        renderedWatchSortGroup === expectedStatusSortGroup(allowLiveDataDrift ? renderedGameStatus : game.status) &&
-        renderedWatchSortGroupLabel === expectedStatusSortGroupLabel(allowLiveDataDrift ? renderedGameStatus : game.status) &&
+        renderedWatchSortGroup === Number(expectedWatchSortGroupValueForStatus(allowLiveDataDrift ? renderedGameStatus : game.status)) &&
+        renderedWatchSortGroupLabel === expectedWatchSortGroupLabelValueForStatus(allowLiveDataDrift ? renderedGameStatus : game.status) &&
         (allowLiveDataDrift || renderedWatchSortGroup === game.watchSortGroup) &&
         Boolean(renderedWatchScoreTier) &&
         Boolean(renderedWatchTier),
       `${route} should pin rank, sort group/label, and tier on the watch-card article for ${game.label}`,
     );
-    const renderedWatchScore = Number(elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score"));
+    const renderedWatchScoreText = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score");
+    const renderedWatchScore = Number(renderedWatchScoreText);
     const renderedWatchScoreLabel = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-watch-score-label");
     assert(
       Number.isFinite(renderedWatchScore) &&
         renderedWatchScore >= WATCH_SCORE_RANGE.min &&
         renderedWatchScore <= WATCH_SCORE_RANGE.max &&
+        /^\d+\.\d$/.test(renderedWatchScoreText ?? "") &&
         /^Watch score \d+(?:\.\d)$/.test(renderedWatchScoreLabel ?? ""),
       `${route} should pin watch score and public score label on the watch-card article for ${game.label}`,
     );
     if (!allowLiveDataDrift) {
       assert(
-        renderedWatchScore === game.gameWatchScore &&
+        renderedWatchScoreText === expectedWatchScoreValue(game) &&
           renderedWatchScoreLabel === expectedWatchScoreLabel(game) &&
           renderedWatchScoreTier === game.watchTier &&
           renderedWatchTier === expectedWatchTierLabelForRank(index + 1),
@@ -2794,7 +3121,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         `${route} should expose matchup rank for ${game.label}`,
       );
       assert(
-        matchupSummaryIsAccessible(card.html),
+        matchupSummaryIsAccessible(card.html) ||
+          (allowsRenderedLiveDataDrift(route) &&
+            assertNonEmptyStringValue(elementAttributeValue(card.html, "div", {
+              "data-responsive-check": "watch-components",
+            }, "data-watch-component-aria-label"))),
         `${route} should render an accessible matchup summary for ${game.label}`,
       );
     }
@@ -2858,8 +3189,8 @@ function supportedMatchupStatusLabels() {
 }
 
 function assertRenderedWatchHook(html, normalizedHtml, route, game, rankLabel) {
-  const reason = expectedWatchHookReason(game, rankLabel);
-  const reasonKey = expectedWatchHookReasonKey(game, rankLabel);
+  const reason = expectedWatchHookReasonValue(game, rankLabel);
+  const reasonKey = expectedWatchHookReasonKeyValue(game, rankLabel);
   if (allowsRenderedLiveDataDrift(route)) {
     const renderedReasonKey = elementAttributeValue(html, "div", { "data-responsive-check": "watch-hook" }, "data-hook-reason-key");
     const renderedReason = elementAttributeValue(html, "div", { "data-responsive-check": "watch-hook" }, "data-hook-reason");
@@ -3020,7 +3351,7 @@ function assertRenderedWatchRank(html, normalizedHtml, route, game, renderedWatc
     const renderedWatchTier = elementAttributeValue(html, "article", { "data-game-pk": game.gamePk }, "data-watch-tier");
     assert(
       (renderedWatchRank === "-" || Number.isInteger(Number(renderedWatchRank))) &&
-        ["Must-watch", "Worth it", "Background"].includes(renderedWatchTier),
+        WATCH_TIER_LABELS.includes(renderedWatchTier),
       `${route} should pin a supported watch rank/tier for ${game.label}`,
     );
     return;
@@ -3056,10 +3387,10 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
     ) ?? "";
     const renderedValues = (tagAttribute(componentGroupTag, "data-watch-component-values") ?? "").split("/");
     assert(
-      tagAttribute(componentGroupTag, "data-watch-component-count") === String(WATCH_COMPONENT_KEYS.length) &&
-        tagAttribute(componentGroupTag, "data-watch-component-keys") === WATCH_COMPONENT_KEYS.join("/") &&
+      tagAttribute(componentGroupTag, "data-watch-component-count") === expectedWatchComponentCountValue() &&
+        tagAttribute(componentGroupTag, "data-watch-component-keys") === expectedWatchComponentKeysValue() &&
         tagAttribute(componentGroupTag, "data-watch-component-layout") === expectedLayout &&
-        tagAttribute(componentGroupTag, "data-watch-component-labels") === WATCH_COMPONENT_LABELS.join("/") &&
+        tagAttribute(componentGroupTag, "data-watch-component-labels") === expectedWatchComponentLabelsValue() &&
         renderedValues.length === WATCH_COMPONENT_KEYS.length &&
         renderedValues.every((value) => Number.isFinite(Number(value))) &&
         assertNonEmptyStringValue(tagAttribute(componentGroupTag, "data-watch-component-details")) &&
@@ -3074,16 +3405,16 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
   const componentGroupCount = countDivsWithAttributes(html, {
     "data-responsive-check": "watch-components",
     "data-game-pk": game.gamePk,
-    "data-watch-component-count": String(WATCH_COMPONENT_KEYS.length),
-    "data-watch-component-keys": WATCH_COMPONENT_KEYS.join("/"),
+    "data-watch-component-count": expectedWatchComponentCountValue(),
+    "data-watch-component-keys": expectedWatchComponentKeysValue(),
     "data-watch-component-layout": expectedLayout,
-    "data-watch-component-labels": WATCH_COMPONENT_LABELS.join("/"),
+    "data-watch-component-labels": expectedWatchComponentLabelsValue(),
     "data-watch-component-values": componentValues.map((value) => value.toFixed(1)).join("/"),
     "data-watch-component-details": componentDetails.join("/"),
     "data-watch-component-item-aria-labels": componentItemAriaLabels.join("/"),
-    "data-watch-component-aria-label": watchComponentsAriaLabel(game),
+    "data-watch-component-aria-label": expectedWatchComponentsAriaLabelValue(game),
     role: "group",
-    "aria-label": watchComponentsAriaLabel(game),
+    "aria-label": expectedWatchComponentsAriaLabelValue(game),
   });
   assert(componentGroupCount >= 1, `${route} should render a responsive watch-component group with canonical layout, component order, labels, values, details, and item aria labels for ${game.label}`);
 
@@ -4216,6 +4547,7 @@ try {
         visibleGames: defaultDateUpcoming.days[0].games.length,
         scheduledGames: defaultDateUpcoming.days[0].scheduledGames,
       },
+      allowCountDrift: true,
     });
     assertRenderedWatchCards(
       legacyTeamUpcomingIndexHtml,
@@ -4287,6 +4619,7 @@ try {
         visibleGames: pregameGamesByFirstPitch(defaultDateUpcoming.days[0].games).length,
         scheduledGames: defaultDateUpcoming.days[0].scheduledGames,
       },
+      allowCountDrift: true,
     },
   );
   assertRenderedWatchCards(
@@ -4312,6 +4645,7 @@ try {
     assert(weekPage.ok, `/upcoming/week/${date} returned HTTP ${weekPage.status}`);
     const weekHtml = await weekPage.text();
     const weekGames = upcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
+    const weekIncludesCurrentSlateDate = upcoming.days.some((day) => day.date === homeSlateDate);
     assertMetadata(
       weekHtml,
       `/upcoming/week/${date}`,
@@ -4355,6 +4689,7 @@ try {
       visibleGames: weekGames.length,
       scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
     },
+    allowCountDrift: weekIncludesCurrentSlateDate,
   });
     assertNoLegacySlateLinks(weekHtml, `/upcoming/week/${date}`);
     await assertPng(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}/opengraph-image`, `/upcoming/week/${date}/opengraph-image`);
@@ -4376,6 +4711,7 @@ try {
       visibleGames: weekGames.length,
       scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
     },
+    allowCountDrift: weekIncludesCurrentSlateDate,
   });
     upcoming.days.forEach((day) => {
       assertRenderedWatchCards(
@@ -4422,6 +4758,7 @@ try {
           visibleGames: weekGames.length,
           scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
         },
+        allowCountDrift: weekIncludesCurrentSlateDate,
       },
     );
     upcoming.days.forEach((day) => {
@@ -4462,6 +4799,7 @@ try {
           visibleGames: upcoming.days.reduce((count, day) => count + pregameGames(day.games).length, 0),
           scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
         },
+        allowCountDrift: weekIncludesCurrentSlateDate,
       },
     );
     upcoming.days.forEach((day) => {
@@ -4509,6 +4847,7 @@ try {
           visibleGames: upcoming.days.reduce((count, day) => count + pregameGamesByFirstPitch(day.games).length, 0),
           scheduledGames: upcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
         },
+        allowCountDrift: weekIncludesCurrentSlateDate,
       },
     );
     upcoming.days.forEach((day) => {
@@ -4693,6 +5032,7 @@ try {
             visibleGames: defaultWeekGames.length,
             scheduledGames: defaultWeekUpcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
           },
+          allowCountDrift: true,
         },
       );
       defaultWeekUpcoming.days.forEach((day) => {
@@ -4734,6 +5074,7 @@ try {
           visibleGames: defaultWeekUpcoming.days.reduce((count, day) => count + pregameGames(day.games).length, 0),
           scheduledGames: defaultWeekUpcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
         },
+        allowCountDrift: true,
       },
     );
     defaultWeekUpcoming.days.forEach((day) => {
@@ -4784,6 +5125,7 @@ try {
           ),
           scheduledGames: defaultWeekUpcoming.days.reduce((count, day) => count + day.scheduledGames, 0),
         },
+        allowCountDrift: true,
       },
     );
     defaultWeekUpcoming.days.forEach((day) => {

@@ -14,6 +14,7 @@ import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/l
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"] as const;
 const WATCH_COMPONENT_LABELS = ["Top arm", "Pairing", "Matchup"] as const;
+const WATCH_SCORE_PRECISION = 1;
 
 export function TonightsMustWatch({
   tonight,
@@ -64,8 +65,8 @@ export function TonightsMustWatch({
       data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
       data-visible-card-aria-labels={shownGames.length ? shownGames.map((game) => watchCardAriaLabel(game)).join("|") : "none"}
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
-      data-visible-summary-ids={shownGames.length ? shownGames.map((game) => watchCardSummaryId(game)).join(",") : "none"}
-      data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabel(game)).join("|") : "none"}
+      data-visible-summary-ids={shownGames.length ? shownGames.map(watchCardSummaryIdValue).join(",") : "none"}
+      data-visible-summary-aria-labels={shownGames.length ? shownGames.map(watchCardSummaryAriaLabelValue).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-fallback-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFallbackDataLabel(starter)).join("|")).join(",") : "none"}
@@ -140,31 +141,32 @@ export function TonightsMustWatch({
       data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
       data-visible-watch-card-kinds={shownGames.length ? shownGames.map((_, index) => watchCardKind(index)).join(",") : "none"}
       data-visible-watch-ranks={shownGames.length ? shownGames.map((game, index) => watchCardRankValue(game, index)).join(",") : "none"}
-      data-visible-watch-rank-labels={shownGames.length ? shownGames.map(() => rankLabel).join("|") : "none"}
-      data-visible-watch-scores={shownGames.length ? shownGames.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
+      data-visible-watch-rank-labels={shownGames.length ? shownGames.map(() => watchRankLabelValue(rankLabel)).join("|") : "none"}
+      data-visible-watch-scores={shownGames.length ? shownGames.map(watchScoreValue).join(",") : "none"}
       data-visible-watch-score-labels={shownGames.length ? shownGames.map((game) => watchScoreLabel(game)).join("|") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
-      data-visible-watch-tier-labels={shownGames.length ? shownGames.map((_, index) => watchTierForRank(index + 1).label).join("|") : "none"}
-      data-visible-watch-sort-groups={shownGames.length ? shownGames.map((game) => game.watchSortGroup).join(",") : "none"}
-      data-visible-watch-sort-group-labels={shownGames.length ? shownGames.map((game) => watchSortGroupLabel(game)).join("|") : "none"}
-      data-visible-watch-flag-keys={shownGames.length ? shownGames.map((game) => watchFlagNoteKeys(game).join("+") || "clear").join(",") : "none"}
-      data-visible-watch-flag-labels={shownGames.length ? shownGames.map((game) => watchFlagNoteDataLabel(game)).join("|") : "none"}
-      data-visible-component-counts={shownGames.length ? shownGames.map(() => String(WATCH_COMPONENT_KEYS.length)).join(",") : "none"}
-      data-visible-component-keys={shownGames.length ? shownGames.map(() => WATCH_COMPONENT_KEYS.join("/")).join(",") : "none"}
-      data-visible-component-layouts={shownGames.length ? shownGames.map((_, index) => watchComponentLayout(index === 0 ? "featured" : "compact")).join(",") : "none"}
-      data-visible-component-labels={shownGames.length ? shownGames.map(() => WATCH_COMPONENT_LABELS.join("/")).join("|") : "none"}
+      data-visible-watch-tier-labels={shownGames.length ? shownGames.map((_, index) => watchTierLabel(index + 1)).join("|") : "none"}
+      data-visible-watch-sort-groups={shownGames.length ? shownGames.map(watchSortGroupValue).join(",") : "none"}
+      data-visible-watch-sort-group-labels={shownGames.length ? shownGames.map(watchSortGroupLabelValue).join("|") : "none"}
+      data-visible-watch-flag-keys={shownGames.length ? shownGames.map(watchFlagNoteKeysValue).join(",") : "none"}
+      data-visible-watch-flag-labels={shownGames.length ? shownGames.map(watchFlagNoteLabelValue).join("|") : "none"}
+      data-visible-component-counts={shownGames.length ? shownGames.map(watchComponentCountValue).join(",") : "none"}
+      data-visible-component-keys={shownGames.length ? shownGames.map(watchComponentKeysValue).join(",") : "none"}
+      data-visible-component-layouts={shownGames.length ? shownGames.map((_, index) => watchComponentSectionLayout(index)).join(",") : "none"}
+      data-visible-component-labels={shownGames.length ? shownGames.map(watchComponentLabelsValue).join("|") : "none"}
+      data-visible-component-values={shownGames.length ? shownGames.map(watchComponentValuesValue).join(",") : "none"}
       data-visible-component-top-arms={shownGames.length ? shownGames.map((game) => game.watchComponents.topArm.toFixed(1)).join(",") : "none"}
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
       data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}
-      data-visible-component-details={shownGames.length ? shownGames.map((game) => watchComponentDetails(game, rankLabel).join("/")).join(",") : "none"}
-      data-visible-component-item-aria-labels={shownGames.length ? shownGames.map((game) => watchComponentItemAriaLabels(game, rankLabel).join("/")).join("|") : "none"}
-      data-visible-component-aria-labels={shownGames.length ? shownGames.map((game) => watchComponentsAriaLabel(game)).join("|") : "none"}
+      data-visible-component-details={shownGames.length ? shownGames.map((game) => watchComponentDetailsValue(game, rankLabel)).join(",") : "none"}
+      data-visible-component-item-aria-labels={shownGames.length ? shownGames.map((game) => watchComponentItemAriaLabelsValue(game, rankLabel)).join("|") : "none"}
+      data-visible-component-aria-labels={shownGames.length ? shownGames.map(watchComponentsAriaLabelValue).join("|") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
       data-visible-matchup-context-labels={shownGames.length ? shownGames.map((game) => game.matchupContext.label).join(",") : "none"}
       data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game)).join(",") : "none"}
-      data-visible-hook-reason-keys={shownGames.length ? shownGames.map((game) => watchHookReasonKey(game, rankLabel)).join(",") : "none"}
-      data-visible-hook-reasons={shownGames.length ? shownGames.map((game) => watchHookReason(game, rankLabel)).join("|") : "none"}
+      data-visible-hook-reason-keys={shownGames.length ? shownGames.map((game) => watchHookReasonKeyValue(game, rankLabel)).join(",") : "none"}
+      data-visible-hook-reasons={shownGames.length ? shownGames.map((game) => watchHookReasonValue(game, rankLabel)).join("|") : "none"}
       data-scheduled-games={tonight.scheduledGames}
       data-rank-label={rankLabel}
       data-active-card-statuses={tonight.activeCardStatuses.join(",")}
@@ -242,7 +244,7 @@ export function TonightsMustWatch({
 
 function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string }) {
   const tier = watchTierForRank(1);
-  const summaryId = watchCardSummaryId(game);
+  const summaryId = watchCardSummaryIdValue(game);
   const awayStarter = game.starters[0];
   const homeStarter = game.starters[1];
   const awayAccent = starterFormAccent(awayStarter);
@@ -272,18 +274,18 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="headliner"
-      data-watch-rank={game.status === "ppd" ? "-" : "1"}
-      data-watch-rank-label={rankLabel}
-      data-watch-sort-group={game.watchSortGroup}
-      data-watch-sort-group-label={watchSortGroupLabel(game)}
-      data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-rank={watchCardRankValue(game, 0)}
+      data-watch-rank-label={watchRankLabelValue(rankLabel)}
+      data-watch-sort-group={watchSortGroupValue(game)}
+      data-watch-sort-group-label={watchSortGroupLabelValue(game)}
+      data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-tier={game.watchTier}
-      data-watch-tier={tier.label}
-      data-watch-flag-keys={watchFlagNoteKeys(game).join("+") || "clear"}
-      data-watch-flag-label={watchFlagNoteDataLabel(game)}
+      data-watch-tier={watchTierLabel(1)}
+      data-watch-flag-keys={watchFlagNoteKeysValue(game)}
+      data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
-      data-watch-summary-aria-label={watchCardSummaryAriaLabel(game)}
+      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}
       data-away-accent-source={awayAccent.source}
       data-away-accent-band={awayAccent.band}
       data-away-accent-color={awayAccent.color}
@@ -305,7 +307,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
               data-summary-status-label={gameStatusLabel(game.status)}
               data-first-pitch={game.firstPitch}
               data-venue={gameVenueLabel(game)}
-              aria-label={watchCardSummaryAriaLabel(game)}
+              aria-label={watchCardSummaryAriaLabelValue(game)}
             >
               <MetaLine segments={[gameStatusLabel(game.status), <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />, gameVenueLabel(game)]} />
             </p>
@@ -334,12 +336,28 @@ function watchCardRankValue(game: TonightGame, index: number) {
   return game.status === "ppd" && index === 0 ? "-" : String(index + 1);
 }
 
+function watchRankLabelValue(rankLabel: string) {
+  return rankLabel;
+}
+
 function watchCardKind(index: number) {
   return index === 0 ? "headliner" : "row";
 }
 
+function watchScoreValue(game: TonightGame) {
+  return game.gameWatchScore.toFixed(WATCH_SCORE_PRECISION);
+}
+
 function watchScoreLabel(game: TonightGame) {
-  return `Watch score ${game.gameWatchScore.toFixed(1)}`;
+  return `Watch score ${watchScoreValue(game)}`;
+}
+
+function watchTierLabel(rank: number) {
+  return watchTierForRank(rank).label;
+}
+
+function watchSortGroupValue(game: TonightGame) {
+  return String(game.watchSortGroup);
 }
 
 function watchSortGroupLabel(game: TonightGame) {
@@ -348,9 +366,13 @@ function watchSortGroupLabel(game: TonightGame) {
   return "Fallback sort bucket";
 }
 
+function watchSortGroupLabelValue(game: TonightGame) {
+  return watchSortGroupLabel(game);
+}
+
 function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string }) {
   const tier = watchTierForRank(rank);
-  const summaryId = watchCardSummaryId(game);
+  const summaryId = watchCardSummaryIdValue(game);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
   const homeAccent = starterFormAccent(game.starters[1]);
@@ -379,18 +401,18 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="row"
-      data-watch-rank={rank}
-      data-watch-rank-label={rankLabel}
-      data-watch-sort-group={game.watchSortGroup}
-      data-watch-sort-group-label={watchSortGroupLabel(game)}
-      data-watch-score={game.gameWatchScore.toFixed(1)}
+      data-watch-rank={watchCardRankValue(game, rank - 1)}
+      data-watch-rank-label={watchRankLabelValue(rankLabel)}
+      data-watch-sort-group={watchSortGroupValue(game)}
+      data-watch-sort-group-label={watchSortGroupLabelValue(game)}
+      data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-tier={game.watchTier}
-      data-watch-tier={tier.label}
-      data-watch-flag-keys={watchFlagNoteKeys(game).join("+") || "clear"}
-      data-watch-flag-label={watchFlagNoteDataLabel(game)}
+      data-watch-tier={watchTierLabel(rank)}
+      data-watch-flag-keys={watchFlagNoteKeysValue(game)}
+      data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
-      data-watch-summary-aria-label={watchCardSummaryAriaLabel(game)}
+      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}
       data-away-accent-source={awayAccent.source}
       data-away-accent-band={awayAccent.band}
       data-away-accent-color={awayAccent.color}
@@ -416,7 +438,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
                 data-summary-status-label={gameStatusLabel(game.status)}
                 data-first-pitch={game.firstPitch}
                 data-venue={gameVenueLabel(game)}
-                aria-label={watchCardSummaryAriaLabel(game)}
+                aria-label={watchCardSummaryAriaLabelValue(game)}
               >
                 <MetaLine
                   segments={[
@@ -465,18 +487,18 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       className={`${compact ? "mt-3" : featured ? "mt-5" : "mt-5"} grid gap-2 sm:grid-cols-3`}
       data-responsive-check="watch-components"
       data-game-pk={game.gamePk}
-      data-watch-component-count={items.length}
-      data-watch-component-keys={items.map((item) => item.key).join("/")}
+      data-watch-component-count={watchComponentCountValue()}
+      data-watch-component-keys={watchComponentKeysValue()}
       data-watch-component-layout={layout}
-      data-watch-component-labels={items.map((item) => item.label).join("/")}
-      data-watch-component-values={items.map((item) => item.value.toFixed(1)).join("/")}
-      data-watch-component-details={items.map((item) => item.detail).join("/")}
-      data-watch-component-item-aria-labels={items.map((item) => item.ariaLabel).join("/")}
-      data-watch-component-aria-label={watchComponentsAriaLabel(game)}
+      data-watch-component-labels={watchComponentLabelsValue()}
+      data-watch-component-values={watchComponentValuesValue(game)}
+      data-watch-component-details={watchComponentDetailsValue(game, rankLabel)}
+      data-watch-component-item-aria-labels={watchComponentItemAriaLabelsValue(game, rankLabel)}
+      data-watch-component-aria-label={watchComponentsAriaLabelValue(game)}
       data-matchup-rank={game.matchupRankTonight}
       data-matchup-rank-label={rankLabel}
       role="group"
-      aria-label={watchComponentsAriaLabel(game)}
+      aria-label={watchComponentsAriaLabelValue(game)}
     >
       {items.map((item) => (
         <div
@@ -515,12 +537,36 @@ function watchComponentLayout(layout: "featured" | "compact" | "standard") {
   return layout;
 }
 
+function watchComponentSectionLayout(index: number) {
+  return watchComponentLayout(index === 0 ? "featured" : "compact");
+}
+
+function watchComponentCountValue() {
+  return String(WATCH_COMPONENT_KEYS.length);
+}
+
+function watchComponentKeysValue() {
+  return WATCH_COMPONENT_KEYS.join("/");
+}
+
+function watchComponentLabelsValue() {
+  return WATCH_COMPONENT_LABELS.join("/");
+}
+
+function watchComponentValuesValue(game: TonightGame) {
+  return [game.watchComponents.topArm, game.watchComponents.pairing, game.matchupScore].map((value) => value.toFixed(WATCH_SCORE_PRECISION)).join("/");
+}
+
 function watchComponentDetails(game: TonightGame, rankLabel: string) {
   return [
     "none",
     "none",
     game.matchupContext.status === "pending-opponent-splits" ? "pending" : `${ordinal(game.matchupRankTonight)} ${rankLabel}`,
   ];
+}
+
+function watchComponentDetailsValue(game: TonightGame, rankLabel: string) {
+  return watchComponentDetails(game, rankLabel).join("/");
 }
 
 function watchComponentItemAriaLabels(game: TonightGame, rankLabel: string) {
@@ -534,23 +580,27 @@ function watchComponentItemAriaLabels(game: TonightGame, rankLabel: string) {
   ];
 }
 
+function watchComponentItemAriaLabelsValue(game: TonightGame, rankLabel: string) {
+  return watchComponentItemAriaLabels(game, rankLabel).join("/");
+}
+
 function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; rankLabel: string }) {
   const [awayStarter, homeStarter] = game.starters;
-  const reason = watchHookReason(game, rankLabel);
-  const reasonKey = watchHookReasonKey(game, rankLabel);
+  const reason = watchHookReasonValue(game, rankLabel);
+  const reasonKey = watchHookReasonKeyValue(game, rankLabel);
 
   return (
     <div
       className="flex min-h-full flex-col justify-between rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]"
       data-responsive-check="watch-hook"
-      data-hook-score={game.gameWatchScore.toFixed(1)}
+      data-hook-score={watchScoreValue(game)}
       data-hook-score-label="score"
       data-hook-reason-key={reasonKey}
       data-hook-reason={reason}
     >
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">The hook</p>
-        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{game.gameWatchScore.toFixed(1)}</p>
+        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
         <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
         <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
       </div>
@@ -572,6 +622,10 @@ function watchHookReason(game: TonightGame, rankLabel: string) {
   return isSlateRankLabel(rankLabel) ? "Top watch score on the slate" : "Top watch score in this group";
 }
 
+function watchHookReasonValue(game: TonightGame, rankLabel: string) {
+  return watchHookReason(game, rankLabel);
+}
+
 function watchHookReasonKey(game: TonightGame, rankLabel: string) {
   if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext.status === "pending-opponent-splits") {
     return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
@@ -580,6 +634,10 @@ function watchHookReasonKey(game: TonightGame, rankLabel: string) {
   if (game.starters.every((starter) => starter.trend === "heating")) return "two-heating";
   if (combinedProjectedStrikeouts(game.starters) >= 12) return "strikeout-upside";
   return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
+}
+
+function watchHookReasonKeyValue(game: TonightGame, rankLabel: string) {
+  return watchHookReasonKey(game, rankLabel);
 }
 
 function isSlateRankLabel(rankLabel: string) {
@@ -826,6 +884,14 @@ function watchFlagNoteKeys(game: TonightGame) {
   if (game.flags?.limitedForm) keys.push("limited-form");
   if (game.matchupContext.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
+}
+
+function watchFlagNoteKeysValue(game: TonightGame) {
+  return watchFlagNoteKeys(game).join("+") || "clear";
+}
+
+function watchFlagNoteLabelValue(game: TonightGame) {
+  return watchFlagNoteDataLabel(game);
 }
 
 function watchFlagNoteDataLabel(game: TonightGame) {
@@ -1352,12 +1418,24 @@ function watchCardSummaryId(game: TonightGame) {
   return `watch-card-${game.gamePk}-summary`;
 }
 
+function watchCardSummaryIdValue(game: TonightGame) {
+  return watchCardSummaryId(game);
+}
+
 function watchCardSummaryAriaLabel(game: TonightGame) {
   return `${gameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${gameVenueLabel(game)}`;
 }
 
+function watchCardSummaryAriaLabelValue(game: TonightGame) {
+  return watchCardSummaryAriaLabel(game);
+}
+
 function watchComponentsAriaLabel(game: TonightGame) {
   return `Watch components for ${game.label} on ${formatSlateDate(game.date)}`;
+}
+
+function watchComponentsAriaLabelValue(game: TonightGame) {
+  return watchComponentsAriaLabel(game);
 }
 
 function starterBlockAriaLabel(starter: TonightStarter) {
