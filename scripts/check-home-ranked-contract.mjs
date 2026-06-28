@@ -323,7 +323,9 @@ assert(
     homeDeferredSections.includes("ranked.liveLeaderboard ? (") &&
     homeDeferredSections.includes("<LiveLeaderboardStrip entries={ranked.liveLeaderboard} />") &&
     homeDeferredSections.includes('data-responsive-check="home-live-leaderboard-strip"') &&
-    homeDeferredSections.includes("<span>Live leaderboard</span>") &&
+    homeDeferredSections.includes('className="block sm:inline">Live</span>') &&
+    homeDeferredSections.includes('className="hidden sm:inline"> </span>') &&
+    homeDeferredSections.includes('className="block sm:inline">Leaderboard</span>') &&
     homeDeferredSections.includes("{entry.pitcherLastName}") &&
     homeDeferredSections.includes("Full live results"),
   "home must show a compact top-five live leaderboard stripe with last names only until a qualified live leader replaces it",
