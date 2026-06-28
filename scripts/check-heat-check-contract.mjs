@@ -373,7 +373,8 @@ assert(
     formPage.includes('className="block sm:inline">{nextStartDetails(pitcher)}</span>') &&
     formPage.includes("function nextStartDetails(pitcher: FormSummary)") &&
     formPage.includes('return " TBD";') &&
-    formPage.includes("return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;"),
+    formPage.includes("return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;") &&
+    !formPage.includes("return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;"),
   "Heat Check rows must top-align rank, headshot, text, trend, sparkline, follow, and score clusters inside each card",
 );
 

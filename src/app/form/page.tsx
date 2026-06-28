@@ -906,7 +906,7 @@ function formatMonthDay(value: string) {
 function nextStartDetails(pitcher: FormSummary) {
   if (!pitcher.nextStart?.opponent || !pitcher.nextStart.date) return " TBD";
   const matchup = pitcher.nextStart.side === "away" ? `@ ${pitcher.nextStart.opponent}` : `vs ${pitcher.nextStart.opponent}`;
-  return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;
+  return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 
 function isStartingToday(pitcher: FormSummary) {
