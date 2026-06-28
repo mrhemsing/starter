@@ -10,6 +10,7 @@ import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
+import { HeatCheckScrollReset } from "@/components/heat-check-scroll-reset";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
@@ -153,6 +154,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+      <HeatCheckScrollReset />
       <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">

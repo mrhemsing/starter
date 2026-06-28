@@ -13,6 +13,7 @@ const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8")
 const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", "utf8");
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
+const scrollReset = await readFile("src/components/heat-check-scroll-reset.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
@@ -211,6 +212,18 @@ assert(
     formPage.includes('ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}') &&
     formPage.includes('hover:border-amber-300/30" scroll={false}'),
   "Heat Check filter links must preserve mobile scroll position instead of jumping to the top",
+);
+
+assert(
+  formPage.includes('import { HeatCheckScrollReset } from "@/components/heat-check-scroll-reset";') &&
+    formPage.includes("<HeatCheckScrollReset />") &&
+    scrollReset.includes('"use client";') &&
+    scrollReset.includes('window.history.scrollRestoration = "manual";') &&
+    scrollReset.includes('navigation.type !== "navigate" && navigation.type !== "reload"') &&
+    scrollReset.includes("window.scrollTo(0, 0)") &&
+    scrollReset.includes("document.documentElement.scrollTop = 0") &&
+    scrollReset.includes("document.body.scrollTop = 0"),
+  "Heat Check hard refreshes and direct opens must force the board to start at the top without changing filter-link scroll preservation",
 );
 
 assert(
