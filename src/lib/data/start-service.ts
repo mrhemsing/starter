@@ -4,7 +4,7 @@ import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client"
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
-import { fetchMlbCompletedPitchingLines, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
+import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
 import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
@@ -199,9 +199,12 @@ export async function getRankedStartsArchiveNavigation(activeDate: string, today
 const getCachedRankedArchivedCompletedSlateDates = unstable_cache(
   async (season: string) => {
     const starts = await getArchivedSeasonStartSummaries(season);
-    return Array.from(new Set(starts.filter((start) => start.source?.line !== "fixture").map((start) => start.date))).sort();
+    const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== "fixture").map((start) => start.date))).sort();
+    if (archivedDates.length > 0) return archivedDates;
+
+    return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });
   },
-  ["ranked-starts-archive-dates-v2"],
+  ["ranked-starts-archive-dates-v3"],
   { revalidate: 15 * 60 },
 );
 

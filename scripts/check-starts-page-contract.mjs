@@ -9,6 +9,7 @@ function assert(condition, message) {
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const rankedStartsPageService = await readFile("src/lib/data/ranked-starts-page-service.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
@@ -79,7 +80,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v4";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v5";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
@@ -122,8 +123,16 @@ assert(
 assert(
   startService.includes("export async function getRankedStartsArchiveNavigation") &&
     startService.includes("const getCachedRankedArchivedCompletedSlateDates = unstable_cache(") &&
-    startService.includes('["ranked-starts-archive-dates-v2"]') &&
+    startService.includes('import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates,') &&
+    startService.includes('["ranked-starts-archive-dates-v3"]') &&
     startService.includes("{ revalidate: 15 * 60 }") &&
+    startService.includes("const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== \"fixture\").map((start) => start.date))).sort();") &&
+    startService.includes("if (archivedDates.length > 0) return archivedDates;") &&
+    startService.includes("return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });") &&
+    mlbStatsClient.includes("export async function fetchMlbCompletedScheduleDates") &&
+    mlbStatsClient.includes("startDate,") &&
+    mlbStatsClient.includes("endDate,") &&
+    mlbStatsClient.includes("(entry.games ?? []).some((game) => isFinalMlbApiGame(game))") &&
     startService.includes("return (await getRankedStartsArchiveNavigation(today, today)).latestDate;") &&
     startService.includes("if (todayCompletion.completedStarts > 0) dates.add(today);") &&
     startService.includes("activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today)") &&

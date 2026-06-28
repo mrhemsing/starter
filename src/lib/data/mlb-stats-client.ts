@@ -339,6 +339,29 @@ export async function fetchMlbSchedule(date: string, options: MlbScheduleClientO
   return promise;
 }
 
+export async function fetchMlbCompletedScheduleDates(startDate: string, endDate: string, options: MlbScheduleClientOptions = {}): Promise<string[]> {
+  if (!options.fetchLive) return [];
+
+  const params = new URLSearchParams({
+    sportId: "1",
+    startDate,
+    endDate,
+  });
+
+  try {
+    const response = await fetch(`${MLB_STATS_API_BASE}/schedule?${params.toString()}`, cachedRequestInit(options, MLB_SCHEDULE_REVALIDATE_SECONDS));
+    if (!response.ok) return [];
+
+    const payload = (await response.json()) as MlbScheduleApiResponse;
+    return (payload.dates ?? [])
+      .filter((entry) => entry.date && (entry.games ?? []).some((game) => isFinalMlbApiGame(game)))
+      .map((entry) => entry.date as string)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
 async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbSchedule> {
   const params = new URLSearchParams({
     sportId: "1",
@@ -356,6 +379,10 @@ async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOpti
   } catch {
     return getFixtureSchedule(date);
   }
+}
+
+function isFinalMlbApiGame(game: MlbApiGame) {
+  return game.status?.abstractGameState === "Final" || game.status?.detailedState === "Final" || game.status?.detailedState === "Completed Early";
 }
 
 export async function getMlbProbablePitchers(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbProbablePitcherGame[]> {
