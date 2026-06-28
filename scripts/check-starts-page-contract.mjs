@@ -18,6 +18,7 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
+const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
@@ -147,15 +148,29 @@ assert(
     siteHeader.includes("hideUpcoming={hideUpcoming}") &&
     siteNav.includes("hideUpcoming = false") &&
     siteNav.includes("const upcomingItem = hideUpcoming ? []") &&
+    startsPage.includes('import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";') &&
+    startsDisclosure.includes('"use client";') &&
+    startsDisclosure.includes("window.sessionStorage.getItem(storageKey)") &&
+    startsDisclosure.includes("window.sessionStorage.setItem(storageKey, nextOpen ? \"open\" : \"closed\")") &&
     startsPage.includes(">Ranked Starts</h1>") &&
     !startsPage.includes(">Daily Ranked Starts</h1>") &&
-    startsPage.includes("Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.") &&
-    startsPage.includes('data-responsive-check="ranked-starts-slate-stamp"') &&
-    startsPage.includes('data-responsive-check="ranked-starts-board-heading"') &&
-    startsPage.includes("formatBoardEyebrowDate(date)") &&
-    startsPage.includes('<p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">Ranked Board</p>') &&
-    startsPage.includes('<h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{formatBoardEyebrowDate(date)}</h2>') &&
-    startsPage.indexOf(">Ranked Board</p>") < startsPage.indexOf("{formatBoardEyebrowDate(date)}</h2>") &&
+    startsPage.includes("Completed starts ranked by GS+.") &&
+    !startsPage.includes("Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.") &&
+    startsPage.includes('data-responsive-check="ranked-starts-compact-controls"') &&
+    startsPage.includes('data-responsive-check="ranked-start-controls"') &&
+    startsPage.includes('data-active-filter-summary={filterSummary}') &&
+    startsPage.includes('storageKey="ranked-starts-filters-open"') &&
+    startsPage.includes('storageKey="ranked-starts-shape-open"') &&
+    startsPage.includes('storageKey="ranked-starts-method-open"') &&
+    startsPage.includes("const visibleQualityBands = QUALITY_BANDS.filter((qualityBand) => (qualityBandCounts.get(qualityBand.label) ?? 0) > 0);") &&
+    startsPage.includes("function rankedStartsFilterSummary") &&
+    startsPage.includes('style={{ pointerEvents: "none" }}') &&
+    startsPage.includes('data-responsive-check="ranked-starts-methodology-notes"') &&
+    startsPage.includes("<ScaleLegend scoreScale={scoreScale} />") &&
+    !startsPage.includes('data-responsive-check="ranked-starts-slate-stamp"') &&
+    !startsPage.includes('data-responsive-check="ranked-starts-board-heading"') &&
+    !startsPage.includes("formatBoardEyebrowDate(date)") &&
+    !startsPage.includes("Ranked Board</p>") &&
     startsPage.includes("MLB Stats API / Baseball Savant") &&
     !startsPage.includes("Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant") &&
     !startsPage.includes(">Previous day</Link>") &&
@@ -179,6 +194,7 @@ assert(
     !slateDateNav.includes('dataLatestState="jump"') &&
     !slateDateNav.includes("ranked-start-date-picker") &&
     !slateDateNav.includes("Pick a date") &&
+    !slateDateNav.includes('className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]"') &&
     !globals.includes(".ranked-start-date-picker-summary") &&
     slateDateNav.includes('className={slateRangeToggleClass(option.active)}') &&
     slateDateNav.includes('"border-amber-300 bg-amber-300 text-zinc-950"'),
@@ -239,11 +255,13 @@ assert(
 );
 
 assert(
-  startsPage.includes('className="mt-3 flex flex-col items-start gap-2"') &&
+  startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
+    startsPage.includes('className="flex flex-wrap items-center gap-2"') &&
     startsPage.includes('className="inline-flex min-h-6 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300"') &&
-    startsPage.includes('className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology"') &&
+    startsPage.includes('storageKey="ranked-starts-method-open" label="How rankings work"') &&
+    startsPage.includes('className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology"') &&
     !startsPage.includes("border-amber-300/30 bg-amber-300/10 px-3"),
-  "ranked starts header status and methodology link must share the title left edge without a bordered badge box",
+  "ranked starts header status and methodology must live in the compact controls without a standalone badge stack",
 );
 
 assert(

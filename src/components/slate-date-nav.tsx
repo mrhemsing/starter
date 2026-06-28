@@ -78,7 +78,7 @@ export function RankedStartsArchiveNav({
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
 
   return (
-    <nav className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
+    <nav className="flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">{formatRankedEyebrowDate(activeDate)}</span>
       <span className="inline-flex overflow-hidden rounded border border-white/10" aria-label="Step ranked starts slates">

@@ -9,6 +9,7 @@ import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitchChart } from "@/components/pitch-chart";
+import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
@@ -199,6 +200,9 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const highlights = new Map(pageData.highlights);
   const formByPitcher = new Map(pageData.formByPitcher);
   const jsonLd = jsonLdForRankedStarts(date, qualifiedStarts);
+  const filterSummary = rankedStartsFilterSummary(sort, band, qualifiedStarts.length, qualityBandCounts);
+  const hasNonDefaultFilter = sort !== "rank" || band !== "all";
+  const visibleQualityBands = QUALITY_BANDS.filter((qualityBand) => (qualityBandCounts.get(qualityBand.label) ?? 0) > 0);
   const visibleStarts = qualifiedStarts
     .filter((start) => band === "all" || qualityBandSlug(qualityTierOf(start.gameScorePlus).label) === band)
     .sort((a, b) => {
@@ -212,50 +216,64 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 pb-6">
+        <header className="mb-4">
           <SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.
-          </p>
-          <div className="mt-3 flex flex-col items-start gap-2">
-            <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
-            <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology">How rankings work</Link>
-          </div>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="ranked-starts-slate-stamp">
-            <ScaleLegend scoreScale={scoreScale} />
-          </p>
-          <RankedStartsArchiveNav
-            activeDate={archiveNavigation.activeDate}
-            previousDate={archiveNavigation.previousDate}
-            nextDate={archiveNavigation.nextDate}
-            isLatest={archiveNavigation.isLatest}
-          />
+          <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
           {starts.length > 0 ? (
-            <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="ranked-start-controls">
+            <section className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-zinc-500">Sort</span>
-                <ControlLink active={sort === "rank"} href={rankedStartsHref(date, { band, sort: "rank", showOpeners })}>GS+ rank</ControlLink>
-                <ControlLink active={sort === "k"} href={rankedStartsHref(date, { band, sort: "k", showOpeners })}>Strikeouts</ControlLink>
-                <ControlLink active={sort === "ip"} href={rankedStartsHref(date, { band, sort: "ip", showOpeners })}>IP</ControlLink>
+                <RankedStartsArchiveNav
+                  activeDate={archiveNavigation.activeDate}
+                  previousDate={archiveNavigation.previousDate}
+                  nextDate={archiveNavigation.nextDate}
+                  isLatest={archiveNavigation.isLatest}
+                />
+                <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-zinc-500">Band</span>
-                <ControlLink active={band === "all"} href={rankedStartsHref(date, { sort, showOpeners })}>All <span className="opacity-60">{qualifiedStarts.length}</span></ControlLink>
-                {QUALITY_BANDS.map((qualityBand) => (
-                  <ControlLink
-                    key={qualityBand.label}
-                    active={band === qualityBandSlug(qualityBand.label)}
-                    href={rankedStartsHref(date, { band: qualityBandSlug(qualityBand.label), sort, showOpeners })}
-                    color={qualityBand.color}
-                  >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: qualityBand.color }} />
-                    {qualityBand.label}
-                    <span className="opacity-60">{qualityBandCounts.get(qualityBand.label) ?? 0}</span>
-                  </ControlLink>
-                ))}
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]" data-responsive-check="ranked-start-controls">
+                <div className="flex min-w-0 gap-2" data-active-filter-summary={filterSummary}>
+                  <RankedStartsDisclosure storageKey="ranked-starts-filters-open" label="Filters" meta={filterSummary} className="min-w-0 flex-1" panelClassName="grid gap-3 font-mono text-xs uppercase tracking-[0.14em]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-zinc-500">Sort</span>
+                      <ControlLink active={sort === "rank"} href={rankedStartsHref(date, { band, sort: "rank", showOpeners })}>GS+ rank</ControlLink>
+                      <ControlLink active={sort === "k"} href={rankedStartsHref(date, { band, sort: "k", showOpeners })}>Strikeouts</ControlLink>
+                      <ControlLink active={sort === "ip"} href={rankedStartsHref(date, { band, sort: "ip", showOpeners })}>IP</ControlLink>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-zinc-500">Band</span>
+                      <ControlLink active={band === "all"} href={rankedStartsHref(date, { sort, showOpeners })}>All <span className="opacity-60">{qualifiedStarts.length}</span></ControlLink>
+                      {visibleQualityBands.map((qualityBand) => (
+                        <ControlLink
+                          key={qualityBand.label}
+                          active={band === qualityBandSlug(qualityBand.label)}
+                          href={rankedStartsHref(date, { band: qualityBandSlug(qualityBand.label), sort, showOpeners })}
+                          color={qualityBand.color}
+                        >
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: qualityBand.color }} />
+                          {qualityBand.label}
+                          <span className="opacity-60">{qualityBandCounts.get(qualityBand.label) ?? 0}</span>
+                        </ControlLink>
+                      ))}
+                    </div>
+                  </RankedStartsDisclosure>
+                  {hasNonDefaultFilter ? (
+                    <FastFilterLink className="inline-flex min-h-11 items-center rounded border border-white/10 bg-[#101014] px-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-300" href={rankedStartsHref(date, { showOpeners })}>Reset</FastFilterLink>
+                  ) : null}
+                </div>
+                <RankedStartsDisclosure storageKey="ranked-starts-shape-open" label="Slate shape" meta="Scatter">
+                  <StartsDistributionStrip starts={qualifiedStarts} />
+                </RankedStartsDisclosure>
+                <RankedStartsDisclosure storageKey="ranked-starts-method-open" label="How rankings work" meta="Scale, rules, source">
+                  <div className="grid gap-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" data-responsive-check="ranked-starts-methodology-notes">
+                    <p><ScaleLegend scoreScale={scoreScale} /></p>
+                    <p>Board ranks starts of 2.0+ innings; openers and short outings are listed separately.</p>
+                    <p>MLB Stats API / Baseball Savant</p>
+                    <Link className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology">Full methodology</Link>
+                  </div>
+                </RankedStartsDisclosure>
               </div>
-            </div>
+            </section>
           ) : null}
         </header>
 
@@ -266,19 +284,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           </section>
         ) : (
           <>
-            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-              Board ranks starts of 2.0+ innings; openers and short outings are listed separately.
-            </p>
-            <section className="mb-4" data-responsive-check="ranked-starts-board-heading">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">Ranked Board</p>
-              <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{formatBoardEyebrowDate(date)}</h2>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-                MLB Stats API / Baseball Savant
-              </p>
-            </section>
-            <StartsDistributionStrip starts={qualifiedStarts} />
             {visibleStarts.length > 0 ? (
-              <section className="mt-4 space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
+              <section className="space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
                 {groupedStarts.map((group) => (
                   <div key={group.key} className="space-y-2">
                     {group.label ? <BandHeader label={group.label} count={group.count} color={group.color} /> : null}
@@ -478,8 +485,8 @@ function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSl
 
 function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
   const width = 760;
-  const height = 360;
-  const pad = { left: 48, right: 28, top: 34, bottom: 44 };
+  const height = 260;
+  const pad = { left: 42, right: 24, top: 24, bottom: 38 };
   const xFor = (score: number) => pad.left + (clamp(score, 0, 100) / 100) * (width - pad.left - pad.right);
   const maxInnings = Math.max(9, ...starts.map((start) => inningsFromIP(start.line.inningsPitched)));
   const yFor = (innings: number) => pad.top + ((maxInnings - innings) / maxInnings) * (height - pad.top - pad.bottom);
@@ -502,36 +509,30 @@ function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
   if (worst) labelIds.add(worst.id);
 
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="ranked-start-distribution">
-      <div className="mb-2 flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Slate scatter</p>
-          <h2 className="font-serif text-2xl font-bold text-zinc-50">Slate shape</h2>
-        </div>
-        <p className="font-mono text-xs text-zinc-500">Click a point to jump to the row</p>
-      </div>
-      <svg className="h-[320px] w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${starts.length} starts distributed by GS+ and innings pitched`}>
-        <rect x={pad.left} y={pad.top} width={width - pad.left - pad.right} height={height - pad.top - pad.bottom} fill="#0b0b0e" opacity="0.58" />
+    <div data-responsive-check="ranked-start-distribution">
+      <p className="mb-2 font-mono text-xs text-zinc-500">Click a point to jump to the row</p>
+      <svg className="h-[220px] w-full sm:h-[240px]" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${starts.length} starts distributed by GS+ and innings pitched`}>
+        <rect x={pad.left} y={pad.top} width={width - pad.left - pad.right} height={height - pad.top - pad.bottom} fill="#0b0b0e" opacity="0.58" style={{ pointerEvents: "none" }} />
         {[20, 40, 60, 80].map((tick) => (
           <g key={`x-${tick}`}>
-            <line x1={xFor(tick)} x2={xFor(tick)} y1={pad.top} y2={height - pad.bottom} stroke="#27272a" />
-            <text x={xFor(tick)} y={height - 15} textAnchor="middle" fill="#71717a" fontSize="11">{tick}</text>
+            <line x1={xFor(tick)} x2={xFor(tick)} y1={pad.top} y2={height - pad.bottom} stroke="#27272a" style={{ pointerEvents: "none" }} />
+            <text x={xFor(tick)} y={height - 15} textAnchor="middle" fill="#71717a" fontSize="11" style={{ pointerEvents: "none" }}>{tick}</text>
           </g>
         ))}
         {[0, 3, 6, 9].map((tick) => (
           <g key={`y-${tick}`}>
-            <line x1={pad.left} x2={width - pad.right} y1={yFor(tick)} y2={yFor(tick)} stroke="#27272a" />
-            <text x={pad.left - 12} y={yFor(tick) + 4} textAnchor="end" fill="#71717a" fontSize="11">{tick}</text>
+            <line x1={pad.left} x2={width - pad.right} y1={yFor(tick)} y2={yFor(tick)} stroke="#27272a" style={{ pointerEvents: "none" }} />
+            <text x={pad.left - 12} y={yFor(tick) + 4} textAnchor="end" fill="#71717a" fontSize="11" style={{ pointerEvents: "none" }}>{tick}</text>
           </g>
         ))}
-        <line x1={pad.left} x2={width - pad.right} y1={height - pad.bottom} y2={height - pad.bottom} stroke="#3f3f46" />
-        <line x1={pad.left} x2={pad.left} y1={pad.top} y2={height - pad.bottom} stroke="#3f3f46" />
-        <line x1={xFor(mean)} x2={xFor(mean)} y1={pad.top} y2={height - pad.bottom} stroke="#a1a1aa" strokeDasharray="4 5" />
-        <line x1={pad.left} x2={width - pad.right} y1={yFor(5)} y2={yFor(5)} stroke="#a1a1aa" strokeDasharray="4 5" opacity="0.85" />
-        <text x={Math.min(width - 122, xFor(mean) + 8)} y={pad.top + 16} fill="#a1a1aa" fontSize="12">avg {mean.toFixed(1)} GS+</text>
-        <text x={width - pad.right - 88} y={yFor(5) - 8} fill="#a1a1aa" fontSize="12">5.0 IP</text>
-        <text x={(pad.left + width - pad.right) / 2} y={height - 4} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace">GS+</text>
-        <text x="14" y={(pad.top + height - pad.bottom) / 2} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" transform={`rotate(-90 14 ${(pad.top + height - pad.bottom) / 2})`}>IP</text>
+        <line x1={pad.left} x2={width - pad.right} y1={height - pad.bottom} y2={height - pad.bottom} stroke="#3f3f46" style={{ pointerEvents: "none" }} />
+        <line x1={pad.left} x2={pad.left} y1={pad.top} y2={height - pad.bottom} stroke="#3f3f46" style={{ pointerEvents: "none" }} />
+        <line x1={xFor(mean)} x2={xFor(mean)} y1={pad.top} y2={height - pad.bottom} stroke="#a1a1aa" strokeDasharray="4 5" style={{ pointerEvents: "none" }} />
+        <line x1={pad.left} x2={width - pad.right} y1={yFor(5)} y2={yFor(5)} stroke="#a1a1aa" strokeDasharray="4 5" opacity="0.85" style={{ pointerEvents: "none" }} />
+        <text x={Math.min(width - 122, xFor(mean) + 8)} y={pad.top + 16} fill="#a1a1aa" fontSize="12" style={{ pointerEvents: "none" }}>avg {mean.toFixed(1)} GS+</text>
+        <text x={width - pad.right - 88} y={yFor(5) - 8} fill="#a1a1aa" fontSize="12" style={{ pointerEvents: "none" }}>5.0 IP</text>
+        <text x={(pad.left + width - pad.right) / 2} y={height - 4} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" style={{ pointerEvents: "none" }}>GS+</text>
+        <text x="14" y={(pad.top + height - pad.bottom) / 2} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" transform={`rotate(-90 14 ${(pad.top + height - pad.bottom) / 2})`} style={{ pointerEvents: "none" }}>IP</text>
         {points.map(({ start, x, y }) => {
           const band = qualityTierOf(start.gameScorePlus);
           const shouldLabel = labelIds.has(start.id);
@@ -552,7 +553,7 @@ function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
           );
         })}
       </svg>
-    </section>
+    </div>
   );
 }
 
@@ -773,6 +774,14 @@ function countQualityBands(starts: StartSummary[]) {
   return counts;
 }
 
+function rankedStartsFilterSummary(sort: RankedStartSort, band: QualityBandFilter, total: number, counts: Map<string, number>) {
+  const sortLabel = sort === "k" ? "Strikeouts" : sort === "ip" ? "IP" : "GS+ rank";
+  if (band === "all") return `${sortLabel} · All ${total}`;
+  const qualityBand = QUALITY_BANDS.find((candidate) => qualityBandSlug(candidate.label) === band);
+  const label = qualityBand?.label ?? band.replace(/-/g, " ");
+  return `${sortLabel} · ${label} ${counts.get(label) ?? 0}`;
+}
+
 function rankedStartsHref(date: string, values: { band?: QualityBandFilter; sort?: string; showOpeners?: boolean }) {
   const params = new URLSearchParams();
   if (values.sort && values.sort !== "rank") params.set("sort", values.sort);
@@ -950,10 +959,4 @@ function stableHash(value: string) {
     hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   }
   return hash;
-}
-
-function formatBoardEyebrowDate(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(parsed);
 }
