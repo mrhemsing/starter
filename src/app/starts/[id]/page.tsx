@@ -271,8 +271,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               Board ranks starts of 2.0+ innings; openers and short outings are listed separately.
             </p>
             <section className="mb-4" data-responsive-check="ranked-starts-board-heading">
-              <h2 className="font-serif text-3xl font-bold text-zinc-50">Ranked Board</h2>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">{formatBoardEyebrowDate(date)}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">Ranked Board</p>
+              <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{formatBoardEyebrowDate(date)}</h2>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
                 MLB Stats API / Baseball Savant
               </p>

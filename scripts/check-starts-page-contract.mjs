@@ -154,8 +154,9 @@ assert(
     startsPage.includes('data-responsive-check="ranked-starts-slate-stamp"') &&
     startsPage.includes('data-responsive-check="ranked-starts-board-heading"') &&
     startsPage.includes("formatBoardEyebrowDate(date)") &&
-    startsPage.includes(">Ranked Board</h2>") &&
-    startsPage.indexOf(">Ranked Board</h2>") < startsPage.indexOf("{formatBoardEyebrowDate(date)}") &&
+    startsPage.includes('<p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">Ranked Board</p>') &&
+    startsPage.includes('<h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{formatBoardEyebrowDate(date)}</h2>') &&
+    startsPage.indexOf(">Ranked Board</p>") < startsPage.indexOf("{formatBoardEyebrowDate(date)}</h2>") &&
     startsPage.includes("MLB Stats API / Baseball Savant") &&
     !startsPage.includes("Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant") &&
     !startsPage.includes(">Previous day</Link>") &&
