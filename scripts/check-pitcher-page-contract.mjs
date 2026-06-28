@@ -13,6 +13,7 @@ const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
 const pitcherLoadingPage = await readFile("src/app/pitchers/[id]/loading.tsx", "utf8");
 const pitchersLoadingPage = await readFile("src/app/pitchers/loading.tsx", "utf8");
+const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
 const pitcherAvailability = await readFile("src/components/pitcher-availability.tsx", "utf8");
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
@@ -231,12 +232,16 @@ assert(
 );
 
 assert(
-  pitcherLoadingPage.includes("export default function PitcherProfileLoading") &&
+    pitcherLoadingPage.includes("export default function PitcherProfileLoading") &&
+    pitcherLoadingPage.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
     pitchersLoadingPage.includes('export { default } from "./[id]/loading";') &&
-    pitcherLoadingPage.includes('data-responsive-check="pitcher-profile-loading"') &&
-    pitcherLoadingPage.includes('aria-busy="true"') &&
+    pitcherLoadingPage.includes('responsiveCheck="pitcher-profile-loading"') &&
+    pitcherLoadingPage.includes('activeLabel="Heat Check"') &&
     pitcherLoadingPage.includes("Loading pitcher profile") &&
-    pitcherLoadingPage.includes("Heat Check"),
+    routeLoadingShell.includes('aria-busy="true"') &&
+    routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
+    routeLoadingShell.includes("route-loading-delayed-message") &&
+    routeLoadingShell.includes("Retrieving fresh data"),
   "canonical pitcher profile route must provide an immediate loading shell during in-app navigation",
 );
 

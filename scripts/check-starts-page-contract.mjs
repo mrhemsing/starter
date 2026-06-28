@@ -19,6 +19,7 @@ const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
 const startsLoading = await readFile("src/app/starts/[id]/loading.tsx", "utf8");
+const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 
 const visibleTieBreakerOrder = [
   {
@@ -63,8 +64,13 @@ assert(
     primaryNavLink.includes("event.preventDefault()") &&
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
-    startsLoading.includes('data-responsive-check="ranked-starts-loading"') &&
-    startsLoading.includes('aria-label="Loading ranked starts"'),
+    startsLoading.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
+    startsLoading.includes('activeLabel="Ranked Starts"') &&
+    startsLoading.includes('responsiveCheck="ranked-starts-loading"') &&
+    startsLoading.includes('aria-label="Loading ranked starts"') &&
+    routeLoadingShell.includes('aria-busy="true"') &&
+    routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
+    routeLoadingShell.includes("route-loading-delayed-message"),
   "ranked starts navigation must prefetch on intent and show an immediate loading shell",
 );
 

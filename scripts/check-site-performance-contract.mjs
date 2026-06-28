@@ -29,6 +29,9 @@ const heatCheckWarmup = await read("src/components/heat-check-filter-warmup.tsx"
 const heatCheckPage = await read("src/app/form/page.tsx");
 const upcomingDatePage = await read("src/app/upcoming/[date]/page.tsx");
 const startsPage = await read("src/app/starts/[id]/page.tsx");
+const appLoading = await read("src/app/loading.tsx");
+const routeLoadingShell = await read("src/components/route-loading-shell.tsx");
+const globals = await read("src/app/globals.css");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -120,6 +123,22 @@ assert(
 assert(
   upcomingDatePage.includes("data-control-link-active={String(active)}"),
   "Upcoming filter controls must preserve active-state metadata",
+);
+
+assert(
+  appLoading.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
+    appLoading.includes('responsiveCheck="app-route-loading"') &&
+    routeLoadingShell.includes("export function RouteLoadingShell") &&
+    routeLoadingShell.includes('aria-busy="true"') &&
+    routeLoadingShell.includes("route-loading-spinner") &&
+    routeLoadingShell.includes("route-loading-delayed-message") &&
+    routeLoadingShell.includes("Retrieving fresh data") &&
+    globals.includes(".route-loading-spinner") &&
+    globals.includes("animation: route-loading-spin 880ms linear infinite;") &&
+    globals.includes(".route-loading-delayed-message") &&
+    globals.includes("animation: route-loading-delayed-message 160ms ease 2s both;") &&
+    globals.includes("@media (prefers-reduced-motion: reduce)"),
+  "slow route transitions must use a shared app-level loading shell with an animated spinner and 2s delayed data message",
 );
 
 assert(
