@@ -577,8 +577,9 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Scheduled starter</span> : null}
         </p>
-        <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
-          {nextStartLine(pitcher)}
+        <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
+          <span>Next start:</span>
+          <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
         </p>
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
         <div className="flex min-w-0 flex-wrap gap-1.5">
@@ -902,10 +903,10 @@ function formatMonthDay(value: string) {
   }).format(date);
 }
 
-function nextStartLine(pitcher: FormSummary) {
-  if (!pitcher.nextStart?.opponent || !pitcher.nextStart.date) return "NEXT START: TBD";
+function nextStartDetails(pitcher: FormSummary) {
+  if (!pitcher.nextStart?.opponent || !pitcher.nextStart.date) return " TBD";
   const matchup = pitcher.nextStart.side === "away" ? `@ ${pitcher.nextStart.opponent}` : `vs ${pitcher.nextStart.opponent}`;
-  return `NEXT START: ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;
+  return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 
 function isStartingToday(pitcher: FormSummary) {

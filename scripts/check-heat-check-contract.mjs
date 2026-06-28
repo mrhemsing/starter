@@ -369,10 +369,11 @@ assert(
     formPage.includes('className="col-span-full row-start-2 min-w-0 sm:hidden"') &&
     formPage.includes("<FormDeltaLabel summary={pitcher} />") &&
     formPage.includes('fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
-    formPage.includes("function nextStartLine(pitcher: FormSummary)") &&
-    formPage.includes('return "NEXT START: TBD";') &&
-    formPage.includes("NEXT START: ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}") &&
-    formPage.includes("{nextStartLine(pitcher)}"),
+    formPage.includes("<span>Next start:</span>") &&
+    formPage.includes('className="block sm:inline">{nextStartDetails(pitcher)}</span>') &&
+    formPage.includes("function nextStartDetails(pitcher: FormSummary)") &&
+    formPage.includes('return " TBD";') &&
+    formPage.includes("return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;"),
   "Heat Check rows must top-align rank, headshot, text, trend, sparkline, follow, and score clusters inside each card",
 );
 
