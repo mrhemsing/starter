@@ -4,7 +4,7 @@ import { getPitcherFormMap } from "@/lib/data/form-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRankedStartsArchiveNavigation, getSlateStartProgress } from "@/lib/data/start-service";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v1";
+const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v2";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;
 

@@ -79,7 +79,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v1";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v2";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
