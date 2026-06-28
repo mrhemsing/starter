@@ -243,6 +243,7 @@ export type FormSummary = {
   tier: FormTier;
   heatIndex?: number;
   spark: number[];
+  formSpark: number[];
   lastStart: FormStartPoint | null;
   seasonStats: FormSeasonStats;
   driverChips: FormDriverChip[];

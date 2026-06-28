@@ -1,4 +1,5 @@
-import { FORM_CHART_COLORS, GS_TIERS, TREND_STYLES } from "@/lib/form-tokens";
+import { FORM_CHART_COLORS, GS_TIERS, TREND_STYLES, formDeltaBand } from "@/lib/form-tokens";
+import type { CSSProperties } from "react";
 import type { FormStartPoint, FormSummary, FormTier } from "@/lib/types";
 
 const tierStyles = Object.fromEntries(GS_TIERS.map((tier) => [tier.key, tier])) as Record<FormTier, typeof GS_TIERS[number]>;
@@ -30,6 +31,9 @@ export function FormSparkline({
   label,
   strokeColor,
   strokeDasharray,
+  deltaForm,
+  baselineValue,
+  window,
   trend = "steady",
   variant = "row",
   intensity = "field",
@@ -40,6 +44,9 @@ export function FormSparkline({
   label: string;
   strokeColor?: string;
   strokeDasharray?: string;
+  deltaForm?: number;
+  baselineValue?: number;
+  window?: number;
   trend?: FormSummary["trend"];
   variant?: "row" | "hero" | "mini";
   intensity?: "pole" | "field";
@@ -48,35 +55,39 @@ export function FormSparkline({
   const height = variant === "hero" ? 92 : variant === "mini" ? 42 : 66;
   const padding = 5;
   const points = values.length > 0 ? values : [leagueMeanGS];
-  const lineColor = strokeColor ?? (trend === "heating" ? "#FF7A3D" : trend === "cooling" ? "#8FCBFF" : tierStyles[tier].color);
+  const deltaBand = typeof deltaForm === "number" ? formDeltaBand(deltaForm) : null;
+  const lineColor = strokeColor ?? deltaBand?.color ?? (trend === "heating" ? "var(--level-hot)" : trend === "cooling" ? "var(--level-cooling)" : tierStyles[tier].color);
   const min = 20;
   const max = 80;
   const xFor = (index: number) => padding + (points.length === 1 ? width / 2 - padding : (index / (points.length - 1)) * (width - padding * 2));
   const yFor = (value: number) => padding + ((max - value) / (max - min)) * (height - padding * 2);
   const path = points.map((value, index) => `${index === 0 ? "M" : "L"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
-  const leagueY = yFor(leagueMeanGS);
+  const baselineY = yFor(baselineValue ?? leagueMeanGS);
   const lastX = xFor(points.length - 1);
   const lastY = yFor(points.at(-1) ?? leagueMeanGS);
   const areaPath = `${path} L ${lastX.toFixed(1)} ${(height - padding).toFixed(1)} L ${xFor(0).toFixed(1)} ${(height - padding).toFixed(1)} Z`;
-  const gradientId = `form-spark-${tier}-${trend}-${points.join("-").replaceAll(".", "_")}-${variant}`;
-  const fillColor = trend === "heating" ? "#EF9F27" : trend === "cooling" ? "#378ADD" : lineColor;
+  const gradientId = `form-spark-${tier}-${deltaBand?.key ?? trend}-${points.join("-").replaceAll(".", "_")}-${window ?? "default"}-${variant}`;
+  const fillColor = lineColor;
+  const lineStyle = { stroke: lineColor } satisfies CSSProperties;
+  const fillStyle = { fill: lineColor } satisfies CSSProperties;
+  const stopStyle = { stopColor: fillColor } satisfies CSSProperties;
 
   return (
     <div>
       <svg className={variant === "hero" ? "h-24 w-full" : variant === "mini" ? "h-11 w-full" : "h-16 w-full"} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={fillColor} stopOpacity={variant === "hero" ? "0.34" : "0.26"} />
-            <stop offset="100%" stopColor={fillColor} stopOpacity="0" />
+            <stop offset="0%" style={stopStyle} stopOpacity={variant === "hero" ? "0.34" : "0.26"} />
+            <stop offset="100%" style={stopStyle} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <line x1={padding} y1={leagueY} x2={width - padding} y2={leagueY} stroke={FORM_CHART_COLORS.gridStrong} strokeDasharray="3 3" />
+        <line x1={padding} y1={baselineY} x2={width - padding} y2={baselineY} stroke={FORM_CHART_COLORS.gridStrong} strokeDasharray="3 3" />
         {points.length > 1 ? <path className="form-spark-area" d={areaPath} fill={`url(#${gradientId})`} /> : null}
-        <path className={`form-spark-line ${intensity === "pole" ? "is-animated is-glowing" : ""}`} d={path} fill="none" stroke={intensity === "field" ? `${lineColor}CC` : lineColor} strokeWidth={variant === "hero" ? "4" : intensity === "field" ? "1.5" : variant === "mini" ? "2" : "3"} strokeDasharray={strokeDasharray} strokeLinecap="round" strokeLinejoin="round" />
+        <path className={`form-spark-line ${intensity === "pole" ? "is-animated is-glowing" : ""}`} d={path} fill="none" style={lineStyle} strokeOpacity={intensity === "field" ? "0.8" : "1"} strokeWidth={variant === "hero" ? "4" : intensity === "field" ? "1.5" : variant === "mini" ? "2" : "3"} strokeDasharray={strokeDasharray} strokeLinecap="round" strokeLinejoin="round" />
         {points.slice(0, -1).map((value, index) => (
-          <circle key={`${value}-${index}`} cx={xFor(index)} cy={yFor(value)} r={variant === "hero" ? "3.2" : "2.4"} fill={lineColor} opacity="0.72" />
+          <circle key={`${value}-${index}`} cx={xFor(index)} cy={yFor(value)} r={variant === "hero" ? "3.2" : "2.4"} style={fillStyle} opacity="0.72" />
         ))}
-        <circle cx={lastX} cy={lastY} r={variant === "hero" ? "6.2" : "4.8"} fill={lineColor} />
+        <circle cx={lastX} cy={lastY} r={variant === "hero" ? "6.2" : "4.8"} style={fillStyle} />
       </svg>
       <p className="sr-only">{label}</p>
     </div>

@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-level-bands-v2";
+const FORM_CACHE_VERSION = "form-level-bands-v3";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -539,7 +539,8 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const windowCount = windowStarts.length;
   const rgs = mean(windowStarts.map((start) => start.gameScorePlus));
   const bgs = mean(starts.map((start) => start.gameScorePlus));
-  const deltaForm = rgs - bgs;
+  const formSpark = buildRollingFormSpark(starts, window);
+  const deltaForm = rgs - (formSpark[0] ?? rgs);
   const trendDelta = calculateTrendDelta(windowStarts);
   const trend = classifyTrend(deltaForm, window);
   const status = windowCount >= FORM_CONFIG.minStartsInWindow ? "ok" : "insufficient";
@@ -565,6 +566,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     tier,
     heatIndex: calculateHeatIndex(rgs, leagueMeanGS, trendDelta),
     spark: windowStarts.map((start) => start.gameScorePlus),
+    formSpark,
     lastStart,
     seasonStats,
     driverChips,
@@ -801,6 +803,17 @@ function compareRollingFormLevelDesc(a: FormSummary, b: FormSummary) {
   if ((b.heatIndex ?? 0) !== (a.heatIndex ?? 0)) return (b.heatIndex ?? 0) - (a.heatIndex ?? 0);
   if (b.deltaForm !== a.deltaForm) return b.deltaForm - a.deltaForm;
   return a.name.localeCompare(b.name);
+}
+
+function buildRollingFormSpark(starts: StartSummary[], window: FormWindow) {
+  const windowStarts = starts.slice(-Math.min(window, starts.length));
+  const firstWindowIndex = starts.length - windowStarts.length;
+
+  return windowStarts.map((_, index) => {
+    const endIndex = firstWindowIndex + index + 1;
+    const sample = starts.slice(Math.max(0, endIndex - window), endIndex);
+    return round1(mean(sample.map((start) => start.gameScorePlus)));
+  });
 }
 
 function compareRollingFormLevelAsc(a: FormSummary, b: FormSummary) {

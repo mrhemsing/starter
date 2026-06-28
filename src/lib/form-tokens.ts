@@ -32,6 +32,31 @@ export const FORM_CONFIG = {
   heatIndexTrendWeight: 0.7,
 };
 
+export const FORM_DELTA_STEADY_THRESHOLD = 1.0;
+
+export type FormDeltaBandKey = "warming" | "steady" | "cooling";
+
+export type FormDeltaBand = {
+  key: FormDeltaBandKey;
+  label: string;
+  marker: "" | "↑" | "↓";
+  color: string;
+  cssVar: string;
+  directionLabel: "up" | "steady" | "down";
+};
+
+export const FORM_DELTA_BANDS: Record<FormDeltaBandKey, FormDeltaBand> = {
+  warming: { key: "warming", label: "Warming", marker: "↑", color: "var(--level-hot)", cssVar: "--level-hot", directionLabel: "up" },
+  steady: { key: "steady", label: "Steady", marker: "", color: "var(--form-steady, #a1a1aa)", cssVar: "--form-steady", directionLabel: "steady" },
+  cooling: { key: "cooling", label: "Cooling", marker: "↓", color: "var(--level-cooling)", cssVar: "--level-cooling", directionLabel: "down" },
+};
+
+export function formDeltaBand(deltaForm: number) {
+  if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.warming;
+  if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.cooling;
+  return FORM_DELTA_BANDS.steady;
+}
+
 export const LEVEL_BANDS: LevelBandToken[] = [
   { key: "onfire", label: "On Fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
   { key: "hot", label: "Heating Up", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },

@@ -14,7 +14,11 @@ const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", 
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
 const scrollReset = await readFile("src/components/heat-check-scroll-reset.tsx", "utf8");
+const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
+const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
+const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const globals = await readFile("src/app/globals.css", "utf8");
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
@@ -358,7 +362,7 @@ assert(
 );
 
 assert(
-  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v2";') &&
+  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v3";') &&
     formService.includes("const [availabilityStatuses, nextStarts] = await Promise.all([") &&
     formService.includes("getNextStartMap(summaries.map((summary) => summary.pitcherId)),") &&
     formService.includes("const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);") &&
@@ -368,11 +372,49 @@ assert(
 
 assert(
   formPage.includes("function FormDeltaLabel") &&
-    formPage.includes('const label = steady ? "steady" : `${marker} ${formatSignedDelta(summary.deltaForm)}`') &&
-    formPage.includes("text-cyan-300") &&
-    formPage.includes("text-amber-300") &&
+    formPage.includes("const band = formDeltaBand(summary.deltaForm);") &&
+    formPage.includes('const label = band.key === "steady" ? "steady" : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;') &&
+    formPage.includes("style={{ color: band.color }}") &&
+    formPage.includes("function formSparklineLabel(pitcher: FormSummary, window: number)") &&
+    formPage.includes("Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}") &&
+    formPage.includes("values={formSparkValues(pitcher)}") &&
+    formPage.includes("baselineValue={formSparkBaseline(pitcher)}") &&
+    formPage.includes("deltaForm={pitcher.deltaForm}") &&
     !formPage.includes("<TrendChip summary={pitcher} compact />"),
-  "Heat Check row delta must be quiet text in the score cluster, not a stranded bordered pill",
+  "Heat Check row delta and sparkline must use shared form-delta banding, form-series values, and accessible form trend labels",
+);
+
+assert(
+  formTokens.includes("export const FORM_DELTA_STEADY_THRESHOLD = 1.0;") &&
+    formTokens.includes('warming: { key: "warming"') &&
+    formTokens.includes('steady: { key: "steady"') &&
+    formTokens.includes('cooling: { key: "cooling"') &&
+    formTokens.includes("export function formDeltaBand(deltaForm: number)") &&
+    formTokens.includes("if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.warming;") &&
+    formTokens.includes("if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.cooling;") &&
+    globals.includes("--form-steady: #a1a1aa;"),
+  "Heat Check form delta banding must have one inclusive 1.0 threshold and a neutral --form-steady token",
+);
+
+assert(
+  formService.includes("function buildRollingFormSpark(starts: StartSummary[], window: FormWindow)") &&
+    formService.includes("formSpark,") &&
+    formService.includes("spark: windowStarts.map((start) => start.gameScorePlus),") &&
+    formService.includes("const deltaForm = rgs - (formSpark[0] ?? rgs);"),
+  "Heat Check data must expose rolling FORM spark values while preserving raw per-start GS+ inputs",
+);
+
+assert(
+    formVisuals.includes("formDeltaBand") &&
+    formVisuals.includes("baselineValue?: number;") &&
+    formVisuals.includes("const baselineY = yFor(baselineValue ?? leagueMeanGS);") &&
+    formVisuals.includes("const lineStyle = { stroke: lineColor } satisfies CSSProperties;") &&
+    formVisuals.includes('style={lineStyle} strokeOpacity={intensity === "field" ? "0.8" : "1"}') &&
+    formVisuals.includes("const fillStyle = { fill: lineColor } satisfies CSSProperties;") &&
+    heatHero.includes("formDeltaBand(pitcher.deltaForm)") &&
+    heatHero.includes("values={formSparkValues(pitcher)}") &&
+    heatHero.includes("baselineValue={formSparkBaseline(pitcher)}"),
+  "Heat Check sparkline stroke, endpoint, fill, and homepage Heat Check hero must follow shared form-delta coloring and baseline",
 );
 
 console.log("heat check contract ok: bar filters, mobile band jumps, league counts, filter status, compact momentum hero, form cluster, top-aligned rows, and canonical pitcher links are locked");

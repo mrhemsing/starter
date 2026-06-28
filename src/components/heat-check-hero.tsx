@@ -5,7 +5,7 @@ import { FormSparkline } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
-import { HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
+import { HEAT_BANDS, HOME_CONFIG, formDeltaBand } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
 
@@ -112,6 +112,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
   const band = levelBandFor(pitcher);
   const nextStart = nextStartDetails(pitcher);
   const tone = heatTone(band);
+  const deltaBand = formDeltaBand(pitcher.deltaForm);
   const intensity = heatIntensity(pitcher.heatIndex ?? 0, band);
   const cardStyle = intensity.mode === "fire"
     ? ({ "--burn": intensity.value } as CSSProperties)
@@ -169,16 +170,19 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
 
         <div className="flex items-baseline gap-0.5 min-[360px]:gap-1.5" aria-label={`RGS ${pitcher.rgs.toFixed(1)}, movement ${formatSignedDecimal(pitcher.deltaForm)}`}>
           <p className="font-mono text-[26px] font-extrabold leading-none tracking-normal tabular-nums min-[360px]:text-[36px]" style={{ color: tone.scoreColor }}>{pitcher.rgs.toFixed(1)}</p>
-          <p className="whitespace-nowrap font-mono text-[10px] font-semibold tracking-normal min-[360px]:text-sm" style={{ color: tone.deltaColor }}>{trendMarker(pitcher.deltaForm)} {formatSignedDecimal(pitcher.deltaForm)}</p>
+          <p className="whitespace-nowrap font-mono text-[10px] font-semibold tracking-normal min-[360px]:text-sm" style={{ color: deltaBand.color }}>{deltaBand.marker ? `${deltaBand.marker} ${formatSignedDecimal(pitcher.deltaForm)}` : "STEADY"}</p>
           <p className="ml-auto self-end pb-1 font-mono text-[7px] uppercase tracking-[0.14em] text-[#56565e] min-[360px]:text-[10.5px]">RGS</p>
         </div>
 
         <HeatMeter heatIndex={pitcher.heatIndex ?? 0} band={band} deltaForm={pitcher.deltaForm} />
         <FormSparkline
-          values={pitcher.spark}
+          values={formSparkValues(pitcher)}
           tier={pitcher.tier}
           leagueMeanGS={leagueMeanGS}
-          label={`${pitcher.name} recent GS+: ${pitcher.spark.join(", ")}`}
+          baselineValue={formSparkBaseline(pitcher)}
+          deltaForm={pitcher.deltaForm}
+          window={window}
+          label={`Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}`}
           trend={pitcher.trend}
           variant="mini"
         />
@@ -238,10 +242,18 @@ function formatSignedDecimal(value: number) {
   return rounded;
 }
 
-function trendMarker(value: number) {
-  if (value > 0) return "↑";
-  if (value < 0) return "↓";
-  return "→";
+function deltaAriaLabel(pitcher: FormSummary) {
+  const band = formDeltaBand(pitcher.deltaForm);
+  if (band.key === "steady") return "steady";
+  return `${band.directionLabel} ${formatSignedDecimal(pitcher.deltaForm)}`;
+}
+
+function formSparkValues(pitcher: FormSummary) {
+  return pitcher.formSpark.length > 0 ? pitcher.formSpark : [pitcher.rgs];
+}
+
+function formSparkBaseline(pitcher: FormSummary) {
+  return formSparkValues(pitcher)[0] ?? pitcher.rgs;
 }
 
 type HeatIntensity = { mode: "fire" | "ice" | "neutral"; value: number };

@@ -21,7 +21,7 @@ import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
-import { FORM_CONFIG, HEAT_BANDS } from "@/lib/form-tokens";
+import { FORM_CONFIG, HEAT_BANDS, formDeltaBand } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -466,7 +466,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
           </div>
         </div>
         <div className="col-span-full row-start-2 min-w-0 sm:row-start-auto sm:col-span-2">
-          <FormSparkline values={pitcher.spark} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} label={`${pitcher.name} last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`} trend={pitcher.trend} variant="hero" intensity="pole" />
+          <FormSparkline values={formSparkValues(pitcher)} tier={pitcher.tier} leagueMeanGS={leagueMeanGS} baselineValue={formSparkBaseline(pitcher)} deltaForm={pitcher.deltaForm} window={window} label={formSparklineLabel(pitcher, window)} trend={pitcher.trend} variant="hero" intensity="pole" />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
             <MomentumContextLine pitcher={pitcher} start={start} />
             <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
@@ -586,10 +586,13 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       <div className="col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:grid sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-3">
         <div className="hidden min-w-0 sm:block">
           <FormSparkline
-            values={pitcher.spark}
+            values={formSparkValues(pitcher)}
             tier={pitcher.tier}
             leagueMeanGS={leagueMeanGS}
-            label={`Last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`}
+            baselineValue={formSparkBaseline(pitcher)}
+            deltaForm={pitcher.deltaForm}
+            window={window}
+            label={formSparklineLabel(pitcher, window)}
             trend={pitcher.trend}
             intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
           />
@@ -605,10 +608,13 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       </div>
       <div className="col-span-full row-start-2 min-w-0 sm:hidden">
         <FormSparkline
-          values={pitcher.spark}
+          values={formSparkValues(pitcher)}
           tier={pitcher.tier}
           leagueMeanGS={leagueMeanGS}
-          label={`Last ${pitcher.windowCount} starts GS+: ${pitcher.spark.join(", ")}`}
+          baselineValue={formSparkBaseline(pitcher)}
+          deltaForm={pitcher.deltaForm}
+          window={window}
+          label={formSparklineLabel(pitcher, window)}
           trend={pitcher.trend}
           intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
         />
@@ -770,28 +776,33 @@ function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "ice";
 }
 
-function FormDeltaLabel({ summary }: { summary: Pick<FormSummary, "trend" | "deltaForm"> }) {
-  const steady = Math.abs(summary.deltaForm) < 1;
-  const marker = summary.trend === "heating" ? "↑" : summary.trend === "cooling" ? "↓" : "→";
-  const label = steady ? "steady" : `${marker} ${formatSignedDelta(summary.deltaForm)}`;
-  const className = summary.trend === "heating"
-    ? "text-cyan-300"
-    : summary.trend === "cooling"
-      ? "text-amber-300"
-      : "text-zinc-500";
+function FormDeltaLabel({ summary }: { summary: Pick<FormSummary, "deltaForm"> }) {
+  const band = formDeltaBand(summary.deltaForm);
+  const label = band.key === "steady" ? "steady" : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;
 
   return (
-    <span className={`mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${className}`}>
+    <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: band.color }}>
       {label}
     </span>
   );
 }
 
-function deltaAriaLabel(summary: Pick<FormSummary, "trend" | "deltaForm">) {
-  if (Math.abs(summary.deltaForm) < 1) return "steady";
-  if (summary.trend === "heating") return `rising ${formatSignedDelta(summary.deltaForm)}`;
-  if (summary.trend === "cooling") return `falling ${formatSignedDelta(summary.deltaForm)}`;
-  return `steady ${formatSignedDelta(summary.deltaForm)}`;
+function deltaAriaLabel(summary: Pick<FormSummary, "deltaForm">) {
+  const band = formDeltaBand(summary.deltaForm);
+  if (band.key === "steady") return "steady";
+  return `${band.directionLabel} ${formatSignedDelta(summary.deltaForm)}`;
+}
+
+function formSparkValues(pitcher: FormSummary) {
+  return pitcher.formSpark.length > 0 ? pitcher.formSpark : [pitcher.rgs];
+}
+
+function formSparkBaseline(pitcher: FormSummary) {
+  return formSparkValues(pitcher)[0] ?? pitcher.rgs;
+}
+
+function formSparklineLabel(pitcher: FormSummary, window: number) {
+  return `Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}`;
 }
 
 function lastName(name: string) {
