@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
@@ -79,11 +80,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp">
             Week of {formatUpcomingDate(resolvedStartDate)} · {visibleGameCount} of {scheduledGameCount} games shown
           </p>
-          <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
-            <Link className={toggleClass(false)} href={upcomingDateHref(today)} aria-label={`View today slate for ${formatUpcomingDate(today)}`} data-range-option="today">Today</Link>
-            <Link className={toggleClass(false)} href={upcomingDateHref(tomorrow)} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`} data-range-option="tomorrow">Tomorrow</Link>
-            <Link className={toggleClass(true)} href={upcomingWeekHref(resolvedStartDate)} aria-current="page" aria-label={`View week of ${formatUpcomingDate(resolvedStartDate)}`} data-range-option="week">This week</Link>
-          </nav>
+          <UpcomingSlateRangeToggle activeDate={resolvedStartDate} today={today} tomorrow={tomorrow} weekActive />
           {bestGame ? (
             <Link
               href={upcomingDateHref(bestGame.day)}
@@ -125,10 +122,6 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
       </div>
     </main>
   );
-}
-
-function toggleClass(active: boolean) {
-  return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
 }
 
 function addDays(date: string, days: number) {

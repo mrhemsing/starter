@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
 import { FastFilterLink } from "@/components/fast-filter-link";
+import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
@@ -79,7 +79,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp" data-slate-state={slateState.state}>
             {formatUpcomingSlateStamp(slateState, today)}
           </p>
-          <UpcomingToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
+          <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
           <UpcomingControls
             controls={controls}
             basePath={upcomingDateHref(resolvedDate)}
@@ -221,23 +221,6 @@ function upcomingControlHref(basePath: string, controls: UpcomingControlsState) 
   if (controls.sort !== "watch") params.set("sort", controls.sort);
   const query = params.toString();
   return `${basePath}${query ? `?${query}` : ""}`;
-}
-
-function UpcomingToggle({ activeDate, today, tomorrow }: { activeDate: string; today: string; tomorrow: string }) {
-  const todayActive = activeDate === today;
-  const tomorrowActive = activeDate === tomorrow;
-
-  return (
-    <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Upcoming range">
-      <Link className={toggleClass(todayActive)} href={upcomingDateHref(today)} aria-current={todayActive ? "page" : undefined} aria-label={`View today slate for ${formatUpcomingDate(today)}`} data-range-option="today">Today</Link>
-      <Link className={toggleClass(tomorrowActive)} href={upcomingDateHref(tomorrow)} aria-current={tomorrowActive ? "page" : undefined} aria-label={`View tomorrow slate for ${formatUpcomingDate(tomorrow)}`} data-range-option="tomorrow">Tomorrow</Link>
-      <Link className={toggleClass(false)} href={upcomingWeekHref(activeDate)} aria-label={`View week of ${formatUpcomingDate(activeDate)}`} data-range-option="week">This week</Link>
-    </nav>
-  );
-}
-
-function toggleClass(active: boolean) {
-  return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
 }
 
 function addDays(date: string, days: number) {

@@ -12,6 +12,7 @@ import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
+import { RankedStartsRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
@@ -214,16 +215,18 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 pb-6">
           <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Daily Ranked Starts</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+            Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.
+          </p>
           <div className="mt-3 flex flex-col items-start gap-2">
             <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
             <Link className="font-mono text-xs uppercase tracking-[0.16em] text-amber-300" href="/methodology">How rankings work</Link>
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]">
-            <Link className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300" href={`/starts/${addDays(date, -1)}`}>Previous day</Link>
-            <Link className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300" href={`/starts/${addDays(date, 1)}`}>Next day</Link>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="ranked-starts-slate-stamp">
             <ScaleLegend scoreScale={scoreScale} />
-          </div>
+          </p>
+          <RankedStartsRangeToggle activeDate={date} today={today} />
           {starts.length > 0 ? (
             <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="ranked-start-controls">
               <div className="flex flex-wrap items-center gap-2">
@@ -262,6 +265,13 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
               Board ranks starts of 2.0+ innings; openers and short outings are listed separately.
             </p>
+            <section className="mb-4" data-responsive-check="ranked-starts-board-heading">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">{formatBoardEyebrowDate(date)}</p>
+              <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Ranked Board</h2>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+                Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant
+              </p>
+            </section>
             <StartsDistributionStrip starts={qualifiedStarts} />
             {visibleStarts.length > 0 ? (
               <section className="mt-4 space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
@@ -466,9 +476,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
 
 function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {
   return (
-    <span className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">
-      Slate range {scoreScale.low}-{scoreScale.high} / Avg {scoreScale.average} / Scale {scoreScale.displayRange}
-    </span>
+    <span>Slate range {scoreScale.low}-{scoreScale.high} / Avg {scoreScale.average} / Scale {scoreScale.displayRange}</span>
   );
 }
 
@@ -921,10 +929,10 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
 }
 
 function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
-  if (state.isToday && slateProgress.state === "starts-in-progress") return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts final`;
-  if (state.isToday && state.isFinal) return `All starts final · Today · ${formatShortStatusDate(state.date)}`;
+  if (state.isToday && slateProgress.state === "starts-in-progress") return `${Math.max(0, state.totalStarts - state.completedStarts)} live / ${state.completedStarts} final`;
+  if (state.isToday && state.isFinal) return `All ${state.totalStarts} final`;
   if (state.isToday) return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;
-  return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;
+  return "Final";
 }
 
 function formatSlateCountdownLabel(countdownLabel: string | null) {
@@ -954,14 +962,8 @@ function formatMetadataDate(date: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
-function formatShortStatusDate(date: string) {
+function formatBoardEyebrowDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
-}
-
-function formatWeekday(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed);
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(parsed);
 }

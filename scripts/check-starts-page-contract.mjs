@@ -14,6 +14,7 @@ const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
+const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
@@ -110,18 +111,32 @@ assert(
 );
 
 assert(
-  startsPage.includes("return `Final · ${formatWeekday(state.date)} · ${formatMetadataDate(state.date)}`;"),
-  "completed non-today starts pages must include weekday and final state in the slate completion line",
-);
-
-assert(
   !startsPage.includes("state.date === addDays(getHomeSlateDate(), -1)"),
   "starts page completion chip must not limit weekday labels to yesterday",
 );
 
 assert(
-  startsPage.includes("function formatWeekday(date: string)"),
-  "starts page must keep the weekday formatter for completed slate labels",
+  startsPage.includes('import { RankedStartsRangeToggle } from "@/components/slate-date-nav";') &&
+    startsPage.includes("<RankedStartsRangeToggle activeDate={date} today={today} />") &&
+    startsPage.includes(">Ranked Starts</h1>") &&
+    !startsPage.includes(">Daily Ranked Starts</h1>") &&
+    startsPage.includes("Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.") &&
+    startsPage.includes('data-responsive-check="ranked-starts-slate-stamp"') &&
+    startsPage.includes('data-responsive-check="ranked-starts-board-heading"') &&
+    startsPage.includes("formatBoardEyebrowDate(date)") &&
+    startsPage.includes(">Ranked Board</h2>") &&
+    startsPage.includes("Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant") &&
+    !startsPage.includes(">Previous day</Link>") &&
+    !startsPage.includes(">Next day</Link>") &&
+    slateDateNav.includes("export function SlateRangeToggle") &&
+    slateDateNav.includes("export function UpcomingSlateRangeToggle") &&
+    slateDateNav.includes("export function RankedStartsRangeToggle") &&
+    slateDateNav.includes("label: todayActive || yesterdayActive ? \"Today\" : \"Jump to today\"") &&
+    slateDateNav.includes('label: "Yesterday"') &&
+    slateDateNav.includes('label: "This week"') &&
+    slateDateNav.includes('className={slateRangeToggleClass(option.active)}') &&
+    slateDateNav.includes('"border-amber-300 bg-amber-300 text-zinc-950"'),
+  "ranked starts header must reuse the Upcoming-style range toggle, promote the date eyebrow, and remove previous/next buttons",
 );
 
 assert(
@@ -164,14 +179,14 @@ assert(
 );
 
 assert(
-  startsPage.includes("function RankedSlateStatus") &&
+    startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
-    startsPage.includes('return `Live · Today · ${state.completedStarts} of ${state.totalStarts} starts final`;') &&
-    startsPage.includes('return `All starts final · Today · ${formatShortStatusDate(state.date)}`;') &&
+    startsPage.includes('return `${Math.max(0, state.totalStarts - state.completedStarts)} live / ${state.completedStarts} final`;') &&
+    startsPage.includes('return `All ${state.totalStarts} final`;') &&
     startsPage.includes('return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;') &&
+    startsPage.includes('return "Final";') &&
     startsPage.includes("function formatSlateCountdownLabel") &&
     startsPage.includes('return `in ${countdownLabel}`;') &&
-    startsPage.includes("function formatShortStatusDate") &&
     !startsPage.includes("function formatFirstPitchStamp") &&
     !startsPage.includes("{date} / completed starts recap"),
   "ranked starts header must use a no-box state-aware live/final/probables indicator and remove the redundant ISO date line",
