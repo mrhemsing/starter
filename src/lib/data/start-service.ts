@@ -201,7 +201,7 @@ const getCachedRankedArchivedCompletedSlateDates = unstable_cache(
     const starts = await getArchivedSeasonStartSummaries(season);
     return Array.from(new Set(starts.filter((start) => start.source?.line !== "fixture").map((start) => start.date))).sort();
   },
-  ["ranked-starts-archive-dates-v1"],
+  ["ranked-starts-archive-dates-v2"],
   { revalidate: 15 * 60 },
 );
 
@@ -225,13 +225,15 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = ne
 
 async function getRankedStartsCompletedSlateDates(activeDate: string, today: string) {
   const seasons = Array.from(new Set([activeDate.slice(0, 4), today.slice(0, 4)]));
-  const [seasonDates, todayCompletion] = await Promise.all([
+  const [seasonDates, todayCompletion, activeCompletion] = await Promise.all([
     Promise.all(seasons.map((season) => getCachedRankedArchivedCompletedSlateDates(season))),
     getRankedSlateCompletionState(today, today),
+    activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today),
   ]);
   const dates = new Set(seasonDates.flat());
 
   if (todayCompletion.completedStarts > 0) dates.add(today);
+  if (activeCompletion && activeCompletion.completedStarts > 0) dates.add(activeDate);
 
   return Array.from(dates)
     .filter((date) => date <= today)

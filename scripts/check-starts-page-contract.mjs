@@ -79,7 +79,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v2";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v4";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
@@ -122,10 +122,12 @@ assert(
 assert(
   startService.includes("export async function getRankedStartsArchiveNavigation") &&
     startService.includes("const getCachedRankedArchivedCompletedSlateDates = unstable_cache(") &&
-    startService.includes('["ranked-starts-archive-dates-v1"]') &&
+    startService.includes('["ranked-starts-archive-dates-v2"]') &&
     startService.includes("{ revalidate: 15 * 60 }") &&
     startService.includes("return (await getRankedStartsArchiveNavigation(today, today)).latestDate;") &&
     startService.includes("if (todayCompletion.completedStarts > 0) dates.add(today);") &&
+    startService.includes("activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today)") &&
+    startService.includes("if (activeCompletion && activeCompletion.completedStarts > 0) dates.add(activeDate);") &&
     startsPage.includes('import { RankedStartsArchiveNav } from "@/components/slate-date-nav";') &&
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.includes("latestDate={archiveNavigation.latestDate}") &&
@@ -154,7 +156,12 @@ assert(
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
     slateDateNav.includes('data-latest-state="latest"') &&
     slateDateNav.includes(">Jump to latest</Link>") &&
+    slateDateNav.includes('className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}') &&
     slateDateNav.includes(">Pick a date</summary>") &&
+    globals.includes(".ranked-start-date-picker-summary") &&
+    globals.includes("touch-action: manipulation;") &&
+    globals.includes("user-select: none;") &&
+    globals.includes("-webkit-user-select: none;") &&
     slateDateNav.includes('className={slateRangeToggleClass(option.active)}') &&
     slateDateNav.includes('"border-amber-300 bg-amber-300 text-zinc-950"'),
   "ranked starts header must use archive-only latest slate navigation, promote the date eyebrow, and remove relative Upcoming-style range pills",

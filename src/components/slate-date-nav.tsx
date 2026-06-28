@@ -108,7 +108,7 @@ export function RankedStartsArchiveNav({
         <Link className={slateRangeToggleClass(false)} href={rankedStartsPath(latestDate)} data-latest-state="jump">Jump to latest</Link>
       )}
       <details className="relative" data-responsive-check="ranked-starts-date-picker">
-        <summary className={`${slateRangeToggleClass(false)} cursor-pointer list-none`}>Pick a date</summary>
+        <summary className={`${slateRangeToggleClass(false)} ranked-start-date-picker-summary cursor-pointer list-none`}>Pick a date</summary>
         <div className="absolute left-0 z-30 mt-2 grid max-h-80 min-w-52 gap-1 overflow-auto rounded border border-white/10 bg-[#101014] p-2 shadow-2xl">
           {datesDescending.map((date) => (
             <Link
