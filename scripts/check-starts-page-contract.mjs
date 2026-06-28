@@ -226,18 +226,18 @@ assert(
 assert(
   startsPage.includes('"--ranked-band-color": profile.railColor') &&
     startsPage.includes("relative scroll-mt-28 overflow-hidden") &&
-    startsPage.includes("sm:pr-36") &&
+    startsPage.includes("sm:pr-20") &&
     startsPage.includes("[&::-webkit-details-marker]:hidden") &&
     startsPage.includes("Toggle breakdown for ${start.pitcher.name}") &&
-    startsPage.includes('className="ranked-start-toggle-label"') &&
-    startsPage.includes(">Breakdown</span>") &&
+    !startsPage.includes('className="ranked-start-toggle-label"') &&
+    !startsPage.includes(">Breakdown</span>") &&
     startsPage.includes('className="ranked-start-toggle-icon"') &&
     startsPage.includes('className="ranked-start-toggle-chevron"') &&
     !startsPage.includes("⌄") &&
     !globals.includes(".ranked-start-details[open] > summary") &&
     !globals.includes("border-top-color: rgb(255 255 255 / 0.1);") &&
     globals.includes(".ranked-start-toggle-icon") &&
-    globals.includes(".ranked-start-toggle-label") &&
+    !globals.includes(".ranked-start-toggle-label") &&
     globals.includes(".ranked-start-toggle-chevron") &&
     globals.includes(".ranked-start-details > summary::marker") &&
     globals.includes(".ranked-start-details > summary::-webkit-details-marker") &&
@@ -246,7 +246,8 @@ assert(
     globals.includes("right: 16px;") &&
     globals.includes("top: 14px;") &&
     globals.includes("min-height: 44px;") &&
-    globals.includes("min-width: 116px;") &&
+    globals.includes("min-width: 44px;") &&
+    globals.includes("width: 44px;") &&
     !rankedStartSummaryRule.includes("width: 100%;") &&
     !rankedStartSummaryRule.includes("height: 100%;") &&
     globals.includes("border-bottom: 2px solid currentColor;") &&

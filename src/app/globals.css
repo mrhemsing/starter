@@ -203,17 +203,16 @@ p,
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.08);
   color: #F6C445;
   display: flex;
-  gap: 8px;
   justify-content: center;
   margin-left: auto;
   margin-bottom: 12px;
   min-height: 44px;
-  min-width: 116px;
-  padding: 0 8px 0 14px;
+  min-width: 44px;
+  padding: 0;
   position: relative;
   transform: none;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
-  width: max-content;
+  width: 44px;
   z-index: 5;
 }
 
@@ -227,15 +226,6 @@ p,
   background: linear-gradient(180deg, rgb(246 196 69 / 0.2), rgb(0 0 0 / 0.32));
   border-color: color-mix(in srgb, var(--ranked-band-color, #F6C445) 72%, transparent);
   color: #FFE082;
-}
-
-.ranked-start-toggle-label {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 .ranked-start-toggle-icon {
