@@ -70,7 +70,7 @@ assert(
     startsLoading.includes('aria-label="Loading ranked starts"') &&
     routeLoadingShell.includes('aria-busy="true"') &&
     routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
-    routeLoadingShell.includes("route-loading-delayed-message"),
+    routeLoadingShell.includes("route-loading-secondary-message"),
   "ranked starts navigation must prefetch on intent and show an immediate loading shell",
 );
 

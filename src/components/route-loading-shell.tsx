@@ -33,8 +33,8 @@ export function RouteLoadingShell({
           <span className="route-loading-spinner" aria-hidden="true" />
           <div className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-400">{label}</p>
-            <p className="route-loading-delayed-message mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">
-              Retrieving fresh data
+            <p className="route-loading-secondary-message mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">
+              Fetching data...
             </p>
           </div>
         </div>

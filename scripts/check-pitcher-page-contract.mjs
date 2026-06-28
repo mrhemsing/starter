@@ -240,8 +240,8 @@ assert(
     pitcherLoadingPage.includes("Loading pitcher profile") &&
     routeLoadingShell.includes('aria-busy="true"') &&
     routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
-    routeLoadingShell.includes("route-loading-delayed-message") &&
-    routeLoadingShell.includes("Retrieving fresh data"),
+    routeLoadingShell.includes("route-loading-secondary-message") &&
+    routeLoadingShell.includes("Fetching data..."),
   "canonical pitcher profile route must provide an immediate loading shell during in-app navigation",
 );
 

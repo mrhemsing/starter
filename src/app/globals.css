@@ -89,20 +89,9 @@ p,
   width: 28px;
 }
 
-.route-loading-delayed-message {
-  animation: route-loading-delayed-message 160ms ease 2s both;
-  opacity: 0;
-}
-
 @keyframes route-loading-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes route-loading-delayed-message {
-  to {
-    opacity: 1;
   }
 }
 

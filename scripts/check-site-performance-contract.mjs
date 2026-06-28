@@ -131,14 +131,12 @@ assert(
     routeLoadingShell.includes("export function RouteLoadingShell") &&
     routeLoadingShell.includes('aria-busy="true"') &&
     routeLoadingShell.includes("route-loading-spinner") &&
-    routeLoadingShell.includes("route-loading-delayed-message") &&
-    routeLoadingShell.includes("Retrieving fresh data") &&
+    routeLoadingShell.includes("route-loading-secondary-message") &&
+    routeLoadingShell.includes("Fetching data...") &&
     globals.includes(".route-loading-spinner") &&
     globals.includes("animation: route-loading-spin 880ms linear infinite;") &&
-    globals.includes(".route-loading-delayed-message") &&
-    globals.includes("animation: route-loading-delayed-message 160ms ease 2s both;") &&
     globals.includes("@media (prefers-reduced-motion: reduce)"),
-  "slow route transitions must use a shared app-level loading shell with an animated spinner and 2s delayed data message",
+  "slow route transitions must use a shared app-level loading shell with an animated spinner and secondary data message",
 );
 
 assert(
