@@ -65,20 +65,17 @@ export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActi
 
 export function RankedStartsArchiveNav({
   activeDate,
-  latestDate,
   previousDate,
   nextDate,
   isLatest,
 }: {
   activeDate: string;
-  latestDate: string;
   previousDate: string | null;
   nextDate: string | null;
   isLatest: boolean;
 }) {
   const previousHref = previousDate ? rankedStartsPath(previousDate) : null;
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
-  const latestHref = rankedStartsPath(latestDate);
 
   return (
     <nav className="mt-5 flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
@@ -106,9 +103,7 @@ export function RankedStartsArchiveNav({
       </span>
       {isLatest ? (
         <span className={slateRangeToggleClass(true)} data-latest-state="latest">Latest</span>
-      ) : (
-        <RankedStartsArchiveLink className={slateRangeToggleClass(false)} href={latestHref} dataLatestState="jump">Jump to latest</RankedStartsArchiveLink>
-      )}
+      ) : null}
     </nav>
   );
 }

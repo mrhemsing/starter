@@ -140,7 +140,6 @@ assert(
     startService.includes("if (activeCompletion && activeCompletion.completedStarts > 0) dates.add(activeDate);") &&
     startsPage.includes('import { RankedStartsArchiveNav } from "@/components/slate-date-nav";') &&
     startsPage.includes("<RankedStartsArchiveNav") &&
-    startsPage.includes("latestDate={archiveNavigation.latestDate}") &&
     startsPage.includes("previousDate={archiveNavigation.previousDate}") &&
     startsPage.includes("nextDate={archiveNavigation.nextDate}") &&
     startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />') &&
@@ -176,7 +175,8 @@ assert(
     rankedStartsArchiveLink.includes('event.key === "ArrowLeft" ? previousHref : event.key === "ArrowRight" ? nextHref : null') &&
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
     slateDateNav.includes('data-latest-state="latest"') &&
-    slateDateNav.includes(">Jump to latest</RankedStartsArchiveLink>") &&
+    !slateDateNav.includes("Jump to latest") &&
+    !slateDateNav.includes('dataLatestState="jump"') &&
     !slateDateNav.includes("ranked-start-date-picker") &&
     !slateDateNav.includes("Pick a date") &&
     !globals.includes(".ranked-start-date-picker-summary") &&
