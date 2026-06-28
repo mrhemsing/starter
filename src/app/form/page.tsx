@@ -259,8 +259,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
             </p>
           </section>
         ) : (
-          <div id="full-board" className={`grid gap-4 scroll-mt-8 ${leagueView ? "lg:grid-cols-[80px_minmax(0,1fr)]" : ""}`} data-responsive-check="form-leaderboard">
-            {leagueView ? <HeatCheckBandNav bands={leagueBandCounts} total={qualifiedPitchers.length} /> : null}
+          <div id="full-board" className="grid gap-4 scroll-mt-8" data-responsive-check="form-leaderboard">
+            {leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}
             <section className="grid gap-2">
               {showBandHeaders ? (
                 groupedBoard.map((group) => (
