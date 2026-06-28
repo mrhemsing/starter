@@ -274,7 +274,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               <h2 className="font-serif text-3xl font-bold text-zinc-50">Ranked Board</h2>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-300">{formatBoardEyebrowDate(date)}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-                Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant
+                MLB Stats API / Baseball Savant
               </p>
             </section>
             <StartsDistributionStrip starts={qualifiedStarts} />
@@ -951,12 +951,6 @@ function stableHash(value: string) {
     hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   }
   return hash;
-}
-
-function formatMetadataDate(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
 function formatBoardEyebrowDate(date: string) {
