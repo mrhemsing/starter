@@ -5,19 +5,21 @@ import { heatCheckPath, liveDateHref, rankedStartsPath, upcomingDateHref, watchl
 type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";
 export type { NavKey };
 
-export async function SiteNav({ active, today }: { active: NavKey | null; today: string; rankedDate?: string }) {
-  const [{ rankedDate, upcomingDate }, slateProgress] = await Promise.all([
+export async function SiteNav({ active, today, rankedDate, hideUpcoming = false }: { active: NavKey | null; today: string; rankedDate?: string; hideUpcoming?: boolean }) {
+  const [defaultDates, slateProgress] = await Promise.all([
     getDefaultSlateDates(today),
     getSlateStartProgress({ window: "today", date: today }),
   ]);
+  const resolvedRankedDate = rankedDate ?? defaultDates.rankedDate;
   const hasActiveLiveStarts = slateProgress.state === "starts-in-progress" && slateProgress.liveGames > 0;
   const liveItem = hasActiveLiveStarts ? [{ key: "live" as const, label: <LiveNavLabel />, href: liveDateHref(today) }] : [];
+  const upcomingItem = hideUpcoming ? [] : [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
-    { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(rankedDate) },
+    { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(resolvedRankedDate) },
     { key: "heat" as const, label: "Heat Check", href: heatCheckPath() },
     ...liveItem,
-    { key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(upcomingDate) },
+    ...upcomingItem,
     { key: "watchlist" as const, label: "Watchlist", href: watchlistPath() },
   ];
 

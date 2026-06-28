@@ -12,7 +12,7 @@ import { PitchChart } from "@/components/pitch-chart";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
-import { RankedStartsRangeToggle } from "@/components/slate-date-nav";
+import { RankedStartsArchiveNav } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
@@ -24,7 +24,6 @@ import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, ranked
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
-import { slateTimeWord } from "@/lib/time-words";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
@@ -185,9 +184,9 @@ export default async function StartPage({ params, searchParams }: StartPageProps
 async function RankedStartsDate({ date, searchParams }: { date: string; searchParams?: StartPageProps["searchParams"] }) {
   const params = await searchParams;
   const today = getHomeSlateDate();
-  const rankedDate = addDays(today, -1);
   const pageData = await getRankedStartsPageData(date, today);
-  const { slateStarts, completionState, slateProgress } = pageData;
+  const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;
+  const rankedDate = archiveNavigation.latestDate;
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
   const qualifiedStarts = starts.filter(isQualifiedRankedStart);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
@@ -214,7 +213,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 pb-6">
-          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.
@@ -226,7 +225,14 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="ranked-starts-slate-stamp">
             <ScaleLegend scoreScale={scoreScale} />
           </p>
-          <RankedStartsRangeToggle activeDate={date} today={today} />
+          <RankedStartsArchiveNav
+            activeDate={archiveNavigation.activeDate}
+            latestDate={archiveNavigation.latestDate}
+            previousDate={archiveNavigation.previousDate}
+            nextDate={archiveNavigation.nextDate}
+            availableDates={archiveNavigation.availableDates}
+            isLatest={archiveNavigation.isLatest}
+          />
           {starts.length > 0 ? (
             <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="ranked-start-controls">
               <div className="flex flex-wrap items-center gap-2">
@@ -320,14 +326,6 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                     ))}
                   </div>
                 ) : null}
-              </section>
-            ) : null}
-            {completionState.isPartialToday ? (
-              <section className="mt-4 rounded border border-white/10 bg-[#101014] p-5" data-responsive-check="ranked-starts-remaining">
-                <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Still moving</p>
-                <Link href={`${upcomingDateHref(date)}#must-watch`} className="mt-2 inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.14em] text-amber-300">
-                  {completionState.remainingStarts} {completionState.remainingStarts === 1 ? "start" : "starts"} still to come {slateTimeWord({ date }, { today })}
-                </Link>
               </section>
             ) : null}
           </>
@@ -929,10 +927,10 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
 }
 
 function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
-  if (state.isToday && slateProgress.state === "starts-in-progress") return `${Math.max(0, state.totalStarts - state.completedStarts)} live / ${state.completedStarts} final`;
-  if (state.isToday && state.isFinal) return `All ${state.totalStarts} final`;
+  if (state.isToday && slateProgress.state === "starts-in-progress") return `${state.completedStarts} final, ${Math.max(0, state.totalStarts - state.completedStarts)} in progress`;
+  if (state.isFinal) return `All ${state.totalStarts} final`;
   if (state.isToday) return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;
-  return "Final";
+  return `${state.completedStarts} final`;
 }
 
 function formatSlateCountdownLabel(countdownLabel: string | null) {

@@ -14,6 +14,7 @@ const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
+const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
@@ -87,9 +88,12 @@ assert(
     rankedStartsPageService.includes("if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("getRankedSlateCompletionState(date, today)") &&
     rankedStartsPageService.includes("getSlateStartProgress({ window: \"yesterday\", date })") &&
+    rankedStartsPageService.includes("getRankedStartsArchiveNavigation(date, today)") &&
+    rankedStartsPageService.includes("archiveNavigation,") &&
     rankedStartsPageService.includes("getPitcherFormMap(starts.map((start) => String(start.pitcher.mlbId)), { window: 5 })") &&
     startsPage.includes('import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";') &&
     startsPage.includes("const pageData = await getRankedStartsPageData(date, today);") &&
+    startsPage.includes("const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;") &&
     startsPage.includes("const highlights = new Map(pageData.highlights);") &&
     startsPage.includes("const formByPitcher = new Map(pageData.formByPitcher);"),
   "ranked starts date pages must use a cached shared page-data payload, with long cache for final slates and short cache while live",
@@ -116,8 +120,23 @@ assert(
 );
 
 assert(
-  startsPage.includes('import { RankedStartsRangeToggle } from "@/components/slate-date-nav";') &&
-    startsPage.includes("<RankedStartsRangeToggle activeDate={date} today={today} />") &&
+  startService.includes("export async function getRankedStartsArchiveNavigation") &&
+    startService.includes("const getCachedRankedArchivedCompletedSlateDates = unstable_cache(") &&
+    startService.includes('["ranked-starts-archive-dates-v1"]') &&
+    startService.includes("{ revalidate: 15 * 60 }") &&
+    startService.includes("return (await getRankedStartsArchiveNavigation(today, today)).latestDate;") &&
+    startService.includes("if (todayCompletion.completedStarts > 0) dates.add(today);") &&
+    startsPage.includes('import { RankedStartsArchiveNav } from "@/components/slate-date-nav";') &&
+    startsPage.includes("<RankedStartsArchiveNav") &&
+    startsPage.includes("latestDate={archiveNavigation.latestDate}") &&
+    startsPage.includes("previousDate={archiveNavigation.previousDate}") &&
+    startsPage.includes("nextDate={archiveNavigation.nextDate}") &&
+    startsPage.includes("availableDates={archiveNavigation.availableDates}") &&
+    startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />') &&
+    siteHeader.includes("hideUpcoming = false") &&
+    siteHeader.includes("hideUpcoming={hideUpcoming}") &&
+    siteNav.includes("hideUpcoming = false") &&
+    siteNav.includes("const upcomingItem = hideUpcoming ? []") &&
     startsPage.includes(">Ranked Starts</h1>") &&
     !startsPage.includes(">Daily Ranked Starts</h1>") &&
     startsPage.includes("Every completed start ranked by GS+, with full lines, matchup context, and breakdowns.") &&
@@ -128,15 +147,17 @@ assert(
     startsPage.includes("Data through {formatMetadataDate(date)} / MLB Stats API / Baseball Savant") &&
     !startsPage.includes(">Previous day</Link>") &&
     !startsPage.includes(">Next day</Link>") &&
+    !slateDateNav.includes("export function RankedStartsRangeToggle") &&
     slateDateNav.includes("export function SlateRangeToggle") &&
     slateDateNav.includes("export function UpcomingSlateRangeToggle") &&
-    slateDateNav.includes("export function RankedStartsRangeToggle") &&
-    slateDateNav.includes("label: todayActive || yesterdayActive ? \"Today\" : \"Jump to today\"") &&
-    slateDateNav.includes('label: "Yesterday"') &&
-    slateDateNav.includes('label: "This week"') &&
+    slateDateNav.includes("export function RankedStartsArchiveNav") &&
+    slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
+    slateDateNav.includes('data-latest-state="latest"') &&
+    slateDateNav.includes(">Jump to latest</Link>") &&
+    slateDateNav.includes(">Pick a date</summary>") &&
     slateDateNav.includes('className={slateRangeToggleClass(option.active)}') &&
     slateDateNav.includes('"border-amber-300 bg-amber-300 text-zinc-950"'),
-  "ranked starts header must reuse the Upcoming-style range toggle, promote the date eyebrow, and remove previous/next buttons",
+  "ranked starts header must use archive-only latest slate navigation, promote the date eyebrow, and remove relative Upcoming-style range pills",
 );
 
 assert(
@@ -160,11 +181,11 @@ assert(
 );
 
 assert(
-  startsPage.includes('import { slateTimeWord } from "@/lib/time-words";') &&
-    startsPage.includes("still to come {slateTimeWord({ date }, { today })}") &&
-    startsPage.includes('href={`${upcomingDateHref(date)}#must-watch`}') &&
+  !startsPage.includes('href={`${upcomingDateHref(date)}#must-watch`}') &&
+    !startsPage.includes('import { slateTimeWord } from "@/lib/time-words";') &&
+    !startsPage.includes("still to come {slateTimeWord({ date }, { today })}") &&
     !startsPage.includes("still to come tonight"),
-  "ranked starts partial-slate CTA must use slateTimeWord and jump directly to the upcoming matchup board instead of the page top",
+  "ranked starts archive pages must not link partial slates into Upcoming",
 );
 
 assert(
@@ -181,10 +202,10 @@ assert(
 assert(
     startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
-    startsPage.includes('return `${Math.max(0, state.totalStarts - state.completedStarts)} live / ${state.completedStarts} final`;') &&
-    startsPage.includes('return `All ${state.totalStarts} final`;') &&
+    startsPage.includes('return `${state.completedStarts} final, ${Math.max(0, state.totalStarts - state.completedStarts)} in progress`;') &&
+    startsPage.includes('if (state.isFinal) return `All ${state.totalStarts} final`;') &&
     startsPage.includes('return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;') &&
-    startsPage.includes('return "Final";') &&
+    startsPage.includes('return `${state.completedStarts} final`;') &&
     startsPage.includes("function formatSlateCountdownLabel") &&
     startsPage.includes('return `in ${countdownLabel}`;') &&
     !startsPage.includes("function formatFirstPitchStamp") &&

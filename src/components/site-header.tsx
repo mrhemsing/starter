@@ -5,12 +5,14 @@ export async function SiteHeader({
   active,
   today,
   rankedDate,
+  hideUpcoming = false,
   className = "",
   responsiveCheck,
 }: {
   active: NavKey | null;
   today: string;
   rankedDate?: string;
+  hideUpcoming?: boolean;
   className?: string;
   responsiveCheck?: string;
 }) {
@@ -19,7 +21,7 @@ export async function SiteHeader({
       <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
         Toe the Slab
       </Link>
-      <SiteNav active={active} today={today} rankedDate={rankedDate} />
+      <SiteNav active={active} today={today} rankedDate={rankedDate} hideUpcoming={hideUpcoming} />
     </header>
   );
 }

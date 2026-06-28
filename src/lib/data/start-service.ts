@@ -170,23 +170,72 @@ export type RankedSlateCompletionState = {
   scheduleSource: MlbSchedule["source"] | "archive";
 };
 
+export type RankedStartsArchiveNavigation = {
+  activeDate: string;
+  latestDate: string;
+  previousDate: string | null;
+  nextDate: string | null;
+  availableDates: string[];
+  isLatest: boolean;
+};
+
+export async function getRankedStartsArchiveNavigation(activeDate: string, today = getHomeSlateDate()): Promise<RankedStartsArchiveNavigation> {
+  const availableDates = await getRankedStartsCompletedSlateDates(activeDate, today);
+  const latestDate = availableDates.at(-1) ?? activeDate;
+  const activeIndex = availableDates.indexOf(activeDate);
+  const previousDate = activeIndex > 0 ? availableDates[activeIndex - 1] ?? null : null;
+  const nextDate = activeIndex >= 0 && activeIndex < availableDates.length - 1 ? availableDates[activeIndex + 1] ?? null : null;
+
+  return {
+    activeDate,
+    latestDate,
+    previousDate,
+    nextDate,
+    availableDates,
+    isLatest: activeDate === latestDate,
+  };
+}
+
+const getCachedRankedArchivedCompletedSlateDates = unstable_cache(
+  async (season: string) => {
+    const starts = await getArchivedSeasonStartSummaries(season);
+    return Array.from(new Set(starts.filter((start) => start.source?.line !== "fixture").map((start) => start.date))).sort();
+  },
+  ["ranked-starts-archive-dates-v1"],
+  { revalidate: 15 * 60 },
+);
+
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
-  const completion = await getRankedSlateCompletionState(today, today);
-  return completion.completedStarts > 0 ? today : addDays(today, -1);
+  return (await getRankedStartsArchiveNavigation(today, today)).latestDate;
 }
 
 export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = new Date()) {
   void _now;
 
-  const [completion, schedule] = await Promise.all([
-    getRankedSlateCompletionState(today, today),
+  const [rankedNavigation, schedule] = await Promise.all([
+    getRankedStartsArchiveNavigation(today, today),
     fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) }),
   ]);
 
   return {
-    rankedDate: completion.completedStarts > 0 ? today : addDays(today, -1),
+    rankedDate: rankedNavigation.latestDate,
     upcomingDate: shouldDefaultUpcomingToTomorrow(schedule) ? addDays(today, 1) : today,
   };
+}
+
+async function getRankedStartsCompletedSlateDates(activeDate: string, today: string) {
+  const seasons = Array.from(new Set([activeDate.slice(0, 4), today.slice(0, 4)]));
+  const [seasonDates, todayCompletion] = await Promise.all([
+    Promise.all(seasons.map((season) => getCachedRankedArchivedCompletedSlateDates(season))),
+    getRankedSlateCompletionState(today, today),
+  ]);
+  const dates = new Set(seasonDates.flat());
+
+  if (todayCompletion.completedStarts > 0) dates.add(today);
+
+  return Array.from(dates)
+    .filter((date) => date <= today)
+    .sort();
 }
 
 function shouldDefaultUpcomingToTomorrow(schedule: MlbSchedule) {

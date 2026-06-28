@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherFormMap } from "@/lib/data/form-service";
-import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
+import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRankedStartsArchiveNavigation, getSlateStartProgress } from "@/lib/data/start-service";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
 const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v1";
@@ -12,6 +12,7 @@ export type RankedStartsPageData = {
   slateStarts: StartSummary[];
   completionState: Awaited<ReturnType<typeof getRankedSlateCompletionState>>;
   slateProgress: Awaited<ReturnType<typeof getSlateStartProgress>>;
+  archiveNavigation: Awaited<ReturnType<typeof getRankedStartsArchiveNavigation>>;
   highlights: Array<[string, FeaturedStartHighlight | null]>;
   formByPitcher: Array<[string, FormSummary]>;
 };
@@ -38,10 +39,11 @@ export async function getRankedStartsPageData(date: string, today = getHomeSlate
 }
 
 async function buildRankedStartsPageData(date: string, today: string): Promise<RankedStartsPageData> {
-  const [slateStarts, completionState, slateProgress] = await Promise.all([
+  const [slateStarts, completionState, slateProgress, archiveNavigation] = await Promise.all([
     getDailySlate({ window: "yesterday", date }),
     getRankedSlateCompletionState(date, today),
     getSlateStartProgress({ window: "yesterday", date }),
+    getRankedStartsArchiveNavigation(date, today),
   ]);
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
   const [highlights, formByPitcher] = await Promise.all([
@@ -53,6 +55,7 @@ async function buildRankedStartsPageData(date: string, today: string): Promise<R
     slateStarts,
     completionState,
     slateProgress,
+    archiveNavigation,
     highlights: Array.from(highlights.entries()),
     formByPitcher: Array.from(formByPitcher.entries()),
   };
