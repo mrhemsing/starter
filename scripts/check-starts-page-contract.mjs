@@ -9,6 +9,7 @@ function assert(condition, message) {
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const rankedStartsPageService = await readFile("src/lib/data/ranked-starts-page-service.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
@@ -72,6 +73,25 @@ assert(
     routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
     routeLoadingShell.includes("route-loading-secondary-message"),
   "ranked starts navigation must prefetch on intent and show an immediate loading shell",
+);
+
+assert(
+  rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v1";') &&
+    rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
+    rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
+    rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
+    rankedStartsPageService.includes("const getCachedLiveRankedStartsPageData = unstable_cache(") &&
+    rankedStartsPageService.includes("if (date < today) return getCachedFinalRankedStartsPageData(date, today);") &&
+    rankedStartsPageService.includes("if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);") &&
+    rankedStartsPageService.includes("getRankedSlateCompletionState(date, today)") &&
+    rankedStartsPageService.includes("getSlateStartProgress({ window: \"yesterday\", date })") &&
+    rankedStartsPageService.includes("getPitcherFormMap(starts.map((start) => String(start.pitcher.mlbId)), { window: 5 })") &&
+    startsPage.includes('import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";') &&
+    startsPage.includes("const pageData = await getRankedStartsPageData(date, today);") &&
+    startsPage.includes("const highlights = new Map(pageData.highlights);") &&
+    startsPage.includes("const formByPitcher = new Map(pageData.formByPitcher);"),
+  "ranked starts date pages must use a cached shared page-data payload, with long cache for final slates and short cache while live",
 );
 
 assert(

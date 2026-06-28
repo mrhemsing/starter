@@ -14,8 +14,8 @@ import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
-import { getPitcherFormMap } from "@/lib/data/form-service";
-import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
+import { getHomeSlateDate, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
@@ -43,7 +43,7 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
   const { id } = await params;
   const query = await searchParams;
   if (/^\d{4}-\d{2}-\d{2}$/.test(id)) {
-    const starts = (await getDailySlate({ window: "yesterday", date: id })).filter((start) => start.source?.line !== "fixture");
+    const starts = (await getRankedStartsPageData(id)).slateStarts.filter((start) => start.source?.line !== "fixture");
     const topStart = starts[0];
     const title = `MLB Starting Pitcher Rankings - ${formatShortDate(id)}`;
     const description = topStart
@@ -185,11 +185,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const params = await searchParams;
   const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
-  const [slateStarts, completionState, slateProgress] = await Promise.all([
-    getDailySlate({ window: "yesterday", date }),
-    getRankedSlateCompletionState(date, today),
-    getSlateStartProgress({ window: "yesterday", date }),
-  ]);
+  const pageData = await getRankedStartsPageData(date, today);
+  const { slateStarts, completionState, slateProgress } = pageData;
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
   const qualifiedStarts = starts.filter(isQualifiedRankedStart);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
@@ -199,8 +196,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const showOpeners = params?.openers === "1";
   const qualityBandCounts = countQualityBands(qualifiedStarts);
   const pairs = pairedStarts(starts);
-  const highlights = await resolveRankedStartHighlights(starts);
-  const formByPitcher = await getPitcherFormMap(starts.map((start) => String(start.pitcher.mlbId)), { window: 5 });
+  const highlights = new Map(pageData.highlights);
+  const formByPitcher = new Map(pageData.formByPitcher);
   const jsonLd = jsonLdForRankedStarts(date, qualifiedStarts);
   const visibleStarts = qualifiedStarts
     .filter((start) => band === "all" || qualityBandSlug(qualityTierOf(start.gameScorePlus).label) === band)
@@ -465,14 +462,6 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       </div>
     </article>
   );
-}
-
-async function resolveRankedStartHighlights(starts: StartSummary[]) {
-  const map = new Map<string, FeaturedStartHighlight | null>();
-  const details = await Promise.all(starts.map((start) => getStartDetail(start.id)));
-  const highlights = await Promise.all(details.map((detail) => resolveFeaturedStartHighlight(detail)));
-  starts.forEach((start, index) => map.set(start.id, highlights[index] ?? null));
-  return map;
 }
 
 function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {
