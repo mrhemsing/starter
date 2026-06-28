@@ -52,7 +52,7 @@ export type LiveScoreboard = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v5"],
+  ["live-scoreboard", "v6"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
@@ -136,6 +136,7 @@ function buildLiveRow(
   const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";
   const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
+  const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;
 
   return {
     id: `${start.gamePk}-${start.pitcher.mlbId}`,
@@ -155,7 +156,7 @@ function buildLiveRow(
     scoreLabel,
     qualityLabel: gsPlus === null ? null : qualityLabel(gsPlus),
     provisional: scoreLabel === "PROV",
-    inningLabel: liveLine?.inningLabel ?? null,
+    inningLabel,
     pitchCount,
     startHref: startHref(start, sourceParams("live")),
     liveHref: liveDateHref(date),
