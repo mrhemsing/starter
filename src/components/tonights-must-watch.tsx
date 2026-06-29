@@ -6,7 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
-import { HEAT_BANDS, watchTierForRank } from "@/lib/form-tokens";
+import { HEAT_BANDS, MUSTWATCH_CONFIG } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { slateTimeWordTitle } from "@/lib/time-words";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
@@ -69,6 +69,7 @@ export function TonightsMustWatch({
       data-visible-summary-aria-labels={shownGames.length ? shownGames.map(watchCardSummaryAriaLabelValue).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
+      data-visible-starter-limited-reasons={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.limitedReason ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-fallback-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFallbackDataLabel(starter)).join("|")).join(",") : "none"}
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
@@ -145,7 +146,8 @@ export function TonightsMustWatch({
       data-visible-watch-scores={shownGames.length ? shownGames.map(watchScoreValue).join(",") : "none"}
       data-visible-watch-score-labels={shownGames.length ? shownGames.map((game) => watchScoreLabel(game)).join("|") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
-      data-visible-watch-tier-labels={shownGames.length ? shownGames.map((_, index) => watchTierLabel(index + 1)).join("|") : "none"}
+      data-visible-watch-tier-labels={shownGames.length ? shownGames.map(watchTierLabel).join("|") : "none"}
+      data-visible-matchup-confidences={shownGames.length ? shownGames.map((game) => game.matchupConfidence).join(",") : "none"}
       data-visible-watch-sort-groups={shownGames.length ? shownGames.map(watchSortGroupValue).join(",") : "none"}
       data-visible-watch-sort-group-labels={shownGames.length ? shownGames.map(watchSortGroupLabelValue).join("|") : "none"}
       data-visible-watch-flag-keys={shownGames.length ? shownGames.map(watchFlagNoteKeysValue).join(",") : "none"}
@@ -243,7 +245,7 @@ export function TonightsMustWatch({
 }
 
 function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string }) {
-  const tier = watchTierForRank(1);
+  const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const awayStarter = game.starters[0];
   const homeStarter = game.starters[1];
@@ -268,6 +270,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-venue={gameVenueLabel(game)}
       data-has-tbd={String(game.flags?.tbd === true)}
       data-limited-form={String(game.flags?.limitedForm === true)}
+      data-cold-start-form={String(game.flags?.coldStartForm === true)}
+      data-no-match-form={String(game.flags?.noMatchForm === true)}
+      data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
       data-matchup-status-label={matchupStatusLabel(game)}
@@ -281,7 +286,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-tier={game.watchTier}
-      data-watch-tier={watchTierLabel(1)}
+      data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
@@ -352,8 +357,12 @@ function watchScoreLabel(game: TonightGame) {
   return `Watch score ${watchScoreValue(game)}`;
 }
 
-function watchTierLabel(rank: number) {
-  return watchTierForRank(rank).label;
+function watchTierForGame(game: TonightGame) {
+  return MUSTWATCH_CONFIG.watchTiers.find((tier) => tier.key === game.watchTier) ?? MUSTWATCH_CONFIG.watchTiers[MUSTWATCH_CONFIG.watchTiers.length - 1];
+}
+
+function watchTierLabel(game: TonightGame) {
+  return watchTierForGame(game).label;
 }
 
 function watchSortGroupValue(game: TonightGame) {
@@ -371,7 +380,7 @@ function watchSortGroupLabelValue(game: TonightGame) {
 }
 
 function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string }) {
-  const tier = watchTierForRank(rank);
+  const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
@@ -395,6 +404,9 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-venue={gameVenueLabel(game)}
       data-has-tbd={String(game.flags?.tbd === true)}
       data-limited-form={String(game.flags?.limitedForm === true)}
+      data-cold-start-form={String(game.flags?.coldStartForm === true)}
+      data-no-match-form={String(game.flags?.noMatchForm === true)}
+      data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
       data-matchup-status-label={matchupStatusLabel(game)}
@@ -408,7 +420,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-tier={game.watchTier}
-      data-watch-tier={watchTierLabel(rank)}
+      data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
@@ -673,6 +685,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       data-starter-name={starter.name ?? "TBD"}
       data-starter-team={starter.team}
       data-starter-status={starter.status}
+      data-starter-limited-reason={starter.limitedReason ?? "none"}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -872,7 +885,8 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
       data-watch-flag-label={watchFlagNoteDataLabel(game)}
     >
       {game.flags?.tbd ? "TBD starter included with league-mean fallback. " : ""}
-      {game.flags?.limitedForm ? "Limited form samples use baseline fallback where needed." : ""}
+      {game.flags?.coldStartForm ? "Cold-start pitchers use baseline fallback where needed. " : ""}
+      {game.flags?.noMatchForm ? "Form pending for a scheduled pitcher." : ""}
       {game.matchupContext.status === "pending-opponent-splits" ? "Opponent split context pending." : ""}
     </p>
   );
@@ -881,7 +895,8 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
 function watchFlagNoteKeys(game: TonightGame) {
   const keys: string[] = [];
   if (game.flags?.tbd) keys.push("tbd");
-  if (game.flags?.limitedForm) keys.push("limited-form");
+  if (game.flags?.coldStartForm) keys.push("cold-start");
+  if (game.flags?.noMatchForm) keys.push("no-match");
   if (game.matchupContext.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
 }
@@ -990,6 +1005,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       data-starter-name={starter.name ?? "TBD"}
       data-starter-team={starter.team}
       data-starter-status={starter.status}
+      data-starter-limited-reason={starter.limitedReason ?? "none"}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -1011,10 +1027,12 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
           {starter.team}
         </p>
-        {starter.status === "insufficient" && starter.lastStart ? (
+        {starter.limitedReason === "cold_start" && starter.lastStart ? (
           <p className="mt-1 text-[11px] text-zinc-500">
             <MetaLine segments={[`Last: vs ${starter.lastStart.opp}`, `GS+ ${starter.lastStart.gsPlus}`]} />
           </p>
+        ) : starter.limitedReason === "no_match" ? (
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Form pending</p>
         ) : null}
       </div>
       <div className="ml-auto text-right">
@@ -1057,6 +1075,15 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
     );
   }
 
+  if (starter.limitedReason === "no_match") {
+    return (
+      <div className="mt-3 text-sm text-zinc-400">
+        <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" aria-label={starterFallbackAriaLabel(starter)}>Form pending</p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">Schedule context is live while pitcher form joins.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 text-sm text-zinc-400">
       <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>Limited form sample</p>
@@ -1077,6 +1104,7 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
                 }}
               />,
               `GS+ ${starter.lastStart.gsPlus}`,
+              "BASELINE",
             ]}
           />
         </p>
@@ -1137,6 +1165,11 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
         {projection.confidence} confidence
       </span>
+      {starter.limitedReason === "cold_start" ? (
+        <span className="inline-flex min-h-6 items-center rounded border border-amber-300/25 bg-amber-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
+          Baseline
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1448,13 +1481,16 @@ function starterFallbackDataLabel(starter: TonightStarter) {
 }
 
 function starterFallbackAriaLabel(starter: TonightStarter) {
-  return starter.status === "tbd" ? "Starter TBD / league baseline used" : "Limited form sample";
+  if (starter.status === "tbd") return "Starter TBD / league baseline used";
+  if (starter.limitedReason === "no_match") return "Form pending";
+  return "Limited form sample / baseline projection";
 }
 
 function watchFlagNoteAriaLabel(game: TonightGame) {
   const notes = [];
   if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
-  if (game.flags?.limitedForm) notes.push("Limited form samples use baseline fallback where needed");
+  if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
+  if (game.flags?.noMatchForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }

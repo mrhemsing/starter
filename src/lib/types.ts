@@ -302,6 +302,8 @@ export type FormPitcherResponse = {
 
 export type WatchTierKey = "mustwatch" | "worthit" | "background";
 export type WatchSortPolicy = "status-then-watch-score";
+export type StarterLimitedReason = "cold_start" | "no_match" | null;
+export type MatchupConfidence = "HIGH" | "LOW" | "NONE";
 
 export type TonightStarter = {
   pitcherId: string | null;
@@ -309,6 +311,7 @@ export type TonightStarter = {
   team: string;
   side: "home" | "away";
   status: FormStatus | "tbd";
+  limitedReason: StarterLimitedReason;
   rgs?: number;
   tier?: FormTier;
   trend?: FormTrend;
@@ -344,7 +347,7 @@ export type TonightStarter = {
     restLabel: "short" | "normal" | "extended" | "unknown";
   };
   availability?: PitcherAvailability | null;
-  flags?: FormSummary["flags"];
+  flags?: FormSummary["flags"] & { noMatch?: boolean };
 };
 
 export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
@@ -379,7 +382,8 @@ export type TonightGame = {
     pairing: number;
     matchup: number;
   };
-  flags?: { tbd?: boolean; limitedForm?: boolean };
+  matchupConfidence: MatchupConfidence;
+  flags?: { tbd?: boolean; limitedForm?: boolean; coldStartForm?: boolean; noMatchForm?: boolean };
 };
 
 export type TonightResponse = {

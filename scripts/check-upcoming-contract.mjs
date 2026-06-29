@@ -179,10 +179,12 @@ function assertUpcomingEnvelope(upcoming, expectedStart, expectedDays, label) {
 function assertStarterForm(starter, label) {
   assert(["home", "away"].includes(starter.side), `${label} side must be home or away`);
   assert(["ok", "insufficient", "tbd"].includes(starter.status), `${label} status must be valid`);
+  assert(["cold_start", "no_match", null].includes(starter.limitedReason), `${label} limitedReason must be valid`);
 
   if (starter.status === "tbd") {
     assert(starter.pitcherId === null && starter.name === null, `${label} tbd starter should not fabricate identity`);
     assert(starter.lastStart === undefined, `${label} tbd starter should not expose lastStart`);
+    assert(starter.limitedReason === null, `${label} tbd starter should not use a limitedReason`);
     return false;
   }
 
@@ -191,6 +193,14 @@ function assertStarterForm(starter, label) {
   assert(typeof starter.team === "string" && starter.team.length > 0, `${label} team missing`);
 
   if (starter.status === "insufficient") {
+    assert(starter.limitedReason === "cold_start" || starter.limitedReason === "no_match", `${label} insufficient starter must declare cold_start or no_match`);
+    if (starter.limitedReason === "no_match") {
+      assert(starter.flags?.noMatch === true, `${label} no_match starter should carry internal noMatch flag`);
+      assert(starter.lastStart === undefined || starter.lastStart === null, `${label} no_match starter should not fabricate lastStart form`);
+      assertStarterProjection(starter.projection, `${label} no_match projection`);
+      assertMarketContext(starter.marketContext, `${label} no_match marketContext`);
+      return false;
+    }
     if (starter.rgs !== undefined) {
       assertNumber(starter.rgs, `${label} limited rgs`);
       assert(FORM_TIER_KEYS.includes(starter.tier), `${label} limited tier must be valid`);
@@ -200,9 +210,11 @@ function assertStarterForm(starter, label) {
       starter.spark.forEach((value, index) => assertNumber(value, `${label} limited spark[${index}]`));
       assertLastStart(starter.lastStart, `${label} limited lastStart`);
     }
+    assert(starter.limitedReason === "cold_start", `${label} limited starter with sparse form should be cold_start`);
     return false;
   }
 
+  assert(starter.limitedReason === null, `${label} complete starter should not carry a limitedReason`);
   assertNumber(starter.rgs, `${label} rgs`);
   assert(FORM_TIER_KEYS.includes(starter.tier), `${label} tier must be valid`);
   assert(["heating", "steady", "cooling"].includes(starter.trend), `${label} trend must be valid`);
@@ -410,6 +422,17 @@ function assertDay(day, expectedDate, options = {}) {
       game.watchTier === expectedWatchTier(game.gameWatchScore),
       `${game.gamePk} watchTier should match watch score ${game.gameWatchScore}`,
     );
+    assert(["HIGH", "LOW", "NONE"].includes(game.matchupConfidence), `${game.gamePk} matchupConfidence must be valid`);
+    assert(
+      game.matchupConfidence === expectedMatchupConfidence(game),
+      `${game.gamePk} matchupConfidence should derive from limited starter reasons`,
+    );
+    if (game.matchupConfidence === "NONE") {
+      assert(game.watchTier === "background", `${game.gamePk} no_match form should floor the matchup to Background`);
+    }
+    if (game.matchupConfidence === "LOW") {
+      assert(game.watchTier !== "mustwatch", `${game.gamePk} cold_start form should cap the matchup below Must-watch`);
+    }
     assert(
       game.watchSortGroup === expectedStatusSortGroup(game.status),
       `${game.gamePk} watchSortGroup should match ${day.watchSortPolicy}`,
@@ -451,6 +474,8 @@ function assertDay(day, expectedDate, options = {}) {
     );
     assert(typeof game.flags?.tbd === "boolean", `${game.gamePk} flags.tbd must be boolean`);
     assert(typeof game.flags?.limitedForm === "boolean", `${game.gamePk} flags.limitedForm must be boolean`);
+    assert(typeof game.flags?.coldStartForm === "boolean", `${game.gamePk} flags.coldStartForm must be boolean`);
+    assert(typeof game.flags?.noMatchForm === "boolean", `${game.gamePk} flags.noMatchForm must be boolean`);
     assert(
       game.flags.tbd === game.starters.some((starter) => starter.status === "tbd"),
       `${game.gamePk} flags.tbd should match starter TBD state`,
@@ -458,6 +483,14 @@ function assertDay(day, expectedDate, options = {}) {
     assert(
       game.flags.limitedForm === game.starters.some((starter) => starter.status !== "ok" || starter.flags?.limitedSample === true),
       `${game.gamePk} flags.limitedForm should match limited starter or small-sample state`,
+    );
+    assert(
+      game.flags.coldStartForm === game.starters.some((starter) => starter.limitedReason === "cold_start"),
+      `${game.gamePk} flags.coldStartForm should match cold_start starter state`,
+    );
+    assert(
+      game.flags.noMatchForm === game.starters.some((starter) => starter.limitedReason === "no_match"),
+      `${game.gamePk} flags.noMatchForm should match no_match starter state`,
     );
 
     const sortGroup = game.watchSortGroup;
@@ -583,6 +616,7 @@ function dayApiSignature(day) {
       matchupContext: game.matchupContext,
       gameWatchScore: game.gameWatchScore,
       watchTier: game.watchTier,
+      matchupConfidence: game.matchupConfidence,
       watchSortGroup: game.watchSortGroup,
       watchComponents: game.watchComponents,
       flags: game.flags,
@@ -592,11 +626,18 @@ function dayApiSignature(day) {
 }
 
 function expectedGameWatchScore(game, weights) {
-  return round1(
+  const rawScore = round1(
     weights.topArm * game.watchComponents.topArm +
       weights.pairAvg * game.watchComponents.pairing +
       weights.matchup * game.watchComponents.matchup,
   );
+  return expectedConfidenceCappedWatchScore(rawScore, game.matchupConfidence);
+}
+
+function expectedConfidenceCappedWatchScore(score, confidence) {
+  if (confidence === "NONE") return Math.min(score, 47.9);
+  if (confidence === "LOW") return Math.min(score, 57.9);
+  return score;
 }
 
 function expectedWatchScoreLabel(game) {
@@ -652,10 +693,14 @@ function expectedWatchFlagNoteLabelValue(game) {
   return watchFlagNoteDataLabel(game);
 }
 
-function expectedWatchTierLabelForRank(rank) {
-  if (rank <= 3) return WATCH_TIER_LABELS[0];
-  if (rank <= 8) return WATCH_TIER_LABELS[1];
-  return WATCH_TIER_LABELS[2];
+function expectedWatchTierLabelForGame(game) {
+  return expectedWatchTierLabel(game.gameWatchScore);
+}
+
+function expectedMatchupConfidence(game) {
+  if (game.starters.some((starter) => starter.limitedReason === "no_match")) return "NONE";
+  if (game.starters.some((starter) => starter.limitedReason === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
+  return "HIGH";
 }
 
 function expectedTrendLabel(trend) {
@@ -1222,7 +1267,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v7"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v5"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
@@ -1234,7 +1280,19 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       tonightServiceSource.includes("const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));") &&
       !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
       !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
-    "upcoming probable starters must use scheduled game slot teams, the refreshed v6 cache namespace, and only pregame-typed cards now that live has its own section",
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v7 cache namespace, and only pregame-typed cards now that live has its own section",
+  );
+  assert(
+    typesSource.includes('export type StarterLimitedReason = "cold_start" | "no_match" | null;') &&
+      typesSource.includes('export type MatchupConfidence = "HIGH" | "LOW" | "NONE";') &&
+      tonightServiceSource.includes('limitedReason: "no_match"') &&
+      tonightServiceSource.includes('limitedReason: form.status === "insufficient" ? "cold_start" : null') &&
+      tonightServiceSource.includes('console.warn("[upcoming:no-match-starter]"') &&
+      tonightServiceSource.includes("function applyConfidenceWatchCap") &&
+      tonightsMustWatchSource.includes('data-visible-starter-limited-reasons=') &&
+      tonightsMustWatchSource.includes("Form pending") &&
+      tonightsMustWatchSource.includes("Baseline"),
+    "upcoming limited pitchers must distinguish cold_start from no_match, log join misses, expose reason telemetry, and render form pending/baseline states",
   );
   assert(
       tonightsMustWatchSource.includes("data-visible-starter-spark-readies=") &&
@@ -1316,14 +1374,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming watch-score telemetry, labels, and hook display must share one formatted score helper",
   );
   assert(
-    tonightsMustWatchSource.includes("function watchTierLabel(rank: number)") &&
-      countOccurrences(tonightsMustWatchSource, "function watchTierLabel(rank: number)") === 1 &&
-      tonightsMustWatchSource.includes("return watchTierForRank(rank).label;") &&
-      tonightsMustWatchSource.includes("shownGames.map((_, index) => watchTierLabel(index + 1)).join(\"|\")") &&
-      countOccurrences(tonightsMustWatchSource, "data-watch-tier={watchTierLabel(") === 2 &&
+    tonightsMustWatchSource.includes("function watchTierLabel(game: TonightGame)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchTierLabel(game: TonightGame)") === 1 &&
+      tonightsMustWatchSource.includes("return watchTierForGame(game).label;") &&
+      tonightsMustWatchSource.includes("shownGames.map(watchTierLabel).join(\"|\")") &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-tier={watchTierLabel(game)}") === 2 &&
       !tonightsMustWatchSource.includes("data-watch-tier={tier.label}") &&
-      !tonightsMustWatchSource.includes("shownGames.map((_, index) => watchTierForRank(index + 1).label"),
-    "upcoming public watch-tier labels must share one rank-derived helper across section telemetry and card attributes",
+      !tonightsMustWatchSource.includes("watchTierForRank"),
+    "upcoming public watch-tier labels must share the confidence-capped game tier across section telemetry and card attributes",
   );
   assert(
     tonightsMustWatchSource.includes("function watchSortGroupValue(game: TonightGame)") &&
@@ -1841,6 +1899,7 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
         (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
         (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
         ["true", "false"].includes(nameLinked ?? "") &&
+        ["cold_start", "no_match", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
         ["form-band", "neutral"].includes(accentSource ?? "") &&
         [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
         Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "")
@@ -1853,7 +1912,8 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
       (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
       (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
       ["true", "false"].includes(nameLinked ?? "") &&
-      (fallbackLabel === "none" || fallbackLabel === "Limited form sample" || fallbackLabel === "Starter TBD / league baseline used") &&
+      ["none", "Limited form sample / baseline projection", "Form pending", "Starter TBD / league baseline used"].includes(fallbackLabel ?? "") &&
+      ["cold_start", "no_match", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
       ["form-band", "neutral"].includes(accentSource ?? "") &&
       [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
       Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "") &&
@@ -1905,6 +1965,9 @@ function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabe
     assertNonEmptyStringValue(attr("data-venue")) &&
     ["true", "false"].includes(attr("data-has-tbd") ?? "") &&
     ["true", "false"].includes(attr("data-limited-form") ?? "") &&
+    ["true", "false"].includes(attr("data-cold-start-form") ?? "") &&
+    ["true", "false"].includes(attr("data-no-match-form") ?? "") &&
+    ["HIGH", "LOW", "NONE"].includes(attr("data-matchup-confidence") ?? "") &&
     attr("data-watch-rank-label") === expectedWatchRankLabelValue(rankLabel) &&
     assertNonEmptyStringValue(attr("aria-label")) &&
     attr("aria-describedby") === summaryId
@@ -2117,6 +2180,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedSummaryAriaLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-summary-aria-labels"));
   const renderedStarterSides = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-sides"));
   const renderedStarterStatuses = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-statuses"));
+  const renderedStarterLimitedReasons = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-limited-reasons"));
   const renderedStarterFallbackLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-fallback-labels"));
   const renderedStarterPitcherIds = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-pitcher-ids"));
   const renderedStarterNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-starter-names"));
@@ -2194,6 +2258,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const renderedWatchScoreLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-score-labels"));
   const renderedWatchTiers = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tiers"));
   const renderedWatchTierLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-tier-labels"));
+  const renderedMatchupConfidences = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-confidences"));
   const renderedWatchSortGroups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-groups"));
   const renderedWatchSortGroupLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-sort-group-labels"));
   const renderedWatchFlagKeys = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-watch-flag-keys"));
@@ -2293,10 +2358,15 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} ${sectionId} should expose one away/home starter status pair per visible game`,
   );
   assert(
+    renderedStarterLimitedReasons.length === renderedGameCount &&
+      renderedStarterLimitedReasons.every((reasons) => /^(cold_start|no_match|none)\/(cold_start|no_match|none)$/.test(reasons)),
+    `${route} ${sectionId} should expose one away/home starter limited-reason pair per visible game`,
+  );
+  assert(
     renderedStarterFallbackLabels.length === renderedGameCount &&
       renderedStarterFallbackLabels.every((labels) =>
         labels.split("|").length === 2 &&
-        labels.split("|").every((label) => ["none", "Limited form sample", "Starter TBD / league baseline used"].includes(label)),
+        labels.split("|").every((label) => ["none", "Limited form sample / baseline projection", "Form pending", "Starter TBD / league baseline used"].includes(label)),
       ),
     `${route} ${sectionId} should expose one away/home starter fallback label pair per visible game`,
   );
@@ -2520,12 +2590,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
       renderedWatchTierLabels.length === renderedGameCount &&
       renderedWatchTierLabels.every((tierLabel) => WATCH_TIER_LABELS.includes(tierLabel)) &&
+      renderedMatchupConfidences.length === renderedGameCount &&
+      renderedMatchupConfidences.every((confidence) => ["HIGH", "LOW", "NONE"].includes(confidence)) &&
       renderedWatchSortGroups.length === renderedGameCount &&
       renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
       renderedWatchSortGroupLabels.length === renderedGameCount &&
       renderedWatchSortGroupLabels.every((label) => ["Pregame sort bucket", "Live sort bucket", "Fallback sort bucket"].includes(label)) &&
       renderedWatchFlagKeys.length === renderedGameCount &&
-      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key))) &&
+      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "no-match", "pending-opponent-splits"].includes(key))) &&
       renderedWatchFlagLabels.length === renderedGameCount &&
       renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
       renderedComponentCounts.length === renderedGameCount &&
@@ -2652,7 +2724,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchScores.join(",") === games.map(expectedWatchScoreValue).join(",") &&
       renderedWatchScoreLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchScoreLabel(game))).join("|") &&
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
-      renderedWatchTierLabels.join("|") === games.map((_, index) => escapeHtmlAttribute(expectedWatchTierLabelForRank(index + 1))).join("|") &&
+      renderedWatchTierLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchTierLabelForGame(game))).join("|") &&
       renderedWatchSortGroups.join(",") === games.map(expectedWatchSortGroupValue).join(",") &&
       renderedWatchSortGroupLabels.join("|") === games.map(expectedWatchSortGroupLabelValue).join("|") &&
       renderedWatchFlagKeys.join(",") === games.map(expectedWatchFlagNoteKeysValue).join(",") &&
@@ -2765,7 +2837,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchScores.join(",") === games.map(expectedWatchScoreValue).join(",") &&
       renderedWatchScoreLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchScoreLabel(game))).join("|") &&
       renderedWatchTiers.join(",") === games.map((game) => game.watchTier).join(",") &&
-      renderedWatchTierLabels.join("|") === games.map((_, index) => escapeHtmlAttribute(expectedWatchTierLabelForRank(index + 1))).join("|") &&
+      renderedWatchTierLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchTierLabelForGame(game))).join("|") &&
       renderedComponentCounts.join(",") === games.map(expectedWatchComponentCountValue).join(",") &&
       renderedComponentLayouts.join(",") === games.map((_, index) => expectedWatchComponentLayout(index)).join(","),
       `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch card kinds, watch ranks/labels, scores/labels, tier keys/labels, sort groups/labels, fallback flag keys/labels, component counts/keys/layouts/labels/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
@@ -2939,6 +3011,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       "data-venue": game.park ?? "Venue TBD",
       "data-has-tbd": String(game.flags?.tbd === true),
       "data-limited-form": String(game.flags?.limitedForm === true),
+      "data-cold-start-form": String(game.flags?.coldStartForm === true),
+      "data-no-match-form": String(game.flags?.noMatchForm === true),
+      "data-matchup-confidence": game.matchupConfidence,
       "data-watch-card-kind": expectedWatchCardKind(index),
       "data-watch-rank-label": expectedWatchRankLabelValue(rankLabel),
       "data-watch-flag-keys": expectedWatchFlagNoteKeysValue(game),
@@ -3012,7 +3087,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         renderedWatchScoreText === expectedWatchScoreValue(game) &&
           renderedWatchScoreLabel === expectedWatchScoreLabel(game) &&
           renderedWatchScoreTier === game.watchTier &&
-          renderedWatchTier === expectedWatchTierLabelForRank(index + 1),
+          renderedWatchTier === expectedWatchTierLabelForGame(game),
         `${route} should match API watch score, score label, tier key, and public tier label on the watch-card article for ${game.label}`,
       );
     }
@@ -3411,7 +3486,7 @@ function assertRenderedWatchRank(html, normalizedHtml, route, game, renderedWatc
 
   const rank = Number(renderedWatchRank);
   assert(Number.isInteger(rank) && rank >= 1, `${route} should expose a numeric rendered watch rank for ${game.label}`);
-  const tierLabel = expectedWatchTierLabelForRank(rank);
+  const tierLabel = expectedWatchTierLabelForGame(game);
   const visibleRank = `#${rank}`;
   const visibleRankPattern = new RegExp(`#\\s*${rank}\\b`);
   assert(
@@ -3560,7 +3635,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
       Number.isInteger(count) &&
         count === keys.length &&
         keys.length > 0 &&
-        keys.every((key) => ["tbd", "limited-form", "pending-opponent-splits"].includes(key)) &&
+        keys.every((key) => ["tbd", "cold-start", "no-match", "pending-opponent-splits"].includes(key)) &&
         assertNonEmptyStringValue(tagAttribute(noteTag, "aria-label")),
       `${route} should expose valid live-adjusted watch-card fallback reason metadata for ${game.label}`,
     );
@@ -3574,10 +3649,17 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.flags?.limitedForm) {
+  if (game.flags?.coldStartForm) {
     assert(
-      normalizedHtml.includes("Limited form samples use baseline fallback where needed."),
-      `${route} should explain limited-form fallback on ${game.label}`,
+      normalizedHtml.includes("Cold-start pitchers use baseline fallback where needed."),
+      `${route} should explain cold-start baseline fallback on ${game.label}`,
+    );
+  }
+
+  if (game.flags?.noMatchForm) {
+    assert(
+      normalizedHtml.includes("Form pending for a scheduled pitcher."),
+      `${route} should explain no-match form pending state on ${game.label}`,
     );
   }
 
@@ -3588,7 +3670,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
+  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.noMatchForm || game.matchupContext?.status === "pending-opponent-splits") {
     assert(
       elementHasAttributes(html, "p", {
         "aria-label": watchFlagNoteAriaLabel(game),
@@ -3808,7 +3890,9 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         `${label} should expose accessible limited-form fallback copy`,
       );
       assert(
-        normalizedHtml.includes("Limited form sample") || normalizedHtml.includes("Limited"),
+        starter.limitedReason === "no_match"
+          ? normalizedHtml.includes("Form pending")
+          : normalizedHtml.includes("Limited form sample") || normalizedHtml.includes("Limited"),
         `${label} should render limited-form fallback copy`,
       );
       if (starter.lastStart) {
@@ -3820,6 +3904,9 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
           normalizedHtml.includes(`GS+ ${starter.lastStart.gsPlus}`),
           `${label} should render limited-form last-start GS+`,
         );
+      }
+      if (starter.limitedReason === "cold_start") {
+        assert(normalizedHtml.includes("BASELINE") || normalizedHtml.includes("Baseline"), `${label} should stamp cold-start projections as baseline`);
       }
       return;
     }
@@ -3861,7 +3948,9 @@ function pitcherSlug(name, fallbackId) {
 }
 
 function starterFallbackAriaLabel(starter) {
-  return starter.status === "tbd" ? "Starter TBD / league baseline used" : "Limited form sample";
+  if (starter.status === "tbd") return "Starter TBD / league baseline used";
+  if (starter.limitedReason === "no_match") return "Form pending";
+  return "Limited form sample / baseline projection";
 }
 
 function starterHeadshotFormBand(starter) {
@@ -3871,7 +3960,8 @@ function starterHeadshotFormBand(starter) {
 function watchFlagNoteAriaLabel(game) {
   const notes = [];
   if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
-  if (game.flags?.limitedForm) notes.push("Limited form samples use baseline fallback where needed");
+  if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
+  if (game.flags?.noMatchForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }
@@ -3879,7 +3969,8 @@ function watchFlagNoteAriaLabel(game) {
 function watchFlagNoteKeys(game) {
   const keys = [];
   if (game.flags?.tbd) keys.push("tbd");
-  if (game.flags?.limitedForm) keys.push("limited-form");
+  if (game.flags?.coldStartForm) keys.push("cold-start");
+  if (game.flags?.noMatchForm) keys.push("no-match");
   if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
 }

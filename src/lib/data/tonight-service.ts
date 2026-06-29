@@ -28,7 +28,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
-  ["tonight-must-watch", "v6"],
+  ["tonight-must-watch", "v7"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS },
 );
 
@@ -133,10 +133,14 @@ async function buildTonightGame(
   const topArm = round1(Math.max(starterScores[0], starterScores[1]));
   const pairing = round1(mean(starterScores));
   const matchupComponent = round1(normMatchup);
-  const gameWatchScore = status === "ppd" ? 0 : round1(calculateGameWatchScore(topArm, pairing, matchupComponent));
+  const rawWatchScore = status === "ppd" ? 0 : round1(calculateGameWatchScore(topArm, pairing, matchupComponent));
+  const matchupConfidence = matchupConfidenceForStarters([awayStarter, homeStarter]);
+  const gameWatchScore = applyConfidenceWatchCap(rawWatchScore, matchupConfidence);
   const watchTier = watchTierOf(gameWatchScore).key as WatchTierKey;
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const limitedForm = awayStarter.status !== "ok" || homeStarter.status !== "ok" || awayStarter.flags?.limitedSample === true || homeStarter.flags?.limitedSample === true;
+  const coldStartForm = awayStarter.limitedReason === "cold_start" || homeStarter.limitedReason === "cold_start";
+  const noMatchForm = awayStarter.limitedReason === "no_match" || homeStarter.limitedReason === "no_match";
 
   return {
     gamePk: String(game.gamePk),
@@ -161,6 +165,7 @@ async function buildTonightGame(
     starters: [awayStarter, homeStarter],
     gameWatchScore,
     watchTier,
+    matchupConfidence,
     watchSortGroup: watchSortGroup(status),
     watchComponents: {
       topArm,
@@ -170,6 +175,8 @@ async function buildTonightGame(
     flags: {
       tbd,
       limitedForm,
+      coldStartForm,
+      noMatchForm,
     },
   };
 }
@@ -209,6 +216,7 @@ function buildTonightStarter(
       team,
       side,
       status: "tbd",
+      limitedReason: null,
       projection,
       marketContext: buildMarketContext(projection, null, opponentMarketName, date, marketContext),
     };
@@ -218,14 +226,17 @@ function buildTonightStarter(
   const opponentSplit = form?.throws ? opponentSplits.get(teamSplitKey(opponent, form.throws === "L" ? "vs-lhp" : "vs-rhp")) ?? null : null;
   if (!form) {
     const projection = pendingProjection("Insufficient completed-start history");
+    logNoMatchStarter({ probable, side, team, opponent, date });
     return {
       pitcherId: String(probable.id),
       name: probable.fullName,
       team,
       side,
       status: "insufficient",
+      limitedReason: "no_match",
       projection,
       marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, date, marketContext),
+      flags: { noMatch: true },
     };
   }
   const formWorkload = form.workload ?? {
@@ -243,6 +254,7 @@ function buildTonightStarter(
     team,
     side,
     status: form.status,
+    limitedReason: form.status === "insufficient" ? "cold_start" : null,
     rgs: form.rgs,
     tier: form.tier,
     trend: form.trend,
@@ -263,6 +275,50 @@ function buildTonightStarter(
     availability: form.availability ?? null,
     flags: form.flags,
   };
+}
+
+function matchupConfidenceForStarters(starters: TonightGame["starters"]) {
+  if (starters.some((starter) => starter.limitedReason === "no_match")) return "NONE";
+  if (starters.some((starter) => starter.limitedReason === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
+  return "HIGH";
+}
+
+function applyConfidenceWatchCap(score: number, confidence: TonightGame["matchupConfidence"]) {
+  if (confidence === "NONE") return Math.min(score, maxWatchScoreForTier("background"));
+  if (confidence === "LOW") return Math.min(score, maxWatchScoreForTier("worthit"));
+  return score;
+}
+
+function maxWatchScoreForTier(tierKey: WatchTierKey) {
+  const tiers = MUSTWATCH_CONFIG.watchTiers;
+  const tierIndex = tiers.findIndex((tier) => tier.key === tierKey);
+  if (tierIndex <= 0) return WATCH_SCORE_RANGE.max;
+  const higherTier = tiers[tierIndex - 1];
+  return round1(higherTier.min - 1 / 10 ** WATCH_SCORE_PRECISION);
+}
+
+function logNoMatchStarter({
+  probable,
+  side,
+  team,
+  opponent,
+  date,
+}: {
+  probable: MlbProbablePitcher;
+  side: "home" | "away";
+  team: string;
+  opponent: string;
+  date: string;
+}) {
+  console.warn("[upcoming:no-match-starter]", {
+    date,
+    side,
+    team,
+    opponent,
+    probablePitcherId: probable.id,
+    probablePitcherName: probable.fullName,
+    limitedReason: "no_match",
+  });
 }
 
 function pendingProjection(reason: string): NonNullable<TonightStarter["projection"]> {
