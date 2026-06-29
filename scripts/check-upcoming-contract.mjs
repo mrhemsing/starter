@@ -2142,6 +2142,18 @@ function assertUpcomingPageHeader(html, route) {
   );
   assertUpcomingHeaderSpacing(route);
   assert(html.includes('data-responsive-check="upcoming-slate-stamp"'), `${route} should render the state-aware upcoming slate stamp`);
+  assert(
+    upcomingDatePageSource.includes("function formatUpcomingStampDate") &&
+      upcomingDatePageSource.includes('month: "long"') &&
+      !upcomingDatePageSource.includes("`Today · ${formatUpcomingDate(state.date)} · first starter"),
+    "upcoming slate stamp must use full month names instead of abbreviated month text",
+  );
+  assert(
+    upcomingDatePageSource.includes('<span className="block sm:inline">{dayLabel} · {dateLabel}</span>') &&
+      upcomingDatePageSource.includes('<span className="hidden sm:inline"> · </span>') &&
+      upcomingDatePageSource.includes('<span className="mt-1 block sm:mt-0 sm:inline">{firstStarterLabel}</span>'),
+    "upcoming slate stamp must force the first-starter phrase onto a new line on mobile",
+  );
 }
 
 function assertUpcomingHeaderSpacing(route) {

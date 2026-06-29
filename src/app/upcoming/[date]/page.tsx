@@ -76,7 +76,12 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             One card per game, ranked by starter form and matchup context.
           </p>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp" data-slate-state={slateState.state}>
+          <p
+            className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500"
+            data-responsive-check="upcoming-slate-stamp"
+            data-slate-state={slateState.state}
+            aria-label={formatUpcomingSlateStampLabel(slateState, today)}
+          >
             {formatUpcomingSlateStamp(slateState, today)}
           </p>
           <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
@@ -104,11 +109,38 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
 }
 
 function formatUpcomingSlateStamp(state: SlateProgressState, today: string) {
-  const dayLabel = state.date === today ? "Today" : formatUpcomingDate(state.date);
-  if (state.state === "no-games") return `${formatUpcomingDate(state.date)} · no games today`;
-  if (state.state === "all-starts-complete") return `${dayLabel} · ${formatUpcomingDate(state.date)} · all ${state.totalStarts} starts final`;
-  if (state.state === "starts-in-progress") return `${dayLabel} · ${formatUpcomingDate(state.date)} · ${state.completedStarts} of ${state.totalStarts} starts final`;
-  return `${dayLabel} · ${formatUpcomingDate(state.date)} · first starter toes the slab ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
+  const dayLabel = state.date === today ? "Today" : formatUpcomingStampDate(state.date);
+  const dateLabel = formatUpcomingStampDate(state.date);
+  if (state.state === "no-games") return `${dateLabel} · no games today`;
+  if (state.state === "all-starts-complete") return `${dayLabel} · ${dateLabel} · all ${state.totalStarts} starts final`;
+  if (state.state === "starts-in-progress") return `${dayLabel} · ${dateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;
+  const firstStarterLabel = `first starter toes the slab ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
+  return (
+    <>
+      <span className="block sm:inline">{dayLabel} · {dateLabel}</span>
+      <span className="hidden sm:inline"> · </span>
+      <span className="mt-1 block sm:mt-0 sm:inline">{firstStarterLabel}</span>
+    </>
+  );
+}
+
+function formatUpcomingSlateStampLabel(state: SlateProgressState, today: string) {
+  const dayLabel = state.date === today ? "Today" : formatUpcomingStampDate(state.date);
+  const dateLabel = formatUpcomingStampDate(state.date);
+  if (state.state === "no-games") return `${dateLabel} · no games today`;
+  if (state.state === "all-starts-complete") return `${dayLabel} · ${dateLabel} · all ${state.totalStarts} starts final`;
+  if (state.state === "starts-in-progress") return `${dayLabel} · ${dateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;
+  return `${dayLabel} · ${dateLabel} · first starter toes the slab ${state.firstPitchAt ? formatFirstPitchStamp(state.firstPitchAt) : "soon"}`;
+}
+
+function formatUpcomingStampDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
 }
 
 function formatFirstPitchStamp(value: string) {
