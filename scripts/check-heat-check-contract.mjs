@@ -93,8 +93,16 @@ assert(
 
 assert(
   formPage.includes("{leagueView ? (") &&
-    formPage.includes('Starting-pitcher FORM over the last {window} starts{teamScopeLabel}.') &&
-    formPage.includes('const teamScopeLabel = team ? ` for the ${teamDisplayName(team)}` : "";') &&
+    formPage.includes("How starting pitchers are trending over their last {window} starts.") &&
+    formPage.includes('const heatScopeLabel = team ? teamDisplayName(team) : "All teams";') &&
+    formPage.includes('{heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}') &&
+    formPage.includes('className="pb-6"') &&
+    formPage.includes('className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400"') &&
+    formPage.includes('className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}') &&
+    !formPage.includes("Starting-pitcher FORM over the last {window} starts") &&
+    !formPage.includes("teamScopeLabel") &&
+    !formPage.includes('header className={team ? "pb-3" : "pb-6"}') &&
+    !formPage.includes('team ? "mt-2 text-sm text-zinc-500" : "mt-3 text-sm text-zinc-400"') &&
     formPage.includes('BAL: "Baltimore Orioles"') &&
     !formPage.includes("A season-wide rolling view with movement called out in the Movers strip.") &&
     formPage.includes('FORM band unavailable - check FORM data.') &&
@@ -104,7 +112,7 @@ assert(
     !formPage.includes("Nobody's in free fall today.") &&
     !formPage.includes(">Starting today<") &&
     !formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
-  "Heat Check deck must name the active FORM window, remove the season-wide helper line, and expand team-scoped copy to full team names",
+  "Heat Check deck must use fixed-height momentum copy, keep team scope in the meta line, and avoid inline team-name subtitle jumps",
 );
 
 assert(
@@ -206,7 +214,8 @@ assert(
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className={`relative z-40 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('<section className="relative z-40 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">') &&
+    !formPage.includes('${team ? "my-3" : "my-5"}') &&
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
     formPage.includes("{leagueView ? (") &&

@@ -151,7 +151,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
-  const teamScopeLabel = team ? ` for the ${teamDisplayName(team)}` : "";
+  const heatScopeLabel = team ? teamDisplayName(team) : "All teams";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -160,18 +160,18 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
-        <header className={team ? "pb-3" : "pb-6"}>
+        <header className="pb-6">
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
-          <p className={`max-w-2xl leading-6 ${team ? "mt-2 text-sm text-zinc-500" : "mt-3 text-sm text-zinc-400"}`}>
-            Starting-pitcher FORM over the last {window} starts{teamScopeLabel}.
+          <p className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400">
+            How starting pitchers are trending over their last {window} starts.
           </p>
-          <p className={`${team ? "mt-2" : "mt-3"} font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
-            Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
+          <p className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
+            {heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
           </p>
         </header>
 
-        <section className={`relative z-40 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">
+        <section className="relative z-40 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
           <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
         </section>
 
