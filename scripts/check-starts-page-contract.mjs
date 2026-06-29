@@ -152,6 +152,13 @@ assert(
     startsDisclosure.includes('"use client";') &&
     startsDisclosure.includes("window.sessionStorage.getItem(storageKey)") &&
     startsDisclosure.includes("window.sessionStorage.setItem(storageKey, nextOpen ? \"open\" : \"closed\")") &&
+    startsDisclosure.includes("grid h-6 w-6 shrink-0 place-items-center rounded border border-white/15") &&
+    startsDisclosure.includes("group-hover:border-amber-300/60 group-hover:text-amber-300") &&
+    startsDisclosure.includes("group-open:border-amber-300/60 group-open:text-amber-300") &&
+    startsDisclosure.includes('<span className="group-open:hidden">+</span>') &&
+    startsDisclosure.includes('<span className="hidden group-open:inline">&#8722;</span>') &&
+    !startsDisclosure.includes("group-open:rotate-180") &&
+    !startsDisclosure.includes('aria-hidden="true">v</span>') &&
     startsPage.includes(">Ranked Starts</h1>") &&
     !startsPage.includes(">Daily Ranked Starts</h1>") &&
     startsPage.includes("Completed starts ranked by GS+.") &&

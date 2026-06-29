@@ -40,7 +40,13 @@ export function RankedStartsDisclosure({
           <span className="text-amber-300">{label}</span>
           {meta ? <span className="truncate text-[10px] text-zinc-500">{meta}</span> : null}
         </span>
-        <span className="text-zinc-500 transition group-open:rotate-180" aria-hidden="true">v</span>
+        <span
+          className="grid h-6 w-6 shrink-0 place-items-center rounded border border-white/15 font-mono text-sm leading-none text-zinc-400 transition group-hover:border-amber-300/60 group-hover:text-amber-300 group-open:border-amber-300/60 group-open:text-amber-300"
+          aria-hidden="true"
+        >
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">&#8722;</span>
+        </span>
       </summary>
       <div className={`border-t border-white/10 p-3 ${panelClassName}`}>{children}</div>
     </details>

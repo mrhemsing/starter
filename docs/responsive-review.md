@@ -16,7 +16,7 @@ Reviewed after the fixture and live responsive runs:
 
 ## Review Result
 
-No obvious visual regression found in the refreshed captures. The Ranked Starts slate header keeps the date stepper anchored on mobile and desktop, with separate 44px chevron controls and no horizontal drift across date labels. The longest live slate is tall as expected because the screenshot is full-page, but card density and action targets remain usable.
+No obvious visual regression found in the refreshed captures. The Ranked Starts slate header keeps the date stepper anchored on mobile and desktop, with separate 44px chevron controls and no horizontal drift across date labels. The filter disclosures now use bordered plus/minus indicators that stay distinct from the date chevrons and row breakdown toggles. The longest live slate is tall as expected because the screenshot is full-page, but card density and action targets remain usable.
 
 ## Next Visual Risk
 
