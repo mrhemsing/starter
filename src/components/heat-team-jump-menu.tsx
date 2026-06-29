@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 
 type HeatTeamJumpMenuProps = {
   teams: string[];
@@ -62,23 +62,23 @@ export function HeatTeamJumpMenu({ teams, activeTeam, params }: HeatTeamJumpMenu
 
 function TeamMenuLink({ active, href, team, label, onSelect }: { active: boolean; href: string; team: string; label: string; onSelect: () => void }) {
   return (
-    <Link
+    <HeatCheckFilterLink
       href={href}
       className={`flex min-h-11 items-center gap-3 rounded border px-3 py-2 text-left transition ${
         active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 bg-black/30 text-zinc-200 hover:border-amber-300/60 hover:text-amber-200"
       }`}
       role="menuitem"
-      data-team-jump-link
       data-team={team || "all"}
-      aria-current={active ? "page" : undefined}
-      onClick={onSelect}
+      data-team-jump-link="true"
+      ariaCurrent={active ? "page" : undefined}
+      onSelect={onSelect}
     >
       <TeamLogo team={team} active={active} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-mono text-xs uppercase tracking-[0.12em]">{label}</span>
         {team ? <span className={`mt-0.5 block font-mono text-[10px] uppercase tracking-[0.14em] ${active ? "text-zinc-800" : "text-zinc-500"}`}>{team}</span> : null}
       </span>
-    </Link>
+    </HeatCheckFilterLink>
   );
 }
 

@@ -15,6 +15,7 @@ const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8")
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
 const scrollReset = await readFile("src/components/heat-check-scroll-reset.tsx", "utf8");
 const heatPitcherProfileLink = await readFile("src/components/heat-pitcher-profile-link.tsx", "utf8");
+const heatFilterLink = await readFile("src/components/heat-check-filter-link.tsx", "utf8");
 const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
@@ -38,6 +39,27 @@ assert(
     heatPitcherProfileLink.includes("Loading pitcher profile") &&
     heatPitcherProfileLink.includes("Fetching data..."),
   "Heat Check pitcher profile links must prefetch and show immediate loading feedback during slow profile navigation",
+);
+
+assert(
+  formPage.includes('import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";') &&
+    formPage.includes("<HeatCheckFilterLink") &&
+    formPage.includes('data-heat-window-link="true"') &&
+    teamJumpMenu.includes('import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";') &&
+    teamJumpMenu.includes("<HeatCheckFilterLink") &&
+    teamJumpMenu.includes('data-team-jump-link="true"') &&
+    teamDrawer.includes('import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";') &&
+    teamDrawer.includes("<HeatCheckFilterLink") &&
+    teamDrawer.includes('data-team-drawer-link="true"') &&
+    heatFilterLink.includes('"use client";') &&
+    heatFilterLink.includes("router.prefetch(href);") &&
+    heatFilterLink.includes("setPendingIntent({ href, from: currentHref });") &&
+    heatFilterLink.includes("scroll={false}") &&
+    heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
+    heatFilterLink.includes("Updating Heat Check") &&
+    heatFilterLink.includes("Fetching pitcher form...") &&
+    heatFilterLink.includes("route-loading-spinner"),
+  "Heat Check team and window filters must show immediate loading feedback while server data is fetched",
 );
 
 assert(
@@ -244,7 +266,8 @@ assert(
 );
 
 assert(
-  formPage.includes('href={href} ariaCurrent={active ? "page" : undefined} scroll={false}') &&
+  formPage.includes('data-heat-window-link="true"') &&
+    heatFilterLink.includes("scroll={false}") &&
     formPage.includes('ariaCurrent={!activeBand ? "page" : undefined} scroll={false}') &&
     formPage.includes('ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}') &&
     formPage.includes('hover:border-amber-300/30" scroll={false}'),
@@ -286,7 +309,7 @@ assert(
     teamJumpMenu.includes('document.addEventListener("pointerdown", onPointerDown)') &&
     teamJumpMenu.includes("details.open = false") &&
     teamJumpMenu.includes("const closeMenu = () =>") &&
-    teamJumpMenu.includes("onClick={onSelect}") &&
+    teamJumpMenu.includes("onSelect={onSelect}") &&
     teamJumpMenu.includes("details.contains(event.target)") &&
     teamJumpMenu.includes('data-responsive-check="heat-team-jump-menu"') &&
     teamJumpMenu.includes('data-team-jump-details') &&
@@ -329,7 +352,7 @@ assert(
     teamDrawer.includes("const closeDrawer = () => setOpen(false);") &&
     teamDrawer.includes("teamDisplayName(activeTeam)") &&
     teamDrawer.includes("TeamDrawerLink") &&
-    teamDrawer.includes("onClick={onSelect}") &&
+    teamDrawer.includes("onSelect={onSelect}") &&
     teamDrawer.includes("onSelect={closeDrawer}") &&
     teamDrawer.includes("data-team-drawer-link") &&
     teamDrawer.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&

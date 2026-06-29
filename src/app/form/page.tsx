@@ -9,6 +9,7 @@ import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
+import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
 import { HeatCheckScrollReset } from "@/components/heat-check-scroll-reset";
 import { HeatPitcherProfileLink } from "@/components/heat-pitcher-profile-link";
@@ -870,9 +871,9 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined} scroll={false}>
+    <HeatCheckFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined} data-heat-window-link="true">
       {children}
-    </FastFilterLink>
+    </HeatCheckFilterLink>
   );
 }
 

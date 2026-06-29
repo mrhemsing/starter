@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 
 type HeatTeamDrawerProps = {
@@ -82,20 +82,20 @@ export function HeatTeamDrawer({ teams, activeTeam, params }: HeatTeamDrawerProp
 
 function TeamDrawerLink({ active, href, team, label, onSelect }: { active: boolean; href: string; team: string; label: string; onSelect: () => void }) {
   return (
-    <Link
+    <HeatCheckFilterLink
       href={href}
       className={`flex min-h-12 items-center gap-3 rounded border px-3 py-2 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 bg-black/20 text-zinc-200"}`}
-      data-team-drawer-link
+      data-team-drawer-link="true"
       data-team={team || "all"}
-      aria-current={active ? "page" : undefined}
-      onClick={onSelect}
+      ariaCurrent={active ? "page" : undefined}
+      onSelect={onSelect}
     >
       <TeamLogo team={team} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-mono text-xs uppercase tracking-[0.14em]">{label}</span>
         {team ? <span className={`mt-0.5 block font-mono text-[10px] uppercase tracking-[0.14em] ${active ? "text-zinc-800" : "text-zinc-500"}`}>{team}</span> : null}
       </span>
-    </Link>
+    </HeatCheckFilterLink>
   );
 }
 
