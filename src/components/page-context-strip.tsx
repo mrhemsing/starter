@@ -19,19 +19,23 @@ export function PageContextStrip({
   metaClassName = "",
   "data-responsive-check": responsiveCheck,
 }: PageContextStripProps) {
+  const hasContext = Boolean(leading || primary);
+
   return (
     <div
       className={`flex flex-wrap items-center justify-between gap-3 ${className}`}
       data-responsive-check={responsiveCheck}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        {leading}
-        {primary ? (
-          <span className={`min-w-0 text-zinc-100 ${primaryClassName}`} data-context-primary>
-            {primary}
-          </span>
-        ) : null}
-      </div>
+      {hasContext ? (
+        <div className="flex min-w-0 items-center gap-2">
+          {leading}
+          {primary ? (
+            <span className={`min-w-0 text-zinc-100 ${primaryClassName}`} data-context-primary>
+              {primary}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {meta ? (
         <span className={`shrink-0 text-zinc-400 ${metaClassName}`} data-context-meta>
           {meta}

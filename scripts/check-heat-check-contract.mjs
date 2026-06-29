@@ -121,6 +121,8 @@ assert(
     formPage.includes("How starting pitchers are trending over their last {window} starts.") &&
     formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     pageContextStrip.includes("export function PageContextStrip") &&
+    pageContextStrip.includes("const hasContext = Boolean(leading || primary);") &&
+    pageContextStrip.includes("{hasContext ? (") &&
     pageContextStrip.includes("data-context-primary") &&
     pageContextStrip.includes("data-context-meta") &&
     formPage.includes('const formThroughLabel = `Form through ${leaderboard.formThroughDate ?? "pending"}') &&
