@@ -57,6 +57,8 @@ assert(
     heatFilterLink.includes("setPendingIntent({ href, from: currentHref });") &&
     heatFilterLink.includes("scroll={false}") &&
     heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
+    heatFilterLink.includes("absolute inset-0 z-[120] flex items-center justify-start") &&
+    !heatFilterLink.includes("fixed inset-0 z-[120] grid place-items-center") &&
     heatFilterLink.includes("Updating Heat Check") &&
     heatFilterLink.includes("Fetching pitcher form...") &&
     heatFilterLink.includes("route-loading-spinner"),

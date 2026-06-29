@@ -75,7 +75,7 @@ export function HeatCheckFilterLink({
         {children}
       </Link>
       {pending ? (
-        <div className="fixed inset-0 z-[120] grid place-items-center bg-black/55 px-4 backdrop-blur-sm" role="status" aria-live="polite" data-responsive-check="heat-filter-pending">
+        <div className="absolute inset-0 z-[120] flex items-center justify-start bg-black/55 px-4 backdrop-blur-sm" role="status" aria-live="polite" data-responsive-check="heat-filter-pending">
           <div className="flex min-h-24 w-full max-w-sm items-center gap-4 rounded border border-white/10 bg-[#101014]/95 px-5 py-4 shadow-2xl shadow-black/40">
             <span className="route-loading-spinner" aria-hidden="true" />
             <span>
