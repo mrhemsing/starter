@@ -66,7 +66,12 @@ assert(
 
 assert(
   slateState.includes(".format(parsed).toUpperCase()"),
-  "homepage status date label must render uppercase month text like JUN 17",
+  "homepage status date label must render uppercase full month text like JUNE 17",
+);
+
+assert(
+  slateState.includes('month: "long"') && slateState.includes("function formatStatusDate"),
+  "homepage status date label must use the full month name, not an abbreviated month",
 );
 
 assert(

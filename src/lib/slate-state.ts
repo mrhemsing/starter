@@ -82,7 +82,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
 }
 
 export function formatSlateStatusLine(state: SlateProgressState) {
-  const dateLabel = formatShortDate(state.date);
+  const dateLabel = formatStatusDate(state.date);
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
   if (state.state === "all-starts-complete") return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
@@ -124,11 +124,11 @@ function resolveFirstPitchAt(games: MlbSchedule["games"]) {
   return firstPitch?.iso ?? null;
 }
 
-function formatShortDate(date: string) {
+function formatStatusDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", {
-    month: "short",
+    month: "long",
     day: "numeric",
     timeZone: "UTC",
   }).format(parsed).toUpperCase();
