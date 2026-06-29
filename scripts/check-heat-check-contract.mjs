@@ -56,6 +56,8 @@ assert(
     heatFilterLink.includes('"use client";') &&
     heatFilterLink.includes("router.prefetch(href);") &&
     heatFilterLink.includes("setPendingIntent({ href, from: currentHref });") &&
+    heatFilterLink.includes("const pending = !ariaCurrent && pendingIntent?.href === href && pendingIntent.from === currentHref;") &&
+    heatFilterLink.includes("window.setTimeout(() => setPendingIntent(null), 8000)") &&
     heatFilterLink.includes("scroll={false}") &&
     heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
     heatFilterLink.includes("absolute inset-0 z-[120] flex items-center justify-start") &&

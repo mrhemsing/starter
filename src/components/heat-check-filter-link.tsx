@@ -38,7 +38,13 @@ export function HeatCheckFilterLink({
   const currentSearch = searchParams.toString();
   const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;
   const [pendingIntent, setPendingIntent] = useState<{ href: string; from: string } | null>(null);
-  const pending = pendingIntent?.href === href && pendingIntent.from === currentHref;
+  const pending = !ariaCurrent && pendingIntent?.href === href && pendingIntent.from === currentHref;
+
+  useEffect(() => {
+    if (!pendingIntent) return;
+    const timer = window.setTimeout(() => setPendingIntent(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [pendingIntent]);
 
   useEffect(() => {
     router.prefetch(href);
