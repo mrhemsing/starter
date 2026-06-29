@@ -181,6 +181,22 @@ assert(
     slateDateNav.includes("export function RankedStartsArchiveNav") &&
     slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";') &&
     slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
+    slateDateNav.includes('className="flex min-w-0 items-center gap-3 font-mono text-xs uppercase tracking-[0.14em]"') &&
+    slateDateNav.includes('className="min-w-[23ch] shrink-0 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300"') &&
+    slateDateNav.includes("data-ranked-date-label") &&
+    slateDateNav.includes('className="inline-flex shrink-0 items-center gap-1.5"') &&
+    slateDateNav.includes("const rankedStartsArchiveStepClass =") &&
+    slateDateNav.includes('"inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
+    slateDateNav.includes("const rankedStartsArchiveStepDisabledClass =") &&
+    slateDateNav.includes('"inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700"') &&
+    slateDateNav.includes('ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`}') &&
+    slateDateNav.includes('ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`}') &&
+    slateDateNav.includes('aria-label="No next slate"') &&
+    slateDateNav.includes('<span className="text-2xl font-bold leading-none" aria-hidden="true">‹</span>') &&
+    slateDateNav.includes('<span className="text-2xl font-bold leading-none" aria-hidden="true">›</span>') &&
+    !slateDateNav.includes("&lt;") &&
+    !slateDateNav.includes("&gt;") &&
+    !slateDateNav.includes("overflow-hidden rounded border border-white/10") &&
     slateDateNav.includes('dataArchiveStep="previous"') &&
     slateDateNav.includes('dataArchiveStep="next"') &&
     rankedStartsArchiveLink.includes('"use client";') &&

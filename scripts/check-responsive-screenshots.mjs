@@ -22,16 +22,13 @@ const fixturePages = [
   {
     name: "home",
     path: "/",
-    text: "Every start, ranked.",
+    text: "Every MLB start,",
     mobileChecks: [
       { selector: "[data-responsive-check='home-mobile-nav']", visible: true },
-      { selector: "[data-responsive-check='home-mobile-nav'] a", count: 4 },
+      { selector: "[data-responsive-check='home-mobile-nav'] a", count: 5 },
       { selector: "[data-responsive-check='home-mobile-nav'] a", minHeight: 44 },
       { selector: "[data-responsive-check='home-masthead']", visible: true },
-      { selector: "[data-responsive-check='heat-check-hero']", visible: true },
       { selector: "[data-responsive-check='slate-swarm']", visible: true },
-      { selector: "[data-responsive-check='top-start-headliner']", visible: true },
-      { selector: "[data-responsive-check='featured-start-teaser']", visible: true },
       { selector: "[data-responsive-check='must-watch']", visible: true },
     ],
     desktopChecks: [{ selector: "[data-responsive-check='home-mobile-nav']", visible: false }],
@@ -39,12 +36,8 @@ const fixturePages = [
   {
     name: "slate",
     path: `/starts/${contractSlateDate}`,
-    text: "Ranking reasons",
+    text: "Completed starts ranked by GS+.",
     mobileChecks: [
-      { selector: "[data-responsive-check='starts-score-breakdown']", visible: true },
-      { selector: "[data-responsive-check='score-explainer']", visible: true },
-      { selector: "[data-responsive-check='score-component-list']", visible: true },
-      { selector: "[data-responsive-check='score-delta-comparison']", visible: true },
       { selector: "[data-responsive-check='ranked-start-card']", maxHeight: 760 },
       { selector: "[data-responsive-check='ranked-start-card'] a", minHeight: 44 },
     ],
@@ -55,7 +48,6 @@ const fixturePages = [
     text: "One card per game",
     mobileChecks: [
       { selector: "[data-responsive-check='must-watch']", visible: true },
-      { selector: "[data-responsive-check='must-watch-headliner']", visible: true },
     ],
   },
   {
@@ -64,16 +56,14 @@ const fixturePages = [
     text: "One card per game",
     mobileChecks: [
       { selector: "[data-responsive-check='must-watch']", visible: true },
-      { selector: "[data-responsive-check='must-watch-headliner']", visible: true },
     ],
   },
   {
     name: "upcoming-week",
     path: `/upcoming/week/${upcomingSlateDate}`,
-    text: "This week's probable slates",
+    text: "Upcoming Matchups",
     mobileChecks: [
       { selector: "[data-responsive-check='must-watch']", visible: true },
-      { selector: "[data-responsive-check='must-watch-headliner']", visible: true },
     ],
   },
   {
@@ -93,20 +83,20 @@ const fixturePages = [
   {
     name: "pitcher",
     path: "/pitchers/694973",
-    text: "Start history",
+    text: "Paul Skenes",
     mobileChecks: [
-      { selector: "[data-responsive-check='pitcher-start-affordance']", visible: true },
-      { selector: "[data-responsive-check='pitcher-start-row']", minHeight: 64 },
+      { selector: "[data-responsive-check='pitcher-form-hero']", visible: true },
+      { selector: "[data-responsive-check='pitcher-game-log-row']", minHeight: 44 },
     ],
   },
   {
     name: "pitcher-loss-filter",
     path: "/pitchers/694973?result=L",
-    text: "Start history",
+    text: "Paul Skenes",
     fixtureOnly: true,
     mobileChecks: [
-      { selector: "[data-responsive-check='pitcher-start-affordance']", visible: true },
-      { selector: "[data-responsive-check='pitcher-start-row']", minHeight: 64 },
+      { selector: "[data-responsive-check='pitcher-form-hero']", visible: true },
+      { selector: "[data-responsive-check='pitcher-game-log-row']", minHeight: 44 },
     ],
   },
 ];
