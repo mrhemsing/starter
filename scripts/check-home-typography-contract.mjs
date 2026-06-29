@@ -88,8 +88,13 @@ assert(
     globals.includes("margin-bottom: 8px;") &&
     globals.includes("text-align: center;") &&
     globals.includes(".site-logo-season-kicker") &&
+    globals.includes("display: flex;") &&
+    globals.includes("white-space: nowrap;") &&
+    globals.includes(".site-logo-season-kicker::before,") &&
+    globals.includes(".site-logo-season-kicker::after") &&
+    globals.includes("flex: 1 1 0;") &&
     globals.includes("letter-spacing: 0.15em;"),
-  "site logo lockup must force a visibly larger mobile yellow Tourney logo with a muted season kicker",
+  "site logo lockup must force a visibly larger mobile yellow Tourney logo with a centered muted season kicker and balanced rules",
 );
 
 assert(
