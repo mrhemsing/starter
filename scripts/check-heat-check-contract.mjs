@@ -189,10 +189,14 @@ assert(
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const leagueView = !team;") &&
     formPage.includes('const showBandHeaders = leagueView && sort === "form";') &&
+    formPage.includes("const heroCandidates = qualifiedPitchers;") &&
+    !formPage.includes("const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);") &&
+    formPage.includes('data-responsive-check="heat-primary-controls"') &&
+    formPage.indexOf('data-responsive-check="heat-primary-controls"') < formPage.indexOf('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
     formPage.includes("{leagueView ? (") &&
-    formPage.includes("{leagueView ? <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} /> : null}") &&
+    formPage.includes("<BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />") &&
     formPage.includes("{leagueView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
@@ -200,9 +204,11 @@ assert(
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className={`z-20 rounded border border-white/10 bg-[#101014]/95 backdrop-blur sm:sticky sm:top-0 ${team ? "my-3 p-3" : "my-5 p-4"}`} data-responsive-check="form-controls">') &&
-    formPage.includes("{leagueView ? <details>") &&
-    formPage.includes("</details> : null}") &&
+    formPage.includes('<section className={`z-20 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
+    formPage.includes("{leagueView ? (") &&
+    formPage.includes("<details>") &&
+    formPage.includes("</details>") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
     formPage.includes('data-responsive-check="heat-team-filter"') &&
     formPage.includes('function WindowControlLinks({ window, params }') &&
@@ -214,7 +220,7 @@ assert(
     !formPage.includes('data-responsive-check="heat-team-window-controls"') &&
     !formPage.includes('Filters / Last {window}') &&
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
-    formPage.includes('<div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
+    formPage.includes('<div className="sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     !formPage.includes('{activeTeam ? (\n        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
     formPage.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
