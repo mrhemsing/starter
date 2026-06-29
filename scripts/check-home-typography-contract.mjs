@@ -88,7 +88,9 @@ assert(
     globals.includes("margin-bottom: 8px;") &&
     globals.includes("text-align: center;") &&
     globals.includes(".site-logo-season-kicker") &&
+    globals.includes("box-sizing: border-box;") &&
     globals.includes("display: flex;") &&
+    globals.includes("padding-inline: 0.75rem;") &&
     globals.includes("white-space: nowrap;") &&
     globals.includes(".site-logo-season-kicker::before,") &&
     globals.includes(".site-logo-season-kicker::after") &&
