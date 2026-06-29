@@ -73,7 +73,9 @@ p,
 }
 
 .site-logo-lockup {
+  display: inline-block;
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .site-logo-season-kicker {
@@ -83,6 +85,7 @@ p,
   letter-spacing: 0.15em;
   line-height: 1;
   margin-top: 3px;
+  text-align: center;
   text-transform: uppercase;
 }
 

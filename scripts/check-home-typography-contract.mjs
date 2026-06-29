@@ -84,7 +84,9 @@ assert(
     globals.includes("font-size: clamp(2.875rem, 6.24vw, 3.12rem);") &&
     globals.includes("font-family: var(--font-logo),") &&
     globals.includes(".site-logo-lockup") &&
+    globals.includes("display: inline-block;") &&
     globals.includes("margin-bottom: 8px;") &&
+    globals.includes("text-align: center;") &&
     globals.includes(".site-logo-season-kicker") &&
     globals.includes("letter-spacing: 0.15em;"),
   "site logo lockup must force a visibly larger mobile yellow Tourney logo with a muted season kicker",
