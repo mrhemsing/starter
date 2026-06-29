@@ -143,11 +143,11 @@ assert(
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.includes("previousDate={archiveNavigation.previousDate}") &&
     startsPage.includes("nextDate={archiveNavigation.nextDate}") &&
-    startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />') &&
-    siteHeader.includes("hideUpcoming = false") &&
-    siteHeader.includes("hideUpcoming={hideUpcoming}") &&
-    siteNav.includes("hideUpcoming = false") &&
-    siteNav.includes("const upcomingItem = hideUpcoming ? []") &&
+    startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} />') &&
+    !startsPage.includes("hideUpcoming") &&
+    !siteHeader.includes("hideUpcoming") &&
+    !siteNav.includes("hideUpcoming") &&
+    siteNav.includes('const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];') &&
     startsPage.includes('import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";') &&
     startsDisclosure.includes('"use client";') &&
     startsDisclosure.includes("window.sessionStorage.getItem(storageKey)") &&

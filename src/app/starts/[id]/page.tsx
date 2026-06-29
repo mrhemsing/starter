@@ -217,7 +217,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-4">
-          <SiteHeader active="starts" today={today} rankedDate={rankedDate} hideUpcoming />
+          <SiteHeader active="starts" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
           <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
           {starts.length > 0 ? (
