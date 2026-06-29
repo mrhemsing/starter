@@ -5,7 +5,7 @@ import { isRankedRegularStart } from "@/lib/start-classification";
 import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
-export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;
+export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;
 export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";
 
 export type BestStartsHomeResponse = {
@@ -16,8 +16,7 @@ export type BestStartsHomeResponse = {
 };
 
 export async function getBestStartsHome(): Promise<BestStartsHomeResponse> {
-  const yesterday = addDays(getHomeSlateDate(), -1);
-  return getCachedBestStartsHome(yesterday);
+  return getCachedBestStartsHome(getHomeSlateDate());
 }
 
 const getCachedBestStartsHome = unstable_cache(
@@ -40,7 +39,7 @@ const getCachedBestStartsHome = unstable_cache(
 );
 
 async function getBestStarts(anchorDate: string) {
-  const archivedStarts = await getArchivedSeasonStartSummaries(anchorDate.slice(0, 4));
+  const archivedStarts = await getWindowCandidateStarts(anchorDate);
   const monthlyWindowStart = addDays(anchorDate, -29);
   const monthlyStarts = rankedWindowStarts(archivedStarts, monthlyWindowStart, anchorDate);
 
@@ -53,6 +52,15 @@ async function getBestStarts(anchorDate: string) {
 
   const [weekly, monthly] = await Promise.all([getBestStartWindow(anchorDate, 7), getBestStartWindow(anchorDate, 30)]);
   return { weekly, monthly };
+}
+
+async function getWindowCandidateStarts(anchorDate: string) {
+  const archivedStarts = await getArchivedSeasonStartSummaries(anchorDate.slice(0, 4));
+  const archivedStartIds = new Set(archivedStarts.map((start) => start.id));
+  const todayStarts = await getDailySlate({ window: "today", date: anchorDate });
+  const liveAnchorStarts = todayStarts.filter((start) => !archivedStartIds.has(start.id));
+
+  return [...archivedStarts, ...liveAnchorStarts];
 }
 
 async function getBestStartWindow(anchorDate: string, days: number) {

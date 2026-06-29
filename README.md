@@ -20,7 +20,7 @@ Set `THE_BUMP_ODDS_API_KEY` to hydrate K props, team totals, and game totals fro
 
 YouTube highlights use checked-in manual video IDs or stored Supabase highlight rows by default. Dynamic YouTube search is disabled unless `YOUTUBE_SEARCH_ENABLED=1` because `search.list` is quota-expensive and page renders can otherwise exhaust a small API budget quickly.
 
-Vercel runs `/api/cron/featured-highlights` daily at 15:00 UTC to discover Recent Gems videos across the rolling 30-day homepage window without page-render search. Use the background ingestion command manually after completed starts are archived and synced when you need to backfill a specific date:
+Vercel runs `/api/cron/featured-highlights` daily at 10:00 UTC to discover Recent Gems videos across the rolling 30-day homepage window without page-render search. Use the background ingestion command manually after completed starts are archived and synced when you need to backfill a specific date:
 
 ```bash
 $env:YOUTUBE_API_KEY="..."

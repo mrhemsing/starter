@@ -27,12 +27,12 @@ assert(
 
 assert(
   bestStartsService.includes('import { unstable_cache } from "next/cache";') &&
-    bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 6 * 60 * 60;") &&
+    bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
     bestStartsService.includes('["home-best-starts-v3"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] }"),
-  "home best-starts service must cache rolling-window winners for six hours with a versioned key for highlight payload changes",
+  "home best-starts service must cache rolling-window winners on a short cadence with a versioned key for highlight payload changes",
 );
 
 assert(
@@ -43,9 +43,18 @@ assert(
 );
 
 assert(
+  bestStartsService.includes("return getCachedBestStartsHome(getHomeSlateDate());") &&
+    bestStartsService.includes("async function getWindowCandidateStarts(anchorDate: string)") &&
+    bestStartsService.includes('const todayStarts = await getDailySlate({ window: "today", date: anchorDate });') &&
+    bestStartsService.includes("const liveAnchorStarts = todayStarts.filter((start) => !archivedStartIds.has(start.id));"),
+  "home best-starts service must include the active day's completed live slate before the archive cycle lands",
+);
+
+assert(
   featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
     featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
+    featuredHighlightService.includes('"2026-06-28-bos-nyy-543243": "UFWHObUfAiI"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );
@@ -80,8 +89,8 @@ assert(
     featuredHighlightsCron.includes("upsertHighlights") &&
     featuredHighlightsCron.includes('revalidateTag(HOME_BEST_STARTS_CACHE_TAG, "max")') &&
     featuredHighlightsCron.includes('source: "youtube-search"') &&
-    vercelJson.crons.some((cron) => cron.path === "/api/cron/featured-highlights" && cron.schedule === "0 15 * * *") &&
-    readme.includes("Vercel runs `/api/cron/featured-highlights` daily at 15:00 UTC"),
+    vercelJson.crons.some((cron) => cron.path === "/api/cron/featured-highlights" && cron.schedule === "0 10 * * *") &&
+    readme.includes("Vercel runs `/api/cron/featured-highlights` daily at 10:00 UTC"),
   "Recent Gems highlight ingestion must run automatically as a quota-safe Vercel cron and revalidate home best-starts cache after matches",
 );
 

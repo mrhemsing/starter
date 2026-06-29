@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/featured-highlights",
-      "schedule": "0 15 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
