@@ -46,7 +46,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
-const FORM_CACHE_VERSION = "form-level-bands-v3";
+const FORM_CACHE_VERSION = "form-level-bands-v4";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
@@ -559,6 +559,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     status,
     rgs: round1(rgs),
     windowCount,
+    seasonStartCount: starts.length,
     bgs: round1(bgs),
     deltaForm: round1(deltaForm),
     trend,

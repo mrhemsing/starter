@@ -45,7 +45,8 @@ assert(
 assert(
   formPage.includes('import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";') &&
     formPage.includes("<HeatCheckFilterLink") &&
-    formPage.includes('data-heat-window-link="true"') &&
+    formPage.includes('data-heat-window-link={heatWindowLink ? "true" : undefined}') &&
+    formPage.includes('data-heat-view-link={heatViewLink ? "true" : undefined}') &&
     teamJumpMenu.includes('import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";') &&
     teamJumpMenu.includes("<HeatCheckFilterLink") &&
     teamJumpMenu.includes('data-team-jump-link="true"') &&
@@ -117,17 +118,18 @@ assert(
 );
 
 assert(
-  formPage.includes("{leagueView ? (") &&
-    formPage.includes("How starting pitchers are trending over their last {window} starts.") &&
+  formPage.includes("{trendView && leagueView ? (") &&
+    formPage.includes('{trendView ? <>How starting pitchers are trending over their last {window} starts.</> : <>Starting pitchers ranked by season GS+.</>}') &&
     formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     pageContextStrip.includes("export function PageContextStrip") &&
     pageContextStrip.includes("const hasContext = Boolean(leading || primary);") &&
     pageContextStrip.includes("{hasContext ? (") &&
     pageContextStrip.includes("data-context-primary") &&
     pageContextStrip.includes("data-context-meta") &&
-    formPage.includes('const formThroughLabel = `Form through ${leaderboard.formThroughDate ?? "pending"}') &&
+    formPage.includes('const throughPrefix = seasonView ? "Season through" : "Form through";') &&
+    formPage.includes('const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}') &&
     formPage.includes('className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400"') &&
-    formPage.includes('formThroughLabel={formThroughLabel} stale={leaderboard.stale}') &&
+    formPage.includes('view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale}') &&
     formPage.includes('data-responsive-check="heat-controls-context"') &&
     formPage.includes('meta={formThroughLabel}') &&
     formPage.includes('metaClassName={`font-mono text-xs uppercase leading-4 tracking-[0.16em] ${stale ? "text-amber-300" : "text-zinc-400"}`}') &&
@@ -235,7 +237,8 @@ assert(
     formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly, team })") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
-    formPage.includes("const leagueView = !team;") &&
+    formPage.includes("const allTeamsView = !team;") &&
+    formPage.includes("const leagueView = allTeamsView && trendView;") &&
     formPage.includes('const showBandHeaders = leagueView && sort === "form";') &&
     formPage.includes("const heroCandidates = qualifiedPitchers;") &&
     !formPage.includes("const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);") &&
@@ -243,12 +246,12 @@ assert(
     formPage.indexOf('data-responsive-check="heat-primary-controls"') < formPage.indexOf('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
-    formPage.includes("{leagueView ? (") &&
+    formPage.includes("{trendView && leagueView ? (") &&
     formPage.includes("<BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />") &&
-    formPage.includes("{leagueView && biggestRiser && biggestFaller ? (") &&
+    formPage.includes("{trendView && leagueView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
-    formPage.includes("{leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}") &&
+    formPage.includes("{trendView && leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}") &&
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
@@ -257,7 +260,7 @@ assert(
     !formPage.includes('${team ? "my-3" : "my-5"}') &&
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
-    formPage.includes("{leagueView ? (") &&
+    formPage.includes("{trendView && leagueView ? (") &&
     formPage.includes("<details>") &&
     formPage.includes("</details>") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
@@ -266,14 +269,17 @@ assert(
     formPage.includes('data-responsive-check="heat-window-controls"') &&
     formPage.includes('data-responsive-check="heat-desktop-window-controls"') &&
     formPage.includes('<ControlGroup label="Window">') &&
+    formPage.includes('{view === "trend" ? (') &&
     formPage.includes('<WindowControlLinks window={window} params={params} />') &&
     !formPage.includes('data-responsive-check="heat-league-desktop-window-controls"') &&
     !formPage.includes('data-responsive-check="heat-team-window-controls"') &&
     !formPage.includes('Filters / Last {window}') &&
     formPage.includes('data-responsive-check="heat-team-mobile-window-controls"') &&
-    formPage.includes('<div className="sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
+    formPage.includes('<div className="grid gap-3 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     !formPage.includes('{activeTeam ? (\n        <div className="my-5 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">') &&
     formPage.includes('<div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">') &&
+    formPage.includes('<ControlGroup label="View">') &&
+    formPage.includes('<ViewControlLinks view={view} params={params} />') &&
     formPage.includes('const clearTeamHref = heatCheckHref({ ...params, team: "" });') &&
     formPage.includes('<HeatTeamClearLink') &&
     formPage.includes("{activeTeam ? (") &&
@@ -283,7 +289,41 @@ assert(
 );
 
 assert(
-  formPage.includes('data-heat-window-link="true"') &&
+  formPage.includes('type HeatCheckView = "trend" | "season";') &&
+    formPage.includes('function parseHeatCheckView(value: string | undefined): HeatCheckView') &&
+    formPage.includes('const view = parseHeatCheckView(params?.view);') &&
+    formPage.includes('const trendView = view === "trend";') &&
+    formPage.includes('const seasonView = view === "season";') &&
+    formPage.includes("const seasonPitchers = leaderboard.pitchers") &&
+    formPage.includes(".sort(compareSeasonGsRank);") &&
+    formPage.includes("const seasonRankByPitcherId = buildGlobalSeasonRankMap(qualifiedPitchers);") &&
+    formPage.includes("function compareSeasonGsRank") &&
+    formPage.includes("if (b.bgs !== a.bgs) return b.bgs - a.bgs;") &&
+    formPage.includes("function visibleSeasonPitchers") &&
+    formPage.includes('if (team || show === "all") return pitchers;') &&
+    formPage.includes("return pitchers.slice(0, 25);") &&
+    formPage.includes('data-responsive-check="heat-view-controls"') &&
+    formPage.includes('data-heat-view-link={heatViewLink ? "true" : undefined}') &&
+    formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })}') &&
+    formPage.includes('view === "trend" ? (') &&
+    formPage.includes('const throughPrefix = seasonView ? "Season through" : "Form through";') &&
+    formPage.includes("const qualityTier = qualityTierOf(pitcher.bgs);") &&
+    formPage.includes("const bandColor = seasonView ? qualityTier.color") &&
+    formPage.includes('seasonView ? "Season GS+" : "Form"') &&
+    formPage.includes("pitcher.seasonStartCount} GS") &&
+    formPage.includes('seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
+    formPage.includes("seasonView ? null : (") &&
+    formPage.includes("function SeasonBoardControls") &&
+    formPage.includes("function SeasonExpandControls") &&
+    formService.includes("seasonStartCount: starts.length,") &&
+    formPage.includes('data-responsive-check="heat-season-controls"') &&
+    formPage.includes('data-responsive-check="heat-season-expand"') &&
+    !formPage.includes("bandOf("),
+  "Heat Check Season view must rank by season GS+, hide Trend-only chrome, use quality colors, and cap all-team lists",
+);
+
+assert(
+  formPage.includes('data-heat-window-link={heatWindowLink ? "true" : undefined}') &&
     heatFilterLink.includes("scroll={false}") &&
     formPage.includes('ariaCurrent={!activeBand ? "page" : undefined} scroll={false}') &&
     formPage.includes('ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}') &&
@@ -425,7 +465,7 @@ assert(
 
 assert(
   formPage.includes("heat-check-row scroll-mt-24 grid items-start") &&
-    formPage.includes('className="col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:grid sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-3"') &&
+    formPage.includes('seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"') &&
     formPage.includes('className="col-span-full row-start-2 min-w-0 sm:hidden"') &&
     formPage.includes("<FormDeltaLabel summary={pitcher} />") &&
     formPage.includes('fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
@@ -439,7 +479,7 @@ assert(
 );
 
 assert(
-  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v3";') &&
+  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v4";') &&
     formService.includes("const [availabilityStatuses, nextStarts] = await Promise.all([") &&
     formService.includes("getNextStartMap(summaries.map((summary) => summary.pitcherId)),") &&
     formService.includes("const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);") &&

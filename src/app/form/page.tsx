@@ -24,7 +24,7 @@ import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
-import { FORM_CONFIG, HEAT_BANDS, formDeltaBand } from "@/lib/form-tokens";
+import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -44,14 +44,22 @@ type FormPageProps = {
     even?: string;
     hot?: string;
     cooling?: string;
+    view?: string;
+    show?: string;
   }>;
 };
+
+type HeatCheckView = "trend" | "season";
 
 const sortOptions = [
   { key: "form", label: "Direction" },
   { key: "risers", label: "Risers" },
   { key: "fallers", label: "Fallers" },
 ] as const;
+
+function parseHeatCheckView(value: string | undefined): HeatCheckView {
+  return value === "season" ? "season" : "trend";
+}
 
 export async function generateMetadata({ searchParams }: FormPageProps): Promise<Metadata> {
   return generateHeatCheckMetadata({ searchParams });
@@ -99,6 +107,9 @@ export default async function FormRedirect({ searchParams }: FormPageProps) {
 export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const params = await searchParams;
   const window = parseFormWindow(params?.window);
+  const view = parseHeatCheckView(params?.view);
+  const trendView = view === "trend";
+  const seasonView = view === "season";
   const sort = sortOptions.some((option) => option.key === params?.sort) ? params?.sort ?? "form" : "form";
   const team = params?.team ?? "";
   const query = (params?.q ?? "").trim().toLowerCase();
@@ -119,7 +130,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const rankedDate = addDays(today, -1);
   const startContext = buildTodayStartContext(tonight.games);
   const teams = [...new Set(leaderboard.pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
-  const pitchers = leaderboard.pitchers
+  const trendPitchers = leaderboard.pitchers
     .filter((pitcher) => !team || pitcher.team === team)
     .filter((pitcher) => !query || pitcher.name.toLowerCase().includes(query))
     .filter((pitcher) => !band || pitcher.tier === band)
@@ -131,8 +142,14 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       if (sort === "fallers") return Number(aLimited) - Number(bLimited) || compareMovementFall(a, b);
       return Number(aLimited) - Number(bLimited) || compareRollingFormLevelRank(a, b);
     });
+  const seasonPitchers = leaderboard.pitchers
+    .filter((pitcher) => !team || pitcher.team === team)
+    .filter((pitcher) => !query || pitcher.name.toLowerCase().includes(query))
+    .sort(compareSeasonGsRank);
+  const pitchers = trendView ? trendPitchers : seasonPitchers;
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
   const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);
+  const seasonRankByPitcherId = buildGlobalSeasonRankMap(qualifiedPitchers);
   const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
     count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
@@ -143,8 +160,10 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const biggestRiser = riserCandidates[0] ?? null;
   const biggestFaller = fallerCandidates[0] ?? null;
   const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
-  const leagueView = !team;
+  const allTeamsView = !team;
+  const leagueView = allTeamsView && trendView;
   const boardPitchers = pitchers;
+  const seasonVisiblePitchers = visibleSeasonPitchers(seasonPitchers, team, params?.show);
   const groupedBoard = groupPitchersByBand(boardPitchers);
   const showBandHeaders = leagueView && sort === "form";
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
@@ -153,7 +172,8 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
-  const formThroughLabel = `Form through ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
+  const throughPrefix = seasonView ? "Season through" : "Form through";
+  const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -166,15 +186,15 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            How starting pitchers are trending over their last {window} starts.
+            {trendView ? <>How starting pitchers are trending over their last {window} starts.</> : <>Starting pitchers ranked by season GS+.</>}
           </p>
         </header>
 
         <section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
-          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
+          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
         </section>
 
-        {leagueView && biggestRiser && biggestFaller ? (
+        {trendView && leagueView && biggestRiser && biggestFaller ? (
           <section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">
             <MomentumHero
               riser={biggestRiser}
@@ -197,7 +217,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </section>
         ) : null}
 
-        {leagueView ? (
+        {trendView && leagueView ? (
           <section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">
             {!team && activeFilterLabel !== "All arms" ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
@@ -254,6 +274,10 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </section>
         ) : null}
 
+        {seasonView && allTeamsView ? (
+          <SeasonBoardControls params={params ?? {}} qualifiedOnly={qualifiedOnly} />
+        ) : null}
+
         {pitchers.length === 0 ? (
           <section className="rounded border border-white/10 bg-[#101014] p-6" data-responsive-check="heat-empty-filter">
             <p className="font-mono text-sm uppercase tracking-[0.14em] text-zinc-300">
@@ -263,9 +287,16 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </section>
         ) : (
           <div id="full-board" className="grid gap-4 scroll-mt-8" data-responsive-check="form-leaderboard">
-            {leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}
+            {trendView && leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}
             <section className="grid gap-2">
-              {showBandHeaders ? (
+              {seasonView ? (
+                <>
+                  {seasonVisiblePitchers.map((pitcher) => (
+                    <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={seasonRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" />
+                  ))}
+                  <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonPitchers.length} params={params ?? {}} team={team} />
+                </>
+              ) : showBandHeaders ? (
                 groupedBoard.map((group) => (
                   <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">
                     <BandHeader band={group.band} count={group.pitchers.length} />
@@ -277,7 +308,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                         {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
                         {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { heatingExpanded, coolingExpanded })}
                         {visibleBandPitchers(group.band.key, group.pitchers, { heatingExpanded, coolingExpanded }).map((pitcher, index) => (
-                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} />
+                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" />
                         ))}
                       </>
                     )}
@@ -285,7 +316,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 ))
               ) : (
                 boardPitchers.map((pitcher, index) => (
-                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} />
+                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} view="trend" />
                 ))
               )}
             </section>
@@ -544,15 +575,19 @@ function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
   );
 }
 
-function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string }) {
-  const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
-  const treatment = rowTreatment(pitcher);
+function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId, view }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string; view: HeatCheckView }) {
+  const seasonView = view === "season";
+  const qualityTier = qualityTierOf(pitcher.bgs);
+  const bandColor = seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
+  const treatment = seasonView ? seasonRowTreatment() : rowTreatment(pitcher);
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
+  const seasonMetaLine = `Season: ${seasonLine(pitcher)}`;
   const fullWindow = pitcher.windowCount >= window;
-  const thermalBand = fullWindow ? pitcher.tier : null;
-  const profileHref = pitcherHref(pitcher, sourceParams("heat", { window }));
+  const thermalBand = seasonView ? qualityTier.key : fullWindow ? pitcher.tier : null;
+  const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
+  const score = seasonView ? Math.round(pitcher.bgs) : Math.round(pitcher.rgs);
 
   return (
     <article
@@ -564,7 +599,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
     >
       <div className="min-w-0">
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>#{rank}</p>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{tierLabel(pitcher.tier)}</p>
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{seasonView ? qualityTier.label : tierLabel(pitcher.tier)}</p>
       </div>
       <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
@@ -574,7 +609,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           <MobileStackedPitcherName name={pitcher.name} />
         </h2>
         <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
-          {pitcher.team} / {pitcher.windowCount} of {window} / {lastLine}
+          {seasonView ? `${pitcher.team} / ${pitcher.seasonStartCount} GS / ${seasonMetaLine}` : `${pitcher.team} / ${pitcher.windowCount} of ${window} / ${lastLine}`}
           {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Scheduled starter</span> : null}
         </p>
         <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
@@ -582,12 +617,15 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
         </p>
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
-        <div className="flex min-w-0 flex-wrap gap-1.5">
-          <CrossoverPill pitcher={pitcher} />
-          <FormDriverChips chips={pitcher.driverChips} compact />
-        </div>
+        {seasonView ? null : (
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            <CrossoverPill pitcher={pitcher} />
+            <FormDriverChips chips={pitcher.driverChips} compact />
+          </div>
+        )}
       </HeatPitcherProfileLink>
-      <div className="col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:grid sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-3">
+      <div className={`col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
+        {seasonView ? null : (
         <div className="hidden min-w-0 sm:block">
           <FormSparkline
             values={formSparkValues(pitcher)}
@@ -601,15 +639,17 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
             intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
           />
         </div>
+        )}
         <div className="flex items-start justify-end gap-2">
           <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed} compact />
-          <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`${pitcher.name} Form ${Math.round(pitcher.rgs)}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
-            <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{Math.round(pitcher.rgs)}</p>
-            <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">Form</span>
-            {fullWindow ? <FormDeltaLabel summary={pitcher} /> : null}
+          <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={seasonView ? `${pitcher.name} season GS+ ${score}, ${pitcher.seasonStartCount} starts` : `${pitcher.name} Form ${score}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
+            <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{score}</p>
+            <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">{seasonView ? "Season GS+" : "Form"}</span>
+            {seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} /> : null}
           </HeatPitcherProfileLink>
         </div>
       </div>
+      {seasonView ? null : (
       <div className="col-span-full row-start-2 min-w-0 sm:hidden">
         <FormSparkline
           values={formSparkValues(pitcher)}
@@ -623,6 +663,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
         />
       </div>
+      )}
     </article>
   );
 }
@@ -712,6 +753,40 @@ function visibleBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[], 
   return pitchers;
 }
 
+function visibleSeasonPitchers(pitchers: FormSummary[], team: string, show: string | undefined) {
+  if (team || show === "all") return pitchers;
+  if (show === "50") return pitchers.slice(0, 50);
+  return pitchers.slice(0, 25);
+}
+
+function SeasonBoardControls({ params, qualifiedOnly }: { params: Record<string, string | undefined>; qualifiedOnly: boolean }) {
+  return (
+    <section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-season-controls">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Season list</p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Ranked by season-average GS+</p>
+        </div>
+        <ControlLink active={qualifiedOnly} href={heatCheckHref({ ...params, qualified: qualifiedOnly ? "false" : "true" })}>Qualified</ControlLink>
+      </div>
+    </section>
+  );
+}
+
+function SeasonExpandControls({ visible, total, params, team }: { visible: number; total: number; params: Record<string, string | undefined>; team: string }) {
+  if (team || visible >= total) return null;
+  const canShowMore = visible < 50 && total > 25;
+
+  return (
+    <div className="mt-3 flex flex-wrap justify-end gap-2" data-responsive-check="heat-season-expand">
+      {canShowMore ? (
+        <ControlLink active={false} href={heatCheckHref({ ...params, view: "season", show: "50" })}>Show 25 more</ControlLink>
+      ) : null}
+      <ControlLink active={false} href={heatCheckHref({ ...params, view: "season", show: "all" })}>Show all</ControlLink>
+    </div>
+  );
+}
+
 function groupPitchersByBand(pitchers: FormSummary[]) {
   return HEAT_BANDS.map((band) => ({
     band,
@@ -727,8 +802,19 @@ function buildGlobalFormRankMap(pitchers: FormSummary[]) {
   return new Map(sortPitchersByGlobalFormRank(pitchers).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
 }
 
+function buildGlobalSeasonRankMap(pitchers: FormSummary[]) {
+  return new Map([...pitchers].sort(compareSeasonGsRank).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
+}
+
 function sortPitchersByGlobalFormRank(pitchers: FormSummary[]) {
   return [...pitchers].sort(compareRollingFormLevelRank);
+}
+
+function compareSeasonGsRank(a: FormSummary, b: FormSummary) {
+  if (b.bgs !== a.bgs) return b.bgs - a.bgs;
+  if (b.seasonStartCount !== a.seasonStartCount) return b.seasonStartCount - a.seasonStartCount;
+  if ((b.lastStart?.gsPlus ?? 0) !== (a.lastStart?.gsPlus ?? 0)) return (b.lastStart?.gsPlus ?? 0) - (a.lastStart?.gsPlus ?? 0);
+  return a.pitcherId.localeCompare(b.pitcherId);
 }
 
 function compareRollingFormLevelRank(a: FormSummary, b: FormSummary) {
@@ -774,6 +860,24 @@ function rowTreatment(pitcher: FormSummary): {
     return { padding: "py-4 sm:py-[18px]", opacity: "opacity-95", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+}
+
+function seasonRowTreatment() {
+  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+}
+
+function seasonLine(pitcher: FormSummary) {
+  const stats = pitcher.seasonStats;
+  return [
+    `ERA ${formatNullable(stats.era, 2)}`,
+    `WHIP ${formatNullable(stats.whip, 2)}`,
+    `K/9 ${formatNullable(stats.k9, 1)}`,
+    `IP ${stats.inningsPitched.toFixed(1)}`,
+  ].join(" / ");
+}
+
+function formatNullable(value: number | null | undefined, precision: number) {
+  return value === null || value === undefined ? "--" : value.toFixed(precision);
 }
 
 function isPoleTier(pitcher: FormSummary) {
@@ -822,11 +926,24 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
   );
 }
 
-function ControlLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
+function ControlLink({ active, href, children, heatWindowLink = false, heatViewLink = false }: { active: boolean; href: string; children: React.ReactNode; heatWindowLink?: boolean; heatViewLink?: boolean }) {
   return (
-    <HeatCheckFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined} data-heat-window-link="true">
+    <HeatCheckFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "page" : undefined} data-heat-window-link={heatWindowLink ? "true" : undefined} data-heat-view-link={heatViewLink ? "true" : undefined}>
       {children}
     </HeatCheckFilterLink>
+  );
+}
+
+function ViewControlLinks({ view, params }: { view: HeatCheckView; params: Record<string, string | undefined> }) {
+  return (
+    <div className="flex flex-wrap gap-2" data-responsive-check="heat-view-controls">
+      <ControlLink active={view === "trend"} href={heatCheckHref({ ...params, view: "trend", show: "" })} heatViewLink>
+        Trend
+      </ControlLink>
+      <ControlLink active={view === "season"} href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })} heatViewLink>
+        Season
+      </ControlLink>
+    </div>
   );
 }
 
@@ -834,7 +951,7 @@ function WindowControlLinks({ window, params }: { window: number; params: Record
   return (
     <div className="flex flex-wrap gap-2" data-responsive-check="heat-window-controls">
       {[3, 5, 10].map((value) => (
-        <ControlLink key={value} active={window === value} href={heatCheckHref({ ...params, window: String(value) })}>
+        <ControlLink key={value} active={window === value} href={heatCheckHref({ ...params, window: String(value) })} heatWindowLink>
           Last {value}
         </ControlLink>
       ))}
@@ -847,6 +964,7 @@ function TeamFilterControl({
   activeTeam,
   params,
   window,
+  view,
   formThroughLabel,
   stale,
 }: {
@@ -854,6 +972,7 @@ function TeamFilterControl({
   activeTeam: string;
   params: Record<string, string | undefined>;
   window: number;
+  view: HeatCheckView;
   formThroughLabel: string;
   stale: boolean;
 }) {
@@ -868,6 +987,9 @@ function TeamFilterControl({
         data-responsive-check="heat-controls-context"
       />
       <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
+        <ControlGroup label="View">
+          <ViewControlLinks view={view} params={params} />
+        </ControlGroup>
         <HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />
         {activeTeam ? (
           <HeatTeamClearLink
@@ -875,15 +997,20 @@ function TeamFilterControl({
             className="mb-0 inline-flex min-h-11 items-center justify-center rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
           />
         ) : null}
+        {view === "trend" ? (
         <div className="pb-0" data-responsive-check="heat-desktop-window-controls">
           <ControlGroup label="Window">
             <WindowControlLinks window={window} params={params} />
           </ControlGroup>
         </div>
+        ) : null}
       </div>
       <HeatTeamDrawer key={activeTeam || "all"} teams={teams} activeTeam={activeTeam} params={params} />
-      <div className="sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
-        <WindowControlLinks window={window} params={params} />
+      <div className="grid gap-3 sm:hidden" data-responsive-check="heat-team-mobile-window-controls">
+        <ControlGroup label="View">
+          <ViewControlLinks view={view} params={params} />
+        </ControlGroup>
+        {view === "trend" ? <WindowControlLinks window={window} params={params} /> : null}
       </div>
     </div>
   );

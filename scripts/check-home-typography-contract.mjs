@@ -59,17 +59,22 @@ assert(
 
 assert(
   globals.includes("@media (min-width: 640px)") &&
-    globals.includes("h1.font-serif,\n  .section-title") &&
+    globals.includes("h1.font-serif,") &&
+    globals.includes(".section-title") &&
     globals.includes("margin-top: 24px;"),
   "desktop page and section titles must have 24px of top margin",
 );
 
 assert(
   siteHeader.includes("site-header-nav") &&
+    siteHeader.includes('import { currentSeasonFromDate } from "@/lib/season";') &&
+    siteHeader.includes("const currentSeason = currentSeasonFromDate(today);") &&
+    siteHeader.includes('className="site-logo-lockup"') &&
     siteHeader.includes('<Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">') &&
+    siteHeader.includes('<p className="site-logo-season-kicker">{currentSeason} MLB Season</p>') &&
     siteHeader.includes("border-b border-white/10 pb-5") &&
     siteHeader.includes("<SiteNav active={active} today={today} rankedDate={rankedDate} />"),
-  "site header must own the shared home-linking logo/nav hairline divider",
+  "site header must own the shared home-linking logo/nav hairline divider and season kicker",
 );
 
 assert(
@@ -78,8 +83,11 @@ assert(
     globals.includes(".site-logo-wordmark {\n  color: #fcd34d;") &&
     globals.includes("font-size: clamp(2.875rem, 6.24vw, 3.12rem);") &&
     globals.includes("font-family: var(--font-logo),") &&
-    globals.includes("margin-bottom: 8px;"),
-  "site logo wordmark must force a visibly larger mobile yellow Tourney logo with 8px bottom margin",
+    globals.includes(".site-logo-lockup") &&
+    globals.includes("margin-bottom: 8px;") &&
+    globals.includes(".site-logo-season-kicker") &&
+    globals.includes("letter-spacing: 0.15em;"),
+  "site logo lockup must force a visibly larger mobile yellow Tourney logo with a muted season kicker",
 );
 
 assert(

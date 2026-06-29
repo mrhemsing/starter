@@ -62,13 +62,27 @@ p,
 
 .site-logo-wordmark {
   color: #fcd34d;
+  display: block;
   font-family: var(--font-logo), var(--font-playfair), Georgia, serif;
   font-size: clamp(2.875rem, 6.24vw, 3.12rem);
   font-style: normal;
   font-weight: 400;
   letter-spacing: 0;
   line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.site-logo-lockup {
   margin-bottom: 8px;
+}
+
+.site-logo-season-kicker {
+  color: #a1a1aa;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  line-height: 1;
+  margin-top: 3px;
   text-transform: uppercase;
 }
 

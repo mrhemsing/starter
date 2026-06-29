@@ -236,6 +236,7 @@ export type FormSummary = {
   status: FormStatus;
   rgs: number;
   windowCount: number;
+  seasonStartCount: number;
   bgs: number;
   deltaForm: number;
   trend: FormTrend;

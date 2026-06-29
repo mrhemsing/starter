@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { currentSeasonFromDate } from "@/lib/season";
 
 type RouteLoadingShellProps = {
   activeLabel?: "Home" | "Ranked Starts" | "Heat Check" | "Live" | "Upcoming" | "Watchlist";
@@ -16,13 +17,18 @@ export function RouteLoadingShell({
   label = "Loading page",
   responsiveCheck = "route-loading-shell",
 }: RouteLoadingShellProps) {
+  const currentSeason = currentSeasonFromDate(new Date().toISOString());
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8" aria-busy="true" data-responsive-check={responsiveCheck}>
       <div className="mx-auto max-w-7xl">
         <header className="site-header-nav mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
-          <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
-            Toe the Slab
-          </Link>
+          <div className="site-logo-lockup">
+            <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
+              Toe the Slab
+            </Link>
+            <p className="site-logo-season-kicker">{currentSeason} MLB Season</p>
+          </div>
           <nav className="hidden items-center gap-6 font-mono text-xs uppercase tracking-[0.18em] text-zinc-400 md:flex" aria-label="Primary loading">
             {navLabels.map((item) => (
               <span key={item} className={item === activeLabel ? "text-zinc-50" : undefined}>{item}</span>
