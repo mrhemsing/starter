@@ -344,7 +344,7 @@ function classifyStarterForm(
   if (completeness?.providerMlbDebut || careerGS === 0) {
     return { status: "mlb_debut", matched, expected, careerGS, completeness: ratio };
   }
-  if (expected > FORM_COMPLETENESS.coldStartMax && ratio < FORM_COMPLETENESS.joinCompletenessMin) {
+  if (matched <= FORM_COMPLETENESS.joinGapMatchFloor && expected > FORM_COMPLETENESS.coldStartMax) {
     return { status: "join_gap", matched, expected, careerGS, completeness: ratio };
   }
   if (!form || form.status === "insufficient" || matched < FORM_COMPLETENESS.formMinStarts) {

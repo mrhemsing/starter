@@ -111,7 +111,9 @@ export const MUSTWATCH_CONFIG = {
   windowDefault: 5 as const,
   formCompleteness: {
     coldStartMax: 2,
-    joinCompletenessMin: 0.75,
+    // Join gaps should mean the form join found almost nothing for an established pitcher,
+    // not ordinary settle lag between provider GS and scored form starts.
+    joinGapMatchFloor: 1,
     formMinStarts: 3,
   },
   weights: {

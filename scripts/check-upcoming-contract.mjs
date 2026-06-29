@@ -32,6 +32,11 @@ const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"];
 const WATCH_COMPONENT_LABELS = ["Top arm", "Pairing", "Matchup"];
 const WATCH_COMPONENT_LAYOUTS = ["featured", "compact", "standard"];
 const WATCH_TIER_LABELS = ["Must-watch", "Worth it", "Background"];
+const FORM_COMPLETENESS = {
+  coldStartMax: 2,
+  joinGapMatchFloor: 1,
+  formMinStarts: 3,
+};
 const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
@@ -199,6 +204,12 @@ function assertStarterForm(starter, label) {
     assert(Number.isInteger(starter.formCompleteness.matched), `${label} should expose matched form count`);
     assert(Number.isInteger(starter.formCompleteness.expected), `${label} should expose expected season GS`);
     assert(starter.formCompleteness.careerGS === null || Number.isInteger(starter.formCompleteness.careerGS), `${label} should expose career GS or null`);
+    if (starter.formCompleteness.expected > FORM_COMPLETENESS.coldStartMax && starter.formCompleteness.matched > FORM_COMPLETENESS.joinGapMatchFloor) {
+      assert(formStatus !== "join_gap", `${label} established starter with a real form sample should not be join_gap`);
+    }
+    if (starter.formCompleteness.matched >= FORM_COMPLETENESS.formMinStarts) {
+      assert(formStatus !== "join_gap", `${label} starter with qualified form count should not be join_gap`);
+    }
   }
 
   if (formStatus === "mlb_debut") {
@@ -1323,9 +1334,13 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       typesSource.includes('export type MatchupConfidence = "HIGH" | "LOW" | "NONE";') &&
       tonightServiceSource.includes("fetchMlbPitcherStartCompleteness") &&
       tonightServiceSource.includes("function classifyStarterForm(") &&
+      tonightServiceSource.includes("matched <= FORM_COMPLETENESS.joinGapMatchFloor") &&
+      !tonightServiceSource.includes("ratio < FORM_COMPLETENESS.joinCompletenessMin") &&
       tonightServiceSource.includes('formStatus: formCompleteness.status') &&
       tonightServiceSource.includes('console.warn("[upcoming:join-gap-starter]"') &&
       tonightServiceSource.includes("function applyTrustGateWatchScore") &&
+      tonightsMustWatchSource.includes("function watchFlagNoteText(game: TonightGame)") &&
+      tonightsMustWatchSource.includes('return notes.join(" ");') &&
       tonightsMustWatchSource.includes('data-visible-starter-limited-reasons=') &&
       tonightsMustWatchSource.includes('data-visible-starter-form-statuses=') &&
       tonightsMustWatchSource.includes("Form pending") &&
@@ -2415,14 +2430,14 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   assert(
     renderedStarterLimitedReasons.length === renderedGameCount &&
-      renderedStarterLimitedReasons.every((reasons) => /^(cold_start|join_gap|none)\/(cold_start|join_gap|none)$/.test(reasons)),
+      renderedStarterLimitedReasons.every((reasons) => /^(cold_start|mlb_debut|join_gap|none)\/(cold_start|mlb_debut|join_gap|none)$/.test(reasons)),
     `${route} ${sectionId} should expose one away/home starter limited-reason pair per visible game`,
   );
   assert(
     renderedStarterFallbackLabels.length === renderedGameCount &&
       renderedStarterFallbackLabels.every((labels) =>
         labels.split("|").length === 2 &&
-        labels.split("|").every((label) => ["none", "Limited form sample / baseline projection", "Form pending", "Starter TBD / league baseline used"].includes(label)),
+        labels.split("|").every((label) => ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter TBD / league baseline used"].includes(label)),
       ),
     `${route} ${sectionId} should expose one away/home starter fallback label pair per visible game`,
   );
@@ -2525,11 +2540,11 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterTopDriverScores.length === renderedGameCount &&
       renderedStarterTopDriverScores.every((scores) => scores.split("/").length === 2 && scores.split("/").every((score) => score === "none" || /^-?\d+\.\d$/.test(score))) &&
       renderedStarterAccentSources.length === renderedGameCount &&
-      renderedStarterAccentSources.every((sources) => sources.split("/").length === 2 && sources.split("/").every((source) => ["form-band", "neutral"].includes(source))) &&
+      renderedStarterAccentSources.every((sources) => sources.split("/").length === 2 && sources.split("/").every((source) => ["form-band", "neutral", "mlb-debut"].includes(source))) &&
       renderedStarterAccentBands.length === renderedGameCount &&
       renderedStarterAccentBands.every((bands) => bands.split("/").length === 2 && bands.split("/").every((band) => [...FORM_TIER_KEYS, "neutral"].includes(band))) &&
       renderedStarterAccentColors.length === renderedGameCount &&
-      renderedStarterAccentColors.every((colors) => colors.split("/").length === 2 && colors.split("/").every((color) => Object.values(FORM_ACCENT_COLORS).includes(color))),
+      renderedStarterAccentColors.every((colors) => colors.split("/").length === 2 && colors.split("/").every((color) => [...Object.values(FORM_ACCENT_COLORS), "#EF9F27"].includes(color))),
     `${route} ${sectionId} should expose one away/home starter form tier, trend, score, delta, spark state, season baseline, window count, last-start state, driver-chip state, and form-band accent pair per visible game`,
   );
   assert(
@@ -2653,7 +2668,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchSortGroupLabels.length === renderedGameCount &&
       renderedWatchSortGroupLabels.every((label) => ["Pregame sort bucket", "Live sort bucket", "Fallback sort bucket"].includes(label)) &&
       renderedWatchFlagKeys.length === renderedGameCount &&
-      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "join-gap", "pending-opponent-splits"].includes(key))) &&
+      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "mlb-debut", "join-gap", "pending-opponent-splits"].includes(key))) &&
       renderedWatchFlagLabels.length === renderedGameCount &&
       renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
       renderedComponentCounts.length === renderedGameCount &&

@@ -894,11 +894,7 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
       data-watch-flag-keys={flagKeys.join(",")}
       data-watch-flag-label={watchFlagNoteDataLabel(game)}
     >
-      {game.flags?.tbd ? "TBD starter included with league-mean fallback. " : ""}
-      {game.flags?.coldStartForm ? "Cold-start pitchers use baseline fallback where needed. " : ""}
-      {game.flags?.mlbDebut ? "MLB debut novelty can qualify this game as must-watch. " : ""}
-      {game.flags?.joinGapForm ? "Form pending for a scheduled pitcher." : ""}
-      {game.matchupContext.status === "pending-opponent-splits" ? "Opponent split context pending." : ""}
+      {watchFlagNoteText(game)}
     </p>
   );
 }
@@ -1532,6 +1528,16 @@ function watchFlagNoteAriaLabel(game: TonightGame) {
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
+}
+
+function watchFlagNoteText(game: TonightGame) {
+  const notes = [];
+  if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback.");
+  if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed.");
+  if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify this game as must-watch.");
+  if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher.");
+  if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending.");
+  return notes.join(" ");
 }
 
 function formatSlateDate(value: string) {
