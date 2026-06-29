@@ -109,6 +109,11 @@ export const HOME_CONFIG = {
 
 export const MUSTWATCH_CONFIG = {
   windowDefault: 5 as const,
+  formCompleteness: {
+    coldStartMax: 2,
+    joinCompletenessMin: 0.75,
+    formMinStarts: 3,
+  },
   weights: {
     topArm: 0.5,
     pairAvg: 0.3,

@@ -110,6 +110,7 @@ type MlbPeopleApiResponse = {
   people?: Array<{
     id?: number;
     fullName?: string;
+    mlbDebutDate?: string;
     currentTeam?: {
       id?: number;
       name?: string;
@@ -232,6 +233,15 @@ type MlbGameFeedPitchingStats = {
   wins?: number;
   losses?: number;
   avg?: string;
+};
+
+export type MlbPitcherStartCompleteness = {
+  pitcherMlbId: number;
+  seasonStarts: number | null;
+  careerStarts: number | null;
+  mlbDebutDate: string | null;
+  providerMlbDebut: boolean;
+  source: "live-people-stats";
 };
 
 type MlbGameFeedPlayer = {
@@ -650,6 +660,57 @@ export async function fetchMlbPitcherSeasonProfile(pitcherMlbId: number, season:
   } catch {
     return null;
   }
+}
+
+export async function fetchMlbPitcherStartCompleteness(pitcherMlbIds: number[], season: string, asOfDate: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbPitcherStartCompleteness>> {
+  if (!options.fetchLive) return new Map();
+  const uniqueIds = Array.from(new Set(pitcherMlbIds.filter((id) => Number.isInteger(id) && id > 0)));
+  if (uniqueIds.length === 0) return new Map();
+
+  const entries = await Promise.all(uniqueIds.map((pitcherMlbId) => fetchSinglePitcherStartCompleteness(pitcherMlbId, season, asOfDate, options)));
+  return new Map(entries.filter((entry): entry is MlbPitcherStartCompleteness => Boolean(entry)).map((entry) => [String(entry.pitcherMlbId), entry]));
+}
+
+async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season: string, asOfDate: string, options: MlbScheduleClientOptions): Promise<MlbPitcherStartCompleteness | null> {
+  const seasonParams = new URLSearchParams({ stats: "season", group: "pitching", season });
+  const careerParams = new URLSearchParams({ stats: "career", group: "pitching" });
+
+  try {
+    const [personResponse, seasonResponse, careerResponse] = await Promise.all([
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${seasonParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${careerParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+    ]);
+
+    if (!personResponse.ok || !seasonResponse.ok || !careerResponse.ok) return null;
+
+    const [personPayload, seasonPayload, careerPayload] = (await Promise.all([
+      personResponse.json(),
+      seasonResponse.json(),
+      careerResponse.json(),
+    ])) as [MlbPeopleApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse];
+    const person = personPayload.people?.[0];
+    const seasonStarts = readPitchingGamesStarted(seasonPayload);
+    const careerStarts = readPitchingGamesStarted(careerPayload);
+    const mlbDebutDate = person?.mlbDebutDate ?? null;
+    const providerMlbDebut = Boolean(mlbDebutDate && mlbDebutDate === asOfDate);
+
+    return {
+      pitcherMlbId,
+      seasonStarts,
+      careerStarts,
+      mlbDebutDate,
+      providerMlbDebut,
+      source: "live-people-stats",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readPitchingGamesStarted(payload: MlbPersonStatsApiResponse) {
+  const value = payload.stats?.[0]?.splits?.[0]?.stat?.gamesStarted;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 export async function fetchMlbPitcherAvailabilityStatuses(pitcherMlbIds: number[], options: MlbScheduleClientOptions = {}): Promise<Map<string, PitcherAvailability>> {

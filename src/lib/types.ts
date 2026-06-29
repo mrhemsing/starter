@@ -302,7 +302,8 @@ export type FormPitcherResponse = {
 
 export type WatchTierKey = "mustwatch" | "worthit" | "background";
 export type WatchSortPolicy = "status-then-watch-score";
-export type StarterLimitedReason = "cold_start" | "no_match" | null;
+export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";
+export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;
 export type MatchupConfidence = "HIGH" | "LOW" | "NONE";
 
 export type TonightStarter = {
@@ -311,7 +312,13 @@ export type TonightStarter = {
   team: string;
   side: "home" | "away";
   status: FormStatus | "tbd";
+  formStatus: StarterFormStatus | "tbd";
   limitedReason: StarterLimitedReason;
+  formCompleteness?: {
+    matched: number;
+    expected: number;
+    careerGS: number | null;
+  };
   rgs?: number;
   tier?: FormTier;
   trend?: FormTrend;
@@ -347,7 +354,7 @@ export type TonightStarter = {
     restLabel: "short" | "normal" | "extended" | "unknown";
   };
   availability?: PitcherAvailability | null;
-  flags?: FormSummary["flags"] & { noMatch?: boolean };
+  flags?: FormSummary["flags"] & { joinGap?: boolean; mlbDebut?: boolean };
 };
 
 export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
@@ -383,7 +390,7 @@ export type TonightGame = {
     matchup: number;
   };
   matchupConfidence: MatchupConfidence;
-  flags?: { tbd?: boolean; limitedForm?: boolean; coldStartForm?: boolean; noMatchForm?: boolean };
+  flags?: { tbd?: boolean; limitedForm?: boolean; coldStartForm?: boolean; joinGapForm?: boolean; mlbDebut?: boolean };
 };
 
 export type TonightResponse = {

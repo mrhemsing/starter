@@ -1,11 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { getFormLeaderboard } from "@/lib/data/form-service";
-import { fetchMlbTeamHandednessSplitContexts } from "@/lib/data/mlb-stats-client";
+import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
 import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
-import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
+import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
 
 type TonightOptions = {
   date?: string;
@@ -24,11 +24,12 @@ const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
 const WATCH_SCORE_RANGE = { min: 0, max: 100 };
 const WATCH_SCORE_PRECISION = 1;
+const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
 const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
-  ["tonight-must-watch", "v7"],
+  ["tonight-must-watch", "v8"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS },
 );
 
@@ -58,10 +59,15 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
     fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }),
     fetchMlbOddsMarketContexts(schedule.games),
   ]);
+  const probablePitcherIds = schedule.games.flatMap((game) => [
+    game.probableAwayPitcher?.id,
+    game.probableHomePitcher?.id,
+  ]).filter((id): id is number => typeof id === "number");
+  const completenessByPitcher = await fetchMlbPitcherStartCompleteness(probablePitcherIds, date.slice(0, 4), date, { fetchLive: true });
   const formByPitcher = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
   const probableScoresByGame = groupProbableMatchupScores(probables);
   const builtGames = await Promise.all(
-    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null)),
+    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null)),
   );
   const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
   const matchupRanks = rankMatchups(candidates);
@@ -116,6 +122,7 @@ async function buildTonightGame(
   game: MlbScheduleGame,
   date: string,
   formByPitcher: Map<string, FormSummary>,
+  completenessByPitcher: Map<string, MlbPitcherStartCompleteness>,
   probableMatchupScores: number[],
   leagueMeanGS: number,
   opponentSplits: Map<string, MlbTeamHandednessSplitContext>,
@@ -124,8 +131,8 @@ async function buildTonightGame(
   const status = normalizeGameStatus(game);
   const parkContext = getParkContext(game.venue);
   const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);
-  const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, formByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
-  const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, formByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
+  const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
+  const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const splitMatchupScore = scoreOpponentSplitMatchup([awayStarter, homeStarter], parkContext, weatherContext);
   const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
   const starterScores = [starterWatchValue(awayStarter, leagueMeanGS), starterWatchValue(homeStarter, leagueMeanGS)];
@@ -135,12 +142,13 @@ async function buildTonightGame(
   const matchupComponent = round1(normMatchup);
   const rawWatchScore = status === "ppd" ? 0 : round1(calculateGameWatchScore(topArm, pairing, matchupComponent));
   const matchupConfidence = matchupConfidenceForStarters([awayStarter, homeStarter]);
-  const gameWatchScore = applyConfidenceWatchCap(rawWatchScore, matchupConfidence);
+  const hasMlbDebut = awayStarter.formStatus === "mlb_debut" || homeStarter.formStatus === "mlb_debut";
+  const gameWatchScore = applyTrustGateWatchScore(rawWatchScore, matchupConfidence, hasMlbDebut);
   const watchTier = watchTierOf(gameWatchScore).key as WatchTierKey;
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
-  const limitedForm = awayStarter.status !== "ok" || homeStarter.status !== "ok" || awayStarter.flags?.limitedSample === true || homeStarter.flags?.limitedSample === true;
-  const coldStartForm = awayStarter.limitedReason === "cold_start" || homeStarter.limitedReason === "cold_start";
-  const noMatchForm = awayStarter.limitedReason === "no_match" || homeStarter.limitedReason === "no_match";
+  const limitedForm = awayStarter.formStatus !== "ok" || homeStarter.formStatus !== "ok" || awayStarter.flags?.limitedSample === true || homeStarter.flags?.limitedSample === true;
+  const coldStartForm = awayStarter.formStatus === "cold_start" || homeStarter.formStatus === "cold_start";
+  const joinGapForm = awayStarter.formStatus === "join_gap" || homeStarter.formStatus === "join_gap";
 
   return {
     gamePk: String(game.gamePk),
@@ -176,7 +184,8 @@ async function buildTonightGame(
       tbd,
       limitedForm,
       coldStartForm,
-      noMatchForm,
+      joinGapForm,
+      mlbDebut: hasMlbDebut,
     },
   };
 }
@@ -203,6 +212,7 @@ function buildTonightStarter(
   opponentMarketName: string,
   date: string,
   formByPitcher: Map<string, FormSummary>,
+  completenessByPitcher: Map<string, MlbPitcherStartCompleteness>,
   parkContext: DecisionParkContext,
   weatherContext: DecisionWeatherContext,
   opponentSplits: Map<string, MlbTeamHandednessSplitContext>,
@@ -216,6 +226,7 @@ function buildTonightStarter(
       team,
       side,
       status: "tbd",
+      formStatus: "tbd",
       limitedReason: null,
       projection,
       marketContext: buildMarketContext(projection, null, opponentMarketName, date, marketContext),
@@ -223,20 +234,28 @@ function buildTonightStarter(
   }
 
   const form = formByPitcher.get(String(probable.id));
+  const completeness = completenessByPitcher.get(String(probable.id)) ?? null;
+  const formCompleteness = classifyStarterForm(form, completeness);
   const opponentSplit = form?.throws ? opponentSplits.get(teamSplitKey(opponent, form.throws === "L" ? "vs-lhp" : "vs-rhp")) ?? null : null;
   if (!form) {
     const projection = pendingProjection("Insufficient completed-start history");
-    logNoMatchStarter({ probable, side, team, opponent, date });
+    if (formCompleteness.status === "join_gap") logJoinGapStarter({ probable, side, team, opponent, date, completeness: formCompleteness });
     return {
       pitcherId: String(probable.id),
       name: probable.fullName,
       team,
       side,
       status: "insufficient",
-      limitedReason: "no_match",
+      formStatus: formCompleteness.status,
+      limitedReason: formCompleteness.status === "ok" ? null : formCompleteness.status,
+      formCompleteness: {
+        matched: formCompleteness.matched,
+        expected: formCompleteness.expected,
+        careerGS: formCompleteness.careerGS,
+      },
       projection,
       marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, date, marketContext),
-      flags: { noMatch: true },
+      flags: formCompleteness.status === "mlb_debut" ? { mlbDebut: true } : formCompleteness.status === "join_gap" ? { joinGap: true } : undefined,
     };
   }
   const formWorkload = form.workload ?? {
@@ -247,6 +266,7 @@ function buildTonightStarter(
   };
   const daysRest = formWorkload.lastStartDate ? daysBetween(formWorkload.lastStartDate, date) : null;
   const projection = buildStarterProjection(form, daysRest, parkContext, weatherContext, opponentSplit);
+  if (formCompleteness.status === "join_gap") logJoinGapStarter({ probable, side, team, opponent, date, completeness: formCompleteness });
 
   return {
     pitcherId: form.pitcherId,
@@ -254,7 +274,13 @@ function buildTonightStarter(
     team,
     side,
     status: form.status,
-    limitedReason: form.status === "insufficient" ? "cold_start" : null,
+    formStatus: formCompleteness.status,
+    limitedReason: formCompleteness.status === "ok" ? null : formCompleteness.status,
+    formCompleteness: {
+      matched: formCompleteness.matched,
+      expected: formCompleteness.expected,
+      careerGS: formCompleteness.careerGS,
+    },
     rgs: form.rgs,
     tier: form.tier,
     trend: form.trend,
@@ -273,20 +299,29 @@ function buildTonightStarter(
       restLabel: restLabel(daysRest),
     },
     availability: form.availability ?? null,
-    flags: form.flags,
+    flags: {
+      ...form.flags,
+      ...(formCompleteness.status === "mlb_debut" ? { mlbDebut: true } : null),
+      ...(formCompleteness.status === "join_gap" ? { joinGap: true } : null),
+    },
   };
 }
 
 function matchupConfidenceForStarters(starters: TonightGame["starters"]) {
-  if (starters.some((starter) => starter.limitedReason === "no_match")) return "NONE";
-  if (starters.some((starter) => starter.limitedReason === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
+  if (starters.some((starter) => starter.formStatus === "join_gap")) return "NONE";
+  if (starters.some((starter) => starter.formStatus === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
   return "HIGH";
 }
 
-function applyConfidenceWatchCap(score: number, confidence: TonightGame["matchupConfidence"]) {
+function applyTrustGateWatchScore(score: number, confidence: TonightGame["matchupConfidence"], hasMlbDebut: boolean) {
+  if (hasMlbDebut) return Math.max(score, minWatchScoreForTier("mustwatch"));
   if (confidence === "NONE") return Math.min(score, maxWatchScoreForTier("background"));
   if (confidence === "LOW") return Math.min(score, maxWatchScoreForTier("worthit"));
   return score;
+}
+
+function minWatchScoreForTier(tierKey: WatchTierKey) {
+  return MUSTWATCH_CONFIG.watchTiers.find((tier) => tier.key === tierKey)?.min ?? WATCH_SCORE_RANGE.max;
 }
 
 function maxWatchScoreForTier(tierKey: WatchTierKey) {
@@ -297,27 +332,54 @@ function maxWatchScoreForTier(tierKey: WatchTierKey) {
   return round1(higherTier.min - 1 / 10 ** WATCH_SCORE_PRECISION);
 }
 
-function logNoMatchStarter({
+function classifyStarterForm(
+  form: FormSummary | undefined,
+  completeness: MlbPitcherStartCompleteness | null,
+): { status: StarterFormStatus; matched: number; expected: number; careerGS: number | null; completeness: number } {
+  const matched = form?.seasonStartCount ?? 0;
+  const expected = Math.max(0, completeness?.seasonStarts ?? form?.seasonStartCount ?? 0);
+  const careerGS = completeness?.careerStarts ?? null;
+  const ratio = expected <= 0 ? (matched > 0 ? 1 : 0) : matched / expected;
+
+  if (completeness?.providerMlbDebut || careerGS === 0) {
+    return { status: "mlb_debut", matched, expected, careerGS, completeness: ratio };
+  }
+  if (expected > FORM_COMPLETENESS.coldStartMax && ratio < FORM_COMPLETENESS.joinCompletenessMin) {
+    return { status: "join_gap", matched, expected, careerGS, completeness: ratio };
+  }
+  if (!form || form.status === "insufficient" || matched < FORM_COMPLETENESS.formMinStarts) {
+    return { status: "cold_start", matched, expected, careerGS, completeness: ratio };
+  }
+  return { status: "ok", matched, expected, careerGS, completeness: ratio };
+}
+
+function logJoinGapStarter({
   probable,
   side,
   team,
   opponent,
   date,
+  completeness,
 }: {
   probable: MlbProbablePitcher;
   side: "home" | "away";
   team: string;
   opponent: string;
   date: string;
+  completeness: { matched: number; expected: number; careerGS: number | null; completeness: number };
 }) {
-  console.warn("[upcoming:no-match-starter]", {
+  console.warn("[upcoming:join-gap-starter]", {
     date,
     side,
     team,
     opponent,
     probablePitcherId: probable.id,
     probablePitcherName: probable.fullName,
-    limitedReason: "no_match",
+    formStatus: "join_gap",
+    matched: completeness.matched,
+    expected: completeness.expected,
+    careerGS: completeness.careerGS,
+    completeness: round1(completeness.completeness),
   });
 }
 
@@ -420,14 +482,14 @@ function buildMarketContext(
 }
 
 function starterWatchValue(starter: TonightStarter, leagueMeanGS: number) {
-  if (starter.status === "ok" && starter.rgs !== undefined) return starter.rgs;
-  if (starter.lastStart?.gsPlus) return starter.lastStart.gsPlus;
+  if (starter.formStatus === "ok" && starter.rgs !== undefined) return starter.rgs;
+  if (starter.formStatus === "cold_start" && starter.lastStart?.gsPlus) return starter.lastStart.gsPlus;
   return leagueMeanGS;
 }
 
 function scoreOpponentSplitMatchup(starters: TonightStarter[], parkContext: DecisionParkContext, weatherContext: DecisionWeatherContext) {
   const scored = starters
-    .filter((starter) => starter.status === "ok" && starter.opponentSplit && typeof starter.rgs === "number")
+    .filter((starter) => starter.formStatus === "ok" && starter.opponentSplit && typeof starter.rgs === "number")
     .map((starter) => {
       const split = starter.opponentSplit!;
       return starter.rgs! - split.matchupRunValue * 2.2 + parkContext.runValue * 0.4 - weatherContext.runValue * 0.25;

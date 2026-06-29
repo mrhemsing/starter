@@ -179,11 +179,14 @@ function assertUpcomingEnvelope(upcoming, expectedStart, expectedDays, label) {
 function assertStarterForm(starter, label) {
   assert(["home", "away"].includes(starter.side), `${label} side must be home or away`);
   assert(["ok", "insufficient", "tbd"].includes(starter.status), `${label} status must be valid`);
-  assert(["cold_start", "no_match", null].includes(starter.limitedReason), `${label} limitedReason must be valid`);
+  assert(starter.formStatus === undefined || ["ok", "cold_start", "mlb_debut", "join_gap", "tbd"].includes(starter.formStatus), `${label} formStatus must be valid when present`);
+  assert(["cold_start", "mlb_debut", "join_gap", null].includes(starter.limitedReason), `${label} limitedReason must be valid`);
+  const formStatus = effectiveStarterFormStatus(starter);
 
   if (starter.status === "tbd") {
     assert(starter.pitcherId === null && starter.name === null, `${label} tbd starter should not fabricate identity`);
     assert(starter.lastStart === undefined, `${label} tbd starter should not expose lastStart`);
+    assert(formStatus === "tbd", `${label} tbd starter should use tbd formStatus`);
     assert(starter.limitedReason === null, `${label} tbd starter should not use a limitedReason`);
     return false;
   }
@@ -192,13 +195,27 @@ function assertStarterForm(starter, label) {
   assert(typeof starter.name === "string" && starter.name.length > 0, `${label} name missing`);
   assert(typeof starter.team === "string" && starter.team.length > 0, `${label} team missing`);
 
-  if (starter.status === "insufficient") {
-    assert(starter.limitedReason === "cold_start" || starter.limitedReason === "no_match", `${label} insufficient starter must declare cold_start or no_match`);
-    if (starter.limitedReason === "no_match") {
-      assert(starter.flags?.noMatch === true, `${label} no_match starter should carry internal noMatch flag`);
-      assert(starter.lastStart === undefined || starter.lastStart === null, `${label} no_match starter should not fabricate lastStart form`);
-      assertStarterProjection(starter.projection, `${label} no_match projection`);
-      assertMarketContext(starter.marketContext, `${label} no_match marketContext`);
+  if (starter.formCompleteness !== undefined) {
+    assert(Number.isInteger(starter.formCompleteness.matched), `${label} should expose matched form count`);
+    assert(Number.isInteger(starter.formCompleteness.expected), `${label} should expose expected season GS`);
+    assert(starter.formCompleteness.careerGS === null || Number.isInteger(starter.formCompleteness.careerGS), `${label} should expose career GS or null`);
+  }
+
+  if (formStatus === "mlb_debut") {
+    assert(starter.limitedReason === "mlb_debut", `${label} debut starter should declare mlb_debut`);
+    assert(starter.flags?.mlbDebut === true, `${label} debut starter should carry mlbDebut flag`);
+    assertStarterProjection(starter.projection, `${label} mlb_debut projection`);
+    assertMarketContext(starter.marketContext, `${label} mlb_debut marketContext`);
+    return false;
+  }
+
+  if (starter.status === "insufficient" || formStatus !== "ok") {
+    assert(starter.limitedReason === "cold_start" || starter.limitedReason === "join_gap", `${label} limited starter must declare cold_start or join_gap`);
+    if (formStatus === "join_gap") {
+      assert(starter.flags?.joinGap === true, `${label} join_gap starter should carry internal joinGap flag`);
+      assert(starter.lastStart === undefined || starter.lastStart === null, `${label} join_gap starter should not fabricate lastStart form`);
+      assertStarterProjection(starter.projection, `${label} join_gap projection`);
+      assertMarketContext(starter.marketContext, `${label} join_gap marketContext`);
       return false;
     }
     if (starter.rgs !== undefined) {
@@ -210,10 +227,11 @@ function assertStarterForm(starter, label) {
       starter.spark.forEach((value, index) => assertNumber(value, `${label} limited spark[${index}]`));
       assertLastStart(starter.lastStart, `${label} limited lastStart`);
     }
-    assert(starter.limitedReason === "cold_start", `${label} limited starter with sparse form should be cold_start`);
+    assert(formStatus === "cold_start", `${label} limited starter with sparse form should be cold_start`);
     return false;
   }
 
+  assert(formStatus === "ok", `${label} complete starter should use ok formStatus`);
   assert(starter.limitedReason === null, `${label} complete starter should not carry a limitedReason`);
   assertNumber(starter.rgs, `${label} rgs`);
   assert(FORM_TIER_KEYS.includes(starter.tier), `${label} tier must be valid`);
@@ -340,6 +358,13 @@ function assertWatchScoreRange(range, label) {
   assert(range.max === WATCH_SCORE_RANGE.max, `${label} watchScoreRange.max should be ${WATCH_SCORE_RANGE.max}`);
 }
 
+function effectiveStarterFormStatus(starter) {
+  if (starter.formStatus) return starter.formStatus;
+  if (starter.status === "tbd") return "tbd";
+  if (starter.limitedReason) return starter.limitedReason;
+  return starter.status === "ok" ? "ok" : "cold_start";
+}
+
 function assertLastStart(lastStart, label) {
   if (lastStart === null) return;
   assert(lastStart && typeof lastStart === "object", `${label} must be an object or null`);
@@ -427,10 +452,10 @@ function assertDay(day, expectedDate, options = {}) {
       game.matchupConfidence === expectedMatchupConfidence(game),
       `${game.gamePk} matchupConfidence should derive from limited starter reasons`,
     );
-    if (game.matchupConfidence === "NONE") {
-      assert(game.watchTier === "background", `${game.gamePk} no_match form should floor the matchup to Background`);
+    if (game.matchupConfidence === "NONE" && !game.flags?.mlbDebut) {
+      assert(game.watchTier === "background", `${game.gamePk} join_gap form should floor the matchup to Background`);
     }
-    if (game.matchupConfidence === "LOW") {
+    if (game.matchupConfidence === "LOW" && !game.flags?.mlbDebut) {
       assert(game.watchTier !== "mustwatch", `${game.gamePk} cold_start form should cap the matchup below Must-watch`);
     }
     assert(
@@ -475,22 +500,27 @@ function assertDay(day, expectedDate, options = {}) {
     assert(typeof game.flags?.tbd === "boolean", `${game.gamePk} flags.tbd must be boolean`);
     assert(typeof game.flags?.limitedForm === "boolean", `${game.gamePk} flags.limitedForm must be boolean`);
     assert(typeof game.flags?.coldStartForm === "boolean", `${game.gamePk} flags.coldStartForm must be boolean`);
-    assert(typeof game.flags?.noMatchForm === "boolean", `${game.gamePk} flags.noMatchForm must be boolean`);
+    assert(typeof game.flags?.joinGapForm === "boolean" || game.flags?.joinGapForm === undefined, `${game.gamePk} flags.joinGapForm must be boolean when present`);
+    assert(typeof game.flags?.mlbDebut === "boolean" || game.flags?.mlbDebut === undefined, `${game.gamePk} flags.mlbDebut must be boolean when present`);
     assert(
       game.flags.tbd === game.starters.some((starter) => starter.status === "tbd"),
       `${game.gamePk} flags.tbd should match starter TBD state`,
     );
     assert(
-      game.flags.limitedForm === game.starters.some((starter) => starter.status !== "ok" || starter.flags?.limitedSample === true),
+      game.flags.limitedForm === game.starters.some((starter) => effectiveStarterFormStatus(starter) !== "ok" || starter.flags?.limitedSample === true),
       `${game.gamePk} flags.limitedForm should match limited starter or small-sample state`,
     );
     assert(
-      game.flags.coldStartForm === game.starters.some((starter) => starter.limitedReason === "cold_start"),
+      game.flags.coldStartForm === game.starters.some((starter) => effectiveStarterFormStatus(starter) === "cold_start"),
       `${game.gamePk} flags.coldStartForm should match cold_start starter state`,
     );
     assert(
-      game.flags.noMatchForm === game.starters.some((starter) => starter.limitedReason === "no_match"),
-      `${game.gamePk} flags.noMatchForm should match no_match starter state`,
+      Boolean(game.flags.joinGapForm) === game.starters.some((starter) => effectiveStarterFormStatus(starter) === "join_gap"),
+      `${game.gamePk} flags.joinGapForm should match join_gap starter state`,
+    );
+    assert(
+      Boolean(game.flags.mlbDebut) === game.starters.some((starter) => effectiveStarterFormStatus(starter) === "mlb_debut"),
+      `${game.gamePk} flags.mlbDebut should match mlb_debut starter state`,
     );
 
     const sortGroup = game.watchSortGroup;
@@ -631,10 +661,11 @@ function expectedGameWatchScore(game, weights) {
       weights.pairAvg * game.watchComponents.pairing +
       weights.matchup * game.watchComponents.matchup,
   );
-  return expectedConfidenceCappedWatchScore(rawScore, game.matchupConfidence);
+  return expectedTrustGatedWatchScore(rawScore, game.matchupConfidence, game.flags?.mlbDebut === true);
 }
 
-function expectedConfidenceCappedWatchScore(score, confidence) {
+function expectedTrustGatedWatchScore(score, confidence, hasMlbDebut) {
+  if (hasMlbDebut) return Math.max(score, 58);
   if (confidence === "NONE") return Math.min(score, 47.9);
   if (confidence === "LOW") return Math.min(score, 57.9);
   return score;
@@ -698,8 +729,8 @@ function expectedWatchTierLabelForGame(game) {
 }
 
 function expectedMatchupConfidence(game) {
-  if (game.starters.some((starter) => starter.limitedReason === "no_match")) return "NONE";
-  if (game.starters.some((starter) => starter.limitedReason === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
+  if (game.starters.some((starter) => effectiveStarterFormStatus(starter) === "join_gap")) return "NONE";
+  if (game.starters.some((starter) => effectiveStarterFormStatus(starter) === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
   return "HIGH";
 }
 
@@ -820,6 +851,10 @@ function expectedGameSparkReadyCount(game) {
 
 function expectedWatchScoreValue(game) {
   return game.gameWatchScore.toFixed(WATCH_SCORE_PRECISION);
+}
+
+function expectedLeagueMeanGsValue(value) {
+  return value.toFixed(WATCH_SCORE_PRECISION);
 }
 
 function expectedWatchRankValue(game, index) {
@@ -1267,7 +1302,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v7"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v5"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
@@ -1280,19 +1315,23 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       tonightServiceSource.includes("const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));") &&
       !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
       !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
-    "upcoming probable starters must use scheduled game slot teams, the refreshed v7 cache namespace, and only pregame-typed cards now that live has its own section",
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v8 cache namespace, and only pregame-typed cards now that live has its own section",
   );
   assert(
-    typesSource.includes('export type StarterLimitedReason = "cold_start" | "no_match" | null;') &&
+    typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
+      typesSource.includes('export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;') &&
       typesSource.includes('export type MatchupConfidence = "HIGH" | "LOW" | "NONE";') &&
-      tonightServiceSource.includes('limitedReason: "no_match"') &&
-      tonightServiceSource.includes('limitedReason: form.status === "insufficient" ? "cold_start" : null') &&
-      tonightServiceSource.includes('console.warn("[upcoming:no-match-starter]"') &&
-      tonightServiceSource.includes("function applyConfidenceWatchCap") &&
+      tonightServiceSource.includes("fetchMlbPitcherStartCompleteness") &&
+      tonightServiceSource.includes("function classifyStarterForm(") &&
+      tonightServiceSource.includes('formStatus: formCompleteness.status') &&
+      tonightServiceSource.includes('console.warn("[upcoming:join-gap-starter]"') &&
+      tonightServiceSource.includes("function applyTrustGateWatchScore") &&
       tonightsMustWatchSource.includes('data-visible-starter-limited-reasons=') &&
+      tonightsMustWatchSource.includes('data-visible-starter-form-statuses=') &&
       tonightsMustWatchSource.includes("Form pending") &&
-      tonightsMustWatchSource.includes("Baseline"),
-    "upcoming limited pitchers must distinguish cold_start from no_match, log join misses, expose reason telemetry, and render form pending/baseline states",
+      tonightsMustWatchSource.includes("Baseline") &&
+      tonightsMustWatchSource.includes("MLB DEBUT"),
+    "upcoming limited pitchers must distinguish cold_start, mlb_debut, and join_gap, log join misses, expose status telemetry, and render form pending/baseline/debut states",
   );
   assert(
       tonightsMustWatchSource.includes("data-visible-starter-spark-readies=") &&
@@ -1302,7 +1341,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       countOccurrences(tonightsMustWatchSource, "data-visible-starter-spark-ready-counts=") === 1 &&
       tonightsMustWatchSource.includes("shownGames.map(gameSparkReadyCountValue).join(\",\")") &&
       tonightsMustWatchSource.includes("function hasStarterSparkForm(starter: TonightStarter)") &&
-      tonightsMustWatchSource.includes('return starter.status === "ok" && Boolean(starter.spark?.length && starter.tier);') &&
+      tonightsMustWatchSource.includes('return starter.formStatus === "ok" && Boolean(starter.spark?.length && starter.tier);') &&
       tonightsMustWatchSource.includes("function starterSparkReadyValue(starter: TonightStarter)") &&
       countOccurrences(tonightsMustWatchSource, "starterSparkReadyValue(starter)") === 1 &&
       tonightsMustWatchSource.includes("return String(hasStarterSparkForm(starter));") &&
@@ -1415,6 +1454,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       !tonightsMustWatchSource.includes('data-watch-flag-keys={watchFlagNoteKeys(game).join("+") || "clear"}') &&
       !tonightsMustWatchSource.includes("shownGames.map((game) => watchFlagNoteDataLabel(game)).join(\"|\")"),
     "upcoming watch-flag key/label telemetry must share public value helpers across section and card attributes",
+  );
+  assert(
+    tonightsMustWatchSource.includes("function leagueMeanGsValue(value: number)") &&
+      countOccurrences(tonightsMustWatchSource, "function leagueMeanGsValue(value: number)") === 1 &&
+      tonightsMustWatchSource.includes("return value.toFixed(WATCH_SCORE_PRECISION);") &&
+      tonightsMustWatchSource.includes("data-league-mean-gs={leagueMeanGsValue(tonight.leagueMeanGS)}") &&
+      !tonightsMustWatchSource.includes("data-league-mean-gs={tonight.leagueMeanGS.toFixed(1)}"),
+    "upcoming league mean GS+ telemetry must share the advertised watch-score precision helper",
   );
   assert(
     tonightsMustWatchSource.includes("function watchCardRankValue(game: TonightGame, index: number)") &&
@@ -1883,6 +1930,7 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
     }
 
     const status = tagAttribute(div, "data-starter-status");
+    const formStatus = tagAttribute(div, "data-starter-form-status");
     const pitcherId = tagAttribute(div, "data-starter-pitcher-id");
     const name = tagAttribute(div, "data-starter-name");
     const formHref = tagAttribute(div, "data-starter-form-href");
@@ -1899,10 +1947,12 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
         (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
         (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
         ["true", "false"].includes(nameLinked ?? "") &&
-        ["cold_start", "no_match", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
-        ["form-band", "neutral"].includes(accentSource ?? "") &&
+        ["ok", "cold_start", "mlb_debut", "join_gap", "tbd"].includes(formStatus ?? "") &&
+        ["cold_start", "mlb_debut", "join_gap", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
+        /^\d+\/\d+\/(\d+|unknown)$|^none$/.test(tagAttribute(div, "data-starter-form-completeness") ?? "") &&
+        ["form-band", "neutral", "mlb-debut"].includes(accentSource ?? "") &&
         [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
-        Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "")
+        /^#[0-9A-Fa-f]{6}$/.test(accentColor ?? "")
       );
     }
 
@@ -1912,11 +1962,13 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
       (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
       (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
       ["true", "false"].includes(nameLinked ?? "") &&
-      ["none", "Limited form sample / baseline projection", "Form pending", "Starter TBD / league baseline used"].includes(fallbackLabel ?? "") &&
-      ["cold_start", "no_match", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
-      ["form-band", "neutral"].includes(accentSource ?? "") &&
+      ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter TBD / league baseline used"].includes(fallbackLabel ?? "") &&
+      ["ok", "cold_start", "mlb_debut", "join_gap", "tbd"].includes(formStatus ?? "") &&
+      ["cold_start", "mlb_debut", "join_gap", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
+      /^\d+\/\d+\/(\d+|unknown)$|^none$/.test(tagAttribute(div, "data-starter-form-completeness") ?? "") &&
+      ["form-band", "neutral", "mlb-debut"].includes(accentSource ?? "") &&
       [...FORM_TIER_KEYS, "neutral"].includes(accentBand ?? "") &&
-      Object.values(FORM_ACCENT_COLORS).includes(accentColor ?? "") &&
+      /^#[0-9A-Fa-f]{6}$/.test(accentColor ?? "") &&
       ["pending", "unknown", "short", "normal", "extended"].includes(tagAttribute(div, "data-starter-rest-label") ?? "") &&
       ["true", "false"].includes(tagAttribute(div, "data-starter-limited-sample") ?? "") &&
       ["true", "false"].includes(tagAttribute(div, "data-starter-rust") ?? "")
@@ -1966,7 +2018,7 @@ function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabe
     ["true", "false"].includes(attr("data-has-tbd") ?? "") &&
     ["true", "false"].includes(attr("data-limited-form") ?? "") &&
     ["true", "false"].includes(attr("data-cold-start-form") ?? "") &&
-    ["true", "false"].includes(attr("data-no-match-form") ?? "") &&
+    ["true", "false"].includes(attr("data-join-gap-form") ?? "") &&
     ["HIGH", "LOW", "NONE"].includes(attr("data-matchup-confidence") ?? "") &&
     attr("data-watch-rank-label") === expectedWatchRankLabelValue(rankLabel) &&
     assertNonEmptyStringValue(attr("aria-label")) &&
@@ -2099,7 +2151,7 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "must-watch", scheduledGames = games.length) {
+function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "must-watch", scheduledGames = games.length, expectedLeagueMeanGS = null) {
   const headingId = `${sectionId}-heading`;
   const expectedSlateDate = games[0]?.date ?? (sectionId.startsWith("must-watch-") ? sectionId.replace("must-watch-", "") : null);
   const expectedFormWindow = expectedRenderedFormWindow(route);
@@ -2150,6 +2202,10 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   assert(
     /^\d+\.\d$/.test(renderedLeagueMeanGS) && Number.isFinite(Number(renderedLeagueMeanGS)),
     `${route} ${sectionId} should expose a one-decimal rendered leagueMeanGS baseline`,
+  );
+  assert(
+    expectedLeagueMeanGS === null || renderedLeagueMeanGS === expectedLeagueMeanGsValue(expectedLeagueMeanGS),
+    `${route} ${sectionId} should expose the API leagueMeanGS baseline with public precision`,
   );
   const normalized = normalizeHtmlText(sectionHtml);
   assert(
@@ -2359,7 +2415,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   assert(
     renderedStarterLimitedReasons.length === renderedGameCount &&
-      renderedStarterLimitedReasons.every((reasons) => /^(cold_start|no_match|none)\/(cold_start|no_match|none)$/.test(reasons)),
+      renderedStarterLimitedReasons.every((reasons) => /^(cold_start|join_gap|none)\/(cold_start|join_gap|none)$/.test(reasons)),
     `${route} ${sectionId} should expose one away/home starter limited-reason pair per visible game`,
   );
   assert(
@@ -2597,7 +2653,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchSortGroupLabels.length === renderedGameCount &&
       renderedWatchSortGroupLabels.every((label) => ["Pregame sort bucket", "Live sort bucket", "Fallback sort bucket"].includes(label)) &&
       renderedWatchFlagKeys.length === renderedGameCount &&
-      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "no-match", "pending-opponent-splits"].includes(key))) &&
+      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "join-gap", "pending-opponent-splits"].includes(key))) &&
       renderedWatchFlagLabels.length === renderedGameCount &&
       renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
       renderedComponentCounts.length === renderedGameCount &&
@@ -3012,7 +3068,6 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       "data-has-tbd": String(game.flags?.tbd === true),
       "data-limited-form": String(game.flags?.limitedForm === true),
       "data-cold-start-form": String(game.flags?.coldStartForm === true),
-      "data-no-match-form": String(game.flags?.noMatchForm === true),
       "data-matchup-confidence": game.matchupConfidence,
       "data-watch-card-kind": expectedWatchCardKind(index),
       "data-watch-rank-label": expectedWatchRankLabelValue(rankLabel),
@@ -3027,6 +3082,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       articleIdentityAttributes["data-game-status"] = game.status;
       articleIdentityAttributes["data-game-detailed-state"] = game.detailedState;
     }
+    if (game.flags?.joinGapForm === true) articleIdentityAttributes["data-join-gap-form"] = "true";
+    if (game.flags?.mlbDebut === true) articleIdentityAttributes["data-mlb-debut"] = "true";
     const hasExactArticleIdentity = elementHasAttributes(card.html, "article", articleIdentityAttributes);
     assert(
       hasExactArticleIdentity || (allowLiveDataDrift && watchCardHasSupportedIdentityMetadata(card.html, game.gamePk, summaryId, rankLabel)),
@@ -3635,7 +3692,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
       Number.isInteger(count) &&
         count === keys.length &&
         keys.length > 0 &&
-        keys.every((key) => ["tbd", "cold-start", "no-match", "pending-opponent-splits"].includes(key)) &&
+        keys.every((key) => ["tbd", "cold-start", "join-gap", "pending-opponent-splits"].includes(key)) &&
         assertNonEmptyStringValue(tagAttribute(noteTag, "aria-label")),
       `${route} should expose valid live-adjusted watch-card fallback reason metadata for ${game.label}`,
     );
@@ -3656,10 +3713,10 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.flags?.noMatchForm) {
+  if (game.flags?.joinGapForm) {
     assert(
       normalizedHtml.includes("Form pending for a scheduled pitcher."),
-      `${route} should explain no-match form pending state on ${game.label}`,
+      `${route} should explain join-gap form pending state on ${game.label}`,
     );
   }
 
@@ -3670,7 +3727,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.noMatchForm || game.matchupContext?.status === "pending-opponent-splits") {
+  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.joinGapForm || game.matchupContext?.status === "pending-opponent-splits") {
     assert(
       elementHasAttributes(html, "p", {
         "aria-label": watchFlagNoteAriaLabel(game),
@@ -3890,7 +3947,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         `${label} should expose accessible limited-form fallback copy`,
       );
       assert(
-        starter.limitedReason === "no_match"
+        starter.limitedReason === "join_gap"
           ? normalizedHtml.includes("Form pending")
           : normalizedHtml.includes("Limited form sample") || normalizedHtml.includes("Limited"),
         `${label} should render limited-form fallback copy`,
@@ -3949,7 +4006,7 @@ function pitcherSlug(name, fallbackId) {
 
 function starterFallbackAriaLabel(starter) {
   if (starter.status === "tbd") return "Starter TBD / league baseline used";
-  if (starter.limitedReason === "no_match") return "Form pending";
+  if (starter.limitedReason === "join_gap") return "Form pending";
   return "Limited form sample / baseline projection";
 }
 
@@ -3961,7 +4018,7 @@ function watchFlagNoteAriaLabel(game) {
   const notes = [];
   if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
-  if (game.flags?.noMatchForm) notes.push("Form pending for a scheduled pitcher");
+  if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }
@@ -3970,7 +4027,7 @@ function watchFlagNoteKeys(game) {
   const keys = [];
   if (game.flags?.tbd) keys.push("tbd");
   if (game.flags?.coldStartForm) keys.push("cold-start");
-  if (game.flags?.noMatchForm) keys.push("no-match");
+  if (game.flags?.joinGapForm) keys.push("join-gap");
   if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
 }
@@ -4408,7 +4465,7 @@ try {
     upcoming.days[0].games,
     `/upcoming/${date}`,
   );
-  assertRenderedWatchCards(dayHtml, `/upcoming/${date}`, upcoming.days[0].games, `on ${formatUpcomingDate(date)}`, "must-watch", upcoming.days[0].scheduledGames);
+  assertRenderedWatchCards(dayHtml, `/upcoming/${date}`, upcoming.days[0].games, `on ${formatUpcomingDate(date)}`, "must-watch", upcoming.days[0].scheduledGames, upcoming.days[0].leagueMeanGS);
   assertPrimarySlateCta(dayHtml, `/upcoming/${date}`, "Week view", `/upcoming/week/${date}`, `View week of ${formatUpcomingDate(date)}`);
   assertUpcomingRangeToggle(
     dayHtml,
@@ -4450,6 +4507,7 @@ try {
     `on ${formatUpcomingDate(date)}`,
     "must-watch",
     upcoming.days[0].scheduledGames,
+    upcoming.days[0].leagueMeanGS,
   );
   assertPrimarySlateCta(filteredDayHtml, `/upcoming/${date}?sort=time`, "Week view", `/upcoming/week/${date}`, `View week of ${formatUpcomingDate(date)}`);
   assertNoLegacySlateLinks(filteredDayHtml, `/upcoming/${date}?sort=time`);
@@ -4485,6 +4543,7 @@ try {
       `on ${formatUpcomingDate(filteredDate)}`,
       "must-watch",
       currentFilteredDay.scheduledGames,
+      currentFilteredDay.leagueMeanGS,
     );
     assertPrimarySlateCta(
       filteredPregameTeamDayHtml,
