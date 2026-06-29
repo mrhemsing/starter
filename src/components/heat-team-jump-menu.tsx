@@ -32,7 +32,7 @@ export function HeatTeamJumpMenu({ teams, activeTeam, params }: HeatTeamJumpMenu
     <div className="inline-block max-w-full" data-responsive-check="heat-team-jump-menu">
       <div className="block max-w-full">
         <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Team</span>
-        <details ref={detailsRef} className="group relative w-full sm:w-auto sm:max-w-full" data-team-jump-details>
+        <details ref={detailsRef} className="group relative z-[70] w-full sm:w-auto sm:max-w-full" data-team-jump-details>
           <summary
             className="flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-4 rounded border border-amber-300/70 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-amber-300 outline-none transition hover:border-amber-300 hover:bg-amber-300/10 focus-visible:ring-2 focus-visible:ring-amber-300/40 sm:w-auto [&::-webkit-details-marker]:hidden"
             aria-label="Jump to Heat Check team"
@@ -44,7 +44,7 @@ export function HeatTeamJumpMenu({ teams, activeTeam, params }: HeatTeamJumpMenu
             <span className="shrink-0 text-[10px]">▾</span>
           </summary>
           <div
-            className="absolute left-0 top-[calc(100%+6px)] z-30 grid max-h-[360px] w-[min(32rem,calc(100vw-2rem))] gap-1 overflow-y-auto rounded border border-amber-300 bg-[#101014] p-2 shadow-2xl shadow-black/40"
+            className="absolute left-0 top-[calc(100%+6px)] z-[80] grid max-h-[360px] w-[min(32rem,calc(100vw-2rem))] gap-1 overflow-y-auto rounded border border-amber-300 bg-[#101014] p-2 shadow-2xl shadow-black/40"
             role="menu"
             aria-label="Heat Check teams"
             data-team-jump-list

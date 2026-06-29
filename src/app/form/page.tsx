@@ -171,12 +171,12 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
           </p>
         </header>
 
-        <section className={`z-20 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">
+        <section className={`relative z-40 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">
           <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
         </section>
 
         {leagueView && biggestRiser && biggestFaller ? (
-          <section className="grid gap-4" data-responsive-check="heat-league-pulse">
+          <section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">
             <MomentumHero
               riser={biggestRiser}
               faller={biggestFaller}

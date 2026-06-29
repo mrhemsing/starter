@@ -206,7 +206,8 @@ assert(
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className={`z-20 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('<section className={`relative z-40 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur ${team ? "my-3" : "my-5"}`} data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
     formPage.includes("{leagueView ? (") &&
     formPage.includes("<details>") &&
@@ -282,6 +283,8 @@ assert(
     teamJumpMenu.includes('data-team-jump-details') &&
     teamJumpMenu.includes('data-team-jump-list') &&
     teamJumpMenu.includes('data-team-jump-link') &&
+    teamJumpMenu.includes('className="group relative z-[70] w-full sm:w-auto sm:max-w-full"') &&
+    teamJumpMenu.includes('top-[calc(100%+6px)] z-[80]') &&
     teamJumpMenu.includes('inline-block max-w-full') &&
     teamJumpMenu.includes('border-amber-300/70 bg-black/20') &&
     teamJumpMenu.includes('text-amber-300') &&
