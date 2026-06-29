@@ -44,9 +44,8 @@ assert(
 
 assert(
   bestStartsService.includes("return getCachedBestStartsHome(getHomeSlateDate());") &&
-    bestStartsService.includes("async function getWindowCandidateStarts(anchorDate: string)") &&
-    bestStartsService.includes('const todayStarts = await getDailySlate({ window: "today", date: anchorDate });') &&
-    bestStartsService.includes("const liveAnchorStarts = todayStarts.filter((start) => !archivedStartIds.has(start.id));"),
+    bestStartsService.includes('getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })') &&
+    bestStartsService.includes("const [weekly, monthly] = await Promise.all([getBestStartWindow(anchorDate, 7), getBestStartWindow(anchorDate, 30)]);"),
   "home best-starts service must include the active day's completed live slate before the archive cycle lands",
 );
 
@@ -107,10 +106,10 @@ assert(
 );
 
 assert(
-  bestStartsService.includes("getArchivedSeasonStartSummaries") &&
-    bestStartsService.includes("rankedWindowStarts") &&
-    bestStartsService.includes("monthlyStarts.length > 0"),
-  "home best-starts service must use the archived season summary fast path before falling back to daily slate fanout",
+  !bestStartsService.includes("rankedWindowStarts") &&
+    bestStartsService.includes("getBestStartWindow(anchorDate, 30)") &&
+    bestStartsService.includes('getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })'),
+  "home best-starts service must use the same rolling daily-slate comparison for 7-day and 30-day winners",
 );
 
 assert(
