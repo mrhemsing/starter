@@ -93,16 +93,18 @@ assert(
 
 assert(
   formPage.includes("{leagueView ? (") &&
-    formPage.includes("<span className=\"block\">Starting-pitcher FORM over the last {window} starts.</span>") &&
-    formPage.includes('<span className="block lg:whitespace-nowrap">A season-wide rolling view with movement called out in the Movers strip.</span>') &&
+    formPage.includes('Starting-pitcher FORM over the last {window} starts{teamScopeLabel}.') &&
+    formPage.includes('const teamScopeLabel = team ? ` for the ${teamDisplayName(team)}` : "";') &&
+    formPage.includes('BAL: "Baltimore Orioles"') &&
+    !formPage.includes("A season-wide rolling view with movement called out in the Movers strip.") &&
     formPage.includes('FORM band unavailable - check FORM data.') &&
     formPage.includes('FORM cold band unavailable - check FORM data.') &&
     formPage.includes('Scheduled starter') &&
     !formPage.includes("Nobody's on fire today.") &&
     !formPage.includes("Nobody's in free fall today.") &&
     !formPage.includes(">Starting today<") &&
-    formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
-  "Heat Check deck must keep league framing in All Teams and switch to compact team-scoped copy with shown count in team mode",
+    !formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
+  "Heat Check deck must name the active FORM window, remove the season-wide helper line, and expand team-scoped copy to full team names",
 );
 
 assert(

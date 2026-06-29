@@ -151,6 +151,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
+  const teamScopeLabel = team ? ` for the ${teamDisplayName(team)}` : "";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -162,14 +163,9 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
         <header className={team ? "pb-3" : "pb-6"}>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
-          {leagueView ? (
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-              <span className="block">Starting-pitcher FORM over the last {window} starts.</span>
-              <span className="block lg:whitespace-nowrap">A season-wide rolling view with movement called out in the Movers strip.</span>
-            </p>
-          ) : (
-            <p className="mt-2 truncate text-xs leading-5 text-zinc-500 sm:text-sm">{team} starters by recent form · {pitchers.length} shown.</p>
-          )}
+          <p className={`max-w-2xl leading-6 ${team ? "mt-2 text-sm text-zinc-500" : "mt-3 text-sm text-zinc-400"}`}>
+            Starting-pitcher FORM over the last {window} starts{teamScopeLabel}.
+          </p>
           <p className={`${team ? "mt-2" : "mt-3"} font-mono text-xs uppercase tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
             Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
           </p>
@@ -754,6 +750,51 @@ function buildActiveFilterLabel({ band, motion, team, query }: { band: string; m
 
   return labels.length > 0 ? labels.join(" / ") : "All arms";
 }
+
+function teamDisplayName(team: string) {
+  return MLB_TEAM_NAMES[team.toUpperCase()] ?? team;
+}
+
+const MLB_TEAM_NAMES: Record<string, string> = {
+  ARI: "Arizona Diamondbacks",
+  AZ: "Arizona Diamondbacks",
+  ATL: "Atlanta Braves",
+  BAL: "Baltimore Orioles",
+  BOS: "Boston Red Sox",
+  CHC: "Chicago Cubs",
+  CWS: "Chicago White Sox",
+  CHW: "Chicago White Sox",
+  CIN: "Cincinnati Reds",
+  CLE: "Cleveland Guardians",
+  COL: "Colorado Rockies",
+  DET: "Detroit Tigers",
+  HOU: "Houston Astros",
+  KC: "Kansas City Royals",
+  KCR: "Kansas City Royals",
+  LAA: "Los Angeles Angels",
+  LAD: "Los Angeles Dodgers",
+  MIA: "Miami Marlins",
+  MIL: "Milwaukee Brewers",
+  MIN: "Minnesota Twins",
+  NYM: "New York Mets",
+  NYY: "New York Yankees",
+  OAK: "Oakland Athletics",
+  ATH: "Athletics",
+  PHI: "Philadelphia Phillies",
+  PIT: "Pittsburgh Pirates",
+  SD: "San Diego Padres",
+  SDP: "San Diego Padres",
+  SEA: "Seattle Mariners",
+  SF: "San Francisco Giants",
+  SFG: "San Francisco Giants",
+  STL: "St. Louis Cardinals",
+  TB: "Tampa Bay Rays",
+  TBR: "Tampa Bay Rays",
+  TEX: "Texas Rangers",
+  TOR: "Toronto Blue Jays",
+  WSH: "Washington Nationals",
+  WSN: "Washington Nationals",
+};
 
 function rowTreatment(pitcher: FormSummary): {
   padding: string;
