@@ -16,7 +16,7 @@ Reviewed after the fixture and live responsive runs:
 
 ## Review Result
 
-No obvious visual regression found in the refreshed captures. The Ranked Starts slate header keeps the date stepper anchored on mobile and desktop, with separate 44px chevron controls and no horizontal drift across date labels. The filter disclosures now use bordered plus/minus indicators that stay distinct from the date chevrons and row breakdown toggles. The longest live slate is tall as expected because the screenshot is full-page, but card density and action targets remain usable.
+No obvious visual regression found in the refreshed captures. The Ranked Starts slate header now promotes the slate date as the 24px bone context anchor, keeps the date stepper tight to it, and demotes the completion count into a quiet bordered status pill. Heat Check was verified with a production browser probe: the floating team/form meta row is gone, `Form through` lives inside the controls card at a legible context-meta tier, and the subtitle-to-controls gap holds at 16px on mobile and desktop. The filter disclosures still use bordered plus/minus indicators that stay distinct from the date chevrons and row breakdown toggles. The longest live slate is tall as expected because the screenshot is full-page, but card density and action targets remain usable.
 
 ## Next Visual Risk
 

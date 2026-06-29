@@ -19,6 +19,7 @@ const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
 const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
+const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
@@ -186,21 +187,29 @@ assert(
     slateDateNav.includes("export function SlateRangeToggle") &&
     slateDateNav.includes("export function UpcomingSlateRangeToggle") &&
     slateDateNav.includes("export function RankedStartsArchiveNav") &&
+    pageContextStrip.includes("export function PageContextStrip") &&
+    pageContextStrip.includes("data-context-primary") &&
+    pageContextStrip.includes("data-context-meta") &&
+    slateDateNav.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";') &&
     slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
-    slateDateNav.includes('className="flex min-w-0 items-center gap-3 font-mono text-xs uppercase tracking-[0.14em]"') &&
-    slateDateNav.includes('className="min-w-[23ch] shrink-0 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300"') &&
+    slateDateNav.includes('className="min-w-0 font-mono uppercase"') &&
+    slateDateNav.includes("primaryClassName=\"font-mono text-2xl font-semibold leading-none tracking-normal\"") &&
     slateDateNav.includes("data-ranked-date-label") &&
     slateDateNav.includes('className="inline-flex shrink-0 items-center gap-1.5"') &&
     slateDateNav.includes("const rankedStartsArchiveStepClass =") &&
-    slateDateNav.includes('"inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
+    slateDateNav.includes('"inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
     slateDateNav.includes("const rankedStartsArchiveStepDisabledClass =") &&
-    slateDateNav.includes('"inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700"') &&
+    slateDateNav.includes('"inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700"') &&
     slateDateNav.includes('ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`}') &&
     slateDateNav.includes('ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`}') &&
     slateDateNav.includes('aria-label="No next slate"') &&
-    slateDateNav.includes('<span className="text-2xl font-bold leading-none" aria-hidden="true">‹</span>') &&
-    slateDateNav.includes('<span className="text-2xl font-bold leading-none" aria-hidden="true">›</span>') &&
+    slateDateNav.includes('<span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>') &&
+    slateDateNav.includes('<span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>') &&
+    !slateDateNav.includes("text-amber-300") &&
+    !slateDateNav.includes("min-w-[23ch]") &&
+    startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
+    startsPage.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     !slateDateNav.includes("&lt;") &&
     !slateDateNav.includes("&gt;") &&
     !slateDateNav.includes("overflow-hidden rounded border border-white/10") &&
@@ -282,12 +291,12 @@ assert(
 
 assert(
   startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
-    startsPage.includes('className="flex flex-wrap items-center gap-2"') &&
-    startsPage.includes('className="inline-flex min-h-6 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300"') &&
+    startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
+    startsPage.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     startsPage.includes('storageKey="ranked-starts-method-open" label="How rankings work"') &&
     startsPage.includes('className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology"') &&
     !startsPage.includes("border-amber-300/30 bg-amber-300/10 px-3"),
-  "ranked starts header status and methodology must live in the compact controls without a standalone badge stack",
+  "ranked starts header status and methodology must live in the compact controls with a quiet status pill",
 );
 
 assert(

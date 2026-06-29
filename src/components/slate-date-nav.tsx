@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageContextStrip } from "@/components/page-context-strip";
 import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";
 import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 
@@ -76,40 +77,43 @@ export function RankedStartsArchiveNav({
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
 
   return (
-    <nav className="flex min-w-0 items-center gap-3 font-mono text-xs uppercase tracking-[0.14em]" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
+    <nav className="min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
-      <span className="min-w-[23ch] shrink-0 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300" data-ranked-date-label>
-        {formatRankedEyebrowDate(activeDate)}
-      </span>
-      <span className="inline-flex shrink-0 items-center gap-1.5" aria-label="Step ranked starts slates">
-        {previousDate ? (
-          <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={previousHref ?? rankedStartsPath(previousDate)} ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`} dataArchiveStep="previous">
-            <span className="text-2xl font-bold leading-none" aria-hidden="true">‹</span>
-          </RankedStartsArchiveLink>
-        ) : (
-          <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No previous slate" data-archive-step="previous">
-            <span className="text-2xl font-bold leading-none" aria-hidden="true">‹</span>
+      <PageContextStrip
+        primary={<span data-ranked-date-label>{formatRankedEyebrowDate(activeDate)}</span>}
+        leading={
+          <span className="inline-flex shrink-0 items-center gap-1.5" aria-label="Step ranked starts slates">
+            {previousDate ? (
+              <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={previousHref ?? rankedStartsPath(previousDate)} ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`} dataArchiveStep="previous">
+                <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
+              </RankedStartsArchiveLink>
+            ) : (
+              <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No previous slate" data-archive-step="previous">
+                <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
+              </span>
+            )}
+            {nextDate ? (
+              <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
+                <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
+              </RankedStartsArchiveLink>
+            ) : (
+              <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No next slate" data-archive-step="next">
+                <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
+              </span>
+            )}
           </span>
-        )}
-        {nextDate ? (
-          <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
-            <span className="text-2xl font-bold leading-none" aria-hidden="true">›</span>
-          </RankedStartsArchiveLink>
-        ) : (
-          <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No next slate" data-archive-step="next">
-            <span className="text-2xl font-bold leading-none" aria-hidden="true">›</span>
-          </span>
-        )}
-      </span>
+        }
+        primaryClassName="font-mono text-2xl font-semibold leading-none tracking-normal"
+      />
     </nav>
   );
 }
 
 const rankedStartsArchiveStepClass =
-  "inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300";
+  "inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300";
 
 const rankedStartsArchiveStepDisabledClass =
-  "inline-flex h-11 w-11 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700";
+  "inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700";
 
 export function slateRangeToggleClass(active: boolean) {
   return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;

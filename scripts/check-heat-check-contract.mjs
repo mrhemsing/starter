@@ -16,6 +16,7 @@ const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "u
 const scrollReset = await readFile("src/components/heat-check-scroll-reset.tsx", "utf8");
 const heatPitcherProfileLink = await readFile("src/components/heat-pitcher-profile-link.tsx", "utf8");
 const heatFilterLink = await readFile("src/components/heat-check-filter-link.tsx", "utf8");
+const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
@@ -116,16 +117,27 @@ assert(
 assert(
   formPage.includes("{leagueView ? (") &&
     formPage.includes("How starting pitchers are trending over their last {window} starts.") &&
-    formPage.includes('const heatScopeLabel = team ? teamDisplayName(team) : "All teams";') &&
-    formPage.includes('{heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}') &&
-    formPage.includes('className="pb-6"') &&
-    formPage.includes('className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400"') &&
-    formPage.includes('className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}') &&
+    formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
+    pageContextStrip.includes("export function PageContextStrip") &&
+    pageContextStrip.includes("data-context-primary") &&
+    pageContextStrip.includes("data-context-meta") &&
+    formPage.includes('const formThroughLabel = `Form through ${leaderboard.formThroughDate ?? "pending"}') &&
+    formPage.includes('className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400"') &&
+    formPage.includes('formThroughLabel={formThroughLabel} stale={leaderboard.stale}') &&
+    formPage.includes('data-responsive-check="heat-controls-context"') &&
+    formPage.includes('meta={formThroughLabel}') &&
+    formPage.includes('metaClassName={`font-mono text-xs uppercase leading-4 tracking-[0.16em] ${stale ? "text-amber-300" : "text-zinc-400"}`}') &&
+    !formPage.includes('const heatScopeLabel = team ? teamDisplayName(team) : "All teams";') &&
+    !formPage.includes('{heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}') &&
+    !formPage.includes("All teams · Form through") &&
+    !formPage.includes('className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400"') &&
+    !formPage.includes('className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em]') &&
     !formPage.includes("Starting-pitcher FORM over the last {window} starts") &&
     !formPage.includes("teamScopeLabel") &&
     !formPage.includes('header className={team ? "pb-3" : "pb-6"}') &&
     !formPage.includes('team ? "mt-2 text-sm text-zinc-500" : "mt-3 text-sm text-zinc-400"') &&
-    formPage.includes('BAL: "Baltimore Orioles"') &&
+    teamJumpMenu.includes('BAL: { id: 110, name: "Baltimore Orioles" }') &&
+    teamDrawer.includes('BAL: { id: 110, name: "Baltimore Orioles" }') &&
     !formPage.includes("A season-wide rolling view with movement called out in the Movers strip.") &&
     formPage.includes('FORM band unavailable - check FORM data.') &&
     formPage.includes('FORM cold band unavailable - check FORM data.') &&
@@ -134,7 +146,7 @@ assert(
     !formPage.includes("Nobody's in free fall today.") &&
     !formPage.includes(">Starting today<") &&
     !formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
-  "Heat Check deck must use fixed-height momentum copy, keep team scope in the meta line, and avoid inline team-name subtitle jumps",
+  "Heat Check deck must use tight momentum copy and consolidate the form-through context into the controls card",
 );
 
 assert(
@@ -236,7 +248,8 @@ assert(
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
-    formPage.includes('<section className="relative z-40 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('<section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">') &&
+    formPage.includes('border-b border-white/10 pb-3') &&
     !formPage.includes('${team ? "my-3" : "my-5"}') &&
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&

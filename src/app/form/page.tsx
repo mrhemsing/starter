@@ -16,6 +16,7 @@ import { HeatPitcherProfileLink } from "@/components/heat-pitcher-profile-link";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
+import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
@@ -152,7 +153,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
-  const heatScopeLabel = team ? teamDisplayName(team) : "All teams";
+  const formThroughLabel = `Form through ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -161,19 +162,16 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
       <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
       <div className="mx-auto max-w-7xl">
-        <header className="pb-6">
+        <header>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
-          <p className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             How starting pitchers are trending over their last {window} starts.
-          </p>
-          <p className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em] ${leaderboard.stale ? "text-amber-300" : "text-zinc-500"}`}>
-            {heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}{leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}
           </p>
         </header>
 
-        <section className="relative z-40 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
-          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} />
+        <section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
+          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
         </section>
 
         {leagueView && biggestRiser && biggestFaller ? (
@@ -752,51 +750,6 @@ function buildActiveFilterLabel({ band, motion, team, query }: { band: string; m
   return labels.length > 0 ? labels.join(" / ") : "All arms";
 }
 
-function teamDisplayName(team: string) {
-  return MLB_TEAM_NAMES[team.toUpperCase()] ?? team;
-}
-
-const MLB_TEAM_NAMES: Record<string, string> = {
-  ARI: "Arizona Diamondbacks",
-  AZ: "Arizona Diamondbacks",
-  ATL: "Atlanta Braves",
-  BAL: "Baltimore Orioles",
-  BOS: "Boston Red Sox",
-  CHC: "Chicago Cubs",
-  CWS: "Chicago White Sox",
-  CHW: "Chicago White Sox",
-  CIN: "Cincinnati Reds",
-  CLE: "Cleveland Guardians",
-  COL: "Colorado Rockies",
-  DET: "Detroit Tigers",
-  HOU: "Houston Astros",
-  KC: "Kansas City Royals",
-  KCR: "Kansas City Royals",
-  LAA: "Los Angeles Angels",
-  LAD: "Los Angeles Dodgers",
-  MIA: "Miami Marlins",
-  MIL: "Milwaukee Brewers",
-  MIN: "Minnesota Twins",
-  NYM: "New York Mets",
-  NYY: "New York Yankees",
-  OAK: "Oakland Athletics",
-  ATH: "Athletics",
-  PHI: "Philadelphia Phillies",
-  PIT: "Pittsburgh Pirates",
-  SD: "San Diego Padres",
-  SDP: "San Diego Padres",
-  SEA: "Seattle Mariners",
-  SF: "San Francisco Giants",
-  SFG: "San Francisco Giants",
-  STL: "St. Louis Cardinals",
-  TB: "Tampa Bay Rays",
-  TBR: "Tampa Bay Rays",
-  TEX: "Texas Rangers",
-  TOR: "Toronto Blue Jays",
-  WSH: "Washington Nationals",
-  WSN: "Washington Nationals",
-};
-
 function rowTreatment(pitcher: FormSummary): {
   padding: string;
   opacity: string;
@@ -889,11 +842,31 @@ function WindowControlLinks({ window, params }: { window: number; params: Record
   );
 }
 
-function TeamFilterControl({ teams, activeTeam, params, window }: { teams: string[]; activeTeam: string; params: Record<string, string | undefined>; window: number }) {
+function TeamFilterControl({
+  teams,
+  activeTeam,
+  params,
+  window,
+  formThroughLabel,
+  stale,
+}: {
+  teams: string[];
+  activeTeam: string;
+  params: Record<string, string | undefined>;
+  window: number;
+  formThroughLabel: string;
+  stale: boolean;
+}) {
   const clearTeamHref = heatCheckHref({ ...params, team: "" });
 
   return (
     <div className="grid gap-4" data-responsive-check="heat-team-filter">
+      <PageContextStrip
+        meta={formThroughLabel}
+        className="border-b border-white/10 pb-3"
+        metaClassName={`font-mono text-xs uppercase leading-4 tracking-[0.16em] ${stale ? "text-amber-300" : "text-zinc-400"}`}
+        data-responsive-check="heat-controls-context"
+      />
       <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
         <HeatTeamJumpMenu teams={teams} activeTeam={activeTeam} params={params} />
         {activeTeam ? (

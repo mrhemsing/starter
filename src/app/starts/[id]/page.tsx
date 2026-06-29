@@ -222,7 +222,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
           {starts.length > 0 ? (
             <section className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <RankedStartsArchiveNav
                   activeDate={archiveNavigation.activeDate}
                   previousDate={archiveNavigation.previousDate}
@@ -925,7 +925,7 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
   const label = completionStatusLabel(state, slateProgress);
 
   return (
-    <p className="inline-flex min-h-6 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300" role="status" aria-label={`Slate completion: ${label}`}>
+    <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400" role="status" aria-label={`Slate completion: ${label}`}>
       {isLive ? <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" aria-hidden="true" /> : null}
       <span>{label}</span>
     </p>
