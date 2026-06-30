@@ -110,6 +110,7 @@ assert(
     formPage.includes('data-temperature-job="filter"') &&
     formPage.includes('className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>') &&
     formPage.includes('<p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>') &&
+    formPage.includes('<details className="mt-4">') &&
     !formPage.includes("{onFire} on fire · {ice} ice cold · {total} qualified") &&
     formPage.includes("Click a segment to filter") &&
     formPage.includes('>All</span>') &&
@@ -263,7 +264,7 @@ assert(
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
     formPage.includes("{trendView && leagueView ? (") &&
-    formPage.includes("<details>") &&
+    formPage.includes('<details className="mt-4">') &&
     formPage.includes("</details>") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
     formPage.includes('data-responsive-check="heat-team-filter"') &&

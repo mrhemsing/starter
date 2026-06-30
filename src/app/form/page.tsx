@@ -231,7 +231,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
               </div>
             ) : null}
             <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />
-            <details>
+            <details className="mt-4">
               <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
                 Filters / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
               </summary>
