@@ -108,6 +108,10 @@ p,
   .site-logo-wordmark {
     font-size: clamp(3.1625rem, 6.864vw, 3.432rem);
   }
+
+  .site-logo-season-kicker {
+    padding-inline: 0;
+  }
 }
 
 .route-loading-spinner {
