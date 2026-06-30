@@ -77,7 +77,7 @@ export function RankedStartsArchiveNav({
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
 
   return (
-    <nav className="min-w-0 pl-2 font-mono uppercase sm:pl-0" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
+    <nav className="min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
       <PageContextStrip
         primary={<span data-ranked-date-label>{formatRankedEyebrowDate(activeDate)}</span>}
@@ -103,7 +103,7 @@ export function RankedStartsArchiveNav({
             )}
           </span>
         }
-        primaryClassName="font-mono text-2xl font-semibold leading-none tracking-normal"
+        primaryClassName="ml-2 font-mono text-2xl font-semibold leading-none tracking-normal"
       />
     </nav>
   );
