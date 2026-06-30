@@ -193,7 +193,7 @@ assert(
     slateDateNav.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";') &&
     slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
-    slateDateNav.includes('className="min-w-0 font-mono uppercase"') &&
+    slateDateNav.includes('className="min-w-0 pl-2 font-mono uppercase sm:pl-0"') &&
     slateDateNav.includes("primaryClassName=\"font-mono text-2xl font-semibold leading-none tracking-normal\"") &&
     slateDateNav.includes("data-ranked-date-label") &&
     slateDateNav.includes('className="inline-flex shrink-0 items-center gap-1.5"') &&
