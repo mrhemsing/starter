@@ -90,14 +90,13 @@ assert(
     globals.includes(".site-logo-season-kicker") &&
     globals.includes("box-sizing: border-box;") &&
     globals.includes("display: flex;") &&
-    globals.includes("padding-inline: 0.75rem;") &&
+    globals.includes("padding-inline: 0;") &&
     globals.includes("white-space: nowrap;") &&
     globals.includes(".site-logo-season-kicker::before,") &&
     globals.includes(".site-logo-season-kicker::after") &&
     globals.includes("flex: 1 1 0;") &&
-    globals.includes("letter-spacing: 0.15em;") &&
-    globals.includes(".site-logo-season-kicker {\n    padding-inline: 0;\n  }"),
-  "site logo lockup must force a visibly larger mobile yellow Tourney logo with a centered muted season kicker, mobile rule insets, and desktop full-width rules",
+    globals.includes("letter-spacing: 0.15em;"),
+  "site logo lockup must force a visibly larger mobile yellow Tourney logo with a centered muted season kicker and full-width rules",
 );
 
 assert(

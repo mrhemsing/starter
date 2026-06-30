@@ -89,7 +89,7 @@ p,
   letter-spacing: 0.15em;
   line-height: 1;
   margin-top: 3px;
-  padding-inline: 0.75rem;
+  padding-inline: 0;
   text-align: center;
   text-transform: uppercase;
   white-space: nowrap;
@@ -107,10 +107,6 @@ p,
 @media (min-width: 640px) {
   .site-logo-wordmark {
     font-size: clamp(3.1625rem, 6.864vw, 3.432rem);
-  }
-
-  .site-logo-season-kicker {
-    padding-inline: 0;
   }
 }
 
