@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LiveScoreboard } from "@/components/live-scoreboard";
 import { SiteHeader } from "@/components/site-header";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 
 type LivePageProps = {
   params: Promise<{
@@ -21,12 +21,18 @@ export async function generateMetadata({ params }: LivePageProps): Promise<Metad
 export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
   const today = getHomeSlateDate();
-  const board = await getLiveScoreboard({ date });
+  const [board, slateProgress] = await Promise.all([
+    getLiveScoreboard({ date }),
+    getSlateStartProgress({ window: "today", date }),
+  ]);
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
+  const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
   const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";
   const boardDescription = slateComplete
-    ? "Today's starters are final. Full tiers, filters, and breakdowns live on Ranked Starts."
-    : "Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
+    ? "This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts."
+    : pregame
+      ? "The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming."
+      : "Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -46,7 +52,7 @@ export default async function LivePage({ params }: LivePageProps) {
             {boardDescription}
           </p>
         </section>
-        <LiveScoreboard initialBoard={board} />
+        <LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />
       </div>
     </main>
   );

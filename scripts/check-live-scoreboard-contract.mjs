@@ -75,21 +75,26 @@ assert(
     livePage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
+    livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
+    livePage.includes('getSlateStartProgress({ window: "today", date })') &&
     livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
-    livePage.includes("Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.") &&
-    livePage.includes("Today's starters are final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
-    livePage.includes("<LiveScoreboard initialBoard={board} />") &&
+    livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
+    livePage.includes("The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming.") &&
+    livePage.includes("This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
+    livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
   "/live/[date] route and API must render the cached live board at the shared site width",
 );
 
 assert(
-  liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
+    liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
+    liveComponent.includes("if (!board.hasActiveStarts && !pregame) return;") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
-    liveComponent.includes('import { rankedStartsPath } from "@/lib/routes";') &&
+    liveComponent.includes('import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";') &&
+    liveComponent.includes('import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";') &&
     liveComponent.includes('grid-cols-[35px_minmax(0,1fr)_auto]') &&
     liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
     !liveComponent.includes("band={headshotBand}") &&
@@ -99,10 +104,24 @@ assert(
     liveComponent.includes('const scoredRows = board.rows.filter(isScoredRow);') &&
     liveComponent.includes('const warmingRows = board.rows.filter((row) => !isScoredRow(row));') &&
     liveComponent.includes("const slateComplete = isSlateComplete(board);") &&
+    liveComponent.includes("const pregame = isPregame(board);") &&
+    liveComponent.includes('data-live-board-pregame="true"') &&
+    liveComponent.includes("<PregameHandoff board={board} slateProgress={slateProgress} />") &&
+    liveComponent.includes("function PregameHandoff") &&
+    liveComponent.includes("Scoreboard opens at first pitch") &&
+    liveComponent.includes("FIRST STARTER TOES THE SLAB {countdown}") &&
+    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters on the slate.") &&
+    liveComponent.includes("upcomingDateHref(board.date)") &&
+    liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
+    liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - Date.now())") &&
+    liveComponent.includes("function formatPregameCountdown") &&
+    liveComponent.includes("function isPregame(board: LiveScoreboardData)") &&
+    liveComponent.includes("return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
     liveComponent.includes('<SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />') &&
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&
-    liveComponent.includes("Today&apos;s slate is final.") &&
+    liveComponent.includes("This slate is final.") &&
+    !liveComponent.includes("Today&apos;s slate is final.") &&
     liveComponent.includes("Live returns with the next slate.") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&

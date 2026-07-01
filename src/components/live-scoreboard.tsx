@@ -4,17 +4,21 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Headshot } from "@/components/headshot";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
-import { rankedStartsPath } from "@/lib/routes";
+import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
+import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
 
 type LiveScoreboardProps = {
   initialBoard: LiveScoreboardData;
+  initialSlateProgress: SlateProgressState;
 };
 
-export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
+export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScoreboardProps) {
   const [board, setBoard] = useState(initialBoard);
+  const [slateProgress, setSlateProgress] = useState(initialSlateProgress);
+  const pregame = isPregame(board);
 
   useEffect(() => {
-    if (!board.hasActiveStarts) return;
+    if (!board.hasActiveStarts && !pregame) return;
     let cancelled = false;
 
     const refresh = async () => {
@@ -33,7 +37,23 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [board.hasActiveStarts, initialBoard.date]);
+  }, [board.hasActiveStarts, initialBoard.date, pregame]);
+
+  useEffect(() => {
+    if (!pregame || !slateProgress.firstPitchAt) return;
+
+    const updateCountdown = () => {
+      setSlateProgress((current) => {
+        if (!current.firstPitchAt) return current;
+        const countdownLabel = formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - Date.now());
+        return countdownLabel === current.countdownLabel ? current : { ...current, countdownLabel };
+      });
+    };
+
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 60 * 1000);
+    return () => window.clearInterval(interval);
+  }, [pregame, slateProgress.firstPitchAt]);
 
   const updatedLabel = useMemo(() => formatUpdatedLabel(board.generatedAt), [board.generatedAt]);
 
@@ -57,6 +77,18 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
           <p>{updatedLabel}</p>
         </div>
         <SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />
+      </section>
+    );
+  }
+
+  if (pregame) {
+    return (
+      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-live-board-pregame="true">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+          <p>{scoreboardSummaryLabel(board)}</p>
+          <p>{updatedLabel}</p>
+        </div>
+        <PregameHandoff board={board} slateProgress={slateProgress} />
       </section>
     );
   }
@@ -95,7 +127,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
-          <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">Today&apos;s slate is final.</h2>
+          <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Live returns with the next slate. Full tiers, filters, and breakdowns are ready on Ranked Starts.</p>
           <Link
             href={rankedStartsPath(board.date)}
@@ -131,6 +163,28 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PregameHandoff({ board, slateProgress }: { board: LiveScoreboardData; slateProgress: SlateProgressState }) {
+  const countdown = formatPregameCountdown(slateProgress.countdownLabel);
+
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
+      <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#F6C445]">Scoreboard opens at first pitch</p>
+      <h2 className="mt-2 max-w-3xl font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">
+        FIRST STARTER TOES THE SLAB {countdown}
+      </h2>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+        First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters on the slate.
+      </p>
+      <Link
+        href={upcomingDateHref(board.date)}
+        className="mt-5 inline-flex max-w-full items-center rounded border border-[#F6C445]/50 bg-[#F6C445]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F6C445] transition hover:border-[#F6C445] hover:bg-[#F6C445]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+      >
+        Preview tonight&apos;s matchups on Upcoming -&gt;
+      </Link>
     </div>
   );
 }
@@ -271,12 +325,23 @@ function formatFirstPitch(iso: string) {
   }).format(parsed)} PT`;
 }
 
+function formatPregameCountdown(countdownLabel: string | null) {
+  if (!countdownLabel) return "SOON";
+  if (countdownLabel === "STARTING SOON") return "STARTING SOON";
+  if (countdownLabel === "DELAYED") return "DELAYED";
+  return `IN ${countdownLabel}`;
+}
+
 function isScoredRow(row: LiveScoreboardRow) {
   return row.scoreLabel !== "PROJ";
 }
 
 function isSlateComplete(board: LiveScoreboardData) {
   return board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
+}
+
+function isPregame(board: LiveScoreboardData) {
+  return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
 }
 
 function formatBoardDate(date: string) {
