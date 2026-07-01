@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Headshot } from "@/components/headshot";
@@ -135,6 +136,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           >
             View all ranked starts for {formatBoardDate(board.date)} -&gt;
           </Link>
+          <SlabImage />
         </div>
         <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
@@ -185,6 +187,22 @@ function PregameHandoff({ board, slateProgress }: { board: LiveScoreboardData; s
       >
         Preview tonight&apos;s matchups on Upcoming -&gt;
       </Link>
+      <SlabImage />
+    </div>
+  );
+}
+
+function SlabImage() {
+  return (
+    <div className="mt-6 overflow-hidden rounded border border-white/10 bg-black/30">
+      <Image
+        src="/images/slab-2.png"
+        alt=""
+        width={1280}
+        height={853}
+        className="h-auto w-full object-cover"
+        priority={false}
+      />
     </div>
   );
 }

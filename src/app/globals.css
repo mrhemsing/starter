@@ -27,16 +27,6 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-.live-non-live-page {
-  background:
-    linear-gradient(90deg, rgb(8 8 10 / 0.96), rgb(8 8 10 / 0.88) 48%, rgb(8 8 10 / 0.8)),
-    linear-gradient(180deg, rgb(8 8 10 / 0.72), rgb(8 8 10 / 0.95)),
-    url("/images/slab-2.png");
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
 h1,
 h2,
 h3,

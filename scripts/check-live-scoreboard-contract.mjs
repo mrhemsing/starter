@@ -74,10 +74,8 @@ assert(
 
 assert(
   livePage.includes('active="live"') &&
-    livePage.includes('const livePageClassName = board.hasActiveStarts') &&
-    livePage.includes('? "min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
-    livePage.includes(': "live-non-live-page min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8";') &&
-    livePage.includes('<main className={livePageClassName}>') &&
+    livePage.includes('<main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">') &&
+    !livePage.includes("live-non-live-page") &&
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
     livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
@@ -95,11 +93,16 @@ assert(
 
 assert(
   slabImage.size > 0 &&
-    globals.includes(".live-non-live-page") &&
-    globals.includes('url("/images/slab-2.png")') &&
-    globals.includes("background-size: cover;") &&
-    globals.includes("background-position: center top;"),
-  "non-live Live page phases must use the slab-2 background image on the main page shell",
+    !globals.includes(".live-non-live-page") &&
+    !globals.includes('url("/images/slab-2.png")') &&
+    liveComponent.includes('import Image from "next/image";') &&
+    liveComponent.includes("function SlabImage()") &&
+    liveComponent.includes('src="/images/slab-2.png"') &&
+    liveComponent.includes('alt=""') &&
+    liveComponent.includes('width={1280}') &&
+    liveComponent.includes('height={853}') &&
+    countOccurrences(liveComponent, "<SlabImage />") === 2,
+  "non-live Live page phases must render slab-2 as an inline image in the handoff text column",
 );
 
 assert(
