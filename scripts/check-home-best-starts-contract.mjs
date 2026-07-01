@@ -53,7 +53,7 @@ assert(
   featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
     featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
-    featuredHighlightService.includes('"2026-06-28-bos-nyy-543243": "UFWHObUfAiI"') &&
+    featuredHighlightService.includes('"2026-06-28-bos-nyy-543243": "C-uwf39UDjw"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );
