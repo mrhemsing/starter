@@ -125,9 +125,9 @@ function RankedEyebrowDateLabel({ date }: { date: string }) {
   if (!parts) return <span data-ranked-date-label>{label}</span>;
 
   return (
-    <span className="inline-flex items-baseline gap-1" aria-label={label} data-ranked-date-label>
+    <span className="inline-flex items-baseline" aria-label={label} data-ranked-date-label>
       <span>{parts.weekday},</span>
-      <span>{parts.date}</span>
+      <span className="ml-[0.2em]">{parts.date}</span>
     </span>
   );
 }

@@ -197,8 +197,10 @@ assert(
     slateDateNav.includes("primaryClassName=\"ml-2 font-mono text-2xl font-semibold leading-none tracking-normal\"") &&
     slateDateNav.includes("primary={<RankedEyebrowDateLabel date={activeDate} />}") &&
     slateDateNav.includes("function RankedEyebrowDateLabel") &&
-    slateDateNav.includes('className="inline-flex items-baseline gap-1"') &&
+    slateDateNav.includes('className="inline-flex items-baseline"') &&
     slateDateNav.includes("aria-label={label}") &&
+    slateDateNav.includes('<span>{parts.weekday},</span>') &&
+    slateDateNav.includes('className="ml-[0.2em]"') &&
     slateDateNav.includes("function formatRankedEyebrowDateParts") &&
     slateDateNav.includes("data-ranked-date-label") &&
     slateDateNav.includes('className="inline-flex shrink-0 items-center gap-1.5"') &&
