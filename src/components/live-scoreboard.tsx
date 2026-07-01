@@ -110,10 +110,15 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
             <p>{rows.length} starters</p>
           </div>
           {rows.map((row, index) => (
-            <article key={row.id} className="grid grid-cols-[2ch_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0">
+            <article key={row.id} className="grid grid-cols-[2ch_29px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[2ch_35px_minmax(0,1fr)_auto]">
               <p className="font-mono text-xs text-zinc-500">{index + 1}</p>
+              <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
+                <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="sm" decorative className="ml-0" />
+              </Link>
               <div className="min-w-0">
-                <p className="truncate font-serif text-xl font-bold leading-tight text-zinc-50">{row.pitcherName}</p>
+                <Link href={row.pitcherHref} className="block truncate font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+                  {row.pitcherName}
+                </Link>
                 <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
                   {row.team} vs {row.opponent}
                 </p>

@@ -107,6 +107,12 @@ assert(
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes("Top final GS+") &&
+    liveComponent.includes('grid-cols-[2ch_29px_minmax(0,1fr)_auto]') &&
+    liveComponent.includes('sm:grid-cols-[2ch_35px_minmax(0,1fr)_auto]') &&
+    countOccurrences(liveComponent, "<Headshot playerId={row.pitcherMlbId}") === 2 &&
+    countOccurrences(liveComponent, 'aria-label={`Open ${row.pitcherName} pitcher page`}') === 2 &&
+    liveComponent.includes('size="sm" decorative className="ml-0"') &&
+    liveComponent.includes('className="block truncate font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
     liveComponent.includes("function isSlateComplete(board: LiveScoreboardData)") &&
     liveComponent.includes("return board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     liveComponent.includes("function formatBoardDate(date: string)") &&
@@ -168,3 +174,7 @@ assert(
 );
 
 console.log("live scoreboard contract ok: provisional board, hero, permanent nav, and status hooks are isolated from ranked starts");
+
+function countOccurrences(value, token) {
+  return value.split(token).length - 1;
+}
