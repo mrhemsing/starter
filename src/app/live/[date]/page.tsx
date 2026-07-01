@@ -33,9 +33,12 @@ export default async function LivePage({ params }: LivePageProps) {
     : pregame
       ? "The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming."
       : "Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
+  const livePageClassName = board.hasActiveStarts
+    ? "min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"
+    : "live-non-live-page min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8";
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main className={livePageClassName}>
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <SiteHeader active="live" today={today} />
         <section className="space-y-4">

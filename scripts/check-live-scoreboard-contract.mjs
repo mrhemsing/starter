@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 function assert(condition, message) {
   if (!condition) {
@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
@@ -18,6 +18,8 @@ const [liveService, livePage, liveApi, liveComponent, mlbClient, types, startSer
   readFile("src/components/site-nav.tsx", "utf8"),
   readFile("src/lib/data/home-ranked-service.ts", "utf8"),
   readFile("src/components/home-slate-status-line.tsx", "utf8"),
+  readFile("src/app/globals.css", "utf8"),
+  stat("public/images/slab-2.png"),
 ]);
 
 assert(
@@ -72,7 +74,10 @@ assert(
 
 assert(
   livePage.includes('active="live"') &&
-    livePage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
+    livePage.includes('const livePageClassName = board.hasActiveStarts') &&
+    livePage.includes('? "min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
+    livePage.includes(': "live-non-live-page min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8";') &&
+    livePage.includes('<main className={livePageClassName}>') &&
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
     livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
@@ -86,6 +91,15 @@ assert(
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
   "/live/[date] route and API must render the cached live board at the shared site width",
+);
+
+assert(
+  slabImage.size > 0 &&
+    globals.includes(".live-non-live-page") &&
+    globals.includes('url("/images/slab-2.png")') &&
+    globals.includes("background-size: cover;") &&
+    globals.includes("background-position: center top;"),
+  "non-live Live page phases must use the slab-2 background image on the main page shell",
 );
 
 assert(
