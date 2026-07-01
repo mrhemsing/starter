@@ -56,7 +56,7 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
 
   const line = useMemo(() => formatSlateStatusLine(slateState), [slateState]);
   const mobilePreFirstPitchLine = splitPreFirstPitchStatusLine(line, slateState.state);
-  const liveHref = slateState.liveGames > 0 ? liveDateHref(slateState.date) : null;
+  const liveHref = shouldLinkLiveScoreboard(slateState) ? liveDateHref(slateState.date) : null;
   const content = mobilePreFirstPitchLine ? (
     <>
       <span className="sm:hidden" aria-hidden="true">
@@ -90,6 +90,10 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
       )}
     </div>
   );
+}
+
+function shouldLinkLiveScoreboard(state: SlateProgressState) {
+  return state.liveGames > 0 || state.state === "pre-first-pitch" || state.state === "all-starts-complete";
 }
 
 function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {

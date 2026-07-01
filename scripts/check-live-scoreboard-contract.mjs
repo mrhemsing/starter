@@ -123,21 +123,26 @@ assert(
 assert(
   routes.includes("export function liveDateHref(date: string)") &&
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
-    siteNav.includes('const hasActiveLiveStarts = slateProgress.state === "starts-in-progress" && slateProgress.liveGames > 0;') &&
-    siteNav.includes("const liveItem = hasActiveLiveStarts ?") &&
+    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel state={slateProgress.state} liveGames={slateProgress.liveGames} />, href: liveDateHref(today) }];') &&
     siteNav.includes("href: liveDateHref(today)") &&
-    siteNav.includes("<LiveNavLabel />") &&
-    siteNav.includes('className="h-1.5 w-1.5 rounded-full bg-[#FF5A1F]"') &&
+    siteNav.includes('function LiveNavLabel({ state, liveGames }: { state: SlateProgressState["state"]; liveGames: number })') &&
+    siteNav.includes('const hasActiveLiveStarts = state === "starts-in-progress" && liveGames > 0;') &&
+    siteNav.includes('state === "pre-first-pitch" ? "text-amber-300" : "text-zinc-400"') &&
+    siteNav.includes('state === "pre-first-pitch" ? "bg-[#F6C445]/70" : "bg-zinc-500"') &&
+    siteNav.includes("data-live-nav-state={state}") &&
+    siteNav.includes('data-live-nav-active={hasActiveLiveStarts ? "true" : "false"}') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
-  "primary nav must add a conditional static LIVE wayfinding dot only while games are live",
+  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding",
 );
 
 assert(
   homeRanked.includes("getLiveScoreboard({ date: today })") &&
     homeRanked.includes("resolveLiveLeaderStart(liveBoard, todaySlateStarts)") &&
     homeRanked.includes("href: liveDateHref(today),") &&
+    homeStatus.includes("shouldLinkLiveScoreboard(slateState)") &&
+    homeStatus.includes('state.liveGames > 0 || state.state === "pre-first-pitch" || state.state === "all-starts-complete"') &&
     homeStatus.includes("liveDateHref(slateState.date)"),
-  "homepage hero and status line must become live-board entry points during active starts",
+  "homepage hero and status line must become live-board entry points during active starts and off-hours",
 );
 
-console.log("live scoreboard contract ok: provisional board, hero, nav, and status hooks are isolated from ranked starts");
+console.log("live scoreboard contract ok: provisional board, hero, permanent nav, and status hooks are isolated from ranked starts");

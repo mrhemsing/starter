@@ -90,7 +90,7 @@ export function formatSlateStatusLine(state: SlateProgressState) {
   if (state.state === "starts-in-progress") return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
 
   const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;
-  return `TODAY · ${dateLabel} · FIRST STARTER TOES THE SLAB ${countdown}`;
+  return `TODAY · ${dateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;
 }
 
 export function formatFirstPitchCountdown(durationMs: number, delayed = false) {

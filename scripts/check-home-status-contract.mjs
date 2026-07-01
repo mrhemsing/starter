@@ -65,6 +65,11 @@ assert(
 );
 
 assert(
+  slateState.includes('return `TODAY · ${dateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;'),
+  "homepage pre-first-pitch line must name LIVE GS+ before the mobile FIRST split",
+);
+
+assert(
   slateState.includes(".format(parsed).toUpperCase()"),
   "homepage status date label must render uppercase full month text like JUNE 17",
 );
@@ -117,10 +122,13 @@ assert(
 
 assert(
   !statusLine.includes("Upcoming") &&
+    statusLine.includes("shouldLinkLiveScoreboard(slateState)") &&
+    statusLine.includes('state.state === "pre-first-pitch"') &&
+    statusLine.includes('state.state === "all-starts-complete"') &&
     statusLine.includes("liveDateHref(slateState.date)") &&
     !statusLine.includes("ranked-live-dot") &&
     !statusLine.includes('rounded-full bg-[#FF5A1F]"'),
-  "homepage status eyebrow must link to the live board during games without adding a redundant live dot",
+  "homepage status eyebrow must link to the live board during games and off-hours without adding a redundant live dot",
 );
 
 assert(
