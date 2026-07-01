@@ -49,6 +49,7 @@ export function TopPerformerCard({
   const imageUrl = image?.imageUrl;
   const isPlaceholderImage = image?.source === "placeholder";
   const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");
+  const imageMobileObjectPosition = image?.mobileObjectPosition ?? imageObjectPosition;
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
   const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
@@ -191,8 +192,13 @@ export function TopPerformerCard({
               fill
               sizes="(min-width: 1024px) 55vw, 100vw"
               quality={isPlaceholderImage ? 82 : 86}
-              className="object-cover"
-              style={{ objectPosition: imageObjectPosition }}
+              className="top-performer-image object-cover"
+              style={
+                {
+                  "--top-performer-image-position": imageObjectPosition,
+                  "--top-performer-mobile-image-position": imageMobileObjectPosition,
+                } as CSSProperties
+              }
               priority
             />
           ) : (

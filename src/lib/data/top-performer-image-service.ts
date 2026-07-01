@@ -21,6 +21,7 @@ const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/5
 const JAKE_BENNETT_MLB_ID = 687562;
 const JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE =
   "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/pem1abrn3e0vkdnje4mc.jpg";
+const CADE_CAVALLI_JUNE_30_START_ID = "2026-06-30-wsh-bos-676917";
 
 type TopPerformerImageSource = "action" | "placeholder";
 
@@ -30,6 +31,7 @@ export type TopPerformerImage = {
   alt: string;
   attribution?: string;
   objectPosition?: string;
+  mobileObjectPosition?: string;
   playUrl?: string;
 };
 
@@ -47,6 +49,7 @@ type CachedMlbGameContentActionImage = {
   imageUrl: string;
   alt: string;
   objectPosition: string;
+  mobileObjectPosition?: string;
   playUrl?: string;
   expiresAt: number;
 };
@@ -123,6 +126,7 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
       imageUrl: cachedMlbGameContentAction.imageUrl,
       alt: cachedMlbGameContentAction.alt,
       objectPosition: cachedMlbGameContentAction.objectPosition,
+      mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, cachedMlbGameContentAction.objectPosition),
       playUrl: cachedMlbGameContentAction.playUrl,
     };
   }
@@ -214,6 +218,11 @@ function actionShotObjectPosition() {
   return "50% 50%";
 }
 
+function mobileTopPerformerObjectPosition(startId: string, fallback: string) {
+  if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";
+  return fallback;
+}
+
 async function resolveMlbGameContentActionImage(start: StartSummary): Promise<TopPerformerImage | null> {
   const response = await fetch(`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`, { next: { revalidate: MLB_CONTENT_REVALIDATE_SECONDS } });
   if (!response.ok) return null;
@@ -228,6 +237,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
     imageUrl: normalizeMlbImageUrl(cut.src),
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
     objectPosition: "50% 50%",
+    mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, "50% 50%"),
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
   } satisfies TopPerformerImage;
 
@@ -430,6 +440,7 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     imageUrl: image.imageUrl,
     alt: image.alt,
     objectPosition: image.objectPosition ?? "50% 50%",
+    mobileObjectPosition: image.mobileObjectPosition,
     playUrl: image.playUrl,
     expiresAt: Date.now() + MLB_CONTENT_CACHE_TTL_MS,
   };

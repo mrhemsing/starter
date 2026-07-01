@@ -20,6 +20,7 @@ const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf
 const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
+const globals = await readFile("src/app/globals.css", "utf8");
 
 assert(
   rankedRoute.includes('import { getRankedHome, HOME_RANKED_REVALIDATE_SECONDS } from "@/lib/data/home-ranked-service";') &&
@@ -205,9 +206,15 @@ assert(
 
 assert(
   topPerformerCard.includes('const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");') &&
-    topPerformerCard.includes('className="object-cover"') &&
-    topPerformerCard.includes("style={{ objectPosition: imageObjectPosition }}"),
-  "home top performer real images must cover the frame and honor player-focused image framing",
+    topPerformerCard.includes("const imageMobileObjectPosition = image?.mobileObjectPosition ?? imageObjectPosition;") &&
+    topPerformerCard.includes('className="top-performer-image object-cover"') &&
+    topPerformerCard.includes('"--top-performer-image-position": imageObjectPosition') &&
+    topPerformerCard.includes('"--top-performer-mobile-image-position": imageMobileObjectPosition') &&
+    globals.includes(".top-performer-image") &&
+    globals.includes("object-position: var(--top-performer-mobile-image-position, var(--top-performer-image-position, 50% 50%));") &&
+    globals.includes("@media (min-width: 1024px)") &&
+    globals.includes("object-position: var(--top-performer-image-position, 50% 50%);"),
+  "home top performer real images must cover the frame and support mobile-only player-focused framing without changing desktop",
 );
 
 assert(
@@ -389,6 +396,7 @@ assert(
     imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
     imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
     imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
+    imageService.includes('const CADE_CAVALLI_JUNE_30_START_ID = "2026-06-30-wsh-bos-676917";') &&
     imageService.includes('const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";') &&
     imageService.includes('const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";') &&
     imageService.includes("const JAKE_BENNETT_MLB_ID = 687562;") &&
@@ -401,6 +409,7 @@ assert(
     imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
     imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
+    imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, cachedMlbGameContentAction.objectPosition)") &&
     imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
       imageService.indexOf("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
     imageService.includes("const cached = await readCachedActionShot(start.id);") &&
@@ -414,6 +423,8 @@ assert(
     imageService.indexOf("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") <
       imageService.indexOf("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
+    imageService.includes('mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, "50% 50%")') &&
+    imageService.includes('if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";') &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
     imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&

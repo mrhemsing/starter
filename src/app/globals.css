@@ -171,6 +171,10 @@ p,
   will-change: transform;
 }
 
+.top-performer-image {
+  object-position: var(--top-performer-mobile-image-position, var(--top-performer-image-position, 50% 50%));
+}
+
 .top-performer-score {
   text-shadow:
     0 0 18px rgb(239 159 39 / 0.45),
@@ -468,4 +472,10 @@ p,
     transform: none !important;
   }
 
+}
+
+@media (min-width: 1024px) {
+  .top-performer-image {
+    object-position: var(--top-performer-image-position, 50% 50%);
+  }
 }
