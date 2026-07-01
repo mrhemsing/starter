@@ -221,8 +221,8 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,8,10,0.34)_0%,rgba(8,8,10,0.68)_48%,rgba(8,8,10,0.94)_100%)]" />
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_40%,rgba(246,196,69,0.18),transparent_34%),linear-gradient(90deg,rgba(8,8,10,0.86),rgba(8,8,10,0.38)_54%,rgba(8,8,10,0.72))]" />
 
-        <div className="flex min-h-[470px] flex-col justify-end px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8">
-          <div className="max-w-4xl">
+        <div className="flex min-h-[470px] flex-col items-start justify-start px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8">
+          <div className="w-full max-w-4xl text-left">
             <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
               Scoreboard opens at first pitch

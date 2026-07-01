@@ -140,6 +140,9 @@ assert(
     liveComponent.includes('document.addEventListener("visibilitychange", handleVisibilityChange);') &&
     liveComponent.includes('document.removeEventListener("visibilitychange", handleVisibilityChange);') &&
     liveComponent.includes("getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
+    liveComponent.includes('className="flex min-h-[470px] flex-col items-start justify-start px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8"') &&
+    liveComponent.includes('className="w-full max-w-4xl text-left"') &&
+    !liveComponent.includes("flex-col justify-end px-4 py-5") &&
     liveComponent.includes('data-live-pregame-countdown-mode={countdown.mode}') &&
     liveComponent.includes('aria-label={countdown.ariaLabel}') &&
     liveComponent.includes('<ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />') &&
