@@ -13,9 +13,14 @@ type LiveScoreboardProps = {
   initialSlateProgress: SlateProgressState;
 };
 
+const PREGAME_CLOCK_THRESHOLD_MS = 6 * 60 * 60 * 1000;
+const PREGAME_STARTING_SOON_MS = 60 * 1000;
+const PREGAME_CLOCK_WINDOW_MS = PREGAME_CLOCK_THRESHOLD_MS - PREGAME_STARTING_SOON_MS;
+
 export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScoreboardProps) {
   const [board, setBoard] = useState(initialBoard);
   const [slateProgress, setSlateProgress] = useState(initialSlateProgress);
+  const [pregameNowMs, setPregameNowMs] = useState<number | null>(null);
   const pregame = isPregame(board);
 
   useEffect(() => {
@@ -42,18 +47,48 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 
   useEffect(() => {
     if (!pregame || !slateProgress.firstPitchAt) return;
+    const firstPitchMs = new Date(slateProgress.firstPitchAt).getTime();
+    if (!Number.isFinite(firstPitchMs)) return;
+
+    let interval: number | null = null;
 
     const updateCountdown = () => {
+      const nowMs = Date.now();
+      setPregameNowMs(nowMs);
       setSlateProgress((current) => {
         if (!current.firstPitchAt) return current;
-        const countdownLabel = formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - Date.now());
+        const countdownLabel = formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs);
         return countdownLabel === current.countdownLabel ? current : { ...current, countdownLabel };
       });
     };
 
+    const clearCountdownInterval = () => {
+      if (interval === null) return;
+      window.clearInterval(interval);
+      interval = null;
+    };
+
+    const startCountdownInterval = () => {
+      clearCountdownInterval();
+      if (document.visibilityState === "hidden") return;
+      const remainingMs = firstPitchMs - Date.now();
+      const clockMode = remainingMs > PREGAME_STARTING_SOON_MS && remainingMs <= PREGAME_CLOCK_THRESHOLD_MS;
+      interval = window.setInterval(updateCountdown, clockMode ? 1000 : 60 * 1000);
+    };
+
+    const handleVisibilityChange = () => {
+      updateCountdown();
+      startCountdownInterval();
+    };
+
     updateCountdown();
-    const interval = window.setInterval(updateCountdown, 60 * 1000);
-    return () => window.clearInterval(interval);
+    startCountdownInterval();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearCountdownInterval();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [pregame, slateProgress.firstPitchAt]);
 
   const updatedLabel = useMemo(() => formatUpdatedLabel(board.generatedAt), [board.generatedAt]);
@@ -89,7 +124,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
           <p>{scoreboardSummaryLabel(board)}</p>
           <p>{updatedLabel}</p>
         </div>
-        <PregameHandoff board={board} slateProgress={slateProgress} />
+        <PregameHandoff board={board} slateProgress={slateProgress} nowMs={pregameNowMs} />
       </section>
     );
   }
@@ -169,25 +204,64 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
   );
 }
 
-function PregameHandoff({ board, slateProgress }: { board: LiveScoreboardData; slateProgress: SlateProgressState }) {
-  const countdown = formatPregameCountdown(slateProgress.countdownLabel);
+function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboardData; slateProgress: SlateProgressState; nowMs: number | null }) {
+  const countdown = getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs);
 
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#F6C445]">Scoreboard opens at first pitch</p>
-      <h2 className="mt-2 max-w-3xl font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">
-        FIRST STARTER TOES THE SLAB {countdown}
-      </h2>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-        First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters on the slate.
-      </p>
-      <Link
-        href={upcomingDateHref(board.date)}
-        className="mt-5 inline-flex max-w-full items-center rounded border border-[#F6C445]/50 bg-[#F6C445]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F6C445] transition hover:border-[#F6C445] hover:bg-[#F6C445]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-      >
-        Preview tonight&apos;s matchups on Upcoming -&gt;
-      </Link>
-      <SlabImage />
+    <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
+      <div className="relative isolate min-h-[470px] overflow-hidden sm:min-h-[540px] lg:min-h-[620px]">
+        <Image
+          src="/images/slab-2.png"
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 1120px, 100vw"
+          className="absolute inset-0 -z-20 h-full w-full object-cover"
+          priority={false}
+        />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,8,10,0.34)_0%,rgba(8,8,10,0.68)_48%,rgba(8,8,10,0.94)_100%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_40%,rgba(246,196,69,0.18),transparent_34%),linear-gradient(90deg,rgba(8,8,10,0.86),rgba(8,8,10,0.38)_54%,rgba(8,8,10,0.72))]" />
+
+        <div className="flex min-h-[470px] flex-col justify-end px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8">
+          <div className="max-w-4xl">
+            <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
+              <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
+              Scoreboard opens at first pitch
+            </p>
+            <div className="mt-5" data-live-pregame-countdown-mode={countdown.mode}>
+              {countdown.mode === "clock" ? (
+                <div className="grid max-w-[720px] grid-cols-3 gap-2 sm:gap-3" aria-label={countdown.ariaLabel}>
+                  <ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />
+                  <ClockUnit value={countdown.minutes} label="MIN" toneClass={countdown.toneClass} />
+                  <ClockUnit value={countdown.seconds} label="SEC" toneClass={countdown.toneClass} />
+                </div>
+              ) : (
+                <h2 className={`font-serif text-5xl font-black leading-none tracking-normal sm:text-7xl ${countdown.toneClass}`}>{countdown.label}</h2>
+              )}
+            </div>
+            <div className="mt-5 h-1.5 max-w-[720px] overflow-hidden rounded-full bg-white/15" aria-hidden="true">
+              <div className="h-full rounded-full bg-[#FF5A1F] shadow-[0_0_24px_rgba(255,90,31,0.45)] motion-safe:transition-[width,background-color] motion-safe:duration-500" style={{ width: `${countdown.progressPct}%` }} />
+            </div>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300 sm:text-xs">
+              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters on the slate.
+            </p>
+            <Link
+              href={upcomingDateHref(board.date)}
+              className="mt-5 inline-flex max-w-full items-center rounded border border-[#F6C445]/50 bg-black/35 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F6C445] transition hover:border-[#F6C445] hover:bg-[#F6C445]/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            >
+              Preview tonight&apos;s matchups on Upcoming -&gt;
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClockUnit({ value, label, toneClass }: { value: string; label: string; toneClass: string }) {
+  return (
+    <div className="min-w-0 rounded border border-white/10 bg-black/35 px-2 py-3 text-center shadow-[inset_0_0_30px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
+      <p className={`font-mono text-5xl font-black leading-none tracking-normal tabular-nums motion-safe:transition-colors motion-safe:duration-200 sm:text-7xl lg:text-8xl ${toneClass}`}>{value}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 sm:text-xs">{label}</p>
     </div>
   );
 }
@@ -348,6 +422,104 @@ function formatPregameCountdown(countdownLabel: string | null) {
   if (countdownLabel === "STARTING SOON") return "STARTING SOON";
   if (countdownLabel === "DELAYED") return "DELAYED";
   return `IN ${countdownLabel}`;
+}
+
+function getPregameCountdownView(firstPitchAt: string | null, countdownLabel: string | null, nowMs: number | null) {
+  const fallbackLabel = firstPitchAt ? formatPregameCountdown(countdownLabel) : "TBD";
+
+  if (!firstPitchAt || nowMs === null) {
+    return {
+      mode: "static" as const,
+      label: fallbackLabel,
+      ariaLabel: fallbackLabel,
+      hours: "00",
+      minutes: "00",
+      seconds: "00",
+      progressPct: 0,
+      toneClass: "text-[#F6C445]",
+    };
+  }
+
+  if (countdownLabel === "DELAYED") {
+    return {
+      mode: "status" as const,
+      label: "DELAYED",
+      ariaLabel: "Delayed",
+      hours: "00",
+      minutes: "00",
+      seconds: "00",
+      progressPct: 100,
+      toneClass: "text-[#FF9A62]",
+    };
+  }
+
+  const firstPitchMs = new Date(firstPitchAt).getTime();
+  if (!Number.isFinite(firstPitchMs)) {
+    return {
+      mode: "status" as const,
+      label: "TBD",
+      ariaLabel: "First pitch to be determined",
+      hours: "00",
+      minutes: "00",
+      seconds: "00",
+      progressPct: 0,
+      toneClass: "text-[#F6C445]",
+    };
+  }
+
+  const remainingMs = firstPitchMs - nowMs;
+  if (remainingMs <= PREGAME_STARTING_SOON_MS) {
+    return {
+      mode: "status" as const,
+      label: "STARTING SOON",
+      ariaLabel: "Starting soon",
+      hours: "00",
+      minutes: "00",
+      seconds: "00",
+      progressPct: 100,
+      toneClass: "text-[#FF9A62]",
+    };
+  }
+
+  if (remainingMs > PREGAME_CLOCK_THRESHOLD_MS) {
+    const label = formatPregameCountdown(formatFirstPitchCountdown(remainingMs));
+    return {
+      mode: "static" as const,
+      label,
+      ariaLabel: label,
+      hours: "00",
+      minutes: "00",
+      seconds: "00",
+      progressPct: 0,
+      toneClass: "text-[#F6C445]",
+    };
+  }
+
+  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const progressPct = clamp(((PREGAME_CLOCK_THRESHOLD_MS - remainingMs) / PREGAME_CLOCK_WINDOW_MS) * 100, 0, 100);
+  const toneClass = progressPct > 72 ? "text-[#FF9A62]" : "text-[#F6C445]";
+
+  return {
+    mode: "clock" as const,
+    label: `${padClockUnit(hours)}:${padClockUnit(minutes)}:${padClockUnit(seconds)}`,
+    ariaLabel: `${hours} hours, ${minutes} minutes, ${seconds} seconds until first pitch`,
+    hours: padClockUnit(hours),
+    minutes: padClockUnit(minutes),
+    seconds: padClockUnit(seconds),
+    progressPct,
+    toneClass,
+  };
+}
+
+function padClockUnit(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function isScoredRow(row: LiveScoreboardRow) {

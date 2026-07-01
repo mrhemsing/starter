@@ -95,7 +95,7 @@ export function formatSlateStatusLine(state: SlateProgressState) {
 
 export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
   if (durationMs < 0 && delayed) return "DELAYED";
-  if (durationMs <= 5 * 60 * 1000) return "STARTING SOON";
+  if (durationMs <= 60 * 1000) return "STARTING SOON";
 
   const totalMinutes = Math.max(0, Math.ceil(durationMs / 60000));
   if (totalMinutes < 60) return `${totalMinutes}M`;

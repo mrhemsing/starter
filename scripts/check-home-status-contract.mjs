@@ -81,6 +81,7 @@ assert(
 
 assert(
   slateState.includes("Math.ceil(durationMs / 60000)") &&
+    slateState.includes("durationMs <= 60 * 1000") &&
     slateState.includes('return "STARTING SOON";') &&
     slateState.includes('return "DELAYED";') &&
     slateState.includes('state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED"') &&

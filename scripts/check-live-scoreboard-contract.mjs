@@ -103,8 +103,10 @@ assert(
     liveComponent.includes('alt=""') &&
     liveComponent.includes('width={1280}') &&
     liveComponent.includes('height={853}') &&
-    countOccurrences(liveComponent, "<SlabImage />") === 2,
-  "non-live Live page phases must render slab-2 as an inline image in the handoff text column",
+    liveComponent.includes('fill') &&
+    liveComponent.includes('sizes="(min-width: 1024px) 1120px, 100vw"') &&
+    countOccurrences(liveComponent, "<SlabImage />") === 1,
+  "non-live Live page phases must render slab-2 inline and fuse the pregame countdown into the mound hero",
 );
 
 assert(
@@ -125,14 +127,38 @@ assert(
     liveComponent.includes("const slateComplete = isSlateComplete(board);") &&
     liveComponent.includes("const pregame = isPregame(board);") &&
     liveComponent.includes('data-live-board-pregame="true"') &&
-    liveComponent.includes("<PregameHandoff board={board} slateProgress={slateProgress} />") &&
+    liveComponent.includes("<PregameHandoff board={board} slateProgress={slateProgress} nowMs={pregameNowMs} />") &&
     liveComponent.includes("function PregameHandoff") &&
     liveComponent.includes("Scoreboard opens at first pitch") &&
-    liveComponent.includes("FIRST STARTER TOES THE SLAB {countdown}") &&
+    liveComponent.includes("const PREGAME_CLOCK_THRESHOLD_MS = 6 * 60 * 60 * 1000;") &&
+    liveComponent.includes("const PREGAME_STARTING_SOON_MS = 60 * 1000;") &&
+    liveComponent.includes("const [pregameNowMs, setPregameNowMs] = useState<number | null>(null);") &&
+    liveComponent.includes("setPregameNowMs(nowMs);") &&
+    liveComponent.includes("const clockMode = remainingMs > PREGAME_STARTING_SOON_MS && remainingMs <= PREGAME_CLOCK_THRESHOLD_MS;") &&
+    liveComponent.includes("interval = window.setInterval(updateCountdown, clockMode ? 1000 : 60 * 1000);") &&
+    liveComponent.includes('if (document.visibilityState === "hidden") return;') &&
+    liveComponent.includes('document.addEventListener("visibilitychange", handleVisibilityChange);') &&
+    liveComponent.includes('document.removeEventListener("visibilitychange", handleVisibilityChange);') &&
+    liveComponent.includes("getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
+    liveComponent.includes('data-live-pregame-countdown-mode={countdown.mode}') &&
+    liveComponent.includes('aria-label={countdown.ariaLabel}') &&
+    liveComponent.includes('<ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />') &&
+    liveComponent.includes('<ClockUnit value={countdown.minutes} label="MIN" toneClass={countdown.toneClass} />') &&
+    liveComponent.includes('<ClockUnit value={countdown.seconds} label="SEC" toneClass={countdown.toneClass} />') &&
+    liveComponent.includes("function ClockUnit") &&
+    liveComponent.includes('style={{ width: `${countdown.progressPct}%` }}') &&
+    liveComponent.includes('motion-safe:animate-pulse') &&
+    liveComponent.includes('motion-safe:transition-colors') &&
+    liveComponent.includes("function getPregameCountdownView") &&
+    liveComponent.includes('label: "STARTING SOON"') &&
+    liveComponent.includes('label: "DELAYED"') &&
+    liveComponent.includes('label: "TBD"') &&
+    liveComponent.includes("function padClockUnit") &&
+    liveComponent.includes("function clamp") &&
     liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters on the slate.") &&
     liveComponent.includes("upcomingDateHref(board.date)") &&
     liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
-    liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - Date.now())") &&
+    liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs)") &&
     liveComponent.includes("function formatPregameCountdown") &&
     liveComponent.includes("function isPregame(board: LiveScoreboardData)") &&
     liveComponent.includes("return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
