@@ -30,7 +30,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v3"]') &&
+    bestStartsService.includes('["home-best-starts-v4"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners on a short cadence with a versioned key for highlight payload changes",
 );
@@ -53,7 +53,7 @@ assert(
   featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
     featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
-    featuredHighlightService.includes('"2026-06-28-bos-nyy-543243": "C-uwf39UDjw"') &&
+    featuredHighlightService.includes('"2026-06-30-wsh-bos-676917": "C-uwf39UDjw"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );
@@ -153,9 +153,11 @@ assert(
 
 assert(
   homeDeferredSections.includes("Recent Gems") &&
+    homeDeferredSections.includes(">Best starts</p>") &&
     homeDeferredSections.includes("The best starts of the last 7 and 30 days, worth revisiting.") &&
     homeDeferredSections.includes('badge: "7-DAY BEST"') &&
     homeDeferredSections.includes('badge: "30-DAY BEST"') &&
+    !homeDeferredSections.includes(">Evergreen</p>") &&
     !homeDeferredSections.includes("Start of the Week & Month") &&
     !homeDeferredSections.includes("Start of the Week / Month") &&
     !homeDeferredSections.includes("Tops the last 7 and 30 days") &&
@@ -181,7 +183,7 @@ assert(
 
 assert(
   homeDeferredSections.includes('best: { eyebrow: "Best starts", title: "Loading best starts" },'),
-  "home best-starts loading skeleton must use clear loading copy instead of the final Evergreen section label",
+  "home best-starts loading skeleton must use clear loading copy matching the final section label",
 );
 
 console.log("home best-starts contract ok: highlight payloads are resolved in the API and rendered by the homepage cards");

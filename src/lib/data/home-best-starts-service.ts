@@ -34,7 +34,7 @@ const getCachedBestStartsHome = unstable_cache(
       monthlyHighlight: monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight,
     };
   },
-  ["home-best-starts-v3"],
+  ["home-best-starts-v4"],
   { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] },
 );
 
