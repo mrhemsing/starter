@@ -37,7 +37,7 @@ export default async function LivePage({ params }: LivePageProps) {
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <SiteHeader active="live" today={today} />
-        <div className={pregame ? "space-y-4" : "space-y-6"}>
+        <div className={pregame ? "space-y-2" : "space-y-6"}>
           <section className={pregame ? "space-y-3" : "space-y-4"}>
             <div>
               <div className="flex items-center justify-between gap-4">

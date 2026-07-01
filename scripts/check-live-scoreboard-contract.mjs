@@ -93,7 +93,7 @@ assert(
     livePage.includes('const boardTitle = "Live GS+ Scoreboard";') &&
     livePage.includes('const boardDescription = slateComplete') &&
     livePage.includes('pregame\n      ? ""') &&
-    livePage.includes('className={pregame ? "space-y-4" : "space-y-6"}') &&
+    livePage.includes('className={pregame ? "space-y-2" : "space-y-6"}') &&
     livePage.includes('className={pregame ? "space-y-3" : "space-y-4"}') &&
     livePage.includes('<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Live board</p>') &&
     livePage.includes('className="flex items-center justify-between gap-4"') &&
