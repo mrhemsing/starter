@@ -226,7 +226,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
           priority={false}
         />
 
-        <div className="relative flex flex-col items-start justify-start px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5">
           <div className="w-full max-w-4xl text-left">
             <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />

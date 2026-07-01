@@ -165,7 +165,7 @@ assert(
     liveComponent.includes("getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
     liveComponent.includes('data-scheduled-starts={board.scheduledStarts}') &&
     liveComponent.includes('className="relative isolate overflow-hidden"') &&
-    liveComponent.includes('className="relative flex flex-col items-start justify-start px-4 py-5 sm:px-6 sm:py-6 lg:px-8"') &&
+    liveComponent.includes('className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5"') &&
     !liveComponent.includes("min-h-[470px]") &&
     !liveComponent.includes("sm:min-h-[540px]") &&
     !liveComponent.includes("lg:min-h-[620px]") &&
