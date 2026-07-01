@@ -32,11 +32,11 @@ export async function SiteNav({ active, today, rankedDate }: { active: NavKey | 
           </PrimaryNavLink>
         ))}
       </nav>
-      <nav className="flex min-w-0 max-w-full gap-2 overflow-x-auto pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary mobile" data-responsive-check="home-mobile-nav">
+      <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary mobile" data-responsive-check="home-mobile-nav">
         {items.map((item) => (
           <PrimaryNavLink
             key={item.key}
-            className={`inline-flex min-h-11 shrink-0 items-center rounded border px-3 py-2 ${active !== null && item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}
+            className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center ${active !== null && item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}
             href={item.href}
           >
             {item.label}

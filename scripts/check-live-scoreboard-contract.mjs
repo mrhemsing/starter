@@ -143,6 +143,10 @@ assert(
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
     siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel state={slateProgress.state} liveGames={slateProgress.liveGames} />, href: liveDateHref(today) }];') &&
     siteNav.includes("href: liveDateHref(today)") &&
+    siteNav.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
+    siteNav.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
+    !siteNav.includes("overflow-x-auto pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden") &&
+    !siteNav.includes("shrink-0 items-center rounded border") &&
     siteNav.includes('function LiveNavLabel({ state, liveGames }: { state: SlateProgressState["state"]; liveGames: number })') &&
     siteNav.includes('const hasActiveLiveStarts = state === "starts-in-progress" && liveGames > 0;') &&
     siteNav.includes('state === "pre-first-pitch" ? "text-amber-300" : "text-zinc-400"') &&
@@ -150,7 +154,7 @@ assert(
     siteNav.includes("data-live-nav-state={state}") &&
     siteNav.includes('data-live-nav-active={hasActiveLiveStarts ? "true" : "false"}') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
-  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding",
+  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding and a two-row mobile grid",
 );
 
 assert(

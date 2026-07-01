@@ -133,6 +133,9 @@ assert(
     routeLoadingShell.includes("route-loading-spinner") &&
     routeLoadingShell.includes("route-loading-secondary-message") &&
     routeLoadingShell.includes("Fetching data...") &&
+    routeLoadingShell.includes('aria-label="Primary loading mobile"') &&
+    routeLoadingShell.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
+    routeLoadingShell.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
     globals.includes(".route-loading-spinner") &&
     globals.includes("animation: route-loading-spin 880ms linear infinite;") &&
     globals.includes("@media (prefers-reduced-motion: reduce)"),

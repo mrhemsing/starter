@@ -25,7 +25,7 @@ const fixturePages = [
     text: "Every MLB start,",
     mobileChecks: [
       { selector: "[data-responsive-check='home-mobile-nav']", visible: true },
-      { selector: "[data-responsive-check='home-mobile-nav'] a", count: 5 },
+      { selector: "[data-responsive-check='home-mobile-nav'] a", count: 6 },
       { selector: "[data-responsive-check='home-mobile-nav'] a", minHeight: 44 },
       { selector: "[data-responsive-check='home-masthead']", visible: true },
       { selector: "[data-responsive-check='slate-swarm']", visible: true },

@@ -34,6 +34,13 @@ export function RouteLoadingShell({
               <span key={item} className={item === activeLabel ? "text-zinc-50" : undefined}>{item}</span>
             ))}
           </nav>
+          <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary loading mobile">
+            {navLabels.map((item) => (
+              <span key={item} className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center ${item === activeLabel ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}>
+                {item}
+              </span>
+            ))}
+          </nav>
         </header>
         <div className="flex min-h-20 items-center gap-3 border-b border-white/10 pb-6" aria-label={label}>
           <span className="route-loading-spinner" aria-hidden="true" />
