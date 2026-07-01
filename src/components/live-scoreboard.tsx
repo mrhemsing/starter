@@ -211,15 +211,13 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
     <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
       <div className="relative isolate min-h-[470px] overflow-hidden sm:min-h-[540px] lg:min-h-[620px]">
         <Image
-          src="/images/live-slab-bg.jpg"
+          src="/images/slab-2.png"
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
           className="absolute inset-0 -z-20 h-full w-full object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,8,10,0.34)_0%,rgba(8,8,10,0.68)_48%,rgba(8,8,10,0.94)_100%)]" />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_40%,rgba(246,196,69,0.18),transparent_34%),linear-gradient(90deg,rgba(8,8,10,0.86),rgba(8,8,10,0.38)_54%,rgba(8,8,10,0.72))]" />
 
         <div className="flex min-h-[470px] flex-col items-start justify-start px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8">
           <div className="w-full max-w-4xl text-left">

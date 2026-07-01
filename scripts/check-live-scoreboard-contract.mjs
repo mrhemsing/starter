@@ -130,7 +130,10 @@ assert(
     liveComponent.includes("<PregameHandoff board={board} slateProgress={slateProgress} nowMs={pregameNowMs} />") &&
     liveComponent.includes("function PregameHandoff") &&
     liveComponent.includes("Scoreboard opens at first pitch") &&
-    liveComponent.includes('src="/images/live-slab-bg.jpg"') &&
+    liveComponent.includes('src="/images/slab-2.png"') &&
+    !liveComponent.includes('src="/images/live-slab-bg.jpg"') &&
+    !liveComponent.includes("bg-[linear-gradient(") &&
+    !liveComponent.includes("bg-[radial-gradient(") &&
     liveComponent.includes("const PREGAME_CLOCK_THRESHOLD_MS = 6 * 60 * 60 * 1000;") &&
     liveComponent.includes("const PREGAME_STARTING_SOON_MS = 60 * 1000;") &&
     liveComponent.includes("const [pregameNowMs, setPregameNowMs] = useState<number | null>(null);") &&
