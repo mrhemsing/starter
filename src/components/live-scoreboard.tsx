@@ -194,7 +194,7 @@ function PregameHandoff({ board, slateProgress }: { board: LiveScoreboardData; s
 
 function SlabImage() {
   return (
-    <div className="mt-8 overflow-hidden rounded border border-white/10 bg-black/30">
+    <div className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30">
       <Image
         src="/images/slab-2.png"
         alt=""
