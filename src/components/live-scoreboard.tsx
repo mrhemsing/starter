@@ -107,7 +107,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 
   if (slateComplete) {
     return (
-      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-live-board-complete="true">
+      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts} data-live-board-complete="true">
         <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
           <p>{scoreboardSummaryLabel(board)}</p>
           <p>{updatedLabel}</p>
@@ -119,10 +119,9 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 
   if (pregame) {
     return (
-      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-live-board-pregame="true">
+      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts} data-live-board-pregame="true">
         <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
           <p>{scoreboardSummaryLabel(board)}</p>
-          <p>{updatedLabel}</p>
         </div>
         <PregameHandoff board={board} slateProgress={slateProgress} nowMs={pregameNowMs} />
       </section>
@@ -130,7 +129,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   }
 
   return (
-    <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts}>
+    <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
         <p>{scoreboardSummaryLabel(board)}</p>
         <p>{updatedLabel}</p>
@@ -149,10 +148,19 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 }
 
 function scoreboardSummaryLabel(board: LiveScoreboardData) {
+  const optionalBuckets = [
+    board.warmingStarts > 0 ? `${board.warmingStarts} warming` : null,
+    board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null,
+  ].filter((bucket): bucket is string => Boolean(bucket));
+
   return (
     <>
       <span className={board.liveStarts > 0 ? "text-[#FF9A62]" : undefined}>{board.liveStarts} live</span>
-      <span> · {board.finalStarts} final · {board.warmingStarts} warming · {board.totalStarts} starters</span>
+      <span> · {board.finalStarts} final</span>
+      {optionalBuckets.map((bucket) => (
+        <span key={bucket}> · {bucket}</span>
+      ))}
+      <span> · {board.totalStarts} starters</span>
     </>
   );
 }
@@ -209,7 +217,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
 
   return (
     <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
-      <div className="relative isolate min-h-[470px] overflow-hidden sm:min-h-[540px] lg:min-h-[620px]">
+      <div className="relative isolate overflow-hidden">
         <Image
           src="/images/slab-2.png"
           alt=""
@@ -219,7 +227,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
           priority={false}
         />
 
-        <div className="flex min-h-[470px] flex-col items-start justify-start px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8">
+        <div className="relative flex flex-col items-start justify-start px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
           <div className="w-full max-w-4xl text-left">
             <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
@@ -240,13 +248,13 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
               <div className="h-full rounded-full bg-[#FF5A1F] shadow-[0_0_24px_rgba(255,90,31,0.45)] motion-safe:transition-[width,background-color] motion-safe:duration-500" style={{ width: `${countdown.progressPct}%` }} />
             </div>
             <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300 sm:text-xs">
-              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters on the slate.
+              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters.
             </p>
             <Link
               href={upcomingDateHref(board.date)}
               className="mt-5 inline-flex max-w-full items-center rounded border border-[#F6C445]/50 bg-black/35 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F6C445] transition hover:border-[#F6C445] hover:bg-[#F6C445]/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
             >
-              Preview tonight&apos;s matchups on Upcoming -&gt;
+              Preview matchups -&gt;
             </Link>
           </div>
         </div>
@@ -380,7 +388,7 @@ function StatusChip({ status }: { status: LiveScoreboardRow["status"] }) {
     );
   }
 
-  const label = status === "delay" ? "Delay" : status === "final" ? "Final" : "Warming";
+  const label = status === "delay" ? "Delay" : status === "final" ? "Final" : status === "scheduled" ? "Scheduled" : "Warming";
   return <span className="rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">{label}</span>;
 }
 

@@ -27,7 +27,7 @@ export default async function LivePage({ params }: LivePageProps) {
   ]);
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
   const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
-  const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";
+  const boardTitle = "Live GS+ Scoreboard";
   const boardDescription = slateComplete
     ? "This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts."
     : pregame
@@ -40,9 +40,7 @@ export default async function LivePage({ params }: LivePageProps) {
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">
-                {board.hasActiveStarts ? "Live board" : "Daily board"}
-              </p>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Live board</p>
               <h1 className="mt-2 font-serif text-4xl font-black tracking-normal text-zinc-50 sm:text-6xl">{boardTitle}</h1>
             </div>
             <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{formatPageDate(date)}</p>

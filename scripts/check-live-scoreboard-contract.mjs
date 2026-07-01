@@ -46,12 +46,22 @@ assert(
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
     liveService.includes('["live-scoreboard", "v7"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
-    liveService.includes('const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;') &&
+    liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
     liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
     liveService.includes('scoreLabel: "PROJ" | "PROV" | "FINAL";') &&
     liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";') &&
     liveService.includes('provisional: scoreLabel === "PROV",') &&
+    liveService.includes('export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";') &&
+    liveService.includes("const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;") &&
+    liveService.includes('const scheduledStarts = rows.filter((row) => row.status === "scheduled").length;') &&
+    liveService.includes("scheduledStarts: number;") &&
+    liveService.includes("scheduledStarts,") &&
+    liveService.includes("function refinePregameStatus") &&
+    liveService.includes('if (liveStatus === "warming") return "warming";') &&
+    liveService.includes('return "scheduled";') &&
+    liveService.includes('if (status !== "scheduled" && status !== "warming") return !hasLiveLine && status === "live" ? "warming" : status;') &&
+    liveService.includes('return remainingMs > 0 && remainingMs <= LIVE_WARMING_LEAD_MS ? "warming" : "scheduled";') &&
     liveService.includes("const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;") &&
     liveService.includes("inningLabel,") &&
     liveService.includes("pitcherHref: string;") &&
@@ -69,7 +79,7 @@ assert(
     liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
     liveService.includes("rows.sort(compareLiveRows)") &&
     liveService.includes("leader: leaderRows[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
 );
 
 assert(
@@ -80,7 +90,10 @@ assert(
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
     livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
     livePage.includes('getSlateStartProgress({ window: "today", date })') &&
-    livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
+    livePage.includes('const boardTitle = "Live GS+ Scoreboard";') &&
+    livePage.includes('<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Live board</p>') &&
+    !livePage.includes("Daily GS+ Scoreboard") &&
+    !livePage.includes("Daily board") &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
     livePage.includes("The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming.") &&
@@ -88,7 +101,7 @@ assert(
     livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
-  "/live/[date] route and API must render the cached live board at the shared site width",
+  "/live/[date] route and API must render the cached live board at the shared site width with stable Live naming",
 );
 
 assert(
@@ -144,7 +157,12 @@ assert(
     liveComponent.includes('document.addEventListener("visibilitychange", handleVisibilityChange);') &&
     liveComponent.includes('document.removeEventListener("visibilitychange", handleVisibilityChange);') &&
     liveComponent.includes("getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
-    liveComponent.includes('className="flex min-h-[470px] flex-col items-start justify-start px-4 py-5 sm:min-h-[540px] sm:px-6 sm:py-7 lg:min-h-[620px] lg:px-8"') &&
+    liveComponent.includes('data-scheduled-starts={board.scheduledStarts}') &&
+    liveComponent.includes('className="relative isolate overflow-hidden"') &&
+    liveComponent.includes('className="relative flex flex-col items-start justify-start px-4 py-5 sm:px-6 sm:py-6 lg:px-8"') &&
+    !liveComponent.includes("min-h-[470px]") &&
+    !liveComponent.includes("sm:min-h-[540px]") &&
+    !liveComponent.includes("lg:min-h-[620px]") &&
     liveComponent.includes('className="w-full max-w-4xl text-left"') &&
     !liveComponent.includes("flex-col justify-end px-4 py-5") &&
     liveComponent.includes('data-live-pregame-countdown-mode={countdown.mode}') &&
@@ -162,9 +180,10 @@ assert(
     liveComponent.includes('label: "TBD"') &&
     liveComponent.includes("function padClockUnit") &&
     liveComponent.includes("function clamp") &&
-    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters on the slate.") &&
+    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters.") &&
     liveComponent.includes("upcomingDateHref(board.date)") &&
-    liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
+    liveComponent.includes("Preview matchups -&gt;") &&
+    !liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
     liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs)") &&
     liveComponent.includes("function formatPregameCountdown") &&
     liveComponent.includes("function isPregame(board: LiveScoreboardData)") &&
@@ -192,7 +211,11 @@ assert(
     liveComponent.includes('title="In progress"') &&
     liveComponent.includes('title="Warming up"') &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
-    liveComponent.includes('{board.finalStarts} final · {board.warmingStarts} warming · {board.totalStarts} starters') &&
+    liveComponent.includes("board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null") &&
+    liveComponent.includes('<span> · {board.finalStarts} final</span>') &&
+    liveComponent.includes('<span> · {board.totalStarts} starters</span>') &&
+    liveComponent.includes('status === "scheduled" ? "Scheduled" : "Warming"') &&
+    countOccurrences(liveComponent, "<p>{updatedLabel}</p>") === 2 &&
     liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&
     liveComponent.includes("formatFirstPitch(row.firstPitch)") &&
     liveComponent.includes("function formatFirstPitch") &&

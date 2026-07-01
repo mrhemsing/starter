@@ -9,8 +9,9 @@ import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, Ton
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
 const LIVE_LEADER_MIN_INNINGS = 3;
+const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;
 
-export type LiveScoreboardStatus = "live" | "final" | "warming" | "delay";
+export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";
 
 export type LiveScoreboardRow = {
   id: string;
@@ -46,6 +47,7 @@ export type LiveScoreboard = {
   liveStarts: number;
   finalStarts: number;
   warmingStarts: number;
+  scheduledStarts: number;
   delayStarts: number;
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
@@ -72,12 +74,13 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   const gamesByPk = new Map(schedule.games.map((game) => [game.gamePk, game]));
   const projectionsByStart = getUpcomingProjectionMap(upcoming);
 
+  const generatedAt = new Date();
   const rows = slate.flatMap((start) => {
     const game = gamesByPk.get(start.gamePk);
     if (game && normalizeScheduleStatus(game) === "ppd") return [];
 
     const liveLine = liveLinesByStart.get(lineKey(start.gamePk, start.pitcher.mlbId));
-    return [buildLiveRow(date, start, liveLine, game, projectionsByStart)];
+    return [buildLiveRow(date, start, liveLine, game, projectionsByStart, generatedAt)];
   });
 
   rows.sort(compareLiveRows);
@@ -87,17 +90,19 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   const liveStarts = rows.filter((row) => row.status === "live").length;
   const finalStarts = rows.filter((row) => row.status === "final").length;
   const warmingStarts = rows.filter((row) => row.status === "warming").length;
+  const scheduledStarts = rows.filter((row) => row.status === "scheduled").length;
   const delayStarts = rows.filter((row) => row.status === "delay").length;
 
   return {
     date,
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedAt.toISOString(),
     hasGames: rows.length > 0,
     hasActiveStarts: liveStarts > 0 || delayStarts > 0,
     totalStarts: rows.length,
     liveStarts,
     finalStarts,
     warmingStarts,
+    scheduledStarts,
     delayStarts,
     rows,
     leader: leaderRows[0] ?? null,
@@ -127,10 +132,12 @@ function buildLiveRow(
   liveLine: MlbLivePitchingLine | undefined,
   game: MlbScheduleGame | undefined,
   projectionsByStart: Map<string, number | null>,
+  now: Date,
 ): LiveScoreboardRow {
   const scheduleStatus = game ? normalizeScheduleStatus(game) : "pregame";
   const rawStatus = normalizeLiveStatus(liveLine?.gameStatus, scheduleStatus);
-  const status = !liveLine && rawStatus === "live" ? "warming" : rawStatus;
+  const firstPitch = game?.gameDate ?? start.date;
+  const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));
   const line = liveLine?.line ?? start.line;
   const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
   const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
@@ -149,7 +156,7 @@ function buildLiveRow(
     team: start.pitcher.team,
     opponent: start.opponent,
     side: start.side ?? "away",
-    firstPitch: game?.gameDate ?? start.date,
+    firstPitch,
     status,
     line,
     gsPlus,
@@ -186,7 +193,16 @@ function normalizeLiveStatus(liveStatus: MlbLivePitchingLine["gameStatus"] | und
   if (liveStatus === "delay" || scheduleStatus === "delayed" || scheduleStatus === "suspended") return "delay";
   if (liveStatus === "final" || scheduleStatus === "final") return "final";
   if (liveStatus === "live" || scheduleStatus === "live") return "live";
-  return "warming";
+  if (liveStatus === "warming") return "warming";
+  return "scheduled";
+}
+
+function refinePregameStatus(status: LiveScoreboardStatus, firstPitch: string, now: Date, hasLiveLine: boolean): LiveScoreboardStatus {
+  if (status !== "scheduled" && status !== "warming") return !hasLiveLine && status === "live" ? "warming" : status;
+  const firstPitchMs = new Date(firstPitch).getTime();
+  if (!Number.isFinite(firstPitchMs)) return status;
+  const remainingMs = firstPitchMs - now.getTime();
+  return remainingMs > 0 && remainingMs <= LIVE_WARMING_LEAD_MS ? "warming" : "scheduled";
 }
 
 function compareLiveRows(a: LiveScoreboardRow, b: LiveScoreboardRow) {
