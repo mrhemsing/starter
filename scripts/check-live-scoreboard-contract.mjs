@@ -91,12 +91,18 @@ assert(
     livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
     livePage.includes('getSlateStartProgress({ window: "today", date })') &&
     livePage.includes('const boardTitle = "Live GS+ Scoreboard";') &&
+    livePage.includes('const boardDescription = slateComplete') &&
+    livePage.includes('pregame\n      ? ""') &&
+    livePage.includes('className={pregame ? "space-y-3" : "space-y-4"}') &&
     livePage.includes('<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Live board</p>') &&
+    livePage.includes('className="flex items-center justify-between gap-4"') &&
+    livePage.includes('className="shrink-0 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"') &&
+    livePage.includes('{boardDescription ? <p className="max-w-3xl text-sm leading-6 text-zinc-400">{boardDescription}</p> : null}') &&
+    !livePage.includes('<p className="max-w-3xl text-sm leading-6 text-zinc-400">\n            {boardDescription}\n          </p>') &&
     !livePage.includes("Daily GS+ Scoreboard") &&
     !livePage.includes("Daily board") &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
-    livePage.includes("The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming.") &&
     livePage.includes("This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
     livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
@@ -211,9 +217,11 @@ assert(
     liveComponent.includes('title="In progress"') &&
     liveComponent.includes('title="Warming up"') &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
+    liveComponent.includes("const nonzeroBuckets = [board.liveStarts, board.finalStarts, board.warmingStarts, board.scheduledStarts].filter((count) => count > 0).length;") &&
     liveComponent.includes("board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null") &&
+    liveComponent.includes("const showTotal = nonzeroBuckets > 1;") &&
     liveComponent.includes('<span> · {board.finalStarts} final</span>') &&
-    liveComponent.includes('<span> · {board.totalStarts} starters</span>') &&
+    liveComponent.includes('{showTotal ? <span> · {board.totalStarts} starters</span> : null}') &&
     liveComponent.includes('status === "scheduled" ? "Scheduled" : "Warming"') &&
     countOccurrences(liveComponent, "<p>{updatedLabel}</p>") === 2 &&
     liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&

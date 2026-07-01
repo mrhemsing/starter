@@ -148,10 +148,12 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 }
 
 function scoreboardSummaryLabel(board: LiveScoreboardData) {
+  const nonzeroBuckets = [board.liveStarts, board.finalStarts, board.warmingStarts, board.scheduledStarts].filter((count) => count > 0).length;
   const optionalBuckets = [
     board.warmingStarts > 0 ? `${board.warmingStarts} warming` : null,
     board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null,
   ].filter((bucket): bucket is string => Boolean(bucket));
+  const showTotal = nonzeroBuckets > 1;
 
   return (
     <>
@@ -160,7 +162,7 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
       {optionalBuckets.map((bucket) => (
         <span key={bucket}> · {bucket}</span>
       ))}
-      <span> · {board.totalStarts} starters</span>
+      {showTotal ? <span> · {board.totalStarts} starters</span> : null}
     </>
   );
 }

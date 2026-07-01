@@ -31,23 +31,21 @@ export default async function LivePage({ params }: LivePageProps) {
   const boardDescription = slateComplete
     ? "This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts."
     : pregame
-      ? "The scoreboard wakes up at first pitch. Preview tonight's matchups on Upcoming."
+      ? ""
       : "Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <SiteHeader active="live" today={today} />
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
+        <section className={pregame ? "space-y-3" : "space-y-4"}>
+          <div>
+            <div className="flex items-center justify-between gap-4">
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Live board</p>
-              <h1 className="mt-2 font-serif text-4xl font-black tracking-normal text-zinc-50 sm:text-6xl">{boardTitle}</h1>
+              <p className="shrink-0 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{formatPageDate(date)}</p>
             </div>
-            <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{formatPageDate(date)}</p>
+            <h1 className="mt-2 font-serif text-4xl font-black tracking-normal text-zinc-50 sm:text-6xl">{boardTitle}</h1>
           </div>
-          <p className="max-w-3xl text-sm leading-6 text-zinc-400">
-            {boardDescription}
-          </p>
+          {boardDescription ? <p className="max-w-3xl text-sm leading-6 text-zinc-400">{boardDescription}</p> : null}
         </section>
         <LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />
       </div>
