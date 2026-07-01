@@ -49,13 +49,13 @@ assert(
 assert(
   slateState.includes('state: "starts-in-progress"') &&
     slateState.includes('return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
-    slateState.includes('return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
+    slateState.includes('return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
   "homepage in-progress line must render live and completed starts",
 );
 
 assert(
   slateState.includes('state: "all-starts-complete"') &&
-    slateState.includes('return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS FINAL`;'),
+    slateState.includes('return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;'),
   "homepage all-final line must render completed starts",
 );
 
@@ -65,8 +65,9 @@ assert(
 );
 
 assert(
-  slateState.includes('return `TODAY · ${dateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;'),
-  "homepage pre-first-pitch line must name LIVE GS+ before the mobile FIRST split",
+  slateState.includes('const todayDateLabel = `TODAY, ${dateLabel}`;') &&
+    slateState.includes('return `${todayDateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;'),
+  "homepage pre-first-pitch line must use TODAY, date before LIVE GS+",
 );
 
 assert(

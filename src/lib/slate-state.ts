@@ -83,14 +83,15 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
 
 export function formatSlateStatusLine(state: SlateProgressState) {
   const dateLabel = formatStatusDate(state.date);
+  const todayDateLabel = `TODAY, ${dateLabel}`;
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
-  if (state.state === "all-starts-complete") return `TODAY · ${dateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "all-starts-complete") return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
   if (state.state === "starts-in-progress" && state.liveGames > 0) return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
-  if (state.state === "starts-in-progress") return `TODAY · ${dateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
 
   const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;
-  return `TODAY · ${dateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;
+  return `${todayDateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;
 }
 
 export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
