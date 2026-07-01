@@ -22,8 +22,11 @@ export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
   const today = getHomeSlateDate();
   const board = await getLiveScoreboard({ date });
+  const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
   const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";
-  const boardDescription = "Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
+  const boardDescription = slateComplete
+    ? "Today's starters are final. Full tiers, filters, and breakdowns live on Ranked Starts."
+    : "Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">

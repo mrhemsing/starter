@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Headshot } from "@/components/headshot";
-import type { FormTier } from "@/lib/types";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
+import { rankedStartsPath } from "@/lib/routes";
 
 type LiveScoreboardProps = {
   initialBoard: LiveScoreboardData;
@@ -47,6 +47,19 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
 
   const scoredRows = board.rows.filter(isScoredRow);
   const warmingRows = board.rows.filter((row) => !isScoredRow(row));
+  const slateComplete = isSlateComplete(board);
+
+  if (slateComplete) {
+    return (
+      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-live-board-complete="true">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+          <p>{scoreboardSummaryLabel(board)}</p>
+          <p>{updatedLabel}</p>
+        </div>
+        <SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts}>
@@ -57,10 +70,10 @@ export function LiveScoreboard({ initialBoard }: LiveScoreboardProps) {
 
       <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
         {scoredRows.length > 0 ? (
-          <LiveScoreboardSection title="In progress" rows={scoredRows} startRank={1} />
+          <LiveScoreboardSection title="In progress" rows={scoredRows} />
         ) : null}
         {warmingRows.length > 0 ? (
-          <LiveScoreboardSection title="Warming up" rows={warmingRows} startRank={scoredRows.length + 1} muted={scoredRows.length > 0} />
+          <LiveScoreboardSection title="Warming up" rows={warmingRows} muted={scoredRows.length > 0} />
         ) : null}
       </div>
     </section>
@@ -76,15 +89,54 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
   );
 }
 
+function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
+          <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">Today&apos;s slate is final.</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Live returns with the next slate. Full tiers, filters, and breakdowns are ready on Ranked Starts.</p>
+          <Link
+            href={rankedStartsPath(board.date)}
+            className="mt-5 inline-flex max-w-full items-center rounded border border-[#FF9A62]/50 bg-[#FF5A1F]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#FFB07C] transition hover:border-[#FF9A62] hover:bg-[#FF5A1F]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          >
+            View all ranked starts for {formatBoardDate(board.date)} -&gt;
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
+          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <p>Top final GS+</p>
+            <p>{rows.length} starters</p>
+          </div>
+          {rows.map((row, index) => (
+            <article key={row.id} className="grid grid-cols-[2ch_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0">
+              <p className="font-mono text-xs text-zinc-500">{index + 1}</p>
+              <div className="min-w-0">
+                <p className="truncate font-serif text-xl font-bold leading-tight text-zinc-50">{row.pitcherName}</p>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                  {row.team} vs {row.opponent}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-2xl font-black tabular-nums leading-none text-zinc-100">{formatScore(row.gsPlus)}</p>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LiveScoreboardSection({
   title,
   rows,
-  startRank,
   muted = false,
 }: {
   title: string;
   rows: LiveScoreboardRow[];
-  startRank: number;
   muted?: boolean;
 }) {
   return (
@@ -93,24 +145,21 @@ function LiveScoreboardSection({
         <p>{title}</p>
         <p>{rows.length} starters</p>
       </div>
-      {rows.map((row, index) => (
-        <LiveScoreboardRow key={row.id} row={row} rank={startRank + index} muted={muted} />
+      {rows.map((row) => (
+        <LiveScoreboardRow key={row.id} row={row} muted={muted} />
       ))}
     </div>
   );
 }
 
-function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRow; rank: number; muted?: boolean }) {
-  const scored = row.gsPlus !== null;
+function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; muted?: boolean }) {
   const statusTone = statusClass(row.status);
   const liveOrFinalScore = isScoredRow(row);
-  const headshotBand = liveOrFinalScore && scored ? scoreBand(row.gsPlus ?? 0) : null;
 
   return (
-    <article className={`grid min-h-[88px] grid-cols-[42px_35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[54px_43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
-      <p className="font-serif text-2xl font-bold text-zinc-500">#{rank}</p>
+    <article className={`grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
       <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
-        <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" band={headshotBand} sampleSufficient={liveOrFinalScore} decorative className="ml-0" />
+        <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" decorative className="ml-0" />
       </Link>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -131,12 +180,7 @@ function LiveScoreboardRow({ row, rank, muted = false }: { row: LiveScoreboardRo
         <div className="text-right">
           <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{formatScore(row.gsPlus)}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
-          {row.qualityLabel ? (
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-              {row.qualityLabel}
-              {row.provisional ? " · Prov." : ""}
-            </p>
-          ) : null}
+          {row.provisional ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">Prov.</p> : null}
         </div>
       ) : (
         <div className="text-right">
@@ -197,14 +241,6 @@ function statusClass(status: LiveScoreboardRow["status"]) {
   return "text-zinc-600";
 }
 
-function scoreBand(score: number): FormTier {
-  if (score >= 69) return "onfire";
-  if (score >= 58) return "hot";
-  if (score >= 46) return "even";
-  if (score >= 30) return "cooling";
-  return "ice";
-}
-
 function formatLine(row: LiveScoreboardRow) {
   const line = row.line;
   const pitches = typeof row.pitchCount === "number" ? `, ${row.pitchCount} pitches` : "";
@@ -232,6 +268,16 @@ function formatFirstPitch(iso: string) {
 
 function isScoredRow(row: LiveScoreboardRow) {
   return row.scoreLabel !== "PROJ";
+}
+
+function isSlateComplete(board: LiveScoreboardData) {
+  return board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
+}
+
+function formatBoardDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
 function formatUpdatedLabel(iso: string) {

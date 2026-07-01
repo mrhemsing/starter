@@ -76,7 +76,9 @@ assert(
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
     livePage.includes('const boardTitle = board.hasActiveStarts ? "Live GS+ Scoreboard" : "Daily GS+ Scoreboard";') &&
+    livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     livePage.includes("Pre-game shows projected GS+. Once a starter throws, the number goes live and provisional. Final lines settle when he exits.") &&
+    livePage.includes("Today's starters are final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
     livePage.includes("<LiveScoreboard initialBoard={board} />") &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
@@ -87,14 +89,27 @@ assert(
   liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
-    liveComponent.includes('grid-cols-[42px_35px_minmax(0,1fr)_auto]') &&
+    liveComponent.includes('import { rankedStartsPath } from "@/lib/routes";') &&
+    liveComponent.includes('grid-cols-[35px_minmax(0,1fr)_auto]') &&
     liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
-    liveComponent.includes("band={headshotBand}") &&
-    liveComponent.includes("sampleSufficient={liveOrFinalScore}") &&
-    liveComponent.includes("function scoreBand") &&
+    !liveComponent.includes("band={headshotBand}") &&
+    !liveComponent.includes("sampleSufficient={liveOrFinalScore}") &&
+    !liveComponent.includes("function scoreBand") &&
     liveComponent.includes("function formatScore") &&
     liveComponent.includes('const scoredRows = board.rows.filter(isScoredRow);') &&
     liveComponent.includes('const warmingRows = board.rows.filter((row) => !isScoredRow(row));') &&
+    liveComponent.includes("const slateComplete = isSlateComplete(board);") &&
+    liveComponent.includes('<SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />') &&
+    liveComponent.includes('data-live-board-complete="true"') &&
+    liveComponent.includes("function SlateCompleteHandoff") &&
+    liveComponent.includes("Today&apos;s slate is final.") &&
+    liveComponent.includes("Live returns with the next slate.") &&
+    liveComponent.includes("rankedStartsPath(board.date)") &&
+    liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
+    liveComponent.includes("Top final GS+") &&
+    liveComponent.includes("function isSlateComplete(board: LiveScoreboardData)") &&
+    liveComponent.includes("return board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
+    liveComponent.includes("function formatBoardDate(date: string)") &&
     liveComponent.includes('title="In progress"') &&
     liveComponent.includes('title="Warming up"') &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
@@ -104,8 +119,9 @@ assert(
     liveComponent.includes("function formatFirstPitch") &&
     liveComponent.includes("First pitch") &&
     liveComponent.includes("{row.scoreLabel}") &&
-    liveComponent.includes('{row.qualityLabel ?') &&
-    liveComponent.includes('row.provisional ? " · Prov." : ""') &&
+    !liveComponent.includes('{row.qualityLabel ?') &&
+    !liveComponent.includes("row.qualityLabel") &&
+    liveComponent.includes('row.provisional ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">Prov.</p> : null') &&
     liveComponent.includes("function InningLabel") &&
     liveComponent.includes("<InningLabel label={row.inningLabel} />") &&
     liveComponent.includes("/^(top|bottom)\\b/i.test(label)") &&
@@ -116,8 +132,10 @@ assert(
     liveComponent.includes('aria-label={`Open ${row.pitcherName} pitcher page`}') &&
     liveComponent.includes("pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight") &&
     liveComponent.includes('className="block sm:inline"') &&
+    !liveComponent.includes("font-serif text-2xl font-bold text-zinc-500") &&
+    !liveComponent.includes("#{rank}") &&
     !liveComponent.includes('className="mt-1 block truncate font-serif text-2xl font-bold text-zinc-50'),
-  "live scoreboard component must refresh while active, show starter headshots, link pitcher names to profiles, and mark provisional quality bands",
+  "live scoreboard component must refresh while active, hand off complete slates, and present rows as live status instead of ranked tiers",
 );
 
 assert(
