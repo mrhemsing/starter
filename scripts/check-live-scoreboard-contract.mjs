@@ -217,11 +217,10 @@ assert(
     liveComponent.includes('title="In progress"') &&
     liveComponent.includes('title="Warming up"') &&
     liveComponent.includes("function scoreboardSummaryLabel") &&
-    liveComponent.includes("const nonzeroBuckets = [board.liveStarts, board.finalStarts, board.warmingStarts, board.scheduledStarts].filter((count) => count > 0).length;") &&
     liveComponent.includes("board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null") &&
-    liveComponent.includes("const showTotal = nonzeroBuckets > 1;") &&
     liveComponent.includes('<span> · {board.finalStarts} final</span>') &&
-    liveComponent.includes('{showTotal ? <span> · {board.totalStarts} starters</span> : null}') &&
+    !liveComponent.includes('<span> · {board.totalStarts} starters</span>') &&
+    !liveComponent.includes("const showTotal = nonzeroBuckets > 1;") &&
     liveComponent.includes('status === "scheduled" ? "Scheduled" : "Warming"') &&
     countOccurrences(liveComponent, "<p>{updatedLabel}</p>") === 2 &&
     liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&
