@@ -125,7 +125,7 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
           <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>

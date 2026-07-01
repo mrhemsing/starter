@@ -144,6 +144,8 @@ assert(
     liveComponent.includes("Live returns with the next slate.") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
+    liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
+    !liveComponent.includes('className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
     liveComponent.includes("Top final GS+") &&
     liveComponent.includes('grid-cols-[2ch_29px_minmax(0,1fr)_auto]') &&
     liveComponent.includes('md:grid-cols-[2ch_59px_minmax(0,1fr)_auto]') &&
