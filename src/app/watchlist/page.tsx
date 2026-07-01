@@ -231,7 +231,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
           <p className={`font-serif text-5xl font-bold leading-none ${tierTextClass(entry.tier)}`}>{Math.round(entry.rgs)}</p>
           <span className="mb-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">Form</span>
         </div>
-        <div className="mt-2"><TrendChip summary={entry} compact /></div>
+        <div className="mt-5"><TrendChip summary={entry} compact /></div>
       </div>
       <div className="space-y-3">
         <FormSparkline values={entry.spark} tier={entry.tier} leagueMeanGS={entry.bgs} label={`${entry.name} recent form GS+: ${entry.spark.join(", ")}`} />

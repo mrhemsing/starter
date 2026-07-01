@@ -37,6 +37,10 @@ assert(
     watchlistPageSource.includes("availability={pitcher.availability}"),
   "watchlist rows and search results should surface current MLB IL availability when present",
 );
+assert(
+  watchlistPageSource.includes('<div className="mt-5"><TrendChip summary={entry} compact /></div>'),
+  "watchlist row trend chip should keep enough top space to align with the follow action box",
+);
 
 async function reservePort() {
   const server = net.createServer();
