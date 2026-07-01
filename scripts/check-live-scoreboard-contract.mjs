@@ -186,7 +186,9 @@ assert(
     liveComponent.includes('label: "TBD"') &&
     liveComponent.includes("function padClockUnit") &&
     liveComponent.includes("function clamp") &&
-    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters.") &&
+    liveComponent.includes('className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs"') &&
+    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters") &&
+    !liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters.") &&
     liveComponent.includes("upcomingDateHref(board.date)") &&
     liveComponent.includes("Preview matchups -&gt;") &&
     !liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&

@@ -246,8 +246,8 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
             <div className="mt-5 h-1.5 max-w-[720px] overflow-hidden rounded-full bg-white/15" aria-hidden="true">
               <div className="h-full rounded-full bg-[#FF5A1F] shadow-[0_0_24px_rgba(255,90,31,0.45)] motion-safe:transition-[width,background-color] motion-safe:duration-500" style={{ width: `${countdown.progressPct}%` }} />
             </div>
-            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300 sm:text-xs">
-              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters.
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs">
+              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters
             </p>
             <Link
               href={upcomingDateHref(board.date)}
