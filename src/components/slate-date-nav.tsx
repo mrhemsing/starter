@@ -80,7 +80,7 @@ export function RankedStartsArchiveNav({
     <nav className="min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
       <PageContextStrip
-        primary={<span data-ranked-date-label>{formatRankedEyebrowDate(activeDate)}</span>}
+        primary={<RankedEyebrowDateLabel date={activeDate} />}
         leading={
           <span className="inline-flex shrink-0 items-center gap-1.5" aria-label="Step ranked starts slates">
             {previousDate ? (
@@ -119,8 +119,30 @@ export function slateRangeToggleClass(active: boolean) {
   return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
 }
 
+function RankedEyebrowDateLabel({ date }: { date: string }) {
+  const label = formatRankedEyebrowDate(date);
+  const parts = formatRankedEyebrowDateParts(date);
+  if (!parts) return <span data-ranked-date-label>{label}</span>;
+
+  return (
+    <span className="inline-flex items-baseline gap-1" aria-label={label} data-ranked-date-label>
+      <span>{parts.weekday},</span>
+      <span>{parts.date}</span>
+    </span>
+  );
+}
+
 function formatRankedEyebrowDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function formatRankedEyebrowDateParts(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  return {
+    weekday: new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed),
+    date: new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" }).format(parsed),
+  };
 }
