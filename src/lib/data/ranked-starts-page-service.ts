@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherFormMap } from "@/lib/data/form-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRankedStartsArchiveNavigation, getSlateStartProgress } from "@/lib/data/start-service";
@@ -20,13 +21,13 @@ export type RankedStartsPageData = {
 const getCachedFinalRankedStartsPageData = unstable_cache(
   async (date: string, today: string) => buildRankedStartsPageData(date, today),
   ["ranked-starts-page-final", RANKED_STARTS_PAGE_CACHE_VERSION],
-  { revalidate: RANKED_STARTS_FINAL_REVALIDATE_SECONDS },
+  { revalidate: RANKED_STARTS_FINAL_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 const getCachedLiveRankedStartsPageData = unstable_cache(
   async (date: string, today: string) => buildRankedStartsPageData(date, today),
   ["ranked-starts-page-live", RANKED_STARTS_PAGE_CACHE_VERSION],
-  { revalidate: RANKED_STARTS_LIVE_REVALIDATE_SECONDS },
+  { revalidate: RANKED_STARTS_LIVE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 export async function getRankedStartsPageData(date: string, today = getHomeSlateDate()) {

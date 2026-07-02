@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 import { isRankedRegularStart } from "@/lib/start-classification";
@@ -35,7 +36,7 @@ const getCachedBestStartsHome = unstable_cache(
     };
   },
   ["home-best-starts-v4"],
-  { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] },
+  { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 async function getBestStarts(anchorDate: string) {

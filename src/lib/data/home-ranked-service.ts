@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
@@ -49,7 +50,7 @@ type TopPerformerPayload = TopPerformerState & {
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
   ["home-ranked", "v12"],
-  { revalidate: HOME_RANKED_REVALIDATE_SECONDS },
+  { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 export async function getRankedHome(): Promise<RankedHomeResponse> {

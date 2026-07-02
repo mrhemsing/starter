@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
@@ -65,19 +66,19 @@ const recentLiveFormStartsCache = new Map<string, CachedValue<StartSummary[]>>()
 const getCachedFormLeaderboard = unstable_cache(
   async (season: string, window: FormWindow, qualifiedOnly: boolean, team?: string) => buildFormLeaderboard({ season, window, qualifiedOnly, team }),
   ["form-leaderboard", FORM_CACHE_VERSION],
-  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 const getCachedFormHome = unstable_cache(
   async (season: string, window: FormWindow) => buildFormHome({ season, window }),
   ["form-home", FORM_CACHE_VERSION],
-  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG] },
 );
 
 const getCachedPitcherForm = unstable_cache(
   async (pitcherId: string, season: string, window: FormWindow) => buildPitcherForm(pitcherId, { season, window }),
   ["pitcher-form", FORM_CACHE_VERSION],
-  { revalidate: FORM_DATA_REVALIDATE_SECONDS },
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG] },
 );
 
 const getCachedPitcherSeasonFallbackStarts = unstable_cache(

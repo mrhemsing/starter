@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
   ]);
 
   if (completedStarts.length > 0) {
+    for (const tag of DATA_CHANGE_CACHE_TAGS) {
+      revalidateTag(tag, "max");
+    }
     revalidatePath("/");
     revalidatePath("/heat-check");
     revalidatePath(`/starts/${today}`);

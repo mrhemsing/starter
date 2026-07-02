@@ -15,6 +15,11 @@ const duelsService = await read("src/lib/data/duels-service.ts");
 const rankedService = await read("src/lib/data/home-ranked-service.ts");
 const environmentService = await read("src/lib/data/run-environment.ts");
 const startService = await read("src/lib/data/start-service.ts");
+const cacheTags = await read("src/lib/data/cache-tags.ts");
+const liveService = await read("src/lib/data/live-scoreboard-service.ts");
+const rankedStartsPageService = await read("src/lib/data/ranked-starts-page-service.ts");
+const formService = await read("src/lib/data/form-service.ts");
+const warmLiveStartsCron = await read("src/app/api/cron/warm-live-starts/route.ts");
 const tonightRoute = await read("src/app/api/tonight/route.ts");
 const upcomingRoute = await read("src/app/api/upcoming/route.ts");
 const duelsRoute = await read("src/app/api/duels/route.ts");
@@ -35,10 +40,26 @@ const globals = await read("src/app/globals.css");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
+    tonightService.includes('import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     tonightService.includes("export const TONIGHT_REVALIDATE_SECONDS = 60;") &&
     tonightService.includes("const getCachedTonightMustWatch = unstable_cache(") &&
+    tonightService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
     tonightService.includes("const promise = getCachedTonightMustWatch(date, window);"),
   "Must-Watch data must use Next data cache, not only per-process memoization",
+);
+
+assert(
+  cacheTags.includes('export const SLATE_CACHE_TAG = "slate-surfaces";') &&
+    cacheTags.includes('export const UPCOMING_CACHE_TAG = "upcoming-surfaces";') &&
+    cacheTags.includes('export const HEAT_CHECK_CACHE_TAG = "heat-check-surfaces";') &&
+    cacheTags.includes('export const RANKED_STARTS_CACHE_TAG = "ranked-starts-surfaces";') &&
+    cacheTags.includes('export const LIVE_CACHE_TAG = "live-surfaces";') &&
+    cacheTags.includes("export const DATA_CHANGE_CACHE_TAGS = [") &&
+    warmLiveStartsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
+    warmLiveStartsCron.includes('import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsCron.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
+    warmLiveStartsCron.includes('revalidateTag(tag, "max");'),
+  "data-change cron must push revalidation through shared cache tags for slate surfaces",
 );
 
 assert(
@@ -51,10 +72,23 @@ assert(
 
 assert(
   rankedService.includes('import { unstable_cache } from "next/cache";') &&
+    rankedService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     rankedService.includes("export const HOME_RANKED_REVALIDATE_SECONDS = 60;") &&
     rankedService.includes("const getCachedRankedHome = unstable_cache(") &&
+    rankedService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
     rankedService.includes("return getCachedRankedHome(getHomeSlateDate());"),
   "Home ranked data must use Next data cache for repeated homepage/API loads",
+);
+
+assert(
+  liveService.includes('import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    liveService.includes("tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    rankedStartsPageService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    rankedStartsPageService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    formService.includes('import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    formService.includes("tags: [HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    formService.includes("tags: [HEAT_CHECK_CACHE_TAG]"),
+  "main slate, Live, Ranked Starts, and Heat Check caches must be tag-addressable after data changes",
 );
 
 assert(

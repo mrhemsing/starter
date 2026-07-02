@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
@@ -32,7 +33,7 @@ const tonightCache = new Map<string, CachedTonight>();
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
   ["tonight-must-watch", "v8"],
-  { revalidate: TONIGHT_REVALIDATE_SECONDS },
+  { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
