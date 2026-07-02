@@ -65,15 +65,20 @@ export async function generateMetadata({ searchParams }: FormPageProps): Promise
   return generateHeatCheckMetadata({ searchParams });
 }
 
-export async function generateHeatCheckMetadata({ searchParams }: FormPageProps): Promise<Metadata> {
+export async function generateSeasonHeatCheckMetadata({ searchParams }: FormPageProps): Promise<Metadata> {
+  return generateHeatCheckMetadata({ searchParams, view: "season" });
+}
+
+export async function generateHeatCheckMetadata({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }): Promise<Metadata> {
   const params = await searchParams;
   const window = parseFormWindow(params?.window);
+  const view = viewOverride ?? parseHeatCheckView(params?.view);
   const leaderboard = await getFormLeaderboard({ window, qualifiedOnly: true });
-  const title = formPageTitle(window);
-  const description = formPageDescription(leaderboard);
+  const title = view === "season" ? `${getHomeSlateDate().slice(0, 4)} MLB Season GS+ Leaderboard` : formPageTitle(window);
+  const description = view === "season" ? "Every qualified MLB starter ranked by season-average GS+, with the season view inside Heat Check." : formPageDescription(leaderboard);
   const hasIndexableWindow = params?.window && window !== 5 && Object.keys(params).every((key) => key === "window");
-  const hasNonCanonicalFilters = Boolean(params && Object.keys(params).some((key) => !(key === "window" && hasIndexableWindow)));
-  const url = hasIndexableWindow ? `/heat-check?window=${window}` : "/heat-check";
+  const hasNonCanonicalFilters = Boolean(params && Object.keys(params).some((key) => !(view === "trend" && key === "window" && hasIndexableWindow)));
+  const url = view === "season" ? "/heat-check/season" : hasIndexableWindow ? `/heat-check?window=${window}` : "/heat-check";
   const image = `/form/opengraph-image?window=${window}`;
 
   return {
@@ -104,17 +109,22 @@ export default async function FormRedirect({ searchParams }: FormPageProps) {
   redirect(heatCheckHref(params ?? {}));
 }
 
-export async function HeatCheckPage({ searchParams }: FormPageProps) {
-  const params = await searchParams;
-  const window = parseFormWindow(params?.window);
-  const view = parseHeatCheckView(params?.view);
+export async function HeatCheckSeasonPage({ searchParams }: FormPageProps) {
+  return <HeatCheckPage searchParams={searchParams} view="season" />;
+}
+
+export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }) {
+  const rawParams = await searchParams;
+  const window = parseFormWindow(rawParams?.window);
+  const view = viewOverride ?? parseHeatCheckView(rawParams?.view);
+  const params = { ...(rawParams ?? {}), view };
   const trendView = view === "trend";
   const seasonView = view === "season";
-  const sort = sortOptions.some((option) => option.key === params?.sort) ? params?.sort ?? "form" : "form";
-  const team = params?.team ?? "";
-  const query = (params?.q ?? "").trim().toLowerCase();
-  const qualifiedOnly = params?.qualified !== "false";
-  const band = HEAT_BANDS.some((candidate) => candidate.key === params?.band) ? params?.band ?? "" : "";
+  const sort = sortOptions.some((option) => option.key === params.sort) ? params.sort ?? "form" : "form";
+  const team = params.team ?? "";
+  const query = (params.q ?? "").trim().toLowerCase();
+  const qualifiedOnly = params.qualified !== "false";
+  const band = HEAT_BANDS.some((candidate) => candidate.key === params.band) ? params.band ?? "" : "";
   const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
   const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
   const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
@@ -191,7 +201,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
         </header>
 
         <section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
-          <TeamFilterControl teams={teams} activeTeam={team} params={params ?? {}} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
+          <TeamFilterControl teams={teams} activeTeam={team} params={params} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
         </section>
 
         {trendView && leagueView && biggestRiser && biggestFaller ? (
@@ -230,7 +240,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                 </Link>
               </div>
             ) : null}
-            <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />
+            <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params} />
             <details className="mt-4">
               <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
                 Filters / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
@@ -275,7 +285,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
         ) : null}
 
         {seasonView && allTeamsView ? (
-          <SeasonBoardControls params={params ?? {}} qualifiedOnly={qualifiedOnly} />
+          <SeasonBoardControls params={params} qualifiedOnly={qualifiedOnly} />
         ) : null}
 
         {pitchers.length === 0 ? (
@@ -294,7 +304,7 @@ export async function HeatCheckPage({ searchParams }: FormPageProps) {
                   {seasonVisiblePitchers.map((pitcher) => (
                     <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={seasonRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" />
                   ))}
-                  <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonPitchers.length} params={params ?? {}} team={team} />
+                  <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonPitchers.length} params={params} team={team} />
                 </>
               ) : showBandHeaders ? (
                 groupedBoard.map((group) => (
@@ -1017,12 +1027,14 @@ function TeamFilterControl({
 }
 
 function heatCheckHref(values: Record<string, string | undefined>) {
+  const path = values.view === "season" ? "/heat-check/season" : "/heat-check";
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {
+    if (key === "view") continue;
     if (value && !(key === "window" && value === "5")) params.set(key, value);
   }
   const query = params.toString();
-  return `/heat-check${query ? `?${query}` : ""}`;
+  return `${path}${query ? `?${query}` : ""}`;
 }
 
 function formatSignedDelta(value: number) {
