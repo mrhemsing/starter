@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { dispatchRoutePending } from "@/lib/route-pending-event";
 
 type FastFilterLinkProps = {
   href: string;
@@ -61,7 +62,12 @@ export function FastFilterLink({
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}
-      onClick={() => setPendingIntent({ href, from: currentHref })}
+      onClick={() => {
+        if (href !== currentHref) {
+          setPendingIntent({ href, from: currentHref });
+          dispatchRoutePending({ label: "Updating view", secondary: "Fetching data..." });
+        }
+      }}
     >
       {children}
     </Link>

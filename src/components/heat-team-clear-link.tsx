@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { dispatchRoutePending } from "@/lib/route-pending-event";
 
 type HeatTeamClearLinkProps = {
   href: string;
@@ -33,6 +34,7 @@ export function HeatTeamClearLink({ href, className, onClear }: HeatTeamClearLin
       onFocus={warmClearRoute}
       onClick={() => {
         setPending(true);
+        dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." });
         onClear?.();
       }}
     >

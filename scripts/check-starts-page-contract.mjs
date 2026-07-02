@@ -67,7 +67,10 @@ assert(
 
 assert(
   siteNav.includes("PrimaryNavLink") &&
+    primaryNavLink.includes('const canPrefetch = href !== "/starts";') &&
+    primaryNavLink.includes("prefetch={canPrefetch}") &&
     primaryNavLink.includes("router.prefetch(href)") &&
+    primaryNavLink.includes("if (!canPrefetch) return;") &&
     primaryNavLink.includes("onPointerDown={warmRoute}") &&
     primaryNavLink.includes("event.preventDefault()") &&
     primaryNavLink.includes("router.push(href)") &&

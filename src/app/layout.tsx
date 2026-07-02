@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Tourney } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { BAverageBadge } from "@/components/b-average-badge";
+import { GlobalRoutePendingOverlay } from "@/components/global-route-pending-overlay";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -64,6 +65,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
+        <GlobalRoutePendingOverlay />
         <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <BAverageBadge />

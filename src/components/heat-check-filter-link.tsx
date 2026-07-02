@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { dispatchRoutePending } from "@/lib/route-pending-event";
 
 type HeatCheckFilterLinkProps = {
   href: string;
@@ -74,7 +75,10 @@ export function HeatCheckFilterLink({
         onPointerDown={warmRoute}
         onFocus={warmRoute}
         onClick={() => {
-          if (href !== currentHref) setPendingIntent({ href, from: currentHref });
+          if (href !== currentHref) {
+            setPendingIntent({ href, from: currentHref });
+            dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." });
+          }
           onSelect?.();
         }}
       >

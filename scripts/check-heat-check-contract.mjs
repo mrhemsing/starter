@@ -8,8 +8,11 @@ function assert(condition, message) {
 
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
+const appLayout = await readFile("src/app/layout.tsx", "utf8");
+const globalPendingOverlay = await readFile("src/components/global-route-pending-overlay.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
+const fastFilterLink = await readFile("src/components/fast-filter-link.tsx", "utf8");
 const teamClearLink = await readFile("src/components/heat-team-clear-link.tsx", "utf8");
 const teamDrawer = await readFile("src/components/heat-team-drawer.tsx", "utf8");
 const teamJumpMenu = await readFile("src/components/heat-team-jump-menu.tsx", "utf8");
@@ -28,6 +31,17 @@ const seasonControls = formPage.slice(formPage.indexOf("function SeasonBoardCont
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
   "/heat-check must render the canonical Heat Check page implementation",
+);
+
+assert(
+  appLayout.includes("<GlobalRoutePendingOverlay />") &&
+    globalPendingOverlay.includes("PENDING_DELAY_MS = 900") &&
+    globalPendingOverlay.includes("window.location.href !== pendingFromRef.current") &&
+    globalPendingOverlay.includes('data-responsive-check="global-route-pending"') &&
+    heatFilterLink.includes('dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." })') &&
+    teamClearLink.includes('dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." })') &&
+    fastFilterLink.includes('dispatchRoutePending({ label: "Updating view", secondary: "Fetching data..." })'),
+  "slow Heat Check team/filter navigations must trigger the shared delayed route-loading overlay instead of appearing frozen",
 );
 
 assert(
