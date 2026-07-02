@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageContextStrip } from "@/components/page-context-strip";
 import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";
-import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingStreamersHref, upcomingWeekHref } from "@/lib/routes";
 
 type SlateRangeOption = {
   key: string;
@@ -30,9 +30,9 @@ export function SlateRangeToggle({ label, options }: { label: string; options: S
   );
 }
 
-export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActive = false }: { activeDate: string; today: string; tomorrow: string; weekActive?: boolean }) {
-  const todayActive = !weekActive && activeDate === today;
-  const tomorrowActive = !weekActive && activeDate === tomorrow;
+export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActive = false, streamersActive = false }: { activeDate: string; today: string; tomorrow: string; weekActive?: boolean; streamersActive?: boolean }) {
+  const todayActive = !weekActive && !streamersActive && activeDate === today;
+  const tomorrowActive = !weekActive && !streamersActive && activeDate === tomorrow;
 
   return (
     <SlateRangeToggle
@@ -56,8 +56,15 @@ export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActi
           key: "week",
           label: "This week",
           href: upcomingWeekHref(activeDate),
-          active: weekActive,
+          active: weekActive && !streamersActive,
           ariaLabel: `View week of ${formatUpcomingDate(activeDate)}`,
+        },
+        {
+          key: "streamers",
+          label: "Streamers",
+          href: upcomingStreamersHref(),
+          active: streamersActive,
+          ariaLabel: "View upcoming fantasy streamers",
         },
       ]}
     />

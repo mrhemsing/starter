@@ -135,6 +135,10 @@ export function upcomingWeekHref(startDate: string) {
   return `/upcoming/week/${startDate}`;
 }
 
+export function upcomingStreamersHref() {
+  return "/upcoming/streamers";
+}
+
 export function duelsPath(date: string) {
   return `/duels/${date}`;
 }

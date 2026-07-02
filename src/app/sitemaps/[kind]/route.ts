@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getArchivedSeasonStartSummaries, getDefaultSlateDates, getHomeSlateDate } from "@/lib/data/start-service";
-import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingStreamersHref, upcomingWeekHref } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +59,7 @@ async function urlsForKind(kind: SitemapKind): Promise<SitemapUrl[]> {
       url(rankedStartsPath(defaults.rankedDate), now, "hourly", 0.9),
       url(upcomingDateHref(defaults.upcomingDate), now, "hourly", 0.9),
       url(upcomingWeekHref(defaults.upcomingDate), now, "hourly", 0.8),
+      url(upcomingStreamersHref(), now, "daily", 0.8),
     ];
   }
 
