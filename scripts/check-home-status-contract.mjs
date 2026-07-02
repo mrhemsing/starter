@@ -126,8 +126,10 @@ assert(
 assert(
   !statusLine.includes("Upcoming") &&
     statusLine.includes("shouldLinkLiveScoreboard(slateState)") &&
+    statusLine.includes('state.state === "starts-in-progress"') &&
     statusLine.includes('state.state === "pre-first-pitch"') &&
     statusLine.includes('state.state === "all-starts-complete"') &&
+    !statusLine.includes("state.liveGames > 0") &&
     statusLine.includes("liveDateHref(slateState.date)") &&
     !statusLine.includes("ranked-live-dot") &&
     !statusLine.includes('rounded-full bg-[#FF5A1F]"'),

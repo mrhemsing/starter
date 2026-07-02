@@ -93,7 +93,7 @@ export function HomeSlateStatusLine({ initialState }: HomeSlateStatusLineProps) 
 }
 
 function shouldLinkLiveScoreboard(state: SlateProgressState) {
-  return state.liveGames > 0 || state.state === "pre-first-pitch" || state.state === "all-starts-complete";
+  return state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "all-starts-complete";
 }
 
 function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {
