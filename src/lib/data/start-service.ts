@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
-import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
+import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
@@ -150,7 +150,7 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
   if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
-  if (archivedStarts.length > 0) return canonicalizeStartSummariesWithStore(params.date, archivedStarts);
+  if (archivedStarts.length > 0) return archivedStarts;
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
@@ -278,11 +278,43 @@ function isUpcomingDefaultActiveGame(game: MlbScheduleGame) {
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {
-  const [slateStarts, liveSchedule, archivedSchedule] = await Promise.all([
+  const [slateStarts, slateContext] = await Promise.all([
     getDailySlate({ window: date === today ? "today" : "yesterday", date }),
+    getRankedSlateContextForStarts(date, today, []),
+  ]);
+  const completionState = getRankedSlateCompletionStateFromInputs(date, today, slateStarts, slateContext.liveSchedule, slateContext.archivedSchedule);
+  return completionState;
+}
+
+export async function getRankedSlateContextForStarts(date: string, today: string, slateStarts: StartSummary[]) {
+  const [liveSchedule, archivedSchedule] = await Promise.all([
     fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
     readArchivedSchedule(date),
   ]);
+  const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
+  const completionState = slateStarts.length > 0
+    ? getRankedSlateCompletionStateFromInputs(date, today, slateStarts, liveSchedule, archivedSchedule)
+    : null;
+  const slateProgress = slateStarts.length > 0
+    ? getSlateProgressState(schedule, summarizeCanonicalStartBuckets(slateStarts).finalStarts)
+    : null;
+
+  return {
+    liveSchedule,
+    archivedSchedule,
+    schedule,
+    completionState,
+    slateProgress,
+  };
+}
+
+export function getRankedSlateCompletionStateFromInputs(
+  date: string,
+  today: string,
+  slateStarts: StartSummary[],
+  liveSchedule: MlbSchedule,
+  archivedSchedule: MlbSchedule | null,
+): RankedSlateCompletionState {
   const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
   const finalGames = countableGames.filter(isFinalGameState).length;
@@ -1652,10 +1684,11 @@ function scheduledGameToStarts(
 export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
   const archivedStarts = await readCompletedStarts(date);
 
-  return canonicalizeStartSummaries(archivedStarts
+  const starts = canonicalizeStartSummaries(archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
     .sort(compareRankedStarts)
     .map((start, index) => ({ ...start, rank: index + 1 })));
+  return readCanonicalizedStartSummaries(date, starts);
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {

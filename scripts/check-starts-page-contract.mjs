@@ -11,6 +11,7 @@ const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const rankedStartsPageService = await readFile("src/lib/data/ranked-starts-page-service.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
@@ -82,8 +83,8 @@ assert(
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
     !primaryNavLink.includes("dispatchRoutePending") &&
-    !existsSync("src/app/starts/[id]/loading.tsx"),
-  "ranked starts navigation must avoid page-level loading shells while preserving cached server-rendered navigation",
+    existsSync("src/app/starts/[id]/loading.tsx"),
+  "ranked starts navigation must keep a native route skeleton while the P1-5 timing gate is unmet",
 );
 
 assert(
@@ -96,10 +97,19 @@ assert(
     rankedStartsPageService.includes("if (date < today) return getCachedFinalRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("getRankedSlateCompletionState(date, today)") &&
-    rankedStartsPageService.includes("getSlateStartProgress({ window: \"yesterday\", date })") &&
+    rankedStartsPageService.includes("getRankedSlateContextForStarts(date, today, slateStarts)") &&
+    rankedStartsPageService.includes("withCanonicalStoreDiagnostics") &&
+    rankedStartsPageService.includes('console.info("[ranked-starts-render]"') &&
+    rankedStartsPageService.includes("canonicalReads: diagnostics.reads") &&
+    !rankedStartsPageService.includes("getPitcherFormMap(") &&
+    canonicalStore.includes("export async function readCanonicalizedStartSummaries") &&
+    startService.includes("readCanonicalizedStartSummaries(date, starts)") &&
+    !startsPage.includes("const starts = (await getRankedStartsPageData(id)).slateStarts") &&
     rankedStartsPageService.includes("getRankedStartsArchiveNavigation(date, today)") &&
     rankedStartsPageService.includes("archiveNavigation,") &&
-    rankedStartsPageService.includes("getPitcherFormMap(starts.map((start) => String(start.pitcher.mlbId)), { window: 5 })") &&
+    rankedStartsPageService.includes("formByPitcher: [],") &&
+    startService.includes("export async function getRankedSlateContextForStarts") &&
+    canonicalStore.includes("withCanonicalStoreDiagnostics") &&
     startsPage.includes('import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";') &&
     startsPage.includes("const pageData = await getRankedStartsPageData(date, today);") &&
     startsPage.includes("const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;") &&

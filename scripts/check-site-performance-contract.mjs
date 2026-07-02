@@ -38,6 +38,7 @@ const upcomingIndexPage = await read("src/app/upcoming/page.tsx");
 const startsPage = await read("src/app/starts/[id]/page.tsx");
 const appLayout = await read("src/app/layout.tsx");
 const loadingPolicy = await read("docs/loading-state-policy.md");
+const routeLoadingSkeleton = await read("src/components/route-loading-skeleton.tsx");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -190,14 +191,21 @@ assert(
 );
 
 assert(
-  !existsSync("src/app/loading.tsx") &&
+  existsSync("src/app/loading.tsx") &&
+    existsSync("src/app/starts/[id]/loading.tsx") &&
+    existsSync("src/app/heat-check/loading.tsx") &&
+    existsSync("src/app/heat-check/season/loading.tsx") &&
+    existsSync("src/app/upcoming/loading.tsx") &&
+    existsSync("src/app/upcoming/[date]/loading.tsx") &&
+    routeLoadingSkeleton.includes("export function RouteLoadingSkeleton") &&
+    routeLoadingSkeleton.includes("Loading cached page") &&
     !existsSync("src/components/global-route-pending-overlay.tsx") &&
     !existsSync("src/lib/route-pending-event.ts") &&
     !appLayout.includes("GlobalRoutePendingOverlay") &&
     !fastFilterLink.includes("dispatchRoutePending") &&
     loadingPolicy.includes("Initial navigation should render cached server HTML with page content already present") &&
-    loadingPolicy.includes("Skeletons and spinners are allowed only inside live-polling regions"),
-  "idle navigation must not use app-level overlays, dimming, skeletons, or route-pending event loaders",
+    loadingPolicy.includes("Route-level `loading.tsx` skeletons are allowed only as an interim while the P1-5 timing gate is unmet"),
+  "idle navigation must use interim native route skeletons without restoring app-level overlays, dimming, or route-pending event loaders",
 );
 
 assert(

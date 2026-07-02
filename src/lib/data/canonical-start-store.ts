@@ -1,6 +1,7 @@
 import { canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
 import type { StartDataSource, StartSummary } from "@/lib/types";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 type CanonicalStartStoreFile = {
   date: string;
@@ -36,6 +37,14 @@ const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
 const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
 const ALLOW_VOLATILE_CANONICAL_START_STORE = "THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE";
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
+const canonicalStoreDiagnostics = new AsyncLocalStorage<CanonicalStoreDiagnostics>();
+
+export type CanonicalStoreDiagnostics = {
+  reads: number;
+  writes: number;
+  rowsRead: number;
+  rowsWritten: number;
+};
 
 assertCanonicalStartStoreDeploymentConfig();
 
@@ -61,8 +70,36 @@ export async function canonicalizeStartSummariesWithStore(date: string, starts: 
   return canonicalStarts;
 }
 
+export async function readCanonicalizedStartSummaries(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
+  if (shouldSkipCanonicalStartStore(starts)) {
+    return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
+  }
+
+  const store = await readCanonicalStartStore(date);
+  const recordsById = new Map(store.records.map((record) => [record.id, record]));
+  if (recordsById.size === 0) {
+    return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
+  }
+
+  return starts.map((start) => {
+    const record = recordsById.get(start.id) ?? canonicalStartRecordFromSummary(start, now);
+    return startSummaryFromCanonicalRecord(record, start);
+  });
+}
+
 export async function readCanonicalStartRecords(date: string): Promise<CanonicalStartRecord[]> {
   return (await readCanonicalStartStore(date)).records;
+}
+
+export async function withCanonicalStoreDiagnostics<T>(operation: () => Promise<T>): Promise<{ result: T; diagnostics: CanonicalStoreDiagnostics }> {
+  const diagnostics: CanonicalStoreDiagnostics = {
+    reads: 0,
+    writes: 0,
+    rowsRead: 0,
+    rowsWritten: 0,
+  };
+  const result = await canonicalStoreDiagnostics.run(diagnostics, operation);
+  return { result, diagnostics };
 }
 
 function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, start: StartSummary, now: Date) {
@@ -180,6 +217,7 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
     }
 
     const rows = await response.json() as Array<Pick<CanonicalStartRow, "record" | "updated_at">>;
+    recordCanonicalStoreRead(rows.length);
     return {
       date,
       updatedAt: rows.map((row) => row.updated_at).sort().at(-1) ?? new Date(0).toISOString(),
@@ -263,6 +301,7 @@ async function upsertCanonicalStartRows(baseUrl: string, serviceKey: string, rec
   if (!response.ok) {
     throw new Error(`${CANONICAL_STARTS_TABLE} upsert failed with HTTP ${response.status}: ${await response.text()}`);
   }
+  recordCanonicalStoreWrite(records.length);
 }
 
 async function upsertCanonicalSlateStateRow(baseUrl: string, serviceKey: string, row: CanonicalSlateStateRow) {
@@ -282,6 +321,21 @@ async function upsertCanonicalSlateStateRow(baseUrl: string, serviceKey: string,
   if (!response.ok) {
     throw new Error(`${CANONICAL_SLATE_STATES_TABLE} upsert failed with HTTP ${response.status}: ${await response.text()}`);
   }
+  recordCanonicalStoreWrite(1);
+}
+
+function recordCanonicalStoreRead(rows: number) {
+  const diagnostics = canonicalStoreDiagnostics.getStore();
+  if (!diagnostics) return;
+  diagnostics.reads += 1;
+  diagnostics.rowsRead += rows;
+}
+
+function recordCanonicalStoreWrite(rows: number) {
+  const diagnostics = canonicalStoreDiagnostics.getStore();
+  if (!diagnostics) return;
+  diagnostics.writes += 1;
+  diagnostics.rowsWritten += rows;
 }
 
 function canonicalStartRecordToRow(record: CanonicalStartRecord): CanonicalStartRow {

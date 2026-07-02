@@ -48,12 +48,8 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
   const query = await searchParams;
   if (isIsoDateRouteParam(id)) {
     assertValidDateRouteParam(id);
-    const starts = (await getRankedStartsPageData(id)).slateStarts.filter((start) => start.source?.line !== "fixture");
-    const topStart = starts[0];
     const title = `MLB Starting Pitcher Rankings - ${formatShortDate(id)}`;
-    const description = topStart
-      ? `All ${starts.length} MLB starts on ${formatLongDate(id)} ranked by GS+. ${topStart.pitcher.name} led at ${topStart.gameScorePlus}. Full lines, matchups, and the night's best and worst starts.`
-      : `Every completed MLB start from ${formatLongDate(id)}, ranked by GS+.`;
+    const description = `Every completed MLB start from ${formatLongDate(id)}, ranked by GS+ with full lines, matchups, and best and worst starts.`;
     return {
       title,
       description,
