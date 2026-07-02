@@ -18,6 +18,8 @@ Use `THE_BUMP_ARCHIVE_CONCURRENCY=4` by default. Raise it only for a supervised 
 
 The archive script reads the MLB schedule once for the date range and fetches one gamefeed per completed game with bounded concurrency. Failed gamefeeds are recorded on the date shard as an error and must not make page renders retry the upstream path.
 
+Request-time Baseball Savant fallback is disabled by default to protect normal traffic and external rate limits. Use `THE_BUMP_REQUEST_TIME_SAVANT_PITCH_DETAIL=1` only for a supervised repair or diagnostic run; the normal path is archive first, then a pending/fixture pitch-detail state.
+
 ## Stale State
 
 Pitcher pages surface the archive status in the Arsenal panel. When archived pitch events exist, the label shows `Archive through YYYY-MM-DD`; when no archive-backed arsenal exists, the panel shows `Archive pending` and the profile falls back to neutral/fixture data instead of blocking on request-time ingestion.

@@ -109,6 +109,18 @@ assert(
     startService.includes('process.env.THE_BUMP_LIVE_MLB !== "1" ? null : await fetchMlbPitcherRecentArsenal'),
   "pitcher API must use cached MLB season profile as a missing-archive fallback without forcing live arsenal gamefeed fanout",
 );
+assert(
+  startService.includes('const REQUEST_TIME_SAVANT_PITCH_DETAIL_FLAG = "THE_BUMP_REQUEST_TIME_SAVANT_PITCH_DETAIL";') &&
+    startService.includes("function shouldFetchRequestTimeSavantPitchDetails()") &&
+    startService.includes("process.env[REQUEST_TIME_SAVANT_PITCH_DETAIL_FLAG] === \"1\"") &&
+    startService.includes("async function fetchRequestTimeSavantPitchDetails") &&
+    startService.includes("if (!shouldFetchRequestTimeSavantPitchDetails()) return null;") &&
+    startService.includes("fetchRequestTimeSavantPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId)") &&
+    startService.includes("fetchRequestTimeSavantPitchDetails(date, start.gamePk, start.pitcherMlbId)") &&
+    !startService.includes("?? await fetchSavantStartPitchDetails(schedule.date") &&
+    !startService.includes(": await fetchSavantStartPitchDetails(date"),
+  "start detail must keep Baseball Savant pitch-detail fallback behind an explicit request-time flag",
+);
 
 assert(
   types.includes("export type FormVenueSplitLabel") &&
@@ -324,6 +336,7 @@ assert(
     arsenalDataOps.includes("npm run check:mlb-archive -- --season=2026 --expect-end=YYYY-MM-DD") &&
     arsenalDataOps.includes("npm run sync:supabase-mlb-archive") &&
     arsenalDataOps.includes("THE_BUMP_ARCHIVE_CONCURRENCY=4") &&
+    arsenalDataOps.includes("THE_BUMP_REQUEST_TIME_SAVANT_PITCH_DETAIL=1") &&
     arsenalDataOps.includes("Archive through YYYY-MM-DD") &&
     arsenalDataOps.includes("Archive pending"),
   "arsenal data ops must document nightly archive refresh, validation, Supabase sync, rate-limit posture, and stale labels",

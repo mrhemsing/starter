@@ -26,6 +26,7 @@ const PITCHER_SEASON_LOG_SORTS: PitcherApiSeasonLogSort[] = ["date-desc", "gs-de
 const PITCHER_SEASON_LOG_RESULTS: PitcherApiSeasonLogResultFilter[] = ["all", "W", "L", "ND"];
 const ESTABLISHED_STARTER_MIN_SEASON_STARTS = 5;
 const ESTABLISHED_STARTER_MIN_AVG_IP = 4;
+const REQUEST_TIME_SAVANT_PITCH_DETAIL_FLAG = "THE_BUMP_REQUEST_TIME_SAVANT_PITCH_DETAIL";
 export const PITCHER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
 
 type CompletedPitchingLineSource = "archive-gamefeed" | "live-gamefeed";
@@ -452,6 +453,15 @@ function shouldFetchLivePitchDetails(date: string, scheduleSource: MlbSchedule["
   return scheduleSource === "live" || shouldFetchLiveSchedule(date);
 }
 
+function shouldFetchRequestTimeSavantPitchDetails() {
+  return process.env[REQUEST_TIME_SAVANT_PITCH_DETAIL_FLAG] === "1";
+}
+
+async function fetchRequestTimeSavantPitchDetails(date: string, gamePk: number, pitcherMlbId: number) {
+  if (!shouldFetchRequestTimeSavantPitchDetails()) return null;
+  return fetchSavantStartPitchDetails(date, gamePk, pitcherMlbId);
+}
+
 export function getHomeSlateDate(now = new Date()) {
   return toTimeZoneIsoDate(now, SITE_TIME_ZONE);
 }
@@ -626,7 +636,7 @@ export async function getStartDetail(startId: string) {
       fetchLive: shouldFetchLivePitchDetails(schedule.date, schedule.source),
       gamefeedRevalidateSeconds: LIVE_STARTER_RESULT_REVALIDATE_SECONDS,
     })
-    ?? await fetchSavantStartPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId);
+    ?? await fetchRequestTimeSavantPitchDetails(schedule.date, matchedStart.gamePk, matchedStart.pitcher.mlbId);
   const pitchDetails = livePitchDetails ?? {
     source: "fixture" as const,
     arsenal: [],
@@ -666,7 +676,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
   const gameScorePlus = scoreCompletedLine(start.line, context);
   const savantPitchDetails = start.pitchEvents?.length
     ? null
-    : await fetchSavantStartPitchDetails(date, start.gamePk, start.pitcherMlbId);
+    : await fetchRequestTimeSavantPitchDetails(date, start.gamePk, start.pitcherMlbId);
   const archivedPitchEvents = start.pitchEvents ?? [];
   const pitchEvents = archivedPitchEvents.length > 0 ? archivedPitchEvents : savantPitchDetails?.pitchEvents ?? [];
   const arsenal = archivedPitchEvents.length > 0 ? start.arsenal ?? [] : savantPitchDetails?.arsenal ?? [];
