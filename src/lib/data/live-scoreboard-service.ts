@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
-import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
+import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
@@ -44,6 +44,8 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   hasGames: boolean;
   hasActiveStarts: boolean;
   slateProgress: SlateProgressState;
+  nextSlateDate: string | null;
+  nextSlateFirstPitchAt: string | null;
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
 };
@@ -90,6 +92,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   }
 
   const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
+  const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date) : null;
 
   return {
     date,
@@ -97,10 +100,28 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     hasGames: rows.length > 0,
     hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0,
     slateProgress,
+    nextSlateDate: nextSlate?.date ?? null,
+    nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,
     ...startCounts,
     rows,
     leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null,
   };
+}
+
+async function resolveNextSlateFirstPitch(date: string) {
+  for (let offset = 1; offset <= 7; offset += 1) {
+    const nextDate = addDays(date, offset);
+    const schedule = await fetchMlbSchedule(nextDate, { fetchLive: false });
+    const firstPitchAt = schedule.games
+      .filter((game) => normalizeScheduleStatus(game) !== "ppd")
+      .map((game) => ({ iso: game.gameDate, ms: new Date(game.gameDate).getTime() }))
+      .filter((game) => Number.isFinite(game.ms))
+      .sort((a, b) => a.ms - b.ms)[0]?.iso ?? null;
+
+    if (firstPitchAt) return { date: nextDate, firstPitchAt };
+  }
+
+  return null;
 }
 
 async function getLiveLinesByStart(games: MlbScheduleGame[]) {
@@ -231,11 +252,20 @@ function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
 }
 
 function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScoreboard, "slateProgress"> & { slateProgress?: SlateProgressState }), date: string): LiveScoreboard {
-  if (board.slateProgress) return board as LiveScoreboard;
+  if (board.slateProgress) {
+    const cachedBoard = board as LiveScoreboard;
+    return {
+      ...cachedBoard,
+      nextSlateDate: cachedBoard.nextSlateDate ?? null,
+      nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
+    };
+  }
 
   return {
     ...board,
     slateProgress: fallbackSlateProgress(board, date),
+    nextSlateDate: null,
+    nextSlateFirstPitchAt: null,
   };
 }
 

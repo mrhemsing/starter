@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Headshot } from "@/components/headshot";
+import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
@@ -29,6 +30,10 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   const latestRowsRef = useRef(initialBoard.rows);
   const seenLiveGemAlertKeysRef = useRef<Set<string>>(new Set());
   const pregame = isPregame(board);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }));
+  }, [board.liveStarts, board.warmingStarts]);
 
   useEffect(() => {
     seenLiveGemAlertKeysRef.current = loadSeenLiveGemAlertKeys(initialBoard.date);
@@ -216,6 +221,8 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 }
 
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
+  const nextSlateLine = formatNextSlateLine(board);
+
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
@@ -223,6 +230,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
           <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Live returns with the next slate. Full tiers, filters, and breakdowns are ready on Ranked Starts.</p>
+          {nextSlateLine ? <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
           <Link
             href={rankedStartsPath(board.date)}
             className="mt-5 inline-flex max-w-full items-center rounded border border-[#FF9A62]/50 bg-[#FF5A1F]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#FFB07C] transition hover:border-[#FF9A62] hover:bg-[#FF5A1F]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
@@ -470,6 +478,28 @@ function formatFirstPitch(iso: string) {
     minute: "2-digit",
     timeZone: "America/Los_Angeles",
   }).format(parsed)} PT`;
+}
+
+function formatNextSlateLine(board: LiveScoreboardData) {
+  if (!board.nextSlateFirstPitchAt) return null;
+  const parsed = new Date(board.nextSlateFirstPitchAt);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  const timeLabel = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(parsed).replace(/\bPST\b|\bPDT\b/, "PT");
+
+  if (board.nextSlateDate && board.nextSlateDate !== board.date) {
+    const dayLabel = new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      timeZone: "America/Los_Angeles",
+    }).format(parsed);
+    return `Next slate begins ${dayLabel}, ${timeLabel}`;
+  }
+
+  return `Next slate begins ${timeLabel}`;
 }
 
 function formatPregameCountdown(countdownLabel: string | null) {

@@ -6,11 +6,12 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, liveNavLabel, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
   readFile("src/components/live-scoreboard.tsx", "utf8"),
+  readFile("src/components/live-nav-label.tsx", "utf8"),
   readFile("src/lib/data/mlb-stats-client.ts", "utf8"),
   readFile("src/lib/types.ts", "utf8"),
   readFile("src/lib/data/start-service.ts", "utf8"),
@@ -31,7 +32,7 @@ assert(
 
 assert(
   startService.includes("export function scoreCompletedLine(line: StartLine, context?: StartContext)") &&
-    liveService.includes('import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";') &&
+    liveService.includes('import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";') &&
     liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
     liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
@@ -64,10 +65,22 @@ assert(
     liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
     liveService.includes("let startCounts = summarizeSlateStartBuckets(rows);") &&
     liveService.includes("const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);") &&
+    liveService.includes("const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date) : null;") &&
     liveService.includes("slateProgress: SlateProgressState;") &&
+    liveService.includes("nextSlateDate: string | null;") &&
+    liveService.includes("nextSlateFirstPitchAt: string | null;") &&
+    liveService.includes("nextSlateDate: nextSlate?.date ?? null,") &&
+    liveService.includes("nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,") &&
     liveService.includes("slateProgress,") &&
+    liveService.includes("async function resolveNextSlateFirstPitch(date: string)") &&
+    liveService.includes("for (let offset = 1; offset <= 7; offset += 1)") &&
+    liveService.includes("const nextDate = addDays(date, offset);") &&
+    liveService.includes('fetchMlbSchedule(nextDate, { fetchLive: false })') &&
+    liveService.includes('normalizeScheduleStatus(game) !== "ppd"') &&
     liveService.includes("normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date)") &&
     liveService.includes("function fallbackSlateProgress") &&
+    liveService.includes("nextSlateDate: cachedBoard.nextSlateDate ?? null") &&
+    liveService.includes("nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null") &&
     liveService.includes("formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now())") &&
     liveService.includes("...startCounts,") &&
     liveService.includes("function refinePregameStatus") &&
@@ -146,6 +159,8 @@ assert(
 assert(
     liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
     liveComponent.includes("setSlateProgress(nextBoard.slateProgress);") &&
+    liveComponent.includes('import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";') &&
+    liveComponent.includes("window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }))") &&
     liveComponent.includes("if (!board.hasActiveStarts && !pregame) return;") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
@@ -215,9 +230,15 @@ assert(
     liveComponent.includes('<SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />') &&
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&
+    liveComponent.includes("const nextSlateLine = formatNextSlateLine(board);") &&
     liveComponent.includes("This slate is final.") &&
     !liveComponent.includes("Today&apos;s slate is final.") &&
     liveComponent.includes("Live returns with the next slate.") &&
+    liveComponent.includes("data-live-next-slate") &&
+    liveComponent.includes("function formatNextSlateLine(board: LiveScoreboardData)") &&
+    liveComponent.includes("if (!board.nextSlateFirstPitchAt) return null;") &&
+    liveComponent.includes("return `Next slate begins ${dayLabel}, ${timeLabel}`;") &&
+    liveComponent.includes("return `Next slate begins ${timeLabel}`;") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
@@ -268,18 +289,26 @@ assert(
 assert(
   routes.includes("export function liveDateHref(date: string)") &&
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
-    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel state={slateProgress.state} liveGames={slateProgress.liveGames} />, href: liveDateHref(today) }];') &&
+    siteNav.includes('import { LiveNavLabel } from "@/components/live-nav-label";') &&
+    siteNav.includes('import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} />, href: liveDateHref(today) }];') &&
     siteNav.includes("href: liveDateHref(today)") &&
     siteNav.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
     siteNav.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
     !siteNav.includes("overflow-x-auto pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden") &&
     !siteNav.includes("shrink-0 items-center rounded border") &&
-    siteNav.includes('function LiveNavLabel({ state, liveGames }: { state: SlateProgressState["state"]; liveGames: number })') &&
-    siteNav.includes('const hasActiveLiveStarts = state === "starts-in-progress" && liveGames > 0;') &&
-    siteNav.includes('state === "pre-first-pitch" ? "text-amber-300" : "text-zinc-400"') &&
-    siteNav.includes('state === "pre-first-pitch" ? "bg-[#F6C445]/70" : "bg-zinc-500"') &&
-    siteNav.includes("data-live-nav-state={state}") &&
-    siteNav.includes('data-live-nav-active={hasActiveLiveStarts ? "true" : "false"}') &&
+    liveNavLabel.includes('export type LiveNavIndicatorState = "active" | "warming" | "idle";') &&
+    liveNavLabel.includes('export const LIVE_NAV_STATE_EVENT = "toe-the-slab:live-nav-state";') &&
+    liveNavLabel.includes("function getLiveNavIndicatorState(snapshot: LiveNavSnapshot): LiveNavIndicatorState") &&
+    liveNavLabel.includes('if (snapshot.liveStarts > 0) return "active";') &&
+    liveNavLabel.includes('if (snapshot.warmingStarts > 0) return "warming";') &&
+    liveNavLabel.includes('return "idle";') &&
+    liveNavLabel.includes('toneClass = active ? "text-[#FF9A62]" : "text-zinc-400"') &&
+    liveNavLabel.includes('warming\n      ? "border border-[#F6C445] bg-transparent"') &&
+    liveNavLabel.includes('window.addEventListener(LIVE_NAV_STATE_EVENT, handleStateEvent);') &&
+    liveNavLabel.includes("data-live-nav-state={state}") &&
+    liveNavLabel.includes('data-live-nav-active={active ? "true" : "false"}') &&
+    liveNavLabel.includes('{state === "idle" ? null : <span') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
   "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding and a two-row mobile grid",
 );
