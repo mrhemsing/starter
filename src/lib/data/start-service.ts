@@ -808,7 +808,7 @@ export async function getPitcherDetail(pitcherId: string) {
         ...liveProfile,
         seasonLine: archivedSeasonProfile?.seasonLine ?? liveProfile.seasonLine,
         starts,
-        arsenal: archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? demoPitcherDetail.arsenal,
+        arsenal: archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? [],
         arsenalSource: archivedArsenal?.source ?? liveArsenal?.source ?? "fixture",
         seasonLineSource: archivedSeasonProfile?.source ?? liveProfile.source,
         startHistorySource: archivedSeasonProfile?.source ?? liveProfile.source,
@@ -828,7 +828,7 @@ export async function getPitcherDetail(pitcherId: string) {
       headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${archivedSeasonProfile.mlbId}/headshot/67/current`,
       seasonLine: archivedSeasonProfile.seasonLine,
       starts: archivedSeasonProfile.starts,
-      arsenal: archivedArsenal?.arsenal ?? demoPitcherDetail.arsenal,
+      arsenal: archivedArsenal?.arsenal ?? [],
       arsenalSource: archivedArsenal?.source ?? "fixture",
       seasonLineSource: archivedSeasonProfile.source,
       startHistorySource: archivedSeasonProfile.source,
@@ -840,7 +840,7 @@ export async function getPitcherDetail(pitcherId: string) {
   if (pitcherId === demoPitcherDetail.id || pitcherId === String(demoPitcherDetail.mlbId)) {
     return {
       ...demoPitcherDetail,
-      arsenal: archivedArsenal?.arsenal ?? demoPitcherDetail.arsenal,
+      arsenal: archivedArsenal?.arsenal ?? [],
       arsenalSource: archivedArsenal?.source ?? "fixture",
       archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
     };
@@ -850,7 +850,7 @@ export async function getPitcherDetail(pitcherId: string) {
     ? {
         ...demoPitcherDetail,
         ...matchedStart.pitcher,
-        arsenal: archivedArsenal?.arsenal ?? demoPitcherDetail.arsenal,
+        arsenal: archivedArsenal?.arsenal ?? [],
         arsenalSource: archivedArsenal?.source ?? "fixture",
         archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
         starts: demoPitcherDetail.starts.filter((start) => start.id === matchedStart.id),
@@ -1787,6 +1787,7 @@ function scheduledGameToStarts(
       const fallback = demoSlateStarts[(game.gamePk + index) % demoSlateStarts.length];
       const completedLine = completedLines.get(startLineKey(game.gamePk, pitcher.id));
       const lineSource = completedLine?.source ?? "fixture";
+      const lineStatus = completedLine?.gameStatus;
       const line = completedLine?.line ?? fallback.line;
       const plannedStarter = probablePitcherIds.has(pitcher.id) || establishedStarterIds.has(pitcher.id);
       const colors = teamColors[pitcher.teamAbbreviation] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
@@ -1831,6 +1832,7 @@ function scheduledGameToStarts(
         source: {
           schedule: scheduleSource,
           line: lineSource,
+          ...(lineStatus ? { lineStatus } : {}),
           ranking: getRankingSource(lineSource),
         },
       };

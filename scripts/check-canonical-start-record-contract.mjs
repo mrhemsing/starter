@@ -30,14 +30,14 @@ assert(
 );
 
 assert(
-  canonicalRecord.includes('const final = source.line === "archive-gamefeed";') &&
+  canonicalRecord.includes('const final = source.line === "archive-gamefeed" || source.lineStatus === "final";') &&
     canonicalRecord.includes('const live = source.line === "live-gamefeed";') &&
     canonicalRecord.includes('status: final ? "final" : live ? "live" : "scheduled"') &&
     canonicalRecord.includes("finalizedAt: final ? timestamp : null") &&
     canonicalRecord.includes("frozen: final") &&
     canonicalRecord.includes('event: final ? "final-reconciled" : live ? "live-updated" : "created"') &&
     canonicalRecord.includes("Canonical record reflects a provisional live starter line."),
-  "canonical start record must freeze archive finals while keeping live gamefeed lines provisional",
+  "canonical start record must freeze archive finals or starter-final live lines while keeping active gamefeed lines provisional",
 );
 
 assert(
@@ -48,7 +48,10 @@ assert(
 
 assert(
   canonicalRecord.includes("export function reconcileCanonicalStartRecord(") &&
-    canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);") &&
+    canonicalRecord.includes("const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);") &&
+    canonicalRecord.includes("const result = official.result ?? record.result;") &&
+    canonicalRecord.includes("const venue = safeCanonicalVenue(official.venue) ?? record.venue;") &&
+    canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);") &&
     canonicalRecord.includes('event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled"') &&
     canonicalRecord.includes("...(diffs.length > 0 ? { diffs } : {})") &&
     canonicalRecord.includes("export function diffCanonicalStartRecord(") &&
@@ -56,6 +59,17 @@ assert(
     canonicalRecord.includes("if (record.line[field] === undefined && officialLine[field] === undefined) continue;") &&
     canonicalRecord.includes('diffs.push({ field: "gameScorePlus", before: record.gameScorePlus, after: officialGameScorePlus });'),
   "canonical reconciliation must diff final line, optional GSv2 inputs, and GS+ corrections with explicit audit entries",
+);
+
+assert(
+  canonicalRecord.includes('field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue";') &&
+    canonicalRecord.includes("if (record.gameScoreV2 !== officialGameScoreV2)") &&
+    canonicalRecord.includes('diffs.push({ field: "gameScoreV2", before: record.gameScoreV2, after: officialGameScoreV2 });') &&
+    canonicalRecord.includes('diffs.push({ field: "result", before: record.result, after: officialResult });') &&
+    canonicalRecord.includes('diffs.push({ field: "venue", before: record.venue, after: officialVenue });') &&
+    canonicalRecord.includes("function safeCanonicalVenue") &&
+    canonicalRecord.includes('/\\b(canonical|slate|fixture)\\b/i.test(trimmed)'),
+  "canonical reconciliation must validate GSv2, decision, and venue while blocking source metadata from venue fields",
 );
 
 assert(
@@ -114,7 +128,10 @@ assert(
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
     canonicalStore.includes('if (next.status !== "final") return existing;') &&
-    canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus)") &&
+    canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue)") &&
+    canonicalStore.includes("existing.source.lineStatus !== next.source.lineStatus") &&
+    canonicalStore.includes("result: next.result") &&
+    canonicalStore.includes("venue: next.venue") &&
     canonicalStore.includes("reconcileCanonicalStartRecord(existing") &&
     canonicalStore.includes("officialCanonicalLineSource(next.source.line)"),
   "canonical start store must use Supabase durable records, skip static-build writes, preserve frozen finals, and audit final corrections without filesystem IO",
@@ -179,9 +196,10 @@ assert(
 );
 
 assert(
-  slateState.includes("export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts") &&
+    slateState.includes("export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts") &&
     slateState.includes('if (start.source?.line === "archive-gamefeed") return "final";') &&
-    slateState.includes('if (start.source?.line === "live-gamefeed") return "final";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "final") return "final";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed") return "live";') &&
     slateState.includes('return "scheduled";') &&
     startService.includes('import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";') &&
     startService.includes("export function getRankedSlateCompletionStateFromInputs(") &&

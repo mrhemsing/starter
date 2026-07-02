@@ -18,6 +18,12 @@ type FormBuildOptions = {
   team?: string;
 };
 
+const MLB_TEAM_CODES = new Set([
+  "ATL", "AZ", "BAL", "BOS", "CHC", "CIN", "CLE", "COL", "CWS", "DET",
+  "HOU", "KC", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY", "ATH",
+  "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH",
+]);
+
 type PitcherBucket = {
   pitcherId: string;
   starts: StartSummary[];
@@ -186,6 +192,10 @@ function buildTeamGamesPlayedMap(starts: StartSummary[], formThroughDate: string
     for (const team of [start.pitcher.team, start.opponent]) {
       const normalizedTeam = team.trim().toUpperCase();
       if (!normalizedTeam) continue;
+      if (!MLB_TEAM_CODES.has(normalizedTeam)) {
+        console.error("heat-check skipped non-MLB team code while building qualification map", { team: normalizedTeam, date: start.date, gamePk: start.gamePk });
+        continue;
+      }
       const games = teamGames.get(normalizedTeam) ?? new Set<number>();
       games.add(start.gamePk);
       teamGames.set(normalizedTeam, games);
@@ -196,7 +206,10 @@ function buildTeamGamesPlayedMap(starts: StartSummary[], formThroughDate: string
 }
 
 function attachSeasonQualification(summary: FormSummary, teamGamesPlayed: Map<string, number>): FormSummary {
-  const teamGames = teamGamesPlayed.get(summary.team.trim().toUpperCase()) ?? summary.seasonStartCount;
+  const normalizedTeam = summary.team.trim().toUpperCase();
+  const teamGames = MLB_TEAM_CODES.has(normalizedTeam)
+    ? teamGamesPlayed.get(normalizedTeam) ?? summary.seasonStartCount
+    : 162;
   const minStarts = seasonQualificationMinStarts(teamGames);
   return {
     ...summary,
@@ -631,7 +644,7 @@ function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanoni
       whiffDeltaPct: 0,
       velocityDeltaMph: 0,
       parkRunFactor: 1,
-      parkLabel: "Stored canonical slate",
+      parkLabel: record.venue ?? "MLB venue",
       opponentQualityRunValue: 0,
       opponentQualityLabel: `${record.opponent} opponent quality pending archive refresh.`,
       opponentOffenseRunValue: 0,

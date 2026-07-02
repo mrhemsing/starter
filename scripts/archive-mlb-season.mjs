@@ -171,7 +171,7 @@ async function readJson(filePath) {
 function toDateEntries(payload) {
   return (payload.dates ?? []).map((entry) => ({
     date: entry.date,
-    games: entry.games ?? [],
+    games: (entry.games ?? []).filter((game) => game.gameType === "R"),
   })).filter((entry) => entry.date);
 }
 
@@ -883,6 +883,7 @@ async function archiveGame(game) {
 async function main() {
   const params = new URLSearchParams({
     sportId: "1",
+    gameTypes: "R",
     startDate,
     endDate,
     hydrate: "team",

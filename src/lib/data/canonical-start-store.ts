@@ -110,13 +110,15 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
   if (existing.frozen) {
     if (next.status !== "final") return existing;
 
-    const diffs = diffCanonicalStartRecord(existing, next.line, next.gameScorePlus);
+    const diffs = diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue);
     return diffs.length > 0
       ? reconcileCanonicalStartRecord(existing, {
         line: next.line,
         gameScorePlus: next.gameScorePlus,
         gameScoreV2: next.gameScoreV2,
         gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+        result: next.result,
+        venue: next.venue,
         source: officialCanonicalLineSource(next.source.line),
       }, now)
       : existing;
@@ -128,13 +130,16 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
       gameScorePlus: next.gameScorePlus,
       gameScoreV2: next.gameScoreV2,
       gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+      result: next.result,
+      venue: next.venue,
       source: officialCanonicalLineSource(next.source.line),
     }, now);
   }
 
   const changed = existing.status !== next.status
     || existing.source.line !== next.source.line
-    || diffCanonicalStartRecord(existing, next.line, next.gameScorePlus).length > 0;
+    || existing.source.lineStatus !== next.source.lineStatus
+    || diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue).length > 0;
 
   if (!changed) return existing;
 
@@ -276,6 +281,8 @@ function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, n
       gameScorePlus: next.gameScorePlus,
       gameScoreV2: next.gameScoreV2,
       gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+      result: next.result,
+      venue: next.venue,
       source: officialCanonicalLineSource(next.source.line),
     }, new Date(next.updatedAt));
   }

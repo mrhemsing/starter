@@ -413,6 +413,9 @@ assert(
     formPage.includes("function SeasonExpandControls") &&
     formService.includes("seasonStartCount: starts.length,") &&
     formService.includes("function buildTeamGamesPlayedMap") &&
+    formService.includes("const MLB_TEAM_CODES = new Set([") &&
+    formService.includes("heat-check skipped non-MLB team code while building qualification map") &&
+    formService.includes("MLB_TEAM_CODES.has(normalizedTeam)") &&
     formService.includes("function attachSeasonQualification") &&
     formService.includes("seasonQualificationMinStarts(teamGames)") &&
     formTokens.includes("seasonQualificationDivisor: 16") &&

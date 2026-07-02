@@ -122,6 +122,7 @@ export type MlbTeamHandednessSplitContext = {
 export type StartDataSource = {
   schedule: MlbSchedule["source"];
   line: "fixture" | "archive-gamefeed" | "live-gamefeed";
+  lineStatus?: "scheduled" | "live" | "final" | "warming" | "delay";
   ranking: "schedule-derived-fixture-line" | "schedule-derived-archive-line" | "schedule-derived-gamefeed-line";
 };
 
@@ -617,6 +618,7 @@ export type MlbProbablePitcherGame = MlbProbablePitcher & {
 export type MlbScheduleGame = {
   gamePk: number;
   gameDate: string;
+  gameType?: string;
   status: string;
   detailedState: string;
   venue: string;
@@ -639,6 +641,7 @@ export type MlbCompletedPitchingLine = {
   teamAbbreviation: string;
   opponentAbbreviation: string;
   side: "home" | "away";
+  gameStatus?: "live" | "final" | "warming" | "delay";
   result: StartSummary["result"];
   line: StartLine;
 };

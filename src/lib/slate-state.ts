@@ -44,7 +44,10 @@ export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateSta
 
 function canonicalSlateStartStatus(start: StartSummary): SlateStartBucketStatus {
   if (start.source?.line === "archive-gamefeed") return "final";
-  if (start.source?.line === "live-gamefeed") return "final";
+  if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "final") return "final";
+  if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "delay") return "delay";
+  if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "warming") return "warming";
+  if (start.source?.line === "live-gamefeed") return "live";
   return "scheduled";
 }
 

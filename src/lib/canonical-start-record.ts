@@ -13,9 +13,9 @@ export type CanonicalStartAuditEntry = {
 };
 
 export type CanonicalStartLineDiff = {
-  field: keyof StartLine | "gameScorePlus";
-  before: number | undefined;
-  after: number | undefined;
+  field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue";
+  before: number | string | undefined;
+  after: number | string | undefined;
 };
 
 export type CanonicalStartRecord = {
@@ -27,6 +27,7 @@ export type CanonicalStartRecord = {
   team: string;
   opponent: string;
   side?: "home" | "away";
+  venue?: string;
   status: CanonicalStartStatus;
   line: StartLine;
   gameScorePlus: number;
@@ -62,7 +63,7 @@ const FALLBACK_START_SOURCE: StartDataSource = {
 export function canonicalStartRecordFromSummary(start: StartSummary, now = new Date()): CanonicalStartRecord {
   const source = start.source ?? FALLBACK_START_SOURCE;
   const timestamp = now.toISOString();
-  const final = source.line === "archive-gamefeed";
+  const final = source.line === "archive-gamefeed" || source.lineStatus === "final";
   const live = source.line === "live-gamefeed";
   const gameScorePlus = roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
   const gameScoreV2 = start.gameScoreV2 ?? calculateGameScoreV2(start.line);
@@ -77,6 +78,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     team: start.pitcher.team,
     opponent: start.opponent,
     side: start.side,
+    venue: safeCanonicalVenue(start.context.parkLabel),
     status: final ? "final" : live ? "live" : "scheduled",
     line: start.line,
     gameScorePlus,
@@ -114,6 +116,10 @@ export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, st
     gameScorePlusBreakdown: record.gameScorePlusBreakdown,
     result: record.result,
     source: record.source,
+    context: {
+      ...start.context,
+      ...(record.venue ? { parkLabel: record.venue } : {}),
+    },
   };
 }
 
@@ -132,6 +138,8 @@ export function reconcileCanonicalStartRecord(
     gameScorePlus: number;
     gameScoreV2?: number;
     gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+    result?: StartSummary["result"];
+    venue?: string;
     source: Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed">;
   },
   now = new Date(),
@@ -139,20 +147,25 @@ export function reconcileCanonicalStartRecord(
   const timestamp = now.toISOString();
   const gameScorePlus = roundToScorePrecision(official.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
   const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);
-  const eventFlags = deriveStartEventFlags(record.result, gameScorePlus);
-  const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);
+  const result = official.result ?? record.result;
+  const venue = safeCanonicalVenue(official.venue) ?? record.venue;
+  const eventFlags = deriveStartEventFlags(result, gameScorePlus);
+  const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);
 
   return {
     ...record,
     status: "final",
     line: official.line,
+    venue,
     gameScorePlus,
     gameScoreV2,
     eventFlags,
     gameScorePlusBreakdown: official.gameScorePlusBreakdown ? { ...official.gameScorePlusBreakdown, total: gameScorePlus } : record.gameScorePlusBreakdown,
+    result,
     source: {
       ...record.source,
       line: official.source,
+      lineStatus: "final",
       ranking: official.source === "archive-gamefeed" ? "schedule-derived-archive-line" : "schedule-derived-gamefeed-line",
     },
     updatedAt: timestamp,
@@ -177,7 +190,14 @@ export function deriveStartEventFlags(result: StartSummary["result"], gameScoreP
   return [];
 }
 
-export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialLine: StartLine, officialGameScorePlus: number): CanonicalStartLineDiff[] {
+export function diffCanonicalStartRecord(
+  record: CanonicalStartRecord,
+  officialLine: StartLine,
+  officialGameScorePlus: number,
+  officialGameScoreV2 = calculateGameScoreV2(officialLine),
+  officialResult?: StartSummary["result"],
+  officialVenue?: string,
+): CanonicalStartLineDiff[] {
   const diffs: CanonicalStartLineDiff[] = [];
   const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "runsAllowed", "homeRunsAllowed", "walks", "strikeouts", "pitches"];
 
@@ -192,7 +212,25 @@ export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialL
     diffs.push({ field: "gameScorePlus", before: record.gameScorePlus, after: officialGameScorePlus });
   }
 
+  if (record.gameScoreV2 !== officialGameScoreV2) {
+    diffs.push({ field: "gameScoreV2", before: record.gameScoreV2, after: officialGameScoreV2 });
+  }
+
+  if (officialResult && record.result !== officialResult) {
+    diffs.push({ field: "result", before: record.result, after: officialResult });
+  }
+
+  if (officialVenue && record.venue !== officialVenue) {
+    diffs.push({ field: "venue", before: record.venue, after: officialVenue });
+  }
+
   return diffs;
+}
+
+function safeCanonicalVenue(venue: string | undefined) {
+  const trimmed = venue?.trim();
+  if (!trimmed || /\b(canonical|slate|fixture)\b/i.test(trimmed)) return undefined;
+  return trimmed;
 }
 
 export function summarizeCanonicalReconciliation(date: string, records: CanonicalStartRecord[]): CanonicalReconciliationReport {

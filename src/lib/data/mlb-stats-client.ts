@@ -71,6 +71,7 @@ type MlbApiTeamNode = {
 type MlbApiGame = {
   gamePk?: number;
   gameDate?: string;
+  gameType?: string;
   status?: {
     abstractGameState?: string;
     detailedState?: string;
@@ -214,6 +215,7 @@ type MlbPersonStatSplit = {
   };
   game?: {
     gamePk?: number;
+    gameType?: string;
   };
   stat?: MlbGameFeedPitchingStats & {
     era?: string;
@@ -1249,6 +1251,7 @@ function parsePitcherSeasonProfile(
 
   const starts = (gameLogPayload.stats?.[0]?.splits ?? [])
     .filter((split) => split.stat?.gamesStarted === 1 && split.date && split.game?.gamePk)
+    .filter((split) => isRegularSeasonStatSplit(split, seasonSplit?.season ?? `${new Date().getUTCFullYear()}`))
     .map((split) => readPitcherGameLogStart(split, pitcherMlbId, teamLookup))
     .filter((start): start is MlbPitcherSeasonProfile["starts"][number] => Boolean(start))
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -1364,6 +1367,11 @@ function readPitcherGameLogStart(split: MlbPersonStatSplit, pitcherMlbId: number
     line,
     gameScorePlus: scorePitcherGameLogStart(line),
   };
+}
+
+function isRegularSeasonStatSplit(split: MlbPersonStatSplit, season: string) {
+  if (split.game?.gameType) return split.game.gameType === "R";
+  return Boolean(split.date && split.date >= `${season}-03-25`);
 }
 
 function scorePitcherGameLogStart(line: StartLine) {
@@ -1503,6 +1511,7 @@ function readCompletedPitchingLine(
     teamAbbreviation,
     opponentAbbreviation,
     side,
+    gameStatus: "final",
     result: readPitchingDecision(pitcherMlbId, payload),
     line,
   };
@@ -1640,9 +1649,11 @@ function summarizePitchEvents(pitchEvents: PitchEvent[]): ArsenalPitchSummary[] 
 function parseGame(game: MlbApiGame): MlbScheduleGame[] {
   const gamePk = game.gamePk;
   const gameDate = game.gameDate;
+  const gameType = game.gameType;
   const homeTeam = game.teams?.home?.team;
   const awayTeam = game.teams?.away?.team;
 
+  if (gameType !== "R") return [];
   if (!gamePk || !gameDate || !homeTeam?.name || !awayTeam?.name) return [];
 
   const homeAbbreviation = homeTeam.abbreviation ?? homeTeam.name;
@@ -1650,6 +1661,7 @@ function parseGame(game: MlbApiGame): MlbScheduleGame[] {
   const baseGame = {
     gamePk,
     gameDate,
+    gameType,
     status: game.status?.abstractGameState ?? "scheduled",
     detailedState: game.status?.detailedState ?? "Scheduled",
     venue: game.venue?.name ?? "TBD",

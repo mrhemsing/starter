@@ -336,6 +336,21 @@ assert(
 );
 
 assert(
+  startService.includes("arsenal: archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? []") &&
+    startService.includes("arsenal: archivedArsenal?.arsenal ?? []") &&
+    !startService.includes("archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? demoPitcherDetail.arsenal") &&
+    !startService.includes("archivedArsenal?.arsenal ?? demoPitcherDetail.arsenal"),
+  "real pitcher profiles must never fall back to the demo arsenal table; absent real data should hide the module",
+);
+
+assert(
+  mlbStatsClient.includes('if (gameType !== "R") return [];') &&
+    mlbStatsClient.includes("function isRegularSeasonStatSplit") &&
+    mlbStatsClient.includes('if (split.game?.gameType) return split.game.gameType === "R";'),
+  "pitcher profile and schedule ingestion must filter exhibition games before building season starts",
+);
+
+assert(
   arsenalDataOps.includes("npm run archive:mlb-season -- --season=2026 --date=YYYY-MM-DD") &&
     arsenalDataOps.includes("npm run check:mlb-archive -- --season=2026 --expect-end=YYYY-MM-DD") &&
     arsenalDataOps.includes("npm run sync:supabase-mlb-archive") &&

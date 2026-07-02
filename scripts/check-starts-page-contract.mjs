@@ -413,7 +413,8 @@ assert(
     startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
     startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
     startService.includes("const liveStarts = Math.max(0, liveGames * 2 - completedStartsInLiveGames);") &&
-    slateState.includes('if (start.source?.line === "live-gamefeed") return "final";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "final") return "final";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed") return "live";') &&
     startsPage.includes("function formatRankedFirstPitch") &&
     !startsPage.includes("formatSlateCountdownLabel") &&
     !startsPage.includes("first starter toes the slab") &&
