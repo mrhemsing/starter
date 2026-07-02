@@ -27,7 +27,8 @@ assert(
     types.includes("probableSource: ProbableStarterSource;") &&
     types.includes("probableConfidence: ProbableStarterConfidence;") &&
     types.includes("source: ProbableStarterSource;") &&
-    types.includes("confidence: ProbableStarterConfidence;"),
+    types.includes("confidence: ProbableStarterConfidence;") &&
+    types.includes("likelyOpener?: boolean;"),
   "probable starter records must expose source and confidence metadata",
 );
 
@@ -46,6 +47,16 @@ assert(
     mlbArchive.includes('source: "mlb-stats-api" as const,') &&
     mlbArchive.includes('confidence: "CONFIRMED" as const,'),
   "MLB Stats API probables must stay CONFIRMED while secondary-feed probables fill only missing starters as REPORTED",
+);
+
+assert(
+  mlbStatsClient.includes("recentAppearances: number;") &&
+    mlbStatsClient.includes("recentStarts: number;") &&
+    mlbStatsClient.includes("recentReliefAppearances: number;") &&
+    mlbStatsClient.includes('const gameLogParams = new URLSearchParams({ stats: "gameLog", group: "pitching", season });') &&
+    mlbStatsClient.includes("function readRecentPitchingUsage(") &&
+    mlbStatsClient.includes("reliefAppearances: Math.max(0, recentSplits.length - starts),"),
+  "probable starter completeness must carry recent relief-heavy usage for opener detection",
 );
 
 assert(
@@ -69,15 +80,30 @@ assert(
 );
 
 assert(
+  tonightService.includes("const LIKELY_OPENER_MAX_CAREER_STARTS = 4;") &&
+    tonightService.includes("const LIKELY_OPENER_RECENT_APPEARANCE_FLOOR = 3;") &&
+    tonightService.includes("function isLikelyOpenerProfile(") &&
+    tonightService.includes("completeness.recentReliefAppearances > completeness.recentStarts") &&
+    tonightService.includes("function openerProjection(") &&
+    tonightService.includes('notes: ["Likely opener / bullpen game", "Opener innings profile"]') &&
+    tonightService.includes("likelyOpener,"),
+  "Upcoming service must flag likely openers and use a 2.0 IP opener projection",
+);
+
+assert(
   mustWatchComponent.includes("data-starter-probable-source={starter.probableSource}") &&
     mustWatchComponent.includes("data-starter-probable-confidence={starter.probableConfidence}") &&
+    mustWatchComponent.includes("data-starter-likely-opener={String(starter.likelyOpener === true)}") &&
+    mustWatchComponent.includes("data-likely-opener={String(game.flags?.likelyOpener === true)}") &&
     mustWatchComponent.includes("function ProbableConfidenceChip(") &&
+    mustWatchComponent.includes("function LikelyOpenerBadge(") &&
     mustWatchComponent.includes('starter.probableConfidence !== "REPORTED"') &&
     mustWatchComponent.includes("UNCONFIRMED") &&
     mustWatchComponent.includes("PROVISIONAL") &&
+    mustWatchComponent.includes("Likely opener / bullpen game") &&
     mustWatchComponent.includes("Starter unconfirmed. Score uses league baseline.") &&
     !mustWatchComponent.includes("Starter TBD / league baseline used"),
-  "Upcoming cards must render REPORTED starters as UNCONFIRMED and TBD starters as one PROVISIONAL baseline line",
+  "Upcoming cards must render REPORTED, TBD, and likely opener trust treatments",
 );
 
 assert(

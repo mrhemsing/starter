@@ -275,6 +275,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-cold-start-form={String(game.flags?.coldStartForm === true)}
       data-join-gap-form={String(game.flags?.joinGapForm === true)}
       data-mlb-debut={String(game.flags?.mlbDebut === true)}
+      data-likely-opener={String(game.flags?.likelyOpener === true)}
       data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
@@ -414,6 +415,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-cold-start-form={String(game.flags?.coldStartForm === true)}
       data-join-gap-form={String(game.flags?.joinGapForm === true)}
       data-mlb-debut={String(game.flags?.mlbDebut === true)}
+      data-likely-opener={String(game.flags?.likelyOpener === true)}
       data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
@@ -698,6 +700,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       data-starter-form-completeness={starterFormCompletenessValue(starter)}
       data-starter-probable-source={starter.probableSource}
       data-starter-probable-confidence={starter.probableConfidence}
+      data-starter-likely-opener={String(starter.likelyOpener === true)}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -728,6 +731,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
             {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
           </h4>
           <ProbableConfidenceChip starter={starter} align={align} />
+          <LikelyOpenerBadge starter={starter} align={align} />
           {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
@@ -1021,6 +1025,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       data-starter-form-completeness={starterFormCompletenessValue(starter)}
       data-starter-probable-source={starter.probableSource}
       data-starter-probable-confidence={starter.probableConfidence}
+      data-starter-likely-opener={String(starter.likelyOpener === true)}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -1039,6 +1044,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
         <ProbableConfidenceChip starter={starter} compact />
+        <LikelyOpenerBadge starter={starter} compact />
         <p className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
           {starter.team}
@@ -1147,6 +1153,16 @@ function ProbableConfidenceChip({ starter, align, compact = false }: { starter: 
   return (
     <p className={`mt-1 inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200 ${align === "home" ? "lg:ml-auto" : ""} ${compact ? "text-[8px]" : ""}`}>
       UNCONFIRMED
+    </p>
+  );
+}
+
+function LikelyOpenerBadge({ starter, align, compact = false }: { starter: TonightStarter; align?: "away" | "home"; compact?: boolean }) {
+  if (starter.likelyOpener !== true) return null;
+
+  return (
+    <p className={`mt-1 inline-flex items-center rounded border border-sky-300/30 bg-sky-300/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-sky-200 ${align === "home" ? "lg:ml-auto" : ""} ${compact ? "text-[8px]" : ""}`}>
+      Likely opener / bullpen game
     </p>
   );
 }
@@ -1540,6 +1556,7 @@ function starterFallbackAriaLabel(starter: TonightStarter) {
 function watchFlagNoteAriaLabel(game: TonightGame) {
   const notes = [];
   if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline");
+  if (game.flags?.likelyOpener) notes.push("Likely opener or bullpen game");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify the game as must-watch");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
@@ -1550,6 +1567,7 @@ function watchFlagNoteAriaLabel(game: TonightGame) {
 function watchFlagNoteText(game: TonightGame) {
   const notes = [];
   if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline.");
+  if (game.flags?.likelyOpener) notes.push("Likely opener or bullpen game.");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed.");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify this game as must-watch.");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher.");

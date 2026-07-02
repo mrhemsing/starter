@@ -25,6 +25,8 @@ const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
 const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
+const LIKELY_OPENER_MAX_CAREER_STARTS = 4;
+const LIKELY_OPENER_RECENT_APPEARANCE_FLOOR = 3;
 const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
@@ -126,8 +128,8 @@ async function buildTonightGame(
   const status = normalizeGameStatus(game);
   const parkContext = getParkContext(game.venue);
   const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);
-  const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
-  const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
+  const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
+  const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const splitMatchupScore = scoreOpponentSplitMatchup([awayStarter, homeStarter], parkContext, weatherContext);
   const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
@@ -139,6 +141,7 @@ async function buildTonightGame(
   const rawWatchScore = status === "ppd" ? 0 : roundWatchScore(calculateGameWatchScore(topArm, pairing, matchupComponent));
   const matchupConfidence = matchupConfidenceForStarters([awayStarter, homeStarter]);
   const hasMlbDebut = awayStarter.formStatus === "mlb_debut" || homeStarter.formStatus === "mlb_debut";
+  const likelyOpener = awayStarter.likelyOpener === true || homeStarter.likelyOpener === true;
   const gameWatchScore = applyTbdWatchScoreCap(applyTrustGateWatchScore(rawWatchScore, matchupConfidence, hasMlbDebut), tbd, hasMlbDebut);
   const watchTier = watchTierOf(gameWatchScore).key as WatchTierKey;
   const limitedForm = awayStarter.formStatus !== "ok" || homeStarter.formStatus !== "ok" || awayStarter.flags?.limitedSample === true || homeStarter.flags?.limitedSample === true;
@@ -181,6 +184,7 @@ async function buildTonightGame(
       coldStartForm,
       joinGapForm,
       mlbDebut: hasMlbDebut,
+      likelyOpener,
     },
   };
 }
@@ -225,6 +229,7 @@ function buildTonightStarter(
   opponent: string,
   opponentMarketName: string,
   date: string,
+  leagueMeanGS: number,
   formByPitcher: Map<string, FormSummary>,
   completenessByPitcher: Map<string, MlbPitcherStartCompleteness>,
   parkContext: DecisionParkContext,
@@ -252,9 +257,10 @@ function buildTonightStarter(
   const form = formByPitcher.get(String(probable.id));
   const completeness = completenessByPitcher.get(String(probable.id)) ?? null;
   const formCompleteness = classifyStarterForm(form, completeness);
+  const likelyOpener = isLikelyOpenerProfile(completeness);
   const opponentSplit = form?.throws ? opponentSplits.get(teamSplitKey(opponent, form.throws === "L" ? "vs-lhp" : "vs-rhp")) ?? null : null;
   if (!form) {
-    const projection = pendingProjection("Insufficient completed-start history");
+    const projection = likelyOpener ? openerProjection(leagueMeanGS) : pendingProjection("Insufficient completed-start history");
     if (formCompleteness.status === "join_gap") logJoinGapStarter({ probable, side, team, opponent, date, completeness: formCompleteness });
     return {
       pitcherId: String(probable.id),
@@ -271,9 +277,14 @@ function buildTonightStarter(
         expected: formCompleteness.expected,
         careerGS: formCompleteness.careerGS,
       },
+      likelyOpener,
       projection,
       marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, date, marketContext),
-      flags: formCompleteness.status === "mlb_debut" ? { mlbDebut: true } : formCompleteness.status === "join_gap" ? { joinGap: true } : undefined,
+      flags: {
+        ...(formCompleteness.status === "mlb_debut" ? { mlbDebut: true } : null),
+        ...(formCompleteness.status === "join_gap" ? { joinGap: true } : null),
+        ...(likelyOpener ? { likelyOpener: true } : null),
+      },
     };
   }
   const formWorkload = form.workload ?? {
@@ -283,7 +294,7 @@ function buildTonightStarter(
     avgIpLast5: null,
   };
   const daysRest = formWorkload.lastStartDate ? daysBetween(formWorkload.lastStartDate, date) : null;
-  const projection = buildStarterProjection(form, daysRest, parkContext, weatherContext, opponentSplit);
+  const projection = likelyOpener ? openerProjection(form.rgs, form) : buildStarterProjection(form, daysRest, parkContext, weatherContext, opponentSplit);
   if (formCompleteness.status === "join_gap") logJoinGapStarter({ probable, side, team, opponent, date, completeness: formCompleteness });
 
   return {
@@ -301,6 +312,7 @@ function buildTonightStarter(
       expected: formCompleteness.expected,
       careerGS: formCompleteness.careerGS,
     },
+    likelyOpener,
     rgs: form.rgs,
     tier: form.tier,
     trend: form.trend,
@@ -323,8 +335,16 @@ function buildTonightStarter(
       ...form.flags,
       ...(formCompleteness.status === "mlb_debut" ? { mlbDebut: true } : null),
       ...(formCompleteness.status === "join_gap" ? { joinGap: true } : null),
+      ...(likelyOpener ? { likelyOpener: true } : null),
     },
   };
+}
+
+function isLikelyOpenerProfile(completeness: MlbPitcherStartCompleteness | null) {
+  if (!completeness || completeness.careerStarts === null) return false;
+  if (completeness.careerStarts > LIKELY_OPENER_MAX_CAREER_STARTS) return false;
+  if (completeness.recentAppearances < LIKELY_OPENER_RECENT_APPEARANCE_FLOOR) return false;
+  return completeness.recentReliefAppearances > completeness.recentStarts;
 }
 
 function matchupConfidenceForStarters(starters: TonightGame["starters"]) {
@@ -419,6 +439,23 @@ function pendingProjection(reason: string): NonNullable<TonightStarter["projecti
       earnedRuns: null,
     },
     notes: [reason],
+  };
+}
+
+function openerProjection(baseGameScorePlus: number, form?: FormSummary): NonNullable<TonightStarter["projection"]> {
+  const projectedIp = 2;
+  const k9 = form?.seasonStats.k9 ?? null;
+
+  return {
+    status: "line-backed",
+    projectedGsPlus: roundProjectedGameScorePlus(clamp(20, 80, baseGameScorePlus - 8)),
+    confidence: "low",
+    line: {
+      inningsPitched: projectedIp,
+      strikeouts: k9 ? round1((k9 * projectedIp) / 9) : null,
+      earnedRuns: null,
+    },
+    notes: ["Likely opener / bullpen game", "Opener innings profile"],
   };
 }
 

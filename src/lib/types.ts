@@ -359,6 +359,7 @@ export type TonightStarter = {
   };
   availability?: PitcherAvailability | null;
   flags?: FormSummary["flags"] & { joinGap?: boolean; mlbDebut?: boolean };
+  likelyOpener?: boolean;
 };
 
 export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
@@ -394,7 +395,7 @@ export type TonightGame = {
     matchup: number;
   };
   matchupConfidence: MatchupConfidence;
-  flags?: { tbd?: boolean; limitedForm?: boolean; coldStartForm?: boolean; joinGapForm?: boolean; mlbDebut?: boolean };
+  flags?: { tbd?: boolean; limitedForm?: boolean; coldStartForm?: boolean; joinGapForm?: boolean; mlbDebut?: boolean; likelyOpener?: boolean };
 };
 
 export type TonightResponse = {

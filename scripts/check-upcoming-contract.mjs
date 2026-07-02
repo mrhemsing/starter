@@ -513,6 +513,7 @@ function assertDay(day, expectedDate, options = {}) {
     assert(typeof game.flags?.coldStartForm === "boolean", `${game.gamePk} flags.coldStartForm must be boolean`);
     assert(typeof game.flags?.joinGapForm === "boolean" || game.flags?.joinGapForm === undefined, `${game.gamePk} flags.joinGapForm must be boolean when present`);
     assert(typeof game.flags?.mlbDebut === "boolean" || game.flags?.mlbDebut === undefined, `${game.gamePk} flags.mlbDebut must be boolean when present`);
+    assert(typeof game.flags?.likelyOpener === "boolean" || game.flags?.likelyOpener === undefined, `${game.gamePk} flags.likelyOpener must be boolean when present`);
     assert(
       game.flags.tbd === game.starters.some((starter) => starter.status === "tbd"),
       `${game.gamePk} flags.tbd should match starter TBD state`,
@@ -532,6 +533,10 @@ function assertDay(day, expectedDate, options = {}) {
     assert(
       Boolean(game.flags.mlbDebut) === game.starters.some((starter) => effectiveStarterFormStatus(starter) === "mlb_debut"),
       `${game.gamePk} flags.mlbDebut should match mlb_debut starter state`,
+    );
+    assert(
+      Boolean(game.flags.likelyOpener) === game.starters.some((starter) => starter.likelyOpener === true),
+      `${game.gamePk} flags.likelyOpener should match likely opener starter state`,
     );
 
     const sortGroup = game.watchSortGroup;
@@ -3120,6 +3125,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     }
     if (game.flags?.joinGapForm === true) articleIdentityAttributes["data-join-gap-form"] = "true";
     if (game.flags?.mlbDebut === true) articleIdentityAttributes["data-mlb-debut"] = "true";
+    if (game.flags?.likelyOpener === true) articleIdentityAttributes["data-likely-opener"] = "true";
     const hasExactArticleIdentity = elementHasAttributes(card.html, "article", articleIdentityAttributes);
     assert(
       hasExactArticleIdentity || (allowLiveDataDrift && watchCardHasSupportedIdentityMetadata(card.html, game.gamePk, summaryId, rankLabel)),
@@ -3460,7 +3466,7 @@ function expectedWatchHookReason(game, rankLabel) {
 }
 
 function expectedWatchHookReasonKey(game, rankLabel) {
-  if (game.flags?.tbd || game.flags?.limitedForm || game.matchupContext?.status === "pending-opponent-splits") {
+  if (game.flags?.tbd || game.flags?.limitedForm || game.flags?.likelyOpener || game.matchupContext?.status === "pending-opponent-splits") {
     return isSlateRankLabel(rankLabel) ? "fallback-slate" : "fallback-group";
   }
   if (game.matchupRankTonight === 1) return "best-matchup";
@@ -3756,6 +3762,13 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
+  if (game.flags?.likelyOpener) {
+    assert(
+      normalizedHtml.includes("Likely opener / bullpen game") || normalizedHtml.includes("Likely opener or bullpen game."),
+      `${route} should explain likely opener treatment on ${game.label}`,
+    );
+  }
+
   if (game.matchupContext?.status === "pending-opponent-splits") {
     assert(
       normalizedHtml.includes("Opponent split context pending."),
@@ -3763,7 +3776,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.joinGapForm || game.matchupContext?.status === "pending-opponent-splits") {
+  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.joinGapForm || game.flags?.likelyOpener || game.matchupContext?.status === "pending-opponent-splits") {
     assert(
       elementHasAttributes(html, "p", {
         "aria-label": watchFlagNoteAriaLabel(game),
@@ -4053,6 +4066,7 @@ function starterHeadshotFormBand(starter) {
 function watchFlagNoteAriaLabel(game) {
   const notes = [];
   if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline");
+  if (game.flags?.likelyOpener) notes.push("Likely opener or bullpen game");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");
@@ -4064,6 +4078,7 @@ function watchFlagNoteKeys(game) {
   if (game.flags?.tbd) keys.push("tbd");
   if (game.flags?.coldStartForm) keys.push("cold-start");
   if (game.flags?.joinGapForm) keys.push("join-gap");
+  if (game.flags?.likelyOpener) keys.push("likely-opener");
   if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
 }

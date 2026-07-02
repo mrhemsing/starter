@@ -277,6 +277,9 @@ export type MlbPitcherStartCompleteness = {
   pitcherMlbId: number;
   seasonStarts: number | null;
   careerStarts: number | null;
+  recentAppearances: number;
+  recentStarts: number;
+  recentReliefAppearances: number;
   mlbDebutDate: string | null;
   providerMlbDebut: boolean;
   source: "live-people-stats";
@@ -722,24 +725,28 @@ export async function fetchMlbPitcherStartCompleteness(pitcherMlbIds: number[], 
 async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season: string, asOfDate: string, options: MlbScheduleClientOptions): Promise<MlbPitcherStartCompleteness | null> {
   const seasonParams = new URLSearchParams({ stats: "season", group: "pitching", season });
   const careerParams = new URLSearchParams({ stats: "career", group: "pitching" });
+  const gameLogParams = new URLSearchParams({ stats: "gameLog", group: "pitching", season });
 
   try {
-    const [personResponse, seasonResponse, careerResponse] = await Promise.all([
+    const [personResponse, seasonResponse, careerResponse, gameLogResponse] = await Promise.all([
       fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
       fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${seasonParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
       fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${careerParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
+      fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${gameLogParams.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS)),
     ]);
 
-    if (!personResponse.ok || !seasonResponse.ok || !careerResponse.ok) return null;
+    if (!personResponse.ok || !seasonResponse.ok || !careerResponse.ok || !gameLogResponse.ok) return null;
 
-    const [personPayload, seasonPayload, careerPayload] = (await Promise.all([
+    const [personPayload, seasonPayload, careerPayload, gameLogPayload] = (await Promise.all([
       personResponse.json(),
       seasonResponse.json(),
       careerResponse.json(),
-    ])) as [MlbPeopleApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse];
+      gameLogResponse.json(),
+    ])) as [MlbPeopleApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse];
     const person = personPayload.people?.[0];
     const seasonStarts = readPitchingGamesStarted(seasonPayload);
     const careerStarts = readPitchingGamesStarted(careerPayload);
+    const recentUsage = readRecentPitchingUsage(gameLogPayload, asOfDate);
     const mlbDebutDate = person?.mlbDebutDate ?? null;
     const providerMlbDebut = Boolean(mlbDebutDate && mlbDebutDate === asOfDate);
 
@@ -747,6 +754,9 @@ async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season:
       pitcherMlbId,
       seasonStarts,
       careerStarts,
+      recentAppearances: recentUsage.appearances,
+      recentStarts: recentUsage.starts,
+      recentReliefAppearances: recentUsage.reliefAppearances,
       mlbDebutDate,
       providerMlbDebut,
       source: "live-people-stats",
@@ -759,6 +769,24 @@ async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season:
 function readPitchingGamesStarted(payload: MlbPersonStatsApiResponse) {
   const value = payload.stats?.[0]?.splits?.[0]?.stat?.gamesStarted;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function readRecentPitchingUsage(payload: MlbPersonStatsApiResponse, asOfDate: string) {
+  const endMs = new Date(`${asOfDate}T00:00:00.000Z`).getTime();
+  const startMs = endMs - 30 * 24 * 60 * 60 * 1000;
+  const splits = payload.stats?.[0]?.splits ?? [];
+  const recentSplits = splits.filter((split) => {
+    if (!split.date) return false;
+    const dateMs = new Date(`${split.date}T00:00:00.000Z`).getTime();
+    return Number.isFinite(dateMs) && dateMs >= startMs && dateMs < endMs;
+  });
+  const starts = recentSplits.filter((split) => split.stat?.gamesStarted === 1).length;
+
+  return {
+    appearances: recentSplits.length,
+    starts,
+    reliefAppearances: Math.max(0, recentSplits.length - starts),
+  };
 }
 
 export async function fetchMlbPitcherAvailabilityStatuses(pitcherMlbIds: number[], options: MlbScheduleClientOptions = {}): Promise<Map<string, PitcherAvailability>> {
