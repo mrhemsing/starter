@@ -42,19 +42,20 @@ export async function getRankedStartsPageData(date: string, today = getHomeSlate
 
 async function buildRankedStartsPageData(date: string, today: string): Promise<RankedStartsPageData> {
   const startedAt = performance.now();
+  const timings: Array<{ name: string; durationMs: number }> = [];
   const { result, diagnostics } = await withCanonicalStoreDiagnostics(async () => {
     const [slateStarts, archiveNavigation] = await Promise.all([
-      getDailySlate({ window: "yesterday", date }),
-      getRankedStartsArchiveNavigation(date, today),
+      measureRankedStartsSpan(timings, "daily-slate", () => getDailySlate({ window: "yesterday", date })),
+      measureRankedStartsSpan(timings, "archive-navigation", () => getRankedStartsArchiveNavigation(date, today)),
     ]);
-    const slateContext = await getRankedSlateContextForStarts(date, today, slateStarts);
+    const slateContext = await measureRankedStartsSpan(timings, "slate-context", () => getRankedSlateContextForStarts(date, today, slateStarts));
     if (!slateContext.completionState || !slateContext.slateProgress) {
       throw new Error(`ranked starts page data missing slate context for ${date}`);
     }
     const completionState = slateContext.completionState;
     const slateProgress = slateContext.slateProgress;
-    const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
-    const highlights = await resolveRankedStartHighlights(starts);
+    const starts = measureRankedStartsSyncSpan(timings, "ranking-assembly", () => slateStarts.filter((start) => start.source?.line !== "fixture"));
+    const highlights = await measureRankedStartsSpan(timings, "highlights", () => resolveRankedStartHighlights(starts));
 
     return {
       slateStarts,
@@ -66,10 +67,13 @@ async function buildRankedStartsPageData(date: string, today: string): Promise<R
     };
   });
   const elapsedMs = Math.round(performance.now() - startedAt);
+  timings.push({ name: "total", durationMs: elapsedMs });
   console.info("[ranked-starts-render]", {
     date,
     today,
     elapsedMs,
+    serverTiming: formatRankedStartsServerTiming(timings),
+    timings,
     canonicalReads: diagnostics.reads,
     canonicalWrites: diagnostics.writes,
     canonicalRowsRead: diagnostics.rowsRead,
@@ -77,6 +81,30 @@ async function buildRankedStartsPageData(date: string, today: string): Promise<R
     starts: result.slateStarts.length,
   });
   return result;
+}
+
+async function measureRankedStartsSpan<T>(timings: Array<{ name: string; durationMs: number }>, name: string, action: () => Promise<T>): Promise<T> {
+  const startedAt = performance.now();
+  try {
+    return await action();
+  } finally {
+    timings.push({ name, durationMs: Math.round(performance.now() - startedAt) });
+  }
+}
+
+function measureRankedStartsSyncSpan<T>(timings: Array<{ name: string; durationMs: number }>, name: string, action: () => T): T {
+  const startedAt = performance.now();
+  try {
+    return action();
+  } finally {
+    timings.push({ name, durationMs: Math.round(performance.now() - startedAt) });
+  }
+}
+
+function formatRankedStartsServerTiming(timings: Array<{ name: string; durationMs: number }>) {
+  return timings
+    .map((timing) => `ranked-${timing.name};dur=${Math.max(0, timing.durationMs)}`)
+    .join(", ");
 }
 
 async function resolveRankedStartHighlights(starts: StartSummary[]) {

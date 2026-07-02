@@ -105,6 +105,13 @@ assert(
     rankedStartsPageService.includes("if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("getRankedSlateCompletionState(date, today)") &&
     rankedStartsPageService.includes("getRankedSlateContextForStarts(date, today, slateStarts)") &&
+    rankedStartsPageService.includes('measureRankedStartsSpan(timings, "daily-slate"') &&
+    rankedStartsPageService.includes('measureRankedStartsSpan(timings, "archive-navigation"') &&
+    rankedStartsPageService.includes('measureRankedStartsSpan(timings, "slate-context"') &&
+    rankedStartsPageService.includes('measureRankedStartsSyncSpan(timings, "ranking-assembly"') &&
+    rankedStartsPageService.includes('measureRankedStartsSpan(timings, "highlights"') &&
+    rankedStartsPageService.includes("serverTiming: formatRankedStartsServerTiming(timings)") &&
+    rankedStartsPageService.includes("timings,") &&
     rankedStartsPageService.includes("withCanonicalStoreDiagnostics") &&
     rankedStartsPageService.includes('console.info("[ranked-starts-render]"') &&
     rankedStartsPageService.includes("canonicalReads: diagnostics.reads") &&
