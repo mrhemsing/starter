@@ -661,10 +661,25 @@ export async function getStartDetail(startId: string) {
     arsenal: [],
     pitchEvents: [],
   };
+  const canonicalRecord = (await readCanonicalStartRecords(schedule.date)).find((record) => record.id === startId);
+  const frozenContext = canonicalRecord?.contextSnapshot
+    ? {
+        ...canonicalRecord.contextSnapshot,
+        parkLabel: canonicalRecord.venue ?? canonicalRecord.contextSnapshot.parkLabel,
+      }
+    : matchedStart.context;
 
   return withStartSummaries({
     ...demoStartDetail,
     ...matchedStart,
+    result: canonicalRecord?.result ?? matchedStart.result,
+    line: canonicalRecord?.line ?? matchedStart.line,
+    gameScorePlus: canonicalRecord?.gameScorePlus ?? matchedStart.gameScorePlus,
+    gameScoreV2: canonicalRecord?.gameScoreV2 ?? matchedStart.gameScoreV2,
+    eventFlags: canonicalRecord?.eventFlags ?? matchedStart.eventFlags,
+    gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown ?? matchedStart.gameScorePlusBreakdown,
+    context: frozenContext,
+    source: canonicalRecord?.source ?? matchedStart.source,
     game: scheduledGameToGameSummary(matchedGame, schedule.date),
     arsenal: pitchDetails.arsenal,
     pitchEvents: pitchDetails.pitchEvents,

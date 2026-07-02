@@ -245,12 +245,15 @@ assert(
 
 assert(
   startService.includes("const canonicalRecord = (await readCanonicalStartRecords(date)).find((record) => record.id === startId);") &&
+    startService.includes("const canonicalRecord = (await readCanonicalStartRecords(schedule.date)).find((record) => record.id === startId);") &&
     startService.includes("const frozenContext = canonicalRecord?.contextSnapshot") &&
     startService.includes("const line = canonicalRecord?.line ?? start.line;") &&
     startService.includes("const gameScorePlus = canonicalRecord?.gameScorePlus ?? scoreCompletedLine(line, frozenContext);") &&
+    startService.includes("gameScorePlus: canonicalRecord?.gameScorePlus ?? matchedStart.gameScorePlus,") &&
     startService.includes("gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown,") &&
+    startService.includes("gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown ?? matchedStart.gameScorePlusBreakdown,") &&
     startService.includes("context: frozenContext,"),
-  "archived start detail pages must overlay canonical frozen score, context snapshot, and Why breakdown instead of recomputing settled GS+ from archive context",
+  "active and archived start detail pages must overlay canonical frozen score, context snapshot, and Why breakdown instead of recomputing settled GS+ from moving context",
 );
 
 assert(
