@@ -8,6 +8,7 @@ function assert(condition, message) {
 }
 
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
+const pitchChart = await readFile("src/components/pitch-chart.tsx", "utf8");
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
@@ -345,6 +346,22 @@ assert(
     startsPage.includes("Pitcher page") &&
     !startsPage.includes('<span aria-hidden="true">-&gt;</span>'),
   "start detail pitcher page CTA must use the shared drawn arrow treatment",
+);
+
+assert(
+  types.includes("export type StartArsenalEventSummary") &&
+    types.includes("arsenalEventSummary?: StartArsenalEventSummary;") &&
+    startService.includes("async function buildStartArsenalEventSummary") &&
+    startService.includes("readArchivedPitcherSeasonProfile(start.pitcherMlbId, season)") &&
+    startService.includes("candidate.date < date && (candidate.pitchEvents?.length ?? 0) > 0") &&
+    startService.includes("const newPitchTypes = [...currentUsage.keys()].filter((type) => !seenPitchTypes.has(type));") &&
+    startService.includes(".filter((shift) => Math.abs(shift.usageDeltaPct) >= 8)") &&
+    startService.includes("arsenalEventSummary,") &&
+    pitchChart.includes("function ArsenalEventPanel") &&
+    pitchChart.includes('data-responsive-check="start-arsenal-events"') &&
+    pitchChart.includes("New {pitchTypes[type].name}") &&
+    pitchChart.includes("Compared with prior archived starts for this pitcher."),
+  "start detail pages must surface archived first-seen pitch and major usage-shift events without calling request-time Savant",
 );
 
 assert(

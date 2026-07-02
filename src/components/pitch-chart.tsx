@@ -440,6 +440,8 @@ export function PitchChart({ start }: { start: StartDetail }) {
               </section>
             ) : null}
 
+            <ArsenalEventPanel eventSummary={start.arsenalEventSummary} />
+
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal breakdown</p>
             <div className="flex flex-col gap-3">
               {mixStats
@@ -473,6 +475,35 @@ export function PitchChart({ start }: { start: StartDetail }) {
 function nonPitchScoreComponents(components: StartApiGameScorePlusBreakdown["components"]) {
   const hiddenKeys = new Set(["whiffDelta", "velocityDelta"]);
   return components.filter((component) => !hiddenKeys.has(component.key));
+}
+
+function ArsenalEventPanel({ eventSummary }: { eventSummary: StartDetail["arsenalEventSummary"] }) {
+  if (!eventSummary || (eventSummary.newPitchTypes.length === 0 && eventSummary.usageShifts.length === 0)) return null;
+
+  return (
+    <section className="mb-6 rounded border border-amber-300/20 bg-amber-300/5 p-4" data-responsive-check="start-arsenal-events">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-200">Arsenal event</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {eventSummary.newPitchTypes.map((type) => (
+          <span key={`new-${type}`} className="inline-flex min-h-7 items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100">
+            New {pitchTypes[type].name}
+          </span>
+        ))}
+        {eventSummary.usageShifts.map((shift) => (
+          <span key={`shift-${shift.type}`} className="inline-flex min-h-7 items-center rounded-full border border-white/10 bg-black/25 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-300">
+            {pitchTypes[shift.type].name} {formatSignedPct(shift.usageDeltaPct)} usage
+          </span>
+        ))}
+      </div>
+      <p className="mt-3 text-xs leading-5 text-zinc-400">
+        Compared with prior archived starts for this pitcher.
+      </p>
+    </section>
+  );
+}
+
+function formatSignedPct(value: number) {
+  return `${value > 0 ? "+" : ""}${value}`;
 }
 
 function matchesCountFilter(pitch: Pick<PitchEvent | StartApiPitchSequenceRow, "count">, filter: CountFilter) {

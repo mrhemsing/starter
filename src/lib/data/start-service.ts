@@ -14,7 +14,7 @@ import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
 import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";
 import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";
-import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, PitchTypeKey, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
+import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, PitchTypeKey, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartArsenalEventSummary, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS = 35;
@@ -680,6 +680,14 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
   const archivedPitchEvents = start.pitchEvents ?? [];
   const pitchEvents = archivedPitchEvents.length > 0 ? archivedPitchEvents : savantPitchDetails?.pitchEvents ?? [];
   const arsenal = archivedPitchEvents.length > 0 ? start.arsenal ?? [] : savantPitchDetails?.arsenal ?? [];
+  const arsenalEventSummary = await buildStartArsenalEventSummary(
+    {
+      pitcherMlbId: start.pitcherMlbId,
+      pitchEvents: archivedPitchEvents,
+    },
+    archive.season,
+    date,
+  );
 
   return withStartSummaries({
     ...demoStartDetail,
@@ -710,6 +718,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     },
     arsenal,
     pitchEvents,
+    arsenalEventSummary,
     pitchDetailSource: archivedPitchEvents.length > 0 ? "archive-gamefeed" : savantPitchDetails ? "statcast-savant" : "fixture",
     archivePitchDetail: {
       status: archivedPitchEvents.length > 0 ? "stored" : "missing-gamefeed-pitches",
@@ -1179,6 +1188,51 @@ function summarizePitchUsage(pitchEvents: PitchEvent[]) {
   const byType = new Map<PitchTypeKey, number>();
   for (const pitch of pitchEvents) byType.set(pitch.type, (byType.get(pitch.type) ?? 0) + 1);
   return new Map([...byType.entries()].map(([type, count]) => [type, Math.max(1, Math.round((count / pitchEvents.length) * 100))]));
+}
+
+async function buildStartArsenalEventSummary(
+  start: { pitcherMlbId: number; pitchEvents?: PitchEvent[] },
+  season: string,
+  date: string,
+): Promise<StartArsenalEventSummary | undefined> {
+  const currentPitchEvents = start.pitchEvents ?? [];
+  if (currentPitchEvents.length === 0) return undefined;
+
+  const profile = await readArchivedPitcherSeasonProfile(start.pitcherMlbId, season);
+  const priorStarts = (profile?.starts ?? [])
+    .filter((candidate) => candidate.date < date && (candidate.pitchEvents?.length ?? 0) > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (priorStarts.length === 0) return undefined;
+
+  const currentUsage = summarizePitchUsage(currentPitchEvents);
+  const previousPitchEvents = priorStarts.at(-1)?.pitchEvents ?? [];
+  const previousUsage = summarizePitchUsage(previousPitchEvents);
+  const seenPitchTypes = new Set<PitchTypeKey>();
+
+  for (const priorStart of priorStarts) {
+    for (const pitch of priorStart.pitchEvents ?? []) {
+      seenPitchTypes.add(pitch.type);
+    }
+  }
+
+  const newPitchTypes = [...currentUsage.keys()].filter((type) => !seenPitchTypes.has(type));
+  const usageShifts = [...currentUsage.entries()]
+    .map(([type, usagePct]) => ({
+      type,
+      usagePct,
+      usageDeltaPct: usagePct - (previousUsage.get(type) ?? 0),
+    }))
+    .filter((shift) => Math.abs(shift.usageDeltaPct) >= 8)
+    .sort((a, b) => Math.abs(b.usageDeltaPct) - Math.abs(a.usageDeltaPct))
+    .slice(0, 3);
+
+  if (newPitchTypes.length === 0 && usageShifts.length === 0) return undefined;
+
+  return {
+    newPitchTypes,
+    usageShifts,
+  };
 }
 
 function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {

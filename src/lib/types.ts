@@ -680,6 +680,15 @@ export type ArchivedStartLineSummary = {
   source?: "mlb-stats-api";
 };
 
+export type StartArsenalEventSummary = {
+  newPitchTypes: PitchTypeKey[];
+  usageShifts: Array<{
+    type: PitchTypeKey;
+    usagePct: number;
+    usageDeltaPct: number;
+  }>;
+};
+
 export type MlbPitcherSeasonProfile = {
   source: "live-people-stats";
   id: string;
@@ -740,6 +749,7 @@ export type StartDetail = StartSummary & {
   pitchDetailSource?: StartPitchDetailSource;
   archivePitchDetail?: ArchivedStartPitchDetailSummary;
   archiveCompletedLine?: ArchivedStartLineSummary;
+  arsenalEventSummary?: StartArsenalEventSummary;
 };
 
 export type FeaturedStartHighlight = {
