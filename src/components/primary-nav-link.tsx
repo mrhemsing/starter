@@ -16,6 +16,7 @@ export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProp
   const router = useRouter();
   const pathname = usePathname();
   const canPrefetch = href !== "/starts";
+  const canClientNavigate = href !== "/starts";
   const [pendingIntent, setPendingIntent] = useState<{ href: string; from: string } | null>(null);
   const pending = pendingIntent?.href === href && pendingIntent.from === pathname;
 
@@ -31,6 +32,10 @@ export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProp
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    if (!canClientNavigate) {
+      dispatchRoutePending();
+      return;
+    }
     event.preventDefault();
     setPendingIntent({ href, from: pathname });
     dispatchRoutePending();
