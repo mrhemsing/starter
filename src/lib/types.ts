@@ -21,6 +21,21 @@ export type PitchEvent = {
   plateX: number;
   plateZ: number;
   result: PitchResultKey;
+  statcast?: PitchEventStatcast;
+};
+
+export type PitchEventStatcast = {
+  zone?: number | null;
+  description?: string | null;
+  launchSpeedMph?: number | null;
+  launchAngleDeg?: number | null;
+  estimatedWoba?: number | null;
+  barrel?: boolean | null;
+  hardHit?: boolean | null;
+  releaseExtensionFt?: number | null;
+  spinRateRpm?: number | null;
+  pfxX?: number | null;
+  pfxZ?: number | null;
 };
 
 export type PitcherSummary = {

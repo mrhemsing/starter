@@ -6,6 +6,21 @@ import type { ArchivedPitcherRecentArsenal, ArchivedPitcherSeasonProfile, Archiv
 const ARCHIVED_PITCH_TYPES = new Set<PitchTypeKey>(["FF", "SI", "SL", "CH", "CU", "FC"]);
 const ARCHIVED_PITCH_RESULTS = new Set<PitchResultKey>(["called_strike", "swinging_strike", "foul", "ball", "hit_into_play"]);
 const ARCHIVE_PLACEHOLDER_TEXT = new Set(["TBA", "TBD"]);
+const ARCHIVED_PITCH_EVENT_KEYS = ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"];
+const ARCHIVED_PITCH_EVENT_OPTIONAL_KEYS = ["statcast"];
+const ARCHIVED_PITCH_EVENT_STATCAST_KEYS = [
+  "zone",
+  "description",
+  "launchSpeedMph",
+  "launchAngleDeg",
+  "estimatedWoba",
+  "barrel",
+  "hardHit",
+  "releaseExtensionFt",
+  "spinRateRpm",
+  "pfxX",
+  "pfxZ",
+];
 
 type ArchivedStart = {
   id?: string;
@@ -347,7 +362,7 @@ function summarizePitchEvents(pitchEvents: PitchEvent[]): ArsenalPitchSummary[] 
 
 function hasValidArchivedPitchEvent(start: ArchivedStart, pitchEvent: PitchEvent, index: number) {
   return (
-    hasExactKeys(pitchEvent, ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"]) &&
+    hasRequiredKeysWithOptional(pitchEvent, ARCHIVED_PITCH_EVENT_KEYS, ARCHIVED_PITCH_EVENT_OPTIONAL_KEYS) &&
     pitchEvent.id === `${start.gamePk}-${start.pitcherMlbId}-${index + 1}` &&
     pitchEvent.gamePk === start.gamePk &&
     pitchEvent.pitchNumber === index + 1 &&
@@ -365,8 +380,41 @@ function hasValidArchivedPitchEvent(start: ArchivedStart, pitchEvent: PitchEvent
     Number.isFinite(pitchEvent.velocityMph) &&
     pitchEvent.velocityMph > 0 &&
     Number.isFinite(pitchEvent.plateX) &&
-    Number.isFinite(pitchEvent.plateZ)
+    Number.isFinite(pitchEvent.plateZ) &&
+    hasValidPitchEventStatcast(pitchEvent.statcast)
   );
+}
+
+function hasValidPitchEventStatcast(statcast: PitchEvent["statcast"]) {
+  if (statcast === undefined) return true;
+  if (!statcast || typeof statcast !== "object") return false;
+  if (!hasRequiredKeysWithOptional(statcast, [], ARCHIVED_PITCH_EVENT_STATCAST_KEYS)) return false;
+
+  return (
+    isOptionalFiniteNumber(statcast.zone) &&
+    isOptionalString(statcast.description) &&
+    isOptionalFiniteNumber(statcast.launchSpeedMph) &&
+    isOptionalFiniteNumber(statcast.launchAngleDeg) &&
+    isOptionalFiniteNumber(statcast.estimatedWoba) &&
+    isOptionalBoolean(statcast.barrel) &&
+    isOptionalBoolean(statcast.hardHit) &&
+    isOptionalFiniteNumber(statcast.releaseExtensionFt) &&
+    isOptionalFiniteNumber(statcast.spinRateRpm) &&
+    isOptionalFiniteNumber(statcast.pfxX) &&
+    isOptionalFiniteNumber(statcast.pfxZ)
+  );
+}
+
+function isOptionalFiniteNumber(value: unknown) {
+  return value === undefined || value === null || Number.isFinite(value);
+}
+
+function isOptionalString(value: unknown) {
+  return value === undefined || value === null || typeof value === "string";
+}
+
+function isOptionalBoolean(value: unknown) {
+  return value === undefined || value === null || typeof value === "boolean";
 }
 
 function hasArchivedPitchEventsInInningOrder(pitchEvents: PitchEvent[]) {

@@ -51,15 +51,15 @@ type PitchEventStatcast = {
 };
 ```
 
-Store these fields as optional JSON-compatible properties on archived pitch events first. Backfill can then enrich rows date by date without breaking existing start detail pages.
+Store these fields as an optional `statcast` object on archived pitch events first. Backfill can then enrich rows date by date without breaking existing start detail pages. Supabase sync also mirrors enriched rows into `toetheslab_statcast_pitch_event_enrichments` so future aggregate jobs can query the enriched pitch fields without scanning every completed-start JSON payload.
 
 ## Ingestion Path
 
-1. Extend `PitchEvent` with optional Statcast fields.
+1. Extend `PitchEvent` with optional `statcast` fields.
 2. Update `baseball-savant-client.ts` to parse the fields from Savant CSV.
 3. Update `archive-mlb-season.mjs` validation to accept optional Statcast fields.
 4. Add a supervised backfill mode that enriches completed starts from Savant by date.
-5. Sync enriched archive rows to Supabase.
+5. Sync enriched archive rows to Supabase as both local archive JSON and queryable `toetheslab_statcast_pitch_event_enrichments` rows.
 6. Only then add product copy for chase, contact, xwOBA, hard-hit, and barrel.
 
 ## Product Order

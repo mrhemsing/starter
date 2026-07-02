@@ -21,6 +21,7 @@ const manifest = await readJson(path.join(archiveRoot, "manifest.json"));
 const dateDir = path.join(archiveRoot, "dates");
 const dateFiles = (await readdir(dateDir)).filter((file) => file.endsWith(".json")).sort();
 const rows = [];
+const statcastRows = [];
 
 for (const file of dateFiles) {
   const archive = await readJson(path.join(dateDir, file));
@@ -49,6 +50,22 @@ for (const file of dateFiles) {
         line: start.line,
         archived_at: archive.archivedAt ?? manifest.archivedAt,
       });
+      for (const pitchEvent of start.pitchEvents ?? []) {
+        if (!pitchEvent.statcast || Object.keys(pitchEvent.statcast).length === 0) continue;
+        statcastRows.push({
+          season: archive.season,
+          date: archive.date,
+          game_pk: start.gamePk,
+          pitcher_mlb_id: start.pitcherMlbId,
+          pitch_number: pitchEvent.pitchNumber,
+          pitch_event_id: pitchEvent.id,
+          pitch_type: pitchEvent.type,
+          result: pitchEvent.result,
+          statcast: pitchEvent.statcast,
+          enriched_at: archive.archivedAt ?? manifest.archivedAt,
+          source: "baseball-savant",
+        });
+      }
     }
   }
 }
@@ -57,6 +74,12 @@ for (let index = 0; index < rows.length; index += batchSize) {
   const batch = rows.slice(index, index + batchSize);
   await upsert("toetheslab_mlb_completed_starts", batch, "date,game_pk,pitcher_mlb_id");
   console.log(`synced starts ${Math.min(index + batch.length, rows.length)} / ${rows.length}`);
+}
+
+for (let index = 0; index < statcastRows.length; index += batchSize) {
+  const batch = statcastRows.slice(index, index + batchSize);
+  await upsert("toetheslab_statcast_pitch_event_enrichments", batch, "date,game_pk,pitcher_mlb_id,pitch_number");
+  console.log(`synced statcast pitch enrichments ${Math.min(index + batch.length, statcastRows.length)} / ${statcastRows.length}`);
 }
 
 await upsert("toetheslab_mlb_archive_manifests", [{
@@ -69,7 +92,7 @@ await upsert("toetheslab_mlb_archive_manifests", [{
   dates: manifest.dates,
 }], "season");
 
-console.log(`supabase archive sync ok: ${season}, dates ${dateFiles.length}, starts ${rows.length}`);
+console.log(`supabase archive sync ok: ${season}, dates ${dateFiles.length}, starts ${rows.length}, statcast pitch enrichments ${statcastRows.length}`);
 
 async function upsert(table, body, conflictColumns) {
   const url = new URL(`/rest/v1/${table}`, supabaseUrl);

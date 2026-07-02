@@ -12,6 +12,21 @@ const archiveRoot = readArg("dir", process.env.THE_BUMP_ARCHIVE_DIR ?? path.join
 const minStarts = Number(readArg("min-starts", process.env.THE_BUMP_ARCHIVE_MIN_STARTS ?? 1));
 const expectedEndDate = readArg("expect-end", process.env.THE_BUMP_ARCHIVE_EXPECT_END_DATE);
 const archivePlaceholderText = new Set(["TBA", "TBD"]);
+const archivedPitchEventKeys = ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"];
+const archivedPitchEventOptionalKeys = ["statcast"];
+const archivedPitchEventStatcastKeys = [
+  "zone",
+  "description",
+  "launchSpeedMph",
+  "launchAngleDeg",
+  "estimatedWoba",
+  "barrel",
+  "hardHit",
+  "releaseExtensionFt",
+  "spinRateRpm",
+  "pfxX",
+  "pfxZ",
+];
 
 function assert(condition, message) {
   if (!condition) {
@@ -355,7 +370,7 @@ function assertArchivedPitchDetailCoverage(starts, pitchEvents, label) {
 }
 
 function assertArchivedPitchEvent(start, pitchEvent, index, label) {
-  assertExactKeys(pitchEvent, ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"], `${label} pitch ${index + 1}`);
+  assertRequiredKeysWithOptional(pitchEvent, archivedPitchEventKeys, archivedPitchEventOptionalKeys, `${label} pitch ${index + 1}`);
   assert(pitchEvent.id === `${start.gamePk}-${start.pitcherMlbId}-${index + 1}`, `${label} pitch ${index + 1} id must match game/pitcher/sequence`);
   assert(pitchEvent.gamePk === start.gamePk, `${label} pitch ${index + 1} gamePk must match start`);
   assert(pitchEvent.pitchNumber === index + 1, `${label} pitch ${index + 1} pitchNumber must be sequential`);
@@ -368,6 +383,36 @@ function assertArchivedPitchEvent(start, pitchEvent, index, label) {
   assert(Number.isFinite(pitchEvent.velocityMph) && pitchEvent.velocityMph > 0, `${label} pitch ${index + 1} velocityMph must be positive`);
   assert(Number.isFinite(pitchEvent.plateX), `${label} pitch ${index + 1} plateX must be finite`);
   assert(Number.isFinite(pitchEvent.plateZ), `${label} pitch ${index + 1} plateZ must be finite`);
+  assertArchivedPitchEventStatcast(pitchEvent.statcast, `${label} pitch ${index + 1}`);
+}
+
+function assertArchivedPitchEventStatcast(statcast, label) {
+  if (statcast === undefined) return;
+  assertRequiredKeysWithOptional(statcast, [], archivedPitchEventStatcastKeys, `${label} statcast`);
+
+  assertOptionalFiniteNumber(statcast.zone, `${label} statcast.zone`);
+  assertOptionalString(statcast.description, `${label} statcast.description`);
+  assertOptionalFiniteNumber(statcast.launchSpeedMph, `${label} statcast.launchSpeedMph`);
+  assertOptionalFiniteNumber(statcast.launchAngleDeg, `${label} statcast.launchAngleDeg`);
+  assertOptionalFiniteNumber(statcast.estimatedWoba, `${label} statcast.estimatedWoba`);
+  assertOptionalBoolean(statcast.barrel, `${label} statcast.barrel`);
+  assertOptionalBoolean(statcast.hardHit, `${label} statcast.hardHit`);
+  assertOptionalFiniteNumber(statcast.releaseExtensionFt, `${label} statcast.releaseExtensionFt`);
+  assertOptionalFiniteNumber(statcast.spinRateRpm, `${label} statcast.spinRateRpm`);
+  assertOptionalFiniteNumber(statcast.pfxX, `${label} statcast.pfxX`);
+  assertOptionalFiniteNumber(statcast.pfxZ, `${label} statcast.pfxZ`);
+}
+
+function assertOptionalFiniteNumber(value, label) {
+  assert(value === undefined || value === null || Number.isFinite(value), `${label} must be finite, null, or omitted`);
+}
+
+function assertOptionalString(value, label) {
+  assert(value === undefined || value === null || typeof value === "string", `${label} must be a string, null, or omitted`);
+}
+
+function assertOptionalBoolean(value, label) {
+  assert(value === undefined || value === null || typeof value === "boolean", `${label} must be boolean, null, or omitted`);
 }
 
 function assertArchivedPitchEventOrder(start, label) {

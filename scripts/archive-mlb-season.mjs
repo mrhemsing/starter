@@ -8,6 +8,21 @@ const CONCURRENCY = Number(process.env.THE_BUMP_ARCHIVE_CONCURRENCY ?? 4);
 const ARCHIVED_PITCH_TYPES = new Set(["FF", "SI", "SL", "CH", "CU", "FC"]);
 const ARCHIVED_PITCH_RESULTS = new Set(["called_strike", "swinging_strike", "foul", "ball", "hit_into_play"]);
 const ARCHIVE_PLACEHOLDER_TEXT = new Set(["TBA", "TBD"]);
+const ARCHIVED_PITCH_EVENT_KEYS = ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"];
+const ARCHIVED_PITCH_EVENT_OPTIONAL_KEYS = ["statcast"];
+const ARCHIVED_PITCH_EVENT_STATCAST_KEYS = [
+  "zone",
+  "description",
+  "launchSpeedMph",
+  "launchAngleDeg",
+  "estimatedWoba",
+  "barrel",
+  "hardHit",
+  "releaseExtensionFt",
+  "spinRateRpm",
+  "pfxX",
+  "pfxZ",
+];
 
 function readArg(name, fallback) {
   const prefix = `--${name}=`;
@@ -315,7 +330,7 @@ function archivedStartRouteId(date, start) {
 }
 
 function assertArchivedPitchEvent(start, pitchEvent, index, label) {
-  assertExactKeys(pitchEvent, ["id", "gamePk", "pitchNumber", "count", "inning", "type", "velocityMph", "plateX", "plateZ", "result"], `${label} pitch ${index + 1}`);
+  assertRequiredKeysWithOptional(pitchEvent, ARCHIVED_PITCH_EVENT_KEYS, ARCHIVED_PITCH_EVENT_OPTIONAL_KEYS, `${label} pitch ${index + 1}`);
   if (pitchEvent.id !== `${start.gamePk}-${start.pitcherMlbId}-${index + 1}`) {
     throw new Error(`${label} pitch ${index + 1} id must match game/pitcher/sequence`);
   }
@@ -349,6 +364,42 @@ function assertArchivedPitchEvent(start, pitchEvent, index, label) {
   }
   if (!Number.isFinite(pitchEvent.plateZ)) {
     throw new Error(`${label} pitch ${index + 1} plateZ must be finite`);
+  }
+  assertArchivedPitchEventStatcast(pitchEvent.statcast, `${label} pitch ${index + 1}`);
+}
+
+function assertArchivedPitchEventStatcast(statcast, label) {
+  if (statcast === undefined) return;
+  assertRequiredKeysWithOptional(statcast, [], ARCHIVED_PITCH_EVENT_STATCAST_KEYS, `${label} statcast`);
+
+  assertOptionalFiniteNumber(statcast.zone, `${label} statcast.zone`);
+  assertOptionalString(statcast.description, `${label} statcast.description`);
+  assertOptionalFiniteNumber(statcast.launchSpeedMph, `${label} statcast.launchSpeedMph`);
+  assertOptionalFiniteNumber(statcast.launchAngleDeg, `${label} statcast.launchAngleDeg`);
+  assertOptionalFiniteNumber(statcast.estimatedWoba, `${label} statcast.estimatedWoba`);
+  assertOptionalBoolean(statcast.barrel, `${label} statcast.barrel`);
+  assertOptionalBoolean(statcast.hardHit, `${label} statcast.hardHit`);
+  assertOptionalFiniteNumber(statcast.releaseExtensionFt, `${label} statcast.releaseExtensionFt`);
+  assertOptionalFiniteNumber(statcast.spinRateRpm, `${label} statcast.spinRateRpm`);
+  assertOptionalFiniteNumber(statcast.pfxX, `${label} statcast.pfxX`);
+  assertOptionalFiniteNumber(statcast.pfxZ, `${label} statcast.pfxZ`);
+}
+
+function assertOptionalFiniteNumber(value, label) {
+  if (value !== undefined && value !== null && !Number.isFinite(value)) {
+    throw new Error(`${label} must be finite, null, or omitted`);
+  }
+}
+
+function assertOptionalString(value, label) {
+  if (value !== undefined && value !== null && typeof value !== "string") {
+    throw new Error(`${label} must be a string, null, or omitted`);
+  }
+}
+
+function assertOptionalBoolean(value, label) {
+  if (value !== undefined && value !== null && typeof value !== "boolean") {
+    throw new Error(`${label} must be boolean, null, or omitted`);
   }
 }
 

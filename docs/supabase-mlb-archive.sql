@@ -41,6 +41,24 @@ create table if not exists public.toetheslab_featured_start_highlights (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.toetheslab_statcast_pitch_event_enrichments (
+  season text not null,
+  date date not null,
+  game_pk bigint not null,
+  pitcher_mlb_id bigint not null,
+  pitch_number integer not null,
+  pitch_event_id text not null,
+  pitch_type text not null,
+  result text not null,
+  statcast jsonb not null,
+  enriched_at timestamptz not null,
+  source text not null default 'baseball-savant',
+  primary key (date, game_pk, pitcher_mlb_id, pitch_number)
+);
+
+create index if not exists toetheslab_statcast_pitch_event_enrichments_pitcher_date_idx
+  on public.toetheslab_statcast_pitch_event_enrichments (pitcher_mlb_id, date);
+
 create table if not exists public.toetheslab_canonical_start_records (
   date date not null,
   start_id text not null,
@@ -82,6 +100,7 @@ create table if not exists public.toetheslab_canonical_pitcher_season_aggregates
 alter table public.toetheslab_mlb_completed_starts enable row level security;
 alter table public.toetheslab_mlb_archive_manifests enable row level security;
 alter table public.toetheslab_featured_start_highlights enable row level security;
+alter table public.toetheslab_statcast_pitch_event_enrichments enable row level security;
 alter table public.toetheslab_canonical_start_records enable row level security;
 alter table public.toetheslab_canonical_slate_states enable row level security;
 alter table public.toetheslab_canonical_pitcher_season_aggregates enable row level security;
@@ -92,6 +111,8 @@ drop policy if exists "toetheslab service manifest read" on public.toetheslab_ml
 drop policy if exists "toetheslab service manifest write" on public.toetheslab_mlb_archive_manifests;
 drop policy if exists "toetheslab service highlight read" on public.toetheslab_featured_start_highlights;
 drop policy if exists "toetheslab service highlight write" on public.toetheslab_featured_start_highlights;
+drop policy if exists "toetheslab service statcast pitch read" on public.toetheslab_statcast_pitch_event_enrichments;
+drop policy if exists "toetheslab service statcast pitch write" on public.toetheslab_statcast_pitch_event_enrichments;
 drop policy if exists "toetheslab service canonical starts read" on public.toetheslab_canonical_start_records;
 drop policy if exists "toetheslab service canonical starts write" on public.toetheslab_canonical_start_records;
 drop policy if exists "toetheslab service canonical slate read" on public.toetheslab_canonical_slate_states;
@@ -123,6 +144,15 @@ create policy "toetheslab service highlight read"
 
 create policy "toetheslab service highlight write"
   on public.toetheslab_featured_start_highlights for all
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy "toetheslab service statcast pitch read"
+  on public.toetheslab_statcast_pitch_event_enrichments for select
+  using (auth.role() = 'service_role');
+
+create policy "toetheslab service statcast pitch write"
+  on public.toetheslab_statcast_pitch_event_enrichments for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 
