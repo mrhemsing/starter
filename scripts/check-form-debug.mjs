@@ -96,6 +96,7 @@ async function fetchJson(url, label) {
 function assertHomePayload(home, calibration, label) {
   assert(home.window === calibration.window, `${label} window must match calibration window`);
   assert(home.totalQualified === calibration.counts.qualified, `${label} qualified count must match calibration`);
+  assert(home.leagueMeanGS >= 49 && home.leagueMeanGS <= 51, `${label} league mean GS+ must stay centered near 50 after archive purges, got ${home.leagueMeanGS}`);
   assert(sumValues(home.bands) === home.totalQualified, `${label} heat band counts must sum to qualified count`);
   for (const [key, count] of Object.entries(calibration.counts.bands)) {
     assert(home.bands[key] === count, `${label} band ${key} count ${home.bands[key]} must match calibration ${count}`);

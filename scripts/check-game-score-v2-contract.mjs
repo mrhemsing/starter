@@ -15,6 +15,44 @@ const slatePage = await readFile("src/app/slate/[window]/[date]/page.tsx", "utf8
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
+const publishedTangoFixtures = [
+  {
+    name: "Jared Jones 2026-07-02",
+    line: { inningsPitched: 4, hits: 2, earnedRuns: 1, runsAllowed: 1, homeRunsAllowed: 0, walks: 2, strikeouts: 6, pitches: 73 },
+    gameScoreV2: 59,
+  },
+  {
+    name: "Alan Rangel 2026-07-02",
+    line: { inningsPitched: 4, hits: 3, earnedRuns: 0, runsAllowed: 0, homeRunsAllowed: 0, walks: 4, strikeouts: 4, pitches: 90 },
+    gameScoreV2: 54,
+  },
+  {
+    name: "Chase Burns 2026-07-02",
+    line: { inningsPitched: 6, hits: 4, earnedRuns: 2, runsAllowed: 2, homeRunsAllowed: 1, walks: 2, strikeouts: 4, pitches: 89 },
+    gameScoreV2: 56,
+  },
+  {
+    name: "Jacob Misiorowski 2026-07-02",
+    line: { inningsPitched: 5, hits: 5, earnedRuns: 1, runsAllowed: 5, homeRunsAllowed: 2, walks: 0, strikeouts: 10, pitches: 82 },
+    gameScoreV2: 43,
+  },
+];
+
+function inningsToOuts(inningsPitched) {
+  return Math.round(inningsPitched * 3);
+}
+
+function calculateFixtureGameScoreV2(line) {
+  return Math.round(40 + inningsToOuts(line.inningsPitched) * 2 + line.strikeouts - line.walks * 2 - line.hits * 2 - line.runsAllowed * 3 - line.homeRunsAllowed * 6);
+}
+
+for (const fixture of publishedTangoFixtures) {
+  assert(
+    calculateFixtureGameScoreV2(fixture.line) === fixture.gameScoreV2,
+    `${fixture.name} must match the external Tango Game Score v2 fixture`,
+  );
+}
+
 assert(
   gameScoreV2.includes("const GAME_SCORE_V2_BASELINE = 40;") &&
     gameScoreV2.includes("const GAME_SCORE_V2_OUT_VALUE = 2;") &&

@@ -1488,7 +1488,7 @@ function median(values: number[]) {
 const GAME_SCORE_PLUS_DISPLAY_MIN = 20;
 const GAME_SCORE_PLUS_DISPLAY_MAX = 80;
 const GAME_SCORE_PLUS_DISPLAY_MIDPOINT = 50;
-const GAME_SCORE_PLUS_RAW_MIDPOINT = 59;
+const GAME_SCORE_PLUS_RAW_MIDPOINT = 54.3;
 const GAME_SCORE_PLUS_RAW_TO_DISPLAY_MULTIPLIER = 0.72;
 const GAME_SCORE_PLUS_GRADE_LABELS: StartApiGameScorePlusGradeLabel[] = ["Elite", "Plus", "Average", "Below average", "Poor"];
 const GAME_SCORE_PLUS_EXPLANATION: SlateApiScoreScale["explanation"] = [
