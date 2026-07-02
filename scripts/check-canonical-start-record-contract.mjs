@@ -66,13 +66,17 @@ assert(
 );
 
 assert(
-    canonicalStore.includes('import os from "node:os";') &&
-    canonicalStore.includes("const CANONICAL_START_STORE_DIR = isReadOnlyServerRuntime()") &&
-    canonicalStore.includes('path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")') &&
+    !canonicalStore.includes('import os from "node:os";') &&
+    canonicalStore.includes('const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");') &&
+    !canonicalStore.includes('"toe-the-slab", "canonical-starts"') &&
     canonicalStore.includes('path.join(process.cwd(), ".data", "canonical-starts")') &&
-    canonicalStore.includes("function isReadOnlyServerRuntime()") &&
+    canonicalStore.includes("function shouldUseVolatileCanonicalStartStore()") &&
+    canonicalStore.includes("process.env.VERCEL_ENV") &&
+    canonicalStore.includes("process.env.AWS_LAMBDA_FUNCTION_NAME") &&
+    canonicalStore.includes("process.env.AWS_EXECUTION_ENV") &&
     canonicalStore.includes("process.cwd().startsWith(\"/var/task\")") &&
     canonicalStore.includes("process.cwd().startsWith(\"/var/runtime\")") &&
+    canonicalStore.includes("process.cwd().startsWith(\"/tmp\")") &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
     canonicalStore.includes("const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();") &&
     canonicalStore.includes("const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();") &&
@@ -85,7 +89,7 @@ assert(
     canonicalStore.includes('code === "EMFILE"') &&
     canonicalStore.includes('code === "ENOENT"') &&
     canonicalStore.includes("error instanceof SyntaxError") &&
-    canonicalStore.includes("if (isReadOnlyServerRuntime()) {") &&
+    canonicalStore.includes("if (shouldUseVolatileCanonicalStartStore()) {") &&
     canonicalStore.includes("volatileCanonicalStartStores.set(store.date, store);") &&
     canonicalStore.includes("async function writeCanonicalStartStoreFile(") &&
     canonicalStore.includes("await fs.rename(tempPath, filePath);") &&

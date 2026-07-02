@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
@@ -11,17 +10,19 @@ type CanonicalStartStoreFile = {
   records: CanonicalStartRecord[];
 };
 
-const CANONICAL_START_STORE_DIR = isReadOnlyServerRuntime()
-  ? path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")
-  : path.join(process.cwd(), ".data", "canonical-starts");
+const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
 const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();
 
-function isReadOnlyServerRuntime() {
+function shouldUseVolatileCanonicalStartStore() {
   return Boolean(process.env.VERCEL)
+    || Boolean(process.env.VERCEL_ENV)
+    || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME)
+    || Boolean(process.env.AWS_EXECUTION_ENV)
     || process.cwd().startsWith("/var/task")
-    || process.cwd().startsWith("/var/runtime");
+    || process.cwd().startsWith("/var/runtime")
+    || process.cwd().startsWith("/tmp");
 }
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
@@ -102,7 +103,7 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 }
 
 async function readCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile> {
-  if (isReadOnlyServerRuntime()) {
+  if (shouldUseVolatileCanonicalStartStore()) {
     return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
   }
 
@@ -121,7 +122,7 @@ async function readCanonicalStartStore(date: string): Promise<CanonicalStartStor
 }
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
-  if (isReadOnlyServerRuntime()) {
+  if (shouldUseVolatileCanonicalStartStore()) {
     volatileCanonicalStartStores.set(store.date, store);
     return;
   }
