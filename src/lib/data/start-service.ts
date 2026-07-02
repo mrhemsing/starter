@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
 import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
+import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
@@ -33,6 +34,7 @@ type CompletedPitchingLineEntry = MlbCompletedPitchingLine & {
 };
 
 const LIVE_STARTER_RESULT_REVALIDATE_SECONDS = 60;
+const DEFAULT_UPCOMING_DATE_REVALIDATE_SECONDS = 60;
 
 const teamColors: Record<string, { color: string; accent: string }> = {
   ARI: { color: "#a71930", accent: "#e3d4ad" },
@@ -237,14 +239,30 @@ function hasRankedSlateActivity(state: RankedSlateCompletionState) {
   return state.liveStarts > 0 || state.completedStarts > 0;
 }
 
+const getCachedDefaultUpcomingDate = unstable_cache(
+  async (today: string) => {
+    const schedule = await fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) });
+    return shouldDefaultUpcomingToTomorrow(schedule) ? addDays(today, 1) : today;
+  },
+  ["default-upcoming-date-v1"],
+  { revalidate: DEFAULT_UPCOMING_DATE_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
+);
+
+export async function getDefaultUpcomingDate(today = getHomeSlateDate()) {
+  return getCachedDefaultUpcomingDate(today);
+}
+
 export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = new Date()) {
   void _now;
 
-  const schedule = await fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) });
+  const [rankedDate, upcomingDate] = await Promise.all([
+    getRankedStartsDefaultDate(today),
+    getDefaultUpcomingDate(today),
+  ]);
 
   return {
-    rankedDate: await getRankedStartsDefaultDate(today),
-    upcomingDate: shouldDefaultUpcomingToTomorrow(schedule) ? addDays(today, 1) : today,
+    rankedDate,
+    upcomingDate,
   };
 }
 

@@ -52,14 +52,27 @@ assert(
 
 assert(
   startService.includes("export function getProbablesFromSchedule") &&
-    tonightService.includes('import { getDefaultSlateDates, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";') &&
     !tonightService.includes("getTodayProbables") &&
     tonightService.includes("const [schedule, leaderboard] = await Promise.all([") &&
     tonightService.includes("const probables = getProbablesFromSchedule(date, schedule);") &&
+    tonightService.includes('import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";') &&
+    tonightService.includes("const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();") &&
     upcomingDatePage.includes("const [upcoming, slateState] = await Promise.all([") &&
+    upcomingIndexPage.includes('import { getDefaultUpcomingDate } from "@/lib/data/start-service";') &&
+    upcomingIndexPage.includes("const date = await getDefaultUpcomingDate();") &&
     upcomingIndexPage.includes("const title = upcomingDayTitle(date);") &&
     !upcomingIndexPage.includes("getTonightMustWatch"),
   "Upcoming page assembly must not duplicate schedule/probable board work in metadata or within Must-Watch assembly",
+);
+
+assert(
+  startService.includes('import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    startService.includes("const getCachedDefaultUpcomingDate = unstable_cache(") &&
+    startService.includes("export async function getDefaultUpcomingDate") &&
+    startService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
+    startService.includes("const [rankedDate, upcomingDate] = await Promise.all([") &&
+    startService.includes("getDefaultUpcomingDate(today),"),
+  "Upcoming default-date lookup must be cached and must not compute Ranked Starts defaults for the bare /upcoming route",
 );
 
 assert(

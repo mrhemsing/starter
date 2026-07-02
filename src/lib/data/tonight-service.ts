@@ -4,7 +4,7 @@ import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
 import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
-import { getDefaultSlateDates, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
+import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
@@ -38,7 +38,7 @@ const getCachedTonightMustWatch = unstable_cache(
 );
 
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
-  const date = normalizeDateKey(options.date) ?? (await getDefaultSlateDates()).upcomingDate;
+  const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();
   const window = options.window ?? MUSTWATCH_CONFIG.windowDefault;
   const cacheKey = `${date}:${window}`;
   const cached = tonightCache.get(cacheKey);
@@ -105,7 +105,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
 }
 
 export async function getUpcomingMustWatch(options: { date?: string; start?: string; days?: number; window?: 3 | 5 | 10 } = {}): Promise<UpcomingResponse> {
-  const start = normalizeDateKey(options.start ?? options.date) ?? (await getDefaultSlateDates()).upcomingDate;
+  const start = normalizeDateKey(options.start ?? options.date) ?? await getDefaultUpcomingDate();
   const days = normalizeUpcomingDays(options.days);
   const dateList = Array.from({ length: days }, (_, index) => addDays(start, index));
   const upcomingDays = await Promise.all(dateList.map((date) => getTonightMustWatch({ date, window: options.window })));

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getDefaultSlateDates } from "@/lib/data/start-service";
+import { getDefaultUpcomingDate } from "@/lib/data/start-service";
 import { noIndexFollow } from "@/lib/seo";
 import { upcomingDayTitle } from "@/lib/upcoming-metadata";
 import UpcomingDatePage from "./[date]/page";
@@ -15,7 +15,7 @@ type UpcomingIndexPageProps = {
 
 export async function generateMetadata({ searchParams }: UpcomingIndexPageProps): Promise<Metadata> {
   const query = await searchParams;
-  const { upcomingDate: date } = await getDefaultSlateDates();
+  const date = await getDefaultUpcomingDate();
   const title = upcomingDayTitle(date);
   const description = `Probable starting pitchers and pitching matchups for ${date}, ranked by watch score, starter form, pairing quality, and matchup context.`;
   const url = "/upcoming";
@@ -45,6 +45,6 @@ export async function generateMetadata({ searchParams }: UpcomingIndexPageProps)
 }
 
 export default async function UpcomingPage({ searchParams }: UpcomingIndexPageProps) {
-  const { upcomingDate } = await getDefaultSlateDates();
+  const upcomingDate = await getDefaultUpcomingDate();
   return <UpcomingDatePage params={Promise.resolve({ date: upcomingDate })} searchParams={searchParams} />;
 }
