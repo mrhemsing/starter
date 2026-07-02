@@ -129,7 +129,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
       <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts} data-live-board-complete="true">
         <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
           <p>{scoreboardSummaryLabel(board)}</p>
-          <p>{updatedLabel}</p>
+          <p suppressHydrationWarning>{updatedLabel}</p>
         </div>
         <SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />
       </section>
@@ -151,7 +151,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
     <section className="space-y-3" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
         <p>{scoreboardSummaryLabel(board)}</p>
-        <p>{updatedLabel}</p>
+        <p suppressHydrationWarning>{updatedLabel}</p>
       </div>
 
       <LiveGemAlertStack alerts={liveGemAlerts} onDismiss={(id) => setLiveGemAlerts((current) => current.filter((alert) => alert.id !== id))} />

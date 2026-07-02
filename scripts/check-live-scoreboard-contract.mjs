@@ -240,7 +240,7 @@ assert(
     !liveComponent.includes('<span> · {board.totalStarts} starters</span>') &&
     !liveComponent.includes("const showTotal = nonzeroBuckets > 1;") &&
     liveComponent.includes('status === "scheduled" ? "Scheduled" : "Warming"') &&
-    countOccurrences(liveComponent, "<p>{updatedLabel}</p>") === 2 &&
+    countOccurrences(liveComponent, "<p suppressHydrationWarning>{updatedLabel}</p>") === 2 &&
     liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&
     liveComponent.includes("formatFirstPitch(row.firstPitch)") &&
     liveComponent.includes("function formatFirstPitch") &&
