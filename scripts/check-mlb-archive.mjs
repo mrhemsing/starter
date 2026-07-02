@@ -58,6 +58,20 @@ function assertExactKeys(value, expectedKeys, label) {
   }
 }
 
+function assertRequiredKeysWithOptional(value, requiredKeys, optionalKeys, label) {
+  if (!value || typeof value !== "object") {
+    throw new Error(`${label} must be an object`);
+  }
+  const keys = Object.keys(value);
+  const allowed = new Set([...requiredKeys, ...optionalKeys]);
+  for (const key of requiredKeys) {
+    assert(keys.includes(key), `${label} missing ${key}`);
+  }
+  for (const key of keys) {
+    assert(allowed.has(key), `${label} contains unexpected ${key}`);
+  }
+}
+
 function assertInningsPitched(value, label) {
   assert(Number.isFinite(value) && value >= 0, `${label} must be a non-negative number`);
   assert(Math.round(value * 10) % 10 <= 2, `${label} must use baseball outs notation`);
@@ -250,10 +264,16 @@ function assertArchivedGameStartLayout(game, label) {
 }
 
 function assertArchivedStartLine(start, label) {
-  assertExactKeys(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"], `${label} line`);
+  assertRequiredKeysWithOptional(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"], ["runsAllowed", "homeRunsAllowed"], `${label} line`);
   assertInningsPitched(start.line?.inningsPitched, `${label} line inningsPitched`);
   assert(Number.isInteger(start.line?.hits) && start.line.hits >= 0, `${label} line hits must be a non-negative integer`);
   assert(Number.isInteger(start.line?.earnedRuns) && start.line.earnedRuns >= 0, `${label} line earnedRuns must be a non-negative integer`);
+  if (start.line.runsAllowed !== undefined) {
+    assert(Number.isInteger(start.line.runsAllowed) && start.line.runsAllowed >= 0, `${label} line runsAllowed must be a non-negative integer`);
+  }
+  if (start.line.homeRunsAllowed !== undefined) {
+    assert(Number.isInteger(start.line.homeRunsAllowed) && start.line.homeRunsAllowed >= 0, `${label} line homeRunsAllowed must be a non-negative integer`);
+  }
   assert(Number.isInteger(start.line?.walks) && start.line.walks >= 0, `${label} line walks must be a non-negative integer`);
   assert(Number.isInteger(start.line?.strikeouts) && start.line.strikeouts >= 0, `${label} line strikeouts must be a non-negative integer`);
   assert(start.line.strikeouts <= inningsToOuts(start.line.inningsPitched), `${label} line strikeouts cannot exceed recorded outs`);

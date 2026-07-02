@@ -266,6 +266,8 @@ type MlbGameFeedPitchingStats = {
   inningsPitched?: string;
   hits?: number;
   earnedRuns?: number;
+  runs?: number;
+  homeRuns?: number;
   baseOnBalls?: number;
   strikeOuts?: number;
   numberOfPitches?: number;
@@ -1536,6 +1538,8 @@ function readStartLine(stats: MlbGameFeedPitchingStats): StartLine | undefined {
     inningsPitched,
     hits: stats.hits ?? 0,
     earnedRuns: stats.earnedRuns ?? 0,
+    ...(typeof stats.runs === "number" ? { runsAllowed: stats.runs } : {}),
+    ...(typeof stats.homeRuns === "number" ? { homeRunsAllowed: stats.homeRuns } : {}),
     walks: stats.baseOnBalls ?? 0,
     strikeouts: stats.strikeOuts ?? 0,
     pitches: stats.numberOfPitches ?? stats.pitchesThrown ?? 0,

@@ -72,7 +72,7 @@ export default async function MethodologyPage() {
             Game Score v2 is the familiar box-score benchmark. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, runs, and home runs. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. The current canonical line does not yet carry total runs or home runs, so GSv2 falls back to earned runs and zero home runs until those official inputs are added.
+            The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. GSv2 uses official total runs and home runs when the gamefeed carries them; older line records fall back to earned runs and zero home runs.
           </p>
           <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
             <FormulaItem label="GSv2 baseline" value="40" />

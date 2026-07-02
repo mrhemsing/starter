@@ -14,8 +14,8 @@ export type CanonicalStartAuditEntry = {
 
 export type CanonicalStartLineDiff = {
   field: keyof StartLine | "gameScorePlus";
-  before: number;
-  after: number;
+  before: number | undefined;
+  after: number | undefined;
 };
 
 export type CanonicalStartRecord = {
@@ -179,9 +179,10 @@ export function deriveStartEventFlags(result: StartSummary["result"], gameScoreP
 
 export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialLine: StartLine, officialGameScorePlus: number): CanonicalStartLineDiff[] {
   const diffs: CanonicalStartLineDiff[] = [];
-  const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"];
+  const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "runsAllowed", "homeRunsAllowed", "walks", "strikeouts", "pitches"];
 
   for (const field of fields) {
+    if (record.line[field] === undefined && officialLine[field] === undefined) continue;
     if (record.line[field] !== officialLine[field]) {
       diffs.push({ field, before: record.line[field], after: officialLine[field] });
     }

@@ -48,9 +48,10 @@ assert(
     canonicalRecord.includes('event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled"') &&
     canonicalRecord.includes("...(diffs.length > 0 ? { diffs } : {})") &&
     canonicalRecord.includes("export function diffCanonicalStartRecord(") &&
-    canonicalRecord.includes('const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"];') &&
+    canonicalRecord.includes('const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "runsAllowed", "homeRunsAllowed", "walks", "strikeouts", "pitches"];') &&
+    canonicalRecord.includes("if (record.line[field] === undefined && officialLine[field] === undefined) continue;") &&
     canonicalRecord.includes('diffs.push({ field: "gameScorePlus", before: record.gameScorePlus, after: officialGameScorePlus });'),
-  "canonical reconciliation must diff final line and GS+ corrections with explicit audit entries",
+  "canonical reconciliation must diff final line, optional GSv2 inputs, and GS+ corrections with explicit audit entries",
 );
 
 assert(

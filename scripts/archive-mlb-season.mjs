@@ -57,6 +57,24 @@ function assertExactKeys(value, expectedKeys, label) {
   }
 }
 
+function assertRequiredKeysWithOptional(value, requiredKeys, optionalKeys, label) {
+  if (!value || typeof value !== "object") {
+    throw new Error(`${label} must be an object`);
+  }
+  const keys = Object.keys(value);
+  const allowed = new Set([...requiredKeys, ...optionalKeys]);
+  for (const key of requiredKeys) {
+    if (!keys.includes(key)) {
+      throw new Error(`${label} missing ${key}`);
+    }
+  }
+  for (const key of keys) {
+    if (!allowed.has(key)) {
+      throw new Error(`${label} contains unexpected ${key}`);
+    }
+  }
+}
+
 function assertInningsPitched(value, label) {
   if (!Number.isFinite(value) || value < 0) {
     throw new Error(`${label} must be a non-negative number`);
@@ -268,10 +286,16 @@ function assertArchivedGameStartLayout(game, label) {
 }
 
 function assertArchivedStartLine(start, label) {
-  assertExactKeys(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"], `${label} line`);
+  assertRequiredKeysWithOptional(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"], ["runsAllowed", "homeRunsAllowed"], `${label} line`);
   assertInningsPitched(start.line?.inningsPitched, `${label} line inningsPitched`);
   assertNonNegativeInteger(start.line?.hits, `${label} line hits`);
   assertNonNegativeInteger(start.line?.earnedRuns, `${label} line earnedRuns`);
+  if (start.line.runsAllowed !== undefined) {
+    assertNonNegativeInteger(start.line.runsAllowed, `${label} line runsAllowed`);
+  }
+  if (start.line.homeRunsAllowed !== undefined) {
+    assertNonNegativeInteger(start.line.homeRunsAllowed, `${label} line homeRunsAllowed`);
+  }
   assertNonNegativeInteger(start.line?.walks, `${label} line walks`);
   assertNonNegativeInteger(start.line?.strikeouts, `${label} line strikeouts`);
   if (start.line.strikeouts > inningsToOuts(start.line.inningsPitched)) {
@@ -625,6 +649,8 @@ function readStartLine(stats) {
     inningsPitched,
     hits: stats.hits ?? 0,
     earnedRuns: stats.earnedRuns ?? 0,
+    ...(Number.isInteger(stats.runs) ? { runsAllowed: stats.runs } : {}),
+    ...(Number.isInteger(stats.homeRuns) ? { homeRunsAllowed: stats.homeRuns } : {}),
     walks: stats.baseOnBalls ?? 0,
     strikeouts: stats.strikeOuts ?? 0,
     pitches: stats.numberOfPitches ?? stats.pitchesThrown ?? 0,

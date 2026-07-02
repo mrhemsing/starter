@@ -137,6 +137,13 @@ function hasExactKeys(value: unknown, expectedKeys: string[]) {
   return keys.length === expectedKeys.length && expectedKeys.every((key) => keys.includes(key));
 }
 
+function hasRequiredKeysWithOptional(value: unknown, requiredKeys: string[], optionalKeys: string[]) {
+  if (!value || typeof value !== "object") return false;
+  const keys = Object.keys(value);
+  const allowed = new Set([...requiredKeys, ...optionalKeys]);
+  return requiredKeys.every((key) => keys.includes(key)) && keys.every((key) => allowed.has(key));
+}
+
 function isSeasonDate(value: unknown, season: string) {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && value.startsWith(`${season}-`);
 }
@@ -368,15 +375,19 @@ function hasArchivedPitchEventsInInningOrder(pitchEvents: PitchEvent[]) {
 
 function hasValidArchivedStartLine(start: ArchivedStart) {
   return (
-    hasExactKeys(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"]) &&
+    hasRequiredKeysWithOptional(start.line, ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"], ["runsAllowed", "homeRunsAllowed"]) &&
     isValidInningsPitched(start.line?.inningsPitched) &&
     Number.isInteger(start.line?.hits) &&
     Number.isInteger(start.line?.earnedRuns) &&
+    (start.line.runsAllowed === undefined || Number.isInteger(start.line.runsAllowed)) &&
+    (start.line.homeRunsAllowed === undefined || Number.isInteger(start.line.homeRunsAllowed)) &&
     Number.isInteger(start.line?.walks) &&
     Number.isInteger(start.line?.strikeouts) &&
     Number.isInteger(start.line?.pitches) &&
     start.line.hits >= 0 &&
     start.line.earnedRuns >= 0 &&
+    (start.line.runsAllowed === undefined || start.line.runsAllowed >= 0) &&
+    (start.line.homeRunsAllowed === undefined || start.line.homeRunsAllowed >= 0) &&
     start.line.walks >= 0 &&
     start.line.strikeouts >= 0 &&
     start.line.strikeouts <= inningsToOuts(start.line.inningsPitched) &&

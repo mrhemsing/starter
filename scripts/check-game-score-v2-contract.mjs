@@ -10,6 +10,7 @@ const gameScoreV2 = await readFile("src/lib/game-score-v2.ts", "utf8");
 const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf8");
 const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const slatePage = await readFile("src/app/slate/[window]/[date]/page.tsx", "utf8");
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
@@ -30,6 +31,8 @@ assert(
 
 assert(
   types.includes("gameScoreV2?: number;") &&
+    types.includes("runsAllowed?: number;") &&
+    types.includes("homeRunsAllowed?: number;") &&
     types.includes('Pick<StartSummary, "id" | "date" | "opponent" | "result" | "line" | "gameScorePlus" | "gameScoreV2">') &&
     canonicalRecord.includes('import { calculateGameScoreV2 } from "@/lib/game-score-v2";') &&
     canonicalRecord.includes("gameScoreV2: number;") &&
@@ -37,6 +40,14 @@ assert(
     canonicalRecord.includes("gameScoreV2: record.gameScoreV2,") &&
     canonicalRecord.includes("const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);"),
   "canonical start records and shared response types must carry stored Game Score v2",
+);
+
+assert(
+  mlbStatsClient.includes("runs?: number;") &&
+    mlbStatsClient.includes("homeRuns?: number;") &&
+    mlbStatsClient.includes('...(typeof stats.runs === "number" ? { runsAllowed: stats.runs } : {})') &&
+    mlbStatsClient.includes('...(typeof stats.homeRuns === "number" ? { homeRunsAllowed: stats.homeRuns } : {})'),
+  "MLB gamefeed lines must carry official total runs and home runs into canonical StartLine when present",
 );
 
 assert(
@@ -62,12 +73,13 @@ assert(
 );
 
 assert(
-  methodologyPage.includes("Game Score v2 is the familiar box-score benchmark.") &&
+    methodologyPage.includes("Game Score v2 is the familiar box-score benchmark.") &&
     methodologyPage.includes("Toe the Slab stores GSv2 on the same canonical start record as GS+") &&
     methodologyPage.includes("The adjustment label is shown as GS+ minus GSv2.") &&
-    methodologyPage.includes("GSv2 falls back to earned runs and zero home runs until those official inputs are added.") &&
+    methodologyPage.includes("GSv2 uses official total runs and home runs when the gamefeed carries them") &&
+    methodologyPage.includes("older line records fall back to earned runs and zero home runs") &&
     methodologyPage.includes('<FormulaItem label="Adjustment" value="GS+ minus GSv2" />'),
-  "methodology must explain GSv2, the GS+ adjustment label, and current canonical input fallbacks",
+  "methodology must explain GSv2, the GS+ adjustment label, official input usage, and legacy fallbacks",
 );
 
 console.log("game score v2 contract ok: GSv2 is computed once and carried through canonical start records");

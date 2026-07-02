@@ -52,6 +52,8 @@ export type StartLine = {
   inningsPitched: number;
   hits: number;
   earnedRuns: number;
+  runsAllowed?: number;
+  homeRunsAllowed?: number;
   walks: number;
   strikeouts: number;
   pitches: number;
