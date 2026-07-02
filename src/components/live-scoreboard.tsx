@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Headshot } from "@/components/headshot";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
+import { formatGameScorePlus } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
 
 type LiveScoreboardProps = {
@@ -404,8 +405,7 @@ function formatLine(row: LiveScoreboardRow) {
 }
 
 function formatScore(score: number | null) {
-  if (score === null) return "--";
-  return Number.isInteger(score) ? String(score) : score.toFixed(1);
+  return formatGameScorePlus(score);
 }
 
 function projectionLabel(row: LiveScoreboardRow) {

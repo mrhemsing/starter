@@ -1,6 +1,7 @@
 import type { TonightGame, TonightResponse, UpcomingResponse } from "@/lib/types";
 import { watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { formatWatchScore } from "@/lib/score-display";
 import { absoluteUrl } from "@/lib/seo";
 
 type StarterWithIdentity = TonightGame["starters"][number] & { name: string; pitcherId: string };
@@ -11,7 +12,7 @@ export function upcomingDayTitle(date: string) {
 
 export function upcomingDayDescription(upcoming: Pick<TonightResponse, "date" | "scheduledGames" | "games">) {
   const topGame = upcoming.games[0];
-  const lead = topGame ? `Top watch: ${topGame.label} with a ${topGame.gameWatchScore.toFixed(1)} watch score.` : "Probable starter watch list will update as starters are named.";
+  const lead = topGame ? `Top watch: ${topGame.label} with a ${formatWatchScore(topGame.gameWatchScore)} watch score.` : "Probable starter watch list will update as starters are named.";
   return `Probable starting pitchers and pitching matchups for ${formatUpcomingDate(upcoming.date)}, ranked by watch score: top arms, pairing quality, and matchup context. ${lead}`;
 }
 
@@ -25,7 +26,7 @@ export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range"
     (best, game) => (!best || game.gameWatchScore > best.gameWatchScore ? game : best),
     null,
   );
-  const lead = topGame ? `Top watch: ${topGame.label} at ${topGame.gameWatchScore.toFixed(1)}.` : "Updates as probable starters are named.";
+  const lead = topGame ? `Top watch: ${topGame.label} at ${formatWatchScore(topGame.gameWatchScore)}.` : "Updates as probable starters are named.";
   return `${games.length} upcoming MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
 }
 

@@ -5,6 +5,7 @@ import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type
 import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
+import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
 
 type TonightOptions = {
@@ -22,8 +23,7 @@ export const TONIGHT_REVALIDATE_SECONDS = 60;
 export const UPCOMING_REVALIDATE_SECONDS = 60;
 const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
-const WATCH_SCORE_RANGE = { min: 0, max: 100 };
-const WATCH_SCORE_PRECISION = 1;
+const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
 const tonightCache = new Map<string, CachedTonight>();
 
@@ -133,10 +133,10 @@ async function buildTonightGame(
   const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
   const starterScores = [starterWatchValue(awayStarter, leagueMeanGS), starterWatchValue(homeStarter, leagueMeanGS)];
   const normMatchup = normalizeMatchupScore(matchupScore);
-  const topArm = round1(Math.max(starterScores[0], starterScores[1]));
-  const pairing = round1(mean(starterScores) * (tbd ? MUSTWATCH_CONFIG.tbdStarter.pairingMultiplier : 1));
-  const matchupComponent = round1(normMatchup);
-  const rawWatchScore = status === "ppd" ? 0 : round1(calculateGameWatchScore(topArm, pairing, matchupComponent));
+  const topArm = roundWatchScore(Math.max(starterScores[0], starterScores[1]));
+  const pairing = roundWatchScore(mean(starterScores) * (tbd ? MUSTWATCH_CONFIG.tbdStarter.pairingMultiplier : 1));
+  const matchupComponent = roundWatchScore(normMatchup);
+  const rawWatchScore = status === "ppd" ? 0 : roundWatchScore(calculateGameWatchScore(topArm, pairing, matchupComponent));
   const matchupConfidence = matchupConfidenceForStarters([awayStarter, homeStarter]);
   const hasMlbDebut = awayStarter.formStatus === "mlb_debut" || homeStarter.formStatus === "mlb_debut";
   const gameWatchScore = applyTbdWatchScoreCap(applyTrustGateWatchScore(rawWatchScore, matchupConfidence, hasMlbDebut), tbd, hasMlbDebut);
@@ -354,7 +354,7 @@ function maxWatchScoreForTier(tierKey: WatchTierKey) {
   const tierIndex = tiers.findIndex((tier) => tier.key === tierKey);
   if (tierIndex <= 0) return WATCH_SCORE_RANGE.max;
   const higherTier = tiers[tierIndex - 1];
-  return round1(higherTier.min - 1 / 10 ** WATCH_SCORE_PRECISION);
+  return roundWatchScore(higherTier.min - 1 / 10 ** WATCH_SCORE_PRECISION);
 }
 
 function classifyStarterForm(
@@ -443,7 +443,7 @@ function buildStarterProjection(
 
   return {
     status: "line-backed",
-    projectedGsPlus: round1(clamp(20, 80, projectedGsPlus)),
+    projectedGsPlus: roundProjectedGameScorePlus(clamp(20, 80, projectedGsPlus)),
     confidence: form.flags?.limitedSample ? "low" : form.windowCount >= 5 && form.seasonStats.inningsPitched >= 40 ? "high" : "medium",
     line: {
       inningsPitched: round1(projectedIp),
@@ -582,7 +582,7 @@ function mean(values: number[]) {
 }
 
 function round1(value: number) {
-  return Math.round(value * 10) / 10;
+  return roundToScorePrecision(value, 1);
 }
 
 function clamp(min: number, max: number, value: number) {
