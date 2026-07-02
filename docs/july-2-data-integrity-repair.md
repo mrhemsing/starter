@@ -48,3 +48,12 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Production Heat Check Season probe: no `GBR`, `SAC`, or John Michael Bertrand.
 - July 2 archive remediation: local date shard removed; Supabase `toetheslab_mlb_completed_starts` rows deleted `4 -> 0`; Supabase July 2 slate-state row deleted `1 -> 0`; archive manifest rebuilt through `2026-07-01`.
 - Production live-board probe after remediation: July 2 reports 18 total starts, 6 final starts, 12 scheduled starts, and no slate-final panel.
+
+## Pipeline follow-up
+
+- Archive gap triage on July 2 confirmed Supabase archive status was current: `lastDate=2026-07-01`, `lagDays=0`, `stale=false`, `starts=2612`.
+- The homepage Server Component error did not reproduce on a direct production request during follow-up; `/` returned 200 with the live ticker present.
+- `warm-live-starts` now checks archive freshness before warming. If the completed-start archive is stale, it logs `archive-gap` and defers to the archive job instead of trying to repair data from the render/warm path.
+- `warm-live-starts` stores completed batch keys in runtime state so a later invocation resumes revalidation and warming work instead of restarting every batch.
+- Probable-starter confidence transition logging now stores last-known confidence by `(gamePk, side)`, backfills without emitting a full-league burst, suppresses repeated unchanged transitions, and skips games outside the upcoming horizon.
+- Runtime state is documented in `docs/supabase-mlb-archive.sql` as `toetheslab_runtime_state`. Applying that table from this runner was blocked because the direct Supabase Postgres host resolved only to IPv6 here; the REST probe returned 404 until the table is applied in the production database.

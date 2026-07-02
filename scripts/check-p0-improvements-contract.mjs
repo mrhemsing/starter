@@ -72,18 +72,27 @@ assert(
 );
 
 assert(
+  mlbStatsClient.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
   mlbStatsClient.includes('const probableConfidenceBySlot = new Map<string, MlbProbablePitcher["confidence"] | "TBD">();') &&
+    mlbStatsClient.includes("const PROBABLE_CONFIDENCE_TRANSITION_HORIZON_DAYS = 7;") &&
+    mlbStatsClient.includes("type ProbableConfidenceState = {") &&
     mlbStatsClient.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
-    mlbStatsClient.includes("logProbableConfidenceTransitions(hydratedSchedule);") &&
-    mlbStatsClient.includes("function logProbableConfidenceTransitions(schedule: MlbSchedule)") &&
+    mlbStatsClient.includes("await logProbableConfidenceTransitions(hydratedSchedule);") &&
+    mlbStatsClient.includes("async function logProbableConfidenceTransitions(schedule: MlbSchedule)") &&
     mlbStatsClient.includes("if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return;") &&
-    mlbStatsClient.includes("const previousConfidence = probableConfidenceBySlot.get(key);") &&
+    mlbStatsClient.includes("if (isBeyondProbableConfidenceTransitionHorizon(game.gameDate)) continue;") &&
+    mlbStatsClient.includes("const previousConfidence = probableConfidenceBySlot.get(key) ?? (await readProbableConfidenceState(stateKey))?.confidence;") &&
     mlbStatsClient.includes("probableConfidenceBySlot.set(key, nextConfidence);") &&
+    mlbStatsClient.includes("await writeProbableConfidenceState(stateKey, nextConfidence);") &&
     mlbStatsClient.includes('console.info("probable starter confidence transition", {') &&
     mlbStatsClient.includes("from: previousConfidence,") &&
     mlbStatsClient.includes("to: nextConfidence,") &&
-    mlbStatsClient.includes('source: slot.probable?.source ?? "none",'),
-  "probable starter confidence transitions must be logged with slot, source, and before/after state",
+    mlbStatsClient.includes('source: slot.probable?.source ?? "none",') &&
+    mlbStatsClient.includes("function probableConfidenceStateKey(gamePk: number, side:") &&
+    mlbStatsClient.includes("async function readProbableConfidenceState(key: string)") &&
+    mlbStatsClient.includes("async function writeProbableConfidenceState(key: string, confidence: ProbableConfidenceState") &&
+    mlbStatsClient.includes("function isBeyondProbableConfidenceTransitionHorizon(gameDate: string)"),
+  "probable starter confidence transitions must persist state, suppress repeated logs, and skip far-future probables",
 );
 
 assert(

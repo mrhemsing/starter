@@ -14,6 +14,7 @@ const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts",
 const supabaseSchema = await readFile("docs/supabase-mlb-archive.sql", "utf8");
 const warmLiveStartsCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
 const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
+const runtimeStateStore = await readFile("src/lib/data/runtime-state-store.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
@@ -143,11 +144,14 @@ assert(
     supabaseSchema.includes("record jsonb not null") &&
     supabaseSchema.includes("create table if not exists public.toetheslab_canonical_slate_states") &&
     supabaseSchema.includes("create table if not exists public.toetheslab_canonical_pitcher_season_aggregates") &&
+    supabaseSchema.includes("create table if not exists public.toetheslab_runtime_state") &&
     supabaseSchema.includes("toetheslab service canonical starts read") &&
     supabaseSchema.includes("toetheslab service canonical starts write") &&
     supabaseSchema.includes("toetheslab service canonical slate read") &&
-    supabaseSchema.includes("toetheslab service canonical aggregates read"),
-  "Supabase schema must document durable canonical start, slate-state, and pitcher season aggregate storage",
+    supabaseSchema.includes("toetheslab service canonical aggregates read") &&
+    supabaseSchema.includes("toetheslab service runtime state read") &&
+    supabaseSchema.includes("toetheslab service runtime state write"),
+  "Supabase schema must document durable canonical start, slate-state, pitcher aggregate, and runtime state storage",
 );
 
 assert(
@@ -155,20 +159,36 @@ assert(
     warmLiveStartsCron.includes('import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";') &&
     warmLiveStartsCron.includes('const date = !process.env.VERCEL_ENV ? new URL(request.url).searchParams.get("date") ?? undefined : undefined;') &&
     warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
+    warmLiveStartsJob.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
+    warmLiveStartsJob.includes('import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";') &&
     warmLiveStartsJob.includes("export const WARM_LIVE_STARTS_BATCH_SIZE = 8;") &&
     warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
+    warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap";') &&
+    warmLiveStartsJob.includes("getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) })") &&
+    warmLiveStartsJob.includes('console.error("warm-live-starts archive gap detected; deferring to archive job"') &&
     warmLiveStartsJob.includes('console.log("warm-live-starts start"') &&
+    warmLiveStartsJob.includes("const progressKey = warmLiveStartsProgressKey(date, completion.finalGames, completedStarts.length);") &&
+    warmLiveStartsJob.includes("const progress = await readWarmLiveStartsProgress(progressKey);") &&
+    warmLiveStartsJob.includes('await markWarmStepComplete(progressKey, progress, "revalidate-tags");') &&
+    warmLiveStartsJob.includes("await markWarmStepComplete(progressKey, progress, batchKey);") &&
     warmLiveStartsJob.includes('console.log("warm-live-starts batch warmed form leaderboards"') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts batch revalidated pitcher forms"') &&
     warmLiveStartsJob.includes('console.log("warm-live-starts team form warming deferred"') &&
     warmLiveStartsJob.includes('console.log("warm-live-starts end"') &&
     warmLiveStartsJob.includes("for (const batch of batchItems(slateTeams, WARM_LIVE_STARTS_BATCH_SIZE))") &&
     warmLiveStartsJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+    warmLiveStartsJob.includes("async function readWarmLiveStartsProgress(key: string): Promise<WarmLiveStartsProgress>") &&
+    warmLiveStartsJob.includes("function warmLiveStartsProgressKey(date: string, finalGames: number, completedStarts: number)") &&
     warmLiveStartsJob.includes("function shouldWarmTeamFormOnCron()") &&
     warmLiveStartsJob.includes("if (!process.env.VERCEL_ENV && dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
+    runtimeStateStore.includes('const RUNTIME_STATE_TABLE = "toetheslab_runtime_state";') &&
+    runtimeStateStore.includes("export async function readRuntimeState") &&
+    runtimeStateStore.includes("export async function writeRuntimeState") &&
+    runtimeStateStore.includes("prefer: \"resolution=merge-duplicates\"") &&
     formService.includes("includeGlobal?: boolean") &&
     formService.includes("const includeGlobal = options.includeGlobal ?? true;") &&
     formService.includes("if (includeGlobal) {"),
-  "warm-live-starts cron must have an explicit duration budget, batched/idempotent warm work, and progress logs",
+  "warm-live-starts cron must have an explicit duration budget, durable progress, archive-gap deferral, batched/idempotent warm work, and progress logs",
 );
 
 assert(

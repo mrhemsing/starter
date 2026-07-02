@@ -128,6 +128,12 @@ create table if not exists public.toetheslab_canonical_pitcher_season_aggregates
   primary key (season, pitcher_mlb_id)
 );
 
+create table if not exists public.toetheslab_runtime_state (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 alter table public.toetheslab_mlb_completed_starts enable row level security;
 alter table public.toetheslab_mlb_archive_manifests enable row level security;
 alter table public.toetheslab_pitcher_archive_arsenals enable row level security;
@@ -136,6 +142,7 @@ alter table public.toetheslab_statcast_pitch_event_enrichments enable row level 
 alter table public.toetheslab_canonical_start_records enable row level security;
 alter table public.toetheslab_canonical_slate_states enable row level security;
 alter table public.toetheslab_canonical_pitcher_season_aggregates enable row level security;
+alter table public.toetheslab_runtime_state enable row level security;
 
 drop policy if exists "toetheslab service archive read" on public.toetheslab_mlb_completed_starts;
 drop policy if exists "toetheslab service archive write" on public.toetheslab_mlb_completed_starts;
@@ -153,6 +160,8 @@ drop policy if exists "toetheslab service canonical slate read" on public.toethe
 drop policy if exists "toetheslab service canonical slate write" on public.toetheslab_canonical_slate_states;
 drop policy if exists "toetheslab service canonical aggregates read" on public.toetheslab_canonical_pitcher_season_aggregates;
 drop policy if exists "toetheslab service canonical aggregates write" on public.toetheslab_canonical_pitcher_season_aggregates;
+drop policy if exists "toetheslab service runtime state read" on public.toetheslab_runtime_state;
+drop policy if exists "toetheslab service runtime state write" on public.toetheslab_runtime_state;
 
 create policy "toetheslab service archive read"
   on public.toetheslab_mlb_completed_starts for select
@@ -223,5 +232,14 @@ create policy "toetheslab service canonical aggregates read"
 
 create policy "toetheslab service canonical aggregates write"
   on public.toetheslab_canonical_pitcher_season_aggregates for all
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy "toetheslab service runtime state read"
+  on public.toetheslab_runtime_state for select
+  using (auth.role() = 'service_role');
+
+create policy "toetheslab service runtime state write"
+  on public.toetheslab_runtime_state for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
