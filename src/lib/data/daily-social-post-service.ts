@@ -2,6 +2,7 @@ import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getStartDetail } from "@/lib/data/start-service";
 import { formatArsenalEventHeadline, formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { formatStartLine } from "@/lib/format";
+import { formatPitchEventQualityHeadline, formatPitchEventQualitySentence, summarizePitchEventQuality } from "@/lib/pitch-event-quality";
 import { absoluteUrl, formatLongDate } from "@/lib/seo";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { StartLine, StartSummary } from "@/lib/types";
@@ -23,6 +24,8 @@ export type StartOfDay = {
   gsPlus: number;
   arsenalEventHeadline?: string | null;
   arsenalEventSentence?: string | null;
+  pitchQualityHeadline?: string | null;
+  pitchQualitySentence?: string | null;
   headshotUrl: string;
   image: TopPerformerImage | null;
   renderUrls: Record<DailySocialRenderVariant, string>;
@@ -113,6 +116,9 @@ export async function getDailySocialPostDraft(date = previousDate(getHomeSlateDa
   const homeAway = detail?.game.awayTeam.abbreviation === start.pitcher.team ? "away" : "home";
   const arsenalEventHeadline = formatArsenalEventHeadline(detail?.arsenalEventSummary);
   const arsenalEventSentence = formatArsenalEventSentence(detail?.arsenalEventSummary);
+  const pitchQuality = summarizePitchEventQuality(detail?.pitchEvents ?? []);
+  const pitchQualityHeadline = formatPitchEventQualityHeadline(pitchQuality);
+  const pitchQualitySentence = formatPitchEventQualitySentence(pitchQuality);
   const startOfDay: StartOfDay = {
     date,
     gamePk: start.gamePk,
@@ -133,6 +139,8 @@ export async function getDailySocialPostDraft(date = previousDate(getHomeSlateDa
     gsPlus: start.gameScorePlus,
     arsenalEventHeadline,
     arsenalEventSentence,
+    pitchQualityHeadline,
+    pitchQualitySentence,
     headshotUrl: start.pitcher.headshotUrl,
     image,
     renderUrls: {
@@ -168,12 +176,13 @@ export function buildDailySocialCopy(start: StartOfDay): DailySocialCopy {
       "",
       `${matchup} | ${line} | ${start.gsPlus} GS+`,
       start.arsenalEventSentence ?? null,
+      start.pitchQualitySentence ?? null,
       "",
       "Full daily ranked starts board at toetheslab.com.",
       "",
       "#MLB #Baseball #StartingPitching #Pitching #ToeTheSlab #GSPlus",
     ].join("\n"),
-    x: `${start.name}: Start of the Day. ${line}. ${start.gsPlus} GS+.${start.arsenalEventHeadline ? ` ${start.arsenalEventHeadline}.` : ""}`,
+    x: `${start.name}: Start of the Day. ${line}. ${start.gsPlus} GS+.${start.arsenalEventHeadline ? ` ${start.arsenalEventHeadline}.` : ""}${start.pitchQualityHeadline ? ` ${start.pitchQualityHeadline}.` : ""}`,
     rankingsUrl,
   };
 }

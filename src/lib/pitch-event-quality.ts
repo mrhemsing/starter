@@ -53,6 +53,11 @@ export function formatPitchEventQualitySentence(summary: PitchEventQualitySummar
   return `Pitch-event quality: ${formatPct(summary.cswPct)} CSW, ${formatPct(summary.whiffPct)} whiff, ${formatPct(summary.zonePct)} zone.${topPitch}`;
 }
 
+export function formatPitchEventQualityHeadline(summary: PitchEventQualitySummary | null | undefined) {
+  if (!summary || summary.pitchCount === 0) return null;
+  return `${formatPct(summary.cswPct)} CSW · ${formatPct(summary.whiffPct)} whiff`;
+}
+
 export function isPitchInStrikeZone(pitch: Pick<PitchEvent, "plateX" | "plateZ">) {
   return pitch.plateX >= strikeZone.xMin && pitch.plateX <= strikeZone.xMax && pitch.plateZ >= strikeZone.zMin && pitch.plateZ <= strikeZone.zMax;
 }

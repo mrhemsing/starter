@@ -88,6 +88,11 @@ export function DailySocialCard({ start, variant }: { start: StartOfDay; variant
                 {start.arsenalEventHeadline}
               </div>
             ) : null}
+            {start.pitchQualityHeadline ? (
+              <div style={{ border: `1px solid ${COLORS.frost}`, color: COLORS.frost, display: "flex", fontFamily: "monospace", fontSize: isPortrait ? 20 : 16, fontWeight: 800, letterSpacing: 3, padding: "9px 12px", textTransform: "uppercase", width: "fit-content" }}>
+                {start.pitchQualityHeadline}
+              </div>
+            ) : null}
           </div>
         </div>
 
