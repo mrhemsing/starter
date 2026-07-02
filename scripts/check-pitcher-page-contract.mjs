@@ -22,6 +22,9 @@ const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
+const supabaseArchive = await readFile("src/lib/data/supabase-archive.ts", "utf8");
+const supabaseSchema = await readFile("docs/supabase-mlb-archive.sql", "utf8");
+const supabaseSync = await readFile("scripts/sync-supabase-mlb-archive.mjs", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const arsenalDataOps = await readFile("docs/arsenal-data-ops.md", "utf8");
 
@@ -341,6 +344,17 @@ assert(
     !startService.includes("archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? demoPitcherDetail.arsenal") &&
     !startService.includes("archivedArsenal?.arsenal ?? demoPitcherDetail.arsenal"),
   "real pitcher profiles must never fall back to the demo arsenal table; absent real data should hide the module",
+);
+
+assert(
+  startService.includes("readSupabaseArchivedPitcherRecentArsenal(pitcherMlbId, season).then((arsenal) => arsenal ?? readArchivedPitcherRecentArsenal(pitcherMlbId, season))") &&
+    supabaseArchive.includes('const PITCHER_ARCHIVE_ARSENALS_TABLE = "toetheslab_pitcher_archive_arsenals";') &&
+    supabaseArchive.includes("export async function readSupabaseArchivedPitcherRecentArsenal") &&
+    supabaseSchema.includes("create table if not exists public.toetheslab_pitcher_archive_arsenals") &&
+    supabaseSync.includes('await upsert("toetheslab_pitcher_archive_arsenals", batch, "season,pitcher_mlb_id");') &&
+    supabaseSync.includes("function buildPitcherArsenalRows") &&
+    supabaseSync.includes("summarizePitchEvents(pitchEvents)"),
+  "production pitcher profiles must source real archive-gamefeed arsenal rows from Supabase instead of local-only archive files",
 );
 
 assert(

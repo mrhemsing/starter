@@ -1,5 +1,5 @@
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
-import type { FeaturedStartHighlight, StartLine, TeamSummary } from "@/lib/types";
+import type { ArchivedPitcherRecentArsenal, ArsenalPitchSummary, FeaturedStartHighlight, PitchEvent, StartLine, TeamSummary } from "@/lib/types";
 
 type SupabaseCompletedStartRow = {
   date: string;
@@ -15,6 +15,10 @@ type SupabaseCompletedStartRow = {
   side: "home" | "away";
   result: ArchivedCompletedStartSummary["result"];
   line: StartLine;
+  pitch_event_count?: number | null;
+  arsenal?: ArsenalPitchSummary[] | null;
+  pitch_events?: PitchEvent[] | null;
+  archived_at?: string | null;
 };
 
 type SupabaseFeaturedStartHighlightRow = {
@@ -23,7 +27,24 @@ type SupabaseFeaturedStartHighlightRow = {
   is_short: boolean | null;
 };
 
+type SupabasePitcherArchiveArsenalRow = {
+  season: string;
+  pitcher_mlb_id: number;
+  pitcher_name: string;
+  team: string;
+  arsenal: ArsenalPitchSummary[];
+  starts: number;
+  pitch_events: number;
+  first_start_date: string;
+  last_start_date: string;
+  start_date: string;
+  end_date: string;
+  archived_at: string;
+  source: "mlb-stats-api";
+};
+
 const COMPLETED_STARTS_TABLE = "toetheslab_mlb_completed_starts";
+const PITCHER_ARCHIVE_ARSENALS_TABLE = "toetheslab_pitcher_archive_arsenals";
 const FEATURED_START_HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
 const PAGE_SIZE = 1000;
 export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;
@@ -108,6 +129,40 @@ export async function readSupabaseArchivedSeasonCompletedStarts(season: string):
   });
 
   return rows.map(rowToCompletedStart);
+}
+
+export async function readSupabaseArchivedPitcherRecentArsenal(pitcherMlbId: number, season: string, maxStarts = 5): Promise<ArchivedPitcherRecentArsenal | null> {
+  if (!isSupabaseArchiveConfigured()) return null;
+
+  const rows = await fetchSupabaseRows<SupabasePitcherArchiveArsenalRow>(
+    PITCHER_ARCHIVE_ARSENALS_TABLE,
+    {
+      season: `eq.${season}`,
+      pitcher_mlb_id: `eq.${pitcherMlbId}`,
+      limit: "1",
+    },
+    0,
+    0,
+  );
+  const row = rows[0];
+  if (!row || row.starts <= 0 || row.pitch_events <= 0 || !Array.isArray(row.arsenal) || row.arsenal.length === 0) return null;
+
+  return {
+    source: "archive-gamefeed",
+    arsenal: row.arsenal,
+    pitchEvents: [],
+    archiveArsenal: {
+      season,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      archivedAt: row.archived_at,
+      source: row.source,
+      starts: Math.min(row.starts, maxStarts),
+      pitchEvents: row.pitch_events,
+      firstStartDate: row.first_start_date,
+      lastStartDate: row.last_start_date,
+    },
+  };
 }
 
 export async function readSupabaseFeaturedStartHighlight(startId: string): Promise<FeaturedStartHighlight | null> {

@@ -13,12 +13,43 @@ create table if not exists public.toetheslab_mlb_completed_starts (
   side text not null check (side in ('home', 'away')),
   result text not null check (result in ('W', 'L', 'ND')),
   line jsonb not null,
+  pitch_event_count integer not null default 0,
+  arsenal jsonb not null default '[]'::jsonb,
+  pitch_events jsonb not null default '[]'::jsonb,
   archived_at timestamptz not null default now(),
   primary key (date, game_pk, pitcher_mlb_id)
 );
 
+alter table public.toetheslab_mlb_completed_starts
+  add column if not exists pitch_event_count integer not null default 0,
+  add column if not exists arsenal jsonb not null default '[]'::jsonb,
+  add column if not exists pitch_events jsonb not null default '[]'::jsonb;
+
 create index if not exists toetheslab_mlb_completed_starts_season_date_idx
   on public.toetheslab_mlb_completed_starts (season, date, game_pk);
+
+create index if not exists toetheslab_mlb_completed_starts_pitcher_date_idx
+  on public.toetheslab_mlb_completed_starts (pitcher_mlb_id, date);
+
+create table if not exists public.toetheslab_pitcher_archive_arsenals (
+  season text not null,
+  pitcher_mlb_id bigint not null,
+  pitcher_name text not null,
+  team text not null,
+  arsenal jsonb not null,
+  starts integer not null,
+  pitch_events integer not null,
+  first_start_date date not null,
+  last_start_date date not null,
+  start_date date not null,
+  end_date date not null,
+  archived_at timestamptz not null,
+  source text not null default 'mlb-stats-api',
+  primary key (season, pitcher_mlb_id)
+);
+
+create index if not exists toetheslab_pitcher_archive_arsenals_pitcher_idx
+  on public.toetheslab_pitcher_archive_arsenals (pitcher_mlb_id, season);
 
 create table if not exists public.toetheslab_mlb_archive_manifests (
   season text primary key,
@@ -99,6 +130,7 @@ create table if not exists public.toetheslab_canonical_pitcher_season_aggregates
 
 alter table public.toetheslab_mlb_completed_starts enable row level security;
 alter table public.toetheslab_mlb_archive_manifests enable row level security;
+alter table public.toetheslab_pitcher_archive_arsenals enable row level security;
 alter table public.toetheslab_featured_start_highlights enable row level security;
 alter table public.toetheslab_statcast_pitch_event_enrichments enable row level security;
 alter table public.toetheslab_canonical_start_records enable row level security;
@@ -109,6 +141,8 @@ drop policy if exists "toetheslab service archive read" on public.toetheslab_mlb
 drop policy if exists "toetheslab service archive write" on public.toetheslab_mlb_completed_starts;
 drop policy if exists "toetheslab service manifest read" on public.toetheslab_mlb_archive_manifests;
 drop policy if exists "toetheslab service manifest write" on public.toetheslab_mlb_archive_manifests;
+drop policy if exists "toetheslab service pitcher arsenal read" on public.toetheslab_pitcher_archive_arsenals;
+drop policy if exists "toetheslab service pitcher arsenal write" on public.toetheslab_pitcher_archive_arsenals;
 drop policy if exists "toetheslab service highlight read" on public.toetheslab_featured_start_highlights;
 drop policy if exists "toetheslab service highlight write" on public.toetheslab_featured_start_highlights;
 drop policy if exists "toetheslab service statcast pitch read" on public.toetheslab_statcast_pitch_event_enrichments;
@@ -135,6 +169,15 @@ create policy "toetheslab service manifest read"
 
 create policy "toetheslab service manifest write"
   on public.toetheslab_mlb_archive_manifests for all
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy "toetheslab service pitcher arsenal read"
+  on public.toetheslab_pitcher_archive_arsenals for select
+  using (auth.role() = 'service_role');
+
+create policy "toetheslab service pitcher arsenal write"
+  on public.toetheslab_pitcher_archive_arsenals for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 

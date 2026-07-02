@@ -8,7 +8,7 @@ import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client"
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
-import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
+import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedPitcherRecentArsenal, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
 import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
@@ -800,7 +800,7 @@ export async function getPitcherDetail(pitcherId: string) {
   const season = getHomeSlateDate().slice(0, 4);
   const [archivedArsenal, archivedSeasonProfile] = Number.isInteger(pitcherMlbId)
     ? await Promise.all([
-        readArchivedPitcherRecentArsenal(pitcherMlbId, season),
+        readSupabaseArchivedPitcherRecentArsenal(pitcherMlbId, season).then((arsenal) => arsenal ?? readArchivedPitcherRecentArsenal(pitcherMlbId, season)),
         readArchivedPitcherSeasonProfile(pitcherMlbId, season),
       ])
     : [null, null];
