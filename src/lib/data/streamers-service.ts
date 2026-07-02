@@ -32,6 +32,7 @@ export type StreamerCandidate = {
   };
   seasonContext: {
     record: string;
+    qualityStarts: number | null;
     k9: number | null;
   };
   matchups: StreamerMatchup[];
@@ -106,6 +107,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     components,
     seasonContext: {
       record: record ? `${record.wins}-${record.losses}-${record.noDecisions}` : "--",
+      qualityStarts: starter.seasonStats?.qualityStarts ?? null,
       k9: starter.seasonStats?.k9 ?? null,
     },
     matchups,

@@ -196,6 +196,7 @@ export type FormSeasonStats = {
   era: number | null;
   whip: number | null;
   k9: number | null;
+  qualityStarts: number;
 };
 
 export type FormSeasonDepthStats = {

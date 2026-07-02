@@ -766,6 +766,7 @@ function buildSeasonStats(starts: StartSummary[]): FormSeasonStats {
       era: null,
       whip: null,
       k9: null,
+      qualityStarts: 0,
     };
   }
 
@@ -774,6 +775,7 @@ function buildSeasonStats(starts: StartSummary[]): FormSeasonStats {
     era: round2((totals.earnedRuns * 27) / totals.outs),
     whip: round2(((totals.hits + totals.walks) * 3) / totals.outs),
     k9: round1((totals.strikeouts * 27) / totals.outs),
+    qualityStarts: starts.filter((start) => inningsToOuts(start.line.inningsPitched) >= 18 && start.line.earnedRuns <= 3).length,
   };
 }
 

@@ -128,6 +128,7 @@ function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank:
 
       <div className="mt-4 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
         <span className="rounded border border-white/10 px-2 py-1">W-L-ND {candidate.seasonContext.record}</span>
+        <span className="rounded border border-white/10 px-2 py-1">QS {candidate.seasonContext.qualityStarts ?? "--"}</span>
         <span className="rounded border border-white/10 px-2 py-1">K/9 {candidate.seasonContext.k9 === null ? "--" : candidate.seasonContext.k9.toFixed(1)}</span>
         {candidate.changed ? <span className="rounded border border-amber-300/40 px-2 py-1 text-amber-300">Changed</span> : null}
       </div>

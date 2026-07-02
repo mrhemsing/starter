@@ -36,7 +36,8 @@ assert(
     streamersService.includes("formRisers: candidates.filter") &&
     streamersService.includes("STREAMER_SCORE_CONFIG") &&
     streamersService.includes("fantasyWeekStart") &&
-    streamersService.includes("starter.seasonDecisionRecord"),
+    streamersService.includes("starter.seasonDecisionRecord") &&
+    streamersService.includes("starter.seasonStats?.qualityStarts"),
   "streamers service must compute two-start and form-riser candidates from Upcoming data with a single score config",
 );
 
@@ -49,6 +50,7 @@ assert(
     streamersPage.includes("Form risers with soft matchups") &&
     streamersPage.includes("data-responsive-check=\"upcoming-streamers\"") &&
     streamersPage.includes("W-L-ND") &&
+    streamersPage.includes("QS {candidate.seasonContext.qualityStarts ?? \"--\"}") &&
     streamersPage.includes("K/9"),
   "streamers page must have distinct metadata, active pill state, two expected sections, and fantasy context labels",
 );
