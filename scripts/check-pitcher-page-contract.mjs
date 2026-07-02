@@ -23,6 +23,7 @@ const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
+const arsenalDataOps = await readFile("docs/arsenal-data-ops.md", "utf8");
 
 assert(
   packageJson.includes('"check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs"') ||
@@ -304,6 +305,10 @@ assert(
 
 assert(
   pitcherFormPage.includes("function ArsenalTable") &&
+    pitcherFormPage.includes("formatArsenalSourceLabel(pitcher)") &&
+    pitcherFormPage.includes("formatArsenalSourceTitle(pitcher)") &&
+    pitcherFormPage.includes('return `Archive through ${pitcher.source.archiveArsenal.lastStartDate}`;') &&
+    pitcherFormPage.includes('return "Archive pending";') &&
     pitcherFormPage.includes('data-responsive-check="pitcher-arsenal-table"') &&
     pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table"') &&
     pitcherFormPage.includes('className="max-w-full overflow-x-auto"') &&
@@ -312,6 +317,16 @@ assert(
     pitcherFormPage.includes("xwOBA") &&
     pitcherFormPage.includes("out pitch"),
   "pitcher profile must render a serious arsenal table with usage, whiff, put-away, xwOBA, and out-pitch highlight",
+);
+
+assert(
+  arsenalDataOps.includes("npm run archive:mlb-season -- --season=2026 --date=YYYY-MM-DD") &&
+    arsenalDataOps.includes("npm run check:mlb-archive -- --season=2026 --expect-end=YYYY-MM-DD") &&
+    arsenalDataOps.includes("npm run sync:supabase-mlb-archive") &&
+    arsenalDataOps.includes("THE_BUMP_ARCHIVE_CONCURRENCY=4") &&
+    arsenalDataOps.includes("Archive through YYYY-MM-DD") &&
+    arsenalDataOps.includes("Archive pending"),
+  "arsenal data ops must document nightly archive refresh, validation, Supabase sync, rate-limit posture, and stale labels",
 );
 
 assert(

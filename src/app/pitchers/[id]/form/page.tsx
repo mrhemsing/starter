@@ -370,7 +370,9 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal / pitch mix</p>
           <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">How he gets outs</h2>
         </div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.source.arsenal.replace(/-/g, " ")}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" title={formatArsenalSourceTitle(pitcher)}>
+          {formatArsenalSourceLabel(pitcher)}
+        </p>
       </div>
 
       {pitches.length > 0 ? (
@@ -427,6 +429,18 @@ function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outP
       <td className="py-3 text-right text-zinc-300">{estimateXwoba(pitch)}</td>
     </tr>
   );
+}
+
+function formatArsenalSourceLabel(pitcher: PitcherApiResponse) {
+  if (pitcher.source.archiveArsenal) return `Archive through ${pitcher.source.archiveArsenal.lastStartDate}`;
+  if (pitcher.source.arsenal === "fixture") return "Archive pending";
+  return pitcher.source.arsenal.replace(/-/g, " ");
+}
+
+function formatArsenalSourceTitle(pitcher: PitcherApiResponse) {
+  const archive = pitcher.source.archiveArsenal;
+  if (!archive) return "Pitch-mix source status";
+  return `${archive.starts} starts, ${archive.pitchEvents} pitches archived from ${archive.firstStartDate} through ${archive.lastStartDate}. Last updated ${archive.archivedAt}.`;
 }
 
 function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
