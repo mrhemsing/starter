@@ -67,41 +67,33 @@ assert(
 
 assert(
     !canonicalStore.includes('import os from "node:os";') &&
-    canonicalStore.includes('const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");') &&
+    !canonicalStore.includes('import fs from "node:fs/promises";') &&
+    !canonicalStore.includes('import path from "node:path";') &&
+    !canonicalStore.includes('const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");') &&
     !canonicalStore.includes('"toe-the-slab", "canonical-starts"') &&
-    canonicalStore.includes('path.join(process.cwd(), ".data", "canonical-starts")') &&
-    canonicalStore.includes("function shouldUseVolatileCanonicalStartStore()") &&
-    canonicalStore.includes("process.env.VERCEL_ENV") &&
-    canonicalStore.includes("process.env.AWS_LAMBDA_FUNCTION_NAME") &&
-    canonicalStore.includes("process.env.AWS_EXECUTION_ENV") &&
-    canonicalStore.includes("process.cwd().startsWith(\"/var/task\")") &&
-    canonicalStore.includes("process.cwd().startsWith(\"/var/runtime\")") &&
-    canonicalStore.includes("process.cwd().startsWith(\"/tmp\")") &&
+    !canonicalStore.includes('path.join(process.cwd(), ".data", "canonical-starts")') &&
+    !canonicalStore.includes("function shouldUseVolatileCanonicalStartStore()") &&
+    !canonicalStore.includes("fs.readFile") &&
+    !canonicalStore.includes("fs.writeFile") &&
+    !canonicalStore.includes("fs.mkdir") &&
+    !canonicalStore.includes("fs.rename") &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
     canonicalStore.includes("const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();") &&
-    canonicalStore.includes("const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();") &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
     canonicalStore.includes("function upsertCanonicalStartRecord(") &&
-    canonicalStore.includes("async function readCanonicalStartStore(") &&
-    canonicalStore.includes("async function writeCanonicalStartStore(") &&
-    canonicalStore.includes("function isCanonicalStoreUnavailableError") &&
-    canonicalStore.includes('code === "EMFILE"') &&
-    canonicalStore.includes('code === "ENOENT"') &&
-    canonicalStore.includes("error instanceof SyntaxError") &&
-    canonicalStore.includes("if (shouldUseVolatileCanonicalStartStore()) {") &&
+    canonicalStore.includes("function readCanonicalStartStore(") &&
+    canonicalStore.includes("function writeCanonicalStartStore(") &&
+    canonicalStore.includes("function assertCanonicalStartStoreDate(") &&
     canonicalStore.includes("volatileCanonicalStartStores.set(store.date, store);") &&
-    canonicalStore.includes("async function writeCanonicalStartStoreFile(") &&
-    canonicalStore.includes("await fs.rename(tempPath, filePath);") &&
     canonicalStore.includes("function emptyCanonicalStartStore(") &&
-    canonicalStore.includes("return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
     canonicalStore.includes('if (next.status !== "final") return existing;') &&
     canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus)") &&
     canonicalStore.includes("reconcileCanonicalStartRecord(existing") &&
     canonicalStore.includes("officialCanonicalLineSource(next.source.line)"),
-  "canonical start store must persist daily records, skip static-build writes, preserve frozen finals, and audit final corrections",
+  "canonical start store must be memory-only at runtime, skip static-build writes, preserve frozen finals, and audit final corrections without filesystem IO",
 );
 
 assert(

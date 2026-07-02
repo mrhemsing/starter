@@ -1,5 +1,3 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
 import type { StartDataSource, StartSummary } from "@/lib/types";
@@ -10,50 +8,33 @@ type CanonicalStartStoreFile = {
   records: CanonicalStartRecord[];
 };
 
-const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
-const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();
-
-function shouldUseVolatileCanonicalStartStore() {
-  return Boolean(process.env.VERCEL)
-    || Boolean(process.env.VERCEL_ENV)
-    || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME)
-    || Boolean(process.env.AWS_EXECUTION_ENV)
-    || process.cwd().startsWith("/var/task")
-    || process.cwd().startsWith("/var/runtime")
-    || process.cwd().startsWith("/tmp");
-}
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
   if (shouldSkipCanonicalStartStore(starts)) {
     return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
   }
 
-  try {
-    const store = await readCanonicalStartStore(date);
-    const recordsById = new Map(store.records.map((record) => [record.id, record]));
-    const canonicalStarts = starts.map((start) => {
-      const next = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
-      recordsById.set(start.id, next);
-      return startSummaryFromCanonicalRecord(next, start);
-    });
+  const store = readCanonicalStartStore(date);
+  const recordsById = new Map(store.records.map((record) => [record.id, record]));
+  const canonicalStarts = starts.map((start) => {
+    const next = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
+    recordsById.set(start.id, next);
+    return startSummaryFromCanonicalRecord(next, start);
+  });
 
-    await writeCanonicalStartStore({
-      date,
-      updatedAt: now.toISOString(),
-      records: Array.from(recordsById.values()).sort(compareCanonicalStartRecords),
-    });
+  writeCanonicalStartStore({
+    date,
+    updatedAt: now.toISOString(),
+    records: Array.from(recordsById.values()).sort(compareCanonicalStartRecords),
+  });
 
-    return canonicalStarts;
-  } catch (error) {
-    if (!isCanonicalStoreUnavailableError(error)) throw error;
-    return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
-  }
+  return canonicalStarts;
 }
 
 export async function readCanonicalStartRecords(date: string): Promise<CanonicalStartRecord[]> {
-  return (await readCanonicalStartStore(date)).records;
+  return readCanonicalStartStore(date).records;
 }
 
 function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, start: StartSummary, now: Date) {
@@ -102,59 +83,22 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
   };
 }
 
-async function readCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile> {
-  if (shouldUseVolatileCanonicalStartStore()) {
-    return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
-  }
-
-  try {
-    const raw = await fs.readFile(canonicalStartStorePath(date), "utf8");
-    const parsed = JSON.parse(raw) as CanonicalStartStoreFile;
-    return {
-      date,
-      updatedAt: parsed.updatedAt ?? new Date(0).toISOString(),
-      records: Array.isArray(parsed.records) ? parsed.records : [],
-    };
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
-    return emptyCanonicalStartStore(date);
-  }
+function readCanonicalStartStore(date: string): CanonicalStartStoreFile {
+  assertCanonicalStartStoreDate(date);
+  return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
 }
 
-async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
-  if (shouldUseVolatileCanonicalStartStore()) {
-    volatileCanonicalStartStores.set(store.date, store);
-    return;
-  }
-
-  const previousWrite = canonicalStartStoreWriteLocks.get(store.date) ?? Promise.resolve();
-  const nextWrite = previousWrite.catch(() => undefined).then(() => writeCanonicalStartStoreFile(store));
-  canonicalStartStoreWriteLocks.set(store.date, nextWrite);
-
-  try {
-    await nextWrite;
-  } finally {
-    if (canonicalStartStoreWriteLocks.get(store.date) === nextWrite) {
-      canonicalStartStoreWriteLocks.delete(store.date);
-    }
-  }
-}
-
-async function writeCanonicalStartStoreFile(store: CanonicalStartStoreFile) {
-  const filePath = canonicalStartStorePath(store.date);
-  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  await fs.mkdir(CANONICAL_START_STORE_DIR, { recursive: true });
-  await fs.writeFile(tempPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
-  await fs.rename(tempPath, filePath);
+function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
+  assertCanonicalStartStoreDate(store.date);
+  volatileCanonicalStartStores.set(store.date, store);
 }
 
 function emptyCanonicalStartStore(date: string): CanonicalStartStoreFile {
   return { date, updatedAt: new Date(0).toISOString(), records: [] };
 }
 
-function canonicalStartStorePath(date: string) {
+function assertCanonicalStartStoreDate(date: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("invalid canonical start store date");
-  return path.join(CANONICAL_START_STORE_DIR, `${date}.json`);
 }
 
 function shouldSkipCanonicalStartStore(starts: StartSummary[]) {
@@ -165,11 +109,6 @@ function shouldSkipCanonicalStartStore(starts: StartSummary[]) {
 
 function officialCanonicalLineSource(source: StartDataSource["line"]): Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed"> {
   return source === "live-gamefeed" ? "live-gamefeed" : "archive-gamefeed";
-}
-
-function isCanonicalStoreUnavailableError(error: unknown) {
-  const code = (error as NodeJS.ErrnoException).code;
-  return code === "EACCES" || code === "EMFILE" || code === "ENOENT" || code === "EPERM" || code === "EROFS" || error instanceof SyntaxError;
 }
 
 function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStartRecord) {
