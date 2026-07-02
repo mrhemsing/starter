@@ -1401,7 +1401,7 @@ function withStartSummaries(start: StartDetail): StartDetail {
     inningTimeline: summarizeInningTimeline(start.pitchEvents),
     countLeverage: summarizeCountLeverage(start.pitchEvents),
     pitchSequence: summarizePitchSequence(start.pitchEvents),
-    gameScorePlusBreakdown: summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
+    gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
   };
 }
 
