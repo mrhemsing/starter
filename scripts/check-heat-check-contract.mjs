@@ -265,7 +265,12 @@ assert(
 assert(
   formPage.includes("team?: string;") &&
     formPage.includes('const team = params.team ?? "";') &&
-    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
+    formPage.includes('import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";') &&
+    !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly })") &&
+    !formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
+    formPage.includes('getSlateSchedule({ window: "today", date: today })') &&
+    formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[])") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const allTeamsView = !team;") &&

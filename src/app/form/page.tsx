@@ -20,16 +20,15 @@ import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
-import { getHomeSlateDate } from "@/lib/data/start-service";
-import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
-import { formPageDescription, formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
+import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { gameTimeWord } from "@/lib/time-words";
-import type { FormSummary, HeatBand, TonightGame } from "@/lib/types";
+import type { FormSummary, HeatBand, MlbScheduleGame } from "@/lib/types";
 import type React from "react";
 
 type FormPageProps = {
@@ -80,9 +79,10 @@ export async function generateHeatCheckMetadata({ searchParams, view: viewOverri
   const params = await searchParams;
   const window = parseFormWindow(params?.window);
   const view = viewOverride ?? parseHeatCheckView(params?.view);
-  const leaderboard = await getFormLeaderboard({ window, qualifiedOnly: true });
   const title = view === "season" ? `${getHomeSlateDate().slice(0, 4)} MLB Season GS+ Leaderboard` : formPageTitle(window);
-  const description = view === "season" ? "Every qualified MLB starter ranked by season-average GS+, with the season view inside Heat Check." : formPageDescription(leaderboard);
+  const description = view === "season"
+    ? "Every qualified MLB starter ranked by season-average GS+, with the season view inside Heat Check."
+    : `Starting-pitcher FORM over the last ${window} starts, with rising and falling arms tracked daily.`;
   const hasIndexableWindow = params?.window && window !== 5 && Object.keys(params).every((key) => key === "window");
   const hasNonCanonicalFilters = Boolean(params && Object.keys(params).some((key) => !(view === "trend" && key === "window" && hasIndexableWindow)));
   const url = view === "season" ? "/heat-check/season" : hasIndexableWindow ? `/heat-check?window=${window}` : "/heat-check";
@@ -143,14 +143,14 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const coolingExpanded = Boolean(team) || params?.cooling === "show" || band === "cooling" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
-  const [leaderboard, followedIds, tonight] = await Promise.all([
-    getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team }),
+  const [leaderboard, followedIds, todaySchedule] = await Promise.all([
+    getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly }),
     getWatchlistPitcherIds(accountId),
-    getTonightMustWatch({ date: today, window }),
+    getSlateSchedule({ window: "today", date: today }),
   ]);
   const jsonLd = jsonLdForFormPage(leaderboard);
   const rankedDate = addDays(today, -1);
-  const startContext = buildTodayStartContext(tonight.games);
+  const startContext = buildTodayStartContext(todaySchedule.games);
   const teams = [...new Set(leaderboard.pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
   const trendPitchers = leaderboard.pitchers
     .filter((pitcher) => !team || pitcher.team === team)
@@ -440,7 +440,6 @@ type TodayStartContext = {
   opponent: string;
   side: "home" | "away";
   firstPitch: string;
-  status: TonightGame["status"];
 };
 
 function MomentumHero({
@@ -552,17 +551,16 @@ function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: 
   );
 }
 
-function buildTodayStartContext(games: TonightGame[]) {
+function buildTodayStartContext(games: MlbScheduleGame[]) {
   const context = new Map<string, TodayStartContext>();
 
   for (const game of games) {
-    for (const starter of game.starters) {
-      if (!starter.pitcherId) continue;
-      context.set(starter.pitcherId, {
-        opponent: starter.side === "away" ? game.home : game.away,
-        side: starter.side,
-        firstPitch: game.firstPitch,
-        status: game.status,
+    for (const probable of [game.probableAwayPitcher, game.probableHomePitcher]) {
+      if (!probable) continue;
+      context.set(String(probable.id), {
+        opponent: probable.side === "away" ? game.homeTeam.abbreviation : game.awayTeam.abbreviation,
+        side: probable.side,
+        firstPitch: game.gameDate,
       });
     }
   }
