@@ -350,8 +350,17 @@ p,
   }
 
   .home-live-ticker-track:hover,
-  .home-live-ticker-track:active {
+  .home-live-ticker-track:active,
+  .home-live-ticker-track[data-touch-paused="true"] {
     animation-play-state: paused;
+  }
+
+  .home-live-ticker-scrollbarless {
+    scrollbar-width: none;
+  }
+
+  .home-live-ticker-scrollbarless::-webkit-scrollbar {
+    display: none;
   }
 
 }

@@ -30,8 +30,9 @@ assert(
 );
 
 assert(
-  ticker.includes('"use client";') &&
+    ticker.includes('"use client";') &&
     ticker.includes("HOME_LIVE_TICKER_POLL_MS = 30 * 1000") &&
+    ticker.includes("HOME_LIVE_TICKER_AUTO_RESUME_MS = 4 * 1000") &&
     ticker.includes("data-responsive-check=\"home-live-gs-ticker\"") &&
     ticker.includes('data-home-live-ticker-phase={phase}') &&
     ticker.includes('data-home-live-ticker-polling={shouldPoll ? "true" : "false"}') &&
@@ -40,12 +41,15 @@ assert(
     ticker.includes("scheduleFirstPitchSync(board);") &&
     ticker.includes("window.setInterval(() =>") &&
     ticker.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
-    ticker.includes("row.scoreLabel === \"PROV\"") &&
+    ticker.includes("row.status === \"live\"") &&
+    ticker.includes('entry.state === "live" ? <span className="text-zinc-500">--</span> : null') &&
+    ticker.includes("row.scoreLabel === \"FINAL\"") &&
+    ticker.includes('state: "final" as const') &&
     ticker.includes("row.scoreLabel === \"PROJ\"") &&
     ticker.includes("row.status === \"scheduled\" || row.status === \"warming\"") &&
     ticker.includes("board.finalStarts < board.totalStarts") &&
     ticker.includes("return [") &&
-    ticker.includes('glyph: (row.gsPlus ?? 0) >= (row.projectedGsPlus ?? 50) ? "up" as const : "down" as const') &&
+    ticker.includes('glyph: row.gsPlus === null ? undefined : (row.gsPlus ?? 0) >= (row.projectedGsPlus ?? 50) ? "up" as const : "down" as const') &&
     ticker.includes("text-[#FF9A62]") &&
     ticker.includes("text-[#7EC8FF]") &&
     ticker.includes("upcomingDateHref(board.date)") &&
@@ -54,7 +58,7 @@ assert(
     ticker.includes("aria-hidden={duplicate ? \"true\" : undefined}") &&
     !ticker.includes("text-green") &&
     !ticker.includes("text-red"),
-  "ticker must render all slate day, poll only through the shared live endpoint when active, exclude finals, use projection glyphs, site colors, collision initials, and accessible duplicate handling",
+  "ticker must render all slate day, poll only through the shared live endpoint when active, include live scoreless arms, carry finals, use projection glyphs, site colors, collision initials, and accessible duplicate handling",
 );
 
 assert(
@@ -62,9 +66,15 @@ assert(
     globals.includes("animation: home-live-ticker-scroll 42s linear infinite;") &&
     globals.includes(".home-live-ticker-track:hover") &&
     globals.includes(".home-live-ticker-track:active") &&
+    globals.includes('.home-live-ticker-track[data-touch-paused="true"]') &&
+    globals.includes(".home-live-ticker-scrollbarless") &&
+    globals.includes("scrollbar-width: none;") &&
+    globals.includes(".home-live-ticker-scrollbarless::-webkit-scrollbar") &&
+    ticker.includes("onPointerDown={pauseForTouch}") &&
+    ticker.includes("onPointerUp={scheduleTouchResume}") &&
     globals.includes("@keyframes home-live-ticker-scroll") &&
     ticker.includes("motion-reduce:animate-none"),
-  "ticker motion must be CSS-only, pause on hover/touch, and honor reduced motion",
+  "ticker motion must be CSS-only, pause on hover/touch, auto-resume touch pauses, hide scrollbars, and honor reduced motion",
 );
 
 assert(
