@@ -66,13 +66,18 @@ assert(
 );
 
 assert(
-  canonicalStore.includes('const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");') &&
+  canonicalStore.includes('import os from "node:os";') &&
+    canonicalStore.includes("const CANONICAL_START_STORE_DIR = process.env.VERCEL") &&
+    canonicalStore.includes('path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")') &&
+    canonicalStore.includes('path.join(process.cwd(), ".data", "canonical-starts")') &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
     canonicalStore.includes("function upsertCanonicalStartRecord(") &&
     canonicalStore.includes("async function readCanonicalStartStore(") &&
     canonicalStore.includes("async function writeCanonicalStartStore(") &&
+    canonicalStore.includes("function isCanonicalStoreUnavailableError") &&
+    canonicalStore.includes("return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
     canonicalStore.includes('if (next.status !== "final") return existing;') &&

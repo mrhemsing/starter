@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
@@ -10,7 +11,9 @@ type CanonicalStartStoreFile = {
   records: CanonicalStartRecord[];
 };
 
-const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");
+const CANONICAL_START_STORE_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")
+  : path.join(process.cwd(), ".data", "canonical-starts");
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
@@ -18,21 +21,26 @@ export async function canonicalizeStartSummariesWithStore(date: string, starts: 
     return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
   }
 
-  const store = await readCanonicalStartStore(date);
-  const recordsById = new Map(store.records.map((record) => [record.id, record]));
-  const canonicalStarts = starts.map((start) => {
-    const next = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
-    recordsById.set(start.id, next);
-    return startSummaryFromCanonicalRecord(next, start);
-  });
+  try {
+    const store = await readCanonicalStartStore(date);
+    const recordsById = new Map(store.records.map((record) => [record.id, record]));
+    const canonicalStarts = starts.map((start) => {
+      const next = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
+      recordsById.set(start.id, next);
+      return startSummaryFromCanonicalRecord(next, start);
+    });
 
-  await writeCanonicalStartStore({
-    date,
-    updatedAt: now.toISOString(),
-    records: Array.from(recordsById.values()).sort(compareCanonicalStartRecords),
-  });
+    await writeCanonicalStartStore({
+      date,
+      updatedAt: now.toISOString(),
+      records: Array.from(recordsById.values()).sort(compareCanonicalStartRecords),
+    });
 
-  return canonicalStarts;
+    return canonicalStarts;
+  } catch (error) {
+    if (!isCanonicalStoreUnavailableError(error)) throw error;
+    return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
+  }
 }
 
 export async function readCanonicalStartRecords(date: string): Promise<CanonicalStartRecord[]> {
@@ -118,6 +126,11 @@ function shouldSkipCanonicalStartStore(starts: StartSummary[]) {
 
 function officialCanonicalLineSource(source: StartDataSource["line"]): Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed"> {
   return source === "live-gamefeed" ? "live-gamefeed" : "archive-gamefeed";
+}
+
+function isCanonicalStoreUnavailableError(error: unknown) {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === "EACCES" || code === "EPERM" || code === "EROFS";
 }
 
 function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStartRecord) {
