@@ -815,6 +815,15 @@ export type PitcherSkillProfile = {
   note: string;
   season: PitcherSkillSnapshot;
   trailing30: PitcherSkillSnapshot;
+  trend: {
+    status: "available" | "insufficient";
+    starts: number;
+    cswDeltaPct: number | null;
+    whiffDeltaPct: number | null;
+    swStrDeltaPct: number | null;
+    avgVelocityDeltaMph: number | null;
+    summary: string;
+  };
   statcastStatus: "available" | "partial" | "pending";
 };
 

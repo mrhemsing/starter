@@ -219,6 +219,14 @@ assert(["archive-gamefeed-line", "live-people-stats-line"].includes(pitcher.skil
 assert(["available", "partial", "pending"].includes(pitcher.skillProfile?.statcastStatus), "pitcher skillProfile must expose pitch-event skill availability");
 assertSkillSnapshot(pitcher.skillProfile?.season, "season");
 assertSkillSnapshot(pitcher.skillProfile?.trailing30, "trailing30");
+assert(["available", "insufficient"].includes(pitcher.skillProfile?.trend?.status), "pitcher skillProfile must expose recent archive-quality trend status");
+assert(Number.isInteger(pitcher.skillProfile.trend.starts) && pitcher.skillProfile.trend.starts >= 0, "pitcher skillProfile trend starts missing");
+assert(typeof pitcher.skillProfile.trend.summary === "string" && pitcher.skillProfile.trend.summary.length > 0, "pitcher skillProfile trend summary missing");
+if (pitcher.skillProfile.trend.status === "available") {
+  for (const key of ["cswDeltaPct", "whiffDeltaPct", "swStrDeltaPct", "avgVelocityDeltaMph"]) {
+    assert(typeof pitcher.skillProfile.trend[key] === "number" && Number.isFinite(pitcher.skillProfile.trend[key]), `pitcher skillProfile trend ${key} missing`);
+  }
+}
 
 assert(Array.isArray(pitcher.arsenal) && pitcher.arsenal.length > 0, "pitcher missing arsenal");
 for (const pitch of pitcher.arsenal) {

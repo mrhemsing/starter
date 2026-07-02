@@ -1024,8 +1024,56 @@ function buildPitcherSkillProfile(
       : "Line-backed profile plus verified pitch-event skills where archived gamefeed or Savant rows exist. Chase, zone, expected stats, and contact quality remain pending full Savant leaderboard ingestion.",
     season,
     trailing30: trailing30Snapshot,
+    trend: buildPitcherSkillTrend(season, trailing30Snapshot),
     statcastStatus,
   };
+}
+
+function buildPitcherSkillTrend(season: PitcherSkillSnapshot, trailing30: PitcherSkillSnapshot): PitcherSkillProfile["trend"] {
+  const starts = trailing30.starts;
+  const hasPitchEvents = season.pitchCount > 0 && trailing30.pitchCount > 0;
+  if (!hasPitchEvents || starts === 0) {
+    return {
+      status: "insufficient",
+      starts,
+      cswDeltaPct: null,
+      whiffDeltaPct: null,
+      swStrDeltaPct: null,
+      avgVelocityDeltaMph: null,
+      summary: "Recent pitch-event trend pending archive depth.",
+    };
+  }
+
+  const cswDeltaPct = deltaPct(trailing30.cswPct, season.cswPct);
+  const whiffDeltaPct = deltaPct(trailing30.whiffPct, season.whiffPct);
+  const swStrDeltaPct = deltaPct(trailing30.swStrPct, season.swStrPct);
+  const avgVelocityDeltaMph = deltaPct(trailing30.avgVelocityMph, season.avgVelocityMph);
+  const strongest = [
+    { label: "CSW", value: cswDeltaPct },
+    { label: "whiff", value: whiffDeltaPct },
+    { label: "SwStr", value: swStrDeltaPct },
+    { label: "velo", value: avgVelocityDeltaMph },
+  ]
+    .filter((entry): entry is { label: string; value: number } => typeof entry.value === "number")
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
+
+  const summary = strongest && Math.abs(strongest.value) >= 1
+    ? `${strongest.label} ${strongest.value > 0 ? "up" : "down"} ${Math.abs(strongest.value).toFixed(1)} ${strongest.label === "velo" ? "mph" : "pts"} over last 30.`
+    : "Recent pitch-event skills are steady against season baseline.";
+
+  return {
+    status: "available",
+    starts,
+    cswDeltaPct,
+    whiffDeltaPct,
+    swStrDeltaPct,
+    avgVelocityDeltaMph,
+    summary,
+  };
+}
+
+function deltaPct(recent: number | null, baseline: number | null) {
+  return typeof recent === "number" && typeof baseline === "number" ? round1(recent - baseline) : null;
 }
 
 function summarizeSkillSnapshot(label: PitcherSkillSnapshot["label"], starts: PitcherApiStartLogEntry[]): PitcherSkillSnapshot {

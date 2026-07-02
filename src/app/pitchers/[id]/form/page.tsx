@@ -554,6 +554,7 @@ function AdvancedPercentilePanel({ pitcher }: { pitcher: PitcherApiResponse }) {
         <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.season} />
         <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.trailing30} />
       </div>
+      <PitcherSkillTrendCard trend={pitcher.skillProfile.trend} />
       <p className="mt-4 text-xs leading-5 text-zinc-500">{pitcher.skillProfile.note}</p>
     </section>
   );
@@ -760,11 +761,43 @@ function PitcherSkillSnapshotCard({ snapshot }: { snapshot: PitcherSkillSnapshot
   );
 }
 
+function PitcherSkillTrendCard({ trend }: { trend: PitcherApiResponse["skillProfile"]["trend"] }) {
+  return (
+    <div className="mt-3 rounded border border-amber-300/15 bg-amber-300/5 p-3" data-responsive-check="pitcher-archive-quality-trend">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-amber-200">Last 30 trend</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+          {trend.status === "available" ? `${trend.starts} starts` : "pending"}
+        </p>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-zinc-300">{trend.summary}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
+        <ArchiveTrendStat label="CSW" value={trend.cswDeltaPct} suffix="pts" />
+        <ArchiveTrendStat label="Whiff" value={trend.whiffDeltaPct} suffix="pts" />
+        <ArchiveTrendStat label="SwStr" value={trend.swStrDeltaPct} suffix="pts" />
+        <ArchiveTrendStat label="Velo" value={trend.avgVelocityDeltaMph} suffix="mph" />
+      </div>
+    </div>
+  );
+}
+
 function ArchiveQualityStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-2">
       <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
       <p className="mt-1 font-serif text-2xl font-semibold text-zinc-50">{value}</p>
+    </div>
+  );
+}
+
+function ArchiveTrendStat({ label, value, suffix }: { label: string; value: number | null; suffix: "pts" | "mph" }) {
+  const tone = typeof value === "number" && value > 0 ? "text-emerald-300" : typeof value === "number" && value < 0 ? "text-cyan-300" : "text-zinc-300";
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-2">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+      <p className={`mt-1 font-serif text-xl font-semibold ${tone}`}>
+        {typeof value === "number" ? `${value > 0 ? "+" : ""}${value.toFixed(1)} ${suffix}` : "--"}
+      </p>
     </div>
   );
 }
