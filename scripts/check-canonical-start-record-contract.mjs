@@ -7,6 +7,7 @@ function assert(condition, message) {
 }
 
 const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf8");
+const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
@@ -64,19 +65,38 @@ assert(
 );
 
 assert(
+  canonicalStore.includes('const CANONICAL_START_STORE_DIR = path.join(process.cwd(), ".data", "canonical-starts");') &&
+    canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
+    canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
+    canonicalStore.includes("export async function readCanonicalStartRecords(") &&
+    canonicalStore.includes("function upsertCanonicalStartRecord(") &&
+    canonicalStore.includes("async function readCanonicalStartStore(") &&
+    canonicalStore.includes("async function writeCanonicalStartStore(") &&
+    canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
+    canonicalStore.includes("if (existing.frozen) {") &&
+    canonicalStore.includes('if (next.status !== "final") return existing;') &&
+    canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus)") &&
+    canonicalStore.includes("reconcileCanonicalStartRecord(existing") &&
+    canonicalStore.includes("officialCanonicalLineSource(next.source.line)"),
+  "canonical start store must persist daily records, skip static-build writes, preserve frozen finals, and audit final corrections",
+);
+
+assert(
   startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
+    startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
-    startService.includes("return canonicalizeStartSummaries(archivedStarts);") &&
-    startService.includes("return canonicalizeStartSummaries(scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);") &&
-    startService.includes("const slateStarts = canonicalizeStartSummaries(starts.length > 0 ? starts : demoSlateStarts);") &&
+    startService.includes("return canonicalizeStartSummariesWithStore(params.date, archivedStarts);") &&
+    startService.includes("return canonicalizeStartSummariesWithStore(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);") &&
+    startService.includes("const slateStarts = await canonicalizeStartSummariesWithStore(params.date, starts.length > 0 ? starts : demoSlateStarts);") &&
     startService.includes("return canonicalizeStartSummaries(archivedStarts") &&
     startService.includes("export async function getArchivedSeasonStartSummaries"),
-  "daily slate, slate API, archived slate, and season summaries must pass through canonical start normalization",
+  "daily slate and slate API must use the persisted canonical store while archived season summaries still pass through canonical normalization",
 );
 
 assert(
   startService.includes("export async function getCanonicalStartReconciliationReport(") &&
-    startService.includes("const records = starts.map((start) => canonicalStartRecordFromSummary(start));") &&
+    startService.includes("const storedRecords = await readCanonicalStartRecords(date);") &&
+    startService.includes("const records = storedRecords.length > 0 ? storedRecords : starts.map((start) => canonicalStartRecordFromSummary(start));") &&
     startService.includes("return summarizeCanonicalReconciliation(date, records);") &&
     archiveStatusRoute.includes("getCanonicalStartReconciliationReport") &&
     archiveStatusRoute.includes("export async function GET(request: Request)") &&

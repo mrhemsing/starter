@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
+import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
@@ -148,18 +149,19 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
   if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
-  if (archivedStarts.length > 0) return canonicalizeStartSummaries(archivedStarts);
+  if (archivedStarts.length > 0) return canonicalizeStartSummariesWithStore(params.date, archivedStarts);
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
 
-  return canonicalizeStartSummaries(scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);
+  return canonicalizeStartSummariesWithStore(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);
 }
 
 export async function getCanonicalStartReconciliationReport(date = getHomeSlateDate()): Promise<CanonicalReconciliationReport> {
   const starts = await getDailySlate({ window: "today", date });
-  const records = starts.map((start) => canonicalStartRecordFromSummary(start));
+  const storedRecords = await readCanonicalStartRecords(date);
+  const records = storedRecords.length > 0 ? storedRecords : starts.map((start) => canonicalStartRecordFromSummary(start));
 
   return summarizeCanonicalReconciliation(date, records);
 }
@@ -456,7 +458,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const starts = archivedStarts.length > 0
     ? archivedStarts
     : rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
-  const slateStarts = canonicalizeStartSummaries(starts.length > 0 ? starts : demoSlateStarts);
+  const slateStarts = await canonicalizeStartSummariesWithStore(params.date, starts.length > 0 ? starts : demoSlateStarts);
   const completedStartStats = summarizeCompletedStartSource(slateStarts);
   const completedStartStatsCoverage = summarizeCompletedStartSourceCoverage(slateStarts);
 
