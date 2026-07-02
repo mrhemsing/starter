@@ -52,9 +52,13 @@ assert(
   slatePage.includes("GSv2 {start.gameScoreV2}") &&
     slatePage.includes("function formatGsAdjustment(start: StartSummary)") &&
     slatePage.includes("return `GS+ ${formatSigned(start.gameScorePlus - start.gameScoreV2)} adj`;") &&
+    slatePage.includes("data-slate-start-decision={start.result}") &&
+    slatePage.includes("function formatDecisionLabel(result: StartSummary[\"result\"])") &&
+    slatePage.includes('if (result === "W") return "Win";') &&
+    slatePage.includes('if (result === "L") return "Loss";') &&
     slatePage.includes("data-slate-start-event-flags={start.eventFlags.join(\",\")}") &&
     slatePage.includes("function formatStartEventFlag(flag: NonNullable<StartSummary[\"eventFlags\"]>[number])"),
-  "completed slate cards must expose canonical GSv2, GS+ adjustment context, and start event flags",
+  "completed slate cards must expose canonical GSv2, GS+ adjustment context, pitcher decisions, and start event flags",
 );
 
 assert(

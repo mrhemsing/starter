@@ -151,6 +151,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+</p>
               <p className="font-serif text-7xl font-black leading-none text-amber-300">{start.gameScorePlus}</p>
               <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} />
+              <DecisionChip result={start.result} className="mt-3 justify-start lg:justify-end" />
               <StartEventFlagChips flags={start.eventFlags} className="mt-3 justify-start lg:justify-end" />
               {start.gameScorePlusBreakdown ? (
                 <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
@@ -420,6 +421,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
+            <DecisionChip result={start.result} className="mt-2 justify-end" compact />
           </div>
         </div>
       </div>
@@ -435,6 +437,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <div className="mt-3">
               <ScoreReasonList reasons={visibleRankingReasons(start.gameScorePlusBreakdown?.rankingReasons ?? [])} />
             </div>
+            <DecisionChip result={start.result} className="mt-4" />
             <StartEventFlagChips flags={start.eventFlags} className="mt-4" />
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.16em]">
               <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
@@ -476,6 +479,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
         <p>{formatStartLine(start.line)}</p>
         <p className="mt-1 text-zinc-500">GS+ {start.gameScorePlus}</p>
         <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
+        <DecisionChip result={start.result} className="mt-2 justify-start sm:justify-end" compact />
       </div>
     </article>
   );
@@ -605,6 +609,26 @@ function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }: { gameScor
       GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj
     </p>
   );
+}
+
+function DecisionChip({ result, className = "", compact = false }: { result: StartSummary["result"]; className?: string; compact?: boolean }) {
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      <span
+        className={`inline-flex min-h-7 items-center rounded border border-white/10 bg-white/5 px-2 font-mono ${compact ? "text-[9px]" : "text-[10px]"} uppercase tracking-[0.12em] text-zinc-300`}
+        data-start-decision={result}
+        title="Official pitcher decision, shown as context only"
+      >
+        {decisionLabel(result)}
+      </span>
+    </div>
+  );
+}
+
+function decisionLabel(result: StartSummary["result"]) {
+  if (result === "W") return "Win";
+  if (result === "L") return "Loss";
+  return "No decision";
 }
 
 function StartEventFlagChips({ flags, className = "" }: { flags?: StartSummary["eventFlags"]; className?: string }) {

@@ -116,9 +116,10 @@ export default async function SlatePage({ params }: SlatePageProps) {
                       </div>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-5 font-mono text-xs text-zinc-400 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-5 font-mono text-xs text-zinc-400 sm:grid-cols-5">
                     <span>GS+ {start.gameScorePlus}</span>
                     {typeof start.gameScoreV2 === "number" ? <span>GSv2 {start.gameScoreV2}</span> : null}
+                    <span data-slate-start-decision={start.result}>{formatDecisionLabel(start.result)}</span>
                     <span>{start.gameScorePlusBreakdown?.gradeBand.label ?? "Unbanded"}</span>
                     <span>{formatGsAdjustment(start)}</span>
                   </div>
@@ -240,6 +241,12 @@ function formatGsAdjustment(start: StartSummary) {
 function formatStartEventFlag(flag: NonNullable<StartSummary["eventFlags"]>[number]) {
   if (flag === "HARD_LUCK") return "Hard luck";
   return "Vulture";
+}
+
+function formatDecisionLabel(result: StartSummary["result"]) {
+  if (result === "W") return "Win";
+  if (result === "L") return "Loss";
+  return "No decision";
 }
 
 function rankProbableMatchups(probables: Array<{ id: string; matchupScore: number }>) {

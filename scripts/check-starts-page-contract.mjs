@@ -272,6 +272,21 @@ assert(
 );
 
 assert(
+  startsPage.includes("function DecisionChip({ result, className = \"\", compact = false }") &&
+    startsPage.includes("data-start-decision={result}") &&
+    startsPage.includes("Official pitcher decision, shown as context only") &&
+    startsPage.includes('if (result === "W") return "Win";') &&
+    startsPage.includes('if (result === "L") return "Loss";') &&
+    startsPage.includes('return "No decision";') &&
+    startsPage.includes("<DecisionChip result={start.result}") &&
+    !startsPage.includes("sort === \"result\"") &&
+    !startsPage.includes("sort === \"decision\"") &&
+    !startsPage.includes("sort === \"win\"") &&
+    !startsPage.includes("sort === \"loss\""),
+  "ranked starts and start detail surfaces must show pitcher decisions as neutral context without adding decision ranking inputs",
+);
+
+assert(
   routes.includes("export function startHref") &&
     startsPage.includes("startHref(start, sourceParams(\"starts\"))") &&
     startsPage.includes("pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(\"starts\"))"),
