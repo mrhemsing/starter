@@ -672,7 +672,11 @@ function expectedGameWatchScore(game, weights) {
       weights.pairAvg * game.watchComponents.pairing +
       weights.matchup * game.watchComponents.matchup,
   );
-  return expectedTrustGatedWatchScore(rawScore, game.matchupConfidence, game.flags?.mlbDebut === true);
+  return expectedTbdCappedWatchScore(
+    expectedTrustGatedWatchScore(rawScore, game.matchupConfidence, game.flags?.mlbDebut === true),
+    game.flags?.tbd === true,
+    game.flags?.mlbDebut === true,
+  );
 }
 
 function expectedTrustGatedWatchScore(score, confidence, hasMlbDebut) {
@@ -680,6 +684,11 @@ function expectedTrustGatedWatchScore(score, confidence, hasMlbDebut) {
   if (confidence === "NONE") return Math.min(score, 47.9);
   if (confidence === "LOW") return Math.min(score, 57.9);
   return score;
+}
+
+function expectedTbdCappedWatchScore(score, hasTbdStarter, hasMlbDebut) {
+  if (!hasTbdStarter || hasMlbDebut) return score;
+  return Math.min(score, 47.9);
 }
 
 function expectedWatchScoreLabel(game) {
@@ -1977,7 +1986,7 @@ function starterGroupHasSupportedMetadata(html, starter, options = {}) {
       (pitcherId === "tbd" || /^\d+$/.test(pitcherId ?? "")) &&
       (formHref === "none" || starterFormHrefMatches(formHref, pitcherId)) &&
       ["true", "false"].includes(nameLinked ?? "") &&
-      ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter TBD / league baseline used"].includes(fallbackLabel ?? "") &&
+      ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter unconfirmed. Score uses league baseline."].includes(fallbackLabel ?? "") &&
       ["ok", "cold_start", "mlb_debut", "join_gap", "tbd"].includes(formStatus ?? "") &&
       ["cold_start", "mlb_debut", "join_gap", "none"].includes(tagAttribute(div, "data-starter-limited-reason") ?? "") &&
       /^\d+\/\d+\/(\d+|unknown)$|^none$/.test(tagAttribute(div, "data-starter-form-completeness") ?? "") &&
@@ -2449,7 +2458,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterFallbackLabels.length === renderedGameCount &&
       renderedStarterFallbackLabels.every((labels) =>
         labels.split("|").length === 2 &&
-        labels.split("|").every((label) => ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter TBD / league baseline used"].includes(label)),
+        labels.split("|").every((label) => ["none", "Limited form sample / baseline projection", "Form pending", "MLB debut", "Starter unconfirmed. Score uses league baseline."].includes(label)),
       ),
     `${route} ${sectionId} should expose one away/home starter fallback label pair per visible game`,
   );
@@ -3728,7 +3737,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
 
   if (game.flags?.tbd) {
     assert(
-      normalizedHtml.includes("TBD starter included with league-mean fallback."),
+      normalizedHtml.includes("Starter unconfirmed. Score uses league baseline."),
       `${route} should explain TBD starter fallback on ${game.label}`,
     );
   }
@@ -4032,7 +4041,7 @@ function pitcherSlug(name, fallbackId) {
 }
 
 function starterFallbackAriaLabel(starter) {
-  if (starter.status === "tbd") return "Starter TBD / league baseline used";
+  if (starter.status === "tbd") return "Starter unconfirmed. Score uses league baseline.";
   if (starter.limitedReason === "join_gap") return "Form pending";
   return "Limited form sample / baseline projection";
 }
@@ -4043,7 +4052,7 @@ function starterHeadshotFormBand(starter) {
 
 function watchFlagNoteAriaLabel(game) {
   const notes = [];
-  if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
+  if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
   if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");

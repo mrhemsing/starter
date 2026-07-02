@@ -11,6 +11,7 @@ const types = await readFile("src/lib/types.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const mlbArchive = await readFile("src/lib/data/mlb-archive.ts", "utf8");
 const tonightService = await readFile("src/lib/data/tonight-service.ts", "utf8");
+const mustWatchComponent = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 
 assert(
   formTokens.includes("tbdStarter: {") &&
@@ -65,6 +66,18 @@ assert(
     tonightService.includes("probableSource: probable.source,") &&
     tonightService.includes("probableConfidence: probable.confidence,"),
   "Upcoming starter slots must carry CONFIRMED/TBD probable metadata",
+);
+
+assert(
+  mustWatchComponent.includes("data-starter-probable-source={starter.probableSource}") &&
+    mustWatchComponent.includes("data-starter-probable-confidence={starter.probableConfidence}") &&
+    mustWatchComponent.includes("function ProbableConfidenceChip(") &&
+    mustWatchComponent.includes('starter.probableConfidence !== "REPORTED"') &&
+    mustWatchComponent.includes("UNCONFIRMED") &&
+    mustWatchComponent.includes("PROVISIONAL") &&
+    mustWatchComponent.includes("Starter unconfirmed. Score uses league baseline.") &&
+    !mustWatchComponent.includes("Starter TBD / league baseline used"),
+  "Upcoming cards must render REPORTED starters as UNCONFIRMED and TBD starters as one PROVISIONAL baseline line",
 );
 
 assert(

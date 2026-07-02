@@ -696,6 +696,8 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       data-starter-form-status={starter.formStatus}
       data-starter-limited-reason={starter.limitedReason ?? "none"}
       data-starter-form-completeness={starterFormCompletenessValue(starter)}
+      data-starter-probable-source={starter.probableSource}
+      data-starter-probable-confidence={starter.probableConfidence}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -725,6 +727,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           <h4 className="pitcher-name mt-1 min-w-0 font-serif text-2xl font-bold leading-tight text-zinc-50 lg:text-3xl">
             {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
           </h4>
+          <ProbableConfidenceChip starter={starter} align={align} />
           {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
@@ -1016,6 +1019,8 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       data-starter-form-status={starter.formStatus}
       data-starter-limited-reason={starter.limitedReason ?? "none"}
       data-starter-form-completeness={starterFormCompletenessValue(starter)}
+      data-starter-probable-source={starter.probableSource}
+      data-starter-probable-confidence={starter.probableConfidence}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -1033,6 +1038,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         <p className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100">
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
+        <ProbableConfidenceChip starter={starter} compact />
         <p className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
           {starter.team}
@@ -1081,9 +1087,10 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
 function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
   if (starter.status === "tbd") {
     return (
-      <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
-        <MetaLine segments={["Starter TBD", "league baseline used"]} />
-      </p>
+      <div className="mt-3 text-sm text-zinc-400" aria-label={starterFallbackAriaLabel(starter)}>
+        <p className="inline-flex items-center rounded border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300">PROVISIONAL</p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">Starter unconfirmed. Score uses league baseline.</p>
+      </div>
     );
   }
 
@@ -1131,6 +1138,16 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function ProbableConfidenceChip({ starter, align, compact = false }: { starter: TonightStarter; align?: "away" | "home"; compact?: boolean }) {
+  if (starter.probableConfidence !== "REPORTED") return null;
+
+  return (
+    <p className={`mt-1 inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200 ${align === "home" ? "lg:ml-auto" : ""} ${compact ? "text-[8px]" : ""}`}>
+      UNCONFIRMED
+    </p>
   );
 }
 
@@ -1514,7 +1531,7 @@ function starterFormCompletenessValue(starter: TonightStarter) {
 }
 
 function starterFallbackAriaLabel(starter: TonightStarter) {
-  if (starter.status === "tbd") return "Starter TBD / league baseline used";
+  if (starter.status === "tbd") return "Starter unconfirmed. Score uses league baseline.";
   if (starter.formStatus === "mlb_debut") return "MLB debut";
   if (starter.formStatus === "join_gap") return "Form pending";
   return "Limited form sample / baseline projection";
@@ -1522,7 +1539,7 @@ function starterFallbackAriaLabel(starter: TonightStarter) {
 
 function watchFlagNoteAriaLabel(game: TonightGame) {
   const notes = [];
-  if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback");
+  if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify the game as must-watch");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
@@ -1532,7 +1549,7 @@ function watchFlagNoteAriaLabel(game: TonightGame) {
 
 function watchFlagNoteText(game: TonightGame) {
   const notes = [];
-  if (game.flags?.tbd) notes.push("TBD starter included with league-mean fallback.");
+  if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline.");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed.");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify this game as must-watch.");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher.");
