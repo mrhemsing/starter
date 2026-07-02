@@ -569,6 +569,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
   const seasonStats = buildSeasonStats(starts);
+  const seasonDecisionRecord = buildSeasonDecisionRecord(starts);
   const tier = formHeatBandOf(rgs, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
@@ -592,6 +593,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     formSpark,
     lastStart,
     seasonStats,
+    seasonDecisionRecord,
     driverChips,
     workload,
     flags: {
@@ -599,6 +601,18 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
       rust,
     },
   };
+}
+
+function buildSeasonDecisionRecord(starts: StartSummary[]) {
+  return starts.reduce(
+    (record, start) => {
+      if (start.result === "W") record.wins += 1;
+      else if (start.result === "L") record.losses += 1;
+      else record.noDecisions += 1;
+      return record;
+    },
+    { wins: 0, losses: 0, noDecisions: 0 },
+  );
 }
 
 function buildWorkload(starts: StartSummary[], window: FormWindow): FormWorkload {

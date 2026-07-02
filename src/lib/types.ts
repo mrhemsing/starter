@@ -196,6 +196,12 @@ export type FormSeasonStats = {
   k9: number | null;
 };
 
+export type FormDecisionRecord = {
+  wins: number;
+  losses: number;
+  noDecisions: number;
+};
+
 export type FormWorkload = {
   lastStartDate: string | null;
   lastStartPitches: number | null;
@@ -252,6 +258,7 @@ export type FormSummary = {
   formSpark: number[];
   lastStart: FormStartPoint | null;
   seasonStats: FormSeasonStats;
+  seasonDecisionRecord: FormDecisionRecord;
   driverChips: FormDriverChip[];
   workload: FormWorkload;
   venueSplit?: FormVenueSplitLabel | null;

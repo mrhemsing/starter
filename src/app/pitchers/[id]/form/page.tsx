@@ -140,7 +140,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
                     <p className="pb-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
                   </div>
                   <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
-                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · FIP {estimateFip(summary.seasonStats.k9)} · xERA {estimateXera(summary.seasonStats.era, summary.trendDelta)}
+                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)} · FIP {estimateFip(summary.seasonStats.k9)} · xERA {estimateXera(summary.seasonStats.era, summary.trendDelta)}
                   </p>
                   {summary.venueSplit ? <HomeRoadSplitBadge split={summary.venueSplit} /> : null}
                 </div>
@@ -707,6 +707,10 @@ function SplitRow({ split }: { split: PitcherApiSplitGroup }) {
 
 function formatNullable(value: number | null | undefined, digits: number) {
   return typeof value === "number" ? value.toFixed(digits) : "--";
+}
+
+function formatSeasonDecisionRecord(record: FormSummary["seasonDecisionRecord"]) {
+  return `${record.wins}-${record.losses}${record.noDecisions > 0 ? ` (${record.noDecisions} ND)` : ""}`;
 }
 
 function VeloSparkline({ values, label, color }: { values: number[]; label: string; color: string }) {

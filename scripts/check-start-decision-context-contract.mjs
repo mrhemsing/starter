@@ -14,8 +14,20 @@ const homeDeferred = await readFile("src/components/home-deferred-sections.tsx",
 
 assert(
   types.includes('result: StartSummary["result"];') &&
+    types.includes("export type FormDecisionRecord = {") &&
+    types.includes("seasonDecisionRecord: FormDecisionRecord;") &&
     formService.includes("result: start.result,"),
   "form start points must carry canonical pitcher decisions into pitcher game logs",
+);
+
+assert(
+  formService.includes("const seasonDecisionRecord = buildSeasonDecisionRecord(starts);") &&
+    formService.includes("seasonDecisionRecord,") &&
+    formService.includes("function buildSeasonDecisionRecord(starts: StartSummary[])") &&
+    formService.includes('if (start.result === "W") record.wins += 1;') &&
+    formService.includes('else if (start.result === "L") record.losses += 1;') &&
+    formService.includes("else record.noDecisions += 1;"),
+  "Form summaries must compute season W-L-ND from canonical start results",
 );
 
 assert(
@@ -26,8 +38,10 @@ assert(
     pitcherFormPage.includes('if (result === "L") return "Loss";') &&
     pitcherFormPage.includes("return \"No decision\";") &&
     pitcherFormPage.includes("<DecisionPill result={start.result} />") &&
-    pitcherFormPage.includes("<DecisionPill result={start.result} className=\"mt-3\" />"),
-  "pitcher profile game logs must show neutral W/L/ND context in collapsed and expanded rows",
+    pitcherFormPage.includes("<DecisionPill result={start.result} className=\"mt-3\" />") &&
+    pitcherFormPage.includes("W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)}") &&
+    pitcherFormPage.includes("function formatSeasonDecisionRecord(record: FormSummary[\"seasonDecisionRecord\"])"),
+  "pitcher profiles must show neutral W/L/ND context in the hero and game-log rows",
 );
 
 assert(

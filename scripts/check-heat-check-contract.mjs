@@ -539,9 +539,13 @@ assert(
 
 assert(
   types.includes('result: StartSummary["result"];') &&
+    types.includes("export type FormDecisionRecord = {") &&
+    types.includes("seasonDecisionRecord: FormDecisionRecord;") &&
     formService.includes("function buildStartPoint(starts: StartSummary[], index: number, window: FormWindow): FormStartPoint") &&
-    formService.includes("result: start.result,"),
-  "Heat Check Form start points must preserve canonical W/L/ND decisions for series and last-start payloads",
+    formService.includes("result: start.result,") &&
+    formService.includes("function buildSeasonDecisionRecord(starts: StartSummary[])") &&
+    formService.includes("seasonDecisionRecord,"),
+  "Heat Check Form summaries and start points must preserve canonical W/L/ND decisions for profile context and last-start payloads",
 );
 
 assert(
