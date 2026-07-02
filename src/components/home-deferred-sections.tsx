@@ -15,11 +15,16 @@ import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/ro
 import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
+import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
+import { inningsFromIP } from "@/lib/innings";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
+const HOME_LIVE_LEADER_POLL_MS = 30 * 1000;
+const HOME_LIVE_LEADER_FLOOR = 50;
+const HOME_LIVE_LEADER_MIN_INNINGS = 3;
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
@@ -89,16 +94,12 @@ export function HomeDeferredSections({
       fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
     }
 
-    const rankedRefresh = window.setInterval(() => {
-      fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
-    }, 60 * 1000);
     const homeClockRefresh = window.setInterval(() => {
       setNowMs(Date.now());
     }, 60 * 1000);
 
     return () => {
       cancelled = true;
-      window.clearInterval(rankedRefresh);
       window.clearInterval(homeClockRefresh);
     };
   }, [bestStarts, duels, formHome, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
@@ -139,27 +140,7 @@ export function HomeDeferredSections({
         ranked === null ? (
           null
         ) : ranked.topPerformer ? (
-          <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl">
-              <TopPerformerCard
-                href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams("home"))}
-                pitcherName={ranked.topPerformer.start.pitcher.name}
-                team={ranked.topPerformer.start.pitcher.team}
-                opponent={ranked.topPerformer.start.opponent}
-                dateLabel={ranked.topPerformer.dateLabel}
-                score={ranked.topPerformer.start.gameScorePlus}
-                line={ranked.topPerformer.start.line}
-                rank={1}
-                slateCount={ranked.topPerformer.slateCount}
-                image={ranked.topPerformer.image}
-                highlight={ranked.topPerformer.highlight}
-                status={ranked.topPerformer.status}
-                whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}
-                topVelo={ranked.topPerformer.metrics?.topVelo ?? null}
-                veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}
-              />
-            </div>
-          </section>
+          <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} today={today} />
         ) : ranked.liveLeaderboard ? (
           <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
         ) : null,
@@ -203,27 +184,7 @@ export function HomeDeferredSections({
       {ranked === null ? (
         null
       ) : ranked.topPerformer ? (
-        <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <TopPerformerCard
-              href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams("home"))}
-              pitcherName={ranked.topPerformer.start.pitcher.name}
-              team={ranked.topPerformer.start.pitcher.team}
-              opponent={ranked.topPerformer.start.opponent}
-              dateLabel={ranked.topPerformer.dateLabel}
-              score={ranked.topPerformer.start.gameScorePlus}
-              line={ranked.topPerformer.start.line}
-              rank={1}
-              slateCount={ranked.topPerformer.slateCount}
-              image={ranked.topPerformer.image}
-              highlight={ranked.topPerformer.highlight}
-              status={ranked.topPerformer.status}
-              whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}
-              topVelo={ranked.topPerformer.metrics?.topVelo ?? null}
-              veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}
-            />
-          </div>
-        </section>
+        <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} today={today} />
       ) : ranked.liveLeaderboard ? (
         <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
       ) : null}
@@ -253,6 +214,140 @@ export function HomeDeferredSections({
       ) : null}
     </>
   );
+}
+
+type HomeTopPerformer = NonNullable<RankedHomeResponse["topPerformer"]>;
+type HomeTopPerformerView = {
+  startId: string;
+  href: string;
+  pitcherName: string;
+  team: string;
+  opponent: string;
+  dateLabel: string;
+  score: number;
+  line: HomeTopPerformer["start"]["line"];
+  rank: number;
+  slateCount: number;
+  image: HomeTopPerformer["image"];
+  highlight: HomeTopPerformer["highlight"];
+  status: HomeTopPerformer["status"];
+  whiffRate: number | null;
+  topVelo: number | null;
+  veloSparkline: number[];
+};
+
+function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTopPerformer; today: string }) {
+  const [view, setView] = useState<HomeTopPerformerView>(() => homeTopPerformerViewFromPayload(topPerformer));
+  const shouldPollLiveLeader = topPerformer.status === "live";
+
+  useEffect(() => {
+    if (!shouldPollLiveLeader) return;
+
+    let cancelled = false;
+    let livePoll = 0;
+
+    const syncLiveLeader = async () => {
+      const board = await fetchJson<LiveScoreboard>(`/api/live/${today}`);
+      if (cancelled) return;
+
+      const leader = resolveHomeLiveLeaderRow(board);
+      if (leader) {
+        setView((current) => homeTopPerformerViewFromLiveRow(current, leader, board, topPerformer.dateLabel));
+      }
+
+      if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {
+        window.clearInterval(livePoll);
+      }
+    };
+
+    syncLiveLeader().catch(() => undefined);
+    livePoll = window.setInterval(() => {
+      syncLiveLeader().catch(() => undefined);
+    }, HOME_LIVE_LEADER_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(livePoll);
+    };
+  }, [shouldPollLiveLeader, today, topPerformer.dateLabel]);
+
+  return (
+    <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}>
+      <div className="mx-auto max-w-7xl">
+        <TopPerformerCard
+          href={view.href}
+          pitcherName={view.pitcherName}
+          team={view.team}
+          opponent={view.opponent}
+          dateLabel={view.dateLabel}
+          score={view.score}
+          line={view.line}
+          rank={view.rank}
+          slateCount={view.slateCount}
+          image={view.image}
+          highlight={view.highlight}
+          status={view.status}
+          whiffRate={view.whiffRate}
+          topVelo={view.topVelo}
+          veloSparkline={view.veloSparkline}
+        />
+      </div>
+    </section>
+  );
+}
+
+function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTopPerformerView {
+  return {
+    startId: topPerformer.start.id,
+    href: topPerformer.href ?? startHref(topPerformer.start, sourceParams("home")),
+    pitcherName: topPerformer.start.pitcher.name,
+    team: topPerformer.start.pitcher.team,
+    opponent: topPerformer.start.opponent,
+    dateLabel: topPerformer.dateLabel,
+    score: topPerformer.start.gameScorePlus,
+    line: topPerformer.start.line,
+    rank: 1,
+    slateCount: topPerformer.slateCount,
+    image: topPerformer.image,
+    highlight: topPerformer.highlight,
+    status: topPerformer.status,
+    whiffRate: topPerformer.metrics?.whiffRate ?? null,
+    topVelo: topPerformer.metrics?.topVelo ?? null,
+    veloSparkline: topPerformer.metrics?.veloSparkline ?? [],
+  };
+}
+
+function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string): HomeTopPerformerView {
+  const sameStart = current.startId === row.startId;
+
+  return {
+    startId: row.startId,
+    href: row.liveHref,
+    pitcherName: row.pitcherName,
+    team: row.team,
+    opponent: row.opponent,
+    dateLabel,
+    score: row.gsPlus ?? current.score,
+    line: row.line,
+    rank: 1,
+    slateCount: board.totalStarts,
+    image: sameStart ? current.image : null,
+    highlight: sameStart ? current.highlight : null,
+    status: row.scoreLabel === "FINAL" ? "final" : "live",
+    whiffRate: sameStart ? current.whiffRate : null,
+    topVelo: sameStart ? current.topVelo : null,
+    veloSparkline: sameStart ? current.veloSparkline : [],
+  };
+}
+
+function resolveHomeLiveLeaderRow(board: LiveScoreboard) {
+  const leader = board.leader;
+  if (!leader || !isHomeLiveLeaderEligibleRow(leader)) return null;
+  return leader;
+}
+
+function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow) {
+  return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.gsPlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;
 }
 
 function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResponse["liveLeaderboard"]> }) {

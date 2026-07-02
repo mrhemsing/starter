@@ -54,6 +54,7 @@ export function TopPerformerCard({
   const finalScoreText = score.toString().padStart(2, "0");
   const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
   const isLiveLeader = status === "live";
+  const scoreStatusLabel = isLiveLeader ? "PROV" : null;
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -210,7 +211,7 @@ export function TopPerformerCard({
               <TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} compact />
               <span className="mt-1 block nowrap-token">{statusLabel.detail}</span>
             </p>
-            <ScoreBug score={scoreText} compact />
+            <ScoreBug score={scoreText} scoreStatusLabel={scoreStatusLabel} compact />
           </div>
           {highlight ? (
             <div className="absolute inset-0 z-20 grid place-items-center lg:hidden">
@@ -232,7 +233,7 @@ export function TopPerformerCard({
             </p>
           </div>
           <div className="absolute bottom-7 right-7 z-10 hidden text-right lg:block">
-            <ScoreBug score={scoreText} />
+            <ScoreBug score={scoreText} scoreStatusLabel={scoreStatusLabel} />
             <p className="nowrap-token mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#F5F2EA]">{context}</p>
           </div>
           {highlight ? (
@@ -282,13 +283,14 @@ function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", da
   };
 }
 
-function ScoreBug({ score, compact = false }: { score: string; compact?: boolean }) {
+function ScoreBug({ score, scoreStatusLabel, compact = false }: { score: string; scoreStatusLabel?: string | null; compact?: boolean }) {
   return (
     <div className="relative text-right">
       <p className={`font-mono font-black tabular-nums leading-[0.82] text-[#F6C445] ${compact ? "text-7xl" : "text-9xl"}`}>{score}</p>
       <div className="mt-2 flex items-center justify-end gap-2">
         <span className="h-px w-10 bg-[#F6C445]" />
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F5F2EA]">GS+</span>
+        {scoreStatusLabel ? <span className="rounded border border-[#FF5A1F]/45 bg-[#FF5A1F]/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[#FFB199]">{scoreStatusLabel}</span> : null}
       </div>
     </div>
   );

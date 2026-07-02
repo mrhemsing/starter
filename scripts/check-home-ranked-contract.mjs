@@ -39,7 +39,7 @@ assert(
     rankedService.includes('import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";') &&
     rankedService.includes("highlight: FeaturedStartHighlight | null;") &&
     rankedService.includes("resolveFeaturedStartHighlight(state.start),") &&
-    homeDeferredSections.includes("highlight={ranked.topPerformer.highlight}") &&
+    homeDeferredSections.includes("highlight={view.highlight}") &&
     featuredHighlightService.includes('"2026-06-25-hou-det-837227": "fSu5y2kmChE"') &&
     featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
@@ -152,7 +152,8 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("image={ranked.topPerformer.image}"),
+  homeDeferredSections.includes("image={view.image}") &&
+    homeDeferredSections.includes("image: topPerformer.image,"),
   "home deferred top performer card must pass through the ranked API image",
 );
 
@@ -180,18 +181,28 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("topVelo={ranked.topPerformer.metrics?.topVelo ?? null}") &&
-    homeDeferredSections.includes("veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}") &&
-    homeDeferredSections.includes("whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}"),
+  homeDeferredSections.includes("topVelo={view.topVelo}") &&
+    homeDeferredSections.includes("veloSparkline={view.veloSparkline}") &&
+    homeDeferredSections.includes("whiffRate={view.whiffRate}") &&
+    homeDeferredSections.includes("function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTopPerformerView") &&
+    homeDeferredSections.includes("topVelo: topPerformer.metrics?.topVelo ?? null,") &&
+    homeDeferredSections.includes("veloSparkline: topPerformer.metrics?.veloSparkline ?? [],") &&
+    homeDeferredSections.includes("whiffRate: topPerformer.metrics?.whiffRate ?? null,"),
   "home deferred top performer card must pass through ranked API velocity metrics",
 );
 
 assert(
-  homeDeferredSections.includes('window.setInterval(() => {') &&
-    homeDeferredSections.includes('fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);') &&
-    homeDeferredSections.includes("}, 60 * 1000);") &&
-    homeDeferredSections.includes("window.clearInterval(rankedRefresh);"),
-  "home ranked hero must revalidate in-session so hidden/live/final states update without manual reload",
+  homeDeferredSections.includes("const HOME_LIVE_LEADER_POLL_MS = 30 * 1000;") &&
+    homeDeferredSections.includes('import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
+    homeDeferredSections.includes("function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTopPerformer; today: string })") &&
+    homeDeferredSections.includes('const shouldPollLiveLeader = topPerformer.status === "live";') &&
+    homeDeferredSections.includes("if (!shouldPollLiveLeader) return;") &&
+    homeDeferredSections.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
+    homeDeferredSections.includes("}, HOME_LIVE_LEADER_POLL_MS);") &&
+    homeDeferredSections.includes("window.clearInterval(livePoll);") &&
+    !homeDeferredSections.includes("const rankedRefresh") &&
+    !homeDeferredSections.includes("window.clearInterval(rankedRefresh);"),
+  "home live leader hero must keep the server snapshot and poll the Live Board feed only while the hero is live",
 );
 
 assert(
@@ -221,11 +232,14 @@ assert(
   topPerformerCard.includes('status: "final" | "live" | "previous";') &&
     topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
     topPerformerCard.includes('const isLiveLeader = status === "live";') &&
+    topPerformerCard.includes('const scoreStatusLabel = isLiveLeader ? "PROV" : null;') &&
     topPerformerCard.includes('eyebrow: "Live GS+ leader"') &&
     topPerformerCard.includes('detail: `Today, ${dateLabel}`') &&
     topPerformerCard.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
+    topPerformerCard.includes("scoreStatusLabel={scoreStatusLabel}") &&
+    topPerformerCard.includes("scoreStatusLabel ?") &&
     topPerformerCard.includes('eyebrow: "Start of the night"') &&
-    homeDeferredSections.includes("status={ranked.topPerformer.status}") &&
+    homeDeferredSections.includes("status={view.status}") &&
     !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
   "home top performer must label live leaders with broadcast live copy and final/previous winners as Start of the Night",
 );
@@ -313,8 +327,23 @@ assert(
     rankedService.includes("const liveBoard = slateProgress.state === \"starts-in-progress\" ? await getLiveScoreboard({ date: today }) : null;") &&
     rankedService.includes("const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);") &&
     rankedService.includes("href: liveDateHref(today),") &&
-    homeDeferredSections.includes("href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams(\"home\"))}"),
-  "home top performer must promote the provisional live GS+ leader into the hero and link to the live board",
+    homeDeferredSections.includes("href: topPerformer.href ?? startHref(topPerformer.start, sourceParams(\"home\")),") &&
+    homeDeferredSections.includes("function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string)") &&
+    homeDeferredSections.includes("href: row.liveHref,") &&
+    homeDeferredSections.includes('status: row.scoreLabel === "FINAL" ? "final" : "live",'),
+  "home top performer must promote the provisional live GS+ leader into the hero, hydrate from the Live Board feed, and link to the live board",
+);
+
+assert(
+  homeDeferredSections.includes("const HOME_LIVE_LEADER_FLOOR = 50;") &&
+    homeDeferredSections.includes("const HOME_LIVE_LEADER_MIN_INNINGS = 3;") &&
+    homeDeferredSections.includes("function resolveHomeLiveLeaderRow(board: LiveScoreboard)") &&
+    homeDeferredSections.includes("const leader = board.leader;") &&
+    homeDeferredSections.includes("function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
+    homeDeferredSections.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.gsPlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;') &&
+    homeDeferredSections.includes('data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}') &&
+    homeDeferredSections.includes('if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {'),
+  "home live leader island must preserve the Start of the Day threshold, avoid projected rows, mark final rows settled, and stop polling after the live slate closes",
 );
 
 assert(
