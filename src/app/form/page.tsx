@@ -627,6 +627,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
           <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
         </p>
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
+        <TodayStartFreshnessChip pitcher={pitcher} />
         {seasonView ? null : (
           <div className="flex min-w-0 flex-wrap gap-1.5">
             <CrossoverPill pitcher={pitcher} />
@@ -675,6 +676,16 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
       </div>
       )}
     </article>
+  );
+}
+
+function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary }) {
+  if (!pitcher.flags?.todaysStartNotReflected) return null;
+
+  return (
+    <span className="mt-1 inline-flex w-fit rounded border border-amber-300/35 bg-amber-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+      TODAY&apos;S START NOT YET REFLECTED
+    </span>
   );
 }
 

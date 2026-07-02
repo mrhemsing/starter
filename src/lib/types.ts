@@ -253,7 +253,7 @@ export type FormSummary = {
   availability?: PitcherAvailability | null;
   nextStart?: FormNextStart | null;
   highlight?: FeaturedStartHighlight | null;
-  flags?: { rust?: boolean; limitedSample?: boolean };
+  flags?: { rust?: boolean; limitedSample?: boolean; todaysStartNotReflected?: boolean };
 };
 
 export type FormNextStart = {

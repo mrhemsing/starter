@@ -26,6 +26,7 @@ type FormStartSet = {
   formThroughDate: string | null;
   latestScoredStartDate: string | null;
   stale: boolean;
+  stalePitcherIds: Set<string>;
 };
 
 type FormMetricKey = "k9" | "bb9" | "ipPerStart" | "er9";
@@ -133,6 +134,7 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const leagueContext = buildLeagueContext(starts);
   const summaries = buildPitcherBuckets(starts)
     .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext))
+    .map((summary) => attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds))
     .sort(compareRollingFormLevelDesc);
   const [availabilityStatuses, nextStarts] = await Promise.all([
     fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true }),
@@ -211,10 +213,11 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     ...summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext),
     venueSplit: buildVenueSplitLabel(venueSplitStarts),
   };
+  const summaryWithFreshness = attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds);
   const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses([Number(summary.pitcherId)], { fetchLive: true });
   const summaryWithAvailability = {
-    ...summary,
-    availability: availabilityStatuses.get(summary.pitcherId) ?? null,
+    ...summaryWithFreshness,
+    availability: availabilityStatuses.get(summaryWithFreshness.pitcherId) ?? null,
   };
   const series = buildStartPoints(bucket.starts, window);
 
@@ -391,6 +394,18 @@ function attachAvailability(pitchers: FormSummary[], availabilityStatuses: Await
   }));
 }
 
+function attachTodayStartFreshnessFlag(summary: FormSummary, stalePitcherIds: Set<string>): FormSummary {
+  if (!stalePitcherIds.has(summary.pitcherId)) return summary;
+
+  return {
+    ...summary,
+    flags: {
+      ...summary.flags,
+      todaysStartNotReflected: true,
+    },
+  };
+}
+
 export async function getFormCalibration(options: FormBuildOptions = {}) {
   const leaderboard = await getFormLeaderboard({ ...options, qualifiedOnly: false });
   const qualified = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok" && pitcher.windowCount >= FORM_CONFIG.minStartsToQualify);
@@ -434,17 +449,23 @@ async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
   const stale = Boolean(formThroughDate && latestScoredStartDate && formThroughDate < latestScoredStartDate);
 
   if (stale) {
-    const affectedPitchers = new Set(scoredStarts.filter((start) => start.date === latestScoredStartDate).map((start) => start.pitcher.mlbId));
+    const affectedPitchers = new Set(scoredStarts.filter((start) => start.date === latestScoredStartDate).map((start) => String(start.pitcher.mlbId)));
     console.warn(
       `[form-pipeline] rolling form is stale: formThroughDate=${formThroughDate}, latestScoredStartDate=${latestScoredStartDate}, affectedPitchers=${affectedPitchers.size}`,
     );
   }
+
+  const stalePitcherIds = new Set(
+    (formThroughDate ? scoredStarts.filter((start) => start.source?.line !== "fixture" && start.date > formThroughDate) : [])
+      .map((start) => String(start.pitcher.mlbId)),
+  );
 
   return {
     starts: qualifiedStarts,
     formThroughDate,
     latestScoredStartDate,
     stale,
+    stalePitcherIds,
   };
 }
 
@@ -461,6 +482,7 @@ async function getStableVenueSplitStarts(season: string): Promise<FormStartSet> 
     formThroughDate: current.formThroughDate,
     latestScoredStartDate: current.latestScoredStartDate,
     stale: current.stale,
+    stalePitcherIds: current.stalePitcherIds,
   };
 }
 

@@ -21,6 +21,7 @@ const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
+const types = await readFile("src/lib/types.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 
 assert(
@@ -159,6 +160,18 @@ assert(
 );
 
 assert(
+  types.includes("todaysStartNotReflected?: boolean") &&
+    formService.includes("stalePitcherIds: Set<string>;") &&
+    formService.includes("function attachTodayStartFreshnessFlag(summary: FormSummary, stalePitcherIds: Set<string>): FormSummary") &&
+    formService.includes("todaysStartNotReflected: true,") &&
+    formService.includes("start.date > formThroughDate") &&
+    formPage.includes("function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary })") &&
+    formPage.includes("pitcher.flags?.todaysStartNotReflected") &&
+    formPage.includes("TODAY&apos;S START NOT YET REFLECTED"),
+  "Heat Check must flag pitchers whose completed start today is not yet reflected in rolling form",
+);
+
+assert(
   formPage.includes("<HeatCheckBandNav bands={leagueBandCounts} />") &&
     bandNav.includes('"use client";') &&
     formPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
@@ -236,7 +249,7 @@ assert(
 
 assert(
   formPage.includes("team?: string;") &&
-    formPage.includes('const team = params?.team ?? "";') &&
+    formPage.includes('const team = params.team ?? "";') &&
     formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly, team })") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
@@ -250,7 +263,7 @@ assert(
     formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
     formPage.includes("{trendView && leagueView ? (") &&
-    formPage.includes("<BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params ?? {}} />") &&
+    formPage.includes("<BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params} />") &&
     formPage.includes("{trendView && leagueView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
@@ -294,7 +307,7 @@ assert(
 assert(
   formPage.includes('type HeatCheckView = "trend" | "season";') &&
     formPage.includes('function parseHeatCheckView(value: string | undefined): HeatCheckView') &&
-    formPage.includes('const view = parseHeatCheckView(params?.view);') &&
+    formPage.includes("const view = viewOverride ?? parseHeatCheckView(rawParams?.view);") &&
     formPage.includes('const trendView = view === "trend";') &&
     formPage.includes('const seasonView = view === "season";') &&
     formPage.includes("const seasonPitchers = leaderboard.pitchers") &&
