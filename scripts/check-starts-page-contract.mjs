@@ -83,8 +83,8 @@ assert(
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
     !primaryNavLink.includes("dispatchRoutePending") &&
-    existsSync("src/app/starts/[id]/loading.tsx"),
-  "ranked starts navigation must keep a native route skeleton while the P1-5 timing gate is unmet",
+    !existsSync("src/app/starts/[id]/loading.tsx"),
+  "ranked starts navigation must keep prefetch warming without restoring the interim route skeleton after the P1-5 timing gate",
 );
 
 assert(
