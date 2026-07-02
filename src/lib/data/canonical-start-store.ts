@@ -11,10 +11,16 @@ type CanonicalStartStoreFile = {
   records: CanonicalStartRecord[];
 };
 
-const CANONICAL_START_STORE_DIR = process.env.VERCEL
+const CANONICAL_START_STORE_DIR = isReadOnlyServerRuntime()
   ? path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")
   : path.join(process.cwd(), ".data", "canonical-starts");
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
+
+function isReadOnlyServerRuntime() {
+  return Boolean(process.env.VERCEL)
+    || process.cwd().startsWith("/var/task")
+    || process.cwd().startsWith("/var/runtime");
+}
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
   if (shouldSkipCanonicalStartStore(starts)) {
@@ -130,7 +136,7 @@ function officialCanonicalLineSource(source: StartDataSource["line"]): Extract<S
 
 function isCanonicalStoreUnavailableError(error: unknown) {
   const code = (error as NodeJS.ErrnoException).code;
-  return code === "EACCES" || code === "EPERM" || code === "EROFS";
+  return code === "EACCES" || code === "ENOENT" || code === "EPERM" || code === "EROFS";
 }
 
 function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStartRecord) {

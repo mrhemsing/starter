@@ -66,10 +66,13 @@ assert(
 );
 
 assert(
-  canonicalStore.includes('import os from "node:os";') &&
-    canonicalStore.includes("const CANONICAL_START_STORE_DIR = process.env.VERCEL") &&
+    canonicalStore.includes('import os from "node:os";') &&
+    canonicalStore.includes("const CANONICAL_START_STORE_DIR = isReadOnlyServerRuntime()") &&
     canonicalStore.includes('path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")') &&
     canonicalStore.includes('path.join(process.cwd(), ".data", "canonical-starts")') &&
+    canonicalStore.includes("function isReadOnlyServerRuntime()") &&
+    canonicalStore.includes("process.cwd().startsWith(\"/var/task\")") &&
+    canonicalStore.includes("process.cwd().startsWith(\"/var/runtime\")") &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
@@ -77,6 +80,7 @@ assert(
     canonicalStore.includes("async function readCanonicalStartStore(") &&
     canonicalStore.includes("async function writeCanonicalStartStore(") &&
     canonicalStore.includes("function isCanonicalStoreUnavailableError") &&
+    canonicalStore.includes('code === "ENOENT"') &&
     canonicalStore.includes("return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
