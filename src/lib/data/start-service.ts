@@ -9,7 +9,7 @@ import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonComplete
 import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
-import { getSlateProgressState, type SlateProgressState } from "@/lib/slate-state";
+import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";
 import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";
 import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
@@ -170,6 +170,10 @@ export type RankedSlateCompletionState = {
   finalGames: number;
   totalStarts: number;
   completedStarts: number;
+  liveStarts: number;
+  warmingStarts: number;
+  scheduledStarts: number;
+  delayStarts: number;
   remainingGames: number;
   remainingStarts: number;
   isToday: boolean;
@@ -265,17 +269,18 @@ function isUpcomingDefaultActiveGame(game: MlbScheduleGame) {
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {
-  const [liveSchedule, archivedSchedule] = await Promise.all([
+  const [slateStarts, liveSchedule, archivedSchedule] = await Promise.all([
+    getDailySlate({ window: date === today ? "today" : "yesterday", date }),
     fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
     readArchivedSchedule(date),
   ]);
   const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
-  const completedLines = await getCompletedPitchingLineMap(schedule);
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
   const finalGames = countableGames.filter(isFinalGameState).length;
   const totalGames = countableGames.length;
-  const totalStarts = totalGames * 2;
-  const completedStarts = Math.min(totalStarts, Math.max(completedLines.size, finalGames * 2));
+  const startCounts = summarizeCanonicalStartBuckets(slateStarts);
+  const totalStarts = startCounts.totalStarts;
+  const completedStarts = Math.min(totalStarts, startCounts.finalStarts);
   const isToday = date === today;
   const isPast = date < today;
   const isFinal = totalStarts > 0 && completedStarts >= totalStarts;
@@ -286,6 +291,10 @@ export async function getRankedSlateCompletionState(date: string, today = getHom
     finalGames,
     totalStarts,
     completedStarts,
+    liveStarts: startCounts.liveStarts,
+    warmingStarts: startCounts.warmingStarts,
+    scheduledStarts: startCounts.scheduledStarts,
+    delayStarts: startCounts.delayStarts,
     remainingGames: Math.max(0, totalGames - finalGames),
     remainingStarts: Math.max(0, totalStarts - completedStarts),
     isToday,

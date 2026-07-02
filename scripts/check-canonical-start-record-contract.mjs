@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
 
 assert(
@@ -82,6 +83,23 @@ assert(
     archiveStatusRoute.includes('new URL(request.url).searchParams.get("date")') &&
     archiveStatusRoute.includes("canonicalReconciliation"),
   "archive status API must expose the canonical daily reconciliation report for a requested date",
+);
+
+assert(
+  slateState.includes("export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts") &&
+    slateState.includes('if (start.source?.line === "archive-gamefeed") return "final";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed") return "live";') &&
+    slateState.includes('return "scheduled";') &&
+    startService.includes('import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";') &&
+    startService.includes('const [slateStarts, liveSchedule, archivedSchedule] = await Promise.all([') &&
+    startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
+    startService.includes("const totalStarts = startCounts.totalStarts;") &&
+    startService.includes("const completedStarts = Math.min(totalStarts, startCounts.finalStarts);") &&
+    startService.includes("liveStarts: startCounts.liveStarts,") &&
+    startService.includes("warmingStarts: startCounts.warmingStarts,") &&
+    startService.includes("scheduledStarts: startCounts.scheduledStarts,") &&
+    startService.includes("delayStarts: startCounts.delayStarts,"),
+  "ranked slate completion state must derive start counts from canonicalized start records",
 );
 
 console.log("canonical start record contract ok: start summaries pass through canonical score and line normalization");

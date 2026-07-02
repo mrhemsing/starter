@@ -1,4 +1,4 @@
-import type { MlbSchedule } from "@/lib/types";
+import type { MlbSchedule, StartSummary } from "@/lib/types";
 
 export type NormalizedScheduleStatus = "pregame" | "delayed" | "live" | "final" | "ppd" | "suspended";
 export type SlateStartBucketStatus = "live" | "final" | "warming" | "scheduled" | "delay";
@@ -35,6 +35,16 @@ export function summarizeSlateStartBuckets<T extends { status: SlateStartBucketS
     scheduledStarts: starts.filter((start) => start.status === "scheduled").length,
     delayStarts: starts.filter((start) => start.status === "delay").length,
   };
+}
+
+export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts {
+  return summarizeSlateStartBuckets(starts.map((start) => ({ status: canonicalSlateStartStatus(start) })));
+}
+
+function canonicalSlateStartStatus(start: StartSummary): SlateStartBucketStatus {
+  if (start.source?.line === "archive-gamefeed") return "final";
+  if (start.source?.line === "live-gamefeed") return "live";
+  return "scheduled";
 }
 
 export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0, now = new Date()): SlateProgressState {
