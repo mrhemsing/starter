@@ -16,6 +16,8 @@ const duelsService = await read("src/lib/data/duels-service.ts");
 const rankedService = await read("src/lib/data/home-ranked-service.ts");
 const environmentService = await read("src/lib/data/run-environment.ts");
 const startService = await read("src/lib/data/start-service.ts");
+const supabaseArchive = await read("src/lib/data/supabase-archive.ts");
+const renderPathAudit = await read("scripts/check-render-path-audit.mjs");
 const cacheTags = await read("src/lib/data/cache-tags.ts");
 const liveService = await read("src/lib/data/live-scoreboard-service.ts");
 const rankedStartsPageService = await read("src/lib/data/ranked-starts-page-service.ts");
@@ -28,6 +30,8 @@ const rankedRoute = await read("src/app/api/home/ranked/route.ts");
 const homeStatusRoute = await read("src/app/api/home/status/route.ts");
 const formHomeRoute = await read("src/app/api/form/home/route.ts");
 const formLeaderboardRoute = await read("src/app/api/form/leaderboard/route.ts");
+const archiveStatusRoute = await read("src/app/api/archive/status/route.ts");
+const packageJson = await read("package.json");
 const pitcherFormRoute = await read("src/app/api/form/pitcher/[id]/route.ts");
 const pitcherProfileRoute = await read("src/app/api/pitchers/[id]/route.ts");
 const fastFilterLink = await read("src/components/fast-filter-link.tsx");
@@ -157,6 +161,21 @@ assert(
     !formService.includes('import { getArchivedSeasonStartSummaries, getDailySlate') &&
     !formService.includes("dates.map((date) => getDailySlate"),
   "Heat Check render paths must cap archive-gap fan-out and read canonical data instead of rebuilding/writing slates",
+);
+
+assert(
+  supabaseArchive.includes("export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;") &&
+    supabaseArchive.includes("expectedLastCompletedDate?: string;") &&
+    supabaseArchive.includes("archiveFreshness(lastDate, options.expectedLastCompletedDate)") &&
+    supabaseArchive.includes("[supabase-archive] archive freshness lag exceeds threshold") &&
+    supabaseArchive.includes("lagDays > ARCHIVE_FRESHNESS_MAX_LAG_DAYS") &&
+    archiveStatusRoute.includes("const expectedLastCompletedDate = addDays(defaultDate, -1);") &&
+    archiveStatusRoute.includes("getSupabaseArchiveStatus(season, { expectedLastCompletedDate })") &&
+    archiveStatusRoute.includes("expectedLastCompletedDate,") &&
+    renderPathAudit.includes("idlePagePaths") &&
+    renderPathAudit.includes("directUpstreamImports") &&
+    packageJson.includes('"check:render-path-audit": "node scripts/check-render-path-audit.mjs"'),
+  "Supabase archive status must expose and error-log freshness lag when completed-start archive is more than two days behind",
 );
 
 assert(

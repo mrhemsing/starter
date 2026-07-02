@@ -26,12 +26,17 @@ type SupabaseFeaturedStartHighlightRow = {
 const COMPLETED_STARTS_TABLE = "toetheslab_mlb_completed_starts";
 const FEATURED_START_HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
 const PAGE_SIZE = 1000;
+export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;
+
+type SupabaseArchiveStatusOptions = {
+  expectedLastCompletedDate?: string;
+};
 
 export function isSupabaseArchiveConfigured() {
   return Boolean(supabaseUrl() && supabaseServiceKey());
 }
 
-export async function getSupabaseArchiveStatus(season: string) {
+export async function getSupabaseArchiveStatus(season: string, options: SupabaseArchiveStatusOptions = {}) {
   const configured = isSupabaseArchiveConfigured();
   const env = {
     THE_BUMP_SUPABASE_URL: Boolean(process.env.THE_BUMP_SUPABASE_URL),
@@ -49,12 +54,25 @@ export async function getSupabaseArchiveStatus(season: string) {
 
   try {
     const starts = await readSupabaseArchivedSeasonCompletedStarts(season);
+    const firstDate = starts[0]?.date ?? null;
+    const lastDate = starts.at(-1)?.date ?? null;
+    const freshness = archiveFreshness(lastDate, options.expectedLastCompletedDate);
+    if (freshness.stale) {
+      console.error("[supabase-archive] archive freshness lag exceeds threshold", {
+        expectedLastCompletedDate: freshness.expectedLastCompletedDate,
+        lastDate,
+        lagDays: freshness.lagDays,
+        maxLagDays: ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
+      });
+    }
+
     return {
       configured,
       env,
       starts: starts.length,
-      firstDate: starts[0]?.date ?? null,
-      lastDate: starts.at(-1)?.date ?? null,
+      firstDate,
+      lastDate,
+      freshness,
       error: null,
     };
   } catch (error) {
@@ -64,6 +82,7 @@ export async function getSupabaseArchiveStatus(season: string) {
       starts: 0,
       firstDate: null,
       lastDate: null,
+      freshness: archiveFreshness(null, options.expectedLastCompletedDate),
       error: error instanceof Error ? error.message : "Unknown Supabase archive error",
     };
   }
@@ -178,6 +197,24 @@ function rowToCompletedStart(row: SupabaseCompletedStartRow): ArchivedCompletedS
     result: row.result,
     line: row.line,
   };
+}
+
+function archiveFreshness(lastDate: string | null, expectedLastCompletedDate: string | undefined) {
+  const lagDays = lastDate && expectedLastCompletedDate ? Math.max(0, daysBetween(lastDate, expectedLastCompletedDate)) : null;
+
+  return {
+    expectedLastCompletedDate: expectedLastCompletedDate ?? null,
+    lagDays,
+    maxLagDays: ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
+    stale: typeof lagDays === "number" && lagDays > ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
+  };
+}
+
+function daysBetween(startDate: string, endDate: string) {
+  const start = Date.parse(`${startDate}T00:00:00.000Z`);
+  const end = Date.parse(`${endDate}T00:00:00.000Z`);
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
+  return Math.round((end - start) / 86_400_000);
 }
 
 function supabaseUrl() {
