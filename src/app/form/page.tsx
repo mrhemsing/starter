@@ -600,7 +600,7 @@ function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
   if (!buyLow && !sellHigh) return null;
 
   return (
-    <span className={`inline-flex items-center rounded border px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] ${buyLow ? "border-teal-300/35 text-teal-300" : "border-amber-300/35 text-amber-300"}`}>
+    <span className={`inline-flex min-h-8 items-center whitespace-nowrap rounded border px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] ${buyLow ? "border-teal-300/35 text-teal-300" : "border-amber-300/35 text-amber-300"}`}>
       {buyLow ? "BUY-LOW" : "SELL-HIGH"}
     </span>
   );
@@ -614,7 +614,11 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
+  const mobileLastLine = pitcher.lastStart
+    ? `LAST: GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
+    : "LAST: START UNAVAILABLE";
   const seasonMetaLine = `Season: ${seasonLine(pitcher)}`;
+  const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;
   const fullWindow = pitcher.windowCount >= window;
   const thermalBand = seasonView ? qualityTier.key : fullWindow ? pitcher.tier : null;
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
@@ -640,10 +644,13 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
           <MobileStackedPitcherName name={pitcher.name} />
         </h2>
-        <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>
+        <p className={`hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block ${treatment.metaClass}`}>
           {seasonView ? `${pitcher.team} / ${pitcher.seasonStartCount} GS / ${seasonMetaLine}` : `${pitcher.team} / ${pitcher.windowCount} of ${window} / ${lastLine}`}
-          {isStartingToday(pitcher) ? <span className="ml-2 text-teal-300">Scheduled starter</span> : null}
         </p>
+        <div className={`font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden ${treatment.metaClass}`}>
+          <p>{mobileMetaLine}</p>
+          <p className="text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
+        </div>
         {seasonView ? <SeasonDepthInlineStats pitcher={pitcher} /> : null}
         <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
           <span>Next start:</span>
@@ -652,10 +659,16 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
         <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
         <TodayStartFreshnessChip pitcher={pitcher} />
         {seasonView ? null : (
-          <div className="flex min-w-0 flex-wrap gap-1.5">
-            <CrossoverPill pitcher={pitcher} />
-            <FormDriverChips chips={pitcher.driverChips} compact />
-          </div>
+          <FormDriverChips
+            chips={pitcher.driverChips}
+            compact
+            leading={(
+              <>
+                <StartStatusChip pitcher={pitcher} />
+                <CrossoverPill pitcher={pitcher} />
+              </>
+            )}
+          />
         )}
       </HeatPitcherProfileLink>
       <div className={`col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
@@ -793,6 +806,17 @@ function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary }) {
   return (
     <span className="mt-1 inline-flex w-fit rounded border border-amber-300/35 bg-amber-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-200">
       TODAY&apos;S START NOT YET REFLECTED
+    </span>
+  );
+}
+
+function StartStatusChip({ pitcher }: { pitcher: FormSummary }) {
+  const label = startStatusLabel(pitcher);
+  if (!label) return null;
+
+  return (
+    <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200">
+      {label}
     </span>
   );
 }
@@ -1305,8 +1329,10 @@ function nextStartDetails(pitcher: FormSummary) {
   return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 
-function isStartingToday(pitcher: FormSummary) {
-  return pitcher.nextStart?.date === getHomeSlateDate();
+function startStatusLabel(pitcher: FormSummary) {
+  if (!pitcher.nextStart?.date) return null;
+  if (pitcher.nextStart.date === getHomeSlateDate()) return "STARTS TODAY";
+  return `STARTS ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 
 function heatGlowStyle(pitcher: FormSummary, hero = false): React.CSSProperties {

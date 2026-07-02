@@ -22,6 +22,7 @@ const heatFilterLink = await readFile("src/components/heat-check-filter-link.tsx
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
+const formDriverChips = await readFile("src/components/form-driver-chips.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
@@ -165,12 +166,33 @@ assert(
     !formPage.includes("A season-wide rolling view with movement called out in the Movers strip.") &&
     formPage.includes('FORM band unavailable - check FORM data.') &&
     formPage.includes('FORM cold band unavailable - check FORM data.') &&
-    formPage.includes('Scheduled starter') &&
+    !formPage.includes('Scheduled starter') &&
+    !formPage.includes('SCHEDULED STARTER') &&
     !formPage.includes("Nobody's on fire today.") &&
     !formPage.includes("Nobody's in free fall today.") &&
     !formPage.includes(">Starting today<") &&
     !formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),
   "Heat Check deck must use tight momentum copy and consolidate the form-through context into the controls card",
+);
+
+assert(
+  formPage.includes("function StartStatusChip({ pitcher }: { pitcher: FormSummary })") &&
+    formPage.includes("function startStatusLabel(pitcher: FormSummary)") &&
+    formPage.includes('if (pitcher.nextStart.date === getHomeSlateDate()) return "STARTS TODAY";') &&
+    formPage.includes("return `STARTS ${formatMonthDay(pitcher.nextStart.date)}`;") &&
+    formPage.includes("<StartStatusChip pitcher={pitcher} />") &&
+    formPage.includes("<CrossoverPill pitcher={pitcher} />") &&
+    formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
+    formPage.includes("whitespace-nowrap") &&
+    formPage.includes("min-h-8") &&
+    formDriverChips.includes("leading?: React.ReactNode") &&
+    formDriverChips.includes("{leading}") &&
+    formDriverChips.includes("flex min-w-0 max-w-full flex-wrap gap-1.5") &&
+    formDriverChips.includes("inline-flex min-h-8") &&
+    formDriverChips.includes("whitespace-nowrap") &&
+    !formDriverChips.includes("whitespace-normal") &&
+    !formDriverChips.includes("[overflow-wrap:anywhere]"),
+  "Heat Check cards must render STARTS TODAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
 );
 
 assert(
@@ -266,8 +288,7 @@ assert(
     formPage.includes('const team = params.team ?? "";') &&
     formPage.includes('import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";') &&
     !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
-    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly })") &&
-    !formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
     formPage.includes('getSlateSchedule({ window: "today", date: today })') &&
     formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[])") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
@@ -565,6 +586,10 @@ assert(
     formPage.includes('className="col-span-full row-start-2 min-w-0 sm:hidden"') &&
     formPage.includes("<FormDeltaLabel summary={pitcher} />") &&
     formPage.includes('fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
+    formPage.includes('hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block') &&
+    formPage.includes('const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;') &&
+    formPage.includes('LAST: GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine') &&
+    formPage.includes('font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden') &&
     formPage.includes("<span>Next start:</span>") &&
     formPage.includes('className="block sm:inline">{nextStartDetails(pitcher)}</span>') &&
     formPage.includes("function nextStartDetails(pitcher: FormSummary)") &&
