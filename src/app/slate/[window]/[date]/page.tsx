@@ -116,11 +116,21 @@ export default async function SlatePage({ params }: SlatePageProps) {
                       </div>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-3 border-t border-white/10 p-5 font-mono text-xs text-zinc-400">
+                  <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-5 font-mono text-xs text-zinc-400 sm:grid-cols-4">
                     <span>GS+ {start.gameScorePlus}</span>
+                    {typeof start.gameScoreV2 === "number" ? <span>GSv2 {start.gameScoreV2}</span> : null}
                     <span>{start.gameScorePlusBreakdown?.gradeBand.label ?? "Unbanded"}</span>
-                    <span>{start.gameScorePlusBreakdown?.gradeBand.percentileLabel ?? "20-80 scale"}</span>
+                    <span>{formatGsAdjustment(start)}</span>
                   </div>
+                  {start.eventFlags?.length ? (
+                    <div className="flex flex-wrap gap-1.5 border-t border-white/10 px-5 py-3" data-slate-start-event-flags={start.eventFlags.join(",")}>
+                      {start.eventFlags.map((flag) => (
+                        <span key={flag} className="rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300">
+                          {formatStartEventFlag(flag)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="grid grid-cols-2 border-t border-white/10 p-5 font-mono text-xs text-zinc-400">
                     <span>Velo {formatSigned(start.context.velocityDeltaMph)}</span>
                     <span>Whiff {formatPct(start.context.whiffDeltaPct)}</span>
@@ -220,6 +230,16 @@ function getStartLineSourceLabel(start: StartSummary) {
   if (start.source?.line === "archive-gamefeed") return "archive";
   if (start.source?.line === "live-gamefeed") return "MLB gamefeed";
   return "scheduled estimate";
+}
+
+function formatGsAdjustment(start: StartSummary) {
+  if (typeof start.gameScoreV2 !== "number") return start.gameScorePlusBreakdown?.gradeBand.percentileLabel ?? "20-80 scale";
+  return `GS+ ${formatSigned(start.gameScorePlus - start.gameScoreV2)} adj`;
+}
+
+function formatStartEventFlag(flag: NonNullable<StartSummary["eventFlags"]>[number]) {
+  if (flag === "HARD_LUCK") return "Hard luck";
+  return "Vulture";
 }
 
 function rankProbableMatchups(probables: Array<{ id: string; matchupScore: number }>) {

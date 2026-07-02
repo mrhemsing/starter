@@ -10,6 +10,7 @@ const gameScoreV2 = await readFile("src/lib/game-score-v2.ts", "utf8");
 const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf8");
 const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const slatePage = await readFile("src/app/slate/[window]/[date]/page.tsx", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
 assert(
@@ -44,6 +45,15 @@ assert(
     startService.includes("gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),") &&
     startService.includes("gameScoreV2: calculateGameScoreV2(start.line),"),
   "slate, start detail, archived summaries, and final reconciliation must expose Game Score v2 from the canonical path",
+);
+
+assert(
+  slatePage.includes("GSv2 {start.gameScoreV2}") &&
+    slatePage.includes("function formatGsAdjustment(start: StartSummary)") &&
+    slatePage.includes("return `GS+ ${formatSigned(start.gameScorePlus - start.gameScoreV2)} adj`;") &&
+    slatePage.includes("data-slate-start-event-flags={start.eventFlags.join(\",\")}") &&
+    slatePage.includes("function formatStartEventFlag(flag: NonNullable<StartSummary[\"eventFlags\"]>[number])"),
+  "completed slate cards must expose canonical GSv2, GS+ adjustment context, and start event flags",
 );
 
 console.log("game score v2 contract ok: GSv2 is computed once and carried through canonical start records");
