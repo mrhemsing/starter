@@ -7,6 +7,7 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
@@ -23,6 +24,7 @@ type UpcomingDatePageProps = {
 
 export async function generateMetadata({ params, searchParams }: UpcomingDatePageProps): Promise<Metadata> {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const query = await searchParams;
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const resolvedDate = upcoming.date;
@@ -56,6 +58,7 @@ export async function generateMetadata({ params, searchParams }: UpcomingDatePag
 
 export default async function UpcomingDatePage({ params, searchParams }: UpcomingDatePageProps) {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const controls = normalizeUpcomingControls(await searchParams);
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);

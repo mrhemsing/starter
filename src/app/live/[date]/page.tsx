@@ -3,6 +3,7 @@ import { LiveScoreboard } from "@/components/live-scoreboard";
 import { SiteHeader } from "@/components/site-header";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 
 type LivePageProps = {
   params: Promise<{
@@ -12,6 +13,7 @@ type LivePageProps = {
 
 export async function generateMetadata({ params }: LivePageProps): Promise<Metadata> {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   return {
     title: `Live GS+ Scoreboard · ${formatPageDate(date)} · Toe the Slab`,
     description: "Live provisional GS+ scores for today's starting pitchers while games are in progress.",
@@ -20,6 +22,7 @@ export async function generateMetadata({ params }: LivePageProps): Promise<Metad
 
 export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const today = getHomeSlateDate();
   const board = await getLiveScoreboard({ date });
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;

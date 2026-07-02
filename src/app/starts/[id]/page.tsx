@@ -23,6 +23,8 @@ import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
 import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
+import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
@@ -44,7 +46,8 @@ type StartPageProps = {
 export async function generateMetadata({ params, searchParams }: StartPageProps): Promise<Metadata> {
   const { id } = await params;
   const query = await searchParams;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(id)) {
+  if (isIsoDateRouteParam(id)) {
+    assertValidDateRouteParam(id);
     const starts = (await getRankedStartsPageData(id)).slateStarts.filter((start) => start.source?.line !== "fixture");
     const topStart = starts[0];
     const title = `MLB Starting Pitcher Rankings - ${formatShortDate(id)}`;
@@ -97,7 +100,10 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
 
 export default async function StartPage({ params, searchParams }: StartPageProps) {
   const { id } = await params;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(id)) return <RankedStartsDate date={id} searchParams={searchParams} />;
+  if (isIsoDateRouteParam(id)) {
+    assertValidDateRouteParam(id);
+    return <RankedStartsDate date={id} searchParams={searchParams} />;
+  }
 
   const query = await searchParams;
   const start = await getStartDetail(id);

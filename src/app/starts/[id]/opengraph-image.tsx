@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getStartDetail } from "@/lib/data/start-service";
 import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
+import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 
 type StartImageProps = {
   params: Promise<{
@@ -20,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Image({ params }: StartImageProps) {
   const { id } = await params;
+  if (isIsoDateRouteParam(id)) assertValidDateRouteParam(id);
   const start = await getStartDetail(id);
   if (!start) notFound();
 

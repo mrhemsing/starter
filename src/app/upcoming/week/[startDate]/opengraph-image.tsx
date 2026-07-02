@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 
 type UpcomingWeekImageProps = {
   params: Promise<{
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Image({ params }: UpcomingWeekImageProps) {
   const { startDate } = await params;
+  assertValidDateRouteParam(startDate);
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const games = upcoming.days
     .flatMap((day) => day.games.map((game) => ({ date: day.date, game })))

@@ -12,6 +12,7 @@ import { getPitcherFormMap } from "@/lib/data/form-service";
 import { addDays, getDailySlate, getHomeSlateDate, getSlateSchedule, getTodayProbables, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { formatPct, formatSigned, formatStartLine } from "@/lib/format";
 import { formatUpcomingDate, isSlateWindow, pitcherHref, sourceParams, startHref, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import type { FormSummary, ProbableStart, StartSummary } from "@/lib/types";
 
 type SlatePageProps = {
@@ -24,6 +25,7 @@ type SlatePageProps = {
 export default async function SlatePage({ params }: SlatePageProps) {
   const { window, date } = await params;
   if (!isSlateWindow(window)) notFound();
+  assertValidDateRouteParam(date);
   if (window === "today" || window === "tomorrow") redirect(upcomingDateHref(date));
   if (window === "week") redirect(upcomingWeekHref(date));
   const today = getHomeSlateDate();

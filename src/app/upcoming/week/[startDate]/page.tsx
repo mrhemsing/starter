@@ -7,6 +7,7 @@ import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from 
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { jsonLdForUpcomingWeek, upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 
@@ -22,6 +23,7 @@ type UpcomingWeekPageProps = {
 
 export async function generateMetadata({ params, searchParams }: UpcomingWeekPageProps): Promise<Metadata> {
   const { startDate } = await params;
+  assertValidDateRouteParam(startDate);
   const query = await searchParams;
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const resolvedStartDate = upcoming.range.start;
@@ -55,6 +57,7 @@ export async function generateMetadata({ params, searchParams }: UpcomingWeekPag
 
 export default async function UpcomingWeekPage({ params, searchParams }: UpcomingWeekPageProps) {
   const { startDate } = await params;
+  assertValidDateRouteParam(startDate);
   const controls = normalizeUpcomingControls(await searchParams);
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);

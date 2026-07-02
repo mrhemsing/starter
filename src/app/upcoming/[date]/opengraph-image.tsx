@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 
 type UpcomingImageProps = {
   params: Promise<{
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Image({ params }: UpcomingImageProps) {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const topGame = upcoming.games[0];
   const topTier = topGame ? watchTierOf(topGame.gameWatchScore) : null;

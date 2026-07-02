@@ -5,6 +5,7 @@ import { PitchingDuelsModule } from "@/components/pitching-duels";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { duelsPath, formatUpcomingDate, rankedStartsPath, upcomingDateHref } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { largeImageTwitter, websiteOpenGraph } from "@/lib/seo";
 
 type DuelsPageProps = {
@@ -14,6 +15,7 @@ type DuelsPageProps = {
 
 export async function generateMetadata({ params, searchParams }: DuelsPageProps): Promise<Metadata> {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const query = await searchParams;
   const mode = query?.mode === "settled" ? "settled" : "upcoming";
   const duels = await getPitchingDuels(date, mode);
@@ -37,6 +39,7 @@ export async function generateMetadata({ params, searchParams }: DuelsPageProps)
 
 export default async function DuelsPage({ params, searchParams }: DuelsPageProps) {
   const { date } = await params;
+  assertValidDateRouteParam(date);
   const query = await searchParams;
   const mode = query?.mode === "settled" ? "settled" : "upcoming";
   const today = getHomeSlateDate();

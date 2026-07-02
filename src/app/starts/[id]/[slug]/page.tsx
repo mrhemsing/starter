@@ -6,6 +6,8 @@ import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath, startRecapSlug } from "@/lib/routes";
+import { assertValidDateRouteParam } from "@/lib/route-date-response";
+import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript } from "@/lib/seo";
 import type { StartDetail, StartSummary } from "@/lib/types";
 
@@ -18,6 +20,7 @@ type StartRecapPageProps = {
 
 export async function generateMetadata({ params }: StartRecapPageProps): Promise<Metadata> {
   const { id: date, slug } = await params;
+  if (isIsoDateRouteParam(date)) assertValidDateRouteParam(date);
   const resolved = await resolveStartRecap(date, slug);
 
   if (!resolved) {
@@ -51,6 +54,7 @@ export async function generateMetadata({ params }: StartRecapPageProps): Promise
 
 export default async function StartRecapPage({ params }: StartRecapPageProps) {
   const { id: date, slug } = await params;
+  if (isIsoDateRouteParam(date)) assertValidDateRouteParam(date);
   const resolved = await resolveStartRecap(date, slug);
   if (!resolved) notFound();
 
@@ -127,7 +131,8 @@ function Metric({ label, value, compact = false }: { label: string; value: strin
 }
 
 async function resolveStartRecap(date: string, slug: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  if (!isIsoDateRouteParam(date)) return null;
+  assertValidDateRouteParam(date);
 
   const pageData = await getRankedStartsPageData(date);
   const slateStarts = pageData.slateStarts.filter((start) => start.source?.line !== "fixture");
