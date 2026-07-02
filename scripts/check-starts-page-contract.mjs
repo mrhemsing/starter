@@ -326,15 +326,17 @@ assert(
 assert(
     startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
-    startsPage.includes('return `${state.completedStarts} final, ${Math.max(0, state.totalStarts - state.completedStarts)} in progress`;') &&
-    startsPage.includes('if (state.isFinal) return `All ${state.totalStarts} final`;') &&
-    startsPage.includes('return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;') &&
-    startsPage.includes('return `${state.completedStarts} final`;') &&
-    startsPage.includes("function formatSlateCountdownLabel") &&
-    startsPage.includes('return `in ${countdownLabel}`;') &&
+    startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
+    startsPage.includes('if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;') &&
+    startsPage.includes('return `${state.completedStarts} FINAL · ${Math.max(0, state.liveStarts)} IN PROGRESS`;') &&
+    startsPage.includes('return `WARMING · FIRST PITCH ${firstPitchLabel}`;') &&
+    startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
+    startsPage.includes("function formatRankedFirstPitch") &&
+    !startsPage.includes("formatSlateCountdownLabel") &&
+    !startsPage.includes("first starter toes the slab") &&
     !startsPage.includes("function formatFirstPitchStamp") &&
     !startsPage.includes("{date} / completed starts recap"),
-  "ranked starts header must use a no-box state-aware live/final/probables indicator and remove the redundant ISO date line",
+  "ranked starts header must use viewed-date scoped functional copy and remove the redundant ISO date line",
 );
 
 assert(

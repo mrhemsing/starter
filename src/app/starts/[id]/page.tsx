@@ -989,9 +989,27 @@ function addDays(date: string, days: number) {
   return value.toISOString().slice(0, 10);
 }
 
-function RankedSlateStatus({ state, slateProgress }: { state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }; slateProgress: SlateProgressState }) {
-  const isLive = state.isToday && slateProgress.state === "starts-in-progress";
+function RankedSlateStatus({
+  state,
+  slateProgress,
+}: {
+  state: {
+    date: string;
+    completedStarts: number;
+    totalStarts: number;
+    totalGames: number;
+    liveStarts: number;
+    warmingStarts: number;
+    isToday: boolean;
+    isPast: boolean;
+    isFinal: boolean;
+    isPartialToday: boolean;
+  };
+  slateProgress: SlateProgressState;
+}) {
+  const isLive = state.isToday && state.liveStarts > 0;
   const label = completionStatusLabel(state, slateProgress);
+  if (!label) return null;
 
   return (
     <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400" role="status" aria-label={`Slate completion: ${label}`}>
@@ -1001,16 +1019,41 @@ function RankedSlateStatus({ state, slateProgress }: { state: { date: string; co
   );
 }
 
-function completionStatusLabel(state: { date: string; completedStarts: number; totalStarts: number; isToday: boolean; isFinal: boolean; isPartialToday: boolean }, slateProgress: SlateProgressState) {
-  if (state.isToday && slateProgress.state === "starts-in-progress") return `${state.completedStarts} final, ${Math.max(0, state.totalStarts - state.completedStarts)} in progress`;
-  if (state.isFinal) return `All ${state.totalStarts} final`;
-  if (state.isToday) return `Probables · Today · first starter toes the slab ${formatSlateCountdownLabel(slateProgress.countdownLabel)}`;
-  return `${state.completedStarts} final`;
+function completionStatusLabel(
+  state: {
+    date: string;
+    completedStarts: number;
+    totalStarts: number;
+    totalGames: number;
+    liveStarts: number;
+    warmingStarts: number;
+    isToday: boolean;
+    isPast: boolean;
+    isFinal: boolean;
+  },
+  slateProgress: SlateProgressState,
+) {
+  if (state.totalGames === 0 && state.totalStarts === 0) return null;
+  if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;
+  if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;
+  if (state.liveStarts > 0 || slateProgress.state === "starts-in-progress") return `${state.completedStarts} FINAL · ${Math.max(0, state.liveStarts)} IN PROGRESS`;
+
+  const firstPitchLabel = formatRankedFirstPitch(slateProgress.firstPitchAt);
+  if (!firstPitchLabel) return null;
+  if (state.warmingStarts > 0) return `WARMING · FIRST PITCH ${firstPitchLabel}`;
+  return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;
 }
 
-function formatSlateCountdownLabel(countdownLabel: string | null) {
-  if (!countdownLabel || countdownLabel === "STARTING SOON" || countdownLabel === "DELAYED") return (countdownLabel ?? "STARTING SOON").toLowerCase();
-  return `in ${countdownLabel}`;
+function formatRankedFirstPitch(value: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  const time = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+  }).format(parsed);
+  return `${time} PT`;
 }
 
 function clamp(value: number, min: number, max: number) {
