@@ -208,11 +208,14 @@ assert(
   types.includes("export type PitcherPitchMixStart = {") &&
     types.includes("pitchMixByStart: PitcherPitchMixStart[];") &&
     startService.includes("function buildPitcherPitchMixByStart") &&
+    startService.includes("function summarizePitchUsage") &&
     startService.includes("usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100))") &&
+    startService.includes("usageDeltaPct: previousUsage.size > 0") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-pitch-mix-by-start"') &&
     pitcherFormPage.includes("<PitchMixByStartPanel starts={pitcher.pitchMixByStart} />") &&
-    pitcherFormPage.includes("Pitch mix / by start"),
-  "pitcher profile must expose pitch mix by start from existing pitch events",
+    pitcherFormPage.includes("Pitch mix / by start") &&
+    pitcherFormPage.includes("usage shift"),
+  "pitcher profile must expose pitch mix by start and start-over-start usage deltas from existing pitch events",
 );
 assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
 assert(

@@ -827,6 +827,7 @@ export type PitcherPitchMixStart = {
   mix: Array<{
     type: PitchTypeKey;
     usagePct: number;
+    usageDeltaPct: number | null;
   }>;
 };
 

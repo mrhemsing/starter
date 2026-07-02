@@ -1125,10 +1125,15 @@ async function getTeamQualityContextMap(date: string) {
 }
 
 function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["pitchMixByStart"] {
-  return starts
-    .map((start) => {
+  const rows = [...starts].sort((a, b) => a.date.localeCompare(b.date));
+
+  return rows
+    .map((start, index) => {
       const pitchEvents = start.pitchEvents ?? [];
       if (pitchEvents.length === 0) return null;
+      const previousStart = rows[index - 1];
+      const previousPitchEvents = previousStart?.pitchEvents ?? [];
+      const previousUsage = previousPitchEvents.length > 0 ? summarizePitchUsage(previousPitchEvents) : new Map<PitchTypeKey, number>();
       const byType = new Map<PitchTypeKey, number>();
       for (const pitch of pitchEvents) byType.set(pitch.type, (byType.get(pitch.type) ?? 0) + 1);
 
@@ -1142,12 +1147,19 @@ function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): Pitcher
           .map(([type, count]) => ({
             type,
             usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100)),
+            usageDeltaPct: previousUsage.size > 0 ? Math.max(1, Math.round((count / pitchEvents.length) * 100)) - (previousUsage.get(type) ?? 0) : null,
           }))
           .sort((a, b) => b.usagePct - a.usagePct),
       };
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
     .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function summarizePitchUsage(pitchEvents: PitchEvent[]) {
+  const byType = new Map<PitchTypeKey, number>();
+  for (const pitch of pitchEvents) byType.set(pitch.type, (byType.get(pitch.type) ?? 0) + 1);
+  return new Map([...byType.entries()].map(([type, count]) => [type, Math.max(1, Math.round((count / pitchEvents.length) * 100))]));
 }
 
 function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {

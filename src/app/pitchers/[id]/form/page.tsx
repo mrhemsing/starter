@@ -496,7 +496,14 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
               </div>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
                 {start.mix.slice(0, 4).map((pitch) => (
-                  <span key={pitch.type}>{pitchTypes[pitch.type].name} {pitch.usagePct}%</span>
+                  <span key={pitch.type}>
+                    {pitchTypes[pitch.type].name} {pitch.usagePct}%
+                    {pitch.usageDeltaPct !== null && Math.abs(pitch.usageDeltaPct) >= 5 ? (
+                      <span className={pitch.usageDeltaPct > 0 ? "ml-1 text-emerald-300" : "ml-1 text-cyan-300"}>
+                        {pitch.usageDeltaPct > 0 ? "+" : ""}{pitch.usageDeltaPct} usage shift
+                      </span>
+                    ) : null}
+                  </span>
                 ))}
               </div>
             </Link>
