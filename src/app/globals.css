@@ -345,6 +345,15 @@ p,
     animation: ranked-live-dot-pulse 2s ease-in-out infinite;
   }
 
+  .home-live-ticker-track {
+    animation: home-live-ticker-scroll 42s linear infinite;
+  }
+
+  .home-live-ticker-track:hover,
+  .home-live-ticker-track:active {
+    animation-play-state: paused;
+  }
+
 }
 
 @keyframes ranked-live-dot-pulse {
@@ -448,6 +457,15 @@ p,
     transform: none !important;
   }
 
+}
+
+@keyframes home-live-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @media (min-width: 1024px) {

@@ -82,6 +82,9 @@ export default async function MethodologyPage() {
           <p className="mt-3 text-sm leading-6 text-zinc-400">
             The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. GSv2 uses official total runs and home runs when the gamefeed carries them; older line records fall back to earned runs and zero home runs.
           </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            On the homepage ticker, ▲ means a live provisional GS+ is at or above that starter&apos;s pregame projected GS+. ▼ means it is below the projection. If no projection is available, the comparison falls back to league-average 50.
+          </p>
           <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
             <FormulaItem label="GSv2 baseline" value="40" />
             <FormulaItem label="Outs" value="+2 per out" />

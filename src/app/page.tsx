@@ -1,4 +1,5 @@
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
+import { HomeLiveTicker } from "@/components/home-live-ticker";
 import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
@@ -6,6 +7,7 @@ import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getFormHome } from "@/lib/data/form-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
+import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
@@ -37,7 +39,8 @@ export default async function Home() {
     .catch(() => null);
   const bestStartsPromise = getBestStartsHome().catch(() => null);
   const formHomePromise = getFormHome({ window: 5 }).catch(() => null);
-  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome] = await Promise.all([
+  const homeTickerBoardPromise = getLiveScoreboard({ date: today }).catch(() => null);
+  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome, homeTickerBoard] = await Promise.all([
     getSlateStartProgress({ window: "today", date: today }),
     getRankedSlateCompletionState(today, today),
     getRankedHome().catch(() => null),
@@ -46,6 +49,7 @@ export default async function Home() {
     duelsPromise,
     bestStartsPromise,
     formHomePromise,
+    homeTickerBoardPromise,
   ]);
   const rankedDate = todayCompletion.completedStarts > 0 ? today : yesterday;
   const homeSlatePhaseExperiment = isHomeSlatePhaseExperimentEnabled();
@@ -94,6 +98,7 @@ export default async function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-7xl">
           <SiteHeader active="home" today={today} rankedDate={rankedDate} />
+          <HomeLiveTicker initialBoard={homeTickerBoard} today={today} />
 
           <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
             <div className="min-w-0 lg:max-w-3xl">
