@@ -8,7 +8,32 @@ type CanonicalStartStoreFile = {
   records: CanonicalStartRecord[];
 };
 
+type CanonicalStartRow = {
+  date: string;
+  start_id: string;
+  game_pk: number;
+  pitcher_mlb_id: number;
+  status: CanonicalStartRecord["status"];
+  frozen: boolean;
+  record: CanonicalStartRecord;
+  updated_at: string;
+};
+
+type CanonicalSlateStateRow = {
+  date: string;
+  state: string;
+  counts: {
+    totalStarts: number;
+    liveStarts: number;
+    finalStarts: number;
+    scheduledStarts: number;
+  };
+  updated_at: string;
+};
+
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
+const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
+const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
@@ -16,7 +41,7 @@ export async function canonicalizeStartSummariesWithStore(date: string, starts: 
     return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));
   }
 
-  const store = readCanonicalStartStore(date);
+  const store = await readCanonicalStartStore(date);
   const recordsById = new Map(store.records.map((record) => [record.id, record]));
   const canonicalStarts = starts.map((start) => {
     const next = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
@@ -24,7 +49,7 @@ export async function canonicalizeStartSummariesWithStore(date: string, starts: 
     return startSummaryFromCanonicalRecord(next, start);
   });
 
-  writeCanonicalStartStore({
+  await writeCanonicalStartStore({
     date,
     updatedAt: now.toISOString(),
     records: Array.from(recordsById.values()).sort(compareCanonicalStartRecords),
@@ -34,7 +59,7 @@ export async function canonicalizeStartSummariesWithStore(date: string, starts: 
 }
 
 export async function readCanonicalStartRecords(date: string): Promise<CanonicalStartRecord[]> {
-  return readCanonicalStartStore(date).records;
+  return (await readCanonicalStartStore(date)).records;
 }
 
 function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, start: StartSummary, now: Date) {
@@ -83,14 +108,16 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
   };
 }
 
-function readCanonicalStartStore(date: string): CanonicalStartStoreFile {
+async function readCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile> {
   assertCanonicalStartStoreDate(date);
-  return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
+  const durableStore = await readDurableCanonicalStartStore(date);
+  return durableStore ?? volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
 }
 
-function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
+async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
   assertCanonicalStartStoreDate(store.date);
-  volatileCanonicalStartStores.set(store.date, store);
+  const written = await writeDurableCanonicalStartStore(store);
+  if (!written) volatileCanonicalStartStores.set(store.date, store);
 }
 
 function emptyCanonicalStartStore(date: string): CanonicalStartStoreFile {
@@ -113,4 +140,166 @@ function officialCanonicalLineSource(source: StartDataSource["line"]): Extract<S
 
 function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStartRecord) {
   return a.date.localeCompare(b.date) || a.gamePk - b.gamePk || a.pitcherMlbId - b.pitcherMlbId;
+}
+
+async function readDurableCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile | null> {
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) return null;
+
+  const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
+  url.searchParams.set("select", "record,updated_at");
+  url.searchParams.set("date", `eq.${date}`);
+  url.searchParams.set("order", "game_pk.asc,pitcher_mlb_id.asc");
+
+  try {
+    const response = await fetch(url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey),
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+
+    const rows = await response.json() as Array<Pick<CanonicalStartRow, "record" | "updated_at">>;
+    return {
+      date,
+      updatedAt: rows.map((row) => row.updated_at).sort().at(-1) ?? new Date(0).toISOString(),
+      records: rows.map((row) => row.record).sort(compareCanonicalStartRecords),
+    };
+  } catch (error) {
+    console.warn("canonical start durable store read failed", { date, error: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+async function writeDurableCanonicalStartStore(store: CanonicalStartStoreFile): Promise<boolean> {
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) return false;
+
+  try {
+    const records = await mergeWithLatestDurableRecords(store.date, store.records);
+    await upsertCanonicalStartRows(baseUrl, serviceKey, records);
+    await upsertCanonicalSlateStateRow(baseUrl, serviceKey, {
+      date: store.date,
+      state: canonicalSlateStateFromRecords(records),
+      counts: canonicalSlateCountsFromRecords(records),
+      updated_at: store.updatedAt,
+    });
+    return true;
+  } catch (error) {
+    console.warn("canonical start durable store write failed", { date: store.date, error: error instanceof Error ? error.message : String(error) });
+    return false;
+  }
+}
+
+async function mergeWithLatestDurableRecords(date: string, records: CanonicalStartRecord[]) {
+  const latest = await readDurableCanonicalStartStore(date);
+  const recordsById = new Map(latest?.records.map((record) => [record.id, record]) ?? []);
+
+  for (const record of records) {
+    recordsById.set(record.id, mergeCanonicalStartRecord(recordsById.get(record.id), record));
+  }
+
+  return Array.from(recordsById.values()).sort(compareCanonicalStartRecords);
+}
+
+function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, next: CanonicalStartRecord) {
+  if (!existing) return next;
+  if (existing.frozen && next.status !== "final") return existing;
+  if (existing.status === "final" && next.status !== "final") return existing;
+  if (next.status === "final" && !existing.frozen) {
+    return reconcileCanonicalStartRecord(existing, {
+      line: next.line,
+      gameScorePlus: next.gameScorePlus,
+      gameScoreV2: next.gameScoreV2,
+      gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+      source: officialCanonicalLineSource(next.source.line),
+    }, new Date(next.updatedAt));
+  }
+  return new Date(next.updatedAt).getTime() >= new Date(existing.updatedAt).getTime() ? next : existing;
+}
+
+async function upsertCanonicalStartRows(baseUrl: string, serviceKey: string, records: CanonicalStartRecord[]) {
+  if (records.length === 0) return;
+
+  const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
+  url.searchParams.set("on_conflict", "date,start_id");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...canonicalStoreSupabaseHeaders(serviceKey),
+      "content-type": "application/json",
+      prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(records.map(canonicalStartRecordToRow)),
+  });
+
+  if (!response.ok) {
+    throw new Error(`${CANONICAL_STARTS_TABLE} upsert failed with HTTP ${response.status}: ${await response.text()}`);
+  }
+}
+
+async function upsertCanonicalSlateStateRow(baseUrl: string, serviceKey: string, row: CanonicalSlateStateRow) {
+  const url = new URL(`/rest/v1/${CANONICAL_SLATE_STATES_TABLE}`, baseUrl);
+  url.searchParams.set("on_conflict", "date");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...canonicalStoreSupabaseHeaders(serviceKey),
+      "content-type": "application/json",
+      prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(row),
+  });
+
+  if (!response.ok) {
+    throw new Error(`${CANONICAL_SLATE_STATES_TABLE} upsert failed with HTTP ${response.status}: ${await response.text()}`);
+  }
+}
+
+function canonicalStartRecordToRow(record: CanonicalStartRecord): CanonicalStartRow {
+  return {
+    date: record.date,
+    start_id: record.id,
+    game_pk: record.gamePk,
+    pitcher_mlb_id: record.pitcherMlbId,
+    status: record.status,
+    frozen: record.frozen,
+    record,
+    updated_at: record.updatedAt,
+  };
+}
+
+function canonicalSlateCountsFromRecords(records: CanonicalStartRecord[]): CanonicalSlateStateRow["counts"] {
+  return {
+    totalStarts: records.length,
+    liveStarts: records.filter((record) => record.status === "live").length,
+    finalStarts: records.filter((record) => record.status === "final").length,
+    scheduledStarts: records.filter((record) => record.status === "scheduled").length,
+  };
+}
+
+function canonicalSlateStateFromRecords(records: CanonicalStartRecord[]) {
+  const counts = canonicalSlateCountsFromRecords(records);
+  if (counts.totalStarts === 0) return "empty";
+  if (counts.finalStarts >= counts.totalStarts) return "complete";
+  if (counts.liveStarts > 0 || counts.finalStarts > 0) return "active";
+  return "pregame";
+}
+
+function canonicalStoreSupabaseHeaders(serviceKey: string) {
+  return {
+    apikey: serviceKey,
+    authorization: `Bearer ${serviceKey}`,
+  };
+}
+
+function canonicalStoreSupabaseUrl() {
+  return process.env.THE_BUMP_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+}
+
+function canonicalStoreSupabaseServiceKey() {
+  return process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.THE_BUMP_SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "";
 }

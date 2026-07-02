@@ -86,12 +86,15 @@ const getCachedPitcherSeasonFallbackStarts = unstable_cache(
   { revalidate: PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS },
 );
 
-export async function warmFormLeaderboards(options: { teams?: string[]; windows?: FormWindow[] } = {}) {
+export async function warmFormLeaderboards(options: { teams?: string[]; windows?: FormWindow[]; includeGlobal?: boolean } = {}) {
   const teams = [...new Set((options.teams ?? []).map((team) => team.trim().toUpperCase()).filter(Boolean))];
   const windows = options.windows ?? FORM_CONFIG.windows;
+  const includeGlobal = options.includeGlobal ?? true;
 
-  await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: true })));
-  await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false })));
+  if (includeGlobal) {
+    await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: true })));
+    await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false })));
+  }
 
   for (const team of teams) {
     await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false, team })));

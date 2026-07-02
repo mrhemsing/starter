@@ -6,7 +6,9 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 10;
+export const maxDuration = 60;
+
+const WARM_BATCH_SIZE = 8;
 
 export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
@@ -14,6 +16,8 @@ export async function GET(request: Request) {
   }
 
   const today = getHomeSlateDate();
+  const startedAt = new Date();
+  console.log("warm-live-starts start", { date: today, batchSize: WARM_BATCH_SIZE, startedAt: startedAt.toISOString() });
   const [tonight, completion] = await Promise.all([
     getTonightMustWatch({ date: today, window: 5 }),
     getRankedSlateCompletionState(today, today),
@@ -22,6 +26,7 @@ export async function GET(request: Request) {
   const activeGames = liveGames + completion.finalGames;
 
   if (activeGames === 0) {
+    console.log("warm-live-starts end", { date: today, warmed: false, reason: "no-live-or-final-games" });
     return NextResponse.json({
       warmed: false,
       date: today,
@@ -34,27 +39,41 @@ export async function GET(request: Request) {
 
   const starts = await getDailySlate({ window: "today", date: today });
   const completedStarts = starts.filter((start) => start.source?.line !== "fixture");
-  const slateTeams = [
-    ...new Set([
-      ...tonight.games.flatMap((game) => [game.away, game.home]),
-      ...completedStarts.map((start) => start.pitcher.team),
-    ]),
-  ];
+  const slateTeams = uniqueValues([
+    ...tonight.games.flatMap((game) => [game.away, game.home]),
+    ...completedStarts.map((start) => start.pitcher.team),
+  ]);
 
   if (completedStarts.length > 0) {
     revalidatePath("/");
     revalidatePath("/heat-check");
     revalidatePath(`/starts/${today}`);
-    for (const pitcherId of new Set(completedStarts.map((start) => start.pitcher.id))) {
-      revalidatePath(`/pitchers/${pitcherId}/form`);
+    const pitcherIds = uniqueValues(completedStarts.map((start) => start.pitcher.id));
+    for (const batch of batchItems(pitcherIds, WARM_BATCH_SIZE)) {
+      for (const pitcherId of batch) {
+        revalidatePath(`/pitchers/${pitcherId}/form`);
+      }
+      console.log("warm-live-starts batch revalidated pitcher forms", { date: today, count: batch.length });
     }
   }
 
-  const [rankedHome] = await Promise.all([
-    getRankedHome(),
-    warmFormLeaderboards({ teams: slateTeams }),
-  ]);
+  await warmFormLeaderboards();
+  console.log("warm-live-starts batch warmed global form leaderboards", { date: today });
+  for (const batch of batchItems(slateTeams, WARM_BATCH_SIZE)) {
+    await warmFormLeaderboards({ teams: batch, includeGlobal: false });
+    console.log("warm-live-starts batch warmed form leaderboards", { date: today, teams: batch.length });
+  }
+
+  const rankedHome = await getRankedHome();
   const topPerformer = rankedHome.topPerformer;
+  const finishedAt = new Date();
+  console.log("warm-live-starts end", {
+    date: today,
+    warmed: true,
+    completedStarts: completedStarts.length,
+    teams: slateTeams.length,
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+  });
 
   return NextResponse.json({
     warmed: true,
@@ -82,4 +101,16 @@ function isAuthorizedCronRequest(request: Request) {
   if (!cronSecret) return true;
 
   return request.headers.get("authorization") === `Bearer ${cronSecret}`;
+}
+
+function uniqueValues<T>(values: T[]) {
+  return [...new Set(values)];
+}
+
+function batchItems<T>(items: T[], batchSize: number) {
+  const batches: T[][] = [];
+  for (let index = 0; index < items.length; index += batchSize) {
+    batches.push(items.slice(index, index + batchSize));
+  }
+  return batches;
 }

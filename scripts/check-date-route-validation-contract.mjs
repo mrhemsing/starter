@@ -65,8 +65,10 @@ assert(
     !canonicalStore.includes("canonical-starts/") &&
     !canonicalStore.includes("fs.readFile") &&
     !canonicalStore.includes("fs.writeFile") &&
-    canonicalStore.includes("volatileCanonicalStartStores"),
-  "canonical store must remain memory-only and never use /tmp or filesystem JSON as a source of truth",
+    canonicalStore.includes('const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";') &&
+    canonicalStore.includes("readDurableCanonicalStartStore") &&
+    canonicalStore.includes("writeDurableCanonicalStartStore"),
+  "canonical store must use durable shared storage and never use /tmp or filesystem JSON as a source of truth",
 );
 
 const guardedPages = [

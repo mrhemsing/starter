@@ -11,6 +11,9 @@ const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
+const supabaseSchema = await readFile("docs/supabase-mlb-archive.sql", "utf8");
+const warmLiveStartsCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
+const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
   canonicalRecord.includes('export type CanonicalStartStatus = "scheduled" | "live" | "final";') &&
@@ -78,14 +81,23 @@ assert(
     !canonicalStore.includes("fs.mkdir") &&
     !canonicalStore.includes("fs.rename") &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
+    canonicalStore.includes('const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";') &&
+    canonicalStore.includes('const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";') &&
     canonicalStore.includes("const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();") &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
     canonicalStore.includes("function upsertCanonicalStartRecord(") &&
-    canonicalStore.includes("function readCanonicalStartStore(") &&
-    canonicalStore.includes("function writeCanonicalStartStore(") &&
+    canonicalStore.includes("async function readCanonicalStartStore(") &&
+    canonicalStore.includes("async function writeCanonicalStartStore(") &&
+    canonicalStore.includes("async function readDurableCanonicalStartStore(") &&
+    canonicalStore.includes("async function writeDurableCanonicalStartStore(") &&
+    canonicalStore.includes("async function mergeWithLatestDurableRecords(") &&
+    canonicalStore.includes("function canonicalStartRecordToRow(") &&
+    canonicalStore.includes("function canonicalSlateCountsFromRecords(") &&
+    canonicalStore.includes("cache: \"no-store\"") &&
+    canonicalStore.includes("prefer: \"resolution=merge-duplicates\"") &&
     canonicalStore.includes("function assertCanonicalStartStoreDate(") &&
-    canonicalStore.includes("volatileCanonicalStartStores.set(store.date, store);") &&
+    canonicalStore.includes("if (!written) volatileCanonicalStartStores.set(store.date, store);") &&
     canonicalStore.includes("function emptyCanonicalStartStore(") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
@@ -93,7 +105,34 @@ assert(
     canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus)") &&
     canonicalStore.includes("reconcileCanonicalStartRecord(existing") &&
     canonicalStore.includes("officialCanonicalLineSource(next.source.line)"),
-  "canonical start store must be memory-only at runtime, skip static-build writes, preserve frozen finals, and audit final corrections without filesystem IO",
+  "canonical start store must use Supabase durable records, skip static-build writes, preserve frozen finals, and audit final corrections without filesystem IO",
+);
+
+assert(
+  supabaseSchema.includes("create table if not exists public.toetheslab_canonical_start_records") &&
+    supabaseSchema.includes("primary key (date, start_id)") &&
+    supabaseSchema.includes("record jsonb not null") &&
+    supabaseSchema.includes("create table if not exists public.toetheslab_canonical_slate_states") &&
+    supabaseSchema.includes("create table if not exists public.toetheslab_canonical_pitcher_season_aggregates") &&
+    supabaseSchema.includes("toetheslab service canonical starts read") &&
+    supabaseSchema.includes("toetheslab service canonical starts write") &&
+    supabaseSchema.includes("toetheslab service canonical slate read") &&
+    supabaseSchema.includes("toetheslab service canonical aggregates read"),
+  "Supabase schema must document durable canonical start, slate-state, and pitcher season aggregate storage",
+);
+
+assert(
+  warmLiveStartsCron.includes("export const maxDuration = 60;") &&
+    warmLiveStartsCron.includes("const WARM_BATCH_SIZE = 8;") &&
+    warmLiveStartsCron.includes('console.log("warm-live-starts start"') &&
+    warmLiveStartsCron.includes('console.log("warm-live-starts batch warmed form leaderboards"') &&
+    warmLiveStartsCron.includes('console.log("warm-live-starts end"') &&
+    warmLiveStartsCron.includes("for (const batch of batchItems(slateTeams, WARM_BATCH_SIZE))") &&
+    warmLiveStartsCron.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+    formService.includes("includeGlobal?: boolean") &&
+    formService.includes("const includeGlobal = options.includeGlobal ?? true;") &&
+    formService.includes("if (includeGlobal) {"),
+  "warm-live-starts cron must have an explicit duration budget, batched/idempotent warm work, and progress logs",
 );
 
 assert(
