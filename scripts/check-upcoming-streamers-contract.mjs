@@ -35,7 +35,8 @@ assert(
     streamersService.includes("twoStartPitchers: candidates.filter((candidate) => candidate.matchups.length >= 2)") &&
     streamersService.includes("formRisers: candidates.filter") &&
     streamersService.includes("STREAMER_SCORE_CONFIG") &&
-    streamersService.includes("fantasyWeekStart"),
+    streamersService.includes("fantasyWeekStart") &&
+    streamersService.includes("starter.seasonDecisionRecord"),
   "streamers service must compute two-start and form-riser candidates from Upcoming data with a single score config",
 );
 

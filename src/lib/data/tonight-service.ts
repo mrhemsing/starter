@@ -321,6 +321,7 @@ function buildTonightStarter(
     spark: form.spark,
     lastStart: form.lastStart,
     seasonStats: form.seasonStats,
+    seasonDecisionRecord: form.seasonDecisionRecord,
     driverChips: form.driverChips,
     opponentSplit,
     projection,

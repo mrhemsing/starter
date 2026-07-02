@@ -372,6 +372,7 @@ export type TonightStarter = {
   spark?: number[];
   lastStart?: FormStartPoint | null;
   seasonStats?: FormSeasonStats;
+  seasonDecisionRecord?: FormDecisionRecord;
   driverChips?: FormDriverChip[];
   opponentSplit?: MlbTeamHandednessSplitContext | null;
   projection?: {

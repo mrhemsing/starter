@@ -93,6 +93,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
   if (!starter.pitcherId || !starter.name) return null;
   const heatBand = starter.tier === "onfire" ? "onfire" : starter.tier === "hot" ? "hot" : null;
   const components = streamScoreComponents(starter, matchups);
+  const record = starter.seasonDecisionRecord;
 
   return {
     pitcherId: starter.pitcherId,
@@ -104,7 +105,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     streamScore: roundToScorePrecision(components.form * STREAMER_SCORE_CONFIG.formWeight + components.matchup * STREAMER_SCORE_CONFIG.matchupWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight, 1),
     components,
     seasonContext: {
-      record: "--",
+      record: record ? `${record.wins}-${record.losses}-${record.noDecisions}` : "--",
       k9: starter.seasonStats?.k9 ?? null,
     },
     matchups,
