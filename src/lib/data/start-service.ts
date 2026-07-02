@@ -805,6 +805,7 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
     startHref: startPath(start.id),
   }));
   const skillProfile = buildPitcherSkillProfile(allStarts, seasonLineSource);
+  const velocityByStart = buildPitcherVelocityByStart(allStarts);
   const seasonLogControls = normalizePitcherSeasonLogControls(controls, allStarts);
   const starts = sortPitcherSeasonLog(
     seasonLogControls.result === "all" ? allStarts : allStarts.filter((start) => start.result === seasonLogControls.result),
@@ -821,6 +822,7 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
     seasonLine: pitcher.seasonLine,
     skillProfile,
     arsenal: pitcher.arsenal,
+    velocityByStart,
     starts,
     seasonLogSummary: summarizePitcherSeasonLog(starts),
     seasonLogControls,
@@ -1060,6 +1062,34 @@ async function getTeamQualityContextMap(date: string) {
   return fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) });
 }
 
+function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {
+  const rows = starts
+    .map((start) => {
+      const velocities = (start.pitchEvents ?? [])
+        .map((pitch) => pitch.velocityMph)
+        .filter((velocity) => Number.isFinite(velocity));
+      if (velocities.length === 0) return null;
+      return {
+        id: start.id,
+        date: start.date,
+        opponent: start.opponent,
+        startHref: start.startHref,
+        avgVelocityMph: round1(velocities.reduce((sum, velocity) => sum + velocity, 0) / velocities.length),
+        maxVelocityMph: round1(Math.max(...velocities)),
+        belowSeasonMedian: false,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const medianVelocity = median(rows.map((row) => row.avgVelocityMph));
+
+  return rows
+    .map((row) => ({
+      ...row,
+      belowSeasonMedian: row.avgVelocityMph <= medianVelocity - 1,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
 function startLineKey(gamePk: number, pitcherMlbId: number) {
   return `${gamePk}:${pitcherMlbId}`;
 }
@@ -1220,6 +1250,13 @@ function summarizeVelocityTrend(pitchEvents: PitchEvent[]): StartApiVelocityTren
 function average(values: number[]) {
   if (values.length === 0) return 0;
   return values.reduce((total, value) => total + value, 0) / values.length;
+}
+
+function median(values: number[]) {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 const GAME_SCORE_PLUS_DISPLAY_MIN = 20;

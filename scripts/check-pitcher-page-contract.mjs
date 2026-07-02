@@ -123,9 +123,9 @@ assert(
 );
 
 assert(
-  formService.includes("fetchMlbPitcherAvailabilityStatuses") &&
+    formService.includes("fetchMlbPitcherAvailabilityStatuses") &&
     formService.includes("attachAvailability(summaries, availabilityStatuses)") &&
-    formService.includes("availability: availabilityStatuses.get(summary.pitcherId) ?? null"),
+    formService.includes("availability: availabilityStatuses.get(pitcher.pitcherId) ?? null"),
   "form service must attach MLB IL status once at the shared FormSummary layer",
 );
 
@@ -193,6 +193,16 @@ assert(
 );
 
 assert(pitcherFormPage.includes('data-responsive-check="pitcher-form-score-summary"'), "pitcher form score block must expose a stable layout hook");
+assert(
+  types.includes("export type PitcherVelocityStart = {") &&
+    types.includes("velocityByStart: PitcherVelocityStart[];") &&
+    startService.includes("function buildPitcherVelocityByStart") &&
+    startService.includes("belowSeasonMedian: row.avgVelocityMph <= medianVelocity - 1") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-velocity-by-start"') &&
+    pitcherFormPage.includes("<VelocityByStartPanel starts={pitcher.velocityByStart} />") &&
+    pitcherFormPage.includes("low velo"),
+  "pitcher profile must expose velocity by start with a one mph below-median flag",
+);
 assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
 assert(
   pitcherFormPage.includes('import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";') &&

@@ -22,7 +22,7 @@ import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -231,7 +231,10 @@ async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherProm
 
   return (
     <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
-      <ArsenalTable pitcher={pitcher} />
+      <div className="min-w-0 space-y-5">
+        <ArsenalTable pitcher={pitcher} />
+        <VelocityByStartPanel starts={pitcher.velocityByStart} />
+      </div>
       <div className="min-w-0 space-y-5">
         <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
         <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
@@ -460,6 +463,45 @@ function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outP
       <td className="py-3 pr-4 text-right text-zinc-300">{putAway}%</td>
       <td className="py-3 text-right text-zinc-300">{estimateXwoba(pitch)}</td>
     </tr>
+  );
+}
+
+function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
+  const rows = starts.slice(0, 8);
+  const maxVelocity = Math.max(1, ...rows.map((start) => start.avgVelocityMph));
+
+  return (
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-velocity-by-start">
+      <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Velocity / by start</p>
+          <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Fastball shape</h2>
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">last {rows.length || 0}</p>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="space-y-3">
+          {rows.map((start) => (
+            <Link key={start.id} href={start.startHref} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_120px] sm:items-center">
+              <div className="min-w-0">
+                <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
+                  <span className={`block h-full rounded-full ${start.belowSeasonMedian ? "bg-cyan-300" : "bg-amber-300"}`} style={{ width: `${Math.max(12, (start.avgVelocityMph / maxVelocity) * 100)}%` }} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 font-mono text-xs sm:block sm:text-right">
+                <span className="text-zinc-100">{start.avgVelocityMph.toFixed(1)} avg</span>
+                <span className="text-zinc-500 sm:mt-1 sm:block">{start.maxVelocityMph.toFixed(1)} max</span>
+                {start.belowSeasonMedian ? <span className="rounded border border-cyan-300/30 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cyan-200 sm:mt-2 sm:inline-block">low velo</span> : null}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Velocity trend pending for this pitcher.</p>
+      )}
+    </section>
   );
 }
 
