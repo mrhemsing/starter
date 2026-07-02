@@ -44,7 +44,7 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v7"]') &&
+    liveService.includes('["live-scoreboard", "v8"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
@@ -60,12 +60,15 @@ assert(
     liveService.includes('provisional: scoreLabel === "PROV",') &&
     liveService.includes('export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";') &&
     liveService.includes("const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;") &&
-    liveService.includes('import { getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";') &&
+    liveService.includes('import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";') &&
     liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
     liveService.includes("let startCounts = summarizeSlateStartBuckets(rows);") &&
     liveService.includes("const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);") &&
     liveService.includes("slateProgress: SlateProgressState;") &&
     liveService.includes("slateProgress,") &&
+    liveService.includes("normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date)") &&
+    liveService.includes("function fallbackSlateProgress") &&
+    liveService.includes("formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now())") &&
     liveService.includes("...startCounts,") &&
     liveService.includes("function refinePregameStatus") &&
     liveService.includes('if (liveStatus === "warming") return "warming";') &&

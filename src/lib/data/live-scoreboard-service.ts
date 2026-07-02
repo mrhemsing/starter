@@ -4,7 +4,7 @@ import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
-import { getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
+import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
@@ -50,12 +50,12 @@ export type LiveScoreboard = SlateStartBucketCounts & {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v7"],
+  ["live-scoreboard", "v8"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
 export async function getLiveScoreboard({ date = getHomeSlateDate() }: { date?: string } = {}): Promise<LiveScoreboard> {
-  return getCachedLiveScoreboard(date);
+  return normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date);
 }
 
 async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
@@ -228,6 +228,79 @@ function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
   if (gsPlus >= 50) return "Solid";
   if (gsPlus >= 40) return "Below";
   return "Poor";
+}
+
+function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScoreboard, "slateProgress"> & { slateProgress?: SlateProgressState }), date: string): LiveScoreboard {
+  if (board.slateProgress) return board as LiveScoreboard;
+
+  return {
+    ...board,
+    slateProgress: fallbackSlateProgress(board, date),
+  };
+}
+
+function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { slateProgress?: SlateProgressState }, date: string): SlateProgressState {
+  const firstPitchAt = board.rows
+    .map((row) => ({ iso: row.firstPitch, ms: new Date(row.firstPitch).getTime() }))
+    .filter((row) => Number.isFinite(row.ms))
+    .sort((a, b) => a.ms - b.ms)[0]?.iso ?? null;
+  const totalGames = Math.ceil(board.totalStarts / 2);
+  const liveGames = Math.ceil(board.liveStarts / 2);
+  const finalGames = Math.floor(board.finalStarts / 2);
+
+  if (!board.hasGames) {
+    return {
+      date,
+      state: "no-games",
+      totalGames: 0,
+      liveGames: 0,
+      finalGames: 0,
+      totalStarts: 0,
+      completedStarts: 0,
+      firstPitchAt,
+      countdownLabel: null,
+    };
+  }
+
+  if (board.totalStarts > 0 && board.finalStarts >= board.totalStarts) {
+    return {
+      date,
+      state: "all-starts-complete",
+      totalGames,
+      liveGames,
+      finalGames,
+      totalStarts: board.totalStarts,
+      completedStarts: board.finalStarts,
+      firstPitchAt,
+      countdownLabel: null,
+    };
+  }
+
+  if (board.liveStarts > 0 || board.finalStarts > 0 || board.delayStarts > 0) {
+    return {
+      date,
+      state: "starts-in-progress",
+      totalGames,
+      liveGames,
+      finalGames,
+      totalStarts: board.totalStarts,
+      completedStarts: board.finalStarts,
+      firstPitchAt,
+      countdownLabel: null,
+    };
+  }
+
+  return {
+    date,
+    state: "pre-first-pitch",
+    totalGames,
+    liveGames,
+    finalGames,
+    totalStarts: board.totalStarts,
+    completedStarts: board.finalStarts,
+    firstPitchAt,
+    countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now()) : "STARTING SOON",
+  };
 }
 
 function lineKey(gamePk: number, pitcherMlbId: number) {
