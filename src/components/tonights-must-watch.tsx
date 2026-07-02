@@ -336,6 +336,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
 
         <WatchComponentReadout game={game} rankLabel={rankLabel} featured />
         <WatchFlagNote game={game} />
+        <MoreDataLine game={game} />
       </div>
     </article>
   );
@@ -482,6 +483,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
             {game.starters.map((starter) => <StarterMini key={`${game.gamePk}-${starter.side}`} starter={starter} leagueMeanGS={leagueMeanGS} />)}
           </div>
           <WatchFlagNote game={game} compact />
+          <MoreDataLine game={game} compact />
         </div>
       </div>
     </article>
@@ -760,14 +762,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
 function FormClash({ away, home, leagueMeanGS }: { away: TonightStarter; home: TonightStarter; leagueMeanGS: number }) {
   const clashData = formClashData(away, home);
   if (!hasStarterSparkForm(away) || !hasStarterSparkForm(home)) {
-    return (
-      <p
-        className="rounded border border-white/10 bg-black/25 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
-        {...clashData}
-      >
-        Form clash pending
-      </p>
-    );
+    return <span className="hidden" aria-hidden="true" {...clashData} />;
   }
 
   const awayAccent = starterFormAccent(away);
@@ -890,7 +885,7 @@ function componentBarColor(value: number) {
 }
 
 function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
-  if (!game.flags?.tbd && !game.flags?.limitedForm && !game.flags?.mlbDebut && game.matchupContext.status !== "pending-opponent-splits") return null;
+  if (!game.flags?.tbd && !game.flags?.limitedForm && !game.flags?.mlbDebut && !game.flags?.likelyOpener) return null;
   const flagKeys = watchFlagNoteKeys(game);
 
   return (
@@ -912,7 +907,7 @@ function watchFlagNoteKeys(game: TonightGame) {
   if (game.flags?.coldStartForm) keys.push("cold-start");
   if (game.flags?.mlbDebut) keys.push("mlb-debut");
   if (game.flags?.joinGapForm) keys.push("join-gap");
-  if (game.matchupContext.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
+  if (game.flags?.likelyOpener) keys.push("likely-opener");
   return keys;
 }
 
@@ -926,6 +921,38 @@ function watchFlagNoteLabelValue(game: TonightGame) {
 
 function watchFlagNoteDataLabel(game: TonightGame) {
   return watchFlagNoteAriaLabel(game) || "clear";
+}
+
+function MoreDataLine({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
+  const keys = unresolvedOptionalInputKeys(game);
+  if (keys.length === 0) return null;
+
+  return (
+    <p
+      className={`${compact ? "mt-2" : "mt-4"} font-mono text-xs text-zinc-500`}
+      data-watch-more-data="true"
+      data-watch-more-data-keys={keys.join(",")}
+    >
+      More data closer to first pitch.
+    </p>
+  );
+}
+
+function unresolvedOptionalInputKeys(game: TonightGame) {
+  if (game.flags?.tbd) return [];
+
+  const keys: string[] = [];
+  if (game.matchupContext.status === "pending-opponent-splits") keys.push("opponent-splits");
+  if (!hasStarterSparkForm(game.starters[0]) || !hasStarterSparkForm(game.starters[1])) keys.push("form-clash");
+
+  for (const starter of game.starters) {
+    if (starter.projection?.status === "pending") keys.push(`${starter.side}-projection`);
+    if (starter.marketContext?.status === "pending-feed") keys.push(`${starter.side}-market`);
+    if (starter.marketContext && starter.marketContext.strikeoutPropLine === null) keys.push(`${starter.side}-prop`);
+    if (starter.marketContext && starter.marketContext.opposingTeamTotal === null) keys.push(`${starter.side}-team-total`);
+  }
+
+  return [...new Set(keys)];
 }
 
 function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
@@ -1186,14 +1213,7 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
     "data-projected-earned-runs": projection.line.earnedRuns === null ? "pending" : projection.line.earnedRuns.toFixed(1),
   };
   if (projection.status !== "line-backed" || projection.projectedGsPlus === null) {
-    return (
-      <p
-        className={`${compact ? "mt-1" : "mt-3"} font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 ${justify}`}
-        {...projectionData}
-      >
-        Projection pending
-      </p>
-    );
+    return <span className="hidden" aria-hidden="true" {...projectionData} />;
   }
 
   const projectedLine: ReactNode[] = [
@@ -1294,9 +1314,23 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
   const market = starter.marketContext;
   if (!market) return null;
   const justify = align === "home" ? "lg:justify-end" : "";
-  const strikeoutText = market.strikeoutPropLine === null
-    ? <MetaLine segments={[<span key="projected" className="stat-token">Proj K {market.projectedStrikeouts === null ? "--" : market.projectedStrikeouts.toFixed(1)}</span>, "prop pending"]} />
-    : <>K edge {market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}</>;
+  const strikeoutPropLine = market.strikeoutPropLine;
+  const opposingTeamTotal = market.opposingTeamTotal;
+  if (strikeoutPropLine === null && opposingTeamTotal === null) {
+    return (
+      <span
+        className="hidden"
+        aria-hidden="true"
+        data-market-status={market.status}
+        data-market-source={market.source}
+        data-market-label={market.label}
+        data-projected-strikeouts={market.projectedStrikeouts === null ? "pending" : market.projectedStrikeouts.toFixed(1)}
+        data-strikeout-prop-line={market.strikeoutPropLine === null ? "pending" : market.strikeoutPropLine.toFixed(1)}
+        data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
+        data-opposing-team-total={market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
+      />
+    );
+  }
 
   return (
     <div
@@ -1311,12 +1345,16 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
       data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
       data-opposing-team-total={market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
     >
-      <span className="inline-flex min-h-6 items-center rounded border border-emerald-300/20 bg-emerald-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-200">
-        {strikeoutText}
-      </span>
-      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-        Team total {market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
-      </span>
+      {strikeoutPropLine !== null ? (
+        <span className="inline-flex min-h-6 items-center rounded border border-emerald-300/20 bg-emerald-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-200">
+          K edge {market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}
+        </span>
+      ) : null}
+      {opposingTeamTotal !== null ? (
+        <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+          Team total {opposingTeamTotal.toFixed(1)}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1560,7 +1598,6 @@ function watchFlagNoteAriaLabel(game: TonightGame) {
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify the game as must-watch");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
-  if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }
 
@@ -1571,7 +1608,6 @@ function watchFlagNoteText(game: TonightGame) {
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed.");
   if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify this game as must-watch.");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher.");
-  if (game.matchupContext.status === "pending-opponent-splits") notes.push("Opponent split context pending.");
   return notes.join(" ");
 }
 
