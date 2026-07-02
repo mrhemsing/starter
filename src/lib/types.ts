@@ -198,6 +198,22 @@ export type FormSeasonStats = {
   k9: number | null;
 };
 
+export type FormSeasonDepthStats = {
+  gemRate: number;
+  dudRate: number;
+  consistency: number;
+  bestStart: number;
+  worstStart: number;
+  medianGsPlus: number;
+  bandDistribution: Array<{
+    key: FormTier;
+    label: string;
+    count: number;
+    share: number;
+    color: string;
+  }>;
+};
+
 export type FormDecisionRecord = {
   wins: number;
   losses: number;
@@ -260,6 +276,7 @@ export type FormSummary = {
   formSpark: number[];
   lastStart: FormStartPoint | null;
   seasonStats: FormSeasonStats;
+  seasonDepthStats: FormSeasonDepthStats;
   seasonDecisionRecord: FormDecisionRecord;
   driverChips: FormDriverChip[];
   workload: FormWorkload;

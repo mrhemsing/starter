@@ -311,8 +311,17 @@ assert(
     formPage.includes('const trendView = view === "trend";') &&
     formPage.includes('const seasonView = view === "season";') &&
     formPage.includes("const seasonPitchers = leaderboard.pitchers") &&
-    formPage.includes(".sort(compareSeasonGsRank);") &&
+    formPage.includes(".sort((a, b) => compareSeasonRows(a, b, sort));") &&
     formPage.includes("const seasonRankByPitcherId = buildGlobalSeasonRankMap(qualifiedPitchers);") &&
+    formPage.includes('const seasonSortOptions = [') &&
+    formPage.includes('{ key: "season-gs", label: "Season GS+" }') &&
+    formPage.includes('{ key: "gem-rate", label: "Gem rate" }') &&
+    formPage.includes('{ key: "consistency", label: "Consistency" }') &&
+    formPage.includes('{ key: "best-start", label: "Best start" }') &&
+    formPage.includes("function compareSeasonRows") &&
+    formPage.includes('if (sort === "gem-rate")') &&
+    formPage.includes('if (sort === "consistency")') &&
+    formPage.includes('if (sort === "best-start")') &&
     formPage.includes("function compareSeasonGsRank") &&
     formPage.includes("if (b.bgs !== a.bgs) return b.bgs - a.bgs;") &&
     formPage.includes("function visibleSeasonPitchers") &&
@@ -330,8 +339,22 @@ assert(
     formPage.includes('seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
     formPage.includes("seasonView ? null : (") &&
     formPage.includes("function SeasonBoardControls") &&
+    formPage.includes('data-responsive-check="heat-season-sort-controls"') &&
     formPage.includes("function SeasonExpandControls") &&
     formService.includes("seasonStartCount: starts.length,") &&
+    formService.includes("function buildSeasonDepthStats(starts: StartSummary[]): FormSeasonDepthStats") &&
+    formService.includes("gemRate: round1((scores.filter((score) => score >= 65).length / total) * 100)") &&
+    formService.includes("dudRate: round1((scores.filter((score) => score <= 30).length / total) * 100)") &&
+    formService.includes("consistency: round1(sampleStddev(scores))") &&
+    formService.includes("bandDistribution,") &&
+    types.includes("export type FormSeasonDepthStats = {") &&
+    types.includes("seasonDepthStats: FormSeasonDepthStats;") &&
+    formPage.includes("function SeasonDepthInlineStats") &&
+    formPage.includes('data-responsive-check="heat-season-depth-inline"') &&
+    formPage.includes("function SeasonDepthMobileDetails") &&
+    formPage.includes('data-responsive-check="heat-season-mobile-depth"') &&
+    formPage.includes("function SeasonRangeBar") &&
+    formPage.includes("function SeasonBandMiniBar") &&
     formPage.includes('data-responsive-check="heat-season-controls"') &&
     formPage.includes('data-responsive-check="heat-season-expand"') &&
     !formPage.includes("bandOf("),

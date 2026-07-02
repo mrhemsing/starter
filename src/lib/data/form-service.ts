@@ -2,10 +2,10 @@ import { unstable_cache } from "next/cache";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, tierOf } from "@/lib/form-tokens";
+import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
-import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
+import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonDepthStats, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
 
@@ -569,6 +569,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
   const seasonStats = buildSeasonStats(starts);
+  const seasonDepthStats = buildSeasonDepthStats(starts);
   const seasonDecisionRecord = buildSeasonDecisionRecord(starts);
   const tier = formHeatBandOf(rgs, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
@@ -593,6 +594,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     formSpark,
     lastStart,
     seasonStats,
+    seasonDepthStats,
     seasonDecisionRecord,
     driverChips,
     workload,
@@ -600,6 +602,32 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
       limitedSample: windowCount < window,
       rust,
     },
+  };
+}
+
+function buildSeasonDepthStats(starts: StartSummary[]): FormSeasonDepthStats {
+  const scores = starts.map((start) => start.gameScorePlus);
+  const sortedScores = [...scores].sort((a, b) => a - b);
+  const total = Math.max(1, scores.length);
+  const bandDistribution = QUALITY_BANDS.map((band) => {
+    const count = scores.filter((score) => qualityTierOf(score).key === band.key).length;
+    return {
+      key: band.key,
+      label: band.label,
+      count,
+      share: round1((count / total) * 100),
+      color: band.color,
+    };
+  });
+
+  return {
+    gemRate: round1((scores.filter((score) => score >= 65).length / total) * 100),
+    dudRate: round1((scores.filter((score) => score <= 30).length / total) * 100),
+    consistency: round1(sampleStddev(scores)),
+    bestStart: round1(sortedScores.at(-1) ?? 0),
+    worstStart: round1(sortedScores[0] ?? 0),
+    medianGsPlus: round1(percentile(sortedScores, 50)),
+    bandDistribution,
   };
 }
 
