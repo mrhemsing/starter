@@ -32,7 +32,7 @@ export function getHomeSlatePhase({
   if (slateProgress.state === "pre-first-pitch" || slateProgress.state === "no-games") return "PREGAME";
 
   const liveLeaderScore = ranked?.topPerformer?.status === "live" ? ranked.topPerformer.start.gameScorePlus : null;
-  if (slateProgress.completedStarts >= 4 || slateProgress.liveGames >= 4 || (liveLeaderScore !== null && liveLeaderScore >= HOME_PRIME_LIVE_GS_PLUS_THRESHOLD)) return "PRIME";
+  if (slateProgress.completedStarts >= 4 || slateProgress.liveStarts >= 4 || (liveLeaderScore !== null && liveLeaderScore >= HOME_PRIME_LIVE_GS_PLUS_THRESHOLD)) return "PRIME";
 
   return "EARLY";
 }

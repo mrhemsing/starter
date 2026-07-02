@@ -295,6 +295,7 @@ function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { 
       finalGames: 0,
       totalStarts: 0,
       completedStarts: 0,
+      liveStarts: 0,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -309,6 +310,7 @@ function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { 
       finalGames,
       totalStarts: board.totalStarts,
       completedStarts: board.finalStarts,
+      liveStarts: 0,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -323,6 +325,7 @@ function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { 
       finalGames,
       totalStarts: board.totalStarts,
       completedStarts: board.finalStarts,
+      liveStarts: board.liveStarts,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -336,6 +339,7 @@ function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { 
     finalGames,
     totalStarts: board.totalStarts,
     completedStarts: board.finalStarts,
+    liveStarts: board.liveStarts,
     firstPitchAt,
     countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now()) : "STARTING SOON",
   };

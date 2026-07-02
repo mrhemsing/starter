@@ -22,6 +22,7 @@ export type SlateProgressState = {
   finalGames: number;
   totalStarts: number;
   completedStarts: number;
+  liveStarts: number;
   firstPitchAt: string | null;
   countdownLabel: string | null;
 };
@@ -55,6 +56,9 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
   const totalGames = countableGames.length;
   const totalStarts = totalGames * 2;
   const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));
+  const completedStartsInFinalGames = finalGames * 2;
+  const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStartCount - completedStartsInFinalGames));
+  const liveStartCount = Math.max(0, liveGames * 2 - completedStartsInLiveGames);
   const firstPitchAt = resolveFirstPitchAt(countableGames);
 
   if (totalGames === 0) {
@@ -66,6 +70,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
       finalGames,
       totalStarts,
       completedStarts: 0,
+      liveStarts: 0,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -80,6 +85,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
       finalGames,
       totalStarts,
       completedStarts: completedStartCount,
+      liveStarts: 0,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -94,6 +100,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
       finalGames,
       totalStarts,
       completedStarts: completedStartCount,
+      liveStarts: liveStartCount,
       firstPitchAt,
       countdownLabel: null,
     };
@@ -107,6 +114,7 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
     finalGames,
     totalStarts,
     completedStarts: completedStartCount,
+    liveStarts: liveStartCount,
     firstPitchAt,
     countdownLabel: firstPitchAt ? formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - now.getTime(), delayedGames > 0) : "STARTING SOON",
   };
@@ -118,7 +126,7 @@ export function formatSlateStatusLine(state: SlateProgressState) {
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
   if (state.state === "all-starts-complete") return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
-  if (state.state === "starts-in-progress" && state.liveGames > 0) return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "starts-in-progress" && state.liveStarts > 0) return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
   if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
 
   const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;

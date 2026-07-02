@@ -33,7 +33,8 @@ assert(
   !phase.includes("slateProgress.liveGames <= 0") &&
     phase.includes('if (slateProgress.state === "pre-first-pitch" || slateProgress.state === "no-games") return "PREGAME";') &&
     phase.includes("slateProgress.completedStarts >= 4") &&
-    phase.includes("slateProgress.liveGames >= 4") &&
+    phase.includes("slateProgress.liveStarts >= 4") &&
+    !phase.includes("slateProgress.liveGames >= 4") &&
     phase.includes("HOME_PRIME_LIVE_GS_PLUS_THRESHOLD") &&
     phase.includes('return "EARLY";'),
   "home slate phase helper must preserve early-to-prime rules without treating zero live games as pregame once starts are settling",

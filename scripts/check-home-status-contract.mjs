@@ -42,14 +42,18 @@ assert(
 assert(
   slateState.includes('totalStarts: number;') &&
     slateState.includes('completedStarts: number;') &&
+    slateState.includes('liveStarts: number;') &&
     slateState.includes("const totalStarts = totalGames * 2;") &&
-    slateState.includes("const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));"),
-  "homepage slate state must count starter outings with a playable-game fallback",
+    slateState.includes("const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));") &&
+    slateState.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStartCount - completedStartsInFinalGames));") &&
+    slateState.includes("const liveStartCount = Math.max(0, liveGames * 2 - completedStartsInLiveGames);"),
+  "homepage slate state must count starter outings and derive in-progress starts from settled starter lines",
 );
 
 assert(
   slateState.includes('state: "starts-in-progress"') &&
-    slateState.includes('return `TODAY · ${state.liveGames} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
+    slateState.includes('return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
+    !slateState.includes('return `TODAY · ${state.liveGames} LIVE') &&
     slateState.includes('return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
   "homepage in-progress line must render live and completed starts",
 );
