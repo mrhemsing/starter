@@ -3,7 +3,7 @@ import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { FORM_CONFIG } from "@/lib/form-tokens";
 import { pitcherHref, upcomingDateHref } from "@/lib/routes";
 import { roundToScorePrecision } from "@/lib/score-display";
-import type { TonightGame, TonightStarter } from "@/lib/types";
+import type { TonightGame, TonightStarter, UpcomingResponse } from "@/lib/types";
 
 export type StreamerMatchup = {
   date: string;
@@ -14,7 +14,11 @@ export type StreamerMatchup = {
   firstPitch: string;
   park: string;
   parkLabel: string;
+  parkFactor: number;
   dayHref: string;
+  opponentLineupRank: number | null;
+  opponentLineupTier: "Soft" | "Neutral" | "Tough" | "Pending";
+  opponentRunValue: number | null;
 };
 
 export type StreamerCandidate = {
@@ -24,6 +28,7 @@ export type StreamerCandidate = {
   pitcherHref: string;
   heatBand: "onfire" | "hot" | null;
   heatLabel: "On Fire" | "Heating Up" | "Streamer";
+  trendDelta: number;
   streamScore: number;
   components: {
     form: number;
@@ -45,6 +50,19 @@ export type UpcomingStreamersResponse = {
     start: string;
     end: string;
   };
+  coverage: {
+    confirmedThrough: string | null;
+    copy: string | null;
+    games: number;
+    starters: number;
+    partial: boolean;
+  };
+  funnel: {
+    risers: number;
+    withNextStart: number;
+    withSoftMatchup: number;
+    emptyReason: string | null;
+  };
   twoStartPitchers: StreamerCandidate[];
   formRisers: StreamerCandidate[];
 };
@@ -58,35 +76,71 @@ export const STREAMER_SCORE_CONFIG = {
   formWeight: 0.5,
   matchupWeight: 0.3,
   parkWeight: 0.2,
-  softMatchupRunValueMax: -0.5,
+};
+
+export const STREAMERS_WEEK_TARGETING_CONFIG = {
+  pivotDay: 4,
+  weekLengthDays: 7,
+};
+
+export const STREAMERS_RISER_FUNNEL_CONFIG = {
+  hotBands: ["onfire", "hot"],
+  minTrendDelta: 0,
+  softOpponentShare: 1 / 3,
+  maxFormRisers: 10,
 };
 
 export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Promise<UpcomingStreamersResponse> {
-  const start = fantasyWeekStart(addDays(anchorDate, 1));
-  const upcoming = await getUpcomingMustWatch({ start, days: 7, window: FORM_CONFIG.windowDefault });
+  const start = targetFantasyWeekStart(anchorDate);
+  const upcoming = await getUpcomingMustWatch({ start, days: STREAMERS_WEEK_TARGETING_CONFIG.weekLengthDays, window: FORM_CONFIG.windowDefault });
   const byPitcher = new Map<string, CandidateAccumulator>();
+  const allMatchups: StreamerMatchup[] = [];
 
   for (const day of upcoming.days) {
     for (const game of day.games) {
       for (const starter of game.starters) {
         if (!starter.pitcherId || !starter.name || starter.status === "tbd") continue;
+        const matchup = buildStreamerMatchup(day.date, game, starter);
         const current = byPitcher.get(starter.pitcherId) ?? { starter, matchups: [] };
-        current.matchups.push(buildStreamerMatchup(day.date, game, starter));
+        current.matchups.push(matchup);
+        allMatchups.push(matchup);
         byPitcher.set(starter.pitcherId, current);
       }
     }
   }
 
+  applyOpponentLineupTiers(allMatchups);
+
   const candidates = [...byPitcher.values()]
     .map(({ starter, matchups }) => buildStreamerCandidate(starter, matchups))
     .filter((candidate): candidate is StreamerCandidate => Boolean(candidate))
     .sort(compareStreamerCandidates);
+  const twoStartPitchers = candidates.filter((candidate) => candidate.matchups.length >= 2);
+  const risers = candidates.filter(isFormRiser);
+  const withNextStart = risers.filter((candidate) => candidate.matchups.length > 0);
+  const withSoftMatchup = withNextStart.filter(hasSoftMatchup).slice(0, STREAMERS_RISER_FUNNEL_CONFIG.maxFormRisers);
+  const funnel = {
+    risers: risers.length,
+    withNextStart: withNextStart.length,
+    withSoftMatchup: withSoftMatchup.length,
+    emptyReason: streamerFunnelEmptyReason(risers.length, withNextStart.length, withSoftMatchup.length),
+  };
+
+  console.info("[streamers:funnel]", {
+    anchorDate,
+    range: upcoming.range,
+    risers: funnel.risers,
+    withNextStart: funnel.withNextStart,
+    withSoftMatchup: funnel.withSoftMatchup,
+  });
 
   return {
     generatedAt: upcoming.generatedAt,
     range: upcoming.range,
-    twoStartPitchers: candidates.filter((candidate) => candidate.matchups.length >= 2),
-    formRisers: candidates.filter((candidate) => candidate.matchups.length > 0 && isFormRiser(candidate) && hasSoftMatchup(candidate)),
+    coverage: buildCoverage(upcoming),
+    funnel,
+    twoStartPitchers,
+    formRisers: withSoftMatchup,
   };
 }
 
@@ -103,6 +157,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     pitcherHref: pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, { from: "upcoming" }),
     heatBand,
     heatLabel: heatBand === "onfire" ? "On Fire" : heatBand === "hot" ? "Heating Up" : "Streamer",
+    trendDelta: roundToScorePrecision(starter.deltaForm ?? 0, 1),
     streamScore: roundToScorePrecision(components.form * STREAMER_SCORE_CONFIG.formWeight + components.matchup * STREAMER_SCORE_CONFIG.matchupWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight, 1),
     components,
     seasonContext: {
@@ -128,14 +183,24 @@ function buildStreamerMatchup(date: string, game: TonightGame, starter: TonightS
     firstPitch: game.firstPitch,
     park: game.park,
     parkLabel: game.parkContext.label,
+    parkFactor: game.parkContext.runFactor,
     dayHref: upcomingDateHref(date),
+    opponentLineupRank: null,
+    opponentLineupTier: "Pending",
+    opponentRunValue: matchupRunValueForStreamer(game, starter),
   };
 }
 
+function matchupRunValueForStreamer(game: TonightGame, starter: TonightStarter) {
+  if (typeof starter.opponentSplit?.matchupRunValue === "number") return starter.opponentSplit.matchupRunValue;
+  if (typeof game.matchupScore === "number") return (50 - game.matchupScore) / 12;
+  return null;
+}
+
 function streamScoreComponents(starter: TonightStarter, matchups: StreamerMatchup[]) {
-  const form = clampScore(((starter.rgs ?? 45) - 35) * 2.5);
-  const matchup = clampScore(mean(matchups.map(() => matchupSoftness(starter))));
-  const park = clampScore(mean(matchups.map((matchup) => parkScore(matchup.parkLabel))));
+  const form = clampScore(((starter.rgs ?? 45) - 35) * 2.5 + Math.max(0, starter.deltaForm ?? 0));
+  const matchup = clampScore(mean(matchups.map((matchup) => matchupSoftness(matchup))));
+  const park = clampScore(mean(matchups.map((matchup) => parkScore(matchup.parkFactor))));
   return {
     form: roundToScorePrecision(form, 1),
     matchup: roundToScorePrecision(matchup, 1),
@@ -143,24 +208,26 @@ function streamScoreComponents(starter: TonightStarter, matchups: StreamerMatchu
   };
 }
 
-function matchupSoftness(starter: TonightStarter) {
-  const value = starter.opponentSplit?.matchupRunValue;
+function matchupSoftness(matchup: StreamerMatchup) {
+  const value = matchup.opponentRunValue;
   if (typeof value !== "number") return 50;
   return clampScore(50 - value * 12);
 }
 
-function parkScore(label: string) {
-  if (/pitcher/i.test(label)) return 70;
-  if (/hitter/i.test(label)) return 35;
-  return 50;
+function parkScore(runFactor: number) {
+  return clampScore(50 + (1 - runFactor) * 120);
 }
 
 function isFormRiser(candidate: StreamerCandidate) {
-  return candidate.heatBand === "onfire" || candidate.heatBand === "hot";
+  return Boolean(
+    candidate.heatBand &&
+    STREAMERS_RISER_FUNNEL_CONFIG.hotBands.includes(candidate.heatBand) &&
+    candidate.trendDelta > STREAMERS_RISER_FUNNEL_CONFIG.minTrendDelta,
+  );
 }
 
 function hasSoftMatchup(candidate: StreamerCandidate) {
-  return candidate.components.matchup >= 56 || candidate.components.park >= 60;
+  return candidate.matchups.some((matchup) => matchup.opponentLineupTier === "Soft");
 }
 
 function compareStreamerCandidates(a: StreamerCandidate, b: StreamerCandidate) {
@@ -173,6 +240,52 @@ function fantasyWeekStart(date: string) {
   const offset = day === 0 ? -6 : 1 - day;
   value.setUTCDate(value.getUTCDate() + offset);
   return value.toISOString().slice(0, 10);
+}
+
+function targetFantasyWeekStart(anchorDate: string) {
+  const currentStart = fantasyWeekStart(anchorDate);
+  const day = new Date(`${anchorDate}T00:00:00.000Z`).getUTCDay();
+  const targetsNextWeek = day === 0 || day >= STREAMERS_WEEK_TARGETING_CONFIG.pivotDay;
+  return targetsNextWeek ? addDays(currentStart, 7) : currentStart;
+}
+
+function applyOpponentLineupTiers(matchups: StreamerMatchup[]) {
+  const scored = matchups
+    .filter((matchup) => typeof matchup.opponentRunValue === "number")
+    .sort((a, b) => (a.opponentRunValue ?? 0) - (b.opponentRunValue ?? 0) || a.opponent.localeCompare(b.opponent));
+  const softCutoff = Math.max(1, Math.ceil(scored.length * STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare));
+  const toughCutoff = Math.max(softCutoff, Math.floor(scored.length * (1 - STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare)));
+
+  scored.forEach((matchup, index) => {
+    matchup.opponentLineupRank = index + 1;
+    matchup.opponentLineupTier = index < softCutoff ? "Soft" : index >= toughCutoff ? "Tough" : "Neutral";
+  });
+}
+
+function buildCoverage(upcoming: UpcomingResponse): UpcomingStreamersResponse["coverage"] {
+  const daysWithProbables = upcoming.days.filter((day) => day.games.some((game) => game.starters.some((starter) => starter.pitcherId && starter.status !== "tbd")));
+  const confirmedThrough = daysWithProbables.at(-1)?.date ?? null;
+  const games = upcoming.days.reduce((sum, day) => sum + day.games.length, 0);
+  const starters = upcoming.days.reduce((sum, day) => sum + day.games.reduce((daySum, game) => daySum + game.starters.filter((starter) => starter.pitcherId && starter.status !== "tbd").length, 0), 0);
+  const partial = confirmedThrough !== null && confirmedThrough < upcoming.range.end;
+  return {
+    confirmedThrough,
+    copy: partial ? `Probables confirmed through ${formatShortDate(confirmedThrough)}. More arms appear as rotations publish.` : null,
+    games,
+    starters,
+    partial,
+  };
+}
+
+function streamerFunnelEmptyReason(risers: number, withNextStart: number, withSoftMatchup: number) {
+  if (withSoftMatchup > 0) return null;
+  if (risers === 0) return "No Heating Up or On Fire arms are in the current Form pool.";
+  if (withNextStart === 0) return `${risers} risers this week, none have a confirmed start in the target week yet.`;
+  return `${withNextStart} risers this week, none draw a bottom-third lineup.`;
+}
+
+function formatShortDate(date: string) {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
 }
 
 function addDays(date: string, days: number) {

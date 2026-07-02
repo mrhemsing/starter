@@ -38,13 +38,24 @@ assert(
 
 assert(
   streamersService.includes("export async function getUpcomingStreamers") &&
-    streamersService.includes("twoStartPitchers: candidates.filter((candidate) => candidate.matchups.length >= 2)") &&
-    streamersService.includes("formRisers: candidates.filter") &&
+    streamersService.includes("STREAMERS_WEEK_TARGETING_CONFIG") &&
+    streamersService.includes("pivotDay: 4") &&
+    streamersService.includes("targetFantasyWeekStart") &&
+    streamersService.includes("STREAMERS_RISER_FUNNEL_CONFIG") &&
+    streamersService.includes("softOpponentShare: 1 / 3") &&
+    streamersService.includes("twoStartPitchers = candidates.filter((candidate) => candidate.matchups.length >= 2)") &&
+    streamersService.includes("withSoftMatchup = withNextStart.filter(hasSoftMatchup)") &&
+    streamersService.includes('console.info("[streamers:funnel]"') &&
+    streamersService.includes("streamerFunnelEmptyReason") &&
+    streamersService.includes("matchupRunValueForStreamer") &&
+    streamersService.includes("Probables confirmed through") &&
     streamersService.includes("STREAMER_SCORE_CONFIG") &&
     streamersService.includes("fantasyWeekStart") &&
     streamersService.includes("starter.seasonDecisionRecord") &&
-    streamersService.includes("starter.seasonStats?.qualityStarts"),
-  "streamers service must compute two-start and form-riser candidates from Upcoming data with a single score config",
+    streamersService.includes("starter.seasonStats?.qualityStarts") &&
+    streamersService.includes("opponentLineupTier") &&
+    streamersService.includes("parkFactor"),
+  "streamers service must target the correct fantasy week, log the riser funnel, and score candidates from Upcoming data with one config",
 );
 
 assert(
@@ -63,8 +74,14 @@ assert(
     streamersPage.includes("images: [{ url: imageUrl, alt: title }]") &&
     streamersPage.includes("<UpcomingSlateRangeToggle") &&
     streamersPage.includes("streamersActive") &&
+    streamersPage.includes("Widely-available arms worth a one-start pickup this week, plus everyone scheduled to start twice.") &&
+    streamersPage.includes("What is streaming?") &&
+    streamersPage.includes("WEEK OF") &&
+    streamersPage.includes("data-streamers-coverage") &&
     streamersPage.includes("Two-start pitchers") &&
+    streamersPage.includes("Two starts in one fantasy week doubles the counting stats.") &&
     streamersPage.includes("Form risers with soft matchups") &&
+    streamersPage.includes("Trending arms drawing a weak lineup in their next start.") &&
     streamersPage.includes("data-responsive-check=\"upcoming-streamers\"") &&
     streamersPage.includes("data-two-start-count={streamers.twoStartPitchers.length}") &&
     streamersPage.includes("data-form-riser-count={streamers.formRisers.length}") &&
@@ -73,8 +90,12 @@ assert(
     streamersPage.includes("data-stream-score={candidate.streamScore}") &&
     streamersPage.includes("W-L-ND") &&
     streamersPage.includes("QS {candidate.seasonContext.qualityStarts ?? \"--\"}") &&
-    streamersPage.includes("K/9"),
-  "streamers page must have distinct metadata, JSON-LD, active pill state, expected sections, card telemetry, and fantasy context labels",
+    streamersPage.includes("K/9") &&
+    streamersPage.includes("CHANGED · NOW 1 START") &&
+    streamersPage.includes("opponentLineupTier") &&
+    streamersPage.includes("Park {matchup.parkFactor.toFixed(2)}") &&
+    streamersPage.includes("label.toUpperCase()"),
+  "streamers page must explain streaming, expose coverage/funnel empty states, and render score components plus fantasy context labels",
 );
 
 assert(
