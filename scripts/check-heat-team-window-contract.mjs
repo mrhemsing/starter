@@ -11,6 +11,7 @@ const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const leaderboardApi = await readFile("src/app/api/form/leaderboard/route.ts", "utf8");
 const heatCheckWarmup = await readFile("src/components/heat-check-filter-warmup.tsx", "utf8");
 const warmCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
+const warmJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
 
 assert(
   formService.includes("team?: string;") &&
@@ -25,7 +26,7 @@ assert(
 );
 
 assert(
-  formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly, team })") &&
+  formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
     leaderboardApi.includes("team: searchParams.get(\"team\") ?? undefined,"),
   "Heat Check page and API must pass team filters into the form leaderboard builder",
 );
@@ -41,14 +42,18 @@ assert(
 
 assert(
   formService.includes("export async function warmFormLeaderboards") &&
-    warmCron.includes('import { warmFormLeaderboards } from "@/lib/data/form-service";') &&
-    warmCron.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
-    warmCron.includes("...tonight.games.flatMap((game) => [game.away, game.home]),") &&
-    warmCron.includes("getRankedHome(),") &&
-    warmCron.includes("warmFormLeaderboards({ teams: slateTeams }),") &&
-    warmCron.includes("imageSource: topPerformer.image?.source ?? null") &&
-    warmCron.includes("warmedTeams: slateTeams.length"),
-  "Live-start cron must prebuild active-slate team Heat Check windows and warm current top-performer imagery",
+    formService.includes("await Promise.all(teams.map((team) => Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false, team })))));") &&
+    warmCron.includes('import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";') &&
+    warmJob.includes('import { warmFormLeaderboards } from "@/lib/data/form-service";') &&
+    warmJob.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
+    warmJob.includes("...tonight.games.flatMap((game) => [game.away, game.home]),") &&
+    warmJob.includes("await warmFormLeaderboards();") &&
+    warmJob.includes("shouldWarmTeamFormOnCron()") &&
+    warmJob.includes("warm-live-starts team form warming deferred") &&
+    warmJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+    warmJob.includes("imageSource: topPerformer.image?.source ?? null") &&
+    warmJob.includes("deferredTeams: shouldWarmTeamFormOnCron() ? 0 : slateTeams.length"),
+  "Live-start cron must warm global Heat Check, optionally warm active-slate team windows, and warm current top-performer imagery",
 );
 
 console.log("heat team window contract ok: team-filtered windows use stored fallbacks and warm team caches");

@@ -13,6 +13,7 @@ const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
 const supabaseSchema = await readFile("docs/supabase-mlb-archive.sql", "utf8");
 const warmLiveStartsCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
+const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
 assert(
@@ -134,12 +135,19 @@ assert(
 
 assert(
   warmLiveStartsCron.includes("export const maxDuration = 60;") &&
-    warmLiveStartsCron.includes("const WARM_BATCH_SIZE = 8;") &&
-    warmLiveStartsCron.includes('console.log("warm-live-starts start"') &&
-    warmLiveStartsCron.includes('console.log("warm-live-starts batch warmed form leaderboards"') &&
-    warmLiveStartsCron.includes('console.log("warm-live-starts end"') &&
-    warmLiveStartsCron.includes("for (const batch of batchItems(slateTeams, WARM_BATCH_SIZE))") &&
-    warmLiveStartsCron.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+    warmLiveStartsCron.includes('import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";') &&
+    warmLiveStartsCron.includes('const date = !process.env.VERCEL_ENV ? new URL(request.url).searchParams.get("date") ?? undefined : undefined;') &&
+    warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
+    warmLiveStartsJob.includes("export const WARM_LIVE_STARTS_BATCH_SIZE = 8;") &&
+    warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts start"') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts batch warmed form leaderboards"') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts team form warming deferred"') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts end"') &&
+    warmLiveStartsJob.includes("for (const batch of batchItems(slateTeams, WARM_LIVE_STARTS_BATCH_SIZE))") &&
+    warmLiveStartsJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+    warmLiveStartsJob.includes("function shouldWarmTeamFormOnCron()") &&
+    warmLiveStartsJob.includes("if (!process.env.VERCEL_ENV && dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
     formService.includes("includeGlobal?: boolean") &&
     formService.includes("const includeGlobal = options.includeGlobal ?? true;") &&
     formService.includes("if (includeGlobal) {"),

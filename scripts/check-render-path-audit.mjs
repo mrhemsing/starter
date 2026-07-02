@@ -34,11 +34,12 @@ for (const path of idlePagePaths) {
   }
 }
 
-const [formService, tonightService, rankedStartsPageService, warmLiveStartsCron, supabaseArchive, sitePerformanceContract, packageJson] = await Promise.all([
+const [formService, tonightService, rankedStartsPageService, warmLiveStartsCron, warmLiveStartsJob, supabaseArchive, sitePerformanceContract, packageJson] = await Promise.all([
   read("src/lib/data/form-service.ts"),
   read("src/lib/data/tonight-service.ts"),
   read("src/lib/data/ranked-starts-page-service.ts"),
   read("src/app/api/cron/warm-live-starts/route.ts"),
+  read("src/lib/data/warm-live-starts-job.ts"),
   read("src/lib/data/supabase-archive.ts"),
   read("scripts/check-site-performance-contract.mjs"),
   read("package.json"),
@@ -71,11 +72,13 @@ assert(
 );
 
 assert(
-  warmLiveStartsCron.includes("await warmFormLeaderboards();") &&
-    warmLiveStartsCron.includes("warm-live-starts batch warmed global form leaderboards") &&
-    warmLiveStartsCron.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
-    warmLiveStartsCron.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
-    warmLiveStartsCron.includes('revalidateTag(tag, "max");'),
+  warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag })") || warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });")
+    ? warmLiveStartsJob.includes("await warmFormLeaderboards();") &&
+      warmLiveStartsJob.includes("warm-live-starts batch warmed global form leaderboards") &&
+      warmLiveStartsJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
+      warmLiveStartsJob.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
+      warmLiveStartsJob.includes('options.revalidateTag?.(tag, "max");')
+    : false,
   "warm-live-starts cron must warm global and team Heat Check variants after data-change revalidation",
 );
 

@@ -23,6 +23,7 @@ const liveService = await read("src/lib/data/live-scoreboard-service.ts");
 const rankedStartsPageService = await read("src/lib/data/ranked-starts-page-service.ts");
 const formService = await read("src/lib/data/form-service.ts");
 const warmLiveStartsCron = await read("src/app/api/cron/warm-live-starts/route.ts");
+const warmLiveStartsJob = await read("src/lib/data/warm-live-starts-job.ts");
 const tonightRoute = await read("src/app/api/tonight/route.ts");
 const upcomingRoute = await read("src/app/api/upcoming/route.ts");
 const duelsRoute = await read("src/app/api/duels/route.ts");
@@ -86,9 +87,10 @@ assert(
     cacheTags.includes('export const LIVE_CACHE_TAG = "live-surfaces";') &&
     cacheTags.includes("export const DATA_CHANGE_CACHE_TAGS = [") &&
     warmLiveStartsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
-    warmLiveStartsCron.includes('import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";') &&
-    warmLiveStartsCron.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
-    warmLiveStartsCron.includes('revalidateTag(tag, "max");'),
+    warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
+    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsJob.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
+    warmLiveStartsJob.includes('options.revalidateTag?.(tag, "max");'),
   "data-change cron must push revalidation through shared cache tags for slate surfaces",
 );
 

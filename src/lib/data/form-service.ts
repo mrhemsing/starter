@@ -106,9 +106,7 @@ export async function warmFormLeaderboards(options: { teams?: string[]; windows?
     await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false })));
   }
 
-  for (const team of teams) {
-    await Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false, team })));
-  }
+  await Promise.all(teams.map((team) => Promise.all(windows.map((window) => getFormLeaderboard({ window, qualifiedOnly: false, team })))));
 }
 
 export function parseFormWindow(value: number | string | undefined): FormWindow {

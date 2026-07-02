@@ -152,7 +152,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, todaySchedule] = await Promise.all([
-    getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly }),
+    getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team }),
     getWatchlistPitcherIds(accountId),
     getSlateSchedule({ window: "today", date: today }),
   ]);
