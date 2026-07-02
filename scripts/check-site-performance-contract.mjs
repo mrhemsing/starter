@@ -34,6 +34,7 @@ const fastFilterLink = await read("src/components/fast-filter-link.tsx");
 const heatCheckWarmup = await read("src/components/heat-check-filter-warmup.tsx");
 const heatCheckPage = await read("src/app/form/page.tsx");
 const upcomingDatePage = await read("src/app/upcoming/[date]/page.tsx");
+const upcomingIndexPage = await read("src/app/upcoming/page.tsx");
 const startsPage = await read("src/app/starts/[id]/page.tsx");
 const appLayout = await read("src/app/layout.tsx");
 const loadingPolicy = await read("docs/loading-state-policy.md");
@@ -46,6 +47,18 @@ assert(
     tonightService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
     tonightService.includes("const promise = getCachedTonightMustWatch(date, window);"),
   "Must-Watch data must use Next data cache, not only per-process memoization",
+);
+
+assert(
+  startService.includes("export function getProbablesFromSchedule") &&
+    tonightService.includes('import { getDefaultSlateDates, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";') &&
+    !tonightService.includes("getTodayProbables") &&
+    tonightService.includes("const [schedule, leaderboard] = await Promise.all([") &&
+    tonightService.includes("const probables = getProbablesFromSchedule(date, schedule);") &&
+    upcomingDatePage.includes("const [upcoming, slateState] = await Promise.all([") &&
+    upcomingIndexPage.includes("const title = upcomingDayTitle(date);") &&
+    !upcomingIndexPage.includes("getTonightMustWatch"),
+  "Upcoming page assembly must not duplicate schedule/probable board work in metadata or within Must-Watch assembly",
 );
 
 assert(

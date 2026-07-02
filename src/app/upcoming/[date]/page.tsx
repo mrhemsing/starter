@@ -63,9 +63,11 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);
-  const upcoming = await getTonightMustWatch({ date, window: 5 });
+  const [upcoming, slateState] = await Promise.all([
+    getTonightMustWatch({ date, window: 5 }),
+    getSlateStartProgress({ window: "today", date }),
+  ]);
   const resolvedDate = upcoming.date;
-  const slateState = await getSlateStartProgress({ window: "today", date: resolvedDate });
   const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };
   const jsonLd = jsonLdForUpcomingDay(upcoming);
 

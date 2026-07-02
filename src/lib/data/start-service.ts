@@ -333,7 +333,11 @@ export async function getTodayProbables(date?: string) {
   const shouldFetchLiveProbables = shouldFetchLiveSchedule(slateDate) || archivedStarts.length > 0;
 
   const probableSchedule = await fetchMlbSchedule(slateDate, { fetchLive: shouldFetchLiveProbables });
-  if (archivedStarts.length > 0 && probableSchedule.source !== "live") return [];
+  return getProbablesFromSchedule(slateDate, probableSchedule, { hasArchivedStarts: archivedStarts.length > 0 });
+}
+
+export function getProbablesFromSchedule(slateDate: string, probableSchedule: MlbSchedule, options: { hasArchivedStarts?: boolean } = {}) {
+  if (options.hasArchivedStarts && probableSchedule.source !== "live") return [];
   const probables = probableSchedule.games.flatMap((game) =>
     [game.probableAwayPitcher, game.probableHomePitcher]
       .filter((pitcher): pitcher is MlbProbablePitcher => Boolean(pitcher))

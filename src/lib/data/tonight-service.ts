@@ -4,7 +4,7 @@ import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
 import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
-import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
+import { getDefaultSlateDates, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
@@ -55,11 +55,11 @@ export async function getTonightMustWatch(options: TonightOptions = {}): Promise
 
 async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<TonightResponse> {
   const enrichAtRequestTime = isRequestTimeEnrichmentEnabled();
-  const [schedule, probables, leaderboard] = await Promise.all([
+  const [schedule, leaderboard] = await Promise.all([
     getSlateSchedule({ window: "today", date }),
-    getTodayProbables(date),
     getFormLeaderboard({ window, qualifiedOnly: false }),
   ]);
+  const probables = getProbablesFromSchedule(date, schedule);
   const [opponentSplits, marketContexts] = await Promise.all([
     enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
     enrichAtRequestTime ? fetchMlbOddsMarketContexts(schedule.games) : Promise.resolve(new Map()),
