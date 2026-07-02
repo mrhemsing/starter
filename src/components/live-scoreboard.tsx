@@ -374,7 +374,7 @@ function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; mut
   const liveOrFinalScore = isScoredRow(row);
 
   return (
-    <article className={`grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
+    <article id={`live-start-${row.pitcherId}`} data-live-start-row={row.pitcherId} className={`scroll-mt-24 grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
       <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
         <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" decorative className="ml-0" />
       </Link>

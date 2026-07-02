@@ -20,12 +20,14 @@ import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
+import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
+import type { LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import { pitcherHref, sourceParams } from "@/lib/routes";
+import { liveDateHref, pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { gameTimeWord } from "@/lib/time-words";
 import type { FormSummary, HeatBand, MlbScheduleGame } from "@/lib/types";
@@ -151,14 +153,15 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
-  const [leaderboard, followedIds, todaySchedule] = await Promise.all([
+  const [leaderboard, followedIds, todaySchedule, liveBoard] = await Promise.all([
     getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team }),
     getWatchlistPitcherIds(accountId),
     getSlateSchedule({ window: "today", date: today }),
+    getLiveScoreboard({ date: today }),
   ]);
   const jsonLd = jsonLdForFormPage(leaderboard);
   const rankedDate = addDays(today, -1);
-  const startContext = buildTodayStartContext(todaySchedule.games);
+  const startContext = buildTodayStartContext(todaySchedule.games, liveBoard.rows, today);
   const teams = [...new Set(leaderboard.pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
   const trendPitchers = leaderboard.pitchers
     .filter((pitcher) => !team || pitcher.team === team)
@@ -341,7 +344,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                         {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
                         {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
                         {visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).map((pitcher, index) => (
-                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" />
+                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
                         ))}
                       </>
                     )}
@@ -349,7 +352,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                 ))
               ) : (
                 boardPitchers.map((pitcher, index) => (
-                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} view="trend" />
+                  <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === boardPitchers.length - 1 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
                 ))
               )}
             </section>
@@ -448,6 +451,8 @@ type TodayStartContext = {
   opponent: string;
   side: "home" | "away";
   firstPitch: string;
+  status: "scheduled" | "warming" | "live" | "final" | "delay";
+  liveHref: string;
 };
 
 function MomentumHero({
@@ -559,21 +564,34 @@ function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: 
   );
 }
 
-function buildTodayStartContext(games: MlbScheduleGame[]) {
+function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboardRow[], date: string) {
   const context = new Map<string, TodayStartContext>();
+  const liveRowByPitcherId = new Map(liveRows.map((row) => [row.pitcherId, row]));
 
   for (const game of games) {
     for (const probable of [game.probableAwayPitcher, game.probableHomePitcher]) {
       if (!probable) continue;
+      const pitcherId = String(probable.id);
+      const liveRow = liveRowByPitcherId.get(pitcherId);
       context.set(String(probable.id), {
         opponent: probable.side === "away" ? game.homeTeam.abbreviation : game.awayTeam.abbreviation,
         side: probable.side,
         firstPitch: game.gameDate,
+        status: liveRow?.status ?? todayStartStatusFromSchedule(game),
+        liveHref: liveRow ? `${liveRow.liveHref}#live-start-${liveRow.pitcherId}` : `${liveDateHref(date)}#live-start-${pitcherId}`,
       });
     }
   }
 
   return context;
+}
+
+function todayStartStatusFromSchedule(game: MlbScheduleGame): TodayStartContext["status"] {
+  const status = `${game.status} ${game.detailedState}`.toLowerCase();
+  if (/\b(final|game over|completed early)\b/.test(status)) return "final";
+  if (/\b(delayed|suspended)\b/.test(status)) return "delay";
+  if (/\b(live|in progress|manager challenge|review)\b/.test(status)) return "live";
+  return "scheduled";
 }
 
 function compareMovementRisers(a: FormSummary, b: FormSummary, startContext: Map<string, TodayStartContext>) {
@@ -606,7 +624,27 @@ function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
   );
 }
 
-function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, poleId, view, unranked = false }: { pitcher: FormSummary; rank: number; window: number; leagueMeanGS: number; followed: boolean; poleId?: string; view: HeatCheckView; unranked?: boolean }) {
+function FormLeaderboardRow({
+  pitcher,
+  rank,
+  window,
+  leagueMeanGS,
+  followed,
+  poleId,
+  view,
+  startContext,
+  unranked = false,
+}: {
+  pitcher: FormSummary;
+  rank: number;
+  window: number;
+  leagueMeanGS: number;
+  followed: boolean;
+  poleId?: string;
+  view: HeatCheckView;
+  startContext?: Map<string, TodayStartContext>;
+  unranked?: boolean;
+}) {
   const seasonView = view === "season";
   const qualityTier = qualityTierOf(pitcher.bgs);
   const bandColor = seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
@@ -623,6 +661,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
   const thermalBand = seasonView ? qualityTier.key : fullWindow ? pitcher.tier : null;
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
   const score = seasonView ? Math.round(pitcher.bgs) : Math.round(pitcher.rgs);
+  const todayStart = startContext?.get(pitcher.pitcherId) ?? null;
 
   return (
     <article
@@ -664,7 +703,7 @@ function FormLeaderboardRow({ pitcher, rank, window, leagueMeanGS, followed, pol
             compact
             leading={(
               <>
-                <StartStatusChip pitcher={pitcher} />
+                <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
                 <CrossoverPill pitcher={pitcher} />
               </>
             )}
@@ -810,15 +849,55 @@ function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary }) {
   );
 }
 
-function StartStatusChip({ pitcher }: { pitcher: FormSummary }) {
-  const label = startStatusLabel(pitcher);
-  if (!label) return null;
+function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null }) {
+  const status = startStatusLabel(pitcher, todayStart);
+  if (!status) return null;
+
+  if (status.kind === "live") {
+    return (
+      <Link href={status.href} className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded border border-[#FF5A1F]/45 bg-[#FF5A1F]/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-[#FF9A62] hover:border-[#FF9A62]/70 hover:text-[#FFC2A6]">
+        <span className="ranked-live-dot h-1.5 w-1.5 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
+        {status.label}
+      </Link>
+    );
+  }
 
   return (
     <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200">
-      {label}
+      {status.label}
     </span>
   );
+}
+
+function startStatusLabel(pitcher: FormSummary, todayStart: TodayStartContext | null): { kind: "live"; label: string; href: string } | { kind: "scheduled"; label: string } | null {
+  // Scheduled labels come from the same probable next-start data as the NEXT START line.
+  // LIVE NOW comes from today's slate context and wins until the starter's line is final.
+  if (todayStart?.status === "live") return { kind: "live", label: "LIVE NOW", href: todayStart.liveHref };
+
+  if (!pitcher.nextStart?.date) return null;
+  const today = getHomeSlateDate();
+  if (pitcher.nextStart.date === today) return { kind: "scheduled", label: "STARTS TODAY" };
+
+  const daysAway = daysBetween(today, pitcher.nextStart.date);
+  if (daysAway > 0 && daysAway <= 6) return { kind: "scheduled", label: `STARTS ${formatWeekday(pitcher.nextStart.date)}` };
+
+  return { kind: "scheduled", label: `STARTS ${formatMonthDay(pitcher.nextStart.date)}` };
+}
+
+function formatWeekday(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.valueOf())) return formatMonthDay(value);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    timeZone: "UTC",
+  }).format(date).toUpperCase();
+}
+
+function daysBetween(start: string, end: string) {
+  const startMs = new Date(`${start}T00:00:00.000Z`).valueOf();
+  const endMs = new Date(`${end}T00:00:00.000Z`).valueOf();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return Number.POSITIVE_INFINITY;
+  return Math.round((endMs - startMs) / 86_400_000);
 }
 
 function MobileStackedPitcherName({ name }: { name: string }) {
@@ -1327,12 +1406,6 @@ function nextStartDetails(pitcher: FormSummary) {
   if (!pitcher.nextStart?.opponent || !pitcher.nextStart.date) return " TBD";
   const matchup = pitcher.nextStart.side === "away" ? `@ ${pitcher.nextStart.opponent}` : `vs ${pitcher.nextStart.opponent}`;
   return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;
-}
-
-function startStatusLabel(pitcher: FormSummary) {
-  if (!pitcher.nextStart?.date) return null;
-  if (pitcher.nextStart.date === getHomeSlateDate()) return "STARTS TODAY";
-  return `STARTS ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 
 function heatGlowStyle(pitcher: FormSummary, hero = false): React.CSSProperties {

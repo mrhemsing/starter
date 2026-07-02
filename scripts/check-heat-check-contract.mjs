@@ -23,6 +23,7 @@ const pageContextStrip = await readFile("src/components/page-context-strip.tsx",
 const formVisuals = await readFile("src/components/form-visuals.tsx", "utf8");
 const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formDriverChips = await readFile("src/components/form-driver-chips.tsx", "utf8");
+const liveScoreboard = await readFile("src/components/live-scoreboard.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
@@ -176,13 +177,20 @@ assert(
 );
 
 assert(
-  formPage.includes("function StartStatusChip({ pitcher }: { pitcher: FormSummary })") &&
-    formPage.includes("function startStatusLabel(pitcher: FormSummary)") &&
-    formPage.includes('if (pitcher.nextStart.date === getHomeSlateDate()) return "STARTS TODAY";') &&
-    formPage.includes("return `STARTS ${formatMonthDay(pitcher.nextStart.date)}`;") &&
-    formPage.includes("<StartStatusChip pitcher={pitcher} />") &&
+  formPage.includes("function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null })") &&
+    formPage.includes("function startStatusLabel(pitcher: FormSummary, todayStart: TodayStartContext | null)") &&
+    formPage.includes('if (todayStart?.status === "live") return { kind: "live", label: "LIVE NOW", href: todayStart.liveHref };') &&
+    formPage.includes('if (pitcher.nextStart.date === today) return { kind: "scheduled", label: "STARTS TODAY" };') &&
+    formPage.includes("if (daysAway > 0 && daysAway <= 6) return { kind: \"scheduled\", label: `STARTS ${formatWeekday(pitcher.nextStart.date)}` };") &&
+    formPage.includes("return { kind: \"scheduled\", label: `STARTS ${formatMonthDay(pitcher.nextStart.date)}` };") &&
+    formPage.includes("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("<CrossoverPill pitcher={pitcher} />") &&
+    formPage.includes("getLiveScoreboard({ date: today })") &&
+    formPage.includes("liveRow?.status ?? todayStartStatusFromSchedule(game)") &&
+    formPage.includes('`${liveRow.liveHref}#live-start-${liveRow.pitcherId}`') &&
+    liveScoreboard.includes('id={`live-start-${row.pitcherId}`}') &&
     formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
+    formPage.includes("border-[#FF5A1F]/45 bg-[#FF5A1F]/10") &&
     formPage.includes("whitespace-nowrap") &&
     formPage.includes("min-h-8") &&
     formDriverChips.includes("leading?: React.ReactNode") &&
@@ -192,7 +200,7 @@ assert(
     formDriverChips.includes("whitespace-nowrap") &&
     !formDriverChips.includes("whitespace-normal") &&
     !formDriverChips.includes("[overflow-wrap:anywhere]"),
-  "Heat Check cards must render STARTS TODAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
+  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS DAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
 );
 
 assert(
@@ -290,7 +298,7 @@ assert(
     !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
     formPage.includes('getSlateSchedule({ window: "today", date: today })') &&
-    formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[])") &&
+    formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboardRow[], date: string)") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const allTeamsView = !team;") &&
@@ -551,7 +559,7 @@ assert(
 );
 
 assert(
-  formPage.includes('import { pitcherHref, sourceParams } from "@/lib/routes";') &&
+  formPage.includes('import { liveDateHref, pitcherHref, sourceParams } from "@/lib/routes";') &&
     formPage.includes('pitcherHref(pitcher, sourceParams("heat", { window }))') &&
     !formPage.includes('href={`/pitchers/${pitcher.pitcherId}/form?window=${window}`}'),
   "Heat Check rows and hero links must use shared canonical pitcherHref links with heat source context",
