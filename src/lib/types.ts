@@ -305,6 +305,8 @@ export type WatchSortPolicy = "status-then-watch-score";
 export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";
 export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;
 export type MatchupConfidence = "HIGH" | "LOW" | "NONE";
+export type ProbableStarterConfidence = "CONFIRMED" | "REPORTED" | "TBD";
+export type ProbableStarterSource = "mlb-stats-api" | "secondary-feed" | "none";
 
 export type TonightStarter = {
   pitcherId: string | null;
@@ -313,6 +315,8 @@ export type TonightStarter = {
   side: "home" | "away";
   status: FormStatus | "tbd";
   formStatus: StarterFormStatus | "tbd";
+  probableSource: ProbableStarterSource;
+  probableConfidence: ProbableStarterConfidence;
   limitedReason: StarterLimitedReason;
   formCompleteness?: {
     matched: number;
@@ -538,6 +542,8 @@ export type MlbProbablePitcher = {
   teamAbbreviation: string;
   opponentAbbreviation: string;
   side: "home" | "away";
+  source: ProbableStarterSource;
+  confidence: ProbableStarterConfidence;
 };
 
 export type MlbProbablePitcherGame = MlbProbablePitcher & {

@@ -657,6 +657,8 @@ export async function readArchivedSchedule(date: string): Promise<MlbSchedule | 
               teamAbbreviation: awayStart.team,
               opponentAbbreviation: awayStart.opponent,
               side: "away" as const,
+              source: "mlb-stats-api" as const,
+              confidence: "CONFIRMED" as const,
             }
           : undefined,
         probableHomePitcher: homeStart
@@ -666,6 +668,8 @@ export async function readArchivedSchedule(date: string): Promise<MlbSchedule | 
               teamAbbreviation: homeStart.team,
               opponentAbbreviation: homeStart.opponent,
               side: "home" as const,
+              source: "mlb-stats-api" as const,
+              confidence: "CONFIRMED" as const,
             }
           : undefined,
       };

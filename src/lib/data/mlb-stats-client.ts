@@ -1425,6 +1425,8 @@ function readProbablePitcher(teamNode: MlbApiTeamNode | undefined, teamAbbreviat
     teamAbbreviation,
     opponentAbbreviation,
     side,
+    source: "mlb-stats-api",
+    confidence: "CONFIRMED",
   };
 }
 
@@ -1439,6 +1441,8 @@ function getFixtureSchedule(date: string): MlbSchedule {
         teamAbbreviation: probable.team,
         opponentAbbreviation: probable.opponent,
         side: "away",
+        source: "mlb-stats-api",
+        confidence: "CONFIRMED",
       };
 
       return {

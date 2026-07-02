@@ -71,17 +71,12 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
   );
   const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
   const matchupRanks = rankMatchups(candidates);
-  const games = candidates
+  const games = sortUpcomingWatchGames(candidates
     .map((game) => ({
       ...game,
       matchupRankTonight: matchupRanks.get(game.gamePk) ?? game.matchupRankTonight,
       watchSortGroup: watchSortGroup(game.status),
-    }))
-    .sort((a, b) => {
-      if (isStartedStatus(a.status) && !isStartedStatus(b.status)) return 1;
-      if (!isStartedStatus(a.status) && isStartedStatus(b.status)) return -1;
-      return b.gameWatchScore - a.gameWatchScore;
-    });
+    })));
 
   return {
     date,
@@ -133,19 +128,19 @@ async function buildTonightGame(
   const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);
   const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
+  const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const splitMatchupScore = scoreOpponentSplitMatchup([awayStarter, homeStarter], parkContext, weatherContext);
   const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
   const starterScores = [starterWatchValue(awayStarter, leagueMeanGS), starterWatchValue(homeStarter, leagueMeanGS)];
   const normMatchup = normalizeMatchupScore(matchupScore);
   const topArm = round1(Math.max(starterScores[0], starterScores[1]));
-  const pairing = round1(mean(starterScores));
+  const pairing = round1(mean(starterScores) * (tbd ? MUSTWATCH_CONFIG.tbdStarter.pairingMultiplier : 1));
   const matchupComponent = round1(normMatchup);
   const rawWatchScore = status === "ppd" ? 0 : round1(calculateGameWatchScore(topArm, pairing, matchupComponent));
   const matchupConfidence = matchupConfidenceForStarters([awayStarter, homeStarter]);
   const hasMlbDebut = awayStarter.formStatus === "mlb_debut" || homeStarter.formStatus === "mlb_debut";
-  const gameWatchScore = applyTrustGateWatchScore(rawWatchScore, matchupConfidence, hasMlbDebut);
+  const gameWatchScore = applyTbdWatchScoreCap(applyTrustGateWatchScore(rawWatchScore, matchupConfidence, hasMlbDebut), tbd, hasMlbDebut);
   const watchTier = watchTierOf(gameWatchScore).key as WatchTierKey;
-  const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const limitedForm = awayStarter.formStatus !== "ok" || homeStarter.formStatus !== "ok" || awayStarter.flags?.limitedSample === true || homeStarter.flags?.limitedSample === true;
   const coldStartForm = awayStarter.formStatus === "cold_start" || homeStarter.formStatus === "cold_start";
   const joinGapForm = awayStarter.formStatus === "join_gap" || homeStarter.formStatus === "join_gap";
@@ -194,6 +189,25 @@ function isStartedStatus(status: TonightGameStatus) {
   return status === "live" || status === "final";
 }
 
+function sortUpcomingWatchGames(games: TonightGame[]) {
+  const sorted = [...games].sort(compareUpcomingWatchGames);
+  const topRankLimit = MUSTWATCH_CONFIG.tbdStarter.maxRankWhenAlternativesExist - 1;
+  const trusted = sorted.filter((game) => !game.flags?.tbd);
+  const provisional = sorted.filter((game) => game.flags?.tbd);
+  if (trusted.length < topRankLimit || provisional.length === 0) return sorted;
+
+  const protectedTrusted = trusted.slice(0, topRankLimit);
+  const protectedIds = new Set(protectedTrusted.map((game) => game.gamePk));
+  const rest = sorted.filter((game) => !protectedIds.has(game.gamePk));
+  return [...protectedTrusted, ...rest];
+}
+
+function compareUpcomingWatchGames(a: TonightGame, b: TonightGame) {
+  if (isStartedStatus(a.status) && !isStartedStatus(b.status)) return 1;
+  if (!isStartedStatus(a.status) && isStartedStatus(b.status)) return -1;
+  return b.gameWatchScore - a.gameWatchScore;
+}
+
 function watchSortGroup(status: TonightGameStatus) {
   if (status === "pregame") return 0;
   if (status === "live") return 1;
@@ -227,6 +241,8 @@ function buildTonightStarter(
       side,
       status: "tbd",
       formStatus: "tbd",
+      probableSource: "none",
+      probableConfidence: "TBD",
       limitedReason: null,
       projection,
       marketContext: buildMarketContext(projection, null, opponentMarketName, date, marketContext),
@@ -247,6 +263,8 @@ function buildTonightStarter(
       side,
       status: "insufficient",
       formStatus: formCompleteness.status,
+      probableSource: probable.source,
+      probableConfidence: probable.confidence,
       limitedReason: formCompleteness.status === "ok" ? null : formCompleteness.status,
       formCompleteness: {
         matched: formCompleteness.matched,
@@ -275,6 +293,8 @@ function buildTonightStarter(
     side,
     status: form.status,
     formStatus: formCompleteness.status,
+    probableSource: probable.source,
+    probableConfidence: probable.confidence,
     limitedReason: formCompleteness.status === "ok" ? null : formCompleteness.status,
     formCompleteness: {
       matched: formCompleteness.matched,
@@ -318,6 +338,11 @@ function applyTrustGateWatchScore(score: number, confidence: TonightGame["matchu
   if (confidence === "NONE") return Math.min(score, maxWatchScoreForTier("background"));
   if (confidence === "LOW") return Math.min(score, maxWatchScoreForTier("worthit"));
   return score;
+}
+
+function applyTbdWatchScoreCap(score: number, hasTbdStarter: boolean, hasMlbDebut: boolean) {
+  if (!hasTbdStarter || hasMlbDebut) return score;
+  return Math.min(score, MUSTWATCH_CONFIG.tbdStarter.maxWatchScore);
 }
 
 function minWatchScoreForTier(tierKey: WatchTierKey) {

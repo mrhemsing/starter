@@ -125,6 +125,11 @@ export const MUSTWATCH_CONFIG = {
     min: 0,
     max: 100,
   },
+  tbdStarter: {
+    pairingMultiplier: 0.6,
+    maxWatchScore: 47.9,
+    maxRankWhenAlternativesExist: 4,
+  },
   watchTiers: [
     { key: "mustwatch", label: "Must-watch", min: 58, color: "#EF9F27" },
     { key: "worthit", label: "Worth it", min: 48, color: "#378ADD" },
