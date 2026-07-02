@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getArchivedSeasonStartSummaries, getDefaultSlateDates, getHomeSlateDate } from "@/lib/data/start-service";
-import { duelsPath, heatCheckPath, rankedStartsPath, startPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
+import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +63,7 @@ async function urlsForKind(kind: SitemapKind): Promise<SitemapUrl[]> {
   }
 
   if (kind === "starts") {
-    return starts.slice(0, 50000).map((start) => url(startPath(start.id), dateLastmod(start.date), "monthly", 0.6));
+    return starts.slice(0, 50000).map((start) => url(startRecapPath(start, starts), dateLastmod(start.date), "monthly", 0.6));
   }
 
   if (kind === "pitchers") {

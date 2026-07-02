@@ -6,7 +6,11 @@ function assert(condition, message) {
   }
 }
 
-const recapPage = await readFile("src/app/starts/[id]/[slug]/page.tsx", "utf8");
+const [recapPage, routes, sitemapRoute] = await Promise.all([
+  readFile("src/app/starts/[id]/[slug]/page.tsx", "utf8"),
+  readFile("src/lib/routes.ts", "utf8"),
+  readFile("src/app/sitemaps/[kind]/route.ts", "utf8"),
+]);
 
 assert(
   recapPage.includes("type StartRecapPageProps =") &&
@@ -19,17 +23,21 @@ assert(
 
 assert(
   recapPage.includes("const pageData = await getRankedStartsPageData(date);") &&
-    recapPage.includes('const slateStarts = pageData.slateStarts.filter((start) => start.source?.line !== "fixture");') &&
+    recapPage.includes('pageData.slateStarts.filter((start) => start.source?.line !== "fixture")') &&
     recapPage.includes("const start = await getStartDetail(match.id);") &&
-    recapPage.includes("canonicalPath: startRecapPathForStart(start, slateStarts),"),
+    recapPage.includes("canonicalPath: startRecapPath(start, slateStarts),"),
   "start recap pages must resolve from ranked slate data and hydrate the canonical start detail",
 );
 
 assert(
-  recapPage.includes("function startRecapSlugForStart(") &&
-    recapPage.includes("sameSlugCount > 1 ? `${baseSlug}-${start.gamePk}` : baseSlug") &&
-    recapPage.includes("function slugifyPitcherName(name: string)") &&
-    recapPage.includes(".replace(/[^a-z0-9]+/g, \"-\")"),
+  routes.includes("export function startRecapPath(") &&
+    routes.includes("return `/starts/${start.date}/${startRecapSlug(start, slateStarts)}`;") &&
+    routes.includes("export function startRecapSlug(") &&
+    routes.includes("sameSlugCount > 1 ? `${baseSlug}-${start.gamePk}` : baseSlug") &&
+    routes.includes("function slugifyRouteText(") &&
+    routes.includes(".replace(/[^a-z0-9]+/g, \"-\")") &&
+    recapPage.includes('import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath, startRecapSlug } from "@/lib/routes";') &&
+    recapPage.includes("startRecapSlug(start, slateStarts) === slug"),
   "start recap slugging must be readable and add a game suffix for same-day slug collisions",
 );
 
@@ -66,4 +74,12 @@ assert(
   "start recap pages must link to pitcher, ranked slate, full start log, and paired recap when present",
 );
 
-console.log("start recap pages contract ok: canonical recap route, metadata, JSON-LD, and context links are pinned");
+assert(
+  sitemapRoute.includes('import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";') &&
+    sitemapRoute.includes('if (kind === "starts") {') &&
+    sitemapRoute.includes('url(startRecapPath(start, starts), dateLastmod(start.date), "monthly", 0.6)') &&
+    !sitemapRoute.includes("url(startPath(start.id)"),
+  "starts sitemap must publish per-start recap URLs instead of the old start-id log URLs",
+);
+
+console.log("start recap pages contract ok: canonical recap route, metadata, JSON-LD, sitemap URLs, and context links are pinned");

@@ -10,6 +10,24 @@ export function startPath(startId: string) {
   return `/starts/${startId}`;
 }
 
+export type StartRecapRouteInput = {
+  date: string;
+  gamePk: string | number;
+  pitcher: {
+    name: string;
+  };
+};
+
+export function startRecapPath(start: StartRecapRouteInput, slateStarts?: Pick<StartRecapRouteInput, "gamePk" | "pitcher">[]) {
+  return `/starts/${start.date}/${startRecapSlug(start, slateStarts)}`;
+}
+
+export function startRecapSlug(start: Pick<StartRecapRouteInput, "gamePk" | "pitcher">, slateStarts: Pick<StartRecapRouteInput, "gamePk" | "pitcher">[] = []) {
+  const baseSlug = slugifyRouteText(start.pitcher.name) || "pitcher";
+  const sameSlugCount = slateStarts.filter((candidate) => (slugifyRouteText(candidate.pitcher.name) || "pitcher") === baseSlug).length;
+  return sameSlugCount > 1 ? `${baseSlug}-${start.gamePk}` : baseSlug;
+}
+
 export type EntitySource = "home" | "starts" | "heat" | "upcoming" | "watchlist" | "live";
 
 export const entitySources: Record<EntitySource, { label: string; shortLabel: string; fallbackHref: string }> = {
@@ -57,11 +75,7 @@ export type PitcherHrefInput = {
 };
 
 export function pitcherSlug(name: string | null | undefined, fallbackId: string | number) {
-  const slug = (name ?? "")
-    .toLowerCase()
-    .replace(/['.]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const slug = slugifyRouteText(name);
 
   return `${slug || "pitcher"}-${fallbackId}`;
 }
@@ -141,4 +155,12 @@ export function apiStartPath(startId: string) {
 
 export function apiPitcherPath(pitcherId: string) {
   return `/api/pitchers/${pitcherId}`;
+}
+
+function slugifyRouteText(value: string | null | undefined) {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/['.]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

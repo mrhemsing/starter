@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
-import { pitcherHref, rankedStartsPath, sourceParams, startHref } from "@/lib/routes";
+import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath, startRecapSlug } from "@/lib/routes";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript } from "@/lib/seo";
 import type { StartDetail, StartSummary } from "@/lib/types";
 
@@ -95,7 +95,7 @@ export default async function StartRecapPage({ params }: StartRecapPageProps) {
               <Link href={rankedStartsPath(start.date)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300 hover:border-white/30">That day ranked starts</Link>
               <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300 hover:border-white/30">Full start log</Link>
               {pairedStart ? (
-                <Link href={startRecapPathForStart(pairedStart, resolved.slateStarts)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300 hover:border-white/30">Opposing starter recap</Link>
+                <Link href={startRecapPath(pairedStart, resolved.slateStarts)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300 hover:border-white/30">Opposing starter recap</Link>
               ) : null}
             </div>
           </div>
@@ -131,7 +131,7 @@ async function resolveStartRecap(date: string, slug: string) {
 
   const pageData = await getRankedStartsPageData(date);
   const slateStarts = pageData.slateStarts.filter((start) => start.source?.line !== "fixture");
-  const match = slateStarts.find((start) => startRecapSlugForStart(start, slateStarts) === slug);
+  const match = slateStarts.find((start) => startRecapSlug(start, slateStarts) === slug);
   if (!match) return null;
 
   const start = await getStartDetail(match.id);
@@ -141,26 +141,8 @@ async function resolveStartRecap(date: string, slug: string) {
     start,
     slateStarts,
     pairedStart: slateStarts.find((candidate) => candidate.gamePk === start.gamePk && candidate.id !== start.id) ?? null,
-    canonicalPath: startRecapPathForStart(start, slateStarts),
+    canonicalPath: startRecapPath(start, slateStarts),
   };
-}
-
-function startRecapPathForStart(start: Pick<StartSummary, "date" | "gamePk" | "pitcher">, slateStarts: Pick<StartSummary, "gamePk" | "pitcher">[]) {
-  return `/starts/${start.date}/${startRecapSlugForStart(start, slateStarts)}`;
-}
-
-function startRecapSlugForStart(start: Pick<StartSummary, "gamePk" | "pitcher">, slateStarts: Pick<StartSummary, "gamePk" | "pitcher">[]) {
-  const baseSlug = slugifyPitcherName(start.pitcher.name);
-  const sameSlugCount = slateStarts.filter((candidate) => slugifyPitcherName(candidate.pitcher.name) === baseSlug).length;
-  return sameSlugCount > 1 ? `${baseSlug}-${start.gamePk}` : baseSlug;
-}
-
-function slugifyPitcherName(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['.]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "pitcher";
 }
 
 function recapSummary(start: StartSummary) {
