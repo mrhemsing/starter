@@ -4,7 +4,7 @@ import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
-import { normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateStartBucketCounts } from "@/lib/slate-state";
+import { getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
@@ -43,6 +43,7 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   generatedAt: string;
   hasGames: boolean;
   hasActiveStarts: boolean;
+  slateProgress: SlateProgressState;
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
 };
@@ -58,39 +59,47 @@ export async function getLiveScoreboard({ date = getHomeSlateDate() }: { date?: 
 }
 
 async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
-  const [slate, schedule, upcoming] = await Promise.all([
+  const [slate, schedule] = await Promise.all([
     getDailySlate({ window: "today", date }),
     fetchMlbSchedule(date, { fetchLive: true, gamefeedRevalidateSeconds: LIVE_SCOREBOARD_REVALIDATE_SECONDS }),
-    getTonightMustWatch({ date, window: 5 }),
   ]);
 
   const liveLinesByStart = await getLiveLinesByStart(schedule.games);
   const gamesByPk = new Map(schedule.games.map((game) => [game.gamePk, game]));
-  const projectionsByStart = getUpcomingProjectionMap(upcoming);
-
   const generatedAt = new Date();
-  const rows = slate.flatMap((start) => {
-    const game = gamesByPk.get(start.gamePk);
-    if (game && normalizeScheduleStatus(game) === "ppd") return [];
+  const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) => {
+      const game = gamesByPk.get(start.gamePk);
+      if (game && normalizeScheduleStatus(game) === "ppd") return [];
 
-    const liveLine = liveLinesByStart.get(lineKey(start.gamePk, start.pitcher.mlbId));
-    return [buildLiveRow(date, start, liveLine, game, projectionsByStart, generatedAt)];
-  });
+      const liveLine = liveLinesByStart.get(lineKey(start.gamePk, start.pitcher.mlbId));
+      return [buildLiveRow(date, start, liveLine, game, projectionsByStart, generatedAt)];
+    })
+    .sort(compareLiveRows);
 
-  rows.sort(compareLiveRows);
+  let rows = buildRows(new Map());
+  let scoredRows = rows.filter(isScoredRow);
+  let startCounts = summarizeSlateStartBuckets(rows);
+  const pregame = rows.length > 0 && startCounts.finalStarts === 0 && startCounts.liveStarts === 0 && startCounts.delayStarts === 0;
+  const slateComplete = rows.length > 0 && startCounts.totalStarts > 0 && startCounts.finalStarts === startCounts.totalStarts;
 
-  const scoredRows = rows.filter(isScoredRow);
-  const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);
-  const startCounts = summarizeSlateStartBuckets(rows);
+  if (!pregame && !slateComplete && rows.some((row) => row.scoreLabel === "PROJ")) {
+    const upcoming = await getTonightMustWatch({ date, window: 5 });
+    rows = buildRows(getUpcomingProjectionMap(upcoming));
+    scoredRows = rows.filter(isScoredRow);
+    startCounts = summarizeSlateStartBuckets(rows);
+  }
+
+  const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
 
   return {
     date,
     generatedAt: generatedAt.toISOString(),
     hasGames: rows.length > 0,
     hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0,
+    slateProgress,
     ...startCounts,
     rows,
-    leader: leaderRows[0] ?? null,
+    leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null,
   };
 }
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LiveScoreboard } from "@/components/live-scoreboard";
 import { SiteHeader } from "@/components/site-header";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
-import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
+import { getHomeSlateDate } from "@/lib/data/start-service";
 
 type LivePageProps = {
   params: Promise<{
@@ -21,10 +21,7 @@ export async function generateMetadata({ params }: LivePageProps): Promise<Metad
 export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
   const today = getHomeSlateDate();
-  const [board, slateProgress] = await Promise.all([
-    getLiveScoreboard({ date }),
-    getSlateStartProgress({ window: "today", date }),
-  ]);
+  const board = await getLiveScoreboard({ date });
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
   const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
   const boardTitle = "Live GS+ Scoreboard";
@@ -48,7 +45,7 @@ export default async function LivePage({ params }: LivePageProps) {
             </div>
             {boardDescription ? <p className="max-w-3xl text-sm leading-6 text-zinc-400">{boardDescription}</p> : null}
           </section>
-          <LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />
+          <LiveScoreboard initialBoard={board} initialSlateProgress={board.slateProgress} />
         </div>
       </div>
     </main>

@@ -33,7 +33,10 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         const response = await fetch(`/api/live/${encodeURIComponent(initialBoard.date)}`, { cache: "no-store" });
         if (!response.ok) return;
         const nextBoard = (await response.json()) as LiveScoreboardData;
-        if (!cancelled) setBoard(nextBoard);
+        if (!cancelled) {
+          setBoard(nextBoard);
+          setSlateProgress(nextBoard.slateProgress);
+        }
       } catch {
         // Keep the last server/cached board during transient live-feed misses.
       }

@@ -47,16 +47,25 @@ assert(
     liveService.includes('["live-scoreboard", "v7"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
-    liveService.includes("const projectionsByStart = getUpcomingProjectionMap(upcoming);") &&
+    liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
+    liveService.includes("let rows = buildRows(new Map());") &&
+    liveService.includes("const pregame = rows.length > 0 && startCounts.finalStarts === 0 && startCounts.liveStarts === 0 && startCounts.delayStarts === 0;") &&
+    liveService.includes("const slateComplete = rows.length > 0 && startCounts.totalStarts > 0 && startCounts.finalStarts === startCounts.totalStarts;") &&
+    liveService.includes('if (!pregame && !slateComplete && rows.some((row) => row.scoreLabel === "PROJ"))') &&
+    liveService.includes("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
+    liveService.includes("rows = buildRows(getUpcomingProjectionMap(upcoming));") &&
     liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
     liveService.includes('scoreLabel: "PROJ" | "PROV" | "FINAL";') &&
     liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";') &&
     liveService.includes('provisional: scoreLabel === "PROV",') &&
     liveService.includes('export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";') &&
     liveService.includes("const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;") &&
-    liveService.includes('import { normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateStartBucketCounts } from "@/lib/slate-state";') &&
+    liveService.includes('import { getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";') &&
     liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
-    liveService.includes("const startCounts = summarizeSlateStartBuckets(rows);") &&
+    liveService.includes("let startCounts = summarizeSlateStartBuckets(rows);") &&
+    liveService.includes("const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);") &&
+    liveService.includes("slateProgress: SlateProgressState;") &&
+    liveService.includes("slateProgress,") &&
     liveService.includes("...startCounts,") &&
     liveService.includes("function refinePregameStatus") &&
     liveService.includes('if (liveStatus === "warming") return "warming";') &&
@@ -69,8 +78,7 @@ assert(
     liveService.includes('import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";') &&
     liveService.includes('pitcherHref: pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("live"))') &&
     !liveService.includes("inningLabel: liveLine?.inningLabel ?? null") &&
-    liveService.includes("const scoredRows = rows.filter(isScoredRow);") &&
-    liveService.includes("const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);") &&
+    liveService.includes("let scoredRows = rows.filter(isScoredRow);") &&
     liveService.includes("function isScoredRow(row: LiveScoreboardRow)") &&
     liveService.includes("const LIVE_LEADER_MIN_INNINGS = 3;") &&
     liveService.includes("function isLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
@@ -78,8 +86,8 @@ assert(
     liveService.includes("if (aScored && !bScored) return -1;") &&
     liveService.includes("return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();") &&
     liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0") &&
-    liveService.includes("rows.sort(compareLiveRows)") &&
-    liveService.includes("leader: leaderRows[0] ?? null"),
+    liveService.includes(".sort(compareLiveRows)") &&
+    liveService.includes("leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null"),
   "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
 );
 
@@ -89,8 +97,10 @@ assert(
     !livePage.includes("live-non-live-page") &&
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
-    livePage.includes('import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";') &&
-    livePage.includes('getSlateStartProgress({ window: "today", date })') &&
+    livePage.includes('import { getHomeSlateDate } from "@/lib/data/start-service";') &&
+    livePage.includes("const board = await getLiveScoreboard({ date });") &&
+    !livePage.includes("getSlateStartProgress") &&
+    !livePage.includes("Promise.all([") &&
     livePage.includes('const boardTitle = "Live GS+ Scoreboard";') &&
     livePage.includes('const boardDescription = slateComplete') &&
     livePage.includes('pregame\n      ? ""') &&
@@ -106,7 +116,7 @@ assert(
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
     livePage.includes("This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
-    livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={slateProgress} />') &&
+    livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={board.slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
   "/live/[date] route and API must render the cached live board at the shared site width with stable Live naming",
@@ -132,6 +142,7 @@ assert(
 
 assert(
     liveComponent.includes("window.setInterval(refresh, 30 * 1000)") &&
+    liveComponent.includes("setSlateProgress(nextBoard.slateProgress);") &&
     liveComponent.includes("if (!board.hasActiveStarts && !pregame) return;") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
