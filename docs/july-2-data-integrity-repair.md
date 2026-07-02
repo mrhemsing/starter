@@ -56,7 +56,7 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - `warm-live-starts` now checks archive freshness before warming. If the completed-start archive is stale, it logs `archive-gap` and defers to the archive job instead of trying to repair data from the render/warm path.
 - `warm-live-starts` stores completed batch keys in runtime state so a later invocation resumes revalidation and warming work instead of restarting every batch.
 - Probable-starter confidence transition logging now stores last-known confidence by `(gamePk, side)`, backfills without emitting a full-league burst, suppresses repeated unchanged transitions, and skips games outside the upcoming horizon.
-- Runtime state is documented in `docs/supabase-mlb-archive.sql` as `toetheslab_runtime_state`. Applying that table from this runner was blocked because the direct Supabase Postgres host resolved only to IPv6 here; the REST probe returned 404 until the table is applied in the production database.
+- Runtime state is documented in `docs/supabase-mlb-archive.sql` as `toetheslab_runtime_state`. The direct Supabase Postgres host resolved only to IPv6 from this runner, so the production migration was applied through the Supabase `us-east-1` pooler instead. REST write/read probe passed, and the follow-up warm run wrote durable `warm-live-starts-lock:2026-07-02` and `warm-live-starts:2026-07-02:g3:s6` rows.
 
 ## GS+ freeze follow-up
 
