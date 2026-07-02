@@ -22,7 +22,7 @@ import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherPitchMixStart, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -234,6 +234,7 @@ async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherProm
       <div className="min-w-0 space-y-5">
         <ArsenalTable pitcher={pitcher} />
         <VelocityByStartPanel starts={pitcher.velocityByStart} />
+        <PitchMixByStartPanel starts={pitcher.pitchMixByStart} />
       </div>
       <div className="min-w-0 space-y-5">
         <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
@@ -500,6 +501,47 @@ function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
         </div>
       ) : (
         <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Velocity trend pending for this pitcher.</p>
+      )}
+    </section>
+  );
+}
+
+function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
+  const rows = starts.slice(0, 6);
+
+  return (
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-pitch-mix-by-start">
+      <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Pitch mix / by start</p>
+          <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Usage shape</h2>
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">last {rows.length || 0}</p>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="space-y-3">
+          {rows.map((start) => (
+            <Link key={start.id} href={start.startHref} className="block rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+                <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{start.pitches} pitches</p>
+              </div>
+              <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
+                {start.mix.map((pitch) => (
+                  <span key={pitch.type} className="block h-full" style={{ width: `${pitch.usagePct}%`, background: pitchTypes[pitch.type].color }} />
+                ))}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                {start.mix.slice(0, 4).map((pitch) => (
+                  <span key={pitch.type}>{pitchTypes[pitch.type].name} {pitch.usagePct}%</span>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Pitch mix trend pending for this pitcher.</p>
       )}
     </section>
   );

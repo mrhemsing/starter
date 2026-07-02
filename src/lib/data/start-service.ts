@@ -13,7 +13,7 @@ import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
 import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";
 import { compareRankedStarts, rankStarts } from "@/lib/start-ranking";
-import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
+import type { GameSummary, MlbCompletedPitchingLine, MlbProbablePitcher, MlbSchedule, MlbScheduleGame, MlbTeamQualityContext, PitchEvent, PitcherApiResponse, PitcherApiSeasonLogControls, PitcherApiSeasonLogResultFilter, PitcherApiSeasonLogSort, PitcherApiSeasonLogSummary, PitcherApiSplitGroup, PitcherApiStartLogEntry, PitcherSkillProfile, PitcherSkillSnapshot, PitchTypeKey, SlateApiResponse, SlateApiScoreDeltaComparison, SlateApiScoreScale, SlateNavItem, SlateRouteParams, SlateWindow, StartApiCountLeverage, StartApiGameScorePlusBreakdown, StartApiGameScorePlusGradeLabel, StartApiInningTimeline, StartApiPitchCount, StartApiPitchSequenceRow, StartApiResponse, StartApiVelocityTrend, StartContext, StartDataSource, StartDetail, StartLine, StartSummary, TeamSummary } from "@/lib/types";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS = 35;
@@ -806,6 +806,7 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
   }));
   const skillProfile = buildPitcherSkillProfile(allStarts, seasonLineSource);
   const velocityByStart = buildPitcherVelocityByStart(allStarts);
+  const pitchMixByStart = buildPitcherPitchMixByStart(allStarts);
   const seasonLogControls = normalizePitcherSeasonLogControls(controls, allStarts);
   const starts = sortPitcherSeasonLog(
     seasonLogControls.result === "all" ? allStarts : allStarts.filter((start) => start.result === seasonLogControls.result),
@@ -823,6 +824,7 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
     skillProfile,
     arsenal: pitcher.arsenal,
     velocityByStart,
+    pitchMixByStart,
     starts,
     seasonLogSummary: summarizePitcherSeasonLog(starts),
     seasonLogControls,
@@ -1060,6 +1062,32 @@ async function getCompletedPitchingLineMap(schedule: MlbSchedule) {
 
 async function getTeamQualityContextMap(date: string) {
   return fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) });
+}
+
+function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["pitchMixByStart"] {
+  return starts
+    .map((start) => {
+      const pitchEvents = start.pitchEvents ?? [];
+      if (pitchEvents.length === 0) return null;
+      const byType = new Map<PitchTypeKey, number>();
+      for (const pitch of pitchEvents) byType.set(pitch.type, (byType.get(pitch.type) ?? 0) + 1);
+
+      return {
+        id: start.id,
+        date: start.date,
+        opponent: start.opponent,
+        startHref: start.startHref,
+        pitches: pitchEvents.length,
+        mix: [...byType.entries()]
+          .map(([type, count]) => ({
+            type,
+            usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100)),
+          }))
+          .sort((a, b) => b.usagePct - a.usagePct),
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {

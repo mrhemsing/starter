@@ -818,6 +818,18 @@ export type PitcherVelocityStart = {
   belowSeasonMedian: boolean;
 };
 
+export type PitcherPitchMixStart = {
+  id: string;
+  date: string;
+  opponent: string;
+  startHref: string;
+  pitches: number;
+  mix: Array<{
+    type: PitchTypeKey;
+    usagePct: number;
+  }>;
+};
+
 export type PitcherApiSeasonLogSort = "date-desc" | "gs-desc" | "ip-desc";
 
 export type PitcherApiSeasonLogResultFilter = "all" | "W" | "L" | "ND";
@@ -851,6 +863,7 @@ export type PitcherApiResponse = Pick<PitcherSummary, "id" | "mlbId" | "name" | 
   skillProfile: PitcherSkillProfile;
   arsenal: ArsenalPitchSummary[];
   velocityByStart: PitcherVelocityStart[];
+  pitchMixByStart: PitcherPitchMixStart[];
   starts: PitcherApiStartLogEntry[];
   seasonLogSummary: PitcherApiSeasonLogSummary;
   seasonLogControls: PitcherApiSeasonLogControls;

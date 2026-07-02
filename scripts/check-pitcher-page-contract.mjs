@@ -203,6 +203,16 @@ assert(
     pitcherFormPage.includes("low velo"),
   "pitcher profile must expose velocity by start with a one mph below-median flag",
 );
+assert(
+  types.includes("export type PitcherPitchMixStart = {") &&
+    types.includes("pitchMixByStart: PitcherPitchMixStart[];") &&
+    startService.includes("function buildPitcherPitchMixByStart") &&
+    startService.includes("usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100))") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-pitch-mix-by-start"') &&
+    pitcherFormPage.includes("<PitchMixByStartPanel starts={pitcher.pitchMixByStart} />") &&
+    pitcherFormPage.includes("Pitch mix / by start"),
+  "pitcher profile must expose pitch mix by start from existing pitch events",
+);
 assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
 assert(
   pitcherFormPage.includes('import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";') &&
