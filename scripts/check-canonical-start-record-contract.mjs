@@ -11,25 +11,27 @@ const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
 
 assert(
-  canonicalRecord.includes('export type CanonicalStartStatus = "scheduled" | "final";') &&
+  canonicalRecord.includes('export type CanonicalStartStatus = "scheduled" | "live" | "final";') &&
     canonicalRecord.includes("export type CanonicalStartRecord = {") &&
     canonicalRecord.includes("line: StartLine;") &&
     canonicalRecord.includes("gameScorePlus: number;") &&
     canonicalRecord.includes("gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;") &&
     canonicalRecord.includes("frozen: boolean;") &&
     canonicalRecord.includes("audit: CanonicalStartAuditEntry[];") &&
-    canonicalRecord.includes('event: "created" | "final-reconciled" | "final-correction";') &&
+    canonicalRecord.includes('event: "created" | "live-updated" | "final-reconciled" | "final-correction";') &&
     canonicalRecord.includes("export type CanonicalStartLineDiff = {"),
   "canonical start record must carry line, score, source, frozen state, and audit fields",
 );
 
 assert(
-  canonicalRecord.includes("source.line === \"archive-gamefeed\" || source.line === \"live-gamefeed\"") &&
-    canonicalRecord.includes('status: final ? "final" : "scheduled"') &&
+  canonicalRecord.includes('const final = source.line === "archive-gamefeed";') &&
+    canonicalRecord.includes('const live = source.line === "live-gamefeed";') &&
+    canonicalRecord.includes('status: final ? "final" : live ? "live" : "scheduled"') &&
     canonicalRecord.includes("finalizedAt: final ? timestamp : null") &&
     canonicalRecord.includes("frozen: final") &&
-    canonicalRecord.includes('event: final ? "final-reconciled" : "created"'),
-  "canonical start record must freeze and audit final gamefeed-backed starts",
+    canonicalRecord.includes('event: final ? "final-reconciled" : live ? "live-updated" : "created"') &&
+    canonicalRecord.includes("Canonical record reflects a provisional live starter line."),
+  "canonical start record must freeze archive finals while keeping live gamefeed lines provisional",
 );
 
 assert(

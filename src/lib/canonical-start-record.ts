@@ -1,11 +1,11 @@
 import { roundToScorePrecision, SCORE_DISPLAY_PRECISION } from "@/lib/score-display";
 import type { StartApiGameScorePlusBreakdown, StartDataSource, StartLine, StartSummary } from "@/lib/types";
 
-export type CanonicalStartStatus = "scheduled" | "final";
+export type CanonicalStartStatus = "scheduled" | "live" | "final";
 
 export type CanonicalStartAuditEntry = {
   at: string;
-  event: "created" | "final-reconciled" | "final-correction";
+  event: "created" | "live-updated" | "final-reconciled" | "final-correction";
   source: StartDataSource["line"];
   note: string;
   diffs?: CanonicalStartLineDiff[];
@@ -59,7 +59,8 @@ const FALLBACK_START_SOURCE: StartDataSource = {
 export function canonicalStartRecordFromSummary(start: StartSummary, now = new Date()): CanonicalStartRecord {
   const source = start.source ?? FALLBACK_START_SOURCE;
   const timestamp = now.toISOString();
-  const final = source.line === "archive-gamefeed" || source.line === "live-gamefeed";
+  const final = source.line === "archive-gamefeed";
+  const live = source.line === "live-gamefeed";
   const gameScorePlus = roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
 
   return {
@@ -71,7 +72,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     team: start.pitcher.team,
     opponent: start.opponent,
     side: start.side,
-    status: final ? "final" : "scheduled",
+    status: final ? "final" : live ? "live" : "scheduled",
     line: start.line,
     gameScorePlus,
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined,
@@ -84,9 +85,13 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     audit: [
       {
         at: timestamp,
-        event: final ? "final-reconciled" : "created",
+        event: final ? "final-reconciled" : live ? "live-updated" : "created",
         source: source.line,
-        note: final ? "Canonical record reflects a reconciled completed starter line." : "Canonical record reflects a scheduled starter projection.",
+        note: final
+          ? "Canonical record reflects a reconciled completed starter line."
+          : live
+            ? "Canonical record reflects a provisional live starter line."
+            : "Canonical record reflects a scheduled starter projection.",
       },
     ],
   };
