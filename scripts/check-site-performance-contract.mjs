@@ -39,6 +39,12 @@ const startsPage = await read("src/app/starts/[id]/page.tsx");
 const appLayout = await read("src/app/layout.tsx");
 const loadingPolicy = await read("docs/loading-state-policy.md");
 const routeLoadingSkeleton = await read("src/components/route-loading-skeleton.tsx");
+const appLoading = await read("src/app/loading.tsx");
+const startsLoading = await read("src/app/starts/[id]/loading.tsx");
+const heatLoading = await read("src/app/heat-check/loading.tsx");
+const heatSeasonLoading = await read("src/app/heat-check/season/loading.tsx");
+const upcomingLoading = await read("src/app/upcoming/loading.tsx");
+const upcomingDateLoading = await read("src/app/upcoming/[date]/loading.tsx");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -223,6 +229,18 @@ assert(
     existsSync("src/app/upcoming/[date]/loading.tsx") &&
     routeLoadingSkeleton.includes("export function RouteLoadingSkeleton") &&
     routeLoadingSkeleton.includes("Loading cached page") &&
+    routeLoadingSkeleton.includes('layout?: "home" | "ranked" | "heat" | "season" | "upcoming";') &&
+    routeLoadingSkeleton.includes('data-skeleton-layout="ranked-starts"') &&
+    routeLoadingSkeleton.includes('data-skeleton-layout="heat-check"') &&
+    routeLoadingSkeleton.includes('data-skeleton-layout="heat-check-season"') &&
+    routeLoadingSkeleton.includes('data-skeleton-layout="upcoming-matchups"') &&
+    routeLoadingSkeleton.includes('data-skeleton-layout="home-dashboard"') &&
+    appLoading.includes('layout="home"') &&
+    startsLoading.includes('layout="ranked"') &&
+    heatLoading.includes('layout="heat"') &&
+    heatSeasonLoading.includes('layout="season"') &&
+    upcomingLoading.includes('layout="upcoming"') &&
+    upcomingDateLoading.includes('layout="upcoming"') &&
     !existsSync("src/components/global-route-pending-overlay.tsx") &&
     !existsSync("src/lib/route-pending-event.ts") &&
     !appLayout.includes("GlobalRoutePendingOverlay") &&
