@@ -679,37 +679,41 @@ function FormLeaderboardRow({
       <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </HeatPitcherProfileLink>
-      <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
-          <MobileStackedPitcherName name={pitcher.name} />
-        </h2>
-        <p className={`hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block ${treatment.metaClass}`}>
-          {seasonView ? `${pitcher.team} / ${pitcher.seasonStartCount} GS / ${seasonMetaLine}` : `${pitcher.team} / ${pitcher.windowCount} of ${window} / ${lastLine}`}
-        </p>
-        <div className={`font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden ${treatment.metaClass}`}>
-          <p>{mobileMetaLine}</p>
-          <p className="text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
+      <div className="grid min-w-0 gap-1">
+        <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
+            <MobileStackedPitcherName name={pitcher.name} />
+          </h2>
+          <p className={`hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block ${treatment.metaClass}`}>
+            {seasonView ? `${pitcher.team} / ${pitcher.seasonStartCount} GS / ${seasonMetaLine}` : `${pitcher.team} / ${pitcher.windowCount} of ${window} / ${lastLine}`}
+          </p>
+          <div className={`font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden ${treatment.metaClass}`}>
+            <p>{mobileMetaLine}</p>
+            <p className="text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
+          </div>
+          {seasonView ? <SeasonDepthInlineStats pitcher={pitcher} /> : null}
+          <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
+            <span>Next start:</span>
+            <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
+          </p>
+        </HeatPitcherProfileLink>
+        <div className="grid gap-1">
+          <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
+          <TodayStartFreshnessChip pitcher={pitcher} />
+          {seasonView ? null : (
+            <FormDriverChips
+              chips={pitcher.driverChips}
+              compact
+              leading={(
+                <>
+                  <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
+                  <CrossoverPill pitcher={pitcher} />
+                </>
+              )}
+            />
+          )}
         </div>
-        {seasonView ? <SeasonDepthInlineStats pitcher={pitcher} /> : null}
-        <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
-          <span>Next start:</span>
-          <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
-        </p>
-        <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
-        <TodayStartFreshnessChip pitcher={pitcher} />
-        {seasonView ? null : (
-          <FormDriverChips
-            chips={pitcher.driverChips}
-            compact
-            leading={(
-              <>
-                <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
-                <CrossoverPill pitcher={pitcher} />
-              </>
-            )}
-          />
-        )}
-      </HeatPitcherProfileLink>
+      </div>
       <div className={`col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
         {seasonView ? null : (
         <div className="hidden min-w-0 sm:block">
@@ -855,7 +859,7 @@ function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayS
 
   if (status.kind === "live") {
     return (
-      <Link href={status.href} className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded border border-[#FF5A1F]/45 bg-[#FF5A1F]/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-[#FF9A62] hover:border-[#FF9A62]/70 hover:text-[#FFC2A6]">
+      <Link href={status.href} className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded border border-[#FF5A1F]/45 bg-[#FF5A1F]/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-[#FF9A62] hover:border-[#FF9A62]/70 hover:text-[#FFC2A6]" data-heat-start-status-chip="live">
         <span className="ranked-live-dot h-1.5 w-1.5 rounded-full bg-[#FF5A1F]" aria-hidden="true" />
         {status.label}
       </Link>
@@ -863,7 +867,7 @@ function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayS
   }
 
   return (
-    <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200">
+    <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200" data-heat-start-status-chip="scheduled">
       {status.label}
     </span>
   );

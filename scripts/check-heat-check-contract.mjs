@@ -190,6 +190,9 @@ assert(
     formPage.includes("liveRow?.status ?? todayStartStatusFromSchedule(game)") &&
     formPage.includes('`${liveRow.liveHref}#live-start-${liveRow.pitcherId}`') &&
     liveScoreboard.includes('id={`live-start-${row.pitcherId}`}') &&
+    formPage.includes('data-heat-start-status-chip="live"') &&
+    formPage.includes('data-heat-start-status-chip="scheduled"') &&
+    formPage.indexOf('</HeatPitcherProfileLink>\n        <div className="grid gap-1">') < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
     formPage.includes("border-[#FF5A1F]/45 bg-[#FF5A1F]/10") &&
     formPage.includes("whitespace-nowrap") &&
