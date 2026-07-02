@@ -37,6 +37,7 @@ export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
     name: upcomingDayTitle(upcoming.date),
     description: upcomingDayDescription(upcoming),
     numberOfItems: upcoming.games.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
     itemListElement: upcoming.games.slice(0, 10).map((game, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -55,6 +56,7 @@ export function jsonLdForUpcomingWeek(upcoming: UpcomingResponse) {
     name: upcomingWeekTitle(upcoming.range.start),
     description: upcomingWeekDescription(upcoming),
     numberOfItems: games.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
     itemListElement: games.slice(0, 20).map(({ day, game }, index) => ({
       "@type": "ListItem",
       position: index + 1,

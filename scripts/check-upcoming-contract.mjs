@@ -51,6 +51,7 @@ const upcomingApiSource = readFileSync("src/app/api/upcoming/route.ts", "utf8");
 const tonightsMustWatchSource = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
 const tonightServiceSource = readFileSync("src/lib/data/tonight-service.ts", "utf8");
 const formServiceSource = readFileSync("src/lib/data/form-service.ts", "utf8");
+const upcomingMetadataSource = readFileSync("src/lib/upcoming-metadata.ts", "utf8");
 const typesSource = readFileSync("src/lib/types.ts", "utf8");
 
 function assert(condition, message) {
@@ -1171,6 +1172,10 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
   assert(jsonLd["@context"] === "https://schema.org", `${route} JSON-LD should use schema.org context`);
   assert(jsonLd["@type"] === "ItemList", `${route} JSON-LD should describe an ItemList`);
   assert(jsonLd.name === expectedName, `${route} JSON-LD name should match route title`);
+  assert(
+    jsonLd.itemListOrder === "https://schema.org/ItemListOrderDescending",
+    `${route} JSON-LD should declare descending ranked order`,
+  );
   if (allowsRenderedLiveDataDrift(route)) {
     assertNonEmptyString(jsonLd.description, `${route} JSON-LD description`);
     assert(
@@ -1455,6 +1460,11 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       upcomingApiSource,
     ].every((source) => source.includes('export const dynamic = "force-dynamic";')),
     "upcoming route pages, image routes, and APIs must stay force-dynamic so runtime slate/form data is not statically cached",
+  );
+  assert(
+    upcomingMetadataSource.includes('itemListOrder: "https://schema.org/ItemListOrderDescending",') &&
+      countOccurrences(upcomingMetadataSource, 'itemListOrder: "https://schema.org/ItemListOrderDescending",') === 2,
+    "upcoming day/week JSON-LD must declare descending ranked ItemList order for share/search metadata",
   );
   assert(
     typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
