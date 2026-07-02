@@ -4,6 +4,7 @@ import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record
 import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
+import { calculateGameScoreV2 } from "@/lib/game-score-v2";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
@@ -510,6 +511,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
         result: start.result,
         line: start.line,
         gameScorePlus: start.gameScorePlus,
+        gameScoreV2: start.gameScoreV2,
         gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
         source: {
           schedule: schedule.source,
@@ -676,6 +678,7 @@ export async function getStartApiResponse(startId: string): Promise<StartApiResp
     opponent: start.opponent,
     line: start.line,
     gameScorePlus: start.gameScorePlus,
+    gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
     source: {
       schedule: start.source?.schedule ?? "fixture",
@@ -1119,6 +1122,7 @@ function withStartSummaries(start: StartDetail): StartDetail {
   return {
     ...start,
     expectedGameScorePlus: summarizeExpectedGameScorePlus(start.line, start.context),
+    gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
     velocityTrend: summarizeVelocityTrend(start.pitchEvents),
     inningTimeline: summarizeInningTimeline(start.pitchEvents),
     countLeverage: summarizeCountLeverage(start.pitchEvents),
@@ -1626,6 +1630,7 @@ function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): 
     result: start.result,
     line: start.line,
     gameScorePlus: scoreCompletedLine(start.line, context),
+    gameScoreV2: calculateGameScoreV2(start.line),
     gameScorePlusBreakdown: summarizeGameScorePlus(start.line, undefined, context),
     teamColor: colors.color,
     accentColor: colors.accent,

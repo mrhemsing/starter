@@ -119,6 +119,7 @@ export type StartSummary = {
   result: "W" | "L" | "ND";
   line: StartLine;
   gameScorePlus: number;
+  gameScoreV2?: number;
   expectedGameScorePlus?: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   plannedStarter?: boolean;
@@ -708,7 +709,7 @@ export type FeaturedStartHighlight = {
   watchUrl: string;
 };
 
-export type PitcherStartLogEntry = Pick<StartSummary, "id" | "date" | "opponent" | "result" | "line" | "gameScorePlus"> & {
+export type PitcherStartLogEntry = Pick<StartSummary, "id" | "date" | "opponent" | "result" | "line" | "gameScorePlus" | "gameScoreV2"> & {
   gamePk?: number;
   pitchEvents?: PitchEvent[];
 };
@@ -873,6 +874,7 @@ export type SlateApiStart = {
   result: StartSummary["result"];
   line: StartLine;
   gameScorePlus: number;
+  gameScoreV2?: number;
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];
@@ -1033,6 +1035,7 @@ export type StartApiResponse = {
   opponent: string;
   line: StartLine;
   gameScorePlus: number;
+  gameScoreV2?: number;
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];

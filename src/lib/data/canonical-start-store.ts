@@ -52,6 +52,7 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
       ? reconcileCanonicalStartRecord(existing, {
         line: next.line,
         gameScorePlus: next.gameScorePlus,
+        gameScoreV2: next.gameScoreV2,
         gameScorePlusBreakdown: next.gameScorePlusBreakdown,
         source: officialCanonicalLineSource(next.source.line),
       }, now)
@@ -62,6 +63,7 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
     return reconcileCanonicalStartRecord(existing, {
       line: next.line,
       gameScorePlus: next.gameScorePlus,
+      gameScoreV2: next.gameScoreV2,
       gameScorePlusBreakdown: next.gameScorePlusBreakdown,
       source: officialCanonicalLineSource(next.source.line),
     }, now);

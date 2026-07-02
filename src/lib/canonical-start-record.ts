@@ -1,4 +1,5 @@
 import { roundToScorePrecision, SCORE_DISPLAY_PRECISION } from "@/lib/score-display";
+import { calculateGameScoreV2 } from "@/lib/game-score-v2";
 import type { StartApiGameScorePlusBreakdown, StartDataSource, StartLine, StartSummary } from "@/lib/types";
 
 export type CanonicalStartStatus = "scheduled" | "live" | "final";
@@ -29,6 +30,7 @@ export type CanonicalStartRecord = {
   status: CanonicalStartStatus;
   line: StartLine;
   gameScorePlus: number;
+  gameScoreV2: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   result: StartSummary["result"];
   source: StartDataSource;
@@ -62,6 +64,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
   const final = source.line === "archive-gamefeed";
   const live = source.line === "live-gamefeed";
   const gameScorePlus = roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
+  const gameScoreV2 = start.gameScoreV2 ?? calculateGameScoreV2(start.line);
 
   return {
     id: start.id,
@@ -75,6 +78,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     status: final ? "final" : live ? "live" : "scheduled",
     line: start.line,
     gameScorePlus,
+    gameScoreV2,
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined,
     result: start.result,
     source,
@@ -102,6 +106,7 @@ export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, st
     ...start,
     line: record.line,
     gameScorePlus: record.gameScorePlus,
+    gameScoreV2: record.gameScoreV2,
     gameScorePlusBreakdown: record.gameScorePlusBreakdown,
     result: record.result,
     source: record.source,
@@ -121,6 +126,7 @@ export function reconcileCanonicalStartRecord(
   official: {
     line: StartLine;
     gameScorePlus: number;
+    gameScoreV2?: number;
     gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
     source: Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed">;
   },
@@ -128,6 +134,7 @@ export function reconcileCanonicalStartRecord(
 ): CanonicalStartRecord {
   const timestamp = now.toISOString();
   const gameScorePlus = roundToScorePrecision(official.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
+  const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);
   const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);
 
   return {
@@ -135,6 +142,7 @@ export function reconcileCanonicalStartRecord(
     status: "final",
     line: official.line,
     gameScorePlus,
+    gameScoreV2,
     gameScorePlusBreakdown: official.gameScorePlusBreakdown ? { ...official.gameScorePlusBreakdown, total: gameScorePlus } : record.gameScorePlusBreakdown,
     source: {
       ...record.source,
