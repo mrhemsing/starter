@@ -631,7 +631,7 @@ function isSlateComplete(board: LiveScoreboardData) {
 }
 
 function isPregame(board: LiveScoreboardData) {
-  return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
+  return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;
 }
 
 function formatBoardDate(date: string) {

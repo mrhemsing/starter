@@ -82,7 +82,12 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   let rows = buildRows(new Map());
   let scoredRows = rows.filter(isScoredRow);
   let startCounts = summarizeSlateStartBuckets(rows);
-  const pregame = rows.length > 0 && startCounts.finalStarts === 0 && startCounts.liveStarts === 0 && startCounts.delayStarts === 0;
+  const pregame =
+    rows.length > 0 &&
+    startCounts.finalStarts === 0 &&
+    startCounts.liveStarts === 0 &&
+    startCounts.warmingStarts === 0 &&
+    startCounts.delayStarts === 0;
   const slateComplete = rows.length > 0 && startCounts.totalStarts > 0 && startCounts.finalStarts === startCounts.totalStarts;
 
   if (!pregame && !slateComplete && rows.some((row) => row.scoreLabel === "PROJ")) {
@@ -99,7 +104,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     date,
     generatedAt: generatedAt.toISOString(),
     hasGames: rows.length > 0,
-    hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0,
+    hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0,
     slateProgress,
     nextSlateDate: nextSlate?.date ?? null,
     nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,

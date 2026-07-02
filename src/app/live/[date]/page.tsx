@@ -26,7 +26,7 @@ export default async function LivePage({ params }: LivePageProps) {
   const today = getHomeSlateDate();
   const board = await getLiveScoreboard({ date });
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
-  const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;
+  const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;
   const boardTitle = "Live GS+ Scoreboard";
   const boardDescription = slateComplete
     ? "This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts."

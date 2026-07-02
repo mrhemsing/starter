@@ -52,7 +52,7 @@ assert(
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
     liveService.includes("let rows = buildRows(new Map());") &&
-    liveService.includes("const pregame = rows.length > 0 && startCounts.finalStarts === 0 && startCounts.liveStarts === 0 && startCounts.delayStarts === 0;") &&
+    liveService.includes("startCounts.warmingStarts === 0") &&
     liveService.includes("const slateComplete = rows.length > 0 && startCounts.totalStarts > 0 && startCounts.finalStarts === startCounts.totalStarts;") &&
     liveService.includes('if (!pregame && !slateComplete && rows.some((row) => row.scoreLabel === "PROJ"))') &&
     liveService.includes("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
@@ -105,7 +105,7 @@ assert(
     liveService.includes("inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS") &&
     liveService.includes("if (aScored && !bScored) return -1;") &&
     liveService.includes("return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();") &&
-    liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0") &&
+    liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0") &&
     liveService.includes(".sort(compareLiveRows)") &&
     liveService.includes("leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null"),
   "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
@@ -134,7 +134,7 @@ assert(
     !livePage.includes("Daily GS+ Scoreboard") &&
     !livePage.includes("Daily board") &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
-    livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
+    livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
     livePage.includes("This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
     livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={board.slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
@@ -232,7 +232,7 @@ assert(
     liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs)") &&
     liveComponent.includes("function formatPregameCountdown") &&
     liveComponent.includes("function isPregame(board: LiveScoreboardData)") &&
-    liveComponent.includes("return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.delayStarts === 0;") &&
+    liveComponent.includes("return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
     liveComponent.includes('<SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />') &&
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&
