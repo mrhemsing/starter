@@ -5,9 +5,16 @@ export type CanonicalStartStatus = "scheduled" | "final";
 
 export type CanonicalStartAuditEntry = {
   at: string;
-  event: "created" | "final-reconciled";
+  event: "created" | "final-reconciled" | "final-correction";
   source: StartDataSource["line"];
   note: string;
+  diffs?: CanonicalStartLineDiff[];
+};
+
+export type CanonicalStartLineDiff = {
+  field: keyof StartLine | "gameScorePlus";
+  before: number;
+  after: number;
 };
 
 export type CanonicalStartRecord = {
@@ -91,4 +98,62 @@ export function canonicalizeStartSummary(start: StartSummary, now = new Date()) 
 
 export function canonicalizeStartSummaries(starts: StartSummary[], now = new Date()) {
   return starts.map((start) => canonicalizeStartSummary(start, now));
+}
+
+export function reconcileCanonicalStartRecord(
+  record: CanonicalStartRecord,
+  official: {
+    line: StartLine;
+    gameScorePlus: number;
+    gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+    source: Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed">;
+  },
+  now = new Date(),
+): CanonicalStartRecord {
+  const timestamp = now.toISOString();
+  const gameScorePlus = roundToScorePrecision(official.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
+  const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);
+
+  return {
+    ...record,
+    status: "final",
+    line: official.line,
+    gameScorePlus,
+    gameScorePlusBreakdown: official.gameScorePlusBreakdown ? { ...official.gameScorePlusBreakdown, total: gameScorePlus } : record.gameScorePlusBreakdown,
+    source: {
+      ...record.source,
+      line: official.source,
+      ranking: official.source === "archive-gamefeed" ? "schedule-derived-archive-line" : "schedule-derived-gamefeed-line",
+    },
+    updatedAt: timestamp,
+    finalizedAt: record.finalizedAt ?? timestamp,
+    frozen: true,
+    audit: [
+      ...record.audit,
+      {
+        at: timestamp,
+        event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled",
+        source: official.source,
+        note: diffs.length > 0 ? "Canonical final record reconciled with an explicit line or score diff." : "Canonical final record reconciled with no line or score diff.",
+        ...(diffs.length > 0 ? { diffs } : {}),
+      },
+    ],
+  };
+}
+
+export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialLine: StartLine, officialGameScorePlus: number): CanonicalStartLineDiff[] {
+  const diffs: CanonicalStartLineDiff[] = [];
+  const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"];
+
+  for (const field of fields) {
+    if (record.line[field] !== officialLine[field]) {
+      diffs.push({ field, before: record.line[field], after: officialLine[field] });
+    }
+  }
+
+  if (record.gameScorePlus !== officialGameScorePlus) {
+    diffs.push({ field: "gameScorePlus", before: record.gameScorePlus, after: officialGameScorePlus });
+  }
+
+  return diffs;
 }

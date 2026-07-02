@@ -16,7 +16,9 @@ assert(
     canonicalRecord.includes("gameScorePlus: number;") &&
     canonicalRecord.includes("gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;") &&
     canonicalRecord.includes("frozen: boolean;") &&
-    canonicalRecord.includes("audit: CanonicalStartAuditEntry[];"),
+    canonicalRecord.includes("audit: CanonicalStartAuditEntry[];") &&
+    canonicalRecord.includes('event: "created" | "final-reconciled" | "final-correction";') &&
+    canonicalRecord.includes("export type CanonicalStartLineDiff = {"),
   "canonical start record must carry line, score, source, frozen state, and audit fields",
 );
 
@@ -33,6 +35,17 @@ assert(
   canonicalRecord.includes("roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus)") &&
     canonicalRecord.includes("gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined"),
   "canonical start record must apply shared GS+ display precision and keep breakdown totals aligned",
+);
+
+assert(
+  canonicalRecord.includes("export function reconcileCanonicalStartRecord(") &&
+    canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);") &&
+    canonicalRecord.includes('event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled"') &&
+    canonicalRecord.includes("...(diffs.length > 0 ? { diffs } : {})") &&
+    canonicalRecord.includes("export function diffCanonicalStartRecord(") &&
+    canonicalRecord.includes('const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "walks", "strikeouts", "pitches"];') &&
+    canonicalRecord.includes('diffs.push({ field: "gameScorePlus", before: record.gameScorePlus, after: officialGameScorePlus });'),
+  "canonical reconciliation must diff final line and GS+ corrections with explicit audit entries",
 );
 
 assert(
