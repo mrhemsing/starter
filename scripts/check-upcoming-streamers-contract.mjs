@@ -6,14 +6,13 @@ function assert(condition, message) {
   }
 }
 
-const [routes, toggle, streamersService, streamersPage, sitemapRoute, siteNav, routeLoading] = await Promise.all([
+const [routes, toggle, streamersService, streamersPage, sitemapRoute, siteNav] = await Promise.all([
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/slate-date-nav.tsx", "utf8"),
   readFile("src/lib/data/streamers-service.ts", "utf8"),
   readFile("src/app/upcoming/streamers/page.tsx", "utf8"),
   readFile("src/app/sitemaps/[kind]/route.ts", "utf8"),
   readFile("src/components/site-nav.tsx", "utf8"),
-  readFile("src/components/route-loading-shell.tsx", "utf8"),
 ]);
 
 assert(
@@ -64,9 +63,10 @@ assert(
   siteNav.includes("{ key: \"home\" as const") &&
     siteNav.includes("{ key: \"starts\" as const") &&
     siteNav.includes("{ key: \"heat\" as const") &&
+    siteNav.includes("{ key: \"live\" as const") &&
+    siteNav.includes("{ key: \"upcoming\" as const") &&
     siteNav.includes("{ key: \"watchlist\" as const") &&
-    !siteNav.includes("streamers") &&
-    routeLoading.includes('const navLabels = ["Home", "Ranked Starts", "Heat Check", "Live", "Upcoming", "Watchlist"] as const;'),
+    !siteNav.includes("streamers"),
   "primary navigation must stay at six items with no standalone streamers nav item",
 );
 

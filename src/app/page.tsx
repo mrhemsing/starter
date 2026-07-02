@@ -3,6 +3,7 @@ import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
+import { getFormHome } from "@/lib/data/form-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
@@ -35,7 +36,8 @@ export default async function Home() {
     .then((watch) => getPitchingDuels(hasPregameWatchGames(watch) ? today : tomorrow, "upcoming"))
     .catch(() => null);
   const bestStartsPromise = getBestStartsHome().catch(() => null);
-  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts] = await Promise.all([
+  const formHomePromise = getFormHome({ window: 5 }).catch(() => null);
+  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome] = await Promise.all([
     getSlateStartProgress({ window: "today", date: today }),
     getRankedSlateCompletionState(today, today),
     getRankedHome().catch(() => null),
@@ -43,6 +45,7 @@ export default async function Home() {
     tomorrowWatchPromise,
     duelsPromise,
     bestStartsPromise,
+    formHomePromise,
   ]);
   const rankedDate = todayCompletion.completedStarts > 0 ? today : yesterday;
   const homeSlatePhaseExperiment = isHomeSlatePhaseExperimentEnabled();
@@ -121,6 +124,7 @@ export default async function Home() {
           tomorrowWatch,
           duels,
           bestStarts,
+          formHome,
         }}
       />
     </main>

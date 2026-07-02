@@ -6,11 +6,10 @@ function assert(condition, message) {
   }
 }
 
-const [formPage, seasonRoute, siteNav, routeLoading] = await Promise.all([
+const [formPage, seasonRoute, siteNav] = await Promise.all([
   readFile("src/app/form/page.tsx", "utf8"),
   readFile("src/app/heat-check/season/page.tsx", "utf8"),
   readFile("src/components/site-nav.tsx", "utf8"),
-  readFile("src/components/route-loading-shell.tsx", "utf8"),
 ]);
 
 assert(
@@ -44,8 +43,8 @@ assert(
     siteNav.includes("{ key: \"starts\" as const") &&
     siteNav.includes("{ key: \"heat\" as const") &&
     siteNav.includes("{ key: \"watchlist\" as const") &&
-    !siteNav.includes("leaderboard") &&
-    routeLoading.includes('const navLabels = ["Home", "Ranked Starts", "Heat Check", "Live", "Upcoming", "Watchlist"] as const;'),
+    siteNav.includes("{ key: \"upcoming\" as const") &&
+    !siteNav.includes("leaderboard"),
   "primary navigation must stay at six items with no standalone leaderboard nav item",
 );
 

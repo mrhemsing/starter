@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 function assert(condition, message) {
   if (!condition) {
@@ -11,9 +12,6 @@ const headshotComponent = await readFile("src/components/headshot.tsx", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const pitcherPage = await readFile("src/app/pitchers/[id]/page.tsx", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
-const pitcherLoadingPage = await readFile("src/app/pitchers/[id]/loading.tsx", "utf8");
-const pitchersLoadingPage = await readFile("src/app/pitchers/loading.tsx", "utf8");
-const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 const pitcherFormWindowPanel = await readFile("src/components/pitcher-form-window-panel.tsx", "utf8");
 const pitcherAvailability = await readFile("src/components/pitcher-availability.tsx", "utf8");
 const pitcherProfileScrollReset = await readFile("src/components/pitcher-profile-scroll-reset.tsx", "utf8");
@@ -257,26 +255,18 @@ assert(
     pitcherFormPage.includes("<ProfileNextStartPill nextStartPromise={nextStartPromise}") &&
     pitcherFormPage.includes("<PitcherScoutingSection pitcherPromise={pitcherPromise}") &&
     pitcherFormPage.includes("<PitcherGameLogSection") &&
-    pitcherFormPage.includes("<NextStartPillSkeleton />") &&
-    pitcherFormPage.includes("<PitcherScoutingSkeleton />") &&
-    pitcherFormPage.includes("<PitcherGameLogSkeleton />"),
-  "pitcher profile must stream slower below-the-fold sections behind Suspense fallbacks so the hero can appear first",
+    pitcherFormPage.includes("<Suspense fallback={null}>") &&
+    !pitcherFormPage.includes("NextStartPillSkeleton") &&
+    !pitcherFormPage.includes("PitcherScoutingSkeleton") &&
+    !pitcherFormPage.includes("PitcherGameLogSkeleton"),
+  "pitcher profile must stream slower below-the-fold sections without non-live skeleton loading states",
 );
 
 assert(
-    pitcherLoadingPage.includes("export default function PitcherProfileLoading") &&
-    pitcherLoadingPage.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
-    pitcherLoadingPage.includes('import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";') &&
-    pitchersLoadingPage.includes('export { default } from "./[id]/loading";') &&
-    pitcherLoadingPage.includes("<PitcherProfileScrollReset />") &&
-    pitcherLoadingPage.includes('responsiveCheck="pitcher-profile-loading"') &&
-    pitcherLoadingPage.includes('activeLabel="Heat Check"') &&
-    pitcherLoadingPage.includes("Loading pitcher profile") &&
-    routeLoadingShell.includes('aria-busy="true"') &&
-    routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
-    routeLoadingShell.includes("route-loading-secondary-message") &&
-    routeLoadingShell.includes("Fetching data..."),
-  "canonical pitcher profile route must provide an immediate loading shell during in-app navigation",
+  !existsSync("src/app/pitchers/[id]/loading.tsx") &&
+    !existsSync("src/app/pitchers/loading.tsx") &&
+    !existsSync("src/components/route-loading-shell.tsx"),
+  "canonical pitcher profile route must not provide a page-level loading shell during idle cached navigation",
 );
 
 assert(

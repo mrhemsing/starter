@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { dispatchRoutePending } from "@/lib/route-pending-event";
 
 type PrimaryNavLinkProps = {
   href: string;
@@ -34,12 +33,10 @@ export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProp
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     if (!canClientNavigate) {
-      dispatchRoutePending();
       return;
     }
     event.preventDefault();
     setPendingIntent({ href, from: pathname });
-    dispatchRoutePending();
     if (canPrefetch) router.prefetch(href);
     router.push(href);
   };

@@ -27,6 +27,7 @@ export type HomeDeferredInitialData = {
   duels?: PitchingDuelsResponse | null;
   ranked?: RankedHomeResponse | null;
   bestStarts?: BestStartsHomeResponse | null;
+  formHome?: FormHomeResponse | null;
 };
 
 export function HomeDeferredSections({
@@ -45,7 +46,7 @@ export function HomeDeferredSections({
   const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(initialData?.todayWatch ?? null);
   const [tomorrowWatch, setTomorrowWatch] = useState<TonightResponse | null>(initialData?.tomorrowWatch ?? null);
   const [duels, setDuels] = useState<PitchingDuelsResponse | null>(initialData?.duels ?? null);
-  const [formHome, setFormHome] = useState<FormHomeResponse | null>(null);
+  const [formHome, setFormHome] = useState<FormHomeResponse | null>(initialData?.formHome ?? null);
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -77,7 +78,9 @@ export function HomeDeferredSections({
         .catch(() => undefined);
     }
 
-    fetchJson<FormHomeResponse>("/api/form/home?window=5").then(setIfLive(setFormHome)).catch(() => undefined);
+    if (!formHome) {
+      fetchJson<FormHomeResponse>("/api/form/home?window=5").then(setIfLive(setFormHome)).catch(() => undefined);
+    }
     if (!ranked) {
       fetchJson<RankedHomeResponse>("/api/home/ranked").then(setIfLive(setRanked)).catch(() => undefined);
     }
@@ -98,7 +101,7 @@ export function HomeDeferredSections({
       window.clearInterval(rankedRefresh);
       window.clearInterval(homeClockRefresh);
     };
-  }, [bestStarts, duels, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
+  }, [bestStarts, duels, formHome, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
   const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);
   const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch, nowMs);
@@ -134,7 +137,7 @@ export function HomeDeferredSections({
     const modules: Record<HomeModuleKey, ReactNode> = {
       spotlight:
         ranked === null ? (
-          <HomeDeferredFallback variant="spotlight" />
+          null
         ) : ranked.topPerformer ? (
           <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
@@ -170,10 +173,10 @@ export function HomeDeferredSections({
           rankLabel={watchWord}
           previewLimit={3}
         />
-      ) : <HomeDeferredFallback variant="watch" />,
-      duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : <HomeDeferredFallback variant="duels" />,
-      heat: formHome ? <HeatCheckHero home={formHome} /> : <HomeDeferredFallback variant="heat" />,
-      ranked: ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : <HomeDeferredFallback variant="ranked" />,
+      ) : null,
+      duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null,
+      heat: formHome ? <HeatCheckHero home={formHome} /> : null,
+      ranked: ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
       best: bestStarts ? (
         <BestStartsLite
           weekly={bestStarts.weekly}
@@ -181,7 +184,7 @@ export function HomeDeferredSections({
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
         />
-      ) : <HomeDeferredFallback variant="best" />,
+      ) : null,
     };
 
     return (
@@ -198,7 +201,7 @@ export function HomeDeferredSections({
   return (
     <>
       {ranked === null ? (
-        <HomeDeferredFallback variant="spotlight" />
+        null
       ) : ranked.topPerformer ? (
         <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
@@ -235,11 +238,11 @@ export function HomeDeferredSections({
           rankLabel={watchWord}
           previewLimit={3}
         />
-      ) : <HomeDeferredFallback variant="watch" />}
+      ) : null}
 
-      {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : <HomeDeferredFallback variant="duels" />}
-      {formHome ? <HeatCheckHero home={formHome} /> : <HomeDeferredFallback variant="heat" />}
-      {ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : <HomeDeferredFallback variant="ranked" />}
+      {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null}
+      {formHome ? <HeatCheckHero home={formHome} /> : null}
+      {ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : null}
       {bestStarts ? (
         <BestStartsLite
           weekly={bestStarts.weekly}
@@ -247,7 +250,7 @@ export function HomeDeferredSections({
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
         />
-      ) : <HomeDeferredFallback variant="best" />}
+      ) : null}
     </>
   );
 }
@@ -303,51 +306,6 @@ async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Request failed: ${url}`);
   return response.json() as Promise<T>;
-}
-
-function HomeDeferredFallback({ variant }: { variant: "spotlight" | "watch" | "duels" | "heat" | "ranked" | "best" }) {
-  const copy = {
-    spotlight: { eyebrow: "Building spotlight", title: "Loading top start" },
-    watch: { eyebrow: "Pregame board", title: "Loading must-watch games" },
-    duels: { eyebrow: "Matchup lens", title: "Loading duels" },
-    heat: { eyebrow: "Form board", title: "Loading heat check" },
-    ranked: { eyebrow: "Settled results", title: "Loading ranked recap" },
-    best: { eyebrow: "Best starts", title: "Loading best starts" },
-  }[variant];
-
-  return (
-    <section className="border-t border-white/10 bg-[#08080a] px-4 py-8 sm:px-6 lg:px-8" aria-busy="true" aria-label={copy.title} data-responsive-check={`home-loading-${variant}`}>
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-amber-300" />
-          <span>{copy.eyebrow}</span>
-        </div>
-        <div className={`grid gap-4 ${variant === "spotlight" ? "lg:grid-cols-[45%_55%]" : "md:grid-cols-3"}`}>
-          <div className={`${variant === "spotlight" ? "min-h-[300px] lg:min-h-[420px]" : "min-h-44"} rounded border border-white/10 bg-[#101014] p-5`}>
-            <LoadingBar className="w-32 bg-amber-300/35" />
-            <LoadingBar className="mt-5 h-8 w-3/4 bg-white/15" />
-            <LoadingBar className="mt-3 w-1/2 bg-white/10" />
-            <div className="mt-8 grid grid-cols-3 gap-2">
-              <LoadingBlock />
-              <LoadingBlock />
-              <LoadingBlock />
-            </div>
-          </div>
-          <div className={`${variant === "spotlight" ? "min-h-[300px] lg:min-h-[420px]" : "min-h-44 md:col-span-2"} overflow-hidden rounded border border-white/10 bg-[#101014] p-5`}>
-            <div className="h-full min-h-36 animate-pulse rounded bg-[linear-gradient(110deg,rgba(246,196,69,0.08),rgba(255,255,255,0.08),rgba(246,196,69,0.06))]" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function LoadingBar({ className = "" }: { className?: string }) {
-  return <div className={`h-3 animate-pulse rounded bg-white/10 ${className}`} />;
-}
-
-function LoadingBlock() {
-  return <div className="h-16 animate-pulse rounded border border-white/10 bg-white/[0.04]" />;
 }
 
 function BestStartsLite({

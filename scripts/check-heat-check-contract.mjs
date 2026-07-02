@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 function assert(condition, message) {
   if (!condition) {
@@ -9,7 +10,6 @@ function assert(condition, message) {
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
 const appLayout = await readFile("src/app/layout.tsx", "utf8");
-const globalPendingOverlay = await readFile("src/components/global-route-pending-overlay.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
 const fastFilterLink = await readFile("src/components/fast-filter-link.tsx", "utf8");
@@ -34,14 +34,13 @@ assert(
 );
 
 assert(
-  appLayout.includes("<GlobalRoutePendingOverlay />") &&
-    globalPendingOverlay.includes("PENDING_DELAY_MS = 900") &&
-    globalPendingOverlay.includes("window.location.href !== pendingFromRef.current") &&
-    globalPendingOverlay.includes('data-responsive-check="global-route-pending"') &&
-    heatFilterLink.includes('dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." })') &&
-    teamClearLink.includes('dispatchRoutePending({ label: "Updating Heat Check", secondary: "Fetching pitcher form..." })') &&
-    fastFilterLink.includes('dispatchRoutePending({ label: "Updating view", secondary: "Fetching data..." })'),
-  "slow Heat Check team/filter navigations must trigger the shared delayed route-loading overlay instead of appearing frozen",
+  !existsSync("src/components/global-route-pending-overlay.tsx") &&
+    !existsSync("src/lib/route-pending-event.ts") &&
+    !appLayout.includes("GlobalRoutePendingOverlay") &&
+    !heatFilterLink.includes("dispatchRoutePending") &&
+    !teamClearLink.includes("dispatchRoutePending") &&
+    !fastFilterLink.includes("dispatchRoutePending"),
+  "Heat Check navigation must not trigger page-level route loading overlays during idle cached transitions",
 );
 
 assert(
@@ -52,10 +51,11 @@ assert(
     heatPitcherProfileLink.includes("router.prefetch(href);") &&
     heatPitcherProfileLink.includes("event.preventDefault();") &&
     heatPitcherProfileLink.includes("router.push(href);") &&
-    heatPitcherProfileLink.includes('data-responsive-check="heat-pitcher-profile-pending"') &&
-    heatPitcherProfileLink.includes("Loading pitcher profile") &&
-    heatPitcherProfileLink.includes("Fetching data..."),
-  "Heat Check pitcher profile links must prefetch and show immediate loading feedback during slow profile navigation",
+    heatPitcherProfileLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
+    !heatPitcherProfileLink.includes('data-responsive-check="heat-pitcher-profile-pending"') &&
+    !heatPitcherProfileLink.includes("Loading pitcher profile") &&
+    !heatPitcherProfileLink.includes("Fetching data"),
+  "Heat Check pitcher profile links must prefetch without showing page-level loading feedback during idle navigation",
 );
 
 assert(
@@ -75,13 +75,12 @@ assert(
     heatFilterLink.includes("const pending = !ariaCurrent && pendingIntent?.href === href && pendingIntent.from === currentHref;") &&
     heatFilterLink.includes("window.setTimeout(() => setPendingIntent(null), 8000)") &&
     heatFilterLink.includes("scroll={false}") &&
-    heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
-    heatFilterLink.includes("absolute inset-0 z-[120] flex items-center justify-start") &&
-    !heatFilterLink.includes("fixed inset-0 z-[120] grid place-items-center") &&
-    heatFilterLink.includes("Updating Heat Check") &&
-    heatFilterLink.includes("Fetching pitcher form...") &&
-    heatFilterLink.includes("route-loading-spinner"),
-  "Heat Check team and window filters must show immediate loading feedback while server data is fetched",
+    !heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
+    !heatFilterLink.includes("absolute inset-0 z-[120]") &&
+    !heatFilterLink.includes("Updating Heat Check") &&
+    !heatFilterLink.includes("Fetching pitcher form") &&
+    !heatFilterLink.includes("route-loading-spinner"),
+  "Heat Check team and window filters must prefetch and avoid page-level loading feedback while cached server data resolves",
 );
 
 assert(

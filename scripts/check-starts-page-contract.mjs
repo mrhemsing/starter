@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 function assert(condition, message) {
   if (!condition) {
@@ -26,8 +27,6 @@ const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
-const startsLoading = await readFile("src/app/starts/[id]/loading.tsx", "utf8");
-const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 
 const visibleTieBreakerOrder = [
   {
@@ -82,14 +81,9 @@ assert(
     primaryNavLink.includes("event.preventDefault()") &&
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
-    startsLoading.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
-    startsLoading.includes('activeLabel="Ranked Starts"') &&
-    startsLoading.includes('responsiveCheck="ranked-starts-loading"') &&
-    startsLoading.includes('aria-label="Loading ranked starts"') &&
-    routeLoadingShell.includes('aria-busy="true"') &&
-    routeLoadingShell.includes("data-responsive-check={responsiveCheck}") &&
-    routeLoadingShell.includes("route-loading-secondary-message"),
-  "ranked starts navigation must prefetch on intent and show an immediate loading shell",
+    !primaryNavLink.includes("dispatchRoutePending") &&
+    !existsSync("src/app/starts/[id]/loading.tsx"),
+  "ranked starts navigation must avoid page-level loading shells while preserving cached server-rendered navigation",
 );
 
 assert(

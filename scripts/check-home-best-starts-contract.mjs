@@ -31,7 +31,7 @@ assert(
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
     bestStartsService.includes('["home-best-starts-v4"]') &&
-    bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG] }"),
+    bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners on a short cadence with a versioned key for highlight payload changes",
 );
 
@@ -182,8 +182,10 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes('best: { eyebrow: "Best starts", title: "Loading best starts" },'),
-  "home best-starts loading skeleton must use clear loading copy matching the final section label",
+  !homeDeferredSections.includes("HomeDeferredFallback") &&
+    !homeDeferredSections.includes("Loading best starts") &&
+    !homeDeferredSections.includes('aria-busy="true"'),
+  "home best-starts must not use an initial loading skeleton for idle cached page content",
 );
 
 console.log("home best-starts contract ok: highlight payloads are resolved in the API and rendered by the homepage cards");

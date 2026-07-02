@@ -147,7 +147,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
                 <TrendChip summary={summary} />
                 <FollowPitcherButton pitcherId={summary.pitcherId} pitcherName={summary.name} initialFollowing={followedIds.includes(summary.pitcherId)} labeled />
               </div>
-              <Suspense fallback={<NextStartPillSkeleton />}>
+              <Suspense fallback={null}>
                 <ProfileNextStartPill nextStartPromise={nextStartPromise} source={source} venueSplit={summary.venueSplit ?? null} />
               </Suspense>
             </div>
@@ -170,11 +170,11 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
           )}
         </section>
 
-        <Suspense fallback={<PitcherScoutingSkeleton />}>
+        <Suspense fallback={null}>
           <PitcherScoutingSection pitcherPromise={pitcherPromise} summary={summary} />
         </Suspense>
 
-        <Suspense fallback={<PitcherGameLogSkeleton />}>
+        <Suspense fallback={null}>
           <PitcherGameLogSection
             series={series}
             recentDepthBundlePromise={recentDepthBundlePromise}
@@ -219,12 +219,6 @@ async function ProfileNextStartPill({
   );
 }
 
-function NextStartPillSkeleton() {
-  return (
-    <p className="mt-5 inline-flex h-9 w-56 max-w-full animate-pulse rounded border border-white/10 bg-white/[0.03]" aria-label="Loading next start" />
-  );
-}
-
 async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherPromise: Promise<PitcherApiResponse | null>; summary: FormSummary }) {
   const pitcher = await pitcherPromise;
   if (!pitcher) return null;
@@ -239,18 +233,6 @@ async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherProm
       <div className="min-w-0 space-y-5">
         <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
         <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
-      </div>
-    </section>
-  );
-}
-
-function PitcherScoutingSkeleton() {
-  return (
-    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label="Loading pitcher scouting">
-      <div className="min-h-56 animate-pulse rounded border border-white/10 bg-[#101014]" />
-      <div className="min-w-0 space-y-5">
-        <div className="min-h-48 animate-pulse rounded border border-white/10 bg-[#101014]" />
-        <div className="min-h-48 animate-pulse rounded border border-white/10 bg-[#101014]" />
       </div>
     </section>
   );
@@ -305,26 +287,6 @@ async function PitcherGameLogSection({
           <p className="mt-2 font-serif text-3xl text-zinc-50">{streak}</p>
           <p className="mt-1 font-mono text-xs text-zinc-500">straight starts of GS+ 55+</p>
         </div>
-      </aside>
-    </section>
-  );
-}
-
-function PitcherGameLogSkeleton() {
-  return (
-    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label="Loading pitcher game log">
-      <div className="min-w-0">
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
-        <div className="overflow-hidden rounded border border-white/10">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="h-20 animate-pulse border-b border-white/10 bg-[#101014] last:border-b-0" />
-          ))}
-        </div>
-      </div>
-      <aside className="min-w-0 space-y-3">
-        <div className="h-28 animate-pulse rounded border border-white/10 bg-[#101014]" />
-        <div className="h-24 animate-pulse rounded border border-white/10 bg-[#101014]" />
-        <div className="h-24 animate-pulse rounded border border-white/10 bg-[#101014]" />
       </aside>
     </section>
   );

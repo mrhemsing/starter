@@ -110,30 +110,6 @@ p,
   }
 }
 
-.route-loading-spinner {
-  animation: route-loading-spin 880ms linear infinite;
-  border: 2px solid rgb(255 255 255 / 0.14);
-  border-top-color: #f6c445;
-  border-radius: 9999px;
-  box-shadow: 0 0 20px rgb(246 196 69 / 0.18);
-  display: inline-block;
-  flex: 0 0 auto;
-  height: 28px;
-  width: 28px;
-}
-
-@keyframes route-loading-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .route-loading-spinner {
-    animation: none;
-  }
-}
-
 .meta-seg,
 .stat-token,
 .nowrap-token,

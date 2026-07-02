@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 function assert(condition, message) {
   if (!condition) {
@@ -34,9 +35,8 @@ const heatCheckWarmup = await read("src/components/heat-check-filter-warmup.tsx"
 const heatCheckPage = await read("src/app/form/page.tsx");
 const upcomingDatePage = await read("src/app/upcoming/[date]/page.tsx");
 const startsPage = await read("src/app/starts/[id]/page.tsx");
-const appLoading = await read("src/app/loading.tsx");
-const routeLoadingShell = await read("src/components/route-loading-shell.tsx");
-const globals = await read("src/app/globals.css");
+const appLayout = await read("src/app/layout.tsx");
+const loadingPolicy = await read("docs/loading-state-policy.md");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -160,20 +160,14 @@ assert(
 );
 
 assert(
-  appLoading.includes('import { RouteLoadingShell } from "@/components/route-loading-shell";') &&
-    appLoading.includes('responsiveCheck="app-route-loading"') &&
-    routeLoadingShell.includes("export function RouteLoadingShell") &&
-    routeLoadingShell.includes('aria-busy="true"') &&
-    routeLoadingShell.includes("route-loading-spinner") &&
-    routeLoadingShell.includes("route-loading-secondary-message") &&
-    routeLoadingShell.includes("Fetching data...") &&
-    routeLoadingShell.includes('aria-label="Primary loading mobile"') &&
-    routeLoadingShell.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
-    routeLoadingShell.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
-    globals.includes(".route-loading-spinner") &&
-    globals.includes("animation: route-loading-spin 880ms linear infinite;") &&
-    globals.includes("@media (prefers-reduced-motion: reduce)"),
-  "slow route transitions must use a shared app-level loading shell with an animated spinner and secondary data message",
+  !existsSync("src/app/loading.tsx") &&
+    !existsSync("src/components/global-route-pending-overlay.tsx") &&
+    !existsSync("src/lib/route-pending-event.ts") &&
+    !appLayout.includes("GlobalRoutePendingOverlay") &&
+    !fastFilterLink.includes("dispatchRoutePending") &&
+    loadingPolicy.includes("Initial navigation should render cached server HTML with page content already present") &&
+    loadingPolicy.includes("Skeletons and spinners are allowed only inside live-polling regions"),
+  "idle navigation must not use app-level overlays, dimming, skeletons, or route-pending event loaders",
 );
 
 assert(
