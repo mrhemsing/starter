@@ -83,7 +83,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v6";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v7";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
@@ -137,14 +137,15 @@ assert(
     mlbStatsClient.includes("endDate,") &&
     mlbStatsClient.includes("(entry.games ?? []).some((game) => isFinalMlbApiGame(game))") &&
     startService.includes("return (await getRankedStartsArchiveNavigation(today, today)).latestDate;") &&
-    startService.includes("if (todayCompletion.totalStarts > 0) dates.add(today);") &&
+    startService.includes("if (todayCompletion.totalGames > 0) dates.add(today);") &&
     startService.includes("activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today)") &&
-    startService.includes("if (activeCompletion && activeCompletion.totalStarts > 0) dates.add(activeDate);") &&
+    startService.includes("if (activeCompletion && activeCompletion.totalGames > 0) dates.add(activeDate);") &&
     startsPage.includes('import { RankedStartsArchiveNav } from "@/components/slate-date-nav";') &&
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.includes("previousDate={archiveNavigation.previousDate}") &&
     startsPage.includes("nextDate={archiveNavigation.nextDate}") &&
-    startsPage.includes('<SiteHeader active="starts" today={today} rankedDate={rankedDate} />') &&
+    startsPage.includes('<SiteHeader active="starts" today={today} />') &&
+    !startsPage.includes("const rankedDate = archiveNavigation.latestDate;") &&
     !startsPage.includes("hideUpcoming") &&
     !siteHeader.includes("hideUpcoming") &&
     !siteNav.includes("hideUpcoming") &&

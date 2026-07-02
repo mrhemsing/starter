@@ -251,8 +251,8 @@ async function getRankedStartsCompletedSlateDates(activeDate: string, today: str
   ]);
   const dates = new Set(seasonDates.flat());
 
-  if (todayCompletion.totalStarts > 0) dates.add(today);
-  if (activeCompletion && activeCompletion.totalStarts > 0) dates.add(activeDate);
+  if (todayCompletion.totalGames > 0) dates.add(today);
+  if (activeCompletion && activeCompletion.totalGames > 0) dates.add(activeDate);
 
   return Array.from(dates)
     .filter((date) => date <= today)
