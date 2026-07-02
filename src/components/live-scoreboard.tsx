@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Headshot } from "@/components/headshot";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
+import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
@@ -17,12 +18,21 @@ type LiveScoreboardProps = {
 const PREGAME_CLOCK_THRESHOLD_MS = 6 * 60 * 60 * 1000;
 const PREGAME_STARTING_SOON_MS = 60 * 1000;
 const PREGAME_CLOCK_WINDOW_MS = PREGAME_CLOCK_THRESHOLD_MS - PREGAME_STARTING_SOON_MS;
+const LIVE_GEM_ALERT_STORAGE_PREFIX = "tts-live-gem-alerts:";
+const LIVE_GEM_ALERT_MAX_VISIBLE = 3;
 
 export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScoreboardProps) {
   const [board, setBoard] = useState(initialBoard);
   const [slateProgress, setSlateProgress] = useState(initialSlateProgress);
   const [pregameNowMs, setPregameNowMs] = useState<number | null>(null);
+  const [liveGemAlerts, setLiveGemAlerts] = useState<LiveGemAlertEvent[]>([]);
+  const latestRowsRef = useRef(initialBoard.rows);
+  const seenLiveGemAlertKeysRef = useRef<Set<string>>(new Set());
   const pregame = isPregame(board);
+
+  useEffect(() => {
+    seenLiveGemAlertKeysRef.current = loadSeenLiveGemAlertKeys(initialBoard.date);
+  }, [initialBoard.date]);
 
   useEffect(() => {
     if (!board.hasActiveStarts && !pregame) return;
@@ -34,6 +44,11 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         if (!response.ok) return;
         const nextBoard = (await response.json()) as LiveScoreboardData;
         if (!cancelled) {
+          const newAlerts = takeUnseenLiveGemAlerts(evaluateLiveGemAlerts(nextBoard.rows, latestRowsRef.current), initialBoard.date, seenLiveGemAlertKeysRef.current);
+          latestRowsRef.current = nextBoard.rows;
+          if (newAlerts.length > 0) {
+            setLiveGemAlerts((current) => [...newAlerts, ...current].slice(0, LIVE_GEM_ALERT_MAX_VISIBLE));
+          }
           setBoard(nextBoard);
           setSlateProgress(nextBoard.slateProgress);
         }
@@ -139,6 +154,8 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         <p>{updatedLabel}</p>
       </div>
 
+      <LiveGemAlertStack alerts={liveGemAlerts} onDismiss={(id) => setLiveGemAlerts((current) => current.filter((alert) => alert.id !== id))} />
+
       <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
         {scoredRows.length > 0 ? (
           <LiveScoreboardSection title="In progress" rows={scoredRows} />
@@ -148,6 +165,36 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         ) : null}
       </div>
     </section>
+  );
+}
+
+function LiveGemAlertStack({ alerts, onDismiss }: { alerts: LiveGemAlertEvent[]; onDismiss: (id: string) => void }) {
+  if (alerts.length === 0) return null;
+
+  return (
+    <div className="space-y-2" data-live-gem-alerts="true" role="status" aria-live="polite">
+      {alerts.map((alert) => (
+        <article key={alert.id} className="flex items-start justify-between gap-3 rounded border border-[#FF5A1F]/35 bg-[#FF5A1F]/10 px-3 py-3 text-sm text-zinc-100 shadow-[0_0_24px_rgba(255,90,31,0.12)]">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#FF9A62]">Live gem alert</p>
+            <Link href={alert.href} className="mt-1 block text-pretty font-serif text-lg font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+              {alert.message}
+            </Link>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+              {alert.team} vs {alert.opponent}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="shrink-0 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 transition hover:border-white/30 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            onClick={() => onDismiss(alert.id)}
+            aria-label={`Dismiss live gem alert for ${alert.pitcherName}`}
+          >
+            Close
+          </button>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -555,4 +602,46 @@ function formatUpdatedLabel(iso: string) {
   if (seconds < 5) return "Updated just now";
   if (seconds < 60) return `Updated ${seconds}s ago`;
   return `Updated ${Math.round(seconds / 60)}m ago`;
+}
+
+function takeUnseenLiveGemAlerts(events: LiveGemAlertEvent[], date: string, seenKeys: Set<string>) {
+  const unseen: LiveGemAlertEvent[] = [];
+
+  for (const event of events) {
+    if (seenKeys.has(event.dedupeKey)) continue;
+    seenKeys.add(event.dedupeKey);
+    unseen.push(event);
+  }
+
+  if (unseen.length > 0) {
+    persistSeenLiveGemAlertKeys(date, seenKeys);
+  }
+
+  return unseen;
+}
+
+function loadSeenLiveGemAlertKeys(date: string) {
+  if (typeof window === "undefined") return new Set<string>();
+
+  try {
+    const raw = window.localStorage.getItem(liveGemAlertStorageKey(date));
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter((key): key is string => typeof key === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function persistSeenLiveGemAlertKeys(date: string, seenKeys: Set<string>) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(liveGemAlertStorageKey(date), JSON.stringify([...seenKeys].slice(-80)));
+  } catch {
+    // Alert delivery should not depend on storage availability.
+  }
+}
+
+function liveGemAlertStorageKey(date: string) {
+  return `${LIVE_GEM_ALERT_STORAGE_PREFIX}${date}`;
 }
