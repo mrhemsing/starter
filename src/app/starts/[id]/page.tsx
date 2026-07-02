@@ -1038,12 +1038,20 @@ function completionStatusLabel(
   if (state.totalGames === 0 && state.totalStarts === 0) return null;
   if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;
   if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;
-  if (state.liveStarts > 0 || slateProgress.state === "starts-in-progress") return `${state.completedStarts} FINAL · ${Math.max(0, state.liveStarts)} IN PROGRESS`;
+  if (state.liveStarts > 0 || slateProgress.state === "starts-in-progress") return inProgressStartsLabel(state);
 
   const firstPitchLabel = formatRankedFirstPitch(slateProgress.firstPitchAt);
   if (!firstPitchLabel) return null;
   if (state.warmingStarts > 0) return `WARMING · FIRST PITCH ${firstPitchLabel}`;
   return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;
+}
+
+function inProgressStartsLabel(state: { completedStarts: number; liveStarts: number; totalStarts: number }) {
+  const finalStarts = Math.max(0, state.completedStarts);
+  const liveStarts = Math.max(0, state.liveStarts);
+  const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);
+  const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";
+  return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;
 }
 
 function formatRankedFirstPitch(value: string | null) {

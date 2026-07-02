@@ -382,7 +382,11 @@ assert(
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
     startsPage.includes('if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;') &&
-    startsPage.includes('return `${state.completedStarts} FINAL · ${Math.max(0, state.liveStarts)} IN PROGRESS`;') &&
+    startsPage.includes("return inProgressStartsLabel(state);") &&
+    startsPage.includes("function inProgressStartsLabel(state: { completedStarts: number; liveStarts: number; totalStarts: number })") &&
+    startsPage.includes("const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);") &&
+    startsPage.includes('const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";') &&
+    startsPage.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
     startsPage.includes('return `WARMING · FIRST PITCH ${firstPitchLabel}`;') &&
     startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
     startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
@@ -394,6 +398,14 @@ assert(
     !startsPage.includes("function formatFirstPitchStamp") &&
     !startsPage.includes("{date} / completed starts recap"),
   "ranked starts header must use viewed-date scoped functional copy and remove the redundant ISO date line",
+);
+
+const rankedLiveFixture = { completedStarts: 2, liveStarts: 2, totalStarts: 18 };
+const rankedLiveUpcomingStarts = Math.max(0, rankedLiveFixture.totalStarts - rankedLiveFixture.completedStarts - rankedLiveFixture.liveStarts);
+const rankedLiveFixtureLabel = `${rankedLiveFixture.completedStarts} FINAL · ${rankedLiveFixture.liveStarts} IN PROGRESS${rankedLiveUpcomingStarts > 0 ? ` · ${rankedLiveUpcomingStarts} UPCOMING` : ""}`;
+assert(
+  rankedLiveFixtureLabel === "2 FINAL · 2 IN PROGRESS · 14 UPCOMING",
+  "ranked starts live status fixture must partition final, in-progress, and upcoming starts",
 );
 
 assert(
