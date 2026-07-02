@@ -1133,4 +1133,5 @@ export type StartApiResponse = {
   pitchSequence: StartApiPitchSequenceRow[];
   arsenal: ArsenalPitchSummary[];
   pitchEvents: PitchEvent[];
+  arsenalEventSummary?: StartArsenalEventSummary;
 };

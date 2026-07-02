@@ -349,7 +349,7 @@ assert(
 );
 
 assert(
-  types.includes("export type StartArsenalEventSummary") &&
+    types.includes("export type StartArsenalEventSummary") &&
     types.includes("arsenalEventSummary?: StartArsenalEventSummary;") &&
     startService.includes("async function buildStartArsenalEventSummary") &&
     startService.includes("readArchivedPitcherSeasonProfile(start.pitcherMlbId, season)") &&
@@ -360,7 +360,9 @@ assert(
     pitchChart.includes("function ArsenalEventPanel") &&
     pitchChart.includes('data-responsive-check="start-arsenal-events"') &&
     pitchChart.includes("New {pitchTypes[type].name}") &&
-    pitchChart.includes("Compared with prior archived starts for this pitcher."),
+    pitchChart.includes("Compared with prior archived starts for this pitcher.") &&
+    types.includes("arsenalEventSummary?: StartArsenalEventSummary;") &&
+    startService.includes("arsenalEventSummary: start.arsenalEventSummary,"),
   "start detail pages must surface archived first-seen pitch and major usage-shift events without calling request-time Savant",
 );
 

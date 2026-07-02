@@ -776,6 +776,7 @@ export async function getStartApiResponse(startId: string): Promise<StartApiResp
     pitchSequence: start.pitchSequence ?? summarizePitchSequence(start.pitchEvents),
     arsenal: start.arsenal,
     pitchEvents: start.pitchEvents,
+    arsenalEventSummary: start.arsenalEventSummary,
   };
 }
 
