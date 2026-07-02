@@ -871,7 +871,7 @@ export async function getPitcherDetail(pitcherId: string) {
 
 const getCachedPitcherApiResponse = unstable_cache(
   async (pitcherId: string, sort: string | null, result: string | null) => buildPitcherApiResponse(pitcherId, { sort, result }),
-  ["pitcher-api-response", "v2"],
+  ["pitcher-api-response", "v3"],
   { revalidate: PITCHER_PROFILE_REVALIDATE_SECONDS },
 );
 
