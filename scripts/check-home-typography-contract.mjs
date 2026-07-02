@@ -72,9 +72,10 @@ assert(
     siteHeader.includes('className="site-logo-lockup"') &&
     siteHeader.includes('<Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">') &&
     siteHeader.includes('<p className="site-logo-season-kicker">{currentSeason} MLB Season</p>') &&
-    siteHeader.includes("border-b border-white/10 pb-5") &&
+    siteHeader.includes("items-center justify-between gap-4 pb-5") &&
+    !siteHeader.includes("border-b border-white/10") &&
     siteHeader.includes("<SiteNav active={active} today={today} rankedDate={rankedDate} />"),
-  "site header must own the shared home-linking logo/nav hairline divider and season kicker",
+  "site header must own the shared home-linking logo/nav and season kicker without a bottom hairline",
 );
 
 assert(

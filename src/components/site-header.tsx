@@ -18,7 +18,7 @@ export async function SiteHeader({
   const currentSeason = currentSeasonFromDate(today);
 
   return (
-    <header className={`site-header-nav flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 ${className}`} data-responsive-check={responsiveCheck}>
+    <header className={`site-header-nav flex flex-wrap items-center justify-between gap-4 pb-5 ${className}`} data-responsive-check={responsiveCheck}>
       <div className="site-logo-lockup">
         <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
           Toe the Slab
