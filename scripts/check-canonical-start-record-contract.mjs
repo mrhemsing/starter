@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts", "utf8");
 
 assert(
   canonicalRecord.includes('export type CanonicalStartStatus = "scheduled" | "final";') &&
@@ -49,7 +50,18 @@ assert(
 );
 
 assert(
-  startService.includes('import { canonicalizeStartSummaries } from "@/lib/canonical-start-record";') &&
+  canonicalRecord.includes("export type CanonicalReconciliationReport = {") &&
+    canonicalRecord.includes("correctionRecords: number;") &&
+    canonicalRecord.includes("correctionDiffs: CanonicalStartLineDiff[];") &&
+    canonicalRecord.includes("latestAuditAt: string | null;") &&
+    canonicalRecord.includes("export function summarizeCanonicalReconciliation(") &&
+    canonicalRecord.includes('entry.event === "final-correction"') &&
+    canonicalRecord.includes('entry.event === "final-reconciled"'),
+  "canonical reconciliation must expose a daily report with final, frozen, correction, diff, and audit timing counts",
+);
+
+assert(
+  startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("return canonicalizeStartSummaries(archivedStarts);") &&
     startService.includes("return canonicalizeStartSummaries(scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);") &&
@@ -57,6 +69,17 @@ assert(
     startService.includes("return canonicalizeStartSummaries(archivedStarts") &&
     startService.includes("export async function getArchivedSeasonStartSummaries"),
   "daily slate, slate API, archived slate, and season summaries must pass through canonical start normalization",
+);
+
+assert(
+  startService.includes("export async function getCanonicalStartReconciliationReport(") &&
+    startService.includes("const records = starts.map((start) => canonicalStartRecordFromSummary(start));") &&
+    startService.includes("return summarizeCanonicalReconciliation(date, records);") &&
+    archiveStatusRoute.includes("getCanonicalStartReconciliationReport") &&
+    archiveStatusRoute.includes("export async function GET(request: Request)") &&
+    archiveStatusRoute.includes('new URL(request.url).searchParams.get("date")') &&
+    archiveStatusRoute.includes("canonicalReconciliation"),
+  "archive status API must expose the canonical daily reconciliation report for a requested date",
 );
 
 console.log("canonical start record contract ok: start summaries pass through canonical score and line normalization");

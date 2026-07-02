@@ -39,6 +39,17 @@ export type CanonicalStartRecord = {
   audit: CanonicalStartAuditEntry[];
 };
 
+export type CanonicalReconciliationReport = {
+  date: string;
+  totalRecords: number;
+  finalRecords: number;
+  frozenRecords: number;
+  reconciledFinalRecords: number;
+  correctionRecords: number;
+  correctionDiffs: CanonicalStartLineDiff[];
+  latestAuditAt: string | null;
+};
+
 const FALLBACK_START_SOURCE: StartDataSource = {
   schedule: "fixture",
   line: "fixture",
@@ -156,4 +167,22 @@ export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialL
   }
 
   return diffs;
+}
+
+export function summarizeCanonicalReconciliation(date: string, records: CanonicalStartRecord[]): CanonicalReconciliationReport {
+  const finalRecords = records.filter((record) => record.status === "final");
+  const correctionAuditEntries = records.flatMap((record) => record.audit.filter((entry) => entry.event === "final-correction"));
+  const correctionDiffs = correctionAuditEntries.flatMap((entry) => entry.diffs ?? []);
+  const auditTimes = records.flatMap((record) => record.audit.map((entry) => entry.at)).sort();
+
+  return {
+    date,
+    totalRecords: records.length,
+    finalRecords: finalRecords.length,
+    frozenRecords: records.filter((record) => record.frozen).length,
+    reconciledFinalRecords: records.filter((record) => record.audit.some((entry) => entry.event === "final-reconciled")).length,
+    correctionRecords: records.filter((record) => record.audit.some((entry) => entry.event === "final-correction")).length,
+    correctionDiffs,
+    latestAuditAt: auditTimes.at(-1) ?? null,
+  };
 }
