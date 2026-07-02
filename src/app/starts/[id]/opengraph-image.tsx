@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
+import { formatArsenalEventHeadline } from "@/lib/arsenal-event-copy";
 import { getStartDetail } from "@/lib/data/start-service";
 import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
@@ -33,6 +34,7 @@ export default async function Image({ params }: StartImageProps) {
   const veloShape = start.inningTimeline?.map((inning) => Number(inning.avgVelocityMph.toFixed(1))) ?? [];
   const sparkPath = sparklinePath(veloShape);
   const latestVelo = veloShape.at(-1);
+  const arsenalEvent = formatArsenalEventHeadline(start.arsenalEventSummary);
 
   return new ImageResponse(
     (
@@ -83,6 +85,11 @@ export default async function Image({ params }: StartImageProps) {
               })}
             </svg>
             <div style={{ color: "#a1a1aa", display: "flex", fontSize: 24 }}>{latestVelo ? `${latestVelo.toFixed(1)} mph latest` : "Pitch data updating"}</div>
+            {arsenalEvent ? (
+              <div style={{ border: "1px solid rgba(239,159,39,0.38)", color: "#EF9F27", display: "flex", fontSize: 21, fontWeight: 800, letterSpacing: 3, marginLeft: "auto", padding: "10px 14px", textTransform: "uppercase" }}>
+                {arsenalEvent}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -9,6 +9,9 @@ function assert(condition, message) {
 
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
 const pitchChart = await readFile("src/components/pitch-chart.tsx", "utf8");
+const startImage = await readFile("src/app/starts/[id]/opengraph-image.tsx", "utf8");
+const startRecapPage = await readFile("src/app/starts/[id]/[slug]/page.tsx", "utf8");
+const arsenalEventCopy = await readFile("src/lib/arsenal-event-copy.ts", "utf8");
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
@@ -362,7 +365,14 @@ assert(
     pitchChart.includes("New {pitchTypes[type].name}") &&
     pitchChart.includes("Compared with prior archived starts for this pitcher.") &&
     types.includes("arsenalEventSummary?: StartArsenalEventSummary;") &&
-    startService.includes("arsenalEventSummary: start.arsenalEventSummary,"),
+    startService.includes("arsenalEventSummary: start.arsenalEventSummary,") &&
+    arsenalEventCopy.includes("export function formatArsenalEventHeadline") &&
+    arsenalEventCopy.includes("export function formatArsenalEventSentence") &&
+    startImage.includes("formatArsenalEventHeadline(start.arsenalEventSummary)") &&
+    startImage.includes("{arsenalEvent}") &&
+    startRecapPage.includes("formatArsenalEventSentence(start.arsenalEventSummary)") &&
+    startRecapPage.includes("recapSummary(start)") &&
+    startRecapPage.includes("arsenalSentence ? ` ${arsenalSentence}` : \"\""),
   "start detail pages must surface archived first-seen pitch and major usage-shift events without calling request-time Savant",
 );
 

@@ -83,6 +83,11 @@ export function DailySocialCard({ start, variant }: { start: StartOfDay; variant
             </div>
             <div style={{ background: COLORS.gold, display: "flex", height: 2, marginTop: isPortrait ? 8 : 4, width: isPortrait ? 420 : 360 }} />
             <div style={{ display: "flex", fontFamily: "monospace", fontSize: isPortrait ? 28 : 23, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>{line}</div>
+            {start.arsenalEventHeadline ? (
+              <div style={{ border: `1px solid ${COLORS.gold}`, color: COLORS.gold, display: "flex", fontFamily: "monospace", fontSize: isPortrait ? 22 : 18, fontWeight: 800, letterSpacing: 3, padding: "10px 12px", textTransform: "uppercase", width: "fit-content" }}>
+                {start.arsenalEventHeadline}
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -12,6 +12,8 @@ const vercel = JSON.parse(await read("vercel.json"));
 const packageJson = JSON.parse(await read("package.json"));
 
 assert.match(service, /type StartOfDay = \{[\s\S]*gamePk: number;[\s\S]*pitcherId: number;[\s\S]*homeAway: "home" \| "away";[\s\S]*gsPlus: number;[\s\S]*headshotUrl: string;/, "StartOfDay type must expose the required social payload fields.");
+assert.match(service, /formatArsenalEventHeadline\(detail\?\.arsenalEventSummary\)/, "Resolver must carry start arsenal-event headlines into social payloads.");
+assert.match(service, /formatArsenalEventSentence\(detail\?\.arsenalEventSummary\)/, "Resolver must carry start arsenal-event sentences into social copy.");
 assert.match(service, /completion\.totalStarts === 0/, "Resolver must cleanly no-op off days.");
 assert.match(service, /!completion\.isFinal/, "Resolver must wait until the full slate is final.");
 assert.match(service, /start\.source\?\.line !== "fixture"/, "Resolver must filter out fixture placeholder lines.");
@@ -19,13 +21,15 @@ assert.match(service, /import \{ isRankedRegularStart \} from "@\/lib\/start-cla
 assert.match(service, /start\.source\?\.line !== "fixture" && isRankedRegularStart\(start\)/, "Resolver must require the shared 2.0 IP ranked-start floor.");
 assert.match(service, /tiedStarts\.length > 1/, "Resolver must skip shared top GS+ ties in v1.");
 assert.match(service, /renderUrls: \{[\s\S]*instagram: absoluteUrl\(dailySocialImagePath\(date, "instagram"\)\),[\s\S]*x: absoluteUrl\(dailySocialImagePath\(date, "x"\)\),[\s\S]*\}/, "Resolver must publish stable absolute URLs for both crops.");
-assert.match(service, /x: `\$\{start\.name\}: Start of the Day\.[\s\S]*\$\{start\.gsPlus\} GS\+\.`/, "X copy must be generated link-free from real start data.");
+assert.ok(service.includes('x: `${start.name}: Start of the Day. ${line}. ${start.gsPlus} GS+.${start.arsenalEventHeadline ? ` ${start.arsenalEventHeadline}.` : ""}`,'), "X copy must be generated link-free from real start data.");
+assert.match(service, /start\.arsenalEventHeadline \? ` \$\{start\.arsenalEventHeadline\}\.`/, "X copy must include arsenal-event headline when present.");
 assert.match(service, /rankingsUrl = absoluteUrl\(`\/starts\/\$\{start\.date\}`\)/, "Rankings URL must be available separately for the X reply.");
 
 assert.match(card, /instagram: \{ width: 1080, height: 1350 \}/, "Instagram render must be 1080x1350.");
 assert.match(card, /x: \{ width: 1600, height: 900 \}/, "X render must be 1600x900.");
 assert.match(card, /Today(?:'|&apos;)s best start/, "Card eyebrow must use a finished-state label.");
 assert.match(card, /Start of the Day/, "Card must retain the Start of the Day subtitle.");
+assert.match(card, /start\.arsenalEventHeadline/, "Card must render the arsenal-event badge when present.");
 assert.match(card, /Toe the Slab/, "Card must lock the Toe the Slab masthead at the top.");
 assert.doesNotMatch(card, /View game log/i, "Social card must not render the removed game-log button.");
 assert.doesNotMatch(card, /league avg/i, "Social card must not render the removed league-average line.");

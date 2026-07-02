@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
+import { formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
@@ -32,7 +33,11 @@ export async function generateMetadata({ params }: StartRecapPageProps): Promise
 
   const { start, canonicalPath } = resolved;
   const title = `${start.pitcher.name} start recap - ${formatShortDate(start.date)} GS+ ${start.gameScorePlus}`;
-  const description = `${start.pitcher.name} vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`;
+  const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
+  const description = [
+    `${start.pitcher.name} vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`,
+    arsenalSentence,
+  ].filter(Boolean).join(" ");
 
   return {
     title,
@@ -150,17 +155,18 @@ async function resolveStartRecap(date: string, slug: string) {
   };
 }
 
-function recapSummary(start: StartSummary) {
+function recapSummary(start: StartDetail) {
   const band = start.gameScorePlusBreakdown?.gradeBand.label.toLowerCase() ?? "graded";
   const decision = formatDecision(start.result).toLowerCase();
   const flags = start.eventFlags ?? [];
+  const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
   const flagSentence = flags.includes("HARD_LUCK")
     ? "The hard-luck tag fits the score and decision."
     : flags.includes("VULTURE")
       ? "The vulture tag marks the decision as context, not ranking credit."
       : "The ranking stays driven by the canonical GS+ line.";
 
-  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. The official decision was ${decision}. ${flagSentence}`;
+  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}`;
 }
 
 function formatDecision(result: StartSummary["result"]) {
