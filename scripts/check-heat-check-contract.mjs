@@ -23,6 +23,7 @@ const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
+const seasonControls = formPage.slice(formPage.indexOf("function SeasonBoardControls"), formPage.indexOf("function SeasonExpandControls"));
 
 assert(
   heatRoute.includes('export { generateHeatCheckMetadata as generateMetadata, HeatCheckPage as default } from "@/app/form/page";'),
@@ -250,7 +251,7 @@ assert(
 assert(
   formPage.includes("team?: string;") &&
     formPage.includes('const team = params.team ?? "";') &&
-    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: team ? false : qualifiedOnly, team })") &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const allTeamsView = !team;") &&
@@ -312,7 +313,9 @@ assert(
     formPage.includes('const seasonView = view === "season";') &&
     formPage.includes("const seasonPitchers = leaderboard.pitchers") &&
     formPage.includes(".sort((a, b) => compareSeasonRows(a, b, sort));") &&
-    formPage.includes("const seasonRankByPitcherId = buildGlobalSeasonRankMap(qualifiedPitchers);") &&
+    formPage.includes("const seasonRankByPitcherId = buildGlobalSeasonRankMap(leaderboard.pitchers.filter(isSeasonQualifiedPitcher));") &&
+    formPage.includes("const seasonQualifiedPitchers = seasonPitchers.filter(isSeasonQualifiedPitcher);") &&
+    formPage.includes('const seasonUnrankedPitchers = seasonPitchers.filter((pitcher) => !isSeasonQualifiedPitcher(pitcher));') &&
     formPage.includes('const seasonSortOptions = [') &&
     formPage.includes('{ key: "season-gs", label: "Season GS+" }') &&
     formPage.includes('{ key: "gem-rate", label: "Gem rate" }') &&
@@ -327,6 +330,15 @@ assert(
     formPage.includes("function visibleSeasonPitchers") &&
     formPage.includes('if (team || show === "all") return pitchers;') &&
     formPage.includes("return pitchers.slice(0, 25);") &&
+    formPage.includes("function isSeasonQualifiedPitcher") &&
+    formPage.includes("return pitcher.seasonQualification.qualified;") &&
+    formPage.includes("function formatSeasonConsistency") &&
+    formPage.includes('if (pitcher.seasonStartCount < FORM_CONFIG.minStartsForConsistency) return "--";') &&
+    formPage.includes("function SeasonQualificationDisclosure") &&
+    formPage.includes("arms below {threshold} GS are not yet ranked. The bar scales with the season.") &&
+    formPage.includes("Show unranked arms") &&
+    formPage.includes('data-season-unranked={unranked ? "true" : undefined}') &&
+    formPage.includes('{unranked ? "-" : `#${rank}`}') &&
     formPage.includes('data-responsive-check="heat-view-controls"') &&
     formPage.includes('data-heat-view-link={heatViewLink ? "true" : undefined}') &&
     formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })}') &&
@@ -336,12 +348,21 @@ assert(
     formPage.includes("const bandColor = seasonView ? qualityTier.color") &&
     formPage.includes('seasonView ? "Season GS+" : "Form"') &&
     formPage.includes("pitcher.seasonStartCount} GS") &&
-    formPage.includes('seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
+    formPage.includes('unranked ? "rounded border border-white/10 px-1.5 py-1 text-zinc-400" : "text-zinc-500"') &&
     formPage.includes("seasonView ? null : (") &&
     formPage.includes("function SeasonBoardControls") &&
     formPage.includes('data-responsive-check="heat-season-sort-controls"') &&
+    !seasonControls.includes("Qualified") &&
     formPage.includes("function SeasonExpandControls") &&
     formService.includes("seasonStartCount: starts.length,") &&
+    formService.includes("function buildTeamGamesPlayedMap") &&
+    formService.includes("function attachSeasonQualification") &&
+    formService.includes("seasonQualificationMinStarts(teamGames)") &&
+    formTokens.includes("seasonQualificationDivisor: 16") &&
+    formTokens.includes("minStartsForConsistency: 4") &&
+    types.includes("export type FormSeasonQualification = {") &&
+    types.includes("seasonQualification: FormSeasonQualification;") &&
+    types.includes("seasonQualificationThreshold: number;") &&
     formService.includes("function buildSeasonDepthStats(starts: StartSummary[]): FormSeasonDepthStats") &&
     formService.includes("gemRate: round1((scores.filter((score) => score >= 65).length / total) * 100)") &&
     formService.includes("dudRate: round1((scores.filter((score) => score <= 30).length / total) * 100)") &&

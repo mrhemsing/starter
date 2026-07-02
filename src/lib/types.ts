@@ -214,6 +214,13 @@ export type FormSeasonDepthStats = {
   }>;
 };
 
+export type FormSeasonQualification = {
+  teamGamesPlayed: number;
+  minStarts: number;
+  divisor: number;
+  qualified: boolean;
+};
+
 export type FormDecisionRecord = {
   wins: number;
   losses: number;
@@ -277,6 +284,7 @@ export type FormSummary = {
   lastStart: FormStartPoint | null;
   seasonStats: FormSeasonStats;
   seasonDepthStats: FormSeasonDepthStats;
+  seasonQualification: FormSeasonQualification;
   seasonDecisionRecord: FormDecisionRecord;
   driverChips: FormDriverChip[];
   workload: FormWorkload;
@@ -302,6 +310,8 @@ export type FormLeaderboardResponse = {
   leagueMeanGS: number;
   count: number;
   qualifiedCount: number;
+  seasonQualificationThreshold: number;
+  seasonUnrankedCount: number;
   heatingCount: number;
   coolingCount: number;
   pitchers: FormSummary[];

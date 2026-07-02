@@ -101,6 +101,9 @@ export default async function MethodologyPage() {
           <MethodCard title="Form" id="form">
             Form is a rolling view of recent GS+ across a pitcher&apos;s qualified starts. Heat Check bands highlight starters who are running above, near, or below their recent baseline.
           </MethodCard>
+          <MethodCard title="Season qualification" id="season-qualification">
+            Heat Check season rankings require roughly one start per 16 team games played. Arms below that bar remain visible below the leaderboard but do not receive ranked positions.
+          </MethodCard>
           <MethodCard title="Watch Score" id="watch-score">
             Watch score ranks probable matchups before the game. It combines the strongest arm in the game, the quality of the pairing, and the matchup context so the best games rise first.
           </MethodCard>

@@ -30,10 +30,13 @@ assert(
 
 assert(
   formPage.includes('const params = { ...(rawParams ?? {}), view };') &&
+    formPage.includes('if (seasonView && (params.sort === "season-gs" || params.qualified))') &&
     formPage.includes('const path = values.view === "season" ? "/heat-check/season" : "/heat-check";') &&
     formPage.includes('if (key === "view") continue;') &&
+    formPage.includes('if (path === "/heat-check/season" && key === "sort" && value === "season-gs") continue;') &&
+    formPage.includes('if (path === "/heat-check/season" && key === "qualified") continue;') &&
     formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })}'),
-  "Heat Check toggle and filter links must keep the season view on /heat-check/season instead of ?view=season",
+  "Heat Check toggle and filter links must keep the season view on /heat-check/season, with clean default-sort URLs",
 );
 
 assert(

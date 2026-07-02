@@ -9,6 +9,8 @@ export const FORM_CONFIG = {
   windowDefault: 5 as const,
   windows: [3, 5, 10] as const,
   minStartsToQualify: 3,
+  seasonQualificationDivisor: 16,
+  minStartsForConsistency: 4,
   minStartsInWindow: 2,
   ipFloor: 2.0,
   heatingDelta: 0.75,
@@ -31,6 +33,10 @@ export const FORM_CONFIG = {
   heatIndexRgsWeight: 1.6,
   heatIndexTrendWeight: 0.7,
 };
+
+export function seasonQualificationMinStarts(teamGamesPlayed: number) {
+  return Math.max(1, Math.ceil(Math.max(0, teamGamesPlayed) / FORM_CONFIG.seasonQualificationDivisor));
+}
 
 export const FORM_DELTA_STEADY_THRESHOLD = 1.0;
 

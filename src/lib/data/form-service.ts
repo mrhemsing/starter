@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, tierOf } from "@/lib/form-tokens";
+import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonDepthStats, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
@@ -132,8 +132,10 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const starts = options.team ? await getTeamAugmentedFormStarts(season, window, startSet.starts, options.team) : startSet.starts;
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
+  const teamGamesPlayed = buildTeamGamesPlayedMap(starts, startSet.formThroughDate);
   const summaries = buildPitcherBuckets(starts)
     .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext))
+    .map((summary) => attachSeasonQualification(summary, teamGamesPlayed))
     .map((summary) => attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds))
     .sort(compareRollingFormLevelDesc);
   const [availabilityStatuses, nextStarts] = await Promise.all([
@@ -144,6 +146,7 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
   const qualifiedPitchers = summariesWithAvailability.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
   const pitchers = options.qualifiedOnly === false ? summariesWithAvailability : qualifiedPitchers;
   const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);
+  const seasonQualificationThreshold = Math.max(...summariesWithAvailability.map((summary) => summary.seasonQualification.minStarts), seasonQualificationMinStarts(0));
 
   return {
     generatedAt: new Date().toISOString(),
@@ -154,9 +157,42 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
     leagueMeanGS: round1(leagueMeanGS),
     count: pitchersWithNextStarts.length,
     qualifiedCount: qualifiedPitchers.length,
+    seasonQualificationThreshold,
+    seasonUnrankedCount: summariesWithAvailability.filter((summary) => !summary.seasonQualification.qualified).length,
     heatingCount: qualifiedPitchers.filter((summary) => summary.trend === "heating").length,
     coolingCount: qualifiedPitchers.filter((summary) => summary.trend === "cooling").length,
     pitchers: pitchersWithNextStarts,
+  };
+}
+
+function buildTeamGamesPlayedMap(starts: StartSummary[], formThroughDate: string | null) {
+  const teamGames = new Map<string, Set<number>>();
+
+  for (const start of starts) {
+    if (formThroughDate && start.date > formThroughDate) continue;
+    for (const team of [start.pitcher.team, start.opponent]) {
+      const normalizedTeam = team.trim().toUpperCase();
+      if (!normalizedTeam) continue;
+      const games = teamGames.get(normalizedTeam) ?? new Set<number>();
+      games.add(start.gamePk);
+      teamGames.set(normalizedTeam, games);
+    }
+  }
+
+  return new Map([...teamGames.entries()].map(([team, games]) => [team, games.size]));
+}
+
+function attachSeasonQualification(summary: FormSummary, teamGamesPlayed: Map<string, number>): FormSummary {
+  const teamGames = teamGamesPlayed.get(summary.team.trim().toUpperCase()) ?? summary.seasonStartCount;
+  const minStarts = seasonQualificationMinStarts(teamGames);
+  return {
+    ...summary,
+    seasonQualification: {
+      teamGamesPlayed: teamGames,
+      minStarts,
+      divisor: FORM_CONFIG.seasonQualificationDivisor,
+      qualified: summary.seasonStartCount >= minStarts,
+    },
   };
 }
 
@@ -574,6 +610,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const tier = formHeatBandOf(rgs, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
+  const fallbackSeasonMinStarts = seasonQualificationMinStarts(starts.length);
 
   return {
     pitcherId: bucket.pitcherId,
@@ -595,6 +632,12 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     lastStart,
     seasonStats,
     seasonDepthStats,
+    seasonQualification: {
+      teamGamesPlayed: starts.length,
+      minStarts: fallbackSeasonMinStarts,
+      divisor: FORM_CONFIG.seasonQualificationDivisor,
+      qualified: starts.length >= fallbackSeasonMinStarts,
+    },
     seasonDecisionRecord,
     driverChips,
     workload,
