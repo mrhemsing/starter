@@ -538,6 +538,13 @@ assert(
 );
 
 assert(
+  types.includes('result: StartSummary["result"];') &&
+    formService.includes("function buildStartPoint(starts: StartSummary[], index: number, window: FormWindow): FormStartPoint") &&
+    formService.includes("result: start.result,"),
+  "Heat Check Form start points must preserve canonical W/L/ND decisions for series and last-start payloads",
+);
+
+assert(
     formVisuals.includes("formDeltaBand") &&
     formVisuals.includes("baselineValue?: number;") &&
     formVisuals.includes("const baselineY = yFor(baselineValue ?? leagueMeanGS);") &&

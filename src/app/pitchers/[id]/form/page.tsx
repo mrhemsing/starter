@@ -541,7 +541,7 @@ function GameLogRow({
   pitcherName,
   source,
 }: {
-  start: { id: string; startHref: string; gameDate: string; opp: string; park: string; ip: number; h: number; er: number; bb: number; k: number; gsPlus: number; tier: HeatBandKey };
+  start: { id: string; startHref: string; gameDate: string; opp: string; park: string; ip: number; h: number; er: number; bb: number; k: number; gsPlus: number; result: FormStartPoint["result"]; tier: HeatBandKey };
   depth: StartDetail | null;
   highlight: FeaturedStartHighlight | null;
   pitcherName: string;
@@ -557,7 +557,10 @@ function GameLogRow({
           <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
         </Link>
         <Link href={href} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">{depth ? "Depth" : "Summary"}</span>
+        <span className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">
+          <DecisionPill result={start.result} />
+          <span>{depth ? "Depth" : "Summary"}</span>
+        </span>
       </summary>
       {depth ? <RecentStartCard start={depth} highlight={highlight} pitcherName={pitcherName} source={source} /> : null}
     </details>
@@ -577,6 +580,7 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
         <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: tier.color }}>{start.date} / {tier.label}</p>
         <Link href={startHref(start.id, sourceParams(source))} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">vs {start.opponent}</Link>
         <p className="mt-2 font-mono text-xs text-zinc-400">{formatStartLine(start.line)}</p>
+        <DecisionPill result={start.result} className="mt-3" />
         {highlight ? (
           <div className="mt-3">
             <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} />
@@ -596,6 +600,24 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
       </div>
     </article>
   );
+}
+
+function DecisionPill({ result, className = "" }: { result: FormStartPoint["result"]; className?: string }) {
+  return (
+    <span
+      className={`inline-flex min-h-7 w-fit items-center rounded border border-white/10 bg-white/5 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300 ${className}`}
+      data-pitcher-start-decision={result}
+      title="Official pitcher decision, shown as context only"
+    >
+      {decisionLabel(result)}
+    </span>
+  );
+}
+
+function decisionLabel(result: FormStartPoint["result"]) {
+  if (result === "W") return "Win";
+  if (result === "L") return "Loss";
+  return "No decision";
 }
 
 function MiniStat({ label, value, color }: { label: string; value: string; color?: string }) {

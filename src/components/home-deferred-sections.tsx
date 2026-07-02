@@ -303,6 +303,13 @@ function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge
           <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">
             <MetaLine segments={[`${start.pitcher.team} vs ${start.opponent}`, formatShortDate(start.date)]} />
           </p>
+          <span
+            className="mt-2 inline-flex rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400"
+            data-home-best-start-decision={start.result}
+            title="Official pitcher decision, shown as context only"
+          >
+            {formatDecisionLabel(start.result)}
+          </span>
         </div>
         <div className="score-bug rounded border border-amber-300/30 bg-amber-300 px-3 py-2 text-center text-zinc-950">
           <p className="font-serif text-4xl font-bold leading-none">{start.gameScorePlus}</p>
@@ -325,6 +332,12 @@ function scoreBand(score: number): FormTier {
   if (score >= 46) return "even";
   if (score >= 30) return "cooling";
   return "ice";
+}
+
+function formatDecisionLabel(result: StartSummary["result"]) {
+  if (result === "W") return "Win";
+  if (result === "L") return "Loss";
+  return "No decision";
 }
 
 function formatShortDate(date: string) {

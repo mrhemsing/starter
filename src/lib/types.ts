@@ -173,6 +173,7 @@ export type FormStartPoint = {
   bb: number;
   k: number;
   gsPlus: number;
+  result: StartSummary["result"];
   tier: FormTier;
   rollingMean: number;
   bandLow: number;

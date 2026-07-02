@@ -44,6 +44,7 @@ const tonightApiSource = readFileSync("src/app/api/tonight/route.ts", "utf8");
 const upcomingApiSource = readFileSync("src/app/api/upcoming/route.ts", "utf8");
 const tonightsMustWatchSource = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
 const tonightServiceSource = readFileSync("src/lib/data/tonight-service.ts", "utf8");
+const formServiceSource = readFileSync("src/lib/data/form-service.ts", "utf8");
 const typesSource = readFileSync("src/lib/types.ts", "utf8");
 
 function assert(condition, message) {
@@ -390,6 +391,9 @@ function assertLastStart(lastStart, label) {
   assertNumber(lastStart.bb, `${label} walks`);
   assertNumber(lastStart.k, `${label} strikeouts`);
   assertNumber(lastStart.gsPlus, `${label} gsPlus`);
+  if (lastStart.result !== undefined) {
+    assert(["W", "L", "ND"].includes(lastStart.result), `${label} result must be W, L, or ND`);
+  }
   assert(FORM_TIER_KEYS.includes(lastStart.tier), `${label} tier must be valid`);
   assertNumber(lastStart.rollingMean, `${label} rollingMean`);
   assertNumber(lastStart.bandLow, `${label} bandLow`);
@@ -1524,6 +1528,12 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryId(game)).join(\",\")") &&
       !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryAriaLabel(game)).join(\"|\")"),
     "upcoming watch-card summary ids and aria labels must share value helpers across section telemetry, card attributes, and summaries",
+  );
+
+  assert(
+    typesSource.includes('result: StartSummary["result"];') &&
+      formServiceSource.includes("result: start.result,"),
+    "upcoming starter lastStart payload must preserve canonical W/L/ND result from Form start points",
   );
   assert(
     tonightsMustWatchSource.includes("function watchComponentCountValue()") &&

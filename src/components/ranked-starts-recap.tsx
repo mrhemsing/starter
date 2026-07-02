@@ -246,7 +246,10 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
             <MetaLine segments={[start.pitcher.team, <StartLineText key="line" line={start.line} />]} />
           </p>
-          {gas ? <span className="mt-1 inline-flex rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#F6C445]">GAS</span> : null}
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <DecisionPill result={start.result} />
+            {gas ? <span className="inline-flex rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#F6C445]">GAS</span> : null}
+          </div>
         </div>
       </Link>
       <div className="flex items-center gap-2">
@@ -264,6 +267,24 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       </div>
     </article>
   );
+}
+
+function DecisionPill({ result }: { result: StartSummary["result"] }) {
+  return (
+    <span
+      className="inline-flex rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400"
+      data-home-start-decision={result}
+      title="Official pitcher decision, shown as context only"
+    >
+      {decisionLabel(result)}
+    </span>
+  );
+}
+
+function decisionLabel(result: StartSummary["result"]) {
+  if (result === "W") return "Win";
+  if (result === "L") return "Loss";
+  return "No decision";
 }
 
 function isRecapGasStart(start: StartSummary, bandLabel: string) {

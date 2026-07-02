@@ -813,6 +813,7 @@ function buildStartPoint(starts: StartSummary[], index: number, window: FormWind
     bb: start.line.walks,
     k: start.line.strikeouts,
     gsPlus: start.gameScorePlus,
+    result: start.result,
     tier: tierOf(start.gameScorePlus).key,
     rollingMean: round1(rollingMean),
     bandLow: round1(rollingMean - sd),
