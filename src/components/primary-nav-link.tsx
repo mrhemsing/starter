@@ -15,8 +15,9 @@ type PrimaryNavLinkProps = {
 export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const canPrefetch = href !== "/starts";
-  const canClientNavigate = href !== "/starts";
+  const documentNavigation = href === "/starts" || href.startsWith("/live/");
+  const canPrefetch = !documentNavigation;
+  const canClientNavigate = !documentNavigation;
   const [pendingIntent, setPendingIntent] = useState<{ href: string; from: string } | null>(null);
   const pending = pendingIntent?.href === href && pendingIntent.from === pathname;
 
@@ -42,6 +43,20 @@ export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProp
     if (canPrefetch) router.prefetch(href);
     router.push(href);
   };
+
+  if (documentNavigation) {
+    return (
+      <a
+        href={href}
+        className={`${className ?? ""}${pending ? " text-amber-300 opacity-80" : ""}`}
+        data-nav-pending={pending ? "true" : undefined}
+        data-document-nav="true"
+        onClick={handleClick}
+      >
+        {children}
+      </a>
+    );
+  }
 
   return (
     <Link

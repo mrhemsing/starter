@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, primaryNavLink, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
@@ -18,6 +18,7 @@ const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, ml
   readFile("src/lib/data/start-service.ts", "utf8"),
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/site-nav.tsx", "utf8"),
+  readFile("src/components/primary-nav-link.tsx", "utf8"),
   readFile("src/lib/data/home-ranked-service.ts", "utf8"),
   readFile("src/components/home-slate-status-line.tsx", "utf8"),
   readFile("src/app/globals.css", "utf8"),
@@ -332,8 +333,12 @@ assert(
     liveNavLabel.includes('data-live-nav-active={active ? "true" : "false"}') &&
     liveNavLabel.includes('data-live-nav-route-active={routeActive ? "true" : "false"}') &&
     liveNavLabel.includes('{state === "idle" ? null : <span') &&
+    primaryNavLink.includes('const documentNavigation = href === "/starts" || href.startsWith("/live/");') &&
+    primaryNavLink.includes("if (documentNavigation)") &&
+    primaryNavLink.includes("<a") &&
+    primaryNavLink.includes('data-document-nav="true"') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
-  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding and a two-row mobile grid",
+  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding, document navigation, and a two-row mobile grid",
 );
 
 assert(
