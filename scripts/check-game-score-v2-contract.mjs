@@ -11,6 +11,7 @@ const canonicalRecord = await readFile("src/lib/canonical-start-record.ts", "utf
 const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const slatePage = await readFile("src/app/slate/[window]/[date]/page.tsx", "utf8");
+const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
 assert(
@@ -54,6 +55,15 @@ assert(
     slatePage.includes("data-slate-start-event-flags={start.eventFlags.join(\",\")}") &&
     slatePage.includes("function formatStartEventFlag(flag: NonNullable<StartSummary[\"eventFlags\"]>[number])"),
   "completed slate cards must expose canonical GSv2, GS+ adjustment context, and start event flags",
+);
+
+assert(
+  methodologyPage.includes("Game Score v2 is the familiar box-score benchmark.") &&
+    methodologyPage.includes("Toe the Slab stores GSv2 on the same canonical start record as GS+") &&
+    methodologyPage.includes("The adjustment label is shown as GS+ minus GSv2.") &&
+    methodologyPage.includes("GSv2 falls back to earned runs and zero home runs until those official inputs are added.") &&
+    methodologyPage.includes('<FormulaItem label="Adjustment" value="GS+ minus GSv2" />'),
+  "methodology must explain GSv2, the GS+ adjustment label, and current canonical input fallbacks",
 );
 
 console.log("game score v2 contract ok: GSv2 is computed once and carried through canonical start records");

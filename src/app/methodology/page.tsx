@@ -58,9 +58,40 @@ export default async function MethodologyPage() {
             <FormulaItem label="Whiff context" value="+0.35 per pct point" />
             <FormulaItem label="Velocity context" value="+1.75 per mph" />
             <FormulaItem label="Park context" value="(1.00 - run factor) x 12" />
+            <FormulaItem label="Opponent quality" value="team quality run value" />
+            <FormulaItem label="Opponent offense" value="offense run value" />
             <FormulaItem label="Display transform" value="50 + (raw - 59) x 0.72, capped 20-80" />
           </dl>
           <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
+        </section>
+
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Calibration bridge</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">GSv2 beside GS+</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Game Score v2 is the familiar box-score benchmark. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, runs, and home runs. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. The current canonical line does not yet carry total runs or home runs, so GSv2 falls back to earned runs and zero home runs until those official inputs are added.
+          </p>
+          <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
+            <FormulaItem label="GSv2 baseline" value="40" />
+            <FormulaItem label="Outs" value="+2 per out" />
+            <FormulaItem label="Strikeouts" value="+1 per K" />
+            <FormulaItem label="Hits" value="-2 per H" />
+            <FormulaItem label="Walks" value="-2 per BB" />
+            <FormulaItem label="Runs" value="-3 per run" />
+            <FormulaItem label="Home runs" value="-6 per HR" />
+            <FormulaItem label="Adjustment" value="GS+ minus GSv2" />
+          </dl>
+        </section>
+
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Decision context</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Hard luck and vulture flags</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Decisions are context, not ranking inputs. A hard-luck flag marks a loss or no-decision with GS+ 60 or better. A vulture flag marks a win with GS+ 35 or worse. The chips exist to explain the story around the line, while the ranked order stays driven by GS+ and its visible line tiebreakers.
+          </p>
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">

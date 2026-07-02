@@ -48,7 +48,9 @@ assert(
 );
 
 assert(
-  methodologyPage.includes("Completed starts use line, park, opponent, and verified pitch-event context when available."),
+  methodologyPage.includes("Completed starts use line, park, opponent, and verified pitch-event context when available.") &&
+    methodologyPage.includes('<FormulaItem label="Opponent quality" value="team quality run value" />') &&
+    methodologyPage.includes('<FormulaItem label="Opponent offense" value="offense run value" />'),
   "public methodology must already disclose park and opponent context at a high level",
 );
 
