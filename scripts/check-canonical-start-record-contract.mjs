@@ -74,13 +74,22 @@ assert(
     canonicalStore.includes("process.cwd().startsWith(\"/var/task\")") &&
     canonicalStore.includes("process.cwd().startsWith(\"/var/runtime\")") &&
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
+    canonicalStore.includes("const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();") &&
+    canonicalStore.includes("const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();") &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
     canonicalStore.includes("function upsertCanonicalStartRecord(") &&
     canonicalStore.includes("async function readCanonicalStartStore(") &&
     canonicalStore.includes("async function writeCanonicalStartStore(") &&
     canonicalStore.includes("function isCanonicalStoreUnavailableError") &&
+    canonicalStore.includes('code === "EMFILE"') &&
     canonicalStore.includes('code === "ENOENT"') &&
+    canonicalStore.includes("error instanceof SyntaxError") &&
+    canonicalStore.includes("if (isReadOnlyServerRuntime()) {") &&
+    canonicalStore.includes("volatileCanonicalStartStores.set(store.date, store);") &&
+    canonicalStore.includes("async function writeCanonicalStartStoreFile(") &&
+    canonicalStore.includes("await fs.rename(tempPath, filePath);") &&
+    canonicalStore.includes("function emptyCanonicalStartStore(") &&
     canonicalStore.includes("return starts.map((start) => startSummaryFromCanonicalRecord(canonicalStartRecordFromSummary(start, now), start));") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&

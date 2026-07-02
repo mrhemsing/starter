@@ -15,6 +15,8 @@ const CANONICAL_START_STORE_DIR = isReadOnlyServerRuntime()
   ? path.join(os.tmpdir(), "toe-the-slab", "canonical-starts")
   : path.join(process.cwd(), ".data", "canonical-starts");
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
+const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
+const canonicalStartStoreWriteLocks = new Map<string, Promise<void>>();
 
 function isReadOnlyServerRuntime() {
   return Boolean(process.env.VERCEL)
@@ -100,6 +102,10 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 }
 
 async function readCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile> {
+  if (isReadOnlyServerRuntime()) {
+    return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
+  }
+
   try {
     const raw = await fs.readFile(canonicalStartStorePath(date), "utf8");
     const parsed = JSON.parse(raw) as CanonicalStartStoreFile;
@@ -109,14 +115,40 @@ async function readCanonicalStartStore(date: string): Promise<CanonicalStartStor
       records: Array.isArray(parsed.records) ? parsed.records : [],
     };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    return { date, updatedAt: new Date(0).toISOString(), records: [] };
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    return emptyCanonicalStartStore(date);
   }
 }
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
+  if (isReadOnlyServerRuntime()) {
+    volatileCanonicalStartStores.set(store.date, store);
+    return;
+  }
+
+  const previousWrite = canonicalStartStoreWriteLocks.get(store.date) ?? Promise.resolve();
+  const nextWrite = previousWrite.catch(() => undefined).then(() => writeCanonicalStartStoreFile(store));
+  canonicalStartStoreWriteLocks.set(store.date, nextWrite);
+
+  try {
+    await nextWrite;
+  } finally {
+    if (canonicalStartStoreWriteLocks.get(store.date) === nextWrite) {
+      canonicalStartStoreWriteLocks.delete(store.date);
+    }
+  }
+}
+
+async function writeCanonicalStartStoreFile(store: CanonicalStartStoreFile) {
+  const filePath = canonicalStartStorePath(store.date);
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   await fs.mkdir(CANONICAL_START_STORE_DIR, { recursive: true });
-  await fs.writeFile(canonicalStartStorePath(store.date), `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await fs.writeFile(tempPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await fs.rename(tempPath, filePath);
+}
+
+function emptyCanonicalStartStore(date: string): CanonicalStartStoreFile {
+  return { date, updatedAt: new Date(0).toISOString(), records: [] };
 }
 
 function canonicalStartStorePath(date: string) {
@@ -136,7 +168,7 @@ function officialCanonicalLineSource(source: StartDataSource["line"]): Extract<S
 
 function isCanonicalStoreUnavailableError(error: unknown) {
   const code = (error as NodeJS.ErrnoException).code;
-  return code === "EACCES" || code === "ENOENT" || code === "EPERM" || code === "EROFS";
+  return code === "EACCES" || code === "EMFILE" || code === "ENOENT" || code === "EPERM" || code === "EROFS" || error instanceof SyntaxError;
 }
 
 function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStartRecord) {
