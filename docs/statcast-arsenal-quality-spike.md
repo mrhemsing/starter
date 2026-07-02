@@ -62,6 +62,10 @@ Store these fields as an optional `statcast` object on archived pitch events fir
 5. Sync enriched archive rows to Supabase as both local archive JSON and queryable `toetheslab_statcast_pitch_event_enrichments` rows.
 6. Only then add product copy for chase, contact, xwOBA, hard-hit, and barrel.
 
+## Backfill IO Plan
+
+The Savant enrichment backfill must run off-peak after the slate completes, in date slices, with an IO-budget check before each slice. Default launch shape: one date per slice, stop for the night if Supabase Disk IO budget falls below 35% remaining or if Postgres starts returning 503, 504, or 57014-class timeout errors. The backfill should resume from the last completed date, not restart from the season opener. If steady-state IO after the July 2 resilience fixes has comfortable headroom, keep the current compute tier and temporarily bump only for the backfill window; if steady-state sits near the budget floor, record the measurement and take a standing one-tier bump before enrichment begins.
+
 ## Product Order
 
 1. Shipped: start-detail archive-derived quality panel using CSW, whiff, zone, swing, and velocity.

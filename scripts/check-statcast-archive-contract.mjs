@@ -56,6 +56,14 @@ assert(syncScript.includes("statcast pitch enrichments"), "Supabase sync must lo
 
 assert(spike.includes("toetheslab_statcast_pitch_event_enrichments"), "Statcast spike doc must name the queryable enrichment table");
 assert(spike.includes("must not fetch Savant during normal page render"), "Statcast spike guardrail must keep Savant out of normal page render");
+assert(
+  spike.includes("## Backfill IO Plan") &&
+    spike.includes("one date per slice") &&
+    spike.includes("Disk IO budget falls below 35%") &&
+    spike.includes("503, 504, or 57014-class timeout errors") &&
+    spike.includes("resume from the last completed date"),
+  "Statcast spike doc must define an off-peak sliced backfill plan with IO budget floor, timeout stop rule, and resumability before enrichment runs",
+);
 assert(renderPathAudit.includes('"@/lib/data/baseball-savant-client"'), "render-path audit must continue blocking direct Savant imports in idle pages");
 
 console.log("statcast archive contract ok: optional pitch enrichment shape, validators, Supabase sync, RLS, and render guardrails are pinned");

@@ -43,9 +43,20 @@ type SupabasePitcherArchiveArsenalRow = {
   source: "mlb-stats-api";
 };
 
+type SupabaseArchiveManifestRow = {
+  season: string;
+  start_date: string;
+  end_date: string;
+  counts: {
+    starts?: number;
+  } | null;
+  synced_at?: string | null;
+};
+
 const COMPLETED_STARTS_TABLE = "toetheslab_mlb_completed_starts";
 const PITCHER_ARCHIVE_ARSENALS_TABLE = "toetheslab_pitcher_archive_arsenals";
 const FEATURED_START_HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
+const ARCHIVE_MANIFESTS_TABLE = "toetheslab_mlb_archive_manifests";
 const PAGE_SIZE = 1000;
 export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;
 
@@ -74,9 +85,11 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
   }
 
   try {
-    const starts = await readSupabaseArchivedSeasonCompletedStarts(season);
-    const firstDate = starts[0]?.date ?? null;
-    const lastDate = starts.at(-1)?.date ?? null;
+    const manifest = await readSupabaseArchiveManifest(season);
+    const starts = manifest ? [] : await readSupabaseArchivedSeasonCompletedStarts(season);
+    const firstDate = manifest?.start_date ?? starts[0]?.date ?? null;
+    const lastDate = manifest?.end_date ?? starts.at(-1)?.date ?? null;
+    const startCount = manifest?.counts?.starts ?? starts.length;
     const freshness = archiveFreshness(lastDate, options.expectedLastCompletedDate);
     if (freshness.stale) {
       console.error("[supabase-archive] archive freshness lag exceeds threshold", {
@@ -90,7 +103,7 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
     return {
       configured,
       env,
-      starts: starts.length,
+      starts: startCount,
       firstDate,
       lastDate,
       freshness,
@@ -204,15 +217,30 @@ function highlightFromStoredVideoId(videoId: string, isShort: boolean): Featured
   };
 }
 
+async function readSupabaseArchiveManifest(season: string): Promise<SupabaseArchiveManifestRow | null> {
+  const rows = await fetchSupabaseRows<SupabaseArchiveManifestRow>(
+    ARCHIVE_MANIFESTS_TABLE,
+    {
+      season: `eq.${season}`,
+      select: "season,start_date,end_date,counts,synced_at",
+      limit: "1",
+    },
+    0,
+    0,
+  );
+  return rows[0] ?? null;
+}
+
 async function fetchSupabaseRows<T>(table: string, filters: Record<string, string | string[]>, from: number, to: number): Promise<T[]> {
   const baseUrl = supabaseUrl();
   const key = supabaseServiceKey();
   if (!baseUrl || !key) return [];
 
   const url = new URL(`/rest/v1/${table}`, baseUrl);
-  url.searchParams.set("select", "*");
+  url.searchParams.set("select", String(filters.select ?? "*"));
 
   for (const [name, value] of Object.entries(filters)) {
+    if (name === "select") continue;
     const values = Array.isArray(value) ? value : [value];
     for (const item of values) {
       url.searchParams.append(name, item);

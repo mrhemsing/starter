@@ -160,6 +160,11 @@ assert(
 
 assert(
   supabaseArchive.includes("export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;") &&
+    supabaseArchive.includes('const ARCHIVE_MANIFESTS_TABLE = "toetheslab_mlb_archive_manifests";') &&
+    supabaseArchive.includes("const manifest = await readSupabaseArchiveManifest(season);") &&
+    supabaseArchive.includes("const starts = manifest ? [] : await readSupabaseArchivedSeasonCompletedStarts(season);") &&
+    supabaseArchive.includes('select: "season,start_date,end_date,counts,synced_at"') &&
+    supabaseArchive.includes('url.searchParams.set("select", String(filters.select ?? "*"));') &&
     supabaseArchive.includes("expectedLastCompletedDate?: string;") &&
     supabaseArchive.includes("archiveFreshness(lastDate, options.expectedLastCompletedDate)") &&
     supabaseArchive.includes("[supabase-archive] archive freshness lag exceeds threshold") &&
