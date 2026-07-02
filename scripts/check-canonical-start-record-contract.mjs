@@ -23,9 +23,10 @@ assert(
     canonicalRecord.includes("line: StartLine;") &&
     canonicalRecord.includes("gameScorePlus: number;") &&
     canonicalRecord.includes("gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;") &&
+    canonicalRecord.includes("contextSnapshot?: StartContext;") &&
     canonicalRecord.includes("frozen: boolean;") &&
     canonicalRecord.includes("audit: CanonicalStartAuditEntry[];") &&
-    canonicalRecord.includes('event: "created" | "live-updated" | "final-reconciled" | "final-correction";') &&
+    canonicalRecord.includes('event: "created" | "live-updated" | "final-reconciled" | "final-correction" | "context-freeze-sweep";') &&
     canonicalRecord.includes("export type CanonicalStartLineDiff = {"),
   "canonical start record must carry line, score, source, frozen state, and audit fields",
 );
@@ -43,8 +44,13 @@ assert(
 
 assert(
   canonicalRecord.includes("roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus)") &&
-    canonicalRecord.includes("gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined"),
-  "canonical start record must apply shared GS+ display precision and keep breakdown totals aligned",
+    canonicalRecord.includes("gameScorePlusBreakdown: start.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(start.gameScorePlusBreakdown, gameScorePlus, final) : undefined") &&
+    canonicalRecord.includes("contextSnapshot: final ? freezeStartContextSnapshot(start.context) : undefined") &&
+    canonicalRecord.includes("function freezeStartContextSnapshot(context: StartContext): StartContext") &&
+    canonicalRecord.includes("function freezeGameScorePlusBreakdown(") &&
+    canonicalRecord.includes("function labelContextAtSettle(value: string)") &&
+    canonicalRecord.includes("Context at settle."),
+  "canonical start record must apply shared GS+ display precision, freeze context snapshots, and keep breakdown totals aligned",
 );
 
 assert(
@@ -52,7 +58,10 @@ assert(
     canonicalRecord.includes("const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);") &&
     canonicalRecord.includes("const result = official.result ?? record.result;") &&
     canonicalRecord.includes("const venue = safeCanonicalVenue(official.venue) ?? record.venue;") &&
+    canonicalRecord.includes("const contextSnapshot = official.contextSnapshot ?? record.contextSnapshot;") &&
     canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);") &&
+    canonicalRecord.includes("gameScorePlusBreakdown: official.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(official.gameScorePlusBreakdown, gameScorePlus, true) : record.gameScorePlusBreakdown") &&
+    canonicalRecord.includes("contextSnapshot: contextSnapshot ? freezeStartContextSnapshot(contextSnapshot) : record.contextSnapshot") &&
     canonicalRecord.includes('event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled"') &&
     canonicalRecord.includes("...(diffs.length > 0 ? { diffs } : {})") &&
     canonicalRecord.includes("export function diffCanonicalStartRecord(") &&

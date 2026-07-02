@@ -1,12 +1,12 @@
 import { roundToScorePrecision, SCORE_DISPLAY_PRECISION } from "@/lib/score-display";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
-import type { StartApiGameScorePlusBreakdown, StartDataSource, StartEventFlag, StartLine, StartSummary } from "@/lib/types";
+import type { StartApiGameScorePlusBreakdown, StartContext, StartDataSource, StartEventFlag, StartLine, StartSummary } from "@/lib/types";
 
 export type CanonicalStartStatus = "scheduled" | "live" | "final";
 
 export type CanonicalStartAuditEntry = {
   at: string;
-  event: "created" | "live-updated" | "final-reconciled" | "final-correction";
+  event: "created" | "live-updated" | "final-reconciled" | "final-correction" | "context-freeze-sweep";
   source: StartDataSource["line"];
   note: string;
   diffs?: CanonicalStartLineDiff[];
@@ -34,6 +34,7 @@ export type CanonicalStartRecord = {
   gameScoreV2: number;
   eventFlags: StartEventFlag[];
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+  contextSnapshot?: StartContext;
   result: StartSummary["result"];
   source: StartDataSource;
   createdAt: string;
@@ -84,7 +85,8 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     gameScorePlus,
     gameScoreV2,
     eventFlags,
-    gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined,
+    gameScorePlusBreakdown: start.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(start.gameScorePlusBreakdown, gameScorePlus, final) : undefined,
+    contextSnapshot: final ? freezeStartContextSnapshot(start.context) : undefined,
     result: start.result,
     source,
     createdAt: timestamp,
@@ -117,7 +119,7 @@ export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, st
     result: record.result,
     source: record.source,
     context: {
-      ...start.context,
+      ...(record.contextSnapshot ?? start.context),
       ...(record.venue ? { parkLabel: record.venue } : {}),
     },
   };
@@ -138,6 +140,7 @@ export function reconcileCanonicalStartRecord(
     gameScorePlus: number;
     gameScoreV2?: number;
     gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+    contextSnapshot?: StartContext;
     result?: StartSummary["result"];
     venue?: string;
     source: Extract<StartDataSource["line"], "archive-gamefeed" | "live-gamefeed">;
@@ -151,6 +154,7 @@ export function reconcileCanonicalStartRecord(
   const venue = safeCanonicalVenue(official.venue) ?? record.venue;
   const eventFlags = deriveStartEventFlags(result, gameScorePlus);
   const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);
+  const contextSnapshot = official.contextSnapshot ?? record.contextSnapshot;
 
   return {
     ...record,
@@ -160,7 +164,8 @@ export function reconcileCanonicalStartRecord(
     gameScorePlus,
     gameScoreV2,
     eventFlags,
-    gameScorePlusBreakdown: official.gameScorePlusBreakdown ? { ...official.gameScorePlusBreakdown, total: gameScorePlus } : record.gameScorePlusBreakdown,
+    gameScorePlusBreakdown: official.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(official.gameScorePlusBreakdown, gameScorePlus, true) : record.gameScorePlusBreakdown,
+    contextSnapshot: contextSnapshot ? freezeStartContextSnapshot(contextSnapshot) : record.contextSnapshot,
     result,
     source: {
       ...record.source,
@@ -182,6 +187,41 @@ export function reconcileCanonicalStartRecord(
       },
     ],
   };
+}
+
+function freezeStartContextSnapshot(context: StartContext): StartContext {
+  return {
+    ...context,
+    opponentQualityLabel: labelContextAtSettle(context.opponentQualityLabel),
+    opponentOffenseLabel: labelContextAtSettle(context.opponentOffenseLabel),
+  };
+}
+
+function freezeGameScorePlusBreakdown(breakdown: StartApiGameScorePlusBreakdown, total: number, frozen: boolean): StartApiGameScorePlusBreakdown {
+  return {
+    ...breakdown,
+    total,
+    components: breakdown.components.map((component) => {
+      if (!frozen || !["whiffDelta", "velocityDelta", "parkContext", "opponentQuality", "opponentOffense", "calibration"].includes(component.key)) return component;
+      return {
+        ...component,
+        label: labelContextAtSettle(component.label),
+        description: labelContextAtSettle(component.description),
+      };
+    }),
+    rankingReasons: breakdown.rankingReasons.map((component) => {
+      if (!frozen || !["whiffDelta", "velocityDelta", "parkContext", "opponentQuality", "opponentOffense", "calibration"].includes(component.key)) return component;
+      return {
+        ...component,
+        label: labelContextAtSettle(component.label),
+        description: labelContextAtSettle(component.description),
+      };
+    }),
+  };
+}
+
+function labelContextAtSettle(value: string) {
+  return /\bcontext at settle\b/i.test(value) ? value : `${value} Context at settle.`;
 }
 
 export function deriveStartEventFlags(result: StartSummary["result"], gameScorePlus: number): StartEventFlag[] {

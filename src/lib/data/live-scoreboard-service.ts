@@ -165,7 +165,7 @@ function buildLiveRow(
   const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
   const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
   const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";
-  const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : null;
+  const gsPlus = hasRealLine ? status === "final" ? start.gameScorePlus : scoreCompletedLine(line, start.context) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
   const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;
 

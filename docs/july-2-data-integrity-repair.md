@@ -57,3 +57,10 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - `warm-live-starts` stores completed batch keys in runtime state so a later invocation resumes revalidation and warming work instead of restarting every batch.
 - Probable-starter confidence transition logging now stores last-known confidence by `(gamePk, side)`, backfills without emitting a full-league burst, suppresses repeated unchanged transitions, and skips games outside the upcoming horizon.
 - Runtime state is documented in `docs/supabase-mlb-archive.sql` as `toetheslab_runtime_state`. Applying that table from this runner was blocked because the direct Supabase Postgres host resolved only to IPv6 here; the REST probe returned 404 until the table is applied in the production database.
+
+## GS+ freeze follow-up
+
+- Final canonical records now snapshot adjustment context at post-game reconciliation and label Why-panel context components as `Context at settle`.
+- Live Board final rows now read the frozen canonical `gameScorePlus` instead of recomputing GS+ from moving live league context.
+- Season-to-date sweep applied the freeze policy to existing settled starts: 2,646 canonical rows scanned, 2,124 settled records updated, follow-up dry run `0`.
+- Misiorowski's July 2 canonical record remains frozen at GS+ `61` with a `context-freeze-sweep` audit entry and context snapshot.

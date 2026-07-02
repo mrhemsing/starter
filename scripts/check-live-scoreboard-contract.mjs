@@ -38,10 +38,10 @@ assert(
     liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
     liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
-    liveService.includes("const gsPlus = hasRealLine ? scoreCompletedLine(line, start.context) : null;") &&
+    liveService.includes('const gsPlus = hasRealLine ? status === "final" ? start.gameScorePlus : scoreCompletedLine(line, start.context) : null;') &&
     liveService.includes("function hasNonEmptyLine(line: StartLine)") &&
     !liveService.includes("start.expectedGameScorePlus ?? start.gameScorePlus"),
-  "live scoreboard must keep Upcoming projected GS+ as context before a real live line and never compute scores from empty lines",
+  "live scoreboard must keep Upcoming projected GS+ as context, use frozen final GS+, and never compute scores from empty lines",
 );
 
 assert(
