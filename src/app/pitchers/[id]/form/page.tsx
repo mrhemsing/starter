@@ -140,7 +140,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
                     <p className="pb-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
                   </div>
                   <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
-                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)} · FIP {estimateFip(summary.seasonStats.k9)} · xERA {estimateXera(summary.seasonStats.era, summary.trendDelta)}
+                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)}
                   </p>
                   {summary.venueSplit ? <HomeRoadSplitBadge split={summary.venueSplit} /> : null}
                 </div>
@@ -231,7 +231,7 @@ async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherProm
         <PitchMixByStartPanel starts={pitcher.pitchMixByStart} />
       </div>
       <div className="min-w-0 space-y-5">
-        <AdvancedPercentilePanel pitcher={pitcher} summary={summary} />
+        <AdvancedPercentilePanel pitcher={pitcher} />
         <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
       </div>
     </section>
@@ -385,7 +385,7 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
                 <th className="py-2 pr-4 text-right font-medium">Velo</th>
                 <th className="py-2 pr-4 text-right font-medium">Whiff</th>
                 <th className="py-2 pr-4 text-right font-medium">Put-away</th>
-                <th className="py-2 text-right font-medium">xwOBA</th>
+                <th className="py-2 text-right font-medium">CSW</th>
               </tr>
             </thead>
             <tbody>
@@ -426,7 +426,7 @@ function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outP
       <td className="py-3 pr-4 text-right text-zinc-300">{pitch.avgVelocityMph.toFixed(1)}</td>
       <td className="py-3 pr-4 text-right text-zinc-300">{pitch.whiffPct}%</td>
       <td className="py-3 pr-4 text-right text-zinc-300">{putAway}%</td>
-      <td className="py-3 text-right text-zinc-300">{estimateXwoba(pitch)}</td>
+      <td className="py-3 text-right text-zinc-300">{pitch.whiffPct + pitch.calledStrikePct}%</td>
     </tr>
   );
 }
@@ -540,17 +540,21 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
   );
 }
 
-function AdvancedPercentilePanel({ pitcher, summary }: { pitcher: PitcherApiResponse; summary: { seasonStats: { era: number | null; k9: number | null }; trendDelta: number } }) {
-  const season = pitcher.skillProfile.season;
-  const metrics = buildAdvancedMetrics(season, summary);
-
+function AdvancedPercentilePanel({ pitcher }: { pitcher: PitcherApiResponse }) {
   return (
     <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Advanced / percentiles</p>
-      <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Trust indicators</h2>
-      <div className="mt-4 grid gap-3">
-        {metrics.map((metric) => <PercentileRow key={metric.label} metric={metric} />)}
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Archive quality</p>
+          <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Pitch-event skills</h2>
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.skillProfile.statcastStatus}</p>
       </div>
+      <div className="mt-4 grid gap-3">
+        <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.season} />
+        <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.trailing30} />
+      </div>
+      <p className="mt-4 text-xs leading-5 text-zinc-500">{pitcher.skillProfile.note}</p>
     </section>
   );
 }
@@ -723,47 +727,58 @@ function NextStartProjectionCard({ nextStart, venueSplitContext }: { nextStart: 
   );
 }
 
-type AdvancedMetric = {
-  label: string;
-  value: string;
-  percentile: number;
-  higherGood: boolean;
-};
+function PitcherSkillSnapshotCard({ snapshot }: { snapshot: PitcherSkillSnapshot }) {
+  const hasPitchEvents = snapshot.pitchCount > 0;
+  const cswScore = pctToBar(snapshot.cswPct, 20, 36);
+  const whiffScore = pctToBar(snapshot.whiffPct, 12, 34);
+  const swStrScore = pctToBar(snapshot.swStrPct, 8, 20);
 
-function buildAdvancedMetrics(snapshot: PitcherSkillSnapshot, summary: { seasonStats: { era: number | null; k9: number | null }; trendDelta: number }): AdvancedMetric[] {
-  const kPct = rateToPercentile(snapshot.k9, 6.2, 12.5, true);
-  const bbPct = rateToPercentile(snapshot.bb9, 1.5, 4.5, false);
-  const whiffPct = percentileFromPct(snapshot.whiffPct, 18, 36, true);
-  const cswPct = percentileFromPct(snapshot.cswPct, 24, 34, true);
-  const xEraValue = estimateXera(summary.seasonStats.era, summary.trendDelta);
-  const fipValue = estimateFip(summary.seasonStats.k9);
-  const xEra = Number(xEraValue);
-  const fip = Number(fipValue);
-
-  return [
-    { label: "K%", value: snapshot.k9 ? `${Math.round(snapshot.k9 * 2.5)}%` : "--", percentile: kPct, higherGood: true },
-    { label: "BB%", value: snapshot.bb9 ? `${Math.round(snapshot.bb9 * 1.1)}%` : "--", percentile: bbPct, higherGood: false },
-    { label: "Whiff%", value: formatPctValue(snapshot.whiffPct), percentile: whiffPct, higherGood: true },
-    { label: "Chase%", value: snapshot.whiffPct ? `${Math.round(snapshot.whiffPct + 7)}%` : "--", percentile: percentileFromPct(snapshot.whiffPct ? snapshot.whiffPct + 7 : null, 24, 38, true), higherGood: true },
-    { label: "CSW%", value: formatPctValue(snapshot.cswPct), percentile: cswPct, higherGood: true },
-    { label: "Barrel%", value: snapshot.era ? `${Math.max(4, Math.round(snapshot.era + 3))}%` : "--", percentile: rateToPercentile(snapshot.era, 3.2, 6.5, false), higherGood: false },
-    { label: "Hard-hit%", value: snapshot.era ? `${Math.max(28, Math.round(snapshot.era * 7.5))}%` : "--", percentile: rateToPercentile(snapshot.era, 3, 6, false), higherGood: false },
-    { label: "xERA", value: xEraValue, percentile: rateToPercentile(Number.isFinite(xEra) ? xEra : null, 2.6, 5.2, false), higherGood: false },
-    { label: "FIP", value: fipValue, percentile: rateToPercentile(Number.isFinite(fip) ? fip : null, 2.7, 5.0, false), higherGood: false },
-    { label: "GB%", value: "pending", percentile: 50, higherGood: true },
-  ];
+  return (
+    <div className="rounded border border-white/10 bg-black/20 p-3" data-responsive-check="pitcher-archive-quality-card">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300">{snapshot.label}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+          {snapshot.starts} starts · {snapshot.pitchCount} pitches
+        </p>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs">
+        <ArchiveQualityStat label="CSW" value={formatPctValue(snapshot.cswPct)} />
+        <ArchiveQualityStat label="Whiff" value={formatPctValue(snapshot.whiffPct)} />
+        <ArchiveQualityStat label="SwStr" value={formatPctValue(snapshot.swStrPct)} />
+        <ArchiveQualityStat label="Top velo" value={snapshot.maxVelocityMph ? snapshot.maxVelocityMph.toFixed(1) : "--"} />
+      </div>
+      {hasPitchEvents ? (
+        <div className="mt-3 space-y-2">
+          <ArchiveQualityBar label="CSW" value={formatPctValue(snapshot.cswPct)} width={cswScore} />
+          <ArchiveQualityBar label="Whiff" value={formatPctValue(snapshot.whiffPct)} width={whiffScore} />
+          <ArchiveQualityBar label="SwStr" value={formatPctValue(snapshot.swStrPct)} width={swStrScore} />
+        </div>
+      ) : (
+        <p className="mt-3 text-xs leading-5 text-zinc-500">Pitch-event skills pending for this window.</p>
+      )}
+    </div>
+  );
 }
 
-function PercentileRow({ metric }: { metric: AdvancedMetric }) {
-  const color = metric.percentile >= 75 ? "#f6c445" : metric.percentile <= 30 ? "#67e8f9" : "#a1a1aa";
+function ArchiveQualityStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid gap-2 font-mono text-xs">
+    <div className="rounded border border-white/10 bg-[#101014] p-2">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+      <p className="mt-1 font-serif text-2xl font-semibold text-zinc-50">{value}</p>
+    </div>
+  );
+}
+
+function ArchiveQualityBar({ label, value, width }: { label: string; value: string; width: number }) {
+  const color = width >= 75 ? "#f6c445" : width <= 30 ? "#67e8f9" : "#a1a1aa";
+  return (
+    <div className="grid gap-1 font-mono text-[10px] uppercase tracking-[0.12em]">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="uppercase tracking-[0.14em] text-zinc-400">{metric.label} <span className="text-zinc-100">{metric.value}</span></p>
-        <p className="text-zinc-500">{metric.percentile}th pct</p>
+        <p className="text-zinc-500">{label}</p>
+        <p className="text-zinc-300">{value}</p>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
-        <span className="block h-full rounded-full" style={{ width: `${metric.percentile}%`, background: color }} />
+        <span className="block h-full rounded-full" style={{ width: `${width}%`, background: color }} />
       </div>
     </div>
   );
@@ -836,38 +851,13 @@ function putAwayPct(pitch: ArsenalPitchSummary) {
   return Math.max(0, Math.min(45, Math.round(pitch.whiffPct * 0.55 + pitch.calledStrikePct * 0.2)));
 }
 
-function estimateXwoba(pitch: ArsenalPitchSummary) {
-  const estimated = 0.39 - pitch.whiffPct / 500 - putAwayPct(pitch) / 800;
-  return estimated.toFixed(3).replace(/^0/, "");
-}
-
-function estimateFip(k9: number | null | undefined) {
-  if (typeof k9 !== "number") return "--";
-  return Math.max(2.4, Math.min(5.4, 5.1 - k9 * 0.17)).toFixed(2);
-}
-
-function estimateXera(era: number | null | undefined, trendDelta: number) {
-  if (typeof era !== "number") return "--";
-  return Math.max(2.2, Math.min(6.2, era - trendDelta * 0.03)).toFixed(2);
-}
-
 function formatPctValue(value: number | null | undefined) {
   return typeof value === "number" ? `${value.toFixed(1)}%` : "--";
 }
 
-function rateToPercentile(value: number | null | undefined, elite: number, poor: number, higherGood: boolean) {
+function pctToBar(value: number | null | undefined, poor: number, elite: number) {
   if (typeof value !== "number") return 50;
-  const raw = higherGood
-    ? ((value - poor) / (elite - poor)) * 100
-    : ((poor - value) / (poor - elite)) * 100;
-  return Math.round(clamp(5, 98, raw));
-}
-
-function percentileFromPct(value: number | null | undefined, poor: number, elite: number, higherGood: boolean) {
-  if (typeof value !== "number") return 50;
-  const raw = higherGood
-    ? ((value - poor) / (elite - poor)) * 100
-    : ((poor - value) / (poor - elite)) * 100;
+  const raw = ((value - poor) / (elite - poor)) * 100;
   return Math.round(clamp(5, 98, raw));
 }
 

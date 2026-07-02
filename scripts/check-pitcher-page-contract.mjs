@@ -326,9 +326,10 @@ assert(
     pitcherFormPage.includes('className="max-w-full overflow-x-auto"') &&
     pitcherFormPage.includes("Arsenal / pitch mix") &&
     pitcherFormPage.includes("Put-away") &&
-    pitcherFormPage.includes("xwOBA") &&
+    pitcherFormPage.includes("CSW") &&
+    !pitcherFormPage.includes("estimateXwoba") &&
     pitcherFormPage.includes("out pitch"),
-  "pitcher profile must render a serious arsenal table with usage, whiff, put-away, xwOBA, and out-pitch highlight",
+  "pitcher profile must render a serious archive-backed arsenal table with usage, whiff, put-away, CSW, and out-pitch highlight",
 );
 
 assert(
@@ -346,11 +347,20 @@ assert(
   pitcherFormPage.includes("function AdvancedPercentilePanel") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-advanced-percentiles"') &&
     pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles"') &&
-    pitcherFormPage.includes("Whiff%") &&
-    pitcherFormPage.includes("CSW%") &&
-    pitcherFormPage.includes("Barrel%") &&
-    pitcherFormPage.includes("th pct"),
-  "pitcher profile must render advanced metric percentile bars",
+    pitcherFormPage.includes("Pitch-event skills") &&
+    pitcherFormPage.includes("function PitcherSkillSnapshotCard") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-archive-quality-card"') &&
+    pitcherFormPage.includes("pitcher.skillProfile.season") &&
+    pitcherFormPage.includes("pitcher.skillProfile.trailing30") &&
+    pitcherFormPage.includes("CSW") &&
+    pitcherFormPage.includes("Whiff") &&
+    pitcherFormPage.includes("SwStr") &&
+    !pitcherFormPage.includes("Chase%") &&
+    !pitcherFormPage.includes("Barrel%") &&
+    !pitcherFormPage.includes("Hard-hit%") &&
+    !pitcherFormPage.includes("xERA") &&
+    !pitcherFormPage.includes("FIP {estimateFip"),
+  "pitcher profile must render archive-derived season and last-30 quality cards without unsupported Statcast estimates",
 );
 
 assert(
