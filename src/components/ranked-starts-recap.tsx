@@ -16,9 +16,10 @@ type RankedStartsRecapProps = {
   label?: string;
   starts: StartSummary[];
   highlights?: Map<string, FeaturedStartHighlight | null>;
+  compact?: boolean;
 };
 
-export function RankedStartsRecap({ date, label = "Yesterday", starts, highlights }: RankedStartsRecapProps) {
+export function RankedStartsRecap({ date, label = "Yesterday", starts, highlights, compact = false }: RankedStartsRecapProps) {
   const settledStarts = starts
     .filter((start) => start.source?.line !== "fixture" && isRankedRegularStart(start));
   const rankedStarts = rankStarts(settledStarts);
@@ -28,7 +29,7 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
   const slateAverage = average(rankedStarts.map((start) => start.gameScorePlus));
 
   return (
-    <section id="slate" className="border-y border-white/10 bg-[#0c0b09] px-4 py-10 sm:px-6 lg:px-8">
+    <section id="slate" className={`border-y border-white/10 bg-[#0c0b09] px-4 ${compact ? "py-7" : "py-10"} sm:px-6 lg:px-8`} data-home-ranked-recap-compact={compact ? "true" : "false"}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
@@ -52,6 +53,11 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
           </div>
         ) : (
           <div className="space-y-5">
+            {compact ? (
+              <div className="grid gap-2" data-responsive-check="home-ranked-recap-compact">
+                {listStarts.slice(0, 3).map((start) => <TopStartRow key={start.id} start={start} highlight={highlights?.get(start.id) ?? null} />)}
+              </div>
+            ) : (
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
             <SlateSwarm starts={settledStarts} mean={slateAverage} />
             <div className="space-y-4">
@@ -61,6 +67,7 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
               {duds.length > 0 ? <Duds starts={duds} /> : null}
             </div>
             </div>
+            )}
           </div>
         )}
       </div>

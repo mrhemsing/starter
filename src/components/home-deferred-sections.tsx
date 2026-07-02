@@ -1,6 +1,8 @@
 "use client";
 
+import { track } from "@vercel/analytics";
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
@@ -10,12 +12,14 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
+import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
+const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
@@ -25,7 +29,19 @@ export type HomeDeferredInitialData = {
   bestStarts?: BestStartsHomeResponse | null;
 };
 
-export function HomeDeferredSections({ today, tomorrow, initialData }: { today: string; tomorrow: string; initialData?: HomeDeferredInitialData }) {
+export function HomeDeferredSections({
+  today,
+  tomorrow,
+  slatePhase,
+  slatePhaseExperiment = false,
+  initialData,
+}: {
+  today: string;
+  tomorrow: string;
+  slatePhase: HomeSlatePhase;
+  slatePhaseExperiment?: boolean;
+  initialData?: HomeDeferredInitialData;
+}) {
   const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(initialData?.todayWatch ?? null);
   const [tomorrowWatch, setTomorrowWatch] = useState<TonightResponse | null>(initialData?.tomorrowWatch ?? null);
   const [duels, setDuels] = useState<PitchingDuelsResponse | null>(initialData?.duels ?? null);
@@ -34,6 +50,8 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const bestStartsRefreshAttemptedRef = useRef(false);
+  const slatePhaseVariant: HomeSlatePhaseVariant = slatePhaseExperiment ? "phase-aware" : "control";
+  const scrollDepthsTrackedRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +105,95 @@ export function HomeDeferredSections({ today, tomorrow, initialData }: { today: 
   const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;
   const watchDate = activeTodayWatch?.games.length ? today : tomorrow;
   const watchWord = watch ? slateTimeWord(watch, { today }) : "today";
+
+  useEffect(() => {
+    if (!slatePhaseExperiment) return;
+
+    track("home_slate_phase_view", { phase: slatePhase, variant: slatePhaseVariant });
+
+    const handleScroll = () => {
+      const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const depth = Math.min(100, Math.round((window.scrollY / scrollable) * 100));
+      const threshold = HOME_SCROLL_DEPTH_THRESHOLDS.find((candidate) => depth >= candidate && !scrollDepthsTrackedRef.current.has(candidate));
+      if (!threshold) return;
+      scrollDepthsTrackedRef.current.add(threshold);
+      track("home_slate_phase_scroll_depth", { phase: slatePhase, variant: slatePhaseVariant, depth: threshold });
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [slatePhase, slatePhaseExperiment, slatePhaseVariant]);
+
+  const trackModuleClick = (module: HomeModuleKey) => {
+    if (!slatePhaseExperiment) return;
+    track("home_slate_phase_module_click", { phase: slatePhase, variant: slatePhaseVariant, module });
+  };
+
+  if (slatePhaseExperiment) {
+    const modules: Record<HomeModuleKey, ReactNode> = {
+      spotlight:
+        ranked === null ? (
+          <HomeDeferredFallback variant="spotlight" />
+        ) : ranked.topPerformer ? (
+          <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl">
+              <TopPerformerCard
+                href={ranked.topPerformer.href ?? startHref(ranked.topPerformer.start, sourceParams("home"))}
+                pitcherName={ranked.topPerformer.start.pitcher.name}
+                team={ranked.topPerformer.start.pitcher.team}
+                opponent={ranked.topPerformer.start.opponent}
+                dateLabel={ranked.topPerformer.dateLabel}
+                score={ranked.topPerformer.start.gameScorePlus}
+                line={ranked.topPerformer.start.line}
+                rank={1}
+                slateCount={ranked.topPerformer.slateCount}
+                image={ranked.topPerformer.image}
+                highlight={ranked.topPerformer.highlight}
+                status={ranked.topPerformer.status}
+                whiffRate={ranked.topPerformer.metrics?.whiffRate ?? null}
+                topVelo={ranked.topPerformer.metrics?.topVelo ?? null}
+                veloSparkline={ranked.topPerformer.metrics?.veloSparkline ?? []}
+              />
+            </div>
+          </section>
+        ) : ranked.liveLeaderboard ? (
+          <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
+        ) : null,
+      watch: watch ? (
+        <TonightsMustWatch
+          tonight={watch}
+          fullSlateHref={upcomingDateHref(watchDate)}
+          fullSlateLabel={`See ${watchWord}'s full slate`}
+          eyebrow={slateTimeWordTitle(watch, { today })}
+          title="Must-Watch Games"
+          rankLabel={watchWord}
+          previewLimit={3}
+        />
+      ) : <HomeDeferredFallback variant="watch" />,
+      duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : <HomeDeferredFallback variant="duels" />,
+      heat: formHome ? <HeatCheckHero home={formHome} /> : <HomeDeferredFallback variant="heat" />,
+      ranked: ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : <HomeDeferredFallback variant="ranked" />,
+      best: bestStarts ? (
+        <BestStartsLite
+          weekly={bestStarts.weekly}
+          monthly={bestStarts.monthly}
+          weeklyHighlight={bestStarts.weeklyHighlight}
+          monthlyHighlight={bestStarts.monthlyHighlight}
+        />
+      ) : <HomeDeferredFallback variant="best" />,
+    };
+
+    return (
+      <div data-home-slate-phase={slatePhase} data-home-slate-phase-variant={slatePhaseVariant} data-home-module-order={getHomeModuleOrder(slatePhase, slatePhaseVariant).join(",")}>
+        {getHomeModuleOrder(slatePhase, slatePhaseVariant).map((module) => (
+          <div key={module} data-home-module={module} onClickCapture={() => trackModuleClick(module)}>
+            {modules[module]}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>

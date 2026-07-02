@@ -7,6 +7,7 @@ import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { TonightResponse } from "@/lib/types";
 
@@ -44,6 +45,8 @@ export default async function Home() {
     bestStartsPromise,
   ]);
   const rankedDate = todayCompletion.completedStarts > 0 ? today : yesterday;
+  const homeSlatePhaseExperiment = isHomeSlatePhaseExperimentEnabled();
+  const homeSlatePhase = getHomeSlatePhase({ slateProgress: slateStatus, ranked });
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -110,6 +113,8 @@ export default async function Home() {
       <HomeDeferredSections
         today={today}
         tomorrow={tomorrow}
+        slatePhase={homeSlatePhase}
+        slatePhaseExperiment={homeSlatePhaseExperiment}
         initialData={{
           ranked,
           todayWatch,
