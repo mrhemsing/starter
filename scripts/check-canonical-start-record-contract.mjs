@@ -83,7 +83,9 @@ assert(
     canonicalStore.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
     canonicalStore.includes('const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";') &&
     canonicalStore.includes('const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";') &&
+    canonicalStore.includes('const ALLOW_VOLATILE_CANONICAL_START_STORE = "THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE";') &&
     canonicalStore.includes("const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();") &&
+    canonicalStore.includes("assertCanonicalStartStoreDeploymentConfig();") &&
     canonicalStore.includes("export async function canonicalizeStartSummariesWithStore(") &&
     canonicalStore.includes("export async function readCanonicalStartRecords(") &&
     canonicalStore.includes("function upsertCanonicalStartRecord(") &&
@@ -97,7 +99,16 @@ assert(
     canonicalStore.includes("cache: \"no-store\"") &&
     canonicalStore.includes("prefer: \"resolution=merge-duplicates\"") &&
     canonicalStore.includes("function assertCanonicalStartStoreDate(") &&
-    canonicalStore.includes("if (!written) volatileCanonicalStartStores.set(store.date, store);") &&
+    canonicalStore.includes("if (canUseVolatileCanonicalStartStore())") &&
+    canonicalStore.includes("function assertCanonicalStartStoreDeploymentConfig()") &&
+    canonicalStore.includes("function failOrBypassMissingDurableCanonicalStore(") &&
+    canonicalStore.includes("function canUseVolatileCanonicalStartStore()") &&
+    canonicalStore.includes("function isDeployedCanonicalStoreRuntime()") &&
+    canonicalStore.includes('process.env[ALLOW_VOLATILE_CANONICAL_START_STORE] === "1"') &&
+    canonicalStore.includes('process.env.VERCEL_ENV === "production"') &&
+    canonicalStore.includes('process.env.VERCEL_ENV === "preview"') &&
+    canonicalStore.includes('process.env.VERCEL === "1"') &&
+    canonicalStore.includes("Canonical start store requires Supabase URL and service role key in production/preview deployments") &&
     canonicalStore.includes("function emptyCanonicalStartStore(") &&
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&

@@ -34,7 +34,10 @@ type CanonicalSlateStateRow = {
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
 const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
+const ALLOW_VOLATILE_CANONICAL_START_STORE = "THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE";
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
+
+assertCanonicalStartStoreDeploymentConfig();
 
 export async function canonicalizeStartSummariesWithStore(date: string, starts: StartSummary[], now = new Date()): Promise<StartSummary[]> {
   if (shouldSkipCanonicalStartStore(starts)) {
@@ -111,13 +114,22 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 async function readCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile> {
   assertCanonicalStartStoreDate(date);
   const durableStore = await readDurableCanonicalStartStore(date);
-  return durableStore ?? volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
+  if (durableStore) return durableStore;
+  if (canUseVolatileCanonicalStartStore()) {
+    return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
+  }
+  throw new Error("canonical start store requires Supabase configuration outside explicit local development fallback");
 }
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
   assertCanonicalStartStoreDate(store.date);
   const written = await writeDurableCanonicalStartStore(store);
-  if (!written) volatileCanonicalStartStores.set(store.date, store);
+  if (written) return;
+  if (canUseVolatileCanonicalStartStore()) {
+    volatileCanonicalStartStores.set(store.date, store);
+    return;
+  }
+  throw new Error("canonical start store write requires Supabase configuration outside explicit local development fallback");
 }
 
 function emptyCanonicalStartStore(date: string): CanonicalStartStoreFile {
@@ -145,7 +157,10 @@ function compareCanonicalStartRecords(a: CanonicalStartRecord, b: CanonicalStart
 async function readDurableCanonicalStartStore(date: string): Promise<CanonicalStartStoreFile | null> {
   const baseUrl = canonicalStoreSupabaseUrl();
   const serviceKey = canonicalStoreSupabaseServiceKey();
-  if (!baseUrl || !serviceKey) return null;
+  if (!baseUrl || !serviceKey) {
+    failOrBypassMissingDurableCanonicalStore("read");
+    return null;
+  }
 
   const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
   url.searchParams.set("select", "record,updated_at");
@@ -157,7 +172,12 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
       headers: canonicalStoreSupabaseHeaders(serviceKey),
       cache: "no-store",
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const message = `${CANONICAL_STARTS_TABLE} read failed with HTTP ${response.status}: ${await response.text()}`;
+      if (isDeployedCanonicalStoreRuntime()) throw new Error(message);
+      console.warn(message);
+      return null;
+    }
 
     const rows = await response.json() as Array<Pick<CanonicalStartRow, "record" | "updated_at">>;
     return {
@@ -166,6 +186,7 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
       records: rows.map((row) => row.record).sort(compareCanonicalStartRecords),
     };
   } catch (error) {
+    if (isDeployedCanonicalStoreRuntime()) throw error;
     console.warn("canonical start durable store read failed", { date, error: error instanceof Error ? error.message : String(error) });
     return null;
   }
@@ -174,7 +195,10 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
 async function writeDurableCanonicalStartStore(store: CanonicalStartStoreFile): Promise<boolean> {
   const baseUrl = canonicalStoreSupabaseUrl();
   const serviceKey = canonicalStoreSupabaseServiceKey();
-  if (!baseUrl || !serviceKey) return false;
+  if (!baseUrl || !serviceKey) {
+    failOrBypassMissingDurableCanonicalStore("write");
+    return false;
+  }
 
   try {
     const records = await mergeWithLatestDurableRecords(store.date, store.records);
@@ -187,6 +211,7 @@ async function writeDurableCanonicalStartStore(store: CanonicalStartStoreFile): 
     });
     return true;
   } catch (error) {
+    if (isDeployedCanonicalStoreRuntime()) throw error;
     console.warn("canonical start durable store write failed", { date: store.date, error: error instanceof Error ? error.message : String(error) });
     return false;
   }
@@ -302,4 +327,27 @@ function canonicalStoreSupabaseUrl() {
 
 function canonicalStoreSupabaseServiceKey() {
   return process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.THE_BUMP_SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "";
+}
+
+function assertCanonicalStartStoreDeploymentConfig() {
+  if (!isDeployedCanonicalStoreRuntime()) return;
+  if (canonicalStoreSupabaseUrl() && canonicalStoreSupabaseServiceKey()) return;
+
+  throw new Error("Canonical start store requires Supabase URL and service role key in production/preview deployments");
+}
+
+function failOrBypassMissingDurableCanonicalStore(operation: "read" | "write") {
+  if (isDeployedCanonicalStoreRuntime()) {
+    throw new Error(`Cannot ${operation} canonical start store without Supabase URL and service role key in production/preview deployments`);
+  }
+}
+
+function canUseVolatileCanonicalStartStore() {
+  return process.env[ALLOW_VOLATILE_CANONICAL_START_STORE] === "1"
+    && !isDeployedCanonicalStoreRuntime();
+}
+
+function isDeployedCanonicalStoreRuntime() {
+  return process.env.NEXT_PHASE !== NEXT_PRODUCTION_BUILD_PHASE
+    && (process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview" || process.env.VERCEL === "1");
 }
