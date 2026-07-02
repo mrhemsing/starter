@@ -34,7 +34,7 @@ assert(
     formPage.includes('if (key === "view") continue;') &&
     formPage.includes('if (path === "/heat-check/season" && key === "sort" && value === "season-gs") continue;') &&
     formPage.includes('if (path === "/heat-check/season" && key === "qualified") continue;') &&
-    formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })}'),
+    formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", fire: "", hot: "", cooling: "", ice: "", show: "", unranked: "" })}'),
   "Heat Check toggle and filter links must keep the season view on /heat-check/season, with clean default-sort URLs",
 );
 

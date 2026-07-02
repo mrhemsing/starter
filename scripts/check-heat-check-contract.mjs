@@ -352,14 +352,20 @@ assert(
     formPage.includes("return pitcher.seasonQualification.qualified;") &&
     formPage.includes("function formatSeasonConsistency") &&
     formPage.includes('if (pitcher.seasonStartCount < FORM_CONFIG.minStartsForConsistency) return "--";') &&
+    formPage.includes("const HEAT_BAND_INITIAL_LIMIT = 12;") &&
+    formPage.includes("const SEASON_UNRANKED_INITIAL_LIMIT = 25;") &&
     formPage.includes("function SeasonQualificationDisclosure") &&
     formPage.includes("arms below {threshold} GS are not yet ranked. The bar scales with the season.") &&
-    formPage.includes("Show unranked arms") &&
+    formPage.includes('data-unranked-expanded={expanded ? "true" : "false"}') &&
+    formPage.includes('const expanded = params.unranked === "show" || params.unranked === "all";') &&
+    formPage.includes("const visiblePitchers = showAll ? sortedPitchers : sortedPitchers.slice(0, SEASON_UNRANKED_INITIAL_LIMIT);") &&
+    formPage.includes('unranked: expanded ? "" : "show"') &&
+    formPage.includes('unranked: "all"') &&
     formPage.includes('data-season-unranked={unranked ? "true" : undefined}') &&
     formPage.includes('{unranked ? "-" : `#${rank}`}') &&
     formPage.includes('data-responsive-check="heat-view-controls"') &&
     formPage.includes('data-heat-view-link={heatViewLink ? "true" : undefined}') &&
-    formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })}') &&
+    formPage.includes('href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", fire: "", hot: "", cooling: "", ice: "", show: "", unranked: "" })}') &&
     formPage.includes('view === "trend" ? (') &&
     formPage.includes('const throughPrefix = seasonView ? "Season through" : "Form through";') &&
     formPage.includes("const qualityTier = qualityTierOf(pitcher.bgs);") &&
@@ -396,8 +402,9 @@ assert(
     formPage.includes("function SeasonBandMiniBar") &&
     formPage.includes('data-responsive-check="heat-season-controls"') &&
     formPage.includes('data-responsive-check="heat-season-expand"') &&
+    !formPage.includes("<details className=\"mt-4 rounded border border-white/10 bg-black/20\"") &&
     !formPage.includes("bandOf("),
-  "Heat Check Season view must rank by season GS+, hide Trend-only chrome, use quality colors, and cap all-team lists",
+  "Heat Check Season view must rank by season GS+, hide Trend-only chrome, use quality colors, cap all-team lists, and keep unranked rows out of initial HTML",
 );
 
 assert(
@@ -531,14 +538,25 @@ assert(
 
 assert(
   formPage.includes('even?: string;') &&
+    formPage.includes('fire?: string;') &&
+    formPage.includes('ice?: string;') &&
     formPage.includes('const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";') &&
+    formPage.includes('const fireExpanded = Boolean(team) || params?.fire === "show" || band === "onfire" || sort !== "form";') &&
+    formPage.includes('const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";') &&
     formPage.includes('group.band.key === "even" && !evenExpanded') &&
     formPage.includes('<EvenBandCollapsed count={group.pitchers.length} href={heatCheckHref({ ...params, even: "show" })} />') &&
     formPage.includes('<EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} />') &&
+    formPage.includes("function bandExpandableControl") &&
+    formPage.includes("function visibleBandPitchers") &&
+    formPage.includes('if (count <= HEAT_BAND_INITIAL_LIMIT) return null;') &&
+    formPage.includes('if (bandKey !== "even" && !bandExpanded(bandKey, state)) return pitchers.slice(0, HEAT_BAND_INITIAL_LIMIT);') &&
+    formPage.includes("function bandExpansionParam") &&
+    formPage.includes("function bandExpansionLabel") &&
+    formPage.includes("`Show ${hidden} more ${label}`") &&
     formPage.includes('data-responsive-check="heat-even-collapsed"') &&
     formPage.includes("Show {count} even arms") &&
     formPage.includes("Hide {count} even arms"),
-  "Heat Check Even band must be collapsible by default without hiding team views, explicit Even filters, or alternate sorts",
+  "Heat Check bands must cap initial row payload without hiding team views, explicit band filters, or alternate sorts",
 );
 
 assert(

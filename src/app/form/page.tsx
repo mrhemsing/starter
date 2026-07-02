@@ -41,10 +41,13 @@ type FormPageProps = {
     band?: string;
     motion?: string;
     even?: string;
+    fire?: string;
     hot?: string;
     cooling?: string;
+    ice?: string;
     view?: string;
     show?: string;
+    unranked?: string;
   }>;
 };
 
@@ -62,6 +65,9 @@ const seasonSortOptions = [
   { key: "consistency", label: "Consistency" },
   { key: "best-start", label: "Best start" },
 ] as const;
+
+const HEAT_BAND_INITIAL_LIMIT = 12;
+const SEASON_UNRANKED_INITIAL_LIMIT = 25;
 
 function parseHeatCheckView(value: string | undefined): HeatCheckView {
   return value === "season" ? "season" : "trend";
@@ -139,8 +145,10 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const band = HEAT_BANDS.some((candidate) => candidate.key === params.band) ? params.band ?? "" : "";
   const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
   const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
+  const fireExpanded = Boolean(team) || params?.fire === "show" || band === "onfire" || sort !== "form";
   const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
   const coolingExpanded = Boolean(team) || params?.cooling === "show" || band === "cooling" || sort !== "form";
+  const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const [leaderboard, followedIds, todaySchedule] = await Promise.all([
@@ -193,7 +201,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query });
-  const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", hot: "", cooling: "" });
+  const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", even: "", fire: "", hot: "", cooling: "", ice: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
   const throughPrefix = seasonView ? "Season through" : "Form through";
@@ -319,7 +327,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                     <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={seasonRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" />
                   ))}
                   <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonQualifiedPitchers.length} params={params} team={team} />
-                  <SeasonQualificationDisclosure pitchers={seasonUnrankedPitchers} threshold={leaderboard.seasonQualificationThreshold} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} sort={sort} />
+                  <SeasonQualificationDisclosure pitchers={seasonUnrankedPitchers} threshold={leaderboard.seasonQualificationThreshold} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} sort={sort} params={params} />
                 </>
               ) : showBandHeaders ? (
                 groupedBoard.map((group) => (
@@ -331,8 +339,8 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                       <>
                         {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
                         {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
-                        {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { heatingExpanded, coolingExpanded })}
-                        {visibleBandPitchers(group.band.key, group.pitchers, { heatingExpanded, coolingExpanded }).map((pitcher, index) => (
+                        {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
+                        {visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).map((pitcher, index) => (
                           <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" />
                         ))}
                       </>
@@ -849,15 +857,19 @@ function bandEmptyMessage(band: HeatBand, count: number) {
   return null;
 }
 
-function bandExpandableControl(bandKey: HeatBand["key"], count: number, params: Record<string, string | undefined>, state: { heatingExpanded: boolean; coolingExpanded: boolean }) {
-  const cap = 12;
-  if (bandKey !== "hot" && bandKey !== "cooling") return null;
-  if (count <= cap) return null;
+function bandExpandableControl(
+  bandKey: HeatBand["key"],
+  count: number,
+  params: Record<string, string | undefined>,
+  state: { fireExpanded: boolean; heatingExpanded: boolean; coolingExpanded: boolean; iceExpanded: boolean },
+) {
+  if (bandKey === "even") return null;
+  if (count <= HEAT_BAND_INITIAL_LIMIT) return null;
 
-  const expanded = bandKey === "hot" ? state.heatingExpanded : state.coolingExpanded;
-  const key = bandKey === "hot" ? "hot" : "cooling";
-  const label = bandKey === "hot" ? "heating up" : "cooling down";
-  const hidden = count - cap;
+  const expanded = bandExpanded(bandKey, state);
+  const key = bandExpansionParam(bandKey);
+  const label = bandExpansionLabel(bandKey);
+  const hidden = count - HEAT_BAND_INITIAL_LIMIT;
 
   return (
     <div className="flex justify-end">
@@ -868,10 +880,31 @@ function bandExpandableControl(bandKey: HeatBand["key"], count: number, params: 
   );
 }
 
-function visibleBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[], state: { heatingExpanded: boolean; coolingExpanded: boolean }) {
-  if (bandKey === "hot" && !state.heatingExpanded) return pitchers.slice(0, 12);
-  if (bandKey === "cooling" && !state.coolingExpanded) return pitchers.slice(0, 12);
+function visibleBandPitchers(bandKey: HeatBand["key"], pitchers: FormSummary[], state: { fireExpanded: boolean; heatingExpanded: boolean; coolingExpanded: boolean; iceExpanded: boolean }) {
+  if (bandKey !== "even" && !bandExpanded(bandKey, state)) return pitchers.slice(0, HEAT_BAND_INITIAL_LIMIT);
   return pitchers;
+}
+
+function bandExpanded(bandKey: HeatBand["key"], state: { fireExpanded?: boolean; heatingExpanded: boolean; coolingExpanded: boolean; iceExpanded?: boolean }) {
+  if (bandKey === "onfire") return Boolean(state.fireExpanded);
+  if (bandKey === "hot") return state.heatingExpanded;
+  if (bandKey === "cooling") return state.coolingExpanded;
+  if (bandKey === "ice") return Boolean(state.iceExpanded);
+  return true;
+}
+
+function bandExpansionParam(bandKey: HeatBand["key"]) {
+  if (bandKey === "onfire") return "fire";
+  if (bandKey === "hot") return "hot";
+  if (bandKey === "cooling") return "cooling";
+  return "ice";
+}
+
+function bandExpansionLabel(bandKey: HeatBand["key"]) {
+  if (bandKey === "onfire") return "on fire";
+  if (bandKey === "hot") return "heating up";
+  if (bandKey === "cooling") return "cooling down";
+  return "ice cold";
 }
 
 function visibleSeasonPitchers(pitchers: FormSummary[], team: string, show: string | undefined) {
@@ -926,24 +959,54 @@ function SeasonExpandControls({ visible, total, params, team }: { visible: numbe
   );
 }
 
-function SeasonQualificationDisclosure({ pitchers, threshold, window, leagueMeanGS, followedIds, sort }: { pitchers: FormSummary[]; threshold: number; window: number; leagueMeanGS: number; followedIds: string[]; sort: string }) {
+function SeasonQualificationDisclosure({
+  pitchers,
+  threshold,
+  window,
+  leagueMeanGS,
+  followedIds,
+  sort,
+  params,
+}: {
+  pitchers: FormSummary[];
+  threshold: number;
+  window: number;
+  leagueMeanGS: number;
+  followedIds: string[];
+  sort: string;
+  params: Record<string, string | undefined>;
+}) {
   if (pitchers.length === 0) return null;
 
+  const expanded = params.unranked === "show" || params.unranked === "all";
+  const showAll = params.unranked === "all";
+  const sortedPitchers = expanded ? [...pitchers].sort((a, b) => compareSeasonRows(a, b, sort)) : [];
+  const visiblePitchers = showAll ? sortedPitchers : sortedPitchers.slice(0, SEASON_UNRANKED_INITIAL_LIMIT);
+  const hiddenCount = Math.max(0, pitchers.length - visiblePitchers.length);
+
   return (
-    <details className="mt-4 rounded border border-white/10 bg-black/20" data-responsive-check="heat-season-unranked-disclosure">
-      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 marker:hidden">
+    <section className="mt-4 rounded border border-white/10 bg-black/20" data-responsive-check="heat-season-unranked-disclosure" data-unranked-expanded={expanded ? "true" : "false"}>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
         <span>{pitchers.length} arms below {threshold} GS are not yet ranked. The bar scales with the season.</span>
-        <span className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 text-zinc-300 hover:border-amber-300/40 hover:text-amber-300">Show unranked arms</span>
-      </summary>
-      <div className="grid gap-2 border-t border-white/10 p-2 sm:p-3">
-        <div className="flex justify-end">
-          <span className="rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">Hide</span>
-        </div>
-        {[...pitchers].sort((a, b) => compareSeasonRows(a, b, sort)).map((pitcher) => (
-          <FormLeaderboardRow key={`unranked-${pitcher.pitcherId}`} pitcher={pitcher} rank={0} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" unranked />
-        ))}
+        <Link href={heatCheckHref({ ...params, view: "season", unranked: expanded ? "" : "show" })} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 text-zinc-300 hover:border-amber-300/40 hover:text-amber-300">
+          {expanded ? "Hide unranked arms" : `Show ${Math.min(SEASON_UNRANKED_INITIAL_LIMIT, pitchers.length)} unranked arms`}
+        </Link>
       </div>
-    </details>
+      {expanded ? (
+        <div className="grid gap-2 border-t border-white/10 p-2 sm:p-3">
+          {visiblePitchers.map((pitcher) => (
+            <FormLeaderboardRow key={`unranked-${pitcher.pitcherId}`} pitcher={pitcher} rank={0} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" unranked />
+          ))}
+          {hiddenCount > 0 ? (
+            <div className="flex justify-end">
+              <Link href={heatCheckHref({ ...params, view: "season", unranked: "all" })} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 hover:border-amber-300/40 hover:text-amber-300">
+                Show {hiddenCount} more unranked arms
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -1122,7 +1185,7 @@ function ViewControlLinks({ view, params }: { view: HeatCheckView; params: Recor
       <ControlLink active={view === "trend"} href={heatCheckHref({ ...params, view: "trend", show: "" })} heatViewLink>
         Trend
       </ControlLink>
-      <ControlLink active={view === "season"} href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", hot: "", cooling: "", show: "" })} heatViewLink>
+      <ControlLink active={view === "season"} href={heatCheckHref({ ...params, view: "season", band: "", motion: "", sort: "", even: "", fire: "", hot: "", cooling: "", ice: "", show: "", unranked: "" })} heatViewLink>
         Season
       </ControlLink>
     </div>
