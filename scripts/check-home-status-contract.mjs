@@ -6,9 +6,10 @@ function assert(condition, message) {
   }
 }
 
-const [homePage, slateState, statusLine, statusRoute] = await Promise.all([
+const [homePage, slateState, startService, statusLine, statusRoute] = await Promise.all([
   readFile("src/app/page.tsx", "utf8"),
   readFile("src/lib/slate-state.ts", "utf8"),
+  readFile("src/lib/data/start-service.ts", "utf8"),
   readFile("src/components/home-slate-status-line.tsx", "utf8"),
   readFile("src/app/api/home/status/route.ts", "utf8"),
 ]);
@@ -29,7 +30,7 @@ assert(
 );
 
 assert(
-  slateState.indexOf('return "suspended"') < slateState.indexOf('return "live"'),
+  slateState.indexOf('if (/\\b(suspended)\\b/.test(status)) return "suspended";') < slateState.indexOf('if (/\\b(live|in progress|manager challenge)\\b/.test(status)) return "live";'),
   "homepage status normalizer must check suspended before live statuses",
 );
 
@@ -136,6 +137,16 @@ assert(
 assert(
   statusRoute.includes("getSlateStartProgress({ window: \"today\", date })"),
   "homepage status API must return the shared slate progress state",
+);
+
+assert(
+  startService.includes("export async function getSlateStartProgress(params: SlateRouteParams): Promise<SlateProgressState>") &&
+    startService.includes("const [schedule, slateStarts] = await Promise.all([") &&
+    startService.includes("getDailySlate(params),") &&
+    startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
+    startService.includes("return getSlateProgressState(schedule, startCounts.finalStarts);") &&
+    !startService.includes("return getSlateProgressState(schedule, completedLines.size);"),
+  "homepage slate progress must use canonicalized start counts instead of a separate completed-line count",
 );
 
 assert(

@@ -310,9 +310,12 @@ export async function getSlateSchedule(params: SlateRouteParams) {
 }
 
 export async function getSlateStartProgress(params: SlateRouteParams): Promise<SlateProgressState> {
-  const schedule = await getSlateSchedule(params);
-  const completedLines = await getCompletedPitchingLineMap(schedule);
-  return getSlateProgressState(schedule, completedLines.size);
+  const [schedule, slateStarts] = await Promise.all([
+    getSlateSchedule(params),
+    getDailySlate(params),
+  ]);
+  const startCounts = summarizeCanonicalStartBuckets(slateStarts);
+  return getSlateProgressState(schedule, startCounts.finalStarts);
 }
 
 export async function getTodayProbables(date?: string) {
