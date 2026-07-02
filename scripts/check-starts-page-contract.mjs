@@ -7,6 +7,7 @@ function assert(condition, message) {
 }
 
 const startsPage = await readFile("src/app/starts/[id]/page.tsx", "utf8");
+const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
@@ -136,7 +137,10 @@ assert(
     mlbStatsClient.includes("startDate,") &&
     mlbStatsClient.includes("endDate,") &&
     mlbStatsClient.includes("(entry.games ?? []).some((game) => isFinalMlbApiGame(game))") &&
-    startService.includes("return (await getRankedStartsArchiveNavigation(today, today)).latestDate;") &&
+    startService.includes("const recentDates = Array.from({ length: 4 }, (_, index) => addDays(today, -index));") &&
+    startService.includes("const activeState = activityStates.find(hasRankedSlateActivity);") &&
+    startService.includes("function hasRankedSlateActivity(state: RankedSlateCompletionState)") &&
+    startService.includes("return state.liveStarts > 0 || state.completedStarts > 0;") &&
     startService.includes("if (todayCompletion.totalGames > 0) dates.add(today);") &&
     startService.includes("activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today)") &&
     startService.includes("if (activeCompletion && activeCompletion.totalGames > 0) dates.add(activeDate);") &&
@@ -149,6 +153,12 @@ assert(
     !startsPage.includes("hideUpcoming") &&
     !siteHeader.includes("hideUpcoming") &&
     !siteNav.includes("hideUpcoming") &&
+    siteNav.includes('href: "/starts"') &&
+    !siteNav.includes("rankedStartsPath(") &&
+    startsIndexRoute.includes('export const dynamic = "force-dynamic";') &&
+    startsIndexRoute.includes("NextResponse.redirect(location, 302)") &&
+    startsIndexRoute.includes('response.headers.set("X-Robots-Tag", "noindex, follow")') &&
+    startsIndexRoute.includes("rankedStartsPath(await getRankedStartsDefaultDate(today))") &&
     siteNav.includes('const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];') &&
     startsPage.includes('import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";') &&
     startsDisclosure.includes('"use client";') &&

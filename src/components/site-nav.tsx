@@ -2,22 +2,22 @@ import { PrimaryNavLink } from "@/components/primary-nav-link";
 import { LiveNavLabel } from "@/components/live-nav-label";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getDefaultSlateDates } from "@/lib/data/start-service";
-import { heatCheckPath, liveDateHref, rankedStartsPath, upcomingDateHref, watchlistPath } from "@/lib/routes";
+import { heatCheckPath, liveDateHref, upcomingDateHref, watchlistPath } from "@/lib/routes";
 
 type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";
 export type { NavKey };
 
 export async function SiteNav({ active, today, rankedDate }: { active: NavKey | null; today: string; rankedDate?: string }) {
+  void rankedDate;
   const [defaultDates, liveBoard] = await Promise.all([
     getDefaultSlateDates(today),
     getLiveScoreboard({ date: today }),
   ]);
-  const resolvedRankedDate = rankedDate ?? defaultDates.rankedDate;
   const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} routeActive={active !== null && active === "live"} />, href: liveDateHref(today) }];
   const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
-    { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(resolvedRankedDate) },
+    { key: "starts" as const, label: "Ranked Starts", href: "/starts" },
     { key: "heat" as const, label: "Heat Check", href: heatCheckPath() },
     ...liveItem,
     ...upcomingItem,

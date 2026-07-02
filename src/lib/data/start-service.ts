@@ -225,19 +225,25 @@ const getCachedRankedArchivedCompletedSlateDates = unstable_cache(
 );
 
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
+  const recentDates = Array.from({ length: 4 }, (_, index) => addDays(today, -index));
+  const activityStates = await Promise.all(recentDates.map((date) => getRankedSlateCompletionState(date, today)));
+  const activeState = activityStates.find(hasRankedSlateActivity);
+  if (activeState) return activeState.date;
+
   return (await getRankedStartsArchiveNavigation(today, today)).latestDate;
+}
+
+function hasRankedSlateActivity(state: RankedSlateCompletionState) {
+  return state.liveStarts > 0 || state.completedStarts > 0;
 }
 
 export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = new Date()) {
   void _now;
 
-  const [rankedNavigation, schedule] = await Promise.all([
-    getRankedStartsArchiveNavigation(today, today),
-    fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) }),
-  ]);
+  const schedule = await fetchMlbSchedule(today, { fetchLive: shouldFetchLiveSchedule(today) });
 
   return {
-    rankedDate: rankedNavigation.latestDate,
+    rankedDate: await getRankedStartsDefaultDate(today),
     upcomingDate: shouldDefaultUpcomingToTomorrow(schedule) ? addDays(today, 1) : today,
   };
 }
