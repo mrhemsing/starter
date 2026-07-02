@@ -1187,18 +1187,18 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
     assert(jsonLd.description === expectedJsonLdDescription, `${route} JSON-LD description should match route metadata`);
   }
   assertNumber(jsonLd.numberOfItems, `${route} JSON-LD numberOfItems`);
+  const expectedVisibleJsonLdItems = allowsRenderedLiveDataDrift(route)
+    ? Math.min(jsonLd.numberOfItems, jsonLdLimit)
+    : Math.min(expectedItemCount, jsonLdLimit, expectedGames.length);
   if (allowsRenderedLiveDataDrift(route)) {
     assert(
-      Number.isInteger(jsonLd.numberOfItems) && jsonLd.numberOfItems >= 0 && jsonLd.numberOfItems <= expectedItemCount,
+      Number.isInteger(jsonLd.numberOfItems) && jsonLd.numberOfItems >= 0 && jsonLd.numberOfItems <= Math.min(expectedItemCount, jsonLdLimit),
       `${route} JSON-LD should expose a valid live-adjusted item count`,
     );
   } else {
-    assert(jsonLd.numberOfItems === expectedItemCount, `${route} JSON-LD should expose exact item count`);
+    assert(jsonLd.numberOfItems === expectedVisibleJsonLdItems, `${route} JSON-LD should expose exact emitted item count`);
   }
   assert(Array.isArray(jsonLd.itemListElement), `${route} JSON-LD itemListElement must be an array`);
-  const expectedVisibleJsonLdItems = allowsRenderedLiveDataDrift(route)
-    ? Math.min(jsonLd.numberOfItems, jsonLdLimit)
-    : Math.min(jsonLd.numberOfItems, jsonLdLimit, expectedGames.length);
   assert(jsonLd.itemListElement.length === expectedVisibleJsonLdItems, `${route} JSON-LD should cap visible list items correctly`);
 
   jsonLd.itemListElement.forEach((entry, index) => {
@@ -1465,6 +1465,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     upcomingMetadataSource.includes('itemListOrder: "https://schema.org/ItemListOrderDescending",') &&
       countOccurrences(upcomingMetadataSource, 'itemListOrder: "https://schema.org/ItemListOrderDescending",') === 2,
     "upcoming day/week JSON-LD must declare descending ranked ItemList order for share/search metadata",
+  );
+  assert(
+    upcomingMetadataSource.includes("const itemListGames = upcoming.games.slice(0, 10);") &&
+      upcomingMetadataSource.includes("const itemListGames = games.slice(0, 20);") &&
+      upcomingMetadataSource.includes("numberOfItems: itemListGames.length,") &&
+      countOccurrences(upcomingMetadataSource, "numberOfItems: itemListGames.length,") === 2 &&
+      upcomingMetadataSource.includes("itemListElement: itemListGames.map("),
+    "upcoming day/week JSON-LD numberOfItems must match the emitted capped ItemList entries",
   );
   assert(
     typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&

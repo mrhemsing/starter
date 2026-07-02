@@ -31,14 +31,16 @@ export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range"
 }
 
 export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
+  const itemListGames = upcoming.games.slice(0, 10);
+
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: upcomingDayTitle(upcoming.date),
     description: upcomingDayDescription(upcoming),
-    numberOfItems: upcoming.games.length,
+    numberOfItems: itemListGames.length,
     itemListOrder: "https://schema.org/ItemListOrderDescending",
-    itemListElement: upcoming.games.slice(0, 10).map((game, index) => ({
+    itemListElement: itemListGames.map((game, index) => ({
       "@type": "ListItem",
       position: index + 1,
       url: absoluteSiteUrl(upcomingDateHref(upcoming.date)),
@@ -49,15 +51,16 @@ export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
 
 export function jsonLdForUpcomingWeek(upcoming: UpcomingResponse) {
   const games = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game })));
+  const itemListGames = games.slice(0, 20);
 
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: upcomingWeekTitle(upcoming.range.start),
     description: upcomingWeekDescription(upcoming),
-    numberOfItems: games.length,
+    numberOfItems: itemListGames.length,
     itemListOrder: "https://schema.org/ItemListOrderDescending",
-    itemListElement: games.slice(0, 20).map(({ day, game }, index) => ({
+    itemListElement: itemListGames.map(({ day, game }, index) => ({
       "@type": "ListItem",
       position: index + 1,
       url: absoluteSiteUrl(upcomingWeekHref(upcoming.range.start)),
