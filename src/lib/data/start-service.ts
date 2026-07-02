@@ -149,7 +149,11 @@ function round2(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise<StartSummary[]> {
+type DailySlateParams = Partial<SlateRouteParams> & {
+  persistCanonical?: boolean;
+};
+
+export async function getDailySlate(params?: DailySlateParams): Promise<StartSummary[]> {
   if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
@@ -166,7 +170,7 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
 
-  return canonicalizeStartSummariesWithStore(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);
+  return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);
 }
 
 export async function getCanonicalStartReconciliationReport(date = getHomeSlateDate()): Promise<CanonicalReconciliationReport> {
@@ -544,7 +548,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const starts = archivedStarts.length > 0
     ? archivedStarts
     : rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
-  const slateStarts = await canonicalizeStartSummariesWithStore(params.date, starts.length > 0 ? starts : demoSlateStarts);
+  const slateStarts = await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts);
   const completedStartStats = summarizeCompletedStartSource(slateStarts);
   const completedStartStatsCoverage = summarizeCompletedStartSourceCoverage(slateStarts);
 
@@ -1858,6 +1862,12 @@ export async function getArchivedSlateStarts(date: string): Promise<StartSummary
     .sort(compareRankedStarts)
     .map((start, index) => ({ ...start, rank: index + 1 })));
   return readCanonicalizedStartSummaries(date, starts);
+}
+
+function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], persistCanonical: boolean) {
+  return persistCanonical
+    ? canonicalizeStartSummariesWithStore(date, starts)
+    : readCanonicalizedStartSummaries(date, starts);
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {

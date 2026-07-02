@@ -115,6 +115,15 @@ assert(
     canonicalStore.includes("cache: \"no-store\"") &&
     canonicalStore.includes("prefer: \"resolution=merge-duplicates\"") &&
     canonicalStore.includes("function assertCanonicalStartStoreDate(") &&
+    canonicalStore.includes("const CANONICAL_STORE_READ_TIMEOUT_MS = 2_500;") &&
+    canonicalStore.includes("const CANONICAL_STORE_WRITE_TIMEOUT_MS = 5_000;") &&
+    canonicalStore.includes("const CANONICAL_STORE_WRITE_FAILURE_LIMIT = 3;") &&
+    canonicalStore.includes("return emptyCanonicalStartStore(date);") &&
+    canonicalStore.includes("async function retryCanonicalStoreWrite(") &&
+    canonicalStore.includes("async function timedCanonicalStoreFetch(") &&
+    canonicalStore.includes('console.warn("[canonical-store] slow-or-failed query"') &&
+    canonicalStore.includes('console.error("[canonical-store] write circuit opened"') &&
+    canonicalStore.includes('console.warn("[canonical-store] write circuit open; deferring canonical write"') &&
     canonicalStore.includes("if (canUseVolatileCanonicalStartStore())") &&
     canonicalStore.includes("function assertCanonicalStartStoreDeploymentConfig()") &&
     canonicalStore.includes("function failOrBypassMissingDurableCanonicalStore(") &&
@@ -163,9 +172,14 @@ assert(
     warmLiveStartsJob.includes('import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";') &&
     warmLiveStartsJob.includes("export const WARM_LIVE_STARTS_BATCH_SIZE = 8;") &&
     warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
-    warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap";') &&
+    warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap" | "already-running";') &&
     warmLiveStartsJob.includes("getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) })") &&
     warmLiveStartsJob.includes('console.error("warm-live-starts archive gap detected; deferring to archive job"') &&
+    warmLiveStartsJob.includes("const lockKey = warmLiveStartsLockKey(date);") &&
+    warmLiveStartsJob.includes("const lock = await acquireWarmLiveStartsLock(lockKey);") &&
+    warmLiveStartsJob.includes('console.warn("warm-live-starts overlap lock active; exiting"') &&
+    warmLiveStartsJob.includes('reason: "already-running"') &&
+    warmLiveStartsJob.includes("await releaseWarmLiveStartsLock(lockKey);") &&
     warmLiveStartsJob.includes('console.log("warm-live-starts start"') &&
     warmLiveStartsJob.includes("const progressKey = warmLiveStartsProgressKey(date, completion.finalGames, completedStarts.length);") &&
     warmLiveStartsJob.includes("const progress = await readWarmLiveStartsProgress(progressKey);") &&
@@ -179,6 +193,8 @@ assert(
     warmLiveStartsJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
     warmLiveStartsJob.includes("async function readWarmLiveStartsProgress(key: string): Promise<WarmLiveStartsProgress>") &&
     warmLiveStartsJob.includes("function warmLiveStartsProgressKey(date: string, finalGames: number, completedStarts: number)") &&
+    warmLiveStartsJob.includes("async function acquireWarmLiveStartsLock(key: string)") &&
+    warmLiveStartsJob.includes("function warmLiveStartsLockKey(date: string)") &&
     warmLiveStartsJob.includes("function shouldWarmTeamFormOnCron()") &&
     warmLiveStartsJob.includes("if (!process.env.VERCEL_ENV && dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
     runtimeStateStore.includes('const RUNTIME_STATE_TABLE = "toetheslab_runtime_state";') &&
@@ -196,11 +212,14 @@ assert(
     startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
-    startService.includes("return canonicalizeStartSummariesWithStore(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);") &&
-    startService.includes("const slateStarts = await canonicalizeStartSummariesWithStore(params.date, starts.length > 0 ? starts : demoSlateStarts);") &&
+    startService.includes("persistCanonical?: boolean;") &&
+    startService.includes("return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);") &&
+    startService.includes("const slateStarts = await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts);") &&
+    startService.includes("function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], persistCanonical: boolean)") &&
+    warmLiveStartsJob.includes('const starts = await getDailySlate({ window: "today", date, persistCanonical: true });') &&
     startService.includes("return readCanonicalizedStartSummaries(date, starts);") &&
     startService.includes("export async function getArchivedSeasonStartSummaries"),
-  "daily slate and slate API must write canonical records only for scheduled/live assembly while archived renders read canonical records without re-upserting",
+  "daily slate and slate API must default to read-only canonical state while the warm pipeline opts into canonical writes explicitly",
 );
 
 assert(

@@ -8,6 +8,7 @@ import { getTonightMustWatch } from "@/lib/data/tonight-service";
 
 export const WARM_LIVE_STARTS_BATCH_SIZE = 8;
 const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";
+const WARM_LIVE_STARTS_LOCK_MS = 55_000;
 type WarmLiveStartsRevalidators = {
   revalidatePath?: (path: string) => void;
   revalidateTag?: (tag: string, profile: "max") => void;
@@ -20,7 +21,7 @@ type WarmLiveStartsJobOptions = WarmLiveStartsRevalidators & {
 export type WarmLiveStartsJobResult = {
   warmed: boolean;
   date: string;
-  reason?: "no-live-or-final-games" | "archive-gap";
+  reason?: "no-live-or-final-games" | "archive-gap" | "already-running";
   liveGames: number;
   finalGames: number;
   totalGames: number;
@@ -45,6 +46,11 @@ type WarmLiveStartsProgress = {
   updatedAt: string;
 };
 
+type WarmLiveStartsLock = {
+  startedAt: string;
+  expiresAt: string;
+};
+
 export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {}): Promise<WarmLiveStartsJobResult> {
   const date = warmLiveStartsDate(options.date);
   const startedAt = new Date();
@@ -67,6 +73,28 @@ export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {
     };
   }
 
+  const lockKey = warmLiveStartsLockKey(date);
+  const lock = await acquireWarmLiveStartsLock(lockKey);
+  if (!lock.acquired) {
+    console.warn("warm-live-starts overlap lock active; exiting", { date, expiresAt: lock.expiresAt });
+    return {
+      warmed: false,
+      date,
+      reason: "already-running",
+      liveGames: 0,
+      finalGames: 0,
+      totalGames: 0,
+    };
+  }
+
+  try {
+    return await runWarmLiveStartsJobUnlocked(options, date, startedAt);
+  } finally {
+    await releaseWarmLiveStartsLock(lockKey);
+  }
+}
+
+async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, date: string, startedAt: Date): Promise<WarmLiveStartsJobResult> {
   const [tonight, completion] = await Promise.all([
     getTonightMustWatch({ date, window: 5 }),
     getRankedSlateCompletionState(date, getHomeSlateDate()),
@@ -86,7 +114,7 @@ export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {
     };
   }
 
-  const starts = await getDailySlate({ window: "today", date });
+  const starts = await getDailySlate({ window: "today", date, persistCanonical: true });
   const completedStarts = starts.filter((start) => start.source?.line !== "fixture");
   const progressKey = warmLiveStartsProgressKey(date, completion.finalGames, completedStarts.length);
   const progress = await readWarmLiveStartsProgress(progressKey);
@@ -223,6 +251,31 @@ async function markWarmStepComplete(key: string, progress: WarmLiveStartsProgres
 
 function warmLiveStartsProgressKey(date: string, finalGames: number, completedStarts: number) {
   return `warm-live-starts:${date}:g${finalGames}:s${completedStarts}`;
+}
+
+async function acquireWarmLiveStartsLock(key: string): Promise<{ acquired: boolean; expiresAt?: string }> {
+  const existing = await readRuntimeState<WarmLiveStartsLock>(key);
+  const now = Date.now();
+  if (existing && new Date(existing.expiresAt).getTime() > now) {
+    return { acquired: false, expiresAt: existing.expiresAt };
+  }
+  const next = {
+    startedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + WARM_LIVE_STARTS_LOCK_MS).toISOString(),
+  };
+  await writeRuntimeState(key, next);
+  return { acquired: true, expiresAt: next.expiresAt };
+}
+
+async function releaseWarmLiveStartsLock(key: string) {
+  await writeRuntimeState(key, {
+    startedAt: new Date(0).toISOString(),
+    expiresAt: new Date(0).toISOString(),
+  });
+}
+
+function warmLiveStartsLockKey(date: string) {
+  return `warm-live-starts-lock:${date}`;
 }
 
 function uniqueValues<T>(values: T[]) {

@@ -36,8 +36,15 @@ const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
 const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
 const ALLOW_VOLATILE_CANONICAL_START_STORE = "THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE";
+const CANONICAL_STORE_READ_TIMEOUT_MS = 2_500;
+const CANONICAL_STORE_WRITE_TIMEOUT_MS = 5_000;
+const CANONICAL_STORE_SLOW_QUERY_MS = 1_000;
+const CANONICAL_STORE_WRITE_FAILURE_LIMIT = 3;
+const CANONICAL_STORE_CIRCUIT_OPEN_MS = 60_000;
 const volatileCanonicalStartStores = new Map<string, CanonicalStartStoreFile>();
 const canonicalStoreDiagnostics = new AsyncLocalStorage<CanonicalStoreDiagnostics>();
+let canonicalStoreWriteFailures = 0;
+let canonicalStoreCircuitOpenUntil = 0;
 
 export type CanonicalStoreDiagnostics = {
   reads: number;
@@ -160,18 +167,19 @@ async function readCanonicalStartStore(date: string): Promise<CanonicalStartStor
   if (canUseVolatileCanonicalStartStore()) {
     return volatileCanonicalStartStores.get(date) ?? emptyCanonicalStartStore(date);
   }
-  throw new Error("canonical start store requires Supabase configuration outside explicit local development fallback");
+  return emptyCanonicalStartStore(date);
 }
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
   assertCanonicalStartStoreDate(store.date);
+  if (isCanonicalStoreCircuitOpen()) return;
   const written = await writeDurableCanonicalStartStore(store);
   if (written) return;
   if (canUseVolatileCanonicalStartStore()) {
     volatileCanonicalStartStores.set(store.date, store);
     return;
   }
-  throw new Error("canonical start store write requires Supabase configuration outside explicit local development fallback");
+  noteCanonicalStoreWriteFailure("canonical start store write unavailable");
 }
 
 function emptyCanonicalStartStore(date: string): CanonicalStartStoreFile {
@@ -210,13 +218,12 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
   url.searchParams.set("order", "game_pk.asc,pitcher_mlb_id.asc");
 
   try {
-    const response = await fetch(url, {
+    const response = await timedCanonicalStoreFetch("canonical-start-records.read", url, {
       headers: canonicalStoreSupabaseHeaders(serviceKey),
       cache: "no-store",
-    });
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
     if (!response.ok) {
       const message = `${CANONICAL_STARTS_TABLE} read failed with HTTP ${response.status}: ${await response.text()}`;
-      if (isDeployedCanonicalStoreRuntime()) throw new Error(message);
       console.warn(message);
       return null;
     }
@@ -229,7 +236,6 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
       records: rows.map((row) => row.record).sort(compareCanonicalStartRecords),
     };
   } catch (error) {
-    if (isDeployedCanonicalStoreRuntime()) throw error;
     console.warn("canonical start durable store read failed", { date, error: error instanceof Error ? error.message : String(error) });
     return null;
   }
@@ -252,10 +258,11 @@ async function writeDurableCanonicalStartStore(store: CanonicalStartStoreFile): 
       counts: canonicalSlateCountsFromRecords(records),
       updated_at: store.updatedAt,
     });
+    canonicalStoreWriteFailures = 0;
     return true;
   } catch (error) {
-    if (isDeployedCanonicalStoreRuntime()) throw error;
     console.warn("canonical start durable store write failed", { date: store.date, error: error instanceof Error ? error.message : String(error) });
+    noteCanonicalStoreWriteFailure(error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -295,7 +302,7 @@ async function upsertCanonicalStartRows(baseUrl: string, serviceKey: string, rec
   const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
   url.searchParams.set("on_conflict", "date,start_id");
 
-  const response = await fetch(url, {
+  const response = await retryCanonicalStoreWrite("canonical-start-records.upsert", url, {
     method: "POST",
     headers: {
       ...canonicalStoreSupabaseHeaders(serviceKey),
@@ -315,7 +322,7 @@ async function upsertCanonicalSlateStateRow(baseUrl: string, serviceKey: string,
   const url = new URL(`/rest/v1/${CANONICAL_SLATE_STATES_TABLE}`, baseUrl);
   url.searchParams.set("on_conflict", "date");
 
-  const response = await fetch(url, {
+  const response = await retryCanonicalStoreWrite("canonical-slate-state.upsert", url, {
     method: "POST",
     headers: {
       ...canonicalStoreSupabaseHeaders(serviceKey),
@@ -343,6 +350,75 @@ function recordCanonicalStoreWrite(rows: number) {
   if (!diagnostics) return;
   diagnostics.writes += 1;
   diagnostics.rowsWritten += rows;
+}
+
+async function retryCanonicalStoreWrite(queryName: string, url: URL, init: RequestInit) {
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await timedCanonicalStoreFetch(queryName, url, init, CANONICAL_STORE_WRITE_TIMEOUT_MS);
+      if (response.ok || !isRetryableCanonicalStoreStatus(response.status) || attempt === 2) return response;
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error;
+      if (attempt === 2) throw error;
+    }
+    await sleep(250 * 2 ** attempt + Math.floor(Math.random() * 150));
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function timedCanonicalStoreFetch(queryName: string, url: URL, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+    const durationMs = Date.now() - startedAt;
+    logCanonicalStoreQuery(queryName, durationMs, response.status);
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function logCanonicalStoreQuery(queryName: string, durationMs: number, status: number) {
+  const payload = { query: queryName, durationMs, status };
+  if (durationMs >= CANONICAL_STORE_SLOW_QUERY_MS || status >= 500) {
+    console.warn("[canonical-store] slow-or-failed query", payload);
+    return;
+  }
+  console.info("[canonical-store] query", payload);
+}
+
+function isRetryableCanonicalStoreStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function noteCanonicalStoreWriteFailure(reason: string) {
+  canonicalStoreWriteFailures += 1;
+  if (canonicalStoreWriteFailures < CANONICAL_STORE_WRITE_FAILURE_LIMIT) return;
+  canonicalStoreCircuitOpenUntil = Date.now() + CANONICAL_STORE_CIRCUIT_OPEN_MS;
+  console.error("[canonical-store] write circuit opened", {
+    failures: canonicalStoreWriteFailures,
+    openMs: CANONICAL_STORE_CIRCUIT_OPEN_MS,
+    reason,
+  });
+}
+
+function isCanonicalStoreCircuitOpen() {
+  if (Date.now() >= canonicalStoreCircuitOpenUntil) return false;
+  console.warn("[canonical-store] write circuit open; deferring canonical write", {
+    opensUntil: new Date(canonicalStoreCircuitOpenUntil).toISOString(),
+  });
+  return true;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function canonicalStartRecordToRow(record: CanonicalStartRecord): CanonicalStartRow {
