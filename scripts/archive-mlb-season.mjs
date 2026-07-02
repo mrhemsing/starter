@@ -169,10 +169,19 @@ async function readJson(filePath) {
 }
 
 function toDateEntries(payload) {
-  return (payload.dates ?? []).map((entry) => ({
-    date: entry.date,
-    games: (entry.games ?? []).filter((game) => game.gameType === "R"),
-  })).filter((entry) => entry.date);
+  return (payload.dates ?? []).map((entry) => {
+    const regularGames = (entry.games ?? []).filter((game) => game.gameType === "R");
+    if (regularGames.length > 0 && regularGames.some((game) => !isCompletedGame(game))) {
+      const completedGames = regularGames.filter(isCompletedGame).length;
+      console.log(`${entry.date}: skipped archive, slate incomplete (${completedGames}/${regularGames.length} games final)`);
+      return { date: entry.date, games: [] };
+    }
+
+    return {
+      date: entry.date,
+      games: regularGames,
+    };
+  }).filter((entry) => entry.date && entry.games.length > 0);
 }
 
 function readTeam(game, side) {

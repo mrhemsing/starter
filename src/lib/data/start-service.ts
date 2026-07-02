@@ -153,7 +153,14 @@ export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise
   if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
-  if (archivedStarts.length > 0) return archivedStarts;
+  if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;
+  if (archivedStarts.length > 0) {
+    console.warn("[start-service] ignoring archive rows for active slate date", {
+      date: params.date,
+      archivedStarts: archivedStarts.length,
+      activeSlateDate: getHomeSlateDate(),
+    });
+  }
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
@@ -451,6 +458,10 @@ function shouldFetchLiveSchedule(date: string) {
 
   const ageInDays = Math.floor((current.getTime() - target.getTime()) / ONE_DAY_MS);
   return ageInDays >= 0 && ageInDays <= RECENT_LIVE_SCHEDULE_LOOKBACK_DAYS;
+}
+
+function shouldUseArchivedSlateForDate(date: string, activeSlateDate = getHomeSlateDate()) {
+  return date < activeSlateDate;
 }
 
 function shouldFetchLivePitchDetails(date: string, scheduleSource: MlbSchedule["source"]) {

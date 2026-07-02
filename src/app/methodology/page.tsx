@@ -46,7 +46,7 @@ export default async function MethodologyPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Formula transparency</p>
           <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">GS+ component weights</h2>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Raw GS+ starts at 45, adds length and strikeouts, subtracts runs, hits, and walks, then applies context and a 20-80 display transform.
+            Raw GS+ starts at 45, adds length and strikeouts, subtracts runs, hits, and walks, then applies context and a public display transform.
           </p>
           <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
             <FormulaItem label="Baseline" value="+45" />
@@ -60,9 +60,17 @@ export default async function MethodologyPage() {
             <FormulaItem label="Park context" value="(1.00 - run factor) x 12" />
             <FormulaItem label="Opponent quality" value="team quality run value" />
             <FormulaItem label="Opponent offense" value="offense run value" />
-            <FormulaItem label="Display transform" value="50 + (raw - 59) x 0.72, capped 20-80" />
+            <FormulaItem label="Display transform" value="50 + (raw - 54.3) x 0.72, capped 20-80" />
           </dl>
           <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
+        </section>
+
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Change note</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">July 2 baseline repair</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Jul 2: exhibition games were removed from the dataset, regular-season archive rows were rebuilt, and league baselines were recalculated. Some recent GS+ scores moved slightly because the regular-season pool is now centered around league average.
+          </p>
         </section>
 
         <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">

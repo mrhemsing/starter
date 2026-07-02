@@ -125,6 +125,7 @@ assertNonNegativeInteger(manifest.counts?.starts, "manifest counts.starts");
 assertNonNegativeInteger(manifest.counts?.pitchEvents, "manifest counts.pitchEvents");
 assert(manifest.counts.dates === manifest.dates.length, "manifest counts.dates must match date summaries");
 assert(manifest.counts.completedGames <= manifest.counts.games, "manifest completedGames cannot exceed games");
+assert(manifest.counts.completedGames === manifest.counts.games, "archive may contain only complete slates");
 assert(manifest.counts.starts <= manifest.counts.completedGames * 2, "manifest starts cannot exceed two starts per completed game");
 assert(manifest.counts.starts % 2 === 0, "manifest starts must be even");
 assert(manifest.counts?.starts >= minStarts, `archive has ${manifest.counts?.starts ?? 0} starts, expected at least ${minStarts}`);
@@ -176,6 +177,7 @@ for (const dateSummary of manifest.dates ?? []) {
   assert(dateSummary.date.startsWith(`${season}-`), `manifest date ${dateSummary.date ?? "missing"} must belong to season ${season}`);
   assertNonNegativeInteger(dateSummary.games, `manifest ${dateSummary.date ?? "missing"} games`);
   assertNonNegativeInteger(dateSummary.completedGames, `manifest ${dateSummary.date ?? "missing"} completedGames`);
+  assert(dateSummary.completedGames === dateSummary.games, `manifest ${dateSummary.date ?? "missing"} must be a complete slate`);
   assertNonNegativeInteger(dateSummary.starts, `manifest ${dateSummary.date ?? "missing"} starts`);
   assertNonNegativeInteger(dateSummary.pitchEvents, `manifest ${dateSummary.date ?? "missing"} pitchEvents`);
   assert(dateSummary.completedGames <= dateSummary.games, `manifest ${dateSummary.date ?? "missing"} completedGames cannot exceed games`);
@@ -469,6 +471,7 @@ for (const file of dateFiles) {
   );
   assert(dateArchive.counts?.games === fileGameCount, `${file} game count ${dateArchive.counts?.games ?? "missing"} does not match ${fileGameCount}`);
   assert(dateArchive.counts?.completedGames === fileCompletedGames, `${file} completed game count ${dateArchive.counts?.completedGames ?? "missing"} does not match ${fileCompletedGames}`);
+  assert(fileCompletedGames === fileGameCount, `${file} must contain only complete games`);
   assert(dateArchive.counts?.starts === fileStarts.length, `${file} start count ${dateArchive.counts?.starts ?? "missing"} does not match ${fileStarts.length}`);
   assert(dateArchive.counts?.pitchEvents === filePitchEvents, `${file} pitch event count ${dateArchive.counts?.pitchEvents ?? "missing"} does not match ${filePitchEvents}`);
   assertArchivedPitchDetailCoverage(fileStarts, filePitchEvents, file);

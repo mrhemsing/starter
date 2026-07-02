@@ -45,6 +45,14 @@ assert(
 );
 
 assert(
+  startService.includes("function shouldUseArchivedSlateForDate(date: string, activeSlateDate = getHomeSlateDate())") &&
+    startService.includes("return date < activeSlateDate;") &&
+    startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
+    startService.includes('console.warn("[start-service] ignoring archive rows for active slate date"'),
+  "daily slate assembly must ignore archive shards for the active slate date so a partial today archive cannot hide live/upcoming starts",
+);
+
+assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
     liveService.includes('["live-scoreboard", "v9"]') &&

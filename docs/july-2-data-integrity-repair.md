@@ -16,6 +16,7 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Reconciled the July 2 Jacob Misiorowski canonical record to final state with official archive fields: result `L`, venue `American Family Field`, line status `final`.
 - Kept GSv2 on the official Tango formula, including total runs and home runs. The July 2 Misiorowski GSv2 remains 43 because MLB's official final box has 5 total runs and 2 home runs.
 - Re-centered post-purge GS+ form calibration after removing spring starts.
+- Removed the accidental July 2 archive shard after the rebuild captured the slate mid-day. The live day now stays live-schedule driven until the slate is complete.
 
 ## Code guardrails
 
@@ -25,8 +26,15 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Canonical reconciliation now diffs and corrects GSv2, result, and venue, and strips source metadata from venue display fields.
 - GSv2 contract fixtures now anchor the formula to external July 2 lines, including the total-runs/HR Misiorowski case.
 - Form debug checks assert the post-purge league mean GS+ remains centered near 50.
+- Archive writes skip in-progress regular-season dates, and `getDailySlate` ignores archive rows for the active slate date.
 - Starter-out live gamefeed lines can mark the canonical record final through `source.lineStatus`.
 - Pitcher profile arsenals no longer fall back to the demo arsenal table; no real data means no arsenal module.
+
+## Score movement note
+
+- Jared Jones and Alan Rangel had valid official GSv2 records before the purge. Their visible GS+ movement came from the display calibration change after removing 708 exhibition starts, not from a change to their official lines.
+- The GS+ display transform moved from `50 + (raw - 59) x 0.72` to `50 + (raw - 54.3) x 0.72`, adding roughly 3.4 points to the line/context total before final rounding. That explains the recent-start score shifts while keeping league mean GS+ centered at 50.
+- The methodology page now carries a July 2 change note for the baseline repair.
 
 ## Verification
 
@@ -38,3 +46,5 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Production warm cron after deploy: revalidated successfully for `2026-07-02`.
 - Production form home after deploy: league mean GS+ `50`, 202 qualified pitchers.
 - Production Heat Check Season probe: no `GBR`, `SAC`, or John Michael Bertrand.
+- July 2 archive remediation: local date shard removed; Supabase `toetheslab_mlb_completed_starts` rows deleted `4 -> 0`; Supabase July 2 slate-state row deleted `1 -> 0`; archive manifest rebuilt through `2026-07-01`.
+- Production live-board probe after remediation: July 2 reports 18 total starts, 6 final starts, 12 scheduled starts, and no slate-final panel.

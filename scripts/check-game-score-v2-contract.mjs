@@ -116,8 +116,10 @@ assert(
     methodologyPage.includes("The adjustment label is shown as GS+ minus GSv2.") &&
     methodologyPage.includes("GSv2 uses official total runs and home runs when the gamefeed carries them") &&
     methodologyPage.includes("older line records fall back to earned runs and zero home runs") &&
+    methodologyPage.includes('<FormulaItem label="Display transform" value="50 + (raw - 54.3) x 0.72, capped 20-80" />') &&
+    methodologyPage.includes("Jul 2: exhibition games were removed from the dataset, regular-season archive rows were rebuilt, and league baselines were recalculated.") &&
     methodologyPage.includes('<FormulaItem label="Adjustment" value="GS+ minus GSv2" />'),
-  "methodology must explain GSv2, the GS+ adjustment label, official input usage, and legacy fallbacks",
+  "methodology must explain GSv2, the GS+ adjustment label, official input usage, legacy fallbacks, and post-purge baseline changes",
 );
 
 console.log("game score v2 contract ok: GSv2 is computed once and carried through canonical start records");
