@@ -46,19 +46,41 @@ export function PitchChart({ start }: { start: StartDetail }) {
   const mixStats = useMemo(() => {
     return (Object.keys(pitchTypes) as PitchTypeKey[]).map((type) => {
       const ofType = pitches.filter((pitch) => pitch.type === type);
+      const calledStrikes = ofType.filter((pitch) => pitch.result === "called_strike").length;
       const whiffs = ofType.filter((pitch) => pitch.result === "swinging_strike").length;
       const swings = ofType.filter((pitch) => ["swinging_strike", "foul", "hit_into_play"].includes(pitch.result)).length;
+      const inZone = ofType.filter(isInStrikeZone).length;
       const velos = ofType.map((pitch) => pitch.velocityMph);
       return {
         type,
         count: ofType.length,
-        pct: ofType.length / pitches.length,
+        pct: pitches.length > 0 ? ofType.length / pitches.length : 0,
         avgVelo: velos.length ? velos.reduce((total, velo) => total + velo, 0) / velos.length : 0,
         maxVelo: velos.length ? Math.max(...velos) : 0,
+        cswPct: ofType.length > 0 ? (calledStrikes + whiffs) / ofType.length : 0,
+        swingPct: ofType.length > 0 ? swings / ofType.length : 0,
+        zonePct: ofType.length > 0 ? inZone / ofType.length : 0,
         whiffPct: swings > 0 ? whiffs / swings : 0,
       };
     });
   }, [pitches]);
+  const qualityStats = useMemo(() => {
+    const calledStrikes = pitches.filter((pitch) => pitch.result === "called_strike").length;
+    const whiffs = pitches.filter((pitch) => pitch.result === "swinging_strike").length;
+    const swings = pitches.filter((pitch) => ["swinging_strike", "foul", "hit_into_play"].includes(pitch.result)).length;
+    const inZone = pitches.filter(isInStrikeZone).length;
+    const topType = mixStats
+      .filter((stat) => stat.count > 0)
+      .sort((a, b) => b.cswPct - a.cswPct || b.count - a.count)[0] ?? null;
+
+    return {
+      cswPct: pitches.length > 0 ? (calledStrikes + whiffs) / pitches.length : 0,
+      zonePct: pitches.length > 0 ? inZone / pitches.length : 0,
+      swingPct: pitches.length > 0 ? swings / pitches.length : 0,
+      whiffPct: swings > 0 ? whiffs / swings : 0,
+      topType,
+    };
+  }, [mixStats, pitches]);
 
   const velocityTrend = start.velocityTrend ?? [];
   const inningTimeline = start.inningTimeline ?? [];
@@ -442,6 +464,34 @@ export function PitchChart({ start }: { start: StartDetail }) {
 
             <ArsenalEventPanel eventSummary={start.arsenalEventSummary} />
 
+            <section className="mb-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="start-arsenal-quality">
+              <div className="mb-4 flex items-baseline justify-between gap-3">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal quality</p>
+                <p className="font-mono text-xs text-zinc-500">{pitches.length} pitches</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <QualityMetric label="CSW" value={formatPct(qualityStats.cswPct)} tone="strong" />
+                <QualityMetric label="Whiff" value={formatPct(qualityStats.whiffPct)} />
+                <QualityMetric label="Zone" value={formatPct(qualityStats.zonePct)} />
+                <QualityMetric label="Swing" value={formatPct(qualityStats.swingPct)} />
+              </div>
+              {qualityStats.topType ? (
+                <div className="mt-4 rounded border border-white/10 bg-black/25 p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="font-mono text-xs font-semibold" style={{ color: pitchTypes[qualityStats.topType.type].color }}>
+                      {pitchTypes[qualityStats.topType.type].name}
+                    </p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Best CSW</p>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                    <span>{formatPct(qualityStats.topType.cswPct)} CSW</span>
+                    <span>{formatPct(qualityStats.topType.zonePct)} zone</span>
+                    <span>{formatPct(qualityStats.topType.whiffPct)} whiff</span>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Arsenal breakdown</p>
             <div className="flex flex-col gap-3">
               {mixStats
@@ -461,6 +511,11 @@ export function PitchChart({ start }: { start: StartDetail }) {
                     <div className="mt-3 flex justify-between font-mono text-xs">
                       <span className="text-zinc-500">{stat.count} thrown</span>
                       <span className={stat.whiffPct > 0.25 ? "text-amber-300" : "text-zinc-400"}>{(stat.whiffPct * 100).toFixed(0)}% whiff</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                      <span>{formatPct(stat.cswPct)} CSW</span>
+                      <span>{formatPct(stat.zonePct)} zone</span>
+                      <span>{formatPct(stat.swingPct)} swing</span>
                     </div>
                   </div>
                 ))}
@@ -500,6 +555,23 @@ function ArsenalEventPanel({ eventSummary }: { eventSummary: StartDetail["arsena
       </p>
     </section>
   );
+}
+
+function QualityMetric({ label, value, tone = "muted" }: { label: string; value: string; tone?: "strong" | "muted" }) {
+  return (
+    <div className={`rounded border p-3 ${tone === "strong" ? "border-amber-300/25 bg-amber-300/10" : "border-white/10 bg-black/20"}`}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+      <p className={`mt-1 font-serif text-3xl font-semibold ${tone === "strong" ? "text-amber-200" : "text-zinc-50"}`}>{value}</p>
+    </div>
+  );
+}
+
+function isInStrikeZone(pitch: Pick<PitchEvent, "plateX" | "plateZ">) {
+  return pitch.plateX >= strikeZone.xMin && pitch.plateX <= strikeZone.xMax && pitch.plateZ >= strikeZone.zMin && pitch.plateZ <= strikeZone.zMax;
+}
+
+function formatPct(value: number) {
+  return `${Math.round(value * 100)}%`;
 }
 
 function formatSignedPct(value: number) {

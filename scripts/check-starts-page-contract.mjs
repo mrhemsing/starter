@@ -378,6 +378,22 @@ assert(
 );
 
 assert(
+    pitchChart.includes('data-responsive-check="start-arsenal-quality"') &&
+    pitchChart.includes("function QualityMetric") &&
+    pitchChart.includes("function isInStrikeZone") &&
+    pitchChart.includes("function formatPct") &&
+    pitchChart.includes('label="CSW"') &&
+    pitchChart.includes('label="Whiff"') &&
+    pitchChart.includes('label="Zone"') &&
+    pitchChart.includes('label="Swing"') &&
+    pitchChart.includes("Best CSW") &&
+    pitchChart.includes("formatPct(stat.cswPct)") &&
+    pitchChart.includes("formatPct(stat.zonePct)") &&
+    pitchChart.includes("formatPct(stat.swingPct)"),
+  "start pitch chart must expose archive-derived arsenal quality metrics without requiring new Statcast fields",
+);
+
+assert(
     startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
