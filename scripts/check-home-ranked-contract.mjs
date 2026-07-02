@@ -241,10 +241,14 @@ assert(
     topPerformerCard.includes("scoreStatusLabel ?") &&
     topPerformerCard.includes('eyebrow: "Start of the day"') &&
     !topPerformerCard.includes("Start of the night") &&
+    rankedService.includes('scoreStatusLabel: "PROV" | null;') &&
+    rankedService.includes('scoreStatusLabel: leader.scoreLabel === "PROV" ? "PROV" as const : null,') &&
+    homeDeferredSections.includes("scoreStatusLabel: topPerformer.scoreStatusLabel,") &&
     homeDeferredSections.includes("status={view.status}") &&
     homeDeferredSections.includes("scoreStatusLabel={view.scoreStatusLabel}") &&
+    !homeDeferredSections.includes('scoreStatusLabel: topPerformer.status === "live" ? "PROV" : null') &&
     !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
-  "home top performer must label live slates with broadcast live copy and settled winners as Start of the Day",
+  "home top performer must label live slates with broadcast live copy and carry score status from the shared feed",
 );
 
 assert(
@@ -320,7 +324,7 @@ assert(
     rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v12"]'),
+    rankedService.includes('["home-ranked", "v13"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 

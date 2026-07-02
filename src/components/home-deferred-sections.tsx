@@ -313,7 +313,7 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
     image: topPerformer.image,
     highlight: topPerformer.highlight,
     status: topPerformer.status,
-    scoreStatusLabel: topPerformer.status === "live" ? "PROV" : null,
+    scoreStatusLabel: topPerformer.scoreStatusLabel,
     whiffRate: topPerformer.metrics?.whiffRate ?? null,
     topVelo: topPerformer.metrics?.topVelo ?? null,
     veloSparkline: topPerformer.metrics?.veloSparkline ?? [],

@@ -34,6 +34,7 @@ type TopPerformerState = {
   start: StartSummary;
   slateCount: number;
   dateLabel: string;
+  scoreStatusLabel: "PROV" | null;
   href?: string;
 };
 
@@ -49,7 +50,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v12"],
+  ["home-ranked", "v13"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -157,6 +158,7 @@ function resolveTopPerformerState({
       start: todayLeader,
       slateCount: todayCompletedSlateStarts.length,
       dateLabel: formatLongDate(today),
+      scoreStatusLabel: null,
     };
   }
 
@@ -167,6 +169,7 @@ function resolveTopPerformerState({
       start: liveLeader,
       slateCount: liveBoard?.totalStarts ?? todaySlateStarts.length,
       dateLabel: formatLongDate(today),
+      scoreStatusLabel: liveLeader.scoreStatusLabel,
       href: liveDateHref(today),
     };
   }
@@ -178,6 +181,7 @@ function resolveTopPerformerState({
       start: todayLeader,
       slateCount: todayCompletedSlateStarts.length,
       dateLabel: formatLongDate(today),
+      scoreStatusLabel: null,
     };
   }
 
@@ -189,6 +193,7 @@ function resolveTopPerformerState({
     start: yesterdayLeader,
     slateCount: yesterdayRankedStarts.length,
     dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
+    scoreStatusLabel: null,
   };
 }
 
@@ -203,6 +208,7 @@ function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStar
     ...baseline,
     line: leader.line,
     gameScorePlus: leader.gsPlus,
+    scoreStatusLabel: leader.scoreLabel === "PROV" ? "PROV" as const : null,
     source: {
       schedule: baseline.source?.schedule ?? "live",
       line: "live-gamefeed" as const,
