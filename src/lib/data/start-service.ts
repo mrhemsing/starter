@@ -692,7 +692,15 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     opponentOffenseRunValue: getOpponentOffenseRunValue(start.opponent),
     opponentOffenseLabel: `${start.opponent} archived offense quality from fixture lineup context.`,
   };
-  const gameScorePlus = scoreCompletedLine(start.line, context);
+  const canonicalRecord = (await readCanonicalStartRecords(date)).find((record) => record.id === startId);
+  const frozenContext = canonicalRecord?.contextSnapshot
+    ? {
+        ...canonicalRecord.contextSnapshot,
+        parkLabel: canonicalRecord.venue ?? canonicalRecord.contextSnapshot.parkLabel,
+      }
+    : context;
+  const line = canonicalRecord?.line ?? start.line;
+  const gameScorePlus = canonicalRecord?.gameScorePlus ?? scoreCompletedLine(line, frozenContext);
   const savantPitchDetails = start.pitchEvents?.length
     ? null
     : await fetchRequestTimeSavantPitchDetails(date, start.gamePk, start.pitcherMlbId);
@@ -724,9 +732,12 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     },
     opponent: start.opponent,
     side: start.side,
-    result: start.result,
-    line: start.line,
+    result: canonicalRecord?.result ?? start.result,
+    line,
     gameScorePlus,
+    gameScoreV2: canonicalRecord?.gameScoreV2,
+    eventFlags: canonicalRecord?.eventFlags,
+    gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown,
     game: {
       gamePk: game.gamePk,
       date,
@@ -754,8 +765,8 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     },
     teamColor: colors.color,
     accentColor: colors.accent,
-    context,
-    source: {
+    context: frozenContext,
+    source: canonicalRecord?.source ?? {
       schedule: "live",
       line: "archive-gamefeed",
       ranking: "schedule-derived-archive-line",

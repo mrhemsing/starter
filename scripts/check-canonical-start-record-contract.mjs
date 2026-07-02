@@ -244,6 +244,16 @@ assert(
 );
 
 assert(
+  startService.includes("const canonicalRecord = (await readCanonicalStartRecords(date)).find((record) => record.id === startId);") &&
+    startService.includes("const frozenContext = canonicalRecord?.contextSnapshot") &&
+    startService.includes("const line = canonicalRecord?.line ?? start.line;") &&
+    startService.includes("const gameScorePlus = canonicalRecord?.gameScorePlus ?? scoreCompletedLine(line, frozenContext);") &&
+    startService.includes("gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown,") &&
+    startService.includes("context: frozenContext,"),
+  "archived start detail pages must overlay canonical frozen score, context snapshot, and Why breakdown instead of recomputing settled GS+ from archive context",
+);
+
+assert(
     slateState.includes("export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts") &&
     slateState.includes('if (start.source?.line === "archive-gamefeed") return "final";') &&
     slateState.includes('if (start.source?.line === "live-gamefeed" && start.source.lineStatus === "final") return "final";') &&
