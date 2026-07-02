@@ -249,6 +249,29 @@ assert(
 );
 
 assert(
+  startsPage.includes("function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }") &&
+    startsPage.includes("const delta = gameScorePlus - gameScoreV2;") &&
+    startsPage.includes("GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj") &&
+    startsPage.includes("data-score-bridge") &&
+    startsPage.includes("<ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} />") &&
+    startsPage.includes("<ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />") &&
+    startsPage.includes("<ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} gameScoreV2={start.gameScoreV2} />"),
+  "ranked starts and start detail surfaces must show GSv2 only as context beside GS+ without changing rank logic",
+);
+
+assert(
+  startsPage.includes("function StartEventFlagChips({ flags, className = \"\" }") &&
+    startsPage.includes("data-start-event-flags={flags.join(\",\")}") &&
+    startsPage.includes('if (flag === "HARD_LUCK") return "Hard luck";') &&
+    startsPage.includes('return "Vulture";') &&
+    startsPage.includes('if (flag === "HARD_LUCK") return "border-sky-300/30 bg-sky-300/10 text-sky-200";') &&
+    startsPage.includes("<StartEventFlagChips flags={start.eventFlags}") &&
+    !startsPage.includes("sort === \"hard-luck\"") &&
+    !startsPage.includes("sort === \"vulture\""),
+  "ranked starts event chips must render from canonical HARD_LUCK/VULTURE flags without adding ranked ordering inputs",
+);
+
+assert(
   routes.includes("export function startHref") &&
     startsPage.includes("startHref(start, sourceParams(\"starts\"))") &&
     startsPage.includes("pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(\"starts\"))"),

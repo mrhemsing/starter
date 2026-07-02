@@ -150,6 +150,8 @@ export default async function StartPage({ params, searchParams }: StartPageProps
             <div className="lg:text-right">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+</p>
               <p className="font-serif text-7xl font-black leading-none text-amber-300">{start.gameScorePlus}</p>
+              <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} />
+              <StartEventFlagChips flags={start.eventFlags} className="mt-3 justify-start lg:justify-end" />
               {start.gameScorePlusBreakdown ? (
                 <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
                   {start.gameScorePlusBreakdown.gradeBand.label} / {start.gameScorePlusBreakdown.gradeBand.percentileLabel}
@@ -417,6 +419,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div>
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
+            <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
           </div>
         </div>
       </div>
@@ -432,13 +435,14 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <div className="mt-3">
               <ScoreReasonList reasons={visibleRankingReasons(start.gameScorePlusBreakdown?.rankingReasons ?? [])} />
             </div>
+            <StartEventFlagChips flags={start.eventFlags} className="mt-4" />
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.16em]">
               <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
               <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Pitcher Profile</Link>
               {pairedStart ? <Link href={`#${pairedStart.id}`} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Same game starter</Link> : null}
             </div>
           </div>
-          {start.gameScorePlusBreakdown ? <ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} /> : null}
+          {start.gameScorePlusBreakdown ? <ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} gameScoreV2={start.gameScoreV2} /> : null}
         </div>
       </details>
     </article>
@@ -471,6 +475,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       <div className="font-mono text-xs text-zinc-400 sm:text-right">
         <p>{formatStartLine(start.line)}</p>
         <p className="mt-1 text-zinc-500">GS+ {start.gameScorePlus}</p>
+        <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
       </div>
     </article>
   );
@@ -570,7 +575,7 @@ function ControlLink({ active, href, children, color, scroll = true }: { active:
   );
 }
 
-function ExpandedScoreBreakdown({ breakdown }: { breakdown: StartApiGameScorePlusBreakdown }) {
+function ExpandedScoreBreakdown({ breakdown, gameScoreV2 }: { breakdown: StartApiGameScorePlusBreakdown; gameScoreV2?: number }) {
   const components = visibleScoreComponents(breakdown.components);
   const earnedTotal = components.reduce((sum, component) => sum + component.value, 0);
 
@@ -582,12 +587,52 @@ function ExpandedScoreBreakdown({ breakdown }: { breakdown: StartApiGameScorePlu
           <p className="mt-1 font-mono text-xs text-zinc-400">
             Earned total {formatSigned(earnedTotal)} -&gt; Calibrated GS+ {breakdown.total}
           </p>
+          <ScoreBridge gameScorePlus={breakdown.total} gameScoreV2={gameScoreV2} />
         </div>
         <p className="font-mono text-xs text-zinc-500">{breakdown.gradeBand.percentileLabel}</p>
       </div>
       <ScoreComponentList components={components} compact />
     </div>
   );
+}
+
+function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }: { gameScorePlus: number; gameScoreV2?: number; compact?: boolean }) {
+  if (typeof gameScoreV2 !== "number") return null;
+  const delta = gameScorePlus - gameScoreV2;
+
+  return (
+    <p className={`${compact ? "mt-1 text-[9px]" : "mt-2 text-xs"} font-mono uppercase tracking-[0.14em] text-zinc-500`} data-score-bridge>
+      GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj
+    </p>
+  );
+}
+
+function StartEventFlagChips({ flags, className = "" }: { flags?: StartSummary["eventFlags"]; className?: string }) {
+  if (!flags?.length) return null;
+
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`} data-start-event-flags={flags.join(",")}>
+      {flags.map((flag) => (
+        <span
+          key={flag}
+          className={`inline-flex min-h-7 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${eventFlagClassName(flag)}`}
+          title={eventFlagLabel(flag)}
+        >
+          {eventFlagLabel(flag)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function eventFlagLabel(flag: NonNullable<StartSummary["eventFlags"]>[number]) {
+  if (flag === "HARD_LUCK") return "Hard luck";
+  return "Vulture";
+}
+
+function eventFlagClassName(flag: NonNullable<StartSummary["eventFlags"]>[number]) {
+  if (flag === "HARD_LUCK") return "border-sky-300/30 bg-sky-300/10 text-sky-200";
+  return "border-zinc-300/25 bg-white/5 text-zinc-200";
 }
 
 function visibleScoreComponents(components: StartApiGameScorePlusBreakdown["components"]) {
