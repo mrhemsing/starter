@@ -8,7 +8,7 @@ import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { WatchlistSearchForm } from "@/components/watchlist-search-form";
 import { getFormLeaderboard } from "@/lib/data/form-service";
-import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
+import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type WatchlistLiveEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
@@ -73,12 +73,13 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <div className="mt-5 grid gap-3 font-mono text-xs sm:grid-cols-3">
             <SummaryStat label="Followed" value={String(watchlist.entries.length)} />
             <SummaryStat label="Digest events" value={String(watchlist.digestEvents.length)} />
-            <SummaryStat label="Pitching soon" value={String(watchlist.pitchingSoon.length)} />
+            <SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)} />
           </div>
         </header>
 
         <section className="grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
+            <PitchingNowStrip entries={watchlist.livePitchingNow} />
             <PitchingSoonStrip entries={watchlist.pitchingSoon} />
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
@@ -149,6 +150,38 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
         </section>
       </div>
     </main>
+  );
+}
+
+function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
+  if (entries.length === 0) return null;
+  return (
+    <section className="mb-4 rounded border border-[#FF7A3D]/35 bg-[#FF7A3D]/[0.08] p-4" data-responsive-check="watchlist-pitching-now">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#FF7A3D]">Pitching now</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Followed arms live</h2>
+        </div>
+        <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{entries.length} live</p>
+      </div>
+      <div className="mt-4 grid gap-2">
+        {entries.map((entry) => (
+          <Link key={`${entry.pitcherId}-${entry.liveStart.liveHref}`} href={entry.liveStart.liveHref} className="grid gap-3 rounded border border-white/10 bg-black/25 p-3 transition hover:border-[#FF7A3D]/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
+              <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
+                {entry.team} vs {entry.liveStart.opponent} · {entry.liveStart.inningLabel ?? "Live"} · {entry.liveStart.pitchCount ?? "--"} pitches
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">{formatStartLine(entry.liveStart.line)}</p>
+            </div>
+            <div className="score-bug min-w-24 rounded border border-[#FF7A3D]/40 bg-[#FF7A3D] px-3 py-2 text-center text-zinc-950">
+              <p className="font-serif text-4xl font-bold leading-none">{entry.liveStart.score === null ? "--" : Math.round(entry.liveStart.score)}</p>
+              <p className="mt-1 font-mono text-[10px] font-bold uppercase tracking-[0.14em]">{entry.liveStart.scoreLabel === "FINAL" ? "FINAL" : "PROV"} GS+</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

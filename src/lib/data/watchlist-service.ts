@@ -2,8 +2,9 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getFormLeaderboard } from "@/lib/data/form-service";
+import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
-import type { FormNextStart, FormSummary, ProbableStart } from "@/lib/types";
+import type { FormNextStart, FormSummary, ProbableStart, StartLine } from "@/lib/types";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
 const WATCHLIST_IDS_PREFIX = "wlids_";
@@ -28,6 +29,20 @@ export type WatchlistEntry = FormSummary & {
   digestEvents: WatchlistDigestEvent[];
 };
 
+export type WatchlistLiveStart = {
+  score: number | null;
+  scoreLabel: "PROV" | "FINAL";
+  inningLabel: string | null;
+  pitchCount: number | null;
+  opponent: string;
+  line: StartLine;
+  liveHref: string;
+};
+
+export type WatchlistLiveEntry = WatchlistEntry & {
+  liveStart: WatchlistLiveStart;
+};
+
 export type WatchlistDigestEvent = {
   key: "starting" | "rising" | "cooling" | "gem" | "rough" | "band";
   label: string;
@@ -39,6 +54,7 @@ export type WatchlistView = {
   pitcherIds: string[];
   sort: WatchlistSort;
   entries: WatchlistEntry[];
+  livePitchingNow: WatchlistLiveEntry[];
   pitchingSoon: WatchlistEntry[];
   bench: WatchlistEntry[];
   digestEvents: Array<WatchlistDigestEvent & { pitcherId: string; pitcherName: string }>;
@@ -101,13 +117,16 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   const pitcherIds = await getWatchlistPitcherIds(accountId);
   const sort = parseWatchlistSort(options.sort);
   if (pitcherIds.length === 0) {
-    return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], pitchingSoon: [], bench: [], digestEvents: [] };
+    return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], livePitchingNow: [], pitchingSoon: [], bench: [], digestEvents: [] };
   }
 
-  const [leaderboard, nextStarts] = await Promise.all([
+  const today = getHomeSlateDate();
+  const [leaderboard, nextStarts, liveBoard] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
     getNextStartMap(pitcherIds),
+    getLiveScoreboard({ date: today }).catch(() => null),
   ]);
+  const liveRowsByPitcherId = new Map((liveBoard?.rows ?? []).filter(isWatchlistLiveRow).map((row) => [row.pitcherId, row]));
   const byId = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
   const hydratedEntries = pitcherIds
     .map((pitcherId) => byId.get(pitcherId))
@@ -121,6 +140,22 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
       };
     });
   const entries = sortWatchlistEntries(hydratedEntries, sort);
+  const livePitchingNow = entries.flatMap((entry) => {
+    const row = liveRowsByPitcherId.get(entry.pitcherId);
+    if (!row) return [];
+    return [{
+      ...entry,
+      liveStart: {
+        score: row.gsPlus,
+        scoreLabel: row.scoreLabel,
+        inningLabel: row.inningLabel,
+        pitchCount: row.pitchCount,
+        opponent: row.opponent,
+        line: row.line,
+        liveHref: row.liveHref,
+      },
+    }];
+  });
   const pitchingSoon = entries.filter(isPitchingSoon);
   const bench = entries.filter((entry) => !isPitchingSoon(entry));
 
@@ -129,10 +164,15 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
     pitcherIds,
     sort,
     entries,
+    livePitchingNow,
     pitchingSoon,
     bench,
     digestEvents: entries.flatMap((entry) => entry.digestEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name }))),
   };
+}
+
+function isWatchlistLiveRow(row: LiveScoreboardRow): row is LiveScoreboardRow & { scoreLabel: "PROV" | "FINAL" } {
+  return row.status === "live" && row.scoreLabel !== "PROJ";
 }
 
 function digestEventsForPitcher(pitcher: FormSummary, nextStart: WatchlistNextStart | null): WatchlistDigestEvent[] {

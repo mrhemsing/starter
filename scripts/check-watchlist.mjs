@@ -6,8 +6,9 @@ import net from "node:net";
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
 
-const [watchlistPageSource, searchFormSource, followButtonSource] = await Promise.all([
+const [watchlistPageSource, watchlistServiceSource, searchFormSource, followButtonSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
+  readFile("src/lib/data/watchlist-service.ts", "utf8"),
   readFile("src/components/watchlist-search-form.tsx", "utf8"),
   readFile("src/components/follow-pitcher-button.tsx", "utf8"),
 ]);
@@ -40,6 +41,22 @@ assert(
 assert(
   watchlistPageSource.includes('<div className="mt-5"><TrendChip summary={entry} compact /></div>'),
   "watchlist row trend chip should keep enough top space to align with the follow action box",
+);
+assert(
+  watchlistServiceSource.includes('import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
+    watchlistServiceSource.includes("livePitchingNow: WatchlistLiveEntry[];") &&
+    watchlistServiceSource.includes("getLiveScoreboard({ date: today }).catch(() => null)") &&
+    watchlistServiceSource.includes("const liveRowsByPitcherId = new Map") &&
+    watchlistServiceSource.includes('return row.status === "live" && row.scoreLabel !== "PROJ";'),
+  "watchlist service should derive followed pitching-now rows from live scoreboard rows",
+);
+assert(
+  watchlistPageSource.includes("<PitchingNowStrip entries={watchlist.livePitchingNow} />") &&
+    watchlistPageSource.includes('data-responsive-check="watchlist-pitching-now"') &&
+    watchlistPageSource.includes("entry.liveStart.liveHref") &&
+    watchlistPageSource.includes("entry.liveStart.scoreLabel === \"FINAL\" ? \"FINAL\" : \"PROV\"") &&
+    watchlistPageSource.includes('SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)}'),
+  "watchlist page should pin followed live arms with provisional GS+ and live-board links",
 );
 
 async function reservePort() {
@@ -117,6 +134,7 @@ try {
   assert(followedJson.pitcherIds.includes(pitcherId), "follow API should persist pitcher id");
   assert(followedJson.entries.some((entry) => entry.pitcherId === pitcherId), "follow API should hydrate followed pitcher");
   assert(Array.isArray(followedJson.pitchingSoon), "watchlist API should expose pitchingSoon group");
+  assert(Array.isArray(followedJson.livePitchingNow), "watchlist API should expose livePitchingNow group");
   assert(Array.isArray(followedJson.bench), "watchlist API should expose bench group");
   assert(["default", "form", "soonest", "mover"].includes(followedJson.sort), "watchlist API should expose supported sort mode");
   assert(
@@ -129,6 +147,7 @@ try {
   const html = await page.text();
   assert(html.includes("Watchlist"), "watchlist page should render");
   assert(html.includes("Digest preview"), "watchlist should render digest preview");
+  assert(html.includes("Pitching now"), "watchlist should expose the live pitching summary label");
   assert(html.includes("Sort"), "watchlist should render sort controls");
   assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
   assert(html.includes("Pitching today / soon"), "watchlist should render actionable pitching-soon group");
