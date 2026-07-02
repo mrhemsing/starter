@@ -182,6 +182,7 @@ assert(
     formPage.includes('if (todayStart?.status === "live") return { kind: "live", label: "LIVE NOW", href: todayStart.liveHref };') &&
     formPage.includes('if (pitcher.nextStart.date === today) return { kind: "scheduled", label: "STARTS TODAY" };') &&
     formPage.includes("if (daysAway > 0 && daysAway <= 6) return { kind: \"scheduled\", label: `STARTS ${formatWeekday(pitcher.nextStart.date)}` };") &&
+    formPage.includes('weekday: "long"') &&
     formPage.includes("return { kind: \"scheduled\", label: `STARTS ${formatMonthDay(pitcher.nextStart.date)}` };") &&
     formPage.includes("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("<CrossoverPill pitcher={pitcher} />") &&
@@ -200,7 +201,7 @@ assert(
     formDriverChips.includes("whitespace-nowrap") &&
     !formDriverChips.includes("whitespace-normal") &&
     !formDriverChips.includes("[overflow-wrap:anywhere]"),
-  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS DAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
+  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS WEEKDAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
 );
 
 assert(

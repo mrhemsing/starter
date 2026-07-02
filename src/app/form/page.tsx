@@ -888,7 +888,7 @@ function formatWeekday(value: string) {
   const date = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(date.valueOf())) return formatMonthDay(value);
   return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
+    weekday: "long",
     timeZone: "UTC",
   }).format(date).toUpperCase();
 }
