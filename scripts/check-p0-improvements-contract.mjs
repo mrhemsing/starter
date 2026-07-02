@@ -33,9 +33,18 @@ assert(
 assert(
   mlbStatsClient.includes('source: "mlb-stats-api",') &&
     mlbStatsClient.includes('confidence: "CONFIRMED",') &&
+    mlbStatsClient.includes('const ESPN_MLB_SCOREBOARD_API = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";') &&
+    mlbStatsClient.includes("async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbProbablePitcher>>") &&
+    mlbStatsClient.includes('source: "secondary-feed",') &&
+    mlbStatsClient.includes('confidence: "REPORTED",') &&
+    mlbStatsClient.includes("const missingKeys = new Set(schedule.games.flatMap((game) => [") &&
+    mlbStatsClient.includes("if (!missingKeys.has(key)) continue;") &&
+    mlbStatsClient.includes("async function resolveReportedPitcherMlbId(fullName: string, options: MlbScheduleClientOptions = {}): Promise<number | null>") &&
+    mlbStatsClient.includes("probableAwayPitcher: game.probableAwayPitcher ?? reported.get(") &&
+    mlbStatsClient.includes("probableHomePitcher: game.probableHomePitcher ?? reported.get(") &&
     mlbArchive.includes('source: "mlb-stats-api" as const,') &&
     mlbArchive.includes('confidence: "CONFIRMED" as const,'),
-  "MLB Stats API and archived probables must be marked CONFIRMED",
+  "MLB Stats API probables must stay CONFIRMED while secondary-feed probables fill only missing starters as REPORTED",
 );
 
 assert(

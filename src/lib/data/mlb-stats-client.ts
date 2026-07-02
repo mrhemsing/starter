@@ -4,6 +4,7 @@ import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
+const ESPN_MLB_SCOREBOARD_API = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";
 const LIVE_SCHEDULE_CACHE_TTL_MS = 60 * 1000;
 const LIVE_GAMEFEED_CACHE_TTL_MS = 60 * 1000;
 const LIVE_CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -34,6 +35,7 @@ const livePitchingLineCache = new Map<string, CachedValue<MlbLivePitchingLine[]>
 const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQualityContext>>>();
 const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
 const teamHandednessSplitCache = new Map<string, CachedValue<Map<string, MlbTeamHandednessSplitContext>>>();
+const resolvedReportedPitcherCache = new Map<string, CachedValue<number | null>>();
 
 function cachedRequestInit(options: MlbScheduleClientOptions, revalidate: number): RequestInit & { next?: { revalidate: number } } {
   if (options.signal) {
@@ -82,6 +84,33 @@ type MlbScheduleApiResponse = {
   }>;
 };
 
+type EspnScoreboardApiResponse = {
+  events?: EspnScoreboardEvent[];
+};
+
+type EspnScoreboardEvent = {
+  competitions?: EspnScoreboardCompetition[];
+};
+
+type EspnScoreboardCompetition = {
+  competitors?: EspnScoreboardCompetitor[];
+};
+
+type EspnScoreboardCompetitor = {
+  homeAway?: "home" | "away";
+  team?: {
+    abbreviation?: string;
+  };
+  probables?: EspnProbablePitcher[];
+};
+
+type EspnProbablePitcher = {
+  name?: string;
+  athlete?: {
+    fullName?: string;
+  };
+};
+
 type MlbStandingsApiResponse = {
   records?: Array<{
     teamRecords?: MlbStandingsTeamRecord[];
@@ -114,6 +143,10 @@ type MlbPeopleApiResponse = {
     currentTeam?: {
       id?: number;
       name?: string;
+    };
+    primaryPosition?: {
+      type?: string;
+      abbreviation?: string;
     };
     pitchHand?: {
       code?: string;
@@ -385,7 +418,9 @@ async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOpti
     if (!response.ok) return getFixtureSchedule(date);
 
     const payload = (await response.json()) as MlbScheduleApiResponse;
-    return parseSchedulePayload(date, payload, "live");
+    const schedule = parseSchedulePayload(date, payload, "live");
+    const reportedProbables = await fetchReportedProbablePitchers(date, schedule, options);
+    return mergeReportedProbablePitchers(schedule, reportedProbables);
   } catch {
     return getFixtureSchedule(date);
   }
@@ -849,6 +884,126 @@ function parseSchedulePayload(date: string, payload: MlbScheduleApiResponse, sou
     source,
     games: scheduleDate?.games?.flatMap(parseGame).filter((game): game is MlbScheduleGame => Boolean(game)) ?? [],
   };
+}
+
+async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbProbablePitcher>> {
+  if (schedule.games.length === 0) return new Map();
+
+  const params = new URLSearchParams({
+    dates: date.replaceAll("-", ""),
+  });
+
+  try {
+    const response = await fetch(`${ESPN_MLB_SCOREBOARD_API}?${params.toString()}`, cachedRequestInit(options, MLB_SCHEDULE_REVALIDATE_SECONDS));
+    if (!response.ok) return new Map();
+
+    const payload = (await response.json()) as EspnScoreboardApiResponse;
+    const reported = new Map<string, MlbProbablePitcher>();
+    const missingKeys = new Set(schedule.games.flatMap((game) => [
+      game.probableAwayPitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away"),
+      game.probableHomePitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home"),
+    ]).filter((key): key is string => Boolean(key)));
+    if (missingKeys.size === 0) return reported;
+
+    for (const event of payload.events ?? []) {
+      for (const competition of event.competitions ?? []) {
+        const competitors = competition.competitors ?? [];
+        const home = competitors.find((competitor) => competitor.homeAway === "home");
+        const away = competitors.find((competitor) => competitor.homeAway === "away");
+        const homeAbbreviation = home?.team?.abbreviation;
+        const awayAbbreviation = away?.team?.abbreviation;
+        if (!homeAbbreviation || !awayAbbreviation) continue;
+
+        for (const competitor of competitors) {
+          const side = competitor.homeAway;
+          const teamAbbreviation = competitor.team?.abbreviation;
+          const probable = competitor.probables?.find((candidate) => candidate.name === "probableStartingPitcher");
+          const fullName = probable?.athlete?.fullName;
+          if ((side !== "home" && side !== "away") || !teamAbbreviation || !fullName) continue;
+
+          const key = reportedProbableKey(awayAbbreviation, homeAbbreviation, side);
+          if (!missingKeys.has(key)) continue;
+
+          const id = await resolveReportedPitcherMlbId(fullName, options);
+          if (!id) continue;
+
+          const opponentAbbreviation = side === "home" ? awayAbbreviation : homeAbbreviation;
+          reported.set(key, {
+            id,
+            fullName,
+            teamAbbreviation,
+            opponentAbbreviation,
+            side,
+            source: "secondary-feed",
+            confidence: "REPORTED",
+          });
+        }
+      }
+    }
+
+    return reported;
+  } catch {
+    return new Map();
+  }
+}
+
+async function resolveReportedPitcherMlbId(fullName: string, options: MlbScheduleClientOptions = {}): Promise<number | null> {
+  const cacheKey = normalizePlayerName(fullName);
+  const cached = resolvedReportedPitcherCache.get(cacheKey);
+  if (!options.signal && cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = fetchReportedPitcherMlbId(fullName, options);
+  if (!options.signal) {
+    resolvedReportedPitcherCache.set(cacheKey, {
+      expiresAt: Date.now() + MLB_PLAYER_PROFILE_REVALIDATE_SECONDS * 1000,
+      promise,
+    });
+  }
+
+  return promise;
+}
+
+async function fetchReportedPitcherMlbId(fullName: string, options: MlbScheduleClientOptions = {}): Promise<number | null> {
+  const params = new URLSearchParams({
+    names: fullName,
+  });
+
+  try {
+    const response = await fetch(`${MLB_STATS_API_BASE}/people/search?${params.toString()}`, cachedRequestInit(options, MLB_PLAYER_PROFILE_REVALIDATE_SECONDS));
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as MlbPeopleApiResponse;
+    const normalized = normalizePlayerName(fullName);
+    const match = (payload.people ?? []).find((person) => person.id && normalizePlayerName(person.fullName ?? "") === normalized && isPitcherPerson(person));
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function mergeReportedProbablePitchers(schedule: MlbSchedule, reported: Map<string, MlbProbablePitcher>): MlbSchedule {
+  if (reported.size === 0) return schedule;
+
+  return {
+    ...schedule,
+    games: schedule.games.map((game) => ({
+      ...game,
+      probableAwayPitcher: game.probableAwayPitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away")),
+      probableHomePitcher: game.probableHomePitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home")),
+    })),
+  };
+}
+
+function reportedProbableKey(awayAbbreviation: string, homeAbbreviation: string, side: "home" | "away") {
+  return `${awayAbbreviation}:${homeAbbreviation}:${side}`;
+}
+
+function normalizePlayerName(name: string) {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function isPitcherPerson(person: NonNullable<MlbPeopleApiResponse["people"]>[number]) {
+  return person.primaryPosition?.type === "Pitcher" || person.primaryPosition?.abbreviation === "P";
 }
 
 function parseTeamQualityContexts(payload: MlbStandingsApiResponse, offenseContexts = new Map<number, MlbTeamOffenseContext>()) {
