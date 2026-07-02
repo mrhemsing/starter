@@ -17,6 +17,7 @@ export const PROBABLES_REPOLL_NEAR_SECONDS = 15 * 60;
 export const PROBABLES_REPOLL_URGENT_SECONDS = 5 * 60;
 const PROBABLES_NEAR_FIRST_PITCH_MS = 4 * 60 * 60 * 1000;
 const PROBABLES_URGENT_FIRST_PITCH_MS = 60 * 60 * 1000;
+const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
@@ -41,6 +42,7 @@ const teamQualityContextCache = new Map<string, CachedValue<Map<string, MlbTeamQ
 const teamOffenseContextCache = new Map<string, CachedValue<Map<number, MlbTeamOffenseContext>>>();
 const teamHandednessSplitCache = new Map<string, CachedValue<Map<string, MlbTeamHandednessSplitContext>>>();
 const resolvedReportedPitcherCache = new Map<string, CachedValue<number | null>>();
+const probableConfidenceBySlot = new Map<string, MlbProbablePitcher["confidence"] | "TBD">();
 
 function cachedRequestInit(options: MlbScheduleClientOptions, revalidate: number): RequestInit & { next?: { revalidate: number } } {
   if (options.signal) {
@@ -436,7 +438,9 @@ async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOpti
     const payload = (await response.json()) as MlbScheduleApiResponse;
     const schedule = parseSchedulePayload(date, payload, "live");
     const reportedProbables = await fetchReportedProbablePitchers(date, schedule, options);
-    return mergeReportedProbablePitchers(schedule, reportedProbables);
+    const hydratedSchedule = mergeReportedProbablePitchers(schedule, reportedProbables);
+    logProbableConfidenceTransitions(hydratedSchedule);
+    return hydratedSchedule;
   } catch {
     return getFixtureSchedule(date);
   }
@@ -1047,6 +1051,39 @@ function mergeReportedProbablePitchers(schedule: MlbSchedule, reported: Map<stri
       probableHomePitcher: game.probableHomePitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home")),
     })),
   };
+}
+
+function logProbableConfidenceTransitions(schedule: MlbSchedule) {
+  if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return;
+
+  for (const game of schedule.games) {
+    const slots = [
+      { side: "away" as const, team: game.awayTeam.abbreviation, opponent: game.homeTeam.abbreviation, probable: game.probableAwayPitcher },
+      { side: "home" as const, team: game.homeTeam.abbreviation, opponent: game.awayTeam.abbreviation, probable: game.probableHomePitcher },
+    ];
+
+    for (const slot of slots) {
+      const key = reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, slot.side);
+      const nextConfidence = slot.probable?.confidence ?? "TBD";
+      const previousConfidence = probableConfidenceBySlot.get(key);
+      probableConfidenceBySlot.set(key, nextConfidence);
+
+      if (!previousConfidence || previousConfidence === nextConfidence) continue;
+
+      console.info("probable starter confidence transition", {
+        date: schedule.date,
+        gamePk: game.gamePk,
+        side: slot.side,
+        team: slot.team,
+        opponent: slot.opponent,
+        from: previousConfidence,
+        to: nextConfidence,
+        pitcherId: slot.probable?.id ?? null,
+        pitcherName: slot.probable?.fullName ?? null,
+        source: slot.probable?.source ?? "none",
+      });
+    }
+  }
 }
 
 function reportedProbableKey(awayAbbreviation: string, homeAbbreviation: string, side: "home" | "away") {

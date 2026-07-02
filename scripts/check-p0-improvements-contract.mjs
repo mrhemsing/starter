@@ -72,6 +72,21 @@ assert(
 );
 
 assert(
+  mlbStatsClient.includes('const probableConfidenceBySlot = new Map<string, MlbProbablePitcher["confidence"] | "TBD">();') &&
+    mlbStatsClient.includes('const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";') &&
+    mlbStatsClient.includes("logProbableConfidenceTransitions(hydratedSchedule);") &&
+    mlbStatsClient.includes("function logProbableConfidenceTransitions(schedule: MlbSchedule)") &&
+    mlbStatsClient.includes("if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return;") &&
+    mlbStatsClient.includes("const previousConfidence = probableConfidenceBySlot.get(key);") &&
+    mlbStatsClient.includes("probableConfidenceBySlot.set(key, nextConfidence);") &&
+    mlbStatsClient.includes('console.info("probable starter confidence transition", {') &&
+    mlbStatsClient.includes("from: previousConfidence,") &&
+    mlbStatsClient.includes("to: nextConfidence,") &&
+    mlbStatsClient.includes('source: slot.probable?.source ?? "none",'),
+  "probable starter confidence transitions must be logged with slot, source, and before/after state",
+);
+
+assert(
   tonightService.includes('probableSource: "none",') &&
     tonightService.includes('probableConfidence: "TBD",') &&
     tonightService.includes("probableSource: probable.source,") &&
