@@ -6,6 +6,7 @@ import { formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
+import { formatPitchEventQualitySentence, summarizePitchEventQuality } from "@/lib/pitch-event-quality";
 import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath, startRecapSlug } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { isIsoDateRouteParam } from "@/lib/route-date-validation";
@@ -34,9 +35,11 @@ export async function generateMetadata({ params }: StartRecapPageProps): Promise
   const { start, canonicalPath } = resolved;
   const title = `${start.pitcher.name} start recap - ${formatShortDate(start.date)} GS+ ${start.gameScorePlus}`;
   const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
+  const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
   const description = [
     `${start.pitcher.name} vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`,
     arsenalSentence,
+    qualitySentence,
   ].filter(Boolean).join(" ");
 
   return {
@@ -160,13 +163,14 @@ function recapSummary(start: StartDetail) {
   const decision = formatDecision(start.result).toLowerCase();
   const flags = start.eventFlags ?? [];
   const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
+  const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
   const flagSentence = flags.includes("HARD_LUCK")
     ? "The hard-luck tag fits the score and decision."
     : flags.includes("VULTURE")
       ? "The vulture tag marks the decision as context, not ranking credit."
       : "The ranking stays driven by the canonical GS+ line.";
 
-  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}`;
+  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}${qualitySentence ? ` ${qualitySentence}` : ""}`;
 }
 
 function formatDecision(result: StartSummary["result"]) {

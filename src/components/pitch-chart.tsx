@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { formatStartLine } from "@/lib/format";
 import { pitchResults, pitchTypes } from "@/lib/pitch-taxonomy";
+import { summarizePitchEventQuality } from "@/lib/pitch-event-quality";
 import type { PitchEvent, PitchResultKey, PitchTypeKey, StartApiGameScorePlusBreakdown, StartApiPitchSequenceRow, StartDetail } from "@/lib/types";
 
 const strikeZone = { xMin: -0.83, xMax: 0.83, zMin: 1.5, zMax: 3.5 };
@@ -43,44 +44,8 @@ export function PitchChart({ start }: { start: StartDetail }) {
   const filteredSequence = (start.pitchSequence ?? []).filter((pitch) => activeTypes.has(pitch.type) && activeResults.has(pitch.result) && matchesCountFilter(pitch, countFilter));
   const sequenceRows = filteredSequence.slice(0, 18);
 
-  const mixStats = useMemo(() => {
-    return (Object.keys(pitchTypes) as PitchTypeKey[]).map((type) => {
-      const ofType = pitches.filter((pitch) => pitch.type === type);
-      const calledStrikes = ofType.filter((pitch) => pitch.result === "called_strike").length;
-      const whiffs = ofType.filter((pitch) => pitch.result === "swinging_strike").length;
-      const swings = ofType.filter((pitch) => ["swinging_strike", "foul", "hit_into_play"].includes(pitch.result)).length;
-      const inZone = ofType.filter(isInStrikeZone).length;
-      const velos = ofType.map((pitch) => pitch.velocityMph);
-      return {
-        type,
-        count: ofType.length,
-        pct: pitches.length > 0 ? ofType.length / pitches.length : 0,
-        avgVelo: velos.length ? velos.reduce((total, velo) => total + velo, 0) / velos.length : 0,
-        maxVelo: velos.length ? Math.max(...velos) : 0,
-        cswPct: ofType.length > 0 ? (calledStrikes + whiffs) / ofType.length : 0,
-        swingPct: ofType.length > 0 ? swings / ofType.length : 0,
-        zonePct: ofType.length > 0 ? inZone / ofType.length : 0,
-        whiffPct: swings > 0 ? whiffs / swings : 0,
-      };
-    });
-  }, [pitches]);
-  const qualityStats = useMemo(() => {
-    const calledStrikes = pitches.filter((pitch) => pitch.result === "called_strike").length;
-    const whiffs = pitches.filter((pitch) => pitch.result === "swinging_strike").length;
-    const swings = pitches.filter((pitch) => ["swinging_strike", "foul", "hit_into_play"].includes(pitch.result)).length;
-    const inZone = pitches.filter(isInStrikeZone).length;
-    const topType = mixStats
-      .filter((stat) => stat.count > 0)
-      .sort((a, b) => b.cswPct - a.cswPct || b.count - a.count)[0] ?? null;
-
-    return {
-      cswPct: pitches.length > 0 ? (calledStrikes + whiffs) / pitches.length : 0,
-      zonePct: pitches.length > 0 ? inZone / pitches.length : 0,
-      swingPct: pitches.length > 0 ? swings / pitches.length : 0,
-      whiffPct: swings > 0 ? whiffs / swings : 0,
-      topType,
-    };
-  }, [mixStats, pitches]);
+  const qualityStats = useMemo(() => summarizePitchEventQuality(pitches), [pitches]);
+  const mixStats = qualityStats.byType;
 
   const velocityTrend = start.velocityTrend ?? [];
   const inningTimeline = start.inningTimeline ?? [];
@@ -564,10 +529,6 @@ function QualityMetric({ label, value, tone = "muted" }: { label: string; value:
       <p className={`mt-1 font-serif text-3xl font-semibold ${tone === "strong" ? "text-amber-200" : "text-zinc-50"}`}>{value}</p>
     </div>
   );
-}
-
-function isInStrikeZone(pitch: Pick<PitchEvent, "plateX" | "plateZ">) {
-  return pitch.plateX >= strikeZone.xMin && pitch.plateX <= strikeZone.xMax && pitch.plateZ >= strikeZone.zMin && pitch.plateZ <= strikeZone.zMax;
 }
 
 function formatPct(value: number) {

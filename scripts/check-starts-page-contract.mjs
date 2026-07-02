@@ -12,6 +12,7 @@ const pitchChart = await readFile("src/components/pitch-chart.tsx", "utf8");
 const startImage = await readFile("src/app/starts/[id]/opengraph-image.tsx", "utf8");
 const startRecapPage = await readFile("src/app/starts/[id]/[slug]/page.tsx", "utf8");
 const arsenalEventCopy = await readFile("src/lib/arsenal-event-copy.ts", "utf8");
+const pitchEventQuality = await readFile("src/lib/pitch-event-quality.ts", "utf8");
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
@@ -380,7 +381,7 @@ assert(
 assert(
     pitchChart.includes('data-responsive-check="start-arsenal-quality"') &&
     pitchChart.includes("function QualityMetric") &&
-    pitchChart.includes("function isInStrikeZone") &&
+    pitchChart.includes("summarizePitchEventQuality(pitches)") &&
     pitchChart.includes("function formatPct") &&
     pitchChart.includes('label="CSW"') &&
     pitchChart.includes('label="Whiff"') &&
@@ -389,8 +390,13 @@ assert(
     pitchChart.includes("Best CSW") &&
     pitchChart.includes("formatPct(stat.cswPct)") &&
     pitchChart.includes("formatPct(stat.zonePct)") &&
-    pitchChart.includes("formatPct(stat.swingPct)"),
-  "start pitch chart must expose archive-derived arsenal quality metrics without requiring new Statcast fields",
+    pitchChart.includes("formatPct(stat.swingPct)") &&
+    pitchEventQuality.includes("export function summarizePitchEventQuality") &&
+    pitchEventQuality.includes("export function formatPitchEventQualitySentence") &&
+    pitchEventQuality.includes("export function isPitchInStrikeZone") &&
+    startRecapPage.includes("formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents))") &&
+    startRecapPage.includes("qualitySentence ? ` ${qualitySentence}` : \"\""),
+  "start pitch chart and recap pages must share archive-derived arsenal quality metrics without requiring new Statcast fields",
 );
 
 assert(
