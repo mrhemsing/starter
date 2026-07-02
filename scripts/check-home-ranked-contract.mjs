@@ -230,18 +230,21 @@ assert(
 
 assert(
   topPerformerCard.includes('status: "final" | "live" | "previous";') &&
+    topPerformerCard.includes('scoreStatusLabel?: "PROV" | null;') &&
     topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
     topPerformerCard.includes('const isLiveLeader = status === "live";') &&
-    topPerformerCard.includes('const scoreStatusLabel = isLiveLeader ? "PROV" : null;') &&
+    !topPerformerCard.includes('const scoreStatusLabel = isLiveLeader ? "PROV" : null;') &&
     topPerformerCard.includes('eyebrow: "Live GS+ leader"') &&
     topPerformerCard.includes('detail: `Today, ${dateLabel}`') &&
     topPerformerCard.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     topPerformerCard.includes("scoreStatusLabel={scoreStatusLabel}") &&
     topPerformerCard.includes("scoreStatusLabel ?") &&
-    topPerformerCard.includes('eyebrow: "Start of the night"') &&
+    topPerformerCard.includes('eyebrow: "Start of the day"') &&
+    !topPerformerCard.includes("Start of the night") &&
     homeDeferredSections.includes("status={view.status}") &&
+    homeDeferredSections.includes("scoreStatusLabel={view.scoreStatusLabel}") &&
     !homeDeferredSections.includes("isProvisional={ranked.topPerformer.status === \"live\"}"),
-  "home top performer must label live leaders with broadcast live copy and final/previous winners as Start of the Night",
+  "home top performer must label live slates with broadcast live copy and settled winners as Start of the Day",
 );
 
 assert(
@@ -283,11 +286,11 @@ assert(
 );
 
 assert(
-  heatHighlightModal.includes('eyebrow = "Recent MLB highlight"') &&
+    heatHighlightModal.includes('eyebrow = "Recent MLB highlight"') &&
     heatHighlightModal.includes("{eyebrow}") &&
     topPerformerCard.includes("eyebrow={statusLabel.eyebrow}") &&
-    topPerformerCard.includes('eyebrow: "Start of the night"'),
-  "home top performer highlight modal must use the Start of the Night eyebrow instead of the generic recent-highlight label",
+    topPerformerCard.includes('eyebrow: "Start of the day"'),
+  "home top performer highlight modal must use the settled/live top performer eyebrow instead of the generic recent-highlight label",
 );
 
 assert(
@@ -330,8 +333,10 @@ assert(
     homeDeferredSections.includes("href: topPerformer.href ?? startHref(topPerformer.start, sourceParams(\"home\")),") &&
     homeDeferredSections.includes("function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string)") &&
     homeDeferredSections.includes("href: row.liveHref,") &&
-    homeDeferredSections.includes('status: row.scoreLabel === "FINAL" ? "final" : "live",'),
-  "home top performer must promote the provisional live GS+ leader into the hero, hydrate from the Live Board feed, and link to the live board",
+    homeDeferredSections.includes('status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",') &&
+    homeDeferredSections.includes('scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,') &&
+    homeDeferredSections.includes("image: sameStart ? current.image : homeTopPerformerImageFromLiveRow(row),"),
+  "home top performer must promote the live GS+ leader into the hero, hydrate label/photo/score from the Live Board feed, and link to the live board",
 );
 
 assert(
@@ -342,6 +347,8 @@ assert(
     homeDeferredSections.includes("function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
     homeDeferredSections.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.gsPlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;') &&
     homeDeferredSections.includes('data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}') &&
+    homeDeferredSections.includes("function homeTopPerformerImageFromLiveRow(row: LiveScoreboardRow): HomeTopPerformer[\"image\"]") &&
+    homeDeferredSections.includes("https://img.mlbstatic.com/mlb-photos/image/upload/w_960,q_auto:best/v1/people/${row.pitcherMlbId}/headshot/67/current") &&
     homeDeferredSections.includes('if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {'),
   "home live leader island must preserve the Start of the Day threshold, avoid projected rows, mark final rows settled, and stop polling after the live slate closes",
 );

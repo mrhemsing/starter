@@ -21,6 +21,7 @@ type TopPerformerCardProps = {
   image: TopPerformerImage | null;
   highlight?: FeaturedStartHighlight | null;
   status: "final" | "live" | "previous";
+  scoreStatusLabel?: "PROV" | null;
   whiffRate?: number | null;
   topVelo?: number | null;
   veloSparkline?: number[];
@@ -39,6 +40,7 @@ export function TopPerformerCard({
   image,
   highlight,
   status,
+  scoreStatusLabel,
   whiffRate,
   topVelo,
   veloSparkline = [],
@@ -54,7 +56,6 @@ export function TopPerformerCard({
   const finalScoreText = score.toString().padStart(2, "0");
   const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
   const isLiveLeader = status === "live";
-  const scoreStatusLabel = isLiveLeader ? "PROV" : null;
   const context = `#${rank} of ${slateCount} · league avg 50`;
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
@@ -278,7 +279,7 @@ function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", da
   }
 
   return {
-    eyebrow: "Start of the night",
+    eyebrow: "Start of the day",
     detail: dateLabel,
   };
 }

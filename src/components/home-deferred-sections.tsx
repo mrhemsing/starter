@@ -231,6 +231,7 @@ type HomeTopPerformerView = {
   image: HomeTopPerformer["image"];
   highlight: HomeTopPerformer["highlight"];
   status: HomeTopPerformer["status"];
+  scoreStatusLabel: "PROV" | null;
   whiffRate: number | null;
   topVelo: number | null;
   veloSparkline: number[];
@@ -287,6 +288,7 @@ function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTop
           image={view.image}
           highlight={view.highlight}
           status={view.status}
+          scoreStatusLabel={view.scoreStatusLabel}
           whiffRate={view.whiffRate}
           topVelo={view.topVelo}
           veloSparkline={view.veloSparkline}
@@ -311,6 +313,7 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
     image: topPerformer.image,
     highlight: topPerformer.highlight,
     status: topPerformer.status,
+    scoreStatusLabel: topPerformer.status === "live" ? "PROV" : null,
     whiffRate: topPerformer.metrics?.whiffRate ?? null,
     topVelo: topPerformer.metrics?.topVelo ?? null,
     veloSparkline: topPerformer.metrics?.veloSparkline ?? [],
@@ -331,12 +334,23 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     line: row.line,
     rank: 1,
     slateCount: board.totalStarts,
-    image: sameStart ? current.image : null,
+    image: sameStart ? current.image : homeTopPerformerImageFromLiveRow(row),
     highlight: sameStart ? current.highlight : null,
-    status: row.scoreLabel === "FINAL" ? "final" : "live",
+    status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",
+    scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,
     whiffRate: sameStart ? current.whiffRate : null,
     topVelo: sameStart ? current.topVelo : null,
     veloSparkline: sameStart ? current.veloSparkline : [],
+  };
+}
+
+function homeTopPerformerImageFromLiveRow(row: LiveScoreboardRow): HomeTopPerformer["image"] {
+  return {
+    source: "placeholder",
+    imageUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_960,q_auto:best/v1/people/${row.pitcherMlbId}/headshot/67/current`,
+    alt: `${row.pitcherName} headshot`,
+    objectPosition: "50% 35%",
+    mobileObjectPosition: "50% 30%",
   };
 }
 
