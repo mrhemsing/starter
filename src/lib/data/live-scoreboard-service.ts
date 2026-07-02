@@ -52,7 +52,7 @@ export type LiveScoreboard = SlateStartBucketCounts & {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v8"],
+  ["live-scoreboard", "v9"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS },
 );
 
