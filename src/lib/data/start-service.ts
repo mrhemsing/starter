@@ -337,10 +337,14 @@ export function getRankedSlateCompletionStateFromInputs(
   const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
   const finalGames = countableGames.filter(isFinalGameState).length;
+  const liveGames = countableGames.filter(isLiveGameState).length;
   const totalGames = countableGames.length;
   const startCounts = summarizeCanonicalStartBuckets(slateStarts);
   const totalStarts = startCounts.totalStarts;
   const completedStarts = Math.min(totalStarts, startCounts.finalStarts);
+  const completedStartsInFinalGames = finalGames * 2;
+  const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));
+  const liveStarts = Math.max(0, liveGames * 2 - completedStartsInLiveGames);
   const isToday = date === today;
   const isPast = date < today;
   const isFinal = totalStarts > 0 && completedStarts >= totalStarts;
@@ -351,7 +355,7 @@ export function getRankedSlateCompletionStateFromInputs(
     finalGames,
     totalStarts,
     completedStarts,
-    liveStarts: startCounts.liveStarts,
+    liveStarts,
     warmingStarts: startCounts.warmingStarts,
     scheduledStarts: startCounts.scheduledStarts,
     delayStarts: startCounts.delayStarts,

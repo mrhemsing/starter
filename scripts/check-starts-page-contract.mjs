@@ -15,6 +15,7 @@ const arsenalEventCopy = await readFile("src/lib/arsenal-event-copy.ts", "utf8")
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
+const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const rankedStartsPageService = await readFile("src/lib/data/ranked-starts-page-service.ts", "utf8");
@@ -384,6 +385,9 @@ assert(
     startsPage.includes('return `${state.completedStarts} FINAL · ${Math.max(0, state.liveStarts)} IN PROGRESS`;') &&
     startsPage.includes('return `WARMING · FIRST PITCH ${firstPitchLabel}`;') &&
     startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
+    startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
+    startService.includes("const liveStarts = Math.max(0, liveGames * 2 - completedStartsInLiveGames);") &&
+    slateState.includes('if (start.source?.line === "live-gamefeed") return "final";') &&
     startsPage.includes("function formatRankedFirstPitch") &&
     !startsPage.includes("formatSlateCountdownLabel") &&
     !startsPage.includes("first starter toes the slab") &&

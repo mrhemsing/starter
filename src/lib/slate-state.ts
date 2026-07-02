@@ -43,7 +43,7 @@ export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateSta
 
 function canonicalSlateStartStatus(start: StartSummary): SlateStartBucketStatus {
   if (start.source?.line === "archive-gamefeed") return "final";
-  if (start.source?.line === "live-gamefeed") return "live";
+  if (start.source?.line === "live-gamefeed") return "final";
   return "scheduled";
 }
 

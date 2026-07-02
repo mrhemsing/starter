@@ -181,7 +181,7 @@ assert(
 assert(
   slateState.includes("export function summarizeCanonicalStartBuckets(starts: StartSummary[]): SlateStartBucketCounts") &&
     slateState.includes('if (start.source?.line === "archive-gamefeed") return "final";') &&
-    slateState.includes('if (start.source?.line === "live-gamefeed") return "live";') &&
+    slateState.includes('if (start.source?.line === "live-gamefeed") return "final";') &&
     slateState.includes('return "scheduled";') &&
     startService.includes('import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";') &&
     startService.includes("export function getRankedSlateCompletionStateFromInputs(") &&
@@ -189,7 +189,11 @@ assert(
     startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
     startService.includes("const totalStarts = startCounts.totalStarts;") &&
     startService.includes("const completedStarts = Math.min(totalStarts, startCounts.finalStarts);") &&
-    startService.includes("liveStarts: startCounts.liveStarts,") &&
+    startService.includes("const liveGames = countableGames.filter(isLiveGameState).length;") &&
+    startService.includes("const completedStartsInFinalGames = finalGames * 2;") &&
+    startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
+    startService.includes("const liveStarts = Math.max(0, liveGames * 2 - completedStartsInLiveGames);") &&
+    startService.includes("liveStarts,") &&
     startService.includes("warmingStarts: startCounts.warmingStarts,") &&
     startService.includes("scheduledStarts: startCounts.scheduledStarts,") &&
     startService.includes("delayStarts: startCounts.delayStarts,"),
