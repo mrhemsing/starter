@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { CtaArrowTail } from "@/components/cta-arrow";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
@@ -90,8 +91,9 @@ function HomepagePitchingDuelsModule({ duels, title }: { duels: PitchingDuelsRes
         ) : null}
         {topMismatch ? (
           <div className="mt-5 border-t border-white/10 pt-4">
-            <Link href={boardHref} className="inline-flex min-h-9 items-center font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 underline-offset-4 hover:text-amber-300 hover:underline">
-              Biggest gap {slateWord}: {topMismatch.label} · {topMismatch.gap}-pt edge to {leadingTeam(topMismatch)}{" ->"}
+            <Link href={boardHref} className="group/cta inline-flex min-h-9 items-center font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 underline-offset-4 hover:text-amber-300 hover:underline">
+              Biggest gap {slateWord}: {topMismatch.label} · {topMismatch.gap}-pt edge to {leadingTeam(topMismatch)}
+              <CtaArrowTail className="ml-2" />
             </Link>
           </div>
         ) : null}

@@ -6,12 +6,13 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, liveNavLabel, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
   readFile("src/components/live-scoreboard.tsx", "utf8"),
   readFile("src/components/live-nav-label.tsx", "utf8"),
+  readFile("src/components/cta-arrow.tsx", "utf8"),
   readFile("src/lib/data/mlb-stats-client.ts", "utf8"),
   readFile("src/lib/types.ts", "utf8"),
   readFile("src/lib/data/start-service.ts", "utf8"),
@@ -223,7 +224,9 @@ assert(
     liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters") &&
     !liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters.") &&
     liveComponent.includes("upcomingDateHref(board.date)") &&
-    liveComponent.includes("Preview matchups -&gt;") &&
+    liveComponent.includes('<CtaArrow\n              href={upcomingDateHref(board.date)}') &&
+    liveComponent.includes("Preview matchups") &&
+    !liveComponent.includes("Preview matchups -&gt;") &&
     !liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
     liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs)") &&
     liveComponent.includes("function formatPregameCountdown") &&
@@ -244,6 +247,7 @@ assert(
     liveComponent.includes("return `Next slate begins ${timeLabel}`;") &&
     liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
+    liveComponent.includes('import { CtaArrow } from "@/components/cta-arrow";') &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)}") &&
     !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
@@ -289,6 +293,18 @@ assert(
     !liveComponent.includes("#{rank}") &&
     !liveComponent.includes('className="mt-1 block truncate font-serif text-2xl font-bold text-zinc-50'),
   "live scoreboard component must refresh while active, hand off complete slates, and present rows as live status instead of ranked tiers",
+);
+
+assert(
+  ctaArrow.includes('export function CtaArrow') &&
+    ctaArrow.includes('data-cta-arrow') &&
+    ctaArrow.includes('data-cta-arrow-tail') &&
+    ctaArrow.includes('aria-hidden="true"') &&
+    ctaArrow.includes('data-cta-arrow-shaft') &&
+    ctaArrow.includes('group-hover/cta:w-10') &&
+    ctaArrow.includes('border-[#FF9A62]/50 text-[#FF9A62] hover:border-[#FF9A62]') &&
+    ctaArrow.includes('border-[#F6C445]/50 text-[#F6C445] hover:border-[#F6C445]'),
+  "shared CTA arrow must render a drawn tail that is hidden from assistive tech and uses site accent tones",
 );
 
 assert(

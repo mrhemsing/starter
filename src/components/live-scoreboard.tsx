@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CtaArrow } from "@/components/cta-arrow";
 import { Headshot } from "@/components/headshot";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
@@ -231,12 +232,12 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Live returns with the next slate. Full tiers, filters, and breakdowns are ready on Ranked Starts.</p>
           {nextSlateLine ? <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
-          <Link
+          <CtaArrow
             href={rankedStartsPath(board.date)}
-            className="mt-5 inline-flex max-w-full items-center rounded border border-[#FF9A62]/50 bg-[#FF5A1F]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#FFB07C] transition hover:border-[#FF9A62] hover:bg-[#FF5A1F]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
           >
             View all ranked starts for {formatBoardDate(board.date)}
-          </Link>
+          </CtaArrow>
           <SlabImage />
         </div>
         <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
@@ -308,12 +309,13 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
             <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs">
               First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters
             </p>
-            <Link
+            <CtaArrow
               href={upcomingDateHref(board.date)}
-              className="mt-5 inline-flex max-w-full items-center rounded border border-[#F6C445]/50 bg-black/35 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#F6C445] transition hover:border-[#F6C445] hover:bg-[#F6C445]/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              tone="amber"
+              className="mt-5 bg-black/35 hover:bg-[#F6C445]/15"
             >
-              Preview matchups -&gt;
-            </Link>
+              Preview matchups
+            </CtaArrow>
           </div>
         </div>
       </div>

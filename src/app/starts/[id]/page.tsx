@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
 import { notFound } from "next/navigation";
+import { CtaArrow } from "@/components/cta-arrow";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { Headshot, type HeadshotSize } from "@/components/headshot";
@@ -158,13 +159,13 @@ export default async function StartPage({ params, searchParams }: StartPageProps
                   {start.gameScorePlusBreakdown.gradeBand.label} / {start.gameScorePlusBreakdown.gradeBand.percentileLabel}
                 </p>
               ) : null}
-              <Link
+              <CtaArrow
                 href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams(source))}
-                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.16em] text-amber-300 transition hover:border-amber-200 hover:bg-amber-300 hover:text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                tone="amber"
+                className="mt-4 bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950"
               >
                 Pitcher page
-                <span aria-hidden="true">-&gt;</span>
-              </Link>
+              </CtaArrow>
             </div>
           </div>
         </div>

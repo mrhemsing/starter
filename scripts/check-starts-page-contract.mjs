@@ -316,9 +316,11 @@ assert(
 );
 
 assert(
-  startsPage.includes('className="mt-4 inline-flex min-h-11 items-center gap-2 rounded border border-amber-300/40 bg-amber-300/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.16em] text-amber-300 transition hover:border-amber-200 hover:bg-amber-300 hover:text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
-    startsPage.includes('<span aria-hidden="true">-&gt;</span>'),
-  "start detail pitcher page CTA must look and behave like an obvious link",
+  startsPage.includes('import { CtaArrow } from "@/components/cta-arrow";') &&
+    startsPage.includes("<CtaArrow") &&
+    startsPage.includes("Pitcher page") &&
+    !startsPage.includes('<span aria-hidden="true">-&gt;</span>'),
+  "start detail pitcher page CTA must use the shared drawn arrow treatment",
 );
 
 assert(
