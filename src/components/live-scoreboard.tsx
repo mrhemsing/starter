@@ -491,7 +491,7 @@ function formatNextSlateLine(board: LiveScoreboardData) {
     timeZoneName: "short",
   }).format(parsed).replace(/\bPST\b|\bPDT\b/, "PT");
 
-  if (board.nextSlateDate && board.nextSlateDate !== board.date) {
+  if (toPacificDate(parsed) !== board.date) {
     const dayLabel = new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       timeZone: "America/Los_Angeles",
@@ -500,6 +500,19 @@ function formatNextSlateLine(board: LiveScoreboardData) {
   }
 
   return `Next slate begins ${timeLabel}`;
+}
+
+function toPacificDate(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "America/Los_Angeles",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value ?? String(date.getUTCFullYear());
+  const month = parts.find((part) => part.type === "month")?.value ?? String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = parts.find((part) => part.type === "day")?.value ?? String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatPregameCountdown(countdownLabel: string | null) {

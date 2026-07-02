@@ -65,18 +65,20 @@ assert(
     liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
     liveService.includes("let startCounts = summarizeSlateStartBuckets(rows);") &&
     liveService.includes("const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);") &&
-    liveService.includes("const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date) : null;") &&
+    liveService.includes("const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date, generatedAt) : null;") &&
     liveService.includes("slateProgress: SlateProgressState;") &&
     liveService.includes("nextSlateDate: string | null;") &&
     liveService.includes("nextSlateFirstPitchAt: string | null;") &&
     liveService.includes("nextSlateDate: nextSlate?.date ?? null,") &&
     liveService.includes("nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,") &&
     liveService.includes("slateProgress,") &&
-    liveService.includes("async function resolveNextSlateFirstPitch(date: string)") &&
+    liveService.includes("async function resolveNextSlateFirstPitch(date: string, after: Date)") &&
+    liveService.includes("const afterMs = after.getTime();") &&
     liveService.includes("for (let offset = 1; offset <= 7; offset += 1)") &&
     liveService.includes("const nextDate = addDays(date, offset);") &&
     liveService.includes('fetchMlbSchedule(nextDate, { fetchLive: false })') &&
     liveService.includes('normalizeScheduleStatus(game) !== "ppd"') &&
+    liveService.includes("Number.isFinite(game.ms) && game.ms > afterMs") &&
     liveService.includes("normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date)") &&
     liveService.includes("function fallbackSlateProgress") &&
     liveService.includes("nextSlateDate: cachedBoard.nextSlateDate ?? null") &&
@@ -237,8 +239,10 @@ assert(
     liveComponent.includes("data-live-next-slate") &&
     liveComponent.includes("function formatNextSlateLine(board: LiveScoreboardData)") &&
     liveComponent.includes("if (!board.nextSlateFirstPitchAt) return null;") &&
+    liveComponent.includes("if (toPacificDate(parsed) !== board.date)") &&
     liveComponent.includes("return `Next slate begins ${dayLabel}, ${timeLabel}`;") &&
     liveComponent.includes("return `Next slate begins ${timeLabel}`;") &&
+    liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&

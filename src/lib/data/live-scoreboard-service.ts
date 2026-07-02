@@ -92,7 +92,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   }
 
   const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
-  const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date) : null;
+  const nextSlate = slateComplete ? await resolveNextSlateFirstPitch(date, generatedAt) : null;
 
   return {
     date,
@@ -108,14 +108,16 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   };
 }
 
-async function resolveNextSlateFirstPitch(date: string) {
+async function resolveNextSlateFirstPitch(date: string, after: Date) {
+  const afterMs = after.getTime();
+
   for (let offset = 1; offset <= 7; offset += 1) {
     const nextDate = addDays(date, offset);
     const schedule = await fetchMlbSchedule(nextDate, { fetchLive: false });
     const firstPitchAt = schedule.games
       .filter((game) => normalizeScheduleStatus(game) !== "ppd")
       .map((game) => ({ iso: game.gameDate, ms: new Date(game.gameDate).getTime() }))
-      .filter((game) => Number.isFinite(game.ms))
+      .filter((game) => Number.isFinite(game.ms) && game.ms > afterMs)
       .sort((a, b) => a.ms - b.ms)[0]?.iso ?? null;
 
     if (firstPitchAt) return { date: nextDate, firstPitchAt };
