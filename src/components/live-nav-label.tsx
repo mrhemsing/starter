@@ -11,12 +11,12 @@ export type LiveNavSnapshot = {
 
 export const LIVE_NAV_STATE_EVENT = "toe-the-slab:live-nav-state";
 
-export function LiveNavLabel({ initialSnapshot }: { initialSnapshot: LiveNavSnapshot }) {
+export function LiveNavLabel({ initialSnapshot, routeActive = false }: { initialSnapshot: LiveNavSnapshot; routeActive?: boolean }) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const state = getLiveNavIndicatorState(snapshot);
   const active = state === "active";
   const warming = state === "warming";
-  const toneClass = active ? "text-[#FF9A62]" : "text-zinc-400";
+  const toneClass = routeActive ? "text-zinc-50" : active ? "text-[#FF9A62]" : "text-zinc-400";
   const dotClass = active
     ? "bg-[#FF5A1F]"
     : warming
@@ -35,7 +35,7 @@ export function LiveNavLabel({ initialSnapshot }: { initialSnapshot: LiveNavSnap
   }, []);
 
   return (
-    <span className={`inline-flex items-center gap-2 ${toneClass}`} data-live-nav-state={state} data-live-nav-active={active ? "true" : "false"}>
+    <span className={`inline-flex items-center gap-2 ${toneClass}`} data-live-nav-state={state} data-live-nav-active={active ? "true" : "false"} data-live-nav-route-active={routeActive ? "true" : "false"}>
       {state === "idle" ? null : <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} aria-hidden="true" />}
       Live
     </span>

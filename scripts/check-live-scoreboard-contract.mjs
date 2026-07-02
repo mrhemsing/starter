@@ -312,7 +312,7 @@ assert(
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
     siteNav.includes('import { LiveNavLabel } from "@/components/live-nav-label";') &&
     siteNav.includes('import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
-    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} />, href: liveDateHref(today) }];') &&
+    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} routeActive={active !== null && active === "live"} />, href: liveDateHref(today) }];') &&
     siteNav.includes("href: liveDateHref(today)") &&
     siteNav.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
     siteNav.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
@@ -324,11 +324,13 @@ assert(
     liveNavLabel.includes('if (snapshot.liveStarts > 0) return "active";') &&
     liveNavLabel.includes('if (snapshot.warmingStarts > 0) return "warming";') &&
     liveNavLabel.includes('return "idle";') &&
-    liveNavLabel.includes('toneClass = active ? "text-[#FF9A62]" : "text-zinc-400"') &&
+    liveNavLabel.includes('routeActive = false') &&
+    liveNavLabel.includes('toneClass = routeActive ? "text-zinc-50" : active ? "text-[#FF9A62]" : "text-zinc-400"') &&
     liveNavLabel.includes('warming\n      ? "border border-[#F6C445] bg-transparent"') &&
     liveNavLabel.includes('window.addEventListener(LIVE_NAV_STATE_EVENT, handleStateEvent);') &&
     liveNavLabel.includes("data-live-nav-state={state}") &&
     liveNavLabel.includes('data-live-nav-active={active ? "true" : "false"}') &&
+    liveNavLabel.includes('data-live-nav-route-active={routeActive ? "true" : "false"}') &&
     liveNavLabel.includes('{state === "idle" ? null : <span') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
   "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding and a two-row mobile grid",
