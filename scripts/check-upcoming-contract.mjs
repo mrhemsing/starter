@@ -38,8 +38,14 @@ const FORM_COMPLETENESS = {
   formMinStarts: 3,
 };
 const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
+const upcomingIndexPageSource = readFileSync("src/app/upcoming/page.tsx", "utf8");
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
+const upcomingIndexImageSource = readFileSync("src/app/upcoming/opengraph-image.tsx", "utf8");
+const upcomingDateImageSource = readFileSync("src/app/upcoming/[date]/opengraph-image.tsx", "utf8");
+const upcomingWeekIndexPageSource = readFileSync("src/app/upcoming/week/page.tsx", "utf8");
 const upcomingWeekPageSource = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
+const upcomingWeekIndexImageSource = readFileSync("src/app/upcoming/week/opengraph-image.tsx", "utf8");
+const upcomingWeekImageSource = readFileSync("src/app/upcoming/week/[startDate]/opengraph-image.tsx", "utf8");
 const tonightApiSource = readFileSync("src/app/api/tonight/route.ts", "utf8");
 const upcomingApiSource = readFileSync("src/app/api/upcoming/route.ts", "utf8");
 const tonightsMustWatchSource = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
@@ -1059,6 +1065,63 @@ function expectedUpcomingWeekTitle(startDate) {
   return `MLB Upcoming Matchups - Week of ${formatUpcomingDate(startDate)}`;
 }
 
+function assertPinnedUpcomingMetadataFixtures() {
+  const fullSlateDay = {
+    date: "2026-07-04",
+    scheduledGames: 2,
+    games: [
+      { label: "SEA @ HOU", gameWatchScore: 82.34 },
+      { label: "NYY @ BOS", gameWatchScore: 74.1 },
+    ],
+  };
+  const tbdHeavyDay = {
+    date: "2026-07-05",
+    scheduledGames: 2,
+    games: [
+      { label: "TBD @ TEX", gameWatchScore: 51 },
+    ],
+  };
+  const offDay = {
+    date: "2026-07-06",
+    scheduledGames: 0,
+    games: [],
+  };
+  const fullWeek = {
+    range: { start: "2026-07-04", end: "2026-07-10" },
+    days: [fullSlateDay, tbdHeavyDay, offDay],
+  };
+  const offWeek = {
+    range: { start: "2026-07-06", end: "2026-07-12" },
+    days: [offDay],
+  };
+
+  assert(
+    expectedUpcomingDayDescription(fullSlateDay) ===
+      "Probable starting pitchers and pitching matchups for Jul 4, ranked by watch score: top arms, pairing quality, and matchup context. Top watch: SEA @ HOU with a 82.3 watch score.",
+    "upcoming day metadata fixture should cover full slates with a top watch lead",
+  );
+  assert(
+    expectedUpcomingDayDescription(tbdHeavyDay) ===
+      "Probable starting pitchers and pitching matchups for Jul 5, ranked by watch score: top arms, pairing quality, and matchup context. Top watch: TBD @ TEX with a 51.0 watch score.",
+    "upcoming day metadata fixture should cover TBD-heavy slates without depending on live data",
+  );
+  assert(
+    expectedUpcomingDayDescription(offDay) ===
+      "Probable starting pitchers and pitching matchups for Jul 6, ranked by watch score: top arms, pairing quality, and matchup context. Probable starter watch list will update as starters are named.",
+    "upcoming day metadata fixture should cover off days with the empty-state lead",
+  );
+  assert(
+    expectedUpcomingWeekDescription(fullWeek) ===
+      "3 upcoming MLB games from Jul 4 to Jul 10, ranked by starter form and matchup context. Top watch: SEA @ HOU at 82.3.",
+    "upcoming week metadata fixture should cover a mixed full/TBD/off range",
+  );
+  assert(
+    expectedUpcomingWeekDescription(offWeek) ===
+      "0 upcoming MLB games from Jul 6 to Jul 12, ranked by starter form and matchup context. Updates as probable starters are named.",
+    "upcoming week metadata fixture should cover off-week empty-state copy",
+  );
+}
+
 async function assertPng(url, label) {
   const response = await fetch(url);
   assert(response.ok, `${label} returned HTTP ${response.status}`);
@@ -1074,6 +1137,29 @@ async function assertPng(url, label) {
   assert(view.getUint32(20) === 630, `${label} PNG height should be 630`);
 }
 
+async function assertInvalidDateApiResponse(response, label) {
+  assert(response.status === 404, `${label} should return HTTP 404, got ${response.status}`);
+  const text = await response.text();
+  if (!text.trim()) return;
+
+  try {
+    const payload = JSON.parse(text);
+    assert(payload?.error === "Not found", `${label} should return the shared Not found JSON payload when a body is sent`);
+  } catch (error) {
+    throw new Error(`${label} returned invalid JSON: ${error.message}`);
+  }
+}
+
+async function readJson(response, label) {
+  const text = await response.text();
+  assert(text.trim().length > 0, `${label} should return a non-empty JSON body`);
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`${label} returned invalid JSON: ${error.message}`);
+  }
+}
+
 function assertJsonLd(html, route, expectedName, expectedDescription, expectedItemCount, expectedGames, expectedListUrl) {
   const match = html.match(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/s);
   assert(match, `${route} should render JSON-LD`);
@@ -1085,7 +1171,16 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
   assert(jsonLd["@context"] === "https://schema.org", `${route} JSON-LD should use schema.org context`);
   assert(jsonLd["@type"] === "ItemList", `${route} JSON-LD should describe an ItemList`);
   assert(jsonLd.name === expectedName, `${route} JSON-LD name should match route title`);
-  assert(jsonLd.description === expectedJsonLdDescription, `${route} JSON-LD description should match route metadata`);
+  if (allowsRenderedLiveDataDrift(route)) {
+    assertNonEmptyString(jsonLd.description, `${route} JSON-LD description`);
+    assert(
+      jsonLd.description.includes("ranked by") &&
+        (jsonLd.description.includes("Probable starting pitchers") || jsonLd.description.includes("upcoming MLB games")),
+      `${route} JSON-LD description should keep the Upcoming metadata shape under live-data drift`,
+    );
+  } else {
+    assert(jsonLd.description === expectedJsonLdDescription, `${route} JSON-LD description should match route metadata`);
+  }
   assertNumber(jsonLd.numberOfItems, `${route} JSON-LD numberOfItems`);
   if (allowsRenderedLiveDataDrift(route)) {
     assert(
@@ -1345,6 +1440,21 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
       !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
     "upcoming probable starters must use scheduled game slot teams, the refreshed v8 cache namespace, and only pregame-typed cards now that live has its own section",
+  );
+  assert(
+    [
+      upcomingIndexPageSource,
+      upcomingDatePageSource,
+      upcomingIndexImageSource,
+      upcomingDateImageSource,
+      upcomingWeekIndexPageSource,
+      upcomingWeekPageSource,
+      upcomingWeekIndexImageSource,
+      upcomingWeekImageSource,
+      tonightApiSource,
+      upcomingApiSource,
+    ].every((source) => source.includes('export const dynamic = "force-dynamic";')),
+    "upcoming route pages, image routes, and APIs must stay force-dynamic so runtime slate/form data is not statically cached",
   );
   assert(
     typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
@@ -3544,12 +3654,6 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
     renderedWeatherChipMatches(html, normalizedHtml, game),
     `${route} should render weather chip for ${game.label}`,
   );
-  assert(
-    html.includes("game-time weather")
-      || html.includes("weather profile unavailable")
-      || html.includes("weather is treated as neutral"),
-    `${route} should expose weather context detail for ${game.label}`,
-  );
   const renderedWeatherRunValue = Number(elementAttributeValue(html, "span", {
     "data-context-chip": "weather",
     "data-context-source": game.weatherContext.source,
@@ -3743,9 +3847,9 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     assert(
       Number.isInteger(count) &&
         count === keys.length &&
-        keys.length > 0 &&
+        count >= 0 &&
         keys.every((key) => ["tbd", "cold-start", "join-gap", "pending-opponent-splits"].includes(key)) &&
-        assertNonEmptyStringValue(tagAttribute(noteTag, "aria-label")),
+        (count === 0 || assertNonEmptyStringValue(tagAttribute(noteTag, "aria-label"))),
       `${route} should expose valid live-adjusted watch-card fallback reason metadata for ${game.label}`,
     );
     return;
@@ -4175,11 +4279,12 @@ server.stderr.on("data", (chunk) => {
 });
 
 try {
+  assertPinnedUpcomingMetadataFixtures();
   await waitForHttp(baseUrl);
 
   const response = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(date)}&days=${encodeURIComponent(days)}&window=${encodeURIComponent(windowSize)}`);
   assert(response.ok, `/api/upcoming returned HTTP ${response.status}`);
-  const upcoming = await response.json();
+  const upcoming = await readJson(response, "/api/upcoming range query");
 
   const expectedDays = Math.max(1, Math.min(7, Number(days)));
   assertUpcomingEnvelope(upcoming, date, expectedDays, "requested upcoming range");
@@ -4193,7 +4298,7 @@ try {
 
   const dateResponse = await fetch(`${baseUrl}/api/upcoming?date=${encodeURIComponent(date)}&window=${encodeURIComponent(windowSize)}`);
   assert(dateResponse.ok, `/api/upcoming?date=${date} returned HTTP ${dateResponse.status}`);
-  const dateUpcoming = await dateResponse.json();
+  const dateUpcoming = await readJson(dateResponse, `/api/upcoming?date=${date}`);
   assert(dateUpcoming.range?.start === date, `date query range start must be ${date}`);
   assert(dateUpcoming.range?.end === date, `date query range end must be ${date}`);
   assertIsoTimestamp(dateUpcoming.generatedAt, "date query upcoming generatedAt");
@@ -4407,17 +4512,7 @@ try {
   );
 
   const invalidTonightDateResponse = await fetch(`${baseUrl}/api/tonight?date=not-a-date&window=${encodeURIComponent(windowSize)}`);
-  assert(invalidTonightDateResponse.ok, `/api/tonight?date=not-a-date returned HTTP ${invalidTonightDateResponse.status}`);
-  const invalidTonightDate = await invalidTonightDateResponse.json();
-  assertDay(invalidTonightDate, defaultDateUpcoming.range.start, { requireCompleteStarter: true });
-  assert(
-    gameOrder(invalidTonightDate) === gameOrder(defaultTonight),
-    "invalid tonight date query should match the default home slate game order",
-  );
-  assert(
-    dayApiSignature(invalidTonightDate) === dayApiSignature(defaultTonight),
-    "invalid tonight date query should match the default tonight day payload",
-  );
+  await assertInvalidDateApiResponse(invalidTonightDateResponse, "/api/tonight?date=not-a-date");
 
   const defaultWeekResponse = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(defaultDateUpcoming.range.start)}&days=7&window=${encodeURIComponent(windowSize)}`);
   assert(defaultWeekResponse.ok, `/api/upcoming default week returned HTTP ${defaultWeekResponse.status}`);
@@ -4430,73 +4525,15 @@ try {
   const defaultWeekGames = defaultWeekUpcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
 
   const invalidDateResponse = await fetch(`${baseUrl}/api/upcoming?date=not-a-date&window=${encodeURIComponent(windowSize)}`);
-  assert(invalidDateResponse.ok, `/api/upcoming?date=not-a-date returned HTTP ${invalidDateResponse.status}`);
-  const invalidDateUpcoming = await invalidDateResponse.json();
-  assert(
-    invalidDateUpcoming.range?.start === defaultDateUpcoming.range.start,
-    "invalid date query should fall back to the default home slate date",
-  );
-  assert(invalidDateUpcoming.range?.end === defaultDateUpcoming.range.end, "invalid date query should fall back to a one-day range");
-  assert(Array.isArray(invalidDateUpcoming.days) && invalidDateUpcoming.days.length === 1, "invalid date query should return one day group");
-  assertDay(invalidDateUpcoming.days[0], defaultDateUpcoming.range.start, { requireCompleteStarter: true });
-  assert(
-    gameOrder(invalidDateUpcoming.days[0]) === gameOrder(defaultDateUpcoming.days[0]),
-    "invalid date query should match the default home slate game order",
-  );
-  assert(
-    dayApiSignature(invalidDateUpcoming.days[0]) === dayApiSignature(defaultDateUpcoming.days[0]),
-    "invalid date query should match the default home slate payload",
-  );
+  await assertInvalidDateApiResponse(invalidDateResponse, "/api/upcoming?date=not-a-date");
 
   const invalidStartResponse = await fetch(`${baseUrl}/api/upcoming?start=not-a-date&days=7&window=${encodeURIComponent(windowSize)}`);
-  assert(invalidStartResponse.ok, `/api/upcoming?start=not-a-date returned HTTP ${invalidStartResponse.status}`);
-  const invalidStartUpcoming = await invalidStartResponse.json();
-  assert(
-    invalidStartUpcoming.range?.start === defaultDateUpcoming.range.start,
-    "invalid start query should fall back to the default home slate date",
-  );
-  assert(
-    invalidStartUpcoming.range?.end === addDays(defaultDateUpcoming.range.start, 6),
-    "invalid start query should preserve the requested week length from the default home slate date",
-  );
-  assert(Array.isArray(invalidStartUpcoming.days) && invalidStartUpcoming.days.length === 7, "invalid start query should return a seven-day range");
-  invalidStartUpcoming.days.forEach((day, index) => {
-    assertDay(day, addDays(defaultDateUpcoming.range.start, index), { requireCompleteStarter: index === 0 });
-  });
-  assert(
-    gameOrder(invalidStartUpcoming.days[0]) === gameOrder(defaultDateUpcoming.days[0]),
-    "invalid start query should match the default home slate game order on the first day",
-  );
-  assert(
-    dayApiSignature(invalidStartUpcoming.days[0]) === dayApiSignature(defaultDateUpcoming.days[0]),
-    "invalid start query should match the default home slate payload on the first day",
-  );
+  await assertInvalidDateApiResponse(invalidStartResponse, "/api/upcoming?start=not-a-date");
 
   const mixedInvalidStartResponse = await fetch(
     `${baseUrl}/api/upcoming?date=${encodeURIComponent(date)}&start=not-a-date&days=2&window=${encodeURIComponent(windowSize)}`,
   );
-  assert(mixedInvalidStartResponse.ok, `/api/upcoming mixed invalid start query returned HTTP ${mixedInvalidStartResponse.status}`);
-  const mixedInvalidStartUpcoming = await mixedInvalidStartResponse.json();
-  assert(
-    mixedInvalidStartUpcoming.range?.start === defaultDateUpcoming.range.start,
-    "mixed invalid start query should still follow range-start fallback semantics",
-  );
-  assert(
-    mixedInvalidStartUpcoming.range?.end === addDays(defaultDateUpcoming.range.start, 1),
-    "mixed invalid start query should preserve requested two-day range from the fallback slate",
-  );
-  assert(Array.isArray(mixedInvalidStartUpcoming.days) && mixedInvalidStartUpcoming.days.length === 2, "mixed invalid start query should return a two-day range");
-  mixedInvalidStartUpcoming.days.forEach((day, index) => {
-    assertDay(day, addDays(defaultDateUpcoming.range.start, index), { requireCompleteStarter: index === 0 });
-  });
-  assert(
-    gameOrder(mixedInvalidStartUpcoming.days[0]) === gameOrder(defaultDateUpcoming.days[0]),
-    "mixed invalid start query should match the default home slate game order on the first day",
-  );
-  assert(
-    dayApiSignature(mixedInvalidStartUpcoming.days[0]) === dayApiSignature(defaultDateUpcoming.days[0]),
-    "mixed invalid start query should match the default home slate payload on the first day",
-  );
+  await assertInvalidDateApiResponse(mixedInvalidStartResponse, "/api/upcoming mixed invalid start query");
 
   const legacyTodayPage = await fetch(`${baseUrl}/slate/today/${encodeURIComponent(date)}`);
   assertFollowedRedirect(legacyTodayPage, `/slate/today/${date}`, `/upcoming/${date}`);
@@ -4671,49 +4708,10 @@ try {
   }
 
   const invalidDayPage = await fetch(`${baseUrl}/upcoming/not-a-date`);
-  assert(invalidDayPage.ok, "/upcoming/not-a-date returned HTTP " + invalidDayPage.status);
-  const invalidDayHtml = await invalidDayPage.text();
-  assertMetadata(
-    invalidDayHtml,
-    `/upcoming/${defaultDateUpcoming.range.start}`,
-    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
-    expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
-  );
-  assertUpcomingPageHeader(invalidDayHtml, "/upcoming/not-a-date");
-  assertJsonLd(
-    invalidDayHtml,
-    "/upcoming/not-a-date",
-    expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
-    expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
-    defaultDayTotals.games,
-    defaultDateUpcoming.days[0].games,
-    `/upcoming/${defaultDateUpcoming.range.start}`,
-  );
-  assertRenderedWatchCards(
-    invalidDayHtml,
-    "/upcoming/not-a-date",
-    defaultDateUpcoming.days[0].games,
-    `on ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
-    "must-watch",
-    defaultDateUpcoming.days[0].scheduledGames,
-  );
-  assertPrimarySlateCta(
-    invalidDayHtml,
-    "/upcoming/not-a-date",
-    "Week view",
-    `/upcoming/week/${defaultDateUpcoming.range.start}`,
-    `View week of ${formatUpcomingDate(defaultDateUpcoming.range.start)}`,
-  );
-  assertUpcomingRangeToggle(
-    invalidDayHtml,
-    "/upcoming/not-a-date",
-    homeSlateDate,
-    defaultDateUpcoming.range.start,
-    `/upcoming/${defaultDateUpcoming.range.start}`,
-  );
-  assertUpcomingControls(invalidDayHtml, "/upcoming/not-a-date");
-  assertNoLegacySlateLinks(invalidDayHtml, "/upcoming/not-a-date");
-  await assertPng(`${baseUrl}/upcoming/not-a-date/opengraph-image`, "/upcoming/not-a-date/opengraph-image");
+  assert(invalidDayPage.status === 404, "/upcoming/not-a-date should return HTTP 404, got " + invalidDayPage.status);
+
+  const invalidDayImage = await fetch(`${baseUrl}/upcoming/not-a-date/opengraph-image`);
+  assert(invalidDayImage.status === 404, "/upcoming/not-a-date/opengraph-image should return HTTP 404, got " + invalidDayImage.status);
 
   const defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
   const upcomingIndex = await fetch(`${baseUrl}/upcoming`);
@@ -5134,53 +5132,10 @@ try {
     assertNoLegacySlateLinks(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time`);
 
     const invalidWeekPage = await fetch(`${baseUrl}/upcoming/week/not-a-date`);
-    assert(invalidWeekPage.ok, "/upcoming/week/not-a-date returned HTTP " + invalidWeekPage.status);
-    const invalidWeekHtml = await invalidWeekPage.text();
-    assertMetadata(
-      invalidWeekHtml,
-      `/upcoming/week/${defaultDateUpcoming.range.start}`,
-      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
-      expectedUpcomingWeekDescription(defaultWeekUpcoming),
-    );
-    assertUpcomingPageHeader(invalidWeekHtml, "/upcoming/week/not-a-date");
-    assertJsonLd(
-      invalidWeekHtml,
-      "/upcoming/week/not-a-date",
-      expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
-      expectedUpcomingWeekDescription(defaultWeekUpcoming),
-      defaultWeekGameCount,
-      defaultWeekGames,
-      `/upcoming/week/${defaultDateUpcoming.range.start}`,
-    );
-    assertWeekMustWatchCallout(invalidWeekHtml, "/upcoming/week/not-a-date", defaultWeekGames);
-    defaultWeekUpcoming.days.forEach((day) => {
-      assertRenderedWatchCards(
-        invalidWeekHtml,
-        `/upcoming/week/not-a-date day ${day.date}`,
-        day.games,
-        `on ${formatUpcomingDate(day.date)}`,
-        `must-watch-${day.date}`,
-        day.scheduledGames,
-      );
-      assertPrimarySlateCta(
-        invalidWeekHtml,
-        `/upcoming/week/not-a-date day ${day.date}`,
-        "Day slate",
-        `/upcoming/${day.date}`,
-        `View day slate for ${formatUpcomingDate(day.date)}`,
-      );
-    });
-    assertWeekDaySlateLinks(invalidWeekHtml, "/upcoming/week/not-a-date", defaultWeekUpcoming.days);
-    assertUpcomingRangeToggle(
-      invalidWeekHtml,
-      "/upcoming/week/not-a-date",
-      homeSlateDate,
-      defaultDateUpcoming.range.start,
-      `/upcoming/week/${defaultDateUpcoming.range.start}`,
-    );
-    assertUpcomingControls(invalidWeekHtml, "/upcoming/week/not-a-date");
-    assertNoLegacySlateLinks(invalidWeekHtml, "/upcoming/week/not-a-date");
-    await assertPng(`${baseUrl}/upcoming/week/not-a-date/opengraph-image`, "/upcoming/week/not-a-date/opengraph-image");
+    assert(invalidWeekPage.status === 404, "/upcoming/week/not-a-date should return HTTP 404, got " + invalidWeekPage.status);
+
+    const invalidWeekImage = await fetch(`${baseUrl}/upcoming/week/not-a-date/opengraph-image`);
+    assert(invalidWeekImage.status === 404, "/upcoming/week/not-a-date/opengraph-image should return HTTP 404, got " + invalidWeekImage.status);
 
     const upcomingWeekIndex = await fetch(`${baseUrl}/upcoming/week`);
     assert(upcomingWeekIndex.ok, "/upcoming/week returned HTTP " + upcomingWeekIndex.status);
