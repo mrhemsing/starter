@@ -4,7 +4,7 @@ import { getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
-import { normalizeScheduleStatus } from "@/lib/slate-state";
+import { normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateStartBucketCounts } from "@/lib/slate-state";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
@@ -38,17 +38,11 @@ export type LiveScoreboardRow = {
   liveHref: string;
 };
 
-export type LiveScoreboard = {
+export type LiveScoreboard = SlateStartBucketCounts & {
   date: string;
   generatedAt: string;
   hasGames: boolean;
   hasActiveStarts: boolean;
-  totalStarts: number;
-  liveStarts: number;
-  finalStarts: number;
-  warmingStarts: number;
-  scheduledStarts: number;
-  delayStarts: number;
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
 };
@@ -87,23 +81,14 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
 
   const scoredRows = rows.filter(isScoredRow);
   const leaderRows = scoredRows.filter(isLiveLeaderEligibleRow);
-  const liveStarts = rows.filter((row) => row.status === "live").length;
-  const finalStarts = rows.filter((row) => row.status === "final").length;
-  const warmingStarts = rows.filter((row) => row.status === "warming").length;
-  const scheduledStarts = rows.filter((row) => row.status === "scheduled").length;
-  const delayStarts = rows.filter((row) => row.status === "delay").length;
+  const startCounts = summarizeSlateStartBuckets(rows);
 
   return {
     date,
     generatedAt: generatedAt.toISOString(),
     hasGames: rows.length > 0,
-    hasActiveStarts: liveStarts > 0 || delayStarts > 0,
-    totalStarts: rows.length,
-    liveStarts,
-    finalStarts,
-    warmingStarts,
-    scheduledStarts,
-    delayStarts,
+    hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0,
+    ...startCounts,
     rows,
     leader: leaderRows[0] ?? null,
   };

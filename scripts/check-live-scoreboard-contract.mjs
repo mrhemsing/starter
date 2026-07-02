@@ -54,9 +54,10 @@ assert(
     liveService.includes('provisional: scoreLabel === "PROV",') &&
     liveService.includes('export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";') &&
     liveService.includes("const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;") &&
-    liveService.includes('const scheduledStarts = rows.filter((row) => row.status === "scheduled").length;') &&
-    liveService.includes("scheduledStarts: number;") &&
-    liveService.includes("scheduledStarts,") &&
+    liveService.includes('import { normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateStartBucketCounts } from "@/lib/slate-state";') &&
+    liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
+    liveService.includes("const startCounts = summarizeSlateStartBuckets(rows);") &&
+    liveService.includes("...startCounts,") &&
     liveService.includes("function refinePregameStatus") &&
     liveService.includes('if (liveStatus === "warming") return "warming";') &&
     liveService.includes('return "scheduled";') &&
@@ -76,7 +77,7 @@ assert(
     liveService.includes("inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS") &&
     liveService.includes("if (aScored && !bScored) return -1;") &&
     liveService.includes("return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();") &&
-    liveService.includes("hasActiveStarts: liveStarts > 0 || delayStarts > 0") &&
+    liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.delayStarts > 0") &&
     liveService.includes("rows.sort(compareLiveRows)") &&
     liveService.includes("leader: leaderRows[0] ?? null"),
   "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",

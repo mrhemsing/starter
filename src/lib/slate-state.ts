@@ -1,6 +1,16 @@
 import type { MlbSchedule } from "@/lib/types";
 
 export type NormalizedScheduleStatus = "pregame" | "delayed" | "live" | "final" | "ppd" | "suspended";
+export type SlateStartBucketStatus = "live" | "final" | "warming" | "scheduled" | "delay";
+
+export type SlateStartBucketCounts = {
+  totalStarts: number;
+  liveStarts: number;
+  finalStarts: number;
+  warmingStarts: number;
+  scheduledStarts: number;
+  delayStarts: number;
+};
 
 export type SlateProgressStateKey = "pre-first-pitch" | "starts-in-progress" | "all-starts-complete" | "no-games";
 
@@ -15,6 +25,17 @@ export type SlateProgressState = {
   firstPitchAt: string | null;
   countdownLabel: string | null;
 };
+
+export function summarizeSlateStartBuckets<T extends { status: SlateStartBucketStatus }>(starts: T[]): SlateStartBucketCounts {
+  return {
+    totalStarts: starts.length,
+    liveStarts: starts.filter((start) => start.status === "live").length,
+    finalStarts: starts.filter((start) => start.status === "final").length,
+    warmingStarts: starts.filter((start) => start.status === "warming").length,
+    scheduledStarts: starts.filter((start) => start.status === "scheduled").length,
+    delayStarts: starts.filter((start) => start.status === "delay").length,
+  };
+}
 
 export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0, now = new Date()): SlateProgressState {
   const countableGames = schedule.games.filter((game) => normalizeScheduleStatus(game) !== "ppd");
