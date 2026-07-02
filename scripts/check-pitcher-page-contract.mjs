@@ -63,8 +63,11 @@ assert(
     formService.includes("getRecentLiveFormStarts(season, archivedStarts)") &&
     formService.includes('const cacheKey = `${season}:${today}:${latestArchivedDate ?? "none"}`;') &&
     formService.includes(".filter((date) => !latestArchivedDate || date > latestArchivedDate)") &&
-    formService.includes("if (dates.length === 0) return [];"),
-  "pitcher form must read the stored season archive once and only fetch live slates newer than the archive",
+    formService.includes("if (dates.length === 0) return { starts: [], truncated: false, gapDates: [] };") &&
+    formService.includes("const selectedDates = dates.slice(-RECENT_FORM_RENDER_GAP_LIMIT_DAYS);") &&
+    formService.includes("readRecentCanonicalFormSlate") &&
+    !formService.includes("dates.map((date) => getDailySlate"),
+  "pitcher form must read the stored season archive once and only read canonical slates newer than the archive",
 );
 assert(
   !formService.includes("Promise.all([\n    getArchivedSeasonStartSummaries(season),\n    getRecentLiveFormStarts(season),") &&

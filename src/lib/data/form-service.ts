@@ -1,7 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
+import { readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
-import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
+import { getArchivedSeasonStartSummaries, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
 import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
@@ -30,6 +31,12 @@ type FormStartSet = {
   stalePitcherIds: Set<string>;
 };
 
+type RecentLiveFormStartsResult = {
+  starts: StartSummary[];
+  truncated: boolean;
+  gapDates: string[];
+};
+
 type FormMetricKey = "k9" | "bb9" | "ipPerStart" | "er9";
 
 type FormMetricSnapshot = Record<FormMetricKey, number>;
@@ -46,6 +53,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 };
 
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
+const RECENT_FORM_RENDER_GAP_LIMIT_DAYS = 2;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
 const FORM_CACHE_VERSION = "form-level-bands-v4";
@@ -62,7 +70,7 @@ type CachedValue<T> = {
 const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse>>();
 const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
 const pitcherFormCache = new Map<string, CachedValue<FormPitcherResponse | null>>();
-const recentLiveFormStartsCache = new Map<string, CachedValue<StartSummary[]>>();
+const recentLiveFormStartsCache = new Map<string, CachedValue<RecentLiveFormStartsResult>>();
 
 const getCachedFormLeaderboard = unstable_cache(
   async (season: string, window: FormWindow, qualifiedOnly: boolean, team?: string) => buildFormLeaderboard({ season, window, qualifiedOnly, team }),
@@ -490,12 +498,13 @@ export async function getFormCalibration(options: FormBuildOptions = {}) {
 
 async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
   const archivedStarts = await getArchivedSeasonStartSummaries(season);
-  const recentStarts = await getRecentLiveFormStarts(season, archivedStarts);
+  const recent = await getRecentLiveFormStarts(season, archivedStarts);
+  const recentStarts = recent.starts;
   const scoredStarts = mergeScoredStarts(archivedStarts, recentStarts);
   const qualifiedStarts = filterQualifiedStarts(scoredStarts);
   const formThroughDate = latestStartDate(qualifiedStarts);
   const latestScoredStartDate = latestStartDate(scoredStarts.filter((start) => start.source?.line !== "fixture"));
-  const stale = Boolean(formThroughDate && latestScoredStartDate && formThroughDate < latestScoredStartDate);
+  const stale = recent.truncated || Boolean(formThroughDate && latestScoredStartDate && formThroughDate < latestScoredStartDate);
 
   if (stale) {
     const affectedPitchers = new Set(scoredStarts.filter((start) => start.date === latestScoredStartDate).map((start) => String(start.pitcher.mlbId)));
@@ -556,14 +565,82 @@ async function buildRecentLiveFormStarts(season: string, today: string, latestAr
     .filter((date) => date.startsWith(season))
     .filter((date) => !latestArchivedDate || date > latestArchivedDate)
     .reverse();
-  if (dates.length === 0) return [];
+  if (dates.length === 0) return { starts: [], truncated: false, gapDates: [] };
 
-  const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
+  const selectedDates = dates.slice(-RECENT_FORM_RENDER_GAP_LIMIT_DAYS);
+  const truncated = dates.length > selectedDates.length;
+  if (truncated) {
+    console.error("[form-pipeline] archive gap exceeds render fan-out cap; serving stale archive/canonical data", {
+      today,
+      latestArchivedDate,
+      gapDays: dates.length,
+      renderedGapDays: selectedDates.length,
+      skippedDates: dates.slice(0, -selectedDates.length),
+    });
+  } else {
+    console.info("[form-pipeline] recent canonical form gap", {
+      today,
+      latestArchivedDate,
+      gapDays: selectedDates.length,
+    });
+  }
 
-  return slates
+  const slates = await Promise.all(selectedDates.map(readRecentCanonicalFormSlate));
+
+  const starts = slates
     .flat()
     .filter((start) => start.source?.line !== "fixture")
     .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
+  return { starts, truncated, gapDates: selectedDates };
+}
+
+async function readRecentCanonicalFormSlate(date: string): Promise<StartSummary[]> {
+  const records = await readCanonicalStartRecords(date);
+  return records
+    .filter((record) => record.status === "final" || record.status === "live")
+    .map((record, index) => canonicalRecordToFormStart(record, index + 1));
+}
+
+function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanonicalStartRecords>>[number], rank: number): StartSummary {
+  const teamColor = "#27272a";
+  const accentColor = "#fbbf24";
+  return {
+    id: record.id,
+    gamePk: record.gamePk,
+    date: record.date,
+    rank,
+    pitcher: {
+      id: String(record.pitcherMlbId),
+      mlbId: record.pitcherMlbId,
+      name: record.pitcherName,
+      team: record.team,
+      throws: "R",
+      headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${record.pitcherMlbId}/headshot/67/current`,
+    },
+    opponent: record.opponent,
+    side: record.side,
+    result: record.result,
+    line: record.line,
+    gameScorePlus: record.gameScorePlus,
+    gameScoreV2: record.gameScoreV2,
+    eventFlags: record.eventFlags,
+    gameScorePlusBreakdown: record.gameScorePlusBreakdown,
+    plannedStarter: true,
+    teamColor,
+    accentColor,
+    context: {
+      label: `${record.team} vs ${record.opponent}`,
+      whiffDeltaPct: 0,
+      velocityDeltaMph: 0,
+      parkRunFactor: 1,
+      parkLabel: "Stored canonical slate",
+      opponentQualityRunValue: 0,
+      opponentQualityLabel: `${record.opponent} opponent quality pending archive refresh.`,
+      opponentOffenseRunValue: 0,
+      opponentOffenseLabel: `${record.opponent} offense quality pending archive refresh.`,
+    },
+    source: record.source,
+  };
 }
 
 function filterQualifiedStarts(starts: StartSummary[]) {

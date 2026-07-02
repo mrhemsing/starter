@@ -143,6 +143,17 @@ assert(
 );
 
 assert(
+  formService.includes("const RECENT_FORM_RENDER_GAP_LIMIT_DAYS = 2;") &&
+    formService.includes("const selectedDates = dates.slice(-RECENT_FORM_RENDER_GAP_LIMIT_DAYS);") &&
+    formService.includes("[form-pipeline] archive gap exceeds render fan-out cap; serving stale archive/canonical data") &&
+    formService.includes("readRecentCanonicalFormSlate") &&
+    formService.includes("readCanonicalStartRecords(date)") &&
+    !formService.includes('import { getArchivedSeasonStartSummaries, getDailySlate') &&
+    !formService.includes("dates.map((date) => getDailySlate"),
+  "Heat Check render paths must cap archive-gap fan-out and read canonical data instead of rebuilding/writing slates",
+);
+
+assert(
   startService.includes('import { unstable_cache } from "next/cache";') &&
     startService.includes("export const PITCHER_PROFILE_REVALIDATE_SECONDS = 15 * 60;") &&
     startService.includes("const getCachedPitcherApiResponse = unstable_cache(") &&

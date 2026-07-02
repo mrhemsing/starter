@@ -148,14 +148,14 @@ assert(
 
 assert(
   startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
-    startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
+    startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
-    startService.includes("return canonicalizeStartSummariesWithStore(params.date, archivedStarts);") &&
+    startService.includes("if (archivedStarts.length > 0) return archivedStarts;") &&
     startService.includes("return canonicalizeStartSummariesWithStore(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);") &&
     startService.includes("const slateStarts = await canonicalizeStartSummariesWithStore(params.date, starts.length > 0 ? starts : demoSlateStarts);") &&
-    startService.includes("return canonicalizeStartSummaries(archivedStarts") &&
+    startService.includes("return readCanonicalizedStartSummaries(date, starts);") &&
     startService.includes("export async function getArchivedSeasonStartSummaries"),
-  "daily slate and slate API must use the persisted canonical store while archived season summaries still pass through canonical normalization",
+  "daily slate and slate API must write canonical records only for scheduled/live assembly while archived renders read canonical records without re-upserting",
 );
 
 assert(
@@ -176,7 +176,8 @@ assert(
     slateState.includes('if (start.source?.line === "live-gamefeed") return "live";') &&
     slateState.includes('return "scheduled";') &&
     startService.includes('import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";') &&
-    startService.includes('const [slateStarts, liveSchedule, archivedSchedule] = await Promise.all([') &&
+    startService.includes("export function getRankedSlateCompletionStateFromInputs(") &&
+    startService.includes("getRankedSlateContextForStarts(date, today, [])") &&
     startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
     startService.includes("const totalStarts = startCounts.totalStarts;") &&
     startService.includes("const completedStarts = Math.min(totalStarts, startCounts.finalStarts);") &&

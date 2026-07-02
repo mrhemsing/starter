@@ -152,7 +152,7 @@ async function fetchSupabaseRows<T>(table: string, filters: Record<string, strin
         authorization: `Bearer ${key}`,
         range: `${from}-${to}`,
       },
-      next: { revalidate: 15 * 60 },
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) return [];
