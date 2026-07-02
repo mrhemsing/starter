@@ -48,6 +48,18 @@ assert(
 );
 
 assert(
+  mlbStatsClient.includes("export const PROBABLES_REPOLL_FAR_SECONDS = 60 * 60;") &&
+    mlbStatsClient.includes("export const PROBABLES_REPOLL_NEAR_SECONDS = 15 * 60;") &&
+    mlbStatsClient.includes("export const PROBABLES_REPOLL_URGENT_SECONDS = 5 * 60;") &&
+    mlbStatsClient.includes("export function probableStarterRepollSeconds(") &&
+    mlbStatsClient.includes("remainingMs <= PROBABLES_URGENT_FIRST_PITCH_MS") &&
+    mlbStatsClient.includes("remainingMs <= PROBABLES_NEAR_FIRST_PITCH_MS") &&
+    mlbStatsClient.includes("cachedSchedule.expiresAt = Date.now() + probableStarterRepollSeconds(schedule) * 1000;") &&
+    mlbStatsClient.includes("cachedRequestInit(options, probableStarterRepollSeconds(schedule))"),
+  "probable starter refresh cadence must tighten from 60 minutes to 15 minutes to 5 minutes as first pitch approaches",
+);
+
+assert(
   tonightService.includes('probableSource: "none",') &&
     tonightService.includes('probableConfidence: "TBD",') &&
     tonightService.includes("probableSource: probable.source,") &&

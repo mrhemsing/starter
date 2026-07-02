@@ -12,6 +12,11 @@ const MLB_SCHEDULE_REVALIDATE_SECONDS = 60;
 const MLB_GAMEFEED_REVALIDATE_SECONDS = 15 * 60;
 const MLB_CONTEXT_REVALIDATE_SECONDS = 60 * 60;
 const MLB_PLAYER_PROFILE_REVALIDATE_SECONDS = 15 * 60;
+export const PROBABLES_REPOLL_FAR_SECONDS = 60 * 60;
+export const PROBABLES_REPOLL_NEAR_SECONDS = 15 * 60;
+export const PROBABLES_REPOLL_URGENT_SECONDS = 5 * 60;
+const PROBABLES_NEAR_FIRST_PITCH_MS = 4 * 60 * 60 * 1000;
+const PROBABLES_URGENT_FIRST_PITCH_MS = 60 * 60 * 1000;
 
 type MlbScheduleClientOptions = {
   fetchLive?: boolean;
@@ -376,6 +381,14 @@ export async function fetchMlbSchedule(date: string, options: MlbScheduleClientO
     scheduleCache.set(cacheKey, {
       expiresAt: Date.now() + LIVE_SCHEDULE_CACHE_TTL_MS,
       promise,
+    });
+    promise.then((schedule) => {
+      const cachedSchedule = scheduleCache.get(cacheKey);
+      if (cachedSchedule?.promise !== promise) return;
+      cachedSchedule.expiresAt = Date.now() + probableStarterRepollSeconds(schedule) * 1000;
+    }).catch(() => {
+      const cachedSchedule = scheduleCache.get(cacheKey);
+      if (cachedSchedule?.promise === promise) cachedSchedule.expiresAt = Date.now() + LIVE_SCHEDULE_CACHE_TTL_MS;
     });
   }
 
@@ -894,7 +907,7 @@ async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule
   });
 
   try {
-    const response = await fetch(`${ESPN_MLB_SCOREBOARD_API}?${params.toString()}`, cachedRequestInit(options, MLB_SCHEDULE_REVALIDATE_SECONDS));
+    const response = await fetch(`${ESPN_MLB_SCOREBOARD_API}?${params.toString()}`, cachedRequestInit(options, probableStarterRepollSeconds(schedule)));
     if (!response.ok) return new Map();
 
     const payload = (await response.json()) as EspnScoreboardApiResponse;
@@ -945,6 +958,20 @@ async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule
   } catch {
     return new Map();
   }
+}
+
+export function probableStarterRepollSeconds(schedule: Pick<MlbSchedule, "games">, now = new Date()) {
+  const upcomingFirstPitchMs = schedule.games
+    .map((game) => new Date(game.gameDate).getTime())
+    .filter((time) => Number.isFinite(time) && time >= now.getTime())
+    .sort((a, b) => a - b)[0];
+
+  if (!upcomingFirstPitchMs) return PROBABLES_REPOLL_URGENT_SECONDS;
+
+  const remainingMs = upcomingFirstPitchMs - now.getTime();
+  if (remainingMs <= PROBABLES_URGENT_FIRST_PITCH_MS) return PROBABLES_REPOLL_URGENT_SECONDS;
+  if (remainingMs <= PROBABLES_NEAR_FIRST_PITCH_MS) return PROBABLES_REPOLL_NEAR_SECONDS;
+  return PROBABLES_REPOLL_FAR_SECONDS;
 }
 
 async function resolveReportedPitcherMlbId(fullName: string, options: MlbScheduleClientOptions = {}): Promise<number | null> {
