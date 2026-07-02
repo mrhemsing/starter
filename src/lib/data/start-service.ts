@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
+import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
 import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
@@ -512,6 +512,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
         line: start.line,
         gameScorePlus: start.gameScorePlus,
         gameScoreV2: start.gameScoreV2,
+        eventFlags: start.eventFlags,
         gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
         source: {
           schedule: schedule.source,
@@ -679,6 +680,7 @@ export async function getStartApiResponse(startId: string): Promise<StartApiResp
     line: start.line,
     gameScorePlus: start.gameScorePlus,
     gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
+    eventFlags: start.eventFlags,
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
     source: {
       schedule: start.source?.schedule ?? "fixture",
@@ -1123,6 +1125,7 @@ function withStartSummaries(start: StartDetail): StartDetail {
     ...start,
     expectedGameScorePlus: summarizeExpectedGameScorePlus(start.line, start.context),
     gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
+    eventFlags: start.eventFlags ?? deriveStartEventFlags(start.result, start.gameScorePlus),
     velocityTrend: summarizeVelocityTrend(start.pitchEvents),
     inningTimeline: summarizeInningTimeline(start.pitchEvents),
     countLeverage: summarizeCountLeverage(start.pitchEvents),

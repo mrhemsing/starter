@@ -82,7 +82,7 @@ assert(
 );
 
 assert(
-  startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
+  startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
     startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("return canonicalizeStartSummariesWithStore(params.date, archivedStarts);") &&

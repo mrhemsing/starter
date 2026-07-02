@@ -1,6 +1,6 @@
 import { roundToScorePrecision, SCORE_DISPLAY_PRECISION } from "@/lib/score-display";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
-import type { StartApiGameScorePlusBreakdown, StartDataSource, StartLine, StartSummary } from "@/lib/types";
+import type { StartApiGameScorePlusBreakdown, StartDataSource, StartEventFlag, StartLine, StartSummary } from "@/lib/types";
 
 export type CanonicalStartStatus = "scheduled" | "live" | "final";
 
@@ -31,6 +31,7 @@ export type CanonicalStartRecord = {
   line: StartLine;
   gameScorePlus: number;
   gameScoreV2: number;
+  eventFlags: StartEventFlag[];
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   result: StartSummary["result"];
   source: StartDataSource;
@@ -65,6 +66,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
   const live = source.line === "live-gamefeed";
   const gameScorePlus = roundToScorePrecision(start.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
   const gameScoreV2 = start.gameScoreV2 ?? calculateGameScoreV2(start.line);
+  const eventFlags = start.eventFlags ?? deriveStartEventFlags(start.result, gameScorePlus);
 
   return {
     id: start.id,
@@ -79,6 +81,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     line: start.line,
     gameScorePlus,
     gameScoreV2,
+    eventFlags,
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ? { ...start.gameScorePlusBreakdown, total: gameScorePlus } : undefined,
     result: start.result,
     source,
@@ -107,6 +110,7 @@ export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, st
     line: record.line,
     gameScorePlus: record.gameScorePlus,
     gameScoreV2: record.gameScoreV2,
+    eventFlags: record.eventFlags,
     gameScorePlusBreakdown: record.gameScorePlusBreakdown,
     result: record.result,
     source: record.source,
@@ -135,6 +139,7 @@ export function reconcileCanonicalStartRecord(
   const timestamp = now.toISOString();
   const gameScorePlus = roundToScorePrecision(official.gameScorePlus, SCORE_DISPLAY_PRECISION.gameScorePlus);
   const gameScoreV2 = official.gameScoreV2 ?? calculateGameScoreV2(official.line);
+  const eventFlags = deriveStartEventFlags(record.result, gameScorePlus);
   const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus);
 
   return {
@@ -143,6 +148,7 @@ export function reconcileCanonicalStartRecord(
     line: official.line,
     gameScorePlus,
     gameScoreV2,
+    eventFlags,
     gameScorePlusBreakdown: official.gameScorePlusBreakdown ? { ...official.gameScorePlusBreakdown, total: gameScorePlus } : record.gameScorePlusBreakdown,
     source: {
       ...record.source,
@@ -163,6 +169,12 @@ export function reconcileCanonicalStartRecord(
       },
     ],
   };
+}
+
+export function deriveStartEventFlags(result: StartSummary["result"], gameScorePlus: number): StartEventFlag[] {
+  if ((result === "L" || result === "ND") && gameScorePlus >= 60) return ["HARD_LUCK"];
+  if (result === "W" && gameScorePlus <= 35) return ["VULTURE"];
+  return [];
 }
 
 export function diffCanonicalStartRecord(record: CanonicalStartRecord, officialLine: StartLine, officialGameScorePlus: number): CanonicalStartLineDiff[] {

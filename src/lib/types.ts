@@ -120,6 +120,7 @@ export type StartSummary = {
   line: StartLine;
   gameScorePlus: number;
   gameScoreV2?: number;
+  eventFlags?: StartEventFlag[];
   expectedGameScorePlus?: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   plannedStarter?: boolean;
@@ -200,6 +201,8 @@ export type FormWorkload = {
   avgPitchesLast5: number | null;
   avgIpLast5: number | null;
 };
+
+export type StartEventFlag = "HARD_LUCK" | "VULTURE";
 
 export type PitcherAvailability = {
   status: "injured-list";
@@ -875,6 +878,7 @@ export type SlateApiStart = {
   line: StartLine;
   gameScorePlus: number;
   gameScoreV2?: number;
+  eventFlags?: StartEventFlag[];
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];
@@ -1036,6 +1040,7 @@ export type StartApiResponse = {
   line: StartLine;
   gameScorePlus: number;
   gameScoreV2?: number;
+  eventFlags?: StartEventFlag[];
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];
