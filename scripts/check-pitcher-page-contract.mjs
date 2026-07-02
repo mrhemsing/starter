@@ -214,6 +214,7 @@ assert(
     startService.includes("belowSeasonMedian: row.avgVelocityMph <= medianVelocity - 1") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-velocity-by-start"') &&
     pitcherFormPage.includes("<VelocityByStartPanel starts={pitcher.velocityByStart} />") &&
+    pitcherFormPage.includes("if (rows.length < 2) return null;") &&
     pitcherFormPage.includes("low velo"),
   "pitcher profile must expose velocity by start with a one mph below-median flag",
 );
@@ -232,6 +233,7 @@ assert(
     startService.includes("usageDeltaPct: previousUsage.size > 0") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-pitch-mix-by-start"') &&
     pitcherFormPage.includes("<PitchMixByStartPanel starts={pitcher.pitchMixByStart} />") &&
+    pitcherFormPage.includes("if (rows.length < 2) return null;") &&
     pitcherFormPage.includes("Pitch mix / by start") &&
     pitcherFormPage.includes("usage shift") &&
     pitcherFormPage.includes("New {pitchTypes[type].name}") &&
@@ -280,8 +282,8 @@ assert(
 assert(
   pitcherFormPage.includes('import { Suspense } from "react";') &&
     pitcherFormPage.includes("<ProfileNextStartPill nextStartPromise={nextStartPromise}") &&
-    pitcherFormPage.includes("<PitcherScoutingSection pitcherPromise={pitcherPromise}") &&
-    pitcherFormPage.includes("<PitcherGameLogSection") &&
+    pitcherFormPage.includes("<PitcherProfileBody") &&
+    pitcherFormPage.includes("pitcherPromise={pitcherPromise}") &&
     pitcherFormPage.includes("<Suspense fallback={null}>") &&
     !pitcherFormPage.includes("NextStartPillSkeleton") &&
     !pitcherFormPage.includes("PitcherScoutingSkeleton") &&
@@ -316,11 +318,12 @@ assert(
 );
 
 assert(
-  pitcherFormPage.includes("function ArsenalTable") &&
+    pitcherFormPage.includes("function ArsenalTable") &&
     pitcherFormPage.includes("formatArsenalSourceLabel(pitcher)") &&
     pitcherFormPage.includes("formatArsenalSourceTitle(pitcher)") &&
     pitcherFormPage.includes('return `Archive through ${pitcher.source.archiveArsenal.lastStartDate}`;') &&
-    pitcherFormPage.includes('return "Archive pending";') &&
+    pitcherFormPage.includes('return "More data after next archive run";') &&
+    pitcherFormPage.includes("if (pitches.length === 0) return null;") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-arsenal-table"') &&
     pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-arsenal-table"') &&
     pitcherFormPage.includes('className="max-w-full overflow-x-auto"') &&
@@ -339,7 +342,7 @@ assert(
     arsenalDataOps.includes("THE_BUMP_ARCHIVE_CONCURRENCY=4") &&
     arsenalDataOps.includes("THE_BUMP_REQUEST_TIME_SAVANT_PITCH_DETAIL=1") &&
     arsenalDataOps.includes("Archive through YYYY-MM-DD") &&
-    arsenalDataOps.includes("Archive pending"),
+    arsenalDataOps.includes("More data after next archive run"),
   "arsenal data ops must document nightly archive refresh, validation, Supabase sync, rate-limit posture, and stale labels",
 );
 
@@ -348,6 +351,8 @@ assert(
     pitcherFormPage.includes('data-responsive-check="pitcher-advanced-percentiles"') &&
     pitcherFormPage.includes('className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles"') &&
     pitcherFormPage.includes("Pitch-event skills") &&
+    pitcherFormPage.includes("const snapshots = [pitcher.skillProfile.season, pitcher.skillProfile.trailing30].filter((snapshot) => snapshot.pitchCount > 0);") &&
+    pitcherFormPage.includes("if (snapshots.length === 0 && !hasTrend) return null;") &&
     pitcherFormPage.includes("function PitcherSkillSnapshotCard") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-archive-quality-card"') &&
     pitcherFormPage.includes("pitcher.skillProfile.season") &&
@@ -371,18 +376,23 @@ assert(
     pitcherFormPage.includes('data-responsive-check="home-road-split-evidence"') &&
     pitcherFormPage.includes("<HomeRoadSplitBadge split={summary.venueSplit} />") &&
     pitcherFormPage.includes("Home GS+ {venueSplit.home.gsPlus.toFixed(1)}") &&
-    pitcherFormPage.includes("Times through order") &&
+    pitcherFormPage.includes("function hasRealSplitValues") &&
+    pitcherFormPage.includes("if (!venueSplit && realSplits.length === 0) return null;") &&
+    !pitcherFormPage.includes("Times through order") &&
     pitcherFormPage.includes("wOBA"),
-  "pitcher profile must render scouting splits, gated home/road evidence when present, and times-through-order placeholder",
+  "pitcher profile must render only populated scouting split rows and gated home/road evidence when present",
 );
 
 assert(
-  pitcherFormPage.includes('className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting"') &&
-    pitcherFormPage.includes('<div className="min-w-0 space-y-5">') &&
-    pitcherFormPage.includes('<section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">') &&
+  pitcherFormPage.includes('className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-stacks"') &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-profile-left-stack"') &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-profile-right-stack"') &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-profile-game-log"') &&
+    pitcherFormPage.includes('<div className="lg:hidden">') &&
+    pitcherFormPage.includes('<div className="hidden lg:block">') &&
     pitcherFormWindowPanel.includes('className="max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart"') &&
     pitcherFormWindowPanel.includes('className="block w-full" viewBox={`0 0 ${width} ${height}`}'),
-  "pitcher form mobile panels must stay constrained while wide chart/table content scrolls inside its own panel",
+  "pitcher form profile modules must pack in independent column stacks while wide chart/table content scrolls inside its own panel",
 );
 
 assert(

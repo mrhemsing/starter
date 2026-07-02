@@ -22,7 +22,7 @@ Request-time Baseball Savant fallback is disabled by default to protect normal t
 
 ## Stale State
 
-Pitcher pages surface the archive status in the Arsenal panel. When archived pitch events exist, the label shows `Archive through YYYY-MM-DD`; when no archive-backed arsenal exists, the panel shows `Archive pending` and the profile falls back to neutral/fixture data instead of blocking on request-time ingestion.
+Pitcher pages surface the archive status only when the Arsenal panel has pitch data. When archived pitch events exist, the label shows `Archive through YYYY-MM-DD`; when fixture-backed pitch data is present, the label uses plain copy such as `More data after next archive run` instead of a pending placeholder module.
 
 ## Statcast Quality
 

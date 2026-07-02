@@ -171,11 +171,8 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
         </section>
 
         <Suspense fallback={null}>
-          <PitcherScoutingSection pitcherPromise={pitcherPromise} summary={summary} />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <PitcherGameLogSection
+          <PitcherProfileBody
+            pitcherPromise={pitcherPromise}
             series={series}
             recentDepthBundlePromise={recentDepthBundlePromise}
             nextStartPromise={nextStartPromise}
@@ -206,7 +203,7 @@ async function ProfileNextStartPill({
   if (!nextStart) {
     return (
       <p className="mt-5 inline-flex max-w-full items-center rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-        Next start pending
+        No confirmed next start
       </p>
     );
   }
@@ -219,26 +216,8 @@ async function ProfileNextStartPill({
   );
 }
 
-async function PitcherScoutingSection({ pitcherPromise, summary }: { pitcherPromise: Promise<PitcherApiResponse | null>; summary: FormSummary }) {
-  const pitcher = await pitcherPromise;
-  if (!pitcher) return null;
-
-  return (
-    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-scouting">
-      <div className="min-w-0 space-y-5">
-        <ArsenalTable pitcher={pitcher} />
-        <VelocityByStartPanel starts={pitcher.velocityByStart} />
-        <PitchMixByStartPanel starts={pitcher.pitchMixByStart} />
-      </div>
-      <div className="min-w-0 space-y-5">
-        <AdvancedPercentilePanel pitcher={pitcher} />
-        <SplitsPanel splits={pitcher.splits.groups} venueSplit={summary.venueSplit ?? null} />
-      </div>
-    </section>
-  );
-}
-
-async function PitcherGameLogSection({
+async function PitcherProfileBody({
+  pitcherPromise,
   series,
   recentDepthBundlePromise,
   nextStartPromise,
@@ -248,6 +227,7 @@ async function PitcherGameLogSection({
   worst,
   streak,
 }: {
+  pitcherPromise: Promise<PitcherApiResponse | null>;
   series: FormStartPoint[];
   recentDepthBundlePromise: Promise<Awaited<ReturnType<typeof getRecentStartDepthWithHighlights>>>;
   nextStartPromise: Promise<ProfileNextStart | null>;
@@ -257,29 +237,37 @@ async function PitcherGameLogSection({
   worst: FormStartPoint;
   streak: number;
 }) {
-  const [recentDepthBundle, nextStart] = await Promise.all([recentDepthBundlePromise, nextStartPromise]);
+  const [pitcher, recentDepthBundle, nextStart] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise]);
   const { recentDepth, recentHighlights } = recentDepthBundle;
   const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
 
   return (
-    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="min-w-0">
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
-        <div className="overflow-hidden rounded border border-white/10">
-          {[...series].reverse().map((start) => (
-            <GameLogRow
-              key={start.id}
-              start={start}
-              depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
-              highlight={recentHighlights.get(start.id) ?? null}
-              pitcherName={summary.name}
-              source={source}
-            />
-          ))}
-        </div>
+    <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-stacks">
+      <div className="min-w-0 space-y-5" data-responsive-check="pitcher-profile-left-stack">
+        {pitcher ? <ArsenalTable pitcher={pitcher} /> : null}
+        {pitcher ? <VelocityByStartPanel starts={pitcher.velocityByStart} /> : null}
+        {pitcher ? <PitchMixByStartPanel starts={pitcher.pitchMixByStart} /> : null}
+        {nextStart ? (
+          <div className="lg:hidden">
+            <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} />
+          </div>
+        ) : null}
+        <GameLogPanel
+          series={series}
+          recentDepth={recentDepth}
+          recentHighlights={recentHighlights}
+          pitcherName={summary.name}
+          source={source}
+        />
       </div>
-      <aside className="min-w-0 space-y-3">
-        {nextStart ? <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} /> : null}
+      <aside className="min-w-0 space-y-5" data-responsive-check="pitcher-profile-right-stack">
+        {nextStart ? (
+          <div className="hidden lg:block">
+            <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} />
+          </div>
+        ) : null}
+        {pitcher ? <AdvancedPercentilePanel pitcher={pitcher} /> : null}
+        <SplitsPanel splits={pitcher?.splits.groups ?? []} venueSplit={summary.venueSplit ?? null} />
         <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
         <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
         <div className="rounded border border-white/10 bg-[#101014] p-4">
@@ -289,6 +277,38 @@ async function PitcherGameLogSection({
         </div>
       </aside>
     </section>
+  );
+}
+
+function GameLogPanel({
+  series,
+  recentDepth,
+  recentHighlights,
+  pitcherName,
+  source,
+}: {
+  series: FormStartPoint[];
+  recentDepth: StartDetail[];
+  recentHighlights: Map<string, FeaturedStartHighlight | null>;
+  pitcherName: string;
+  source: EntitySource;
+}) {
+  return (
+    <div className="min-w-0" data-responsive-check="pitcher-profile-game-log">
+      <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">GS+ game log</p>
+      <div className="overflow-hidden rounded border border-white/10">
+        {[...series].reverse().map((start) => (
+          <GameLogRow
+            key={start.id}
+            start={start}
+            depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
+            highlight={recentHighlights.get(start.id) ?? null}
+            pitcherName={pitcherName}
+            source={source}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -351,13 +371,15 @@ async function getProfileNextStart(pitcherId: string, formScore: number): Promis
       projectedGsPlus,
       matchupLabel: probable.matchupScore >= 56 ? "favorable" : probable.matchupScore <= 44 ? "tough" : "balanced",
       parkLabel: probable.parkAdjustment > 0 ? "park adds run pressure" : probable.parkAdjustment < 0 ? "park helps arms" : "neutral park",
-      weatherLabel: "weather pending",
+      weatherLabel: "weather context closer to first pitch",
     }
   );
 }
 
 function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
   const pitches = [...pitcher.arsenal].sort((a, b) => b.usagePct - a.usagePct).slice(0, 6);
+  if (pitches.length === 0) return null;
+
   const outPitch = pitches.reduce<ArsenalPitchSummary | null>((winner, pitch) => {
     if (!winner) return pitch;
     return putAwayPct(pitch) > putAwayPct(winner) ? pitch : winner;
@@ -375,29 +397,25 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
         </p>
       </div>
 
-      {pitches.length > 0 ? (
-        <div className="max-w-full overflow-x-auto">
-          <table className="min-w-[680px] w-full border-collapse font-mono text-sm">
-            <thead className="text-left text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-              <tr className="border-b border-white/10">
-                <th className="py-2 pr-4 font-medium">Pitch</th>
-                <th className="py-2 pr-4 font-medium">Usage</th>
-                <th className="py-2 pr-4 text-right font-medium">Velo</th>
-                <th className="py-2 pr-4 text-right font-medium">Whiff</th>
-                <th className="py-2 pr-4 text-right font-medium">Put-away</th>
-                <th className="py-2 text-right font-medium">CSW</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pitches.map((pitch) => (
-                <ArsenalTableRow key={pitch.type} pitch={pitch} outPitch={outPitch?.type === pitch.type} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Pitch mix pending for this starter.</p>
-      )}
+      <div className="max-w-full overflow-x-auto">
+        <table className="min-w-[680px] w-full border-collapse font-mono text-sm">
+          <thead className="text-left text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <tr className="border-b border-white/10">
+              <th className="py-2 pr-4 font-medium">Pitch</th>
+              <th className="py-2 pr-4 font-medium">Usage</th>
+              <th className="py-2 pr-4 text-right font-medium">Velo</th>
+              <th className="py-2 pr-4 text-right font-medium">Whiff</th>
+              <th className="py-2 pr-4 text-right font-medium">Put-away</th>
+              <th className="py-2 text-right font-medium">CSW</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pitches.map((pitch) => (
+              <ArsenalTableRow key={pitch.type} pitch={pitch} outPitch={outPitch?.type === pitch.type} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -433,18 +451,20 @@ function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outP
 
 function formatArsenalSourceLabel(pitcher: PitcherApiResponse) {
   if (pitcher.source.archiveArsenal) return `Archive through ${pitcher.source.archiveArsenal.lastStartDate}`;
-  if (pitcher.source.arsenal === "fixture") return "Archive pending";
+  if (pitcher.source.arsenal === "fixture") return "More data after next archive run";
   return pitcher.source.arsenal.replace(/-/g, " ");
 }
 
 function formatArsenalSourceTitle(pitcher: PitcherApiResponse) {
   const archive = pitcher.source.archiveArsenal;
-  if (!archive) return "Pitch-mix source status";
+  if (!archive) return "Pitch mix expands after the next archive run.";
   return `${archive.starts} starts, ${archive.pitchEvents} pitches archived from ${archive.firstStartDate} through ${archive.lastStartDate}. Last updated ${archive.archivedAt}.`;
 }
 
 function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
   const rows = starts.slice(0, 8);
+  if (rows.length < 2) return null;
+
   const maxVelocity = Math.max(1, ...rows.map((start) => start.avgVelocityMph));
 
   return (
@@ -457,33 +477,30 @@ function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">last {rows.length || 0}</p>
       </div>
 
-      {rows.length > 0 ? (
-        <div className="space-y-3">
-          {rows.map((start) => (
-            <Link key={start.id} href={start.startHref} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_120px] sm:items-center">
-              <div className="min-w-0">
-                <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
-                  <span className={`block h-full rounded-full ${start.belowSeasonMedian ? "bg-cyan-300" : "bg-amber-300"}`} style={{ width: `${Math.max(12, (start.avgVelocityMph / maxVelocity) * 100)}%` }} />
-                </div>
+      <div className="space-y-3">
+        {rows.map((start) => (
+          <Link key={start.id} href={start.startHref} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_120px] sm:items-center">
+            <div className="min-w-0">
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
+                <span className={`block h-full rounded-full ${start.belowSeasonMedian ? "bg-cyan-300" : "bg-amber-300"}`} style={{ width: `${Math.max(12, (start.avgVelocityMph / maxVelocity) * 100)}%` }} />
               </div>
-              <div className="flex items-center justify-between gap-3 font-mono text-xs sm:block sm:text-right">
-                <span className="text-zinc-100">{start.avgVelocityMph.toFixed(1)} avg</span>
-                <span className="text-zinc-500 sm:mt-1 sm:block">{start.maxVelocityMph.toFixed(1)} max</span>
-                {start.belowSeasonMedian ? <span className="rounded border border-cyan-300/30 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cyan-200 sm:mt-2 sm:inline-block">low velo</span> : null}
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Velocity trend pending for this pitcher.</p>
-      )}
+            </div>
+            <div className="flex items-center justify-between gap-3 font-mono text-xs sm:block sm:text-right">
+              <span className="text-zinc-100">{start.avgVelocityMph.toFixed(1)} avg</span>
+              <span className="text-zinc-500 sm:mt-1 sm:block">{start.maxVelocityMph.toFixed(1)} max</span>
+              {start.belowSeasonMedian ? <span className="rounded border border-cyan-300/30 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cyan-200 sm:mt-2 sm:inline-block">low velo</span> : null}
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
 
 function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
   const rows = starts.slice(0, 6);
+  if (rows.length < 2) return null;
 
   return (
     <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-pitch-mix-by-start">
@@ -495,52 +512,52 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">last {rows.length || 0}</p>
       </div>
 
-      {rows.length > 0 ? (
-        <div className="space-y-3">
-          {rows.map((start) => (
-            <Link key={start.id} href={start.startHref} className="block rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
-                <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{start.pitches} pitches</p>
-              </div>
-              {start.newPitchTypes.length > 0 ? (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {start.newPitchTypes.slice(0, 3).map((type) => (
-                    <span key={type} className="rounded border border-amber-300/35 bg-amber-300/[0.08] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">
-                      New {pitchTypes[type].name}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
-                {start.mix.map((pitch) => (
-                  <span key={pitch.type} className="block h-full" style={{ width: `${pitch.usagePct}%`, background: pitchTypes[pitch.type].color }} />
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                {start.mix.slice(0, 4).map((pitch) => (
-                  <span key={pitch.type}>
-                    {pitchTypes[pitch.type].name} {pitch.usagePct}%
-                    {pitch.firstSeen ? <span className="ml-1 text-amber-200">new pitch</span> : null}
-                    {pitch.usageDeltaPct !== null && Math.abs(pitch.usageDeltaPct) >= 5 ? (
-                      <span className={pitch.usageDeltaPct > 0 ? "ml-1 text-emerald-300" : "ml-1 text-cyan-300"}>
-                        {pitch.usageDeltaPct > 0 ? "+" : ""}{pitch.usageDeltaPct} usage shift
-                      </span>
-                    ) : null}
+      <div className="space-y-3">
+        {rows.map((start) => (
+          <Link key={start.id} href={start.startHref} className="block rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+              <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{start.pitches} pitches</p>
+            </div>
+            {start.newPitchTypes.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {start.newPitchTypes.slice(0, 3).map((type) => (
+                  <span key={type} className="rounded border border-amber-300/35 bg-amber-300/[0.08] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">
+                    New {pitchTypes[type].name}
                   </span>
                 ))}
               </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <p className="rounded border border-white/10 bg-black/20 p-4 font-mono text-sm text-zinc-400">Pitch mix trend pending for this pitcher.</p>
-      )}
+            ) : null}
+            <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
+              {start.mix.map((pitch) => (
+                <span key={pitch.type} className="block h-full" style={{ width: `${pitch.usagePct}%`, background: pitchTypes[pitch.type].color }} />
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+              {start.mix.slice(0, 4).map((pitch) => (
+                <span key={pitch.type}>
+                  {pitchTypes[pitch.type].name} {pitch.usagePct}%
+                  {pitch.firstSeen ? <span className="ml-1 text-amber-200">new pitch</span> : null}
+                  {pitch.usageDeltaPct !== null && Math.abs(pitch.usageDeltaPct) >= 5 ? (
+                    <span className={pitch.usageDeltaPct > 0 ? "ml-1 text-emerald-300" : "ml-1 text-cyan-300"}>
+                      {pitch.usageDeltaPct > 0 ? "+" : ""}{pitch.usageDeltaPct} usage shift
+                    </span>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
 
 function AdvancedPercentilePanel({ pitcher }: { pitcher: PitcherApiResponse }) {
+  const snapshots = [pitcher.skillProfile.season, pitcher.skillProfile.trailing30].filter((snapshot) => snapshot.pitchCount > 0);
+  const hasTrend = pitcher.skillProfile.trend.status === "available";
+  if (snapshots.length === 0 && !hasTrend) return null;
+
   return (
     <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-advanced-percentiles">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
@@ -551,10 +568,9 @@ function AdvancedPercentilePanel({ pitcher }: { pitcher: PitcherApiResponse }) {
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.skillProfile.statcastStatus}</p>
       </div>
       <div className="mt-4 grid gap-3">
-        <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.season} />
-        <PitcherSkillSnapshotCard snapshot={pitcher.skillProfile.trailing30} />
+        {snapshots.map((snapshot) => <PitcherSkillSnapshotCard key={snapshot.label} snapshot={snapshot} />)}
       </div>
-      <PitcherSkillTrendCard trend={pitcher.skillProfile.trend} />
+      {hasTrend ? <PitcherSkillTrendCard trend={pitcher.skillProfile.trend} /> : null}
       <p className="mt-4 text-xs leading-5 text-zinc-500">{pitcher.skillProfile.note}</p>
     </section>
   );
@@ -596,6 +612,9 @@ function venueSplitContextForNextStart(split: FormVenueSplitLabel, side: "home" 
 }
 
 function SplitsPanel({ splits, venueSplit }: { splits: PitcherApiSplitGroup[]; venueSplit: FormVenueSplitLabel | null }) {
+  const realSplits = splits.filter(hasRealSplitValues);
+  if (!venueSplit && realSplits.length === 0) return null;
+
   return (
     <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-responsive-check="pitcher-splits-panel">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Splits</p>
@@ -608,11 +627,21 @@ function SplitsPanel({ splits, venueSplit }: { splits: PitcherApiSplitGroup[]; v
           </p>
         </div>
       ) : null}
-      <div className="mt-4 grid gap-3">
-        {splits.map((split) => <SplitRow key={split.key} split={split} />)}
-        <SplitRow split={{ key: "home", label: "Times through order", scope: "venue", status: "pending-live-source", inningsPitched: null, era: null, strikeouts: null, walks: null, opponentAverage: null, note: "Times-through-order wOBA is contracted for the profile view once the verified split endpoint lands." }} />
-      </div>
+      {realSplits.length > 0 ? (
+        <div className="mt-4 grid gap-3">
+          {realSplits.map((split) => <SplitRow key={split.key} split={split} />)}
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+function hasRealSplitValues(split: PitcherApiSplitGroup) {
+  return split.status === "live-people-stat-splits" && (
+    split.inningsPitched !== null ||
+    split.opponentAverage !== null ||
+    split.strikeouts !== null ||
+    split.walks !== null
   );
 }
 
@@ -729,7 +758,6 @@ function NextStartProjectionCard({ nextStart, venueSplitContext }: { nextStart: 
 }
 
 function PitcherSkillSnapshotCard({ snapshot }: { snapshot: PitcherSkillSnapshot }) {
-  const hasPitchEvents = snapshot.pitchCount > 0;
   const cswScore = pctToBar(snapshot.cswPct, 20, 36);
   const whiffScore = pctToBar(snapshot.whiffPct, 12, 34);
   const swStrScore = pctToBar(snapshot.swStrPct, 8, 20);
@@ -746,29 +774,25 @@ function PitcherSkillSnapshotCard({ snapshot }: { snapshot: PitcherSkillSnapshot
         <ArchiveQualityStat label="CSW" value={formatPctValue(snapshot.cswPct)} />
         <ArchiveQualityStat label="Whiff" value={formatPctValue(snapshot.whiffPct)} />
         <ArchiveQualityStat label="SwStr" value={formatPctValue(snapshot.swStrPct)} />
-        <ArchiveQualityStat label="Top velo" value={snapshot.maxVelocityMph ? snapshot.maxVelocityMph.toFixed(1) : "--"} />
+        {snapshot.maxVelocityMph ? <ArchiveQualityStat label="Top velo" value={snapshot.maxVelocityMph.toFixed(1)} /> : null}
       </div>
-      {hasPitchEvents ? (
-        <div className="mt-3 space-y-2">
-          <ArchiveQualityBar label="CSW" value={formatPctValue(snapshot.cswPct)} width={cswScore} />
-          <ArchiveQualityBar label="Whiff" value={formatPctValue(snapshot.whiffPct)} width={whiffScore} />
-          <ArchiveQualityBar label="SwStr" value={formatPctValue(snapshot.swStrPct)} width={swStrScore} />
-        </div>
-      ) : (
-        <p className="mt-3 text-xs leading-5 text-zinc-500">Pitch-event skills pending for this window.</p>
-      )}
+      <div className="mt-3 space-y-2">
+        <ArchiveQualityBar label="CSW" value={formatPctValue(snapshot.cswPct)} width={cswScore} />
+        <ArchiveQualityBar label="Whiff" value={formatPctValue(snapshot.whiffPct)} width={whiffScore} />
+        <ArchiveQualityBar label="SwStr" value={formatPctValue(snapshot.swStrPct)} width={swStrScore} />
+      </div>
     </div>
   );
 }
 
 function PitcherSkillTrendCard({ trend }: { trend: PitcherApiResponse["skillProfile"]["trend"] }) {
+  if (trend.status !== "available") return null;
+
   return (
     <div className="mt-3 rounded border border-amber-300/15 bg-amber-300/5 p-3" data-responsive-check="pitcher-archive-quality-trend">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-amber-200">Last 30 trend</p>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-          {trend.status === "available" ? `${trend.starts} starts` : "pending"}
-        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{trend.starts} starts</p>
       </div>
       <p className="mt-2 text-xs leading-5 text-zinc-300">{trend.summary}</p>
       <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
@@ -791,12 +815,14 @@ function ArchiveQualityStat({ label, value }: { label: string; value: string }) 
 }
 
 function ArchiveTrendStat({ label, value, suffix }: { label: string; value: number | null; suffix: "pts" | "mph" }) {
-  const tone = typeof value === "number" && value > 0 ? "text-emerald-300" : typeof value === "number" && value < 0 ? "text-cyan-300" : "text-zinc-300";
+  if (typeof value !== "number") return null;
+
+  const tone = value > 0 ? "text-emerald-300" : value < 0 ? "text-cyan-300" : "text-zinc-300";
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-2">
       <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
       <p className={`mt-1 font-serif text-xl font-semibold ${tone}`}>
-        {typeof value === "number" ? `${value > 0 ? "+" : ""}${value.toFixed(1)} ${suffix}` : "--"}
+        {value > 0 ? "+" : ""}{value.toFixed(1)} {suffix}
       </p>
     </div>
   );
@@ -818,14 +844,14 @@ function ArchiveQualityBar({ label, value, width }: { label: string; value: stri
 }
 
 function SplitRow({ split }: { split: PitcherApiSplitGroup }) {
-  const kPct = split.inningsPitched && split.strikeouts !== null ? `${Math.round((split.strikeouts / Math.max(1, split.inningsPitched * 3)) * 100)}%` : "--";
-  const bbPct = split.inningsPitched && split.walks !== null ? `${Math.round((split.walks / Math.max(1, split.inningsPitched * 3)) * 100)}%` : "--";
+  const kPct = split.inningsPitched && split.strikeouts !== null ? `${Math.round((split.strikeouts / Math.max(1, split.inningsPitched * 3)) * 100)}%` : null;
+  const bbPct = split.inningsPitched && split.walks !== null ? `${Math.round((split.walks / Math.max(1, split.inningsPitched * 3)) * 100)}%` : null;
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 rounded border border-white/10 bg-black/20 p-3 font-mono text-xs">
       <p className="min-w-0 uppercase tracking-[0.14em] text-zinc-300">{split.label}</p>
-      <p className="text-zinc-500">wOBA {split.opponentAverage !== null ? split.opponentAverage.toFixed(3).replace(/^0/, "") : "--"}</p>
-      <p className="text-zinc-500">K {kPct}</p>
-      <p className="text-zinc-500">BB {bbPct}</p>
+      {split.opponentAverage !== null ? <p className="text-zinc-500">wOBA {split.opponentAverage.toFixed(3).replace(/^0/, "")}</p> : null}
+      {kPct ? <p className="text-zinc-500">K {kPct}</p> : null}
+      {bbPct ? <p className="text-zinc-500">BB {bbPct}</p> : null}
     </div>
   );
 }
@@ -885,7 +911,7 @@ function putAwayPct(pitch: ArsenalPitchSummary) {
 }
 
 function formatPctValue(value: number | null | undefined) {
-  return typeof value === "number" ? `${value.toFixed(1)}%` : "--";
+  return typeof value === "number" ? `${value.toFixed(1)}%` : "n/a";
 }
 
 function pctToBar(value: number | null | undefined, poor: number, elite: number) {
