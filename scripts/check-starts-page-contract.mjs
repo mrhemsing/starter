@@ -14,6 +14,7 @@ const startRecapPage = await readFile("src/app/starts/[id]/[slug]/page.tsx", "ut
 const arsenalEventCopy = await readFile("src/lib/arsenal-event-copy.ts", "utf8");
 const pitchEventQuality = await readFile("src/lib/pitch-event-quality.ts", "utf8");
 const startsIndexRoute = await readFile("src/app/starts/route.ts", "utf8");
+const startApiRoute = await readFile("src/app/api/starts/[id]/route.ts", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const slateState = await readFile("src/lib/slate-state.ts", "utf8");
@@ -176,6 +177,7 @@ assert(
     siteNav.includes('href: "/starts"') &&
     !siteNav.includes("rankedStartsPath(") &&
     startsIndexRoute.includes('export const dynamic = "force-dynamic";') &&
+    startApiRoute.includes('export const dynamic = "force-dynamic";') &&
     startsIndexRoute.includes("NextResponse.redirect(location, 302)") &&
     startsIndexRoute.includes('response.headers.set("X-Robots-Tag", "noindex, follow")') &&
     startsIndexRoute.includes("rankedStartsPath(await getRankedStartsDefaultDate(today))") &&

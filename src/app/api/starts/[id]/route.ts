@@ -9,6 +9,8 @@ type StartRouteApiContext = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_request: Request, { params }: StartRouteApiContext) {
   const { id } = await params;
   if (isIsoDateRouteParam(id) && !isValidDateRouteParam(id)) return invalidDateRouteResponse();
