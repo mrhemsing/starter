@@ -1126,6 +1126,7 @@ async function getTeamQualityContextMap(date: string) {
 
 function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["pitchMixByStart"] {
   const rows = [...starts].sort((a, b) => a.date.localeCompare(b.date));
+  const seenPitchTypes = new Set<PitchTypeKey>();
 
   return rows
     .map((start, index) => {
@@ -1136,21 +1137,29 @@ function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): Pitcher
       const previousUsage = previousPitchEvents.length > 0 ? summarizePitchUsage(previousPitchEvents) : new Map<PitchTypeKey, number>();
       const byType = new Map<PitchTypeKey, number>();
       for (const pitch of pitchEvents) byType.set(pitch.type, (byType.get(pitch.type) ?? 0) + 1);
+      const newPitchTypes = previousUsage.size > 0
+        ? [...byType.keys()].filter((type) => !seenPitchTypes.has(type))
+        : [];
+      const newPitchTypeSet = new Set(newPitchTypes);
 
-      return {
+      const row = {
         id: start.id,
         date: start.date,
         opponent: start.opponent,
         startHref: start.startHref,
         pitches: pitchEvents.length,
+        newPitchTypes,
         mix: [...byType.entries()]
           .map(([type, count]) => ({
             type,
             usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100)),
             usageDeltaPct: previousUsage.size > 0 ? Math.max(1, Math.round((count / pitchEvents.length) * 100)) - (previousUsage.get(type) ?? 0) : null,
+            firstSeen: newPitchTypeSet.has(type),
           }))
           .sort((a, b) => b.usagePct - a.usagePct),
       };
+      for (const type of byType.keys()) seenPitchTypes.add(type);
+      return row;
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
     .sort((a, b) => b.date.localeCompare(a.date));

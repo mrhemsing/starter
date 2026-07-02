@@ -205,17 +205,25 @@ assert(
   "pitcher profile must expose velocity by start with a one mph below-median flag",
 );
 assert(
-  types.includes("export type PitcherPitchMixStart = {") &&
+    types.includes("export type PitcherPitchMixStart = {") &&
     types.includes("pitchMixByStart: PitcherPitchMixStart[];") &&
+    types.includes("newPitchTypes: PitchTypeKey[];") &&
+    types.includes("firstSeen: boolean;") &&
     startService.includes("function buildPitcherPitchMixByStart") &&
     startService.includes("function summarizePitchUsage") &&
+    startService.includes("const seenPitchTypes = new Set<PitchTypeKey>();") &&
+    startService.includes("const newPitchTypes = previousUsage.size > 0") &&
+    startService.includes("firstSeen: newPitchTypeSet.has(type)") &&
+    startService.includes("for (const type of byType.keys()) seenPitchTypes.add(type);") &&
     startService.includes("usagePct: Math.max(1, Math.round((count / pitchEvents.length) * 100))") &&
     startService.includes("usageDeltaPct: previousUsage.size > 0") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-pitch-mix-by-start"') &&
     pitcherFormPage.includes("<PitchMixByStartPanel starts={pitcher.pitchMixByStart} />") &&
     pitcherFormPage.includes("Pitch mix / by start") &&
-    pitcherFormPage.includes("usage shift"),
-  "pitcher profile must expose pitch mix by start and start-over-start usage deltas from existing pitch events",
+    pitcherFormPage.includes("usage shift") &&
+    pitcherFormPage.includes("New {pitchTypes[type].name}") &&
+    pitcherFormPage.includes("new pitch"),
+  "pitcher profile must expose pitch mix by start, start-over-start usage deltas, and first-seen pitch type events from existing pitch events",
 );
 assert(pitcherFormPage.includes("<PitcherAvailabilityNote availability={summary.availability}"), "pitcher form hero must show current MLB IL availability when present");
 assert(

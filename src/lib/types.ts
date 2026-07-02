@@ -824,10 +824,12 @@ export type PitcherPitchMixStart = {
   opponent: string;
   startHref: string;
   pitches: number;
+  newPitchTypes: PitchTypeKey[];
   mix: Array<{
     type: PitchTypeKey;
     usagePct: number;
     usageDeltaPct: number | null;
+    firstSeen: boolean;
   }>;
 };
 

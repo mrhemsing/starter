@@ -489,6 +489,15 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
                 <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
                 <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{start.pitches} pitches</p>
               </div>
+              {start.newPitchTypes.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {start.newPitchTypes.slice(0, 3).map((type) => (
+                    <span key={type} className="rounded border border-amber-300/35 bg-amber-300/[0.08] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">
+                      New {pitchTypes[type].name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
                 {start.mix.map((pitch) => (
                   <span key={pitch.type} className="block h-full" style={{ width: `${pitch.usagePct}%`, background: pitchTypes[pitch.type].color }} />
@@ -498,6 +507,7 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
                 {start.mix.slice(0, 4).map((pitch) => (
                   <span key={pitch.type}>
                     {pitchTypes[pitch.type].name} {pitch.usagePct}%
+                    {pitch.firstSeen ? <span className="ml-1 text-amber-200">new pitch</span> : null}
                     {pitch.usageDeltaPct !== null && Math.abs(pitch.usageDeltaPct) >= 5 ? (
                       <span className={pitch.usageDeltaPct > 0 ? "ml-1 text-emerald-300" : "ml-1 text-cyan-300"}>
                         {pitch.usageDeltaPct > 0 ? "+" : ""}{pitch.usageDeltaPct} usage shift
