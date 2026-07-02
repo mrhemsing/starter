@@ -3,7 +3,7 @@ import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
-import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
+import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultSlateDates, getSlateSchedule, getTodayProbables } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
@@ -28,6 +28,7 @@ const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
 const LIKELY_OPENER_MAX_CAREER_STARTS = 4;
 const LIKELY_OPENER_RECENT_APPEARANCE_FLOOR = 3;
+const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";
 const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
@@ -53,24 +54,27 @@ export async function getTonightMustWatch(options: TonightOptions = {}): Promise
 }
 
 async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<TonightResponse> {
+  const enrichAtRequestTime = isRequestTimeEnrichmentEnabled();
   const [schedule, probables, leaderboard] = await Promise.all([
     getSlateSchedule({ window: "today", date }),
     getTodayProbables(date),
     getFormLeaderboard({ window, qualifiedOnly: false }),
   ]);
   const [opponentSplits, marketContexts] = await Promise.all([
-    fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }),
-    fetchMlbOddsMarketContexts(schedule.games),
+    enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
+    enrichAtRequestTime ? fetchMlbOddsMarketContexts(schedule.games) : Promise.resolve(new Map()),
   ]);
   const probablePitcherIds = schedule.games.flatMap((game) => [
     game.probableAwayPitcher?.id,
     game.probableHomePitcher?.id,
   ]).filter((id): id is number => typeof id === "number");
-  const completenessByPitcher = await fetchMlbPitcherStartCompleteness(probablePitcherIds, date.slice(0, 4), date, { fetchLive: true });
+  const completenessByPitcher = enrichAtRequestTime
+    ? await fetchMlbPitcherStartCompleteness(probablePitcherIds, date.slice(0, 4), date, { fetchLive: true })
+    : new Map();
   const formByPitcher = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
   const probableScoresByGame = groupProbableMatchupScores(probables);
   const builtGames = await Promise.all(
-    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null)),
+    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null, enrichAtRequestTime)),
   );
   const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
   const matchupRanks = rankMatchups(candidates);
@@ -125,10 +129,11 @@ async function buildTonightGame(
   leagueMeanGS: number,
   opponentSplits: Map<string, MlbTeamHandednessSplitContext>,
   marketContext: MlbOddsGameMarketContext | null,
+  enrichAtRequestTime: boolean,
 ): Promise<TonightGame> {
   const status = normalizeGameStatus(game);
   const parkContext = getParkContext(game.venue);
-  const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);
+  const weatherContext = enrichAtRequestTime ? await getGameTimeWeather(game.venue, game.gameDate) : getNeutralGameTimeWeather(game.venue);
   const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
@@ -188,6 +193,10 @@ async function buildTonightGame(
       likelyOpener,
     },
   };
+}
+
+function isRequestTimeEnrichmentEnabled() {
+  return process.env[REQUEST_TIME_ENRICHMENT_FLAG] === "1";
 }
 
 function isStartedStatus(status: TonightGameStatus) {

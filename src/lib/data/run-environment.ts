@@ -121,6 +121,8 @@ export function getParkContext(venue: string): DecisionParkContext {
 }
 
 export async function getGameTimeWeather(venue: string, gameDate: string): Promise<DecisionWeatherContext> {
+  if (!isRequestTimeEnvironmentEnrichmentEnabled()) return getNeutralGameTimeWeather(venue);
+
   const profile = VENUE_WEATHER_PROFILES[venue];
   if (!profile) {
     return {
@@ -149,6 +151,23 @@ export async function getGameTimeWeather(venue: string, gameDate: string): Promi
   }));
   weatherCache.set(cacheKey, request);
   return request;
+}
+
+export function getNeutralGameTimeWeather(venue: string): DecisionWeatherContext {
+  const profile = VENUE_WEATHER_PROFILES[venue];
+  const label = profile?.outdoor === false
+    ? `${venue} is roofed or climate-controlled; weather is treated as neutral.`
+    : `${profile?.label ?? venue} weather deferred to the data-change pipeline; using neutral run environment.`;
+
+  return {
+    source: profile?.outdoor === false ? "indoor" : "unavailable",
+    label,
+    runValue: 0,
+  };
+}
+
+export function isRequestTimeEnvironmentEnrichmentEnabled() {
+  return process.env.THE_BUMP_REQUEST_TIME_ENRICHMENT === "1";
 }
 
 async function fetchOpenMeteoWeather(profile: VenueWeatherProfile, gameDate: string): Promise<DecisionWeatherContext> {

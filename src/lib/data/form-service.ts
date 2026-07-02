@@ -52,6 +52,7 @@ const FORM_CACHE_VERSION = "form-level-bands-v4";
 const PITCHER_SEASON_FALLBACK_REVALIDATE_SECONDS = 6 * 60 * 60;
 const VENUE_SPLIT_MIN_STARTS_PER_SIDE = 7;
 const VENUE_SPLIT_MIN_GAP = 11;
+const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";
 
 type CachedValue<T> = {
   expiresAt: number;
@@ -143,7 +144,9 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
     .map((summary) => attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds))
     .sort(compareRollingFormLevelDesc);
   const [availabilityStatuses, nextStarts] = await Promise.all([
-    fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true }),
+    isRequestTimeEnrichmentEnabled()
+      ? fetchMlbPitcherAvailabilityStatuses(summaries.map((summary) => Number(summary.pitcherId)), { fetchLive: true })
+      : Promise.resolve(new Map()),
     getNextStartMap(summaries.map((summary) => summary.pitcherId)),
   ]);
   const summariesWithAvailability = attachAvailability(summaries, availabilityStatuses);
@@ -254,7 +257,9 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     venueSplit: buildVenueSplitLabel(venueSplitStarts),
   };
   const summaryWithFreshness = attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds);
-  const availabilityStatuses = await fetchMlbPitcherAvailabilityStatuses([Number(summary.pitcherId)], { fetchLive: true });
+  const availabilityStatuses = isRequestTimeEnrichmentEnabled()
+    ? await fetchMlbPitcherAvailabilityStatuses([Number(summary.pitcherId)], { fetchLive: true })
+    : new Map();
   const summaryWithAvailability = {
     ...summaryWithFreshness,
     availability: availabilityStatuses.get(summaryWithFreshness.pitcherId) ?? null,
@@ -432,6 +437,10 @@ function attachAvailability(pitchers: FormSummary[], availabilityStatuses: Await
     ...pitcher,
     availability: availabilityStatuses.get(pitcher.pitcherId) ?? null,
   }));
+}
+
+function isRequestTimeEnrichmentEnabled() {
+  return process.env[REQUEST_TIME_ENRICHMENT_FLAG] === "1";
 }
 
 function attachTodayStartFreshnessFlag(summary: FormSummary, stalePitcherIds: Set<string>): FormSummary {
