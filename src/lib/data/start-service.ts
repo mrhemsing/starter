@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { canonicalizeStartSummaries } from "@/lib/canonical-start-record";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
@@ -143,16 +144,16 @@ function round2(value: number) {
 }
 
 export async function getDailySlate(params?: Partial<SlateRouteParams>): Promise<StartSummary[]> {
-  if (!params?.date) return demoSlateStarts;
+  if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
-  if (archivedStarts.length > 0) return archivedStarts;
+  if (archivedStarts.length > 0) return canonicalizeStartSummaries(archivedStarts);
 
   const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
 
-  return scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts;
+  return canonicalizeStartSummaries(scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts);
 }
 
 export type RankedSlateCompletionState = {
@@ -435,7 +436,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const starts = archivedStarts.length > 0
     ? archivedStarts
     : rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
-  const slateStarts = starts.length > 0 ? starts : demoSlateStarts;
+  const slateStarts = canonicalizeStartSummaries(starts.length > 0 ? starts : demoSlateStarts);
   const completedStartStats = summarizeCompletedStartSource(slateStarts);
   const completedStartStatsCoverage = summarizeCompletedStartSourceCoverage(slateStarts);
 
@@ -1547,18 +1548,18 @@ function scheduledGameToStarts(
 export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
   const archivedStarts = await readCompletedStarts(date);
 
-  return archivedStarts
+  return canonicalizeStartSummaries(archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
     .sort(compareRankedStarts)
-    .map((start, index) => ({ ...start, rank: index + 1 }));
+    .map((start, index) => ({ ...start, rank: index + 1 })));
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {
   const archivedStarts = await readSeasonCompletedStarts(season);
 
-  return archivedStarts
+  return canonicalizeStartSummaries(archivedStarts
     .map((start) => archivedCompletedStartToSummary(start))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk);
+    .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk));
 }
 
 async function readCompletedStarts(date: string) {
