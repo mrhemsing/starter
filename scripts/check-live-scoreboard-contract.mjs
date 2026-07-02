@@ -244,7 +244,8 @@ assert(
     liveComponent.includes("return `Next slate begins ${timeLabel}`;") &&
     liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
-    liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
+    liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)}") &&
+    !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
     !liveComponent.includes('className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
     liveComponent.includes("Top final GS+") &&

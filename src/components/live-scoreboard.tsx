@@ -235,7 +235,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
             href={rankedStartsPath(board.date)}
             className="mt-5 inline-flex max-w-full items-center rounded border border-[#FF9A62]/50 bg-[#FF5A1F]/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#FFB07C] transition hover:border-[#FF9A62] hover:bg-[#FF5A1F]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
-            View all ranked starts for {formatBoardDate(board.date)} -&gt;
+            View all ranked starts for {formatBoardDate(board.date)}
           </Link>
           <SlabImage />
         </div>
