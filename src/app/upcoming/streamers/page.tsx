@@ -4,28 +4,38 @@ import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { LocalTime } from "@/components/local-time";
 import { getHomeSlateDate } from "@/lib/data/start-service";
-import { getUpcomingStreamers, type StreamerCandidate } from "@/lib/data/streamers-service";
+import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
 import { formatUpcomingDate } from "@/lib/routes";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
+const title = "MLB Pitcher Streamers This Week";
+const description = "Fantasy pitcher streamers from the upcoming probable starters board, built from form, matchup, and park context.";
+const socialDescription = "Two-start pitchers and form risers with soft upcoming matchups.";
+const canonicalPath = "/upcoming/streamers";
+const imagePath = `${canonicalPath}/opengraph-image`;
+const imageUrl = absoluteUrl(imagePath);
+
 export const metadata: Metadata = {
-  title: "MLB Pitcher Streamers This Week",
-  description: "Fantasy pitcher streamers from the upcoming probable starters board, built from form, matchup, and park context.",
+  title,
+  description,
   alternates: {
-    canonical: "/upcoming/streamers",
+    canonical: canonicalPath,
   },
   openGraph: {
-    title: "MLB Pitcher Streamers This Week",
-    description: "Two-start pitchers and form risers with soft upcoming matchups.",
+    title,
+    description: socialDescription,
     type: "website",
-    url: absoluteUrl("/upcoming/streamers"),
+    url: absoluteUrl(canonicalPath),
+    siteName: SITE_NAME,
+    images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
   },
   twitter: {
-    card: "summary",
-    title: "MLB Pitcher Streamers This Week",
-    description: "Two-start pitchers and form risers with soft upcoming matchups.",
+    card: "summary_large_image",
+    title,
+    description: socialDescription,
+    images: [{ url: imageUrl, alt: title }],
   },
 };
 
@@ -34,9 +44,11 @@ export default async function UpcomingStreamersPage() {
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);
   const streamers = await getUpcomingStreamers(today);
+  const jsonLd = jsonLdForUpcomingStreamers(streamers);
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <div className="mx-auto max-w-7xl">
         <header className="mb-5 pb-3">
           <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
@@ -162,6 +174,45 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+function jsonLdForUpcomingStreamers(streamers: UpcomingStreamersResponse) {
+  const candidates = uniqueStreamerCandidates([...streamers.twoStartPitchers, ...streamers.formRisers]);
+  const itemListCandidates = candidates.slice(0, 10);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: title,
+    description,
+    url: absoluteUrl(canonicalPath),
+    numberOfItems: itemListCandidates.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    itemListElement: itemListCandidates.map((candidate, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: absoluteUrl(candidate.pitcherHref),
+      item: {
+        "@type": "Person",
+        name: candidate.pitcherName,
+        identifier: candidate.pitcherId,
+        memberOf: { "@type": "SportsTeam", name: candidate.team },
+        additionalProperty: [
+          { "@type": "PropertyValue", name: "Stream Score", value: candidate.streamScore },
+          { "@type": "PropertyValue", name: "Upcoming Matchups", value: candidate.matchups.length },
+          { "@type": "PropertyValue", name: "Heat Label", value: candidate.heatLabel },
+        ],
+      },
+    })),
+  };
+}
+
+function uniqueStreamerCandidates(candidates: StreamerCandidate[]) {
+  const byPitcher = new Map<string, StreamerCandidate>();
+  for (const candidate of candidates) {
+    byPitcher.set(candidate.pitcherId, candidate);
+  }
+  return [...byPitcher.values()];
 }
 
 function slugLabel(value: string) {
