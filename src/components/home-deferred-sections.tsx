@@ -238,7 +238,9 @@ type HomeTopPerformerView = {
 };
 
 function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTopPerformer; today: string }) {
-  const [view, setView] = useState<HomeTopPerformerView>(() => homeTopPerformerViewFromPayload(topPerformer));
+  const initialView = homeTopPerformerViewFromPayload(topPerformer);
+  const viewRef = useRef<HomeTopPerformerView>(initialView);
+  const [view, setView] = useState<HomeTopPerformerView>(initialView);
   const shouldPollLiveLeader = topPerformer.status === "live";
 
   useEffect(() => {
@@ -253,7 +255,11 @@ function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTop
 
       const leader = resolveHomeLiveLeaderRow(board);
       if (leader) {
-        setView((current) => homeTopPerformerViewFromLiveRow(current, leader, board, topPerformer.dateLabel));
+        const rankedSnapshot = leader.startId !== viewRef.current.startId ? await resolveRankedHomeTopPerformer(leader.startId) : null;
+        if (cancelled) return;
+        const next = homeTopPerformerViewFromLiveRow(viewRef.current, leader, board, topPerformer.dateLabel, rankedSnapshot);
+        viewRef.current = next;
+        setView(next);
       }
 
       if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {
@@ -298,6 +304,11 @@ function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTop
   );
 }
 
+async function resolveRankedHomeTopPerformer(startId: string) {
+  const ranked = await fetchJson<RankedHomeResponse>("/api/home/ranked").catch(() => null);
+  return ranked?.topPerformer?.start.id === startId ? ranked.topPerformer : null;
+}
+
 function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTopPerformerView {
   return {
     startId: topPerformer.start.id,
@@ -320,8 +331,9 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
   };
 }
 
-function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string): HomeTopPerformerView {
+function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string, rankedSnapshot: HomeTopPerformer | null = null): HomeTopPerformerView {
   const sameStart = current.startId === row.startId;
+  const rankedView = rankedSnapshot ? homeTopPerformerViewFromPayload(rankedSnapshot) : null;
 
   return {
     startId: row.startId,
@@ -334,23 +346,23 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     line: row.line,
     rank: 1,
     slateCount: board.totalStarts,
-    image: sameStart ? current.image : homeTopPerformerImageFromLiveRow(row),
-    highlight: sameStart ? current.highlight : null,
+    image: sameStart ? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),
+    highlight: sameStart ? current.highlight : rankedView?.highlight ?? null,
     status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",
     scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,
-    whiffRate: sameStart ? current.whiffRate : null,
-    topVelo: sameStart ? current.topVelo : null,
-    veloSparkline: sameStart ? current.veloSparkline : [],
+    whiffRate: sameStart ? current.whiffRate : rankedView?.whiffRate ?? null,
+    topVelo: sameStart ? current.topVelo : rankedView?.topVelo ?? null,
+    veloSparkline: sameStart ? current.veloSparkline : rankedView?.veloSparkline ?? [],
   };
 }
 
-function homeTopPerformerImageFromLiveRow(row: LiveScoreboardRow): HomeTopPerformer["image"] {
+function homeTopPerformerImageFromLiveRow(): HomeTopPerformer["image"] {
   return {
     source: "placeholder",
-    imageUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_960,q_auto:best/v1/people/${row.pitcherMlbId}/headshot/67/current`,
-    alt: `${row.pitcherName} headshot`,
-    objectPosition: "50% 35%",
-    mobileObjectPosition: "50% 30%",
+    imageUrl: "/images/top-performer-placeholder.jpg",
+    alt: "Pitcher's mound and rubber on a baseball field",
+    objectPosition: "50% 45%",
+    mobileObjectPosition: "50% 45%",
   };
 }
 
