@@ -165,7 +165,7 @@ function buildLiveRow(
   const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
   const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
   const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";
-  const gsPlus = hasRealLine ? status === "final" ? start.gameScorePlus : scoreCompletedLine(line, start.context) : null;
+  const gsPlus = hasRealLine ? resolveLiveRowGsPlus(status, start, line) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
   const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;
 
@@ -210,6 +210,22 @@ function getUpcomingProjectionMap(upcoming: TonightResponse) {
 
 function hasNonEmptyLine(line: StartLine) {
   return line.pitches > 0 || line.inningsPitched > 0 || line.hits > 0 || line.earnedRuns > 0 || line.walks > 0 || line.strikeouts > 0;
+}
+
+function resolveLiveRowGsPlus(status: LiveScoreboardStatus, start: StartSummary, line: StartLine) {
+  if (status !== "final") return scoreCompletedLine(line, start.context);
+  return sameStartLine(start.line, line) ? start.gameScorePlus : scoreCompletedLine(line, start.context);
+}
+
+function sameStartLine(a: StartLine, b: StartLine) {
+  return a.inningsPitched === b.inningsPitched
+    && a.hits === b.hits
+    && a.earnedRuns === b.earnedRuns
+    && a.runsAllowed === b.runsAllowed
+    && a.homeRunsAllowed === b.homeRunsAllowed
+    && a.walks === b.walks
+    && a.strikeouts === b.strikeouts
+    && a.pitches === b.pitches;
 }
 
 function normalizeLiveStatus(liveStatus: MlbLivePitchingLine["gameStatus"] | undefined, scheduleStatus: ReturnType<typeof normalizeScheduleStatus>): LiveScoreboardStatus {

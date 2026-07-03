@@ -38,10 +38,11 @@ assert(
     liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
     liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
-    liveService.includes('const gsPlus = hasRealLine ? status === "final" ? start.gameScorePlus : scoreCompletedLine(line, start.context) : null;') &&
+    liveService.includes("const gsPlus = hasRealLine ? resolveLiveRowGsPlus(status, start, line) : null;") &&
+    liveService.includes("return sameStartLine(start.line, line) ? start.gameScorePlus : scoreCompletedLine(line, start.context);") &&
     liveService.includes("function hasNonEmptyLine(line: StartLine)") &&
     !liveService.includes("start.expectedGameScorePlus ?? start.gameScorePlus"),
-  "live scoreboard must keep Upcoming projected GS+ as context, use frozen final GS+, and never compute scores from empty lines",
+  "live scoreboard must keep Upcoming projected GS+ as context, use frozen final GS+ only when the final gamefeed line matches the slate snapshot, and never compute scores from empty lines",
 );
 
 assert(
@@ -68,6 +69,12 @@ assert(
     liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
     liveService.includes('scoreLabel: "PROJ" | "PROV" | "FINAL";') &&
     liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";') &&
+    liveService.includes("const gsPlus = hasRealLine ? resolveLiveRowGsPlus(status, start, line) : null;") &&
+    liveService.includes("function resolveLiveRowGsPlus(status: LiveScoreboardStatus, start: StartSummary, line: StartLine)") &&
+    liveService.includes('if (status !== "final") return scoreCompletedLine(line, start.context);') &&
+    liveService.includes("return sameStartLine(start.line, line) ? start.gameScorePlus : scoreCompletedLine(line, start.context);") &&
+    liveService.includes("function sameStartLine(a: StartLine, b: StartLine)") &&
+    liveService.includes("&& a.earnedRuns === b.earnedRuns") &&
     liveService.includes('provisional: scoreLabel === "PROV",') &&
     liveService.includes('export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";') &&
     liveService.includes("const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;") &&
@@ -116,7 +123,7 @@ assert(
     liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0") &&
     liveService.includes(".sort(compareLiveRows)") &&
     liveService.includes("leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, recompute final rows from the displayed gamefeed line when it differs from the slate snapshot, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
 );
 
 assert(
