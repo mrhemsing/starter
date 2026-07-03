@@ -144,6 +144,19 @@ assert(
 );
 
 assert(
+  startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)]") &&
+    startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)]") &&
+    startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)]") &&
+    startsPage.includes('scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[78px]') &&
+    startsPage.includes('scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[66px]') &&
+    startsPage.includes('lineClass: "col-start-3 col-span-1 row-start-2') &&
+    startsPage.includes('className={profile.scoreStackClass}') &&
+    !startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols") &&
+    !startsPage.includes("order-3 flex items-center justify-end gap-2"),
+  "ranked mobile cards must reserve separate name and score columns so GS+ and GSv2/ADJ cannot overlap the pitcher stack",
+);
+
+assert(
   startService.includes("export async function getRankedStartsArchiveNavigation") &&
     startService.includes("const getCachedRankedArchivedCompletedSlateDates = unstable_cache(") &&
     startService.includes('import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates,') &&
@@ -474,10 +487,10 @@ assert(
 );
 
 assert(
-  startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
-    startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
-    startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_auto] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]"),
-  "ranked starts rows must use fixed rank/photo/meta/stats/score grid columns by tier",
+  startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]"),
+  "ranked starts rows must use fixed rank/photo/meta/reserved-score grid columns by tier",
 );
 
 assert(

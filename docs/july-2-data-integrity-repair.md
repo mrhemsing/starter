@@ -14,7 +14,7 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Removed 708 pre-regular-season rows from `toetheslab_mlb_completed_starts`.
 - Removed 708 pre-regular-season rows from `toetheslab_canonical_start_records` and 24 pre-regular-season slate-state rows.
 - Reconciled the July 2 Jacob Misiorowski canonical record to final state with official archive fields: result `L`, venue `American Family Field`, line status `final`.
-- Kept GSv2 on the official Tango formula, including total runs and home runs. The July 2 Misiorowski GSv2 remains 43 because MLB's official final box has 5 total runs and 2 home runs.
+- Second Misiorowski repair after the freeze-semantics sweep: GSv2 is corrected to `67` from the official pitcher line (`5.0 IP, 5 H, 1 ER, 0 BB, 10 K`) and venue remains `American Family Field`.
 - Re-centered post-purge GS+ form calibration after removing spring starts.
 - Removed the accidental July 2 archive shard after the rebuild captured the slate mid-day. The live day now stays live-schedule driven until the slate is complete.
 
@@ -23,8 +23,8 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - MLB schedule and archive ingestion request `gameTypes=R` and drop non-regular-season games before storage.
 - Pitcher profile game logs filter out non-regular-season starts.
 - Heat Check qualification ignores non-MLB team codes instead of letting unknown teams qualify through a zero-game threshold.
-- Canonical reconciliation now diffs and corrects GSv2, result, and venue, and strips source metadata from venue display fields.
-- GSv2 contract fixtures now anchor the formula to external July 2 lines, including the total-runs/HR Misiorowski case.
+- Canonical reconciliation now diffs and corrects GSv2, result, and venue, strips source metadata from venue display fields, and validates settled records before freeze/write commits.
+- GSv2 contract fixtures now anchor the formula to external July 2 lines, including the earned-run Misiorowski case.
 - Form debug checks assert the post-purge league mean GS+ remains centered near 50.
 - Archive writes skip in-progress regular-season dates, and `getDailySlate` ignores archive rows for the active slate date.
 - Starter-out live gamefeed lines can mark the canonical record final through `source.lineStatus`.
@@ -67,3 +67,10 @@ This repair addressed the full-site review P0 trust bugs before continuing the e
 - Live Board final rows now read the frozen canonical `gameScorePlus` instead of recomputing GS+ from moving live league context.
 - Season-to-date sweep applied the freeze policy to existing settled starts: 2,646 canonical rows scanned, 2,124 settled records updated, follow-up dry run `0`.
 - Misiorowski's July 2 canonical record remains frozen at GS+ `61` with a `context-freeze-sweep` audit entry and context snapshot.
+
+## Freeze sweep regression follow-up
+
+- Root cause: the context-freeze sweep read the durable canonical row after the first venue/result repair, but that row still carried the older GSv2 policy that used total runs and home-run penalties. Because the sweep path could write a settled/frozen record without re-running the GSv2 formula check, it preserved and re-froze GSv2 `43` instead of rejecting the record.
+- Distinct record factor: Misiorowski was the manually repaired July 2 row with a rare split between total runs (`5`) and earned runs (`1`) plus two home runs. That made it the exact row where the old total-runs/HR interpretation diverged sharply from the current earned-run GSv2 formula.
+- Guardrail added: all settled canonical record writes now use the shared validation function before creation, reconciliation, merge, durable upsert, and row serialization. The validation checks GSv2 against the single shared formula and rejects implementation vocabulary or unknown venue names.
+- Durable repair: the second audit entry for Misiorowski records the GSv2 correction after the freeze-sweep regression review. The post-repair validation batch is expected to report zero settled GSv2/venue diffs.

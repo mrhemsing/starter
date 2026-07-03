@@ -29,12 +29,12 @@ const publishedTangoFixtures = [
   {
     name: "Chase Burns 2026-07-02",
     line: { inningsPitched: 6, hits: 4, earnedRuns: 2, runsAllowed: 2, homeRunsAllowed: 1, walks: 2, strikeouts: 4, pitches: 89 },
-    gameScoreV2: 56,
+    gameScoreV2: 62,
   },
   {
     name: "Jacob Misiorowski 2026-07-02",
     line: { inningsPitched: 5, hits: 5, earnedRuns: 1, runsAllowed: 5, homeRunsAllowed: 2, walks: 0, strikeouts: 10, pitches: 82 },
-    gameScoreV2: 43,
+    gameScoreV2: 67,
   },
 ];
 
@@ -43,7 +43,7 @@ function inningsToOuts(inningsPitched) {
 }
 
 function calculateFixtureGameScoreV2(line) {
-  return Math.round(40 + inningsToOuts(line.inningsPitched) * 2 + line.strikeouts - line.walks * 2 - line.hits * 2 - line.runsAllowed * 3 - line.homeRunsAllowed * 6);
+  return Math.round(40 + inningsToOuts(line.inningsPitched) * 2 + line.strikeouts - line.walks * 2 - line.hits * 2 - line.earnedRuns * 3);
 }
 
 for (const fixture of publishedTangoFixtures) {
@@ -60,11 +60,11 @@ assert(
     gameScoreV2.includes("const GAME_SCORE_V2_WALK_PENALTY = 2;") &&
     gameScoreV2.includes("const GAME_SCORE_V2_HIT_PENALTY = 2;") &&
     gameScoreV2.includes("const GAME_SCORE_V2_RUN_PENALTY = 3;") &&
-    gameScoreV2.includes("const GAME_SCORE_V2_HOME_RUN_PENALTY = 6;") &&
     gameScoreV2.includes("export function calculateGameScoreV2(") &&
-    gameScoreV2.includes("const runsAllowed = line.runsAllowed ?? line.earnedRuns;") &&
-    gameScoreV2.includes("const homeRunsAllowed = line.homeRunsAllowed ?? 0;"),
-  "Game Score v2 calculator must use the Tango component weights and keep explicit fallbacks for current canonical line inputs",
+    gameScoreV2.includes("- line.earnedRuns * GAME_SCORE_V2_RUN_PENALTY") &&
+    !gameScoreV2.includes("GAME_SCORE_V2_HOME_RUN_PENALTY") &&
+    !gameScoreV2.includes("const runsAllowed = line.runsAllowed ?? line.earnedRuns;"),
+  "Game Score v2 calculator must use the pinned Tango component weights from the earned-run pitcher line",
 );
 
 assert(
@@ -114,12 +114,12 @@ assert(
     methodologyPage.includes("Game Score v2 is the familiar box-score benchmark.") &&
     methodologyPage.includes("Toe the Slab stores GSv2 on the same canonical start record as GS+") &&
     methodologyPage.includes("The adjustment label is shown as GS+ minus GSv2.") &&
-    methodologyPage.includes("GSv2 uses official total runs and home runs when the gamefeed carries them") &&
-    methodologyPage.includes("older line records fall back to earned runs and zero home runs") &&
+    methodologyPage.includes("GSv2 uses earned runs from the pitcher line") &&
+    !methodologyPage.includes("GSv2 uses official total runs and home runs when the gamefeed carries them") &&
     methodologyPage.includes('<FormulaItem label="Display transform" value="50 + (raw - 54.3) x 0.72, capped 20-80" />') &&
     methodologyPage.includes("Jul 2: exhibition games were removed from the dataset, regular-season archive rows were rebuilt, and league baselines were recalculated.") &&
     methodologyPage.includes('<FormulaItem label="Adjustment" value="GS+ minus GSv2" />'),
-  "methodology must explain GSv2, the GS+ adjustment label, official input usage, legacy fallbacks, and post-purge baseline changes",
+  "methodology must explain GSv2, the GS+ adjustment label, earned-run input usage, and post-purge baseline changes",
 );
 
 console.log("game score v2 contract ok: GSv2 is computed once and carried through canonical start records");

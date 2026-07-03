@@ -376,7 +376,7 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
           #{index + 1}
         </div>
       ) : null}
-      <div className={`relative grid items-center gap-x-4 gap-y-2 sm:pr-20 ${profile.gridClass}`}>
+      <div className={`relative grid items-start gap-x-3 gap-y-2 sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
         <div className="min-w-0">
           <span className={`route-shell-shimmer block rounded ${profile.rankClass.includes("3xl") ? "h-8 w-11" : "h-7 w-9"}`} />
           <span className="route-shell-shimmer mt-2 block h-3 w-14 rounded" />
@@ -390,14 +390,14 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
             <span className="route-shell-shimmer h-7 w-20 rounded" />
           </div>
         </div>
-        <div className={`order-4 min-w-0 sm:order-none ${profile.lineClass}`}>
-          <span className="route-shell-shimmer block h-4 w-32 rounded sm:ml-auto" />
-          <span className="route-shell-shimmer mt-2 block h-3 w-24 rounded sm:ml-auto" />
+        <div className={`min-w-0 ${profile.lineClass}`}>
+          <span className="route-shell-shimmer block h-4 w-32 max-w-full rounded sm:ml-auto" />
+          <span className="route-shell-shimmer mt-2 block h-3 w-24 max-w-full rounded sm:ml-auto" />
         </div>
-        <div className="order-3 flex items-center justify-end gap-2 sm:order-none sm:text-right">
-          <div>
+        <div className={profile.scoreStackClass}>
+          <div className="min-w-0">
             <span className={`route-shell-shimmer block rounded ${profile.scoreClass.includes("6xl") ? "h-16 w-20" : "h-12 w-16"}`} />
-            <span className="route-shell-shimmer mt-2 block h-3 w-10 rounded" />
+            <span className="route-shell-shimmer mt-2 block h-3 w-10 rounded ml-auto" />
           </div>
         </div>
       </div>
@@ -434,7 +434,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           #{start.rank}
         </div>
       ) : null}
-      <div className={`relative grid items-center gap-x-4 gap-y-2 sm:pr-20 ${profile.gridClass}`}>
+      <div className={`relative grid items-start gap-x-3 gap-y-2 sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
         <div className="min-w-0">
           <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
@@ -450,7 +450,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <PitcherAvailabilityNote availability={formSummary?.availability} compact />
           </div>
         </div>
-        <div className={`order-4 min-w-0 sm:order-none ${profile.lineClass}`}>
+        <div className={`min-w-0 ${profile.lineClass}`}>
           <p className={`${profile.statClass} font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
           <p className="mt-1 truncate text-xs text-zinc-500">{contextLabel}</p>
           {pairedStart ? (
@@ -459,7 +459,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             </span>
           ) : null}
         </div>
-        <div className="order-3 flex items-center justify-end gap-2 sm:order-none sm:text-right">
+        <div className={profile.scoreStackClass}>
           {highlight ? (
             <div>
               <HeatHighlightModal
@@ -469,7 +469,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               />
             </div>
           ) : null}
-          <div>
+          <div className="min-w-0 text-right">
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
@@ -742,14 +742,15 @@ function rankedBandProfile(label: string) {
       shadow: "0 14px 48px rgba(246,196,69,0.15), inset 0 0 54px rgba(246,196,69,0.055)",
       cardClass: "rounded border border-[#F6C445]/35",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
       headshotSize: "lg" as HeadshotSize,
       plateClass: "!h-[65px] !w-[52px] sm:!h-20 sm:!w-16",
       nameClass: "text-3xl sm:text-4xl",
       rankClass: "text-3xl sm:text-4xl",
       scoreClass: "text-6xl sm:text-[44px]",
       statClass: "text-sm",
-      lineClass: "col-span-full pl-16 sm:col-span-1 sm:pl-0 sm:text-right",
+      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[78px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: true,
       ghostRank: true,
     };
@@ -764,14 +765,15 @@ function rankedBandProfile(label: string) {
       shadow: "0 10px 34px rgba(239,159,39,0.12)",
       cardClass: "rounded border border-[#F6C445]/25",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_minmax(76px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
       headshotSize: "lg" as HeadshotSize,
       plateClass: "!h-[65px] !w-[52px] sm:!h-20 sm:!w-16",
       nameClass: "text-2xl sm:text-3xl",
       rankClass: "text-3xl",
       scoreClass: "text-5xl sm:text-[44px]",
       statClass: "text-sm",
-      lineClass: "col-span-full pl-16 sm:col-span-1 sm:pl-0 sm:text-right",
+      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[76px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: true,
       ghostRank: false,
     };
@@ -786,14 +788,15 @@ function rankedBandProfile(label: string) {
       shadow: "none",
       cardClass: "border-b border-white/10",
       paddingClass: "py-3 sm:py-3.5",
-      gridClass: "grid-cols-[48px_44px_minmax(0,1fr)_auto] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
       headshotSize: "md" as HeadshotSize,
       plateClass: "!h-[55px] !w-11 sm:!h-[65px] sm:!w-[52px]",
       nameClass: "text-xl sm:text-2xl",
       rankClass: "text-2xl",
       scoreClass: "text-4xl sm:text-[36px]",
       statClass: "text-sm",
-      lineClass: "col-span-full pl-[60px] sm:col-span-1 sm:pl-0 sm:text-right",
+      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[66px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: false,
       ghostRank: false,
     };
@@ -808,14 +811,15 @@ function rankedBandProfile(label: string) {
       shadow: "none",
       cardClass: "border-b border-white/10",
       paddingClass: "py-3",
-      gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_auto] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
       headshotSize: "sm" as HeadshotSize,
       plateClass: "!h-[50px] !w-10 sm:!h-[55px] sm:!w-11",
       nameClass: "text-lg sm:text-xl",
       rankClass: "text-xl",
       scoreClass: "text-3xl sm:text-[30px]",
       statClass: "text-xs",
-      lineClass: "col-span-full pl-14 sm:col-span-1 sm:pl-0 sm:text-right",
+      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: false,
       ghostRank: false,
     };
@@ -829,14 +833,15 @@ function rankedBandProfile(label: string) {
     shadow: "none",
     cardClass: "border-b border-white/10",
     paddingClass: "py-2.5",
-    gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_auto] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
+    gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
     headshotSize: "xs" as HeadshotSize,
     plateClass: "!h-[50px] !w-10",
     nameClass: "text-base sm:text-lg",
     rankClass: "text-lg",
     scoreClass: "text-3xl sm:text-[28px]",
     statClass: "text-xs",
-    lineClass: "col-span-full pl-14 sm:col-span-1 sm:pl-0 sm:text-right",
+    lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+    scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
     showReason: false,
     ghostRank: false,
   };

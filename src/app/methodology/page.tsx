@@ -80,10 +80,10 @@ export default async function MethodologyPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Calibration bridge</p>
           <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">GSv2 beside GS+</h2>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Game Score v2 is the familiar box-score benchmark. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, runs, and home runs. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
+            Game Score v2 is the familiar box-score benchmark. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, and earned runs from the pitcher line. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. GSv2 uses official total runs and home runs when the gamefeed carries them; older line records fall back to earned runs and zero home runs.
+            The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. GSv2 uses earned runs from the pitcher line so unearned runs do not corrupt the box-score benchmark.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
             On the homepage ticker, ▲ means a live provisional GS+ is at or above that starter&apos;s pregame projected GS+. ▼ means it is below the projection. If no projection is available, the comparison falls back to league-average 50.
@@ -94,8 +94,7 @@ export default async function MethodologyPage() {
             <FormulaItem label="Strikeouts" value="+1 per K" />
             <FormulaItem label="Hits" value="-2 per H" />
             <FormulaItem label="Walks" value="-2 per BB" />
-            <FormulaItem label="Runs" value="-3 per run" />
-            <FormulaItem label="Home runs" value="-6 per HR" />
+            <FormulaItem label="Earned runs" value="-3 per ER" />
             <FormulaItem label="Adjustment" value="GS+ minus GSv2" />
           </dl>
         </section>

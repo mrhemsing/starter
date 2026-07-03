@@ -55,11 +55,58 @@ export type CanonicalReconciliationReport = {
   latestAuditAt: string | null;
 };
 
+export type CanonicalSettledRecordValidationIssue = {
+  field: "gameScoreV2" | "venue";
+  message: string;
+  expected?: number | string;
+  actual?: number | string;
+};
+
 const FALLBACK_START_SOURCE: StartDataSource = {
   schedule: "fixture",
   line: "fixture",
   ranking: "schedule-derived-fixture-line",
 };
+
+const BANNED_VENUE_WORDS = /\b(canonical|context|fixture|slate|settle|stored|pipeline|cache|snapshot|source|implementation)\b/i;
+const KNOWN_MLB_VENUES = new Set([
+  "Angel Stadium",
+  "American Family Field",
+  "Busch Stadium",
+  "Chase Field",
+  "Citi Field",
+  "Citizens Bank Park",
+  "Comerica Park",
+  "Coors Field",
+  "Daikin Park",
+  "Dodger Stadium",
+  "Estadio Alfredo Harp Helu",
+  "Fenway Park",
+  "George M. Steinbrenner Field",
+  "Globe Life Field",
+  "Great American Ball Park",
+  "Guaranteed Rate Field",
+  "Kauffman Stadium",
+  "Las Vegas Ballpark",
+  "loanDepot park",
+  "Minute Maid Park",
+  "Nationals Park",
+  "Oracle Park",
+  "Oriole Park at Camden Yards",
+  "Petco Park",
+  "PNC Park",
+  "Progressive Field",
+  "Rate Field",
+  "Rogers Centre",
+  "T-Mobile Park",
+  "Target Field",
+  "Tropicana Field",
+  "Truist Park",
+  "Sutter Health Park",
+  "UNIQLO Field at Dodger Stadium",
+  "Wrigley Field",
+  "Yankee Stadium",
+]);
 
 export function canonicalStartRecordFromSummary(start: StartSummary, now = new Date()): CanonicalStartRecord {
   const source = start.source ?? FALLBACK_START_SOURCE;
@@ -70,7 +117,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
   const gameScoreV2 = start.gameScoreV2 ?? calculateGameScoreV2(start.line);
   const eventFlags = start.eventFlags ?? deriveStartEventFlags(start.result, gameScorePlus);
 
-  return {
+  const record: CanonicalStartRecord = {
     id: start.id,
     gamePk: start.gamePk,
     date: start.date,
@@ -106,6 +153,8 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
       },
     ],
   };
+  assertValidCanonicalSettledRecord(record);
+  return record;
 }
 
 export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, start: StartSummary): StartSummary {
@@ -156,7 +205,7 @@ export function reconcileCanonicalStartRecord(
   const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);
   const contextSnapshot = official.contextSnapshot ?? record.contextSnapshot;
 
-  return {
+  const nextRecord: CanonicalStartRecord = {
     ...record,
     status: "final",
     line: official.line,
@@ -187,6 +236,8 @@ export function reconcileCanonicalStartRecord(
       },
     ],
   };
+  assertValidCanonicalSettledRecord(nextRecord);
+  return nextRecord;
 }
 
 function freezeStartContextSnapshot(context: StartContext): StartContext {
@@ -269,8 +320,48 @@ export function diffCanonicalStartRecord(
 
 function safeCanonicalVenue(venue: string | undefined) {
   const trimmed = venue?.trim();
-  if (!trimmed || /\b(canonical|slate|fixture)\b/i.test(trimmed)) return undefined;
+  if (!trimmed || BANNED_VENUE_WORDS.test(trimmed)) return undefined;
   return trimmed;
+}
+
+export function validateCanonicalSettledRecord(record: CanonicalStartRecord): CanonicalSettledRecordValidationIssue[] {
+  if (record.status !== "final" && !record.frozen) return [];
+
+  const issues: CanonicalSettledRecordValidationIssue[] = [];
+  const expectedGameScoreV2 = calculateGameScoreV2(record.line);
+  if (record.gameScoreV2 !== expectedGameScoreV2) {
+    issues.push({
+      field: "gameScoreV2",
+      message: "settled canonical record GSv2 must match the shared formula",
+      expected: expectedGameScoreV2,
+      actual: record.gameScoreV2,
+    });
+  }
+
+  const venue = safeCanonicalVenue(record.venue);
+  if (!venue) {
+    issues.push({
+      field: "venue",
+      message: "settled canonical record venue must not contain implementation vocabulary",
+      expected: "known MLB venue",
+      actual: record.venue,
+    });
+  } else if (!KNOWN_MLB_VENUES.has(venue)) {
+    issues.push({
+      field: "venue",
+      message: "settled canonical record venue must match the known MLB venue set",
+      expected: "known MLB venue",
+      actual: venue,
+    });
+  }
+
+  return issues;
+}
+
+export function assertValidCanonicalSettledRecord(record: CanonicalStartRecord) {
+  const issues = validateCanonicalSettledRecord(record);
+  if (issues.length === 0) return;
+  throw new Error(`invalid settled canonical start record ${record.id}: ${issues.map((issue) => `${issue.field} ${issue.actual ?? "missing"} != ${issue.expected}`).join("; ")}`);
 }
 
 export function summarizeCanonicalReconciliation(date: string, records: CanonicalStartRecord[]): CanonicalReconciliationReport {

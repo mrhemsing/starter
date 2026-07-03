@@ -1,4 +1,4 @@
-import { canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
+import { assertValidCanonicalSettledRecord, canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
 import type { StartDataSource, StartSummary } from "@/lib/types";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -114,6 +114,9 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 
   if (!existing) return next;
 
+  assertValidCanonicalSettledRecord(existing);
+  assertValidCanonicalSettledRecord(next);
+
   if (existing.frozen) {
     if (next.status !== "final") return existing;
 
@@ -174,6 +177,7 @@ async function readCanonicalStartStore(date: string): Promise<CanonicalStartStor
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
   assertCanonicalStartStoreDate(store.date);
+  store.records.forEach(assertValidCanonicalSettledRecord);
   if (isCanonicalStoreCircuitOpen()) return;
   const written = await writeDurableCanonicalStartStore(store);
   if (written) return;
@@ -274,6 +278,7 @@ async function mergeWithLatestDurableRecords(date: string, records: CanonicalSta
   const recordsById = new Map(latest?.records.map((record) => [record.id, record]) ?? []);
 
   for (const record of records) {
+    assertValidCanonicalSettledRecord(record);
     recordsById.set(record.id, mergeCanonicalStartRecord(recordsById.get(record.id), record));
   }
 
@@ -281,6 +286,8 @@ async function mergeWithLatestDurableRecords(date: string, records: CanonicalSta
 }
 
 function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, next: CanonicalStartRecord) {
+  if (existing) assertValidCanonicalSettledRecord(existing);
+  assertValidCanonicalSettledRecord(next);
   if (!existing) return next;
   if (existing.frozen && next.status !== "final") return existing;
   if (existing.status === "final" && next.status !== "final") return existing;
@@ -301,6 +308,7 @@ function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, n
 
 async function upsertCanonicalStartRows(baseUrl: string, serviceKey: string, records: CanonicalStartRecord[]) {
   if (records.length === 0) return;
+  records.forEach(assertValidCanonicalSettledRecord);
 
   const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
   url.searchParams.set("on_conflict", "date,start_id");
@@ -425,6 +433,7 @@ function sleep(ms: number) {
 }
 
 function canonicalStartRecordToRow(record: CanonicalStartRecord): CanonicalStartRow {
+  assertValidCanonicalSettledRecord(record);
   return {
     date: record.date,
     start_id: record.id,

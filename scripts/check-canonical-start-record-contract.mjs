@@ -78,8 +78,17 @@ assert(
     canonicalRecord.includes('diffs.push({ field: "result", before: record.result, after: officialResult });') &&
     canonicalRecord.includes('diffs.push({ field: "venue", before: record.venue, after: officialVenue });') &&
     canonicalRecord.includes("function safeCanonicalVenue") &&
-    canonicalRecord.includes('/\\b(canonical|slate|fixture)\\b/i.test(trimmed)'),
-  "canonical reconciliation must validate GSv2, decision, and venue while blocking source metadata from venue fields",
+    canonicalRecord.includes("export function validateCanonicalSettledRecord") &&
+    canonicalRecord.includes("export function assertValidCanonicalSettledRecord") &&
+    canonicalRecord.includes("const BANNED_VENUE_WORDS =") &&
+    canonicalRecord.includes("context|fixture|slate|settle") &&
+    canonicalRecord.includes("const KNOWN_MLB_VENUES = new Set") &&
+    canonicalRecord.includes('"American Family Field"') &&
+    canonicalStore.includes('import { assertValidCanonicalSettledRecord') &&
+    canonicalStore.includes("store.records.forEach(assertValidCanonicalSettledRecord);") &&
+    canonicalStore.includes("records.forEach(assertValidCanonicalSettledRecord);") &&
+    canonicalStore.includes("assertValidCanonicalSettledRecord(record);"),
+  "canonical reconciliation and every settled-record write path must validate GSv2 and venue through one shared guard",
 );
 
 assert(
