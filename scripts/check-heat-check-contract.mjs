@@ -200,13 +200,17 @@ assert(
     liveScoreboard.includes('id={`live-start-${row.pitcherId}`}') &&
     formPage.includes('data-heat-start-status-chip="live"') &&
     formPage.includes('data-heat-start-status-chip="scheduled"') &&
+    formPage.includes("function MobileStartStatusRowBreak({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null })") &&
+    formPage.includes('return <span className="h-0 basis-full sm:hidden" aria-hidden="true" data-heat-mobile-start-status-break />;') &&
+    formPage.includes("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("function ScheduledStartChipLabel({ label }: { label: string })") &&
     formPage.includes('if (!label.startsWith("STARTS ")) return <>{label}</>;') &&
     formPage.includes('const startDateLabel = label.slice("STARTS ".length);') &&
     formPage.includes('<span className="block sm:inline">STARTS</span>') &&
     formPage.includes('<span className="block sm:inline">{startDateLabel}</span>') &&
     formPage.indexOf("chips={(\n          <>") < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
-    formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf('<PitcherAvailabilityNote availability={pitcher.availability} compact />') &&
+    formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") &&
+    formPage.indexOf("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf('<PitcherAvailabilityNote availability={pitcher.availability} compact />') &&
     formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
     formPage.includes("border-[#FF5A1F]/45 bg-[#FF5A1F]/10") &&
     formPage.includes("whitespace-nowrap") &&

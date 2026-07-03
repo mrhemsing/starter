@@ -807,6 +807,7 @@ function FormLeaderboardRow({
         chips={(
           <>
             <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
+            <MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />
             <PitcherAvailabilityNote availability={pitcher.availability} compact />
             <TodayStartFreshnessChip pitcher={pitcher} compact />
             {seasonView ? null : (
@@ -1023,6 +1024,13 @@ function SeasonBandMiniBar({ stats, showLabels = false }: { stats: FormSummary["
       ) : null}
     </span>
   );
+}
+
+function MobileStartStatusRowBreak({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null }) {
+  const status = startStatusLabel(pitcher, todayStart);
+  if (status?.kind !== "scheduled") return null;
+
+  return <span className="h-0 basis-full sm:hidden" aria-hidden="true" data-heat-mobile-start-status-break />;
 }
 
 function TodayStartFreshnessChip({ pitcher, compact = false }: { pitcher: FormSummary; compact?: boolean }) {
