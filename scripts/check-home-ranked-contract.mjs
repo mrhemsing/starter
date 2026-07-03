@@ -68,6 +68,14 @@ assert(
 );
 
 assert(
+  rankedRecap.includes("grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2") &&
+    rankedRecap.includes("grid-cols-[44px_minmax(0,1fr)] items-center gap-2") &&
+    rankedRecap.includes('decorative className="border-2"') &&
+    !rankedRecap.includes('decorative className="ml-1 border-2"'),
+  "home ranked recap mobile rows must keep rank-to-headshot spacing aligned with the Ranked Starts mobile card rhythm",
+);
+
+assert(
   rankedService.includes("const topPerformer = await resolveTopPerformerPayload(topPerformerState);") &&
     rankedService.includes("async function resolveTopPerformerPayload(state: TopPerformerState | null): Promise<TopPerformerPayload | null>") &&
     rankedService.includes("if (!state) return null;") &&

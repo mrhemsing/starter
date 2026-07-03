@@ -239,15 +239,15 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
 
   return (
     <article
-      className={`relative grid min-h-16 grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded border px-3 py-2 transition hover:border-white/20 ${profile.borderClass}`}
+      className={`relative grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded border px-3 py-2 transition hover:border-white/20 sm:gap-3 ${profile.borderClass}`}
       style={{ background: profile.background }}
       data-band={qualityBandSlug(tier.label)}
       data-gas={gas ? "true" : "false"}
     >
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
       <Link href={startHref(start, sourceParams("home"))} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
-      <Link href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="ml-1 border-2" />
+      <Link href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:gap-3">
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="border-2" />
         <div className="min-w-0">
           <p className="pitcher-name font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
@@ -355,7 +355,7 @@ function Duds({ starts, className = "" }: { starts: StartSummary[]; className?: 
           const tier = qualityTierOf(start.gameScorePlus);
           const color = tierDisplayColor(tier);
           return (
-            <Link key={start.id} href={startHref(start, sourceParams("home"))} className="grid min-h-14 grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/5 bg-[#101014]/70 px-3 py-2 text-sm text-zinc-400">
+            <Link key={start.id} href={startHref(start, sourceParams("home"))} className="grid min-h-14 grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-2 rounded border border-white/5 bg-[#101014]/70 px-3 py-2 text-sm text-zinc-400 sm:gap-3">
               <span className="font-serif text-xl text-zinc-500">#{start.rank}</span>
               <PitcherChip
                 pitcherId={String(start.pitcher.mlbId)}
