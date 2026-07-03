@@ -32,6 +32,8 @@ const startsDisclosure = await readFile("src/components/ranked-starts-disclosure
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
+const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
+const packageJson = await readFile("package.json", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
@@ -160,7 +162,6 @@ assert(
     startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("headerClusterClass: \"col-start-1 row-start-1 grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2 sm:contents\"") &&
-    startsPage.includes('chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto"') &&
     startsPage.includes('scoreStackClass: "col-start-2 row-start-1 flex min-w-16') &&
     startsPage.includes('scoreStackClass: "col-start-2 row-start-1 flex min-w-[66px]') &&
     startsPage.includes('scoreClass: "text-4xl sm:text-[44px]"') &&
@@ -171,13 +172,29 @@ assert(
     startsPage.includes("whitespace-nowrap font-mono text-zinc-300") &&
     startsPage.includes("line-clamp-2 text-xs text-zinc-500 sm:truncate") &&
     startsPage.includes('className={profile.scoreStackClass}') &&
-    startsPage.includes("className={profile.chipRowClass}") &&
     startsPage.includes("className={profile.headerClusterClass}") &&
+    startsPage.includes("data-ranked-desktop-chip-row") &&
+    startsPage.includes("data-ranked-desktop-detail-block") &&
+    startsPage.includes("data-ranked-desktop-score-stack") &&
+    startsPage.indexOf("data-ranked-desktop-chip-row") < startsPage.indexOf("data-ranked-desktop-detail-block") &&
+    startsPage.indexOf("data-ranked-desktop-detail-block") < startsPage.indexOf("data-ranked-desktop-score-stack") &&
+    startsPage.includes('className="mt-1 flex min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row') &&
+    packageJson.includes('"check:mobile-card-layout": "node scripts/check-mobile-card-layout.mjs"') &&
+    mobileCardLayoutCheck.includes("/starts/${rankedDate}") &&
+    mobileCardLayoutCheck.includes("/heat-check") &&
+    mobileCardLayoutCheck.includes('await assertVisible(page, "[data-mobile-card-shell]", false, `ranked ${viewport.name} mobile shell`)') &&
+    mobileCardLayoutCheck.includes('await assertVisible(page, "[data-ranked-desktop-chip-row]", true, `ranked ${viewport.name} desktop chip row`)') &&
+    mobileCardLayoutCheck.includes('await assertVisible(page, "[data-ranked-desktop-detail-block]", true, `ranked ${viewport.name} desktop detail block`)') &&
+    mobileCardLayoutCheck.includes('await assertVisible(page, "[data-ranked-desktop-score-stack]", true, `ranked ${viewport.name} desktop score stack`)') &&
+    mobileCardLayoutCheck.includes("assertDesktopRankedColumns(page, viewport.name)") &&
+    mobileCardLayoutCheck.includes('await assertVisible(page, "[data-form-row]", true, `heat ${viewport.name} desktop row`)') &&
+    mobileCardLayoutCheck.includes("page.screenshot") &&
+    !startsPage.includes('className={profile.chipRowClass}') &&
     !startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols") &&
     !startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)]") &&
     !startsPage.includes("row-span-2 row-start-1 flex") &&
     !startsPage.includes("order-3 flex items-center justify-end gap-2"),
-  "ranked mobile cards must keep the score column in the header row while chips and details span the full card width",
+  "ranked mobile cards must keep the score column in the header row while desktop keeps chips under the name cluster and details/score in the right columns",
 );
 
 assert(

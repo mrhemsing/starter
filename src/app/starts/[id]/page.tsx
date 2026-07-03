@@ -434,23 +434,18 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
           <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
             <span className={`route-shell-shimmer block rounded ${profile.nameClass.includes("3xl") ? "h-9 w-3/4" : "h-7 w-2/3"}`} />
             <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+            <span className="route-shell-shimmer mt-1 block h-7 w-36 rounded" />
           </div>
+        </div>
+        <div className={`min-w-0 ${profile.lineClass}`}>
+          <span className="route-shell-shimmer block h-4 w-full max-w-[240px] rounded sm:ml-auto" />
+          <span className="route-shell-shimmer mt-2 block h-3 w-24 max-w-full rounded sm:ml-auto" />
         </div>
         <div className={profile.scoreStackClass}>
           <div className="min-w-0">
             <span className={`route-shell-shimmer block rounded ${profile.scoreClass.includes("6xl") ? "h-16 w-20" : "h-12 w-16"}`} />
             <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-10 rounded" />
           </div>
-        </div>
-        <div className={profile.chipRowClass}>
-          <div className="flex min-w-0 flex-wrap gap-1.5">
-            <span className="route-shell-shimmer h-7 w-14 rounded" />
-            <span className="route-shell-shimmer h-7 w-20 rounded" />
-          </div>
-        </div>
-        <div className={`min-w-0 ${profile.lineClass}`}>
-          <span className="route-shell-shimmer block h-4 w-full max-w-[240px] rounded sm:ml-auto" />
-          <span className="route-shell-shimmer mt-2 block h-3 w-24 max-w-full rounded sm:ml-auto" />
         </div>
       </div>
     </article>
@@ -539,9 +534,23 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
             <h2 className={`${profile.nameClass} min-w-0 w-full max-w-full break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
             <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+            <div className="mt-1 flex min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row>
+              {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
+              {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
+              <PitcherAvailabilityNote availability={formSummary?.availability} compact />
+            </div>
           </div>
         </div>
-        <div className={profile.scoreStackClass}>
+        <div className={`min-w-0 ${profile.lineClass}`} data-ranked-desktop-detail-block>
+          <p className={`${profile.statClass} whitespace-nowrap font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-zinc-500 sm:truncate">{contextLabel}</p>
+          {pairedStart ? (
+            <span className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:justify-end">
+              Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
+            </span>
+          ) : null}
+        </div>
+        <div className={profile.scoreStackClass} data-ranked-desktop-score-stack>
           {highlight ? (
             <div>
               <HeatHighlightModal
@@ -557,22 +566,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
             <DecisionChip result={start.result} className="mt-2 justify-end" compact />
           </div>
-        </div>
-        <div className={profile.chipRowClass}>
-          <div className="flex min-w-0 flex-wrap gap-1.5">
-            {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
-            {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
-            <PitcherAvailabilityNote availability={formSummary?.availability} compact />
-          </div>
-        </div>
-        <div className={`min-w-0 ${profile.lineClass}`}>
-          <p className={`${profile.statClass} whitespace-nowrap font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
-          <p className="mt-1 line-clamp-2 text-xs text-zinc-500 sm:truncate">{contextLabel}</p>
-          {pairedStart ? (
-            <span className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:justify-end">
-              Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
-            </span>
-          ) : null}
         </div>
       </div>
       <details className="ranked-start-details">
