@@ -87,7 +87,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v7";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v8";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
@@ -144,16 +144,29 @@ assert(
 );
 
 assert(
-  startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)]") &&
-    startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)]") &&
-    startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)]") &&
-    startsPage.includes('scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[78px]') &&
-    startsPage.includes('scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[66px]') &&
-    startsPage.includes('lineClass: "col-start-3 col-span-1 row-start-2') &&
+  startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("headerClusterClass: \"col-start-1 row-start-1 grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2 sm:contents\"") &&
+    startsPage.includes('chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto"') &&
+    startsPage.includes('scoreStackClass: "col-start-2 row-start-1 flex min-w-16') &&
+    startsPage.includes('scoreStackClass: "col-start-2 row-start-1 flex min-w-[66px]') &&
+    startsPage.includes('scoreClass: "text-4xl sm:text-[44px]"') &&
+    startsPage.includes('nameClass: "text-xl sm:text-4xl"') &&
+    startsPage.includes('rankClass: "text-2xl sm:text-4xl"') &&
+    startsPage.includes("min-w-0 w-full max-w-full break-words") &&
+    startsPage.includes('max-w-[64px] whitespace-normal text-[9px] leading-tight') &&
+    startsPage.includes('lineClass: "col-span-full row-start-3') &&
+    startsPage.includes("whitespace-nowrap font-mono text-zinc-300") &&
+    startsPage.includes("line-clamp-2 text-xs text-zinc-500 sm:truncate") &&
     startsPage.includes('className={profile.scoreStackClass}') &&
+    startsPage.includes("className={profile.chipRowClass}") &&
+    startsPage.includes("className={profile.headerClusterClass}") &&
     !startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_auto] sm:grid-cols") &&
+    !startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)]") &&
+    !startsPage.includes("row-span-2 row-start-1 flex") &&
     !startsPage.includes("order-3 flex items-center justify-end gap-2"),
-  "ranked mobile cards must reserve separate name and score columns so GS+ and GSv2/ADJ cannot overlap the pitcher stack",
+  "ranked mobile cards must keep the score column in the header row while chips and details span the full card width",
 );
 
 assert(
@@ -487,9 +500,9 @@ assert(
 );
 
 assert(
-  startsPage.includes("grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
-    startsPage.includes("grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
-    startsPage.includes("grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]"),
+  startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
+    startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]"),
   "ranked starts rows must use fixed rank/photo/meta/reserved-score grid columns by tier",
 );
 
@@ -502,7 +515,7 @@ assert(
 );
 
 assert(
-  startsPage.includes("plateClass: \"!h-[65px] !w-[52px] sm:!h-20 sm:!w-16\"") &&
+  startsPage.includes("plateClass: \"!h-[55px] !w-11 sm:!h-20 sm:!w-16\"") &&
     startsPage.includes("plateClass: \"!h-[55px] !w-11 sm:!h-[65px] sm:!w-[52px]\"") &&
     startsPage.includes("plateClass: \"!h-[50px] !w-10\""),
   "ranked starts headshot plates must use tiered 4:5 dimensions",

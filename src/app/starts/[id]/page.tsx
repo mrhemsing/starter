@@ -377,28 +377,32 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
         </div>
       ) : null}
       <div className={`relative grid items-start gap-x-3 gap-y-2 sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
-        <div className="min-w-0">
-          <span className={`route-shell-shimmer block rounded ${profile.rankClass.includes("3xl") ? "h-8 w-11" : "h-7 w-9"}`} />
-          <span className="route-shell-shimmer mt-2 block h-3 w-14 rounded" />
+        <div className={profile.headerClusterClass}>
+          <div className="min-w-0 row-start-1">
+            <span className={`route-shell-shimmer block rounded ${profile.rankClass.includes("3xl") ? "h-8 w-11" : "h-7 w-9"}`} />
+            <span className="route-shell-shimmer mt-2 block h-3 w-14 rounded" />
+          </div>
+          <span className={`route-shell-shimmer ranked-start-plate row-start-1 block ${profile.plateClass}`} />
+          <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
+            <span className={`route-shell-shimmer block rounded ${profile.nameClass.includes("3xl") ? "h-9 w-3/4" : "h-7 w-2/3"}`} />
+            <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+          </div>
         </div>
-        <span className={`route-shell-shimmer ranked-start-plate block ${profile.plateClass}`} />
-        <div className="grid min-w-0 gap-1">
-          <span className={`route-shell-shimmer block rounded ${profile.nameClass.includes("3xl") ? "h-9 w-3/4" : "h-7 w-2/3"}`} />
-          <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+        <div className={profile.scoreStackClass}>
+          <div className="min-w-0">
+            <span className={`route-shell-shimmer block rounded ${profile.scoreClass.includes("6xl") ? "h-16 w-20" : "h-12 w-16"}`} />
+            <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-10 rounded" />
+          </div>
+        </div>
+        <div className={profile.chipRowClass}>
           <div className="flex min-w-0 flex-wrap gap-1.5">
             <span className="route-shell-shimmer h-7 w-14 rounded" />
             <span className="route-shell-shimmer h-7 w-20 rounded" />
           </div>
         </div>
         <div className={`min-w-0 ${profile.lineClass}`}>
-          <span className="route-shell-shimmer block h-4 w-32 max-w-full rounded sm:ml-auto" />
+          <span className="route-shell-shimmer block h-4 w-full max-w-[240px] rounded sm:ml-auto" />
           <span className="route-shell-shimmer mt-2 block h-3 w-24 max-w-full rounded sm:ml-auto" />
-        </div>
-        <div className={profile.scoreStackClass}>
-          <div className="min-w-0">
-            <span className={`route-shell-shimmer block rounded ${profile.scoreClass.includes("6xl") ? "h-16 w-20" : "h-12 w-16"}`} />
-            <span className="route-shell-shimmer mt-2 block h-3 w-10 rounded ml-auto" />
-          </div>
         </div>
       </div>
     </article>
@@ -435,29 +439,17 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         </div>
       ) : null}
       <div className={`relative grid items-start gap-x-3 gap-y-2 sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
-        <div className="min-w-0">
-          <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
-          {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
-        </div>
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate ${profile.plateClass}`} />
-        <div className="grid min-w-0 gap-1">
-          <h2 className={`${profile.nameClass} break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
-          <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
-          <div className="flex min-w-0 flex-wrap gap-1.5">
-            {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
-            {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
-            <PitcherAvailabilityNote availability={formSummary?.availability} compact />
+        <div className={profile.headerClusterClass}>
+          <div className="min-w-0 row-start-1">
+            <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
+            {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
           </div>
-        </div>
-        <div className={`min-w-0 ${profile.lineClass}`}>
-          <p className={`${profile.statClass} font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
-          <p className="mt-1 truncate text-xs text-zinc-500">{contextLabel}</p>
-          {pairedStart ? (
-            <span className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-              Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
-            </span>
-          ) : null}
+          <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate row-start-1 ${profile.plateClass}`} />
+          <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
+            <h2 className={`${profile.nameClass} min-w-0 w-full max-w-full break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+          </div>
         </div>
         <div className={profile.scoreStackClass}>
           {highlight ? (
@@ -475,6 +467,22 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
             <DecisionChip result={start.result} className="mt-2 justify-end" compact />
           </div>
+        </div>
+        <div className={profile.chipRowClass}>
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
+            {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
+            <PitcherAvailabilityNote availability={formSummary?.availability} compact />
+          </div>
+        </div>
+        <div className={`min-w-0 ${profile.lineClass}`}>
+          <p className={`${profile.statClass} whitespace-nowrap font-mono text-zinc-300`}>{formatStartLine(start.line)}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-zinc-500 sm:truncate">{contextLabel}</p>
+          {pairedStart ? (
+            <span className="mt-1 inline-flex font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:justify-end">
+              Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
+            </span>
+          ) : null}
         </div>
       </div>
       <details className="ranked-start-details">
@@ -657,7 +665,7 @@ function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }: { gameScor
   const delta = gameScorePlus - gameScoreV2;
 
   return (
-    <p className={`${compact ? "mt-1 text-[9px]" : "mt-2 text-xs"} font-mono uppercase tracking-[0.14em] text-zinc-500`} data-score-bridge>
+    <p className={`${compact ? "mt-1 max-w-[64px] whitespace-normal text-[9px] leading-tight" : "mt-2 text-xs"} font-mono uppercase tracking-[0.14em] text-zinc-500`} data-score-bridge>
       GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj
     </p>
   );
@@ -742,15 +750,17 @@ function rankedBandProfile(label: string) {
       shadow: "0 14px 48px rgba(246,196,69,0.15), inset 0 0 54px rgba(246,196,69,0.055)",
       cardClass: "rounded border border-[#F6C445]/35",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_minmax(78px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      headerClusterClass: "col-start-1 row-start-1 grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2 sm:contents",
       headshotSize: "lg" as HeadshotSize,
-      plateClass: "!h-[65px] !w-[52px] sm:!h-20 sm:!w-16",
-      nameClass: "text-3xl sm:text-4xl",
-      rankClass: "text-3xl sm:text-4xl",
-      scoreClass: "text-6xl sm:text-[44px]",
+      plateClass: "!h-[55px] !w-11 sm:!h-20 sm:!w-16",
+      nameClass: "text-xl sm:text-4xl",
+      rankClass: "text-2xl sm:text-4xl",
+      scoreClass: "text-4xl sm:text-[44px]",
       statClass: "text-sm",
-      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
-      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[78px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
+      chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto",
+      lineClass: "col-span-full row-start-3 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-2 row-start-1 flex min-w-16 items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: true,
       ghostRank: true,
     };
@@ -765,15 +775,17 @@ function rankedBandProfile(label: string) {
       shadow: "0 10px 34px rgba(239,159,39,0.12)",
       cardClass: "rounded border border-[#F6C445]/25",
       paddingClass: "py-4 sm:py-[18px]",
-      gridClass: "grid-cols-[48px_52px_minmax(0,1fr)_minmax(76px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]",
+      headerClusterClass: "col-start-1 row-start-1 grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2 sm:contents",
       headshotSize: "lg" as HeadshotSize,
-      plateClass: "!h-[65px] !w-[52px] sm:!h-20 sm:!w-16",
-      nameClass: "text-2xl sm:text-3xl",
-      rankClass: "text-3xl",
-      scoreClass: "text-5xl sm:text-[44px]",
+      plateClass: "!h-[55px] !w-11 sm:!h-20 sm:!w-16",
+      nameClass: "text-xl sm:text-3xl",
+      rankClass: "text-2xl sm:text-3xl",
+      scoreClass: "text-4xl sm:text-[44px]",
       statClass: "text-sm",
-      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
-      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[76px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
+      chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto",
+      lineClass: "col-span-full row-start-3 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-2 row-start-1 flex min-w-16 items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: true,
       ghostRank: false,
     };
@@ -788,15 +800,17 @@ function rankedBandProfile(label: string) {
       shadow: "none",
       cardClass: "border-b border-white/10",
       paddingClass: "py-3 sm:py-3.5",
-      gridClass: "grid-cols-[48px_44px_minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]",
+      headerClusterClass: "col-start-1 row-start-1 grid min-w-0 grid-cols-[48px_44px_minmax(0,1fr)] items-start gap-x-3 sm:contents",
       headshotSize: "md" as HeadshotSize,
       plateClass: "!h-[55px] !w-11 sm:!h-[65px] sm:!w-[52px]",
       nameClass: "text-xl sm:text-2xl",
       rankClass: "text-2xl",
       scoreClass: "text-4xl sm:text-[36px]",
       statClass: "text-sm",
-      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
-      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[66px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
+      chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto",
+      lineClass: "col-span-full row-start-3 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-2 row-start-1 flex min-w-[66px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: false,
       ghostRank: false,
     };
@@ -811,15 +825,17 @@ function rankedBandProfile(label: string) {
       shadow: "none",
       cardClass: "border-b border-white/10",
       paddingClass: "py-3",
-      gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
+      gridClass: "grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_44px_minmax(0,1fr)_auto_auto]",
+      headerClusterClass: "col-start-1 row-start-1 grid min-w-0 grid-cols-[48px_40px_minmax(0,1fr)] items-start gap-x-3 sm:contents",
       headshotSize: "sm" as HeadshotSize,
       plateClass: "!h-[50px] !w-10 sm:!h-[55px] sm:!w-11",
       nameClass: "text-lg sm:text-xl",
       rankClass: "text-xl",
       scoreClass: "text-3xl sm:text-[30px]",
       statClass: "text-xs",
-      lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
-      scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
+      chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto",
+      lineClass: "col-span-full row-start-3 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+      scoreStackClass: "col-start-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
       showReason: false,
       ghostRank: false,
     };
@@ -833,15 +849,17 @@ function rankedBandProfile(label: string) {
     shadow: "none",
     cardClass: "border-b border-white/10",
     paddingClass: "py-2.5",
-    gridClass: "grid-cols-[48px_40px_minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
+    gridClass: "grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]",
+    headerClusterClass: "col-start-1 row-start-1 grid min-w-0 grid-cols-[48px_40px_minmax(0,1fr)] items-start gap-x-3 sm:contents",
     headshotSize: "xs" as HeadshotSize,
     plateClass: "!h-[50px] !w-10",
     nameClass: "text-base sm:text-lg",
     rankClass: "text-lg",
     scoreClass: "text-3xl sm:text-[28px]",
     statClass: "text-xs",
-    lineClass: "col-start-3 col-span-1 row-start-2 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
-    scoreStackClass: "col-start-4 row-span-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
+    chipRowClass: "col-span-full row-start-2 sm:col-start-3 sm:col-span-1 sm:row-auto",
+    lineClass: "col-span-full row-start-3 sm:col-start-auto sm:col-span-1 sm:row-auto sm:pl-0 sm:text-right",
+    scoreStackClass: "col-start-2 row-start-1 flex min-w-[58px] items-start justify-end gap-2 text-right sm:col-start-auto sm:row-auto sm:min-w-0 sm:items-center",
     showReason: false,
     ghostRank: false,
   };

@@ -6,7 +6,7 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRank
 import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v7";
+const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v8";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;
 
