@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import { upcomingDateHref } from "@/lib/routes";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 
@@ -22,9 +23,16 @@ export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScor
   const [board, setBoard] = useState(initialBoard);
   const [touchPaused, setTouchPaused] = useState(false);
   const autoResumeTimer = useRef(0);
+  const staleSlateVerifyKey = useRef<string | null>(null);
   const visible = shouldRenderTicker(board);
   const shouldPoll = Boolean(board?.hasActiveStarts && visible);
-  const phase = board && (board.liveStarts > 0 || board.finalStarts > 0 || board.delayStarts > 0) ? "live" : "today";
+  const shouldVerifyStaleSlate = Boolean(visible && board && !shouldPoll && (board.finalStarts > 0 || board.delayStarts > 0));
+  const phase = board && (board.liveStarts > 0 || board.delayStarts > 0) ? "live" : "today";
+
+  useEffect(() => {
+    if (!board) return;
+    window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }));
+  }, [board]);
 
   useEffect(() => {
     if (!visible || !board) return;
@@ -59,10 +67,16 @@ export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScor
     };
 
     if (shouldPoll) {
+      syncTicker().catch(() => undefined);
       livePoll = window.setInterval(() => {
         syncTicker().catch(() => undefined);
       }, HOME_LIVE_TICKER_POLL_MS);
     } else {
+      const verifyKey = `${board.date}:${board.liveStarts}:${board.finalStarts}:${board.warmingStarts}:${board.scheduledStarts}:${board.delayStarts}`;
+      if (shouldVerifyStaleSlate && staleSlateVerifyKey.current !== verifyKey) {
+        staleSlateVerifyKey.current = verifyKey;
+        syncTicker().catch(() => undefined);
+      }
       scheduleFirstPitchSync(board);
     }
 
@@ -71,7 +85,7 @@ export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScor
       window.clearInterval(livePoll);
       window.clearTimeout(firstPitchTimer);
     };
-  }, [board, shouldPoll, today, visible]);
+  }, [board, shouldPoll, shouldVerifyStaleSlate, today, visible]);
 
   useEffect(() => () => window.clearTimeout(autoResumeTimer.current), []);
 
@@ -210,7 +224,7 @@ function formatTickerTime(value: string) {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error(`Request failed: ${url}`);
   return response.json() as Promise<T>;
 }

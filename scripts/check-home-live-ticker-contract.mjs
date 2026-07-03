@@ -31,14 +31,21 @@ assert(
 
 assert(
     ticker.includes('"use client";') &&
+    ticker.includes('import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";') &&
     ticker.includes("HOME_LIVE_TICKER_POLL_MS = 30 * 1000") &&
     ticker.includes("HOME_LIVE_TICKER_AUTO_RESUME_MS = 4 * 1000") &&
     ticker.includes("data-responsive-check=\"home-live-gs-ticker\"") &&
     ticker.includes('data-home-live-ticker-phase={phase}') &&
     ticker.includes('data-home-live-ticker-polling={shouldPoll ? "true" : "false"}') &&
     ticker.includes('phase === "live" ? "LIVE" : "TODAY"') &&
+    ticker.includes('const phase = board && (board.liveStarts > 0 || board.delayStarts > 0) ? "live" : "today";') &&
+    !ticker.includes("board.liveStarts > 0 || board.finalStarts > 0 || board.delayStarts > 0") &&
     ticker.includes("const shouldPoll = Boolean(board?.hasActiveStarts && visible);") &&
+    ticker.includes("const shouldVerifyStaleSlate = Boolean(visible && board && !shouldPoll && (board.finalStarts > 0 || board.delayStarts > 0));") &&
+    ticker.includes("staleSlateVerifyKey.current !== verifyKey") &&
+    ticker.includes("window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }))") &&
     ticker.includes("scheduleFirstPitchSync(board);") &&
+    ticker.includes("if (shouldPoll) {\n      syncTicker().catch(() => undefined);") &&
     ticker.includes("window.setInterval(() =>") &&
     ticker.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
     ticker.includes("row.status === \"live\"") &&
@@ -56,6 +63,7 @@ assert(
     ticker.includes("function disambiguatedNames") &&
     ticker.includes('aria-label="Live GS+ ticker"') &&
     ticker.includes("aria-hidden={duplicate ? \"true\" : undefined}") &&
+    ticker.includes('fetch(url, { cache: "no-store" })') &&
     !ticker.includes("text-green") &&
     !ticker.includes("text-red"),
   "ticker must render all slate day, poll only through the shared live endpoint when active, include live scoreless arms, carry finals, use projection glyphs, site colors, collision initials, and accessible duplicate handling",
