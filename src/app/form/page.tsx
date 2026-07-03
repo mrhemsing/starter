@@ -757,9 +757,9 @@ function FormLeaderboardRow({
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
-  const mobileLastLine = pitcher.lastStart
-    ? `LAST: GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
-    : "LAST: START UNAVAILABLE";
+  const mobileLastValue = pitcher.lastStart
+    ? `GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
+    : "START UNAVAILABLE";
   const seasonMetaLine = `Season: ${seasonLine(pitcher)}`;
   const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;
   const fullWindow = pitcher.windowCount >= window;
@@ -820,8 +820,8 @@ function FormLeaderboardRow({
         )}
         details={(
           <>
-            <p className="font-mono text-[10px] uppercase leading-4 tracking-[0.04em] text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
-            <p className={`font-mono text-[10px] uppercase tracking-[0.08em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>Next start: {nextStartDetails(pitcher)}</p>
+            <MobileDetailLine label={seasonView ? "Season" : "Last"} value={seasonView ? seasonLine(pitcher) : mobileLastValue} />
+            <MobileDetailLine label="Next start" value={nextStartDetails(pitcher)} muted={!pitcher.nextStart} />
           </>
         )}
         footer={seasonView ? null : (
@@ -858,7 +858,7 @@ function FormLeaderboardRow({
           </p>
           <div className={`font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden ${treatment.metaClass}`}>
             <p>{mobileMetaLine}</p>
-            <p className="text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
+            <p className="text-zinc-400">{seasonView ? seasonMetaLine : `LAST: ${mobileLastValue}`}</p>
           </div>
           {seasonView ? <SeasonDepthInlineStats pitcher={pitcher} /> : null}
           <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
@@ -1050,8 +1050,30 @@ function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayS
 
   return (
     <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200" data-heat-start-status-chip="scheduled">
-      {status.label}
+      <ScheduledStartChipLabel label={status.label} />
     </span>
+  );
+}
+
+function ScheduledStartChipLabel({ label }: { label: string }) {
+  if (!label.startsWith("STARTS ")) return <>{label}</>;
+  const startDateLabel = label.slice("STARTS ".length);
+
+  return (
+    <span className="grid gap-0.5 text-left leading-none sm:inline">
+      <span className="block sm:inline">STARTS</span>
+      <span className="hidden sm:inline"> </span>
+      <span className="block sm:inline">{startDateLabel}</span>
+    </span>
+  );
+}
+
+function MobileDetailLine({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
+  return (
+    <p className={`font-mono text-[10px] uppercase leading-4 tracking-[0.04em] ${muted ? "text-zinc-600" : "text-zinc-400"}`}>
+      <span className="block text-zinc-500">{label}:</span>
+      <span className="block">{value}</span>
+    </p>
   );
 }
 

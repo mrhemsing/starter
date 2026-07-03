@@ -200,6 +200,11 @@ assert(
     liveScoreboard.includes('id={`live-start-${row.pitcherId}`}') &&
     formPage.includes('data-heat-start-status-chip="live"') &&
     formPage.includes('data-heat-start-status-chip="scheduled"') &&
+    formPage.includes("function ScheduledStartChipLabel({ label }: { label: string })") &&
+    formPage.includes('if (!label.startsWith("STARTS ")) return <>{label}</>;') &&
+    formPage.includes('const startDateLabel = label.slice("STARTS ".length);') &&
+    formPage.includes('<span className="block sm:inline">STARTS</span>') &&
+    formPage.includes('<span className="block sm:inline">{startDateLabel}</span>') &&
     formPage.indexOf("chips={(\n          <>") < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf('<PitcherAvailabilityNote availability={pitcher.availability} compact />') &&
     formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
@@ -213,7 +218,7 @@ assert(
     formDriverChips.includes("whitespace-nowrap") &&
     !formDriverChips.includes("whitespace-normal") &&
     !formDriverChips.includes("[overflow-wrap:anywhere]"),
-  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS WEEKDAY/STARTS MM/DD as the first non-wrapping chip and keep driver chips in a wrapping row",
+  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS WEEKDAY/STARTS MM/DD first, with mobile scheduled chips breaking after STARTS and driver chips in a wrapping row",
 );
 
 assert(
@@ -613,9 +618,13 @@ assert(
     formPage.includes('fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
     formPage.includes('hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block') &&
     formPage.includes('const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;') &&
-    formPage.includes('LAST: GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine') &&
-    formPage.includes('font-mono text-[10px] uppercase leading-4 tracking-[0.04em] text-zinc-400') &&
-    formPage.includes("Next start: {nextStartDetails(pitcher)}") &&
+    formPage.includes('const mobileLastValue = pitcher.lastStart') &&
+    formPage.includes('`GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine') &&
+    formPage.includes('<MobileDetailLine label={seasonView ? "Season" : "Last"} value={seasonView ? seasonLine(pitcher) : mobileLastValue} />') &&
+    formPage.includes('<MobileDetailLine label="Next start" value={nextStartDetails(pitcher)} muted={!pitcher.nextStart} />') &&
+    formPage.includes("function MobileDetailLine({ label, value, muted = false }: { label: string; value: string; muted?: boolean })") &&
+    formPage.includes('<span className="block text-zinc-500">{label}:</span>') &&
+    formPage.includes('<span className="block">{value}</span>') &&
     formPage.includes('className="block sm:inline">{nextStartDetails(pitcher)}</span>') &&
     formPage.includes("function nextStartDetails(pitcher: FormSummary)") &&
     globals.includes("@media (min-width: 640px)") &&
