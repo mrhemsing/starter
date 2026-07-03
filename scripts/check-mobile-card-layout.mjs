@@ -47,6 +47,7 @@ try {
     await page.goto(`${baseUrl}/heat-check`, { waitUntil: "load" });
     await page.locator("[data-form-row]:not([data-skeleton-row])").first().waitFor({ timeout: 10_000 });
     if (viewport.kind === "mobile") {
+      await assertHeatRankHeadshotGap(page, viewport.name);
       await assertHeatScheduledChipBreak(page, viewport.name);
     }
     if (viewport.kind === "desktop") {
@@ -102,6 +103,29 @@ async function assertHeatScheduledChipBreak(page, viewportName) {
   assert(geometry.hasBreak, `heat ${viewportName} scheduled chip row must include a mobile row break: ${JSON.stringify(geometry)}`);
   assert(geometry.next, `heat ${viewportName} scheduled chip should be followed by another visible chip row item: ${JSON.stringify(geometry)}`);
   assert(geometry.next.top >= geometry.chip.bottom - 1, `heat ${viewportName} chips after scheduled STARTS must begin on the next row: ${JSON.stringify(geometry)}`);
+}
+
+async function assertHeatRankHeadshotGap(page, viewportName) {
+  const rows = page.locator("[data-form-row]:not([data-skeleton-row]) [data-mobile-card-shell]");
+  await rows.first().waitFor({ timeout: 10_000 });
+  const gaps = await rows.evaluateAll((elements) =>
+    elements.slice(0, 16).map((shell, index) => {
+      const rankText = shell.querySelector("[data-heat-mobile-rank] p");
+      const headshot = shell.querySelector("[data-heat-mobile-headshot]");
+      const rankRect = rankText?.getBoundingClientRect();
+      const headshotRect = headshot?.getBoundingClientRect();
+      return {
+        index,
+        rank: rankText?.textContent?.trim() ?? null,
+        visible: Boolean(rankRect && headshotRect && rankRect.width > 0 && rankRect.height > 0 && headshotRect.width > 0 && headshotRect.height > 0),
+        gap: rankRect && headshotRect ? headshotRect.left - rankRect.right : null,
+      };
+    }).filter((entry) => entry.visible),
+  );
+
+  const invalid = gaps.filter((entry) => entry.gap === null || entry.gap < 8);
+  assert(gaps.length >= 8, `heat ${viewportName} rank/headshot gap check needs visible rows: ${JSON.stringify(gaps)}`);
+  assert(invalid.length === 0, `heat ${viewportName} rank/headshot gap must stay at least 8px: ${JSON.stringify(gaps)}`);
 }
 
 async function assertDesktopRankedColumns(page, viewportName) {

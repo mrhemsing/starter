@@ -194,6 +194,9 @@ assert(
     formPage.includes("return { kind: \"scheduled\", label: `STARTS ${formatMonthDay(pitcher.nextStart.date)}` };") &&
     formPage.includes("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("<CrossoverPill pitcher={pitcher} />") &&
+    formPage.includes("grid-cols-[68px_44px_minmax(0,1fr)] items-start gap-x-3") &&
+    formPage.includes("data-heat-mobile-rank") &&
+    formPage.includes("data-heat-mobile-headshot") &&
     formPage.includes("getLiveScoreboard({ date: today })") &&
     formPage.includes("liveRow?.status ?? todayStartStatusFromSchedule(game)") &&
     formPage.includes('`${liveRow.liveHref}#live-start-${liveRow.pitcherId}`') &&

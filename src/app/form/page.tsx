@@ -781,14 +781,16 @@ function FormLeaderboardRow({
     >
       <MobileCardShell
         left={(
-          <div className="grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2">
-            <div className="min-w-0">
+          <div className="grid min-w-0 grid-cols-[68px_44px_minmax(0,1fr)] items-start gap-x-3">
+            <div className="min-w-0" data-heat-mobile-rank>
               <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>{unranked ? "-" : `#${rank}`}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{seasonView ? qualityTier.label : tierLabel(pitcher.tier)}</p>
             </div>
-            <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
-              <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="md" band={thermalBand} sampleSufficient={fullWindow} decorative />
-            </HeatPitcherProfileLink>
+            <span data-heat-mobile-headshot>
+              <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
+                <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="md" band={thermalBand} sampleSufficient={fullWindow} decorative />
+              </HeatPitcherProfileLink>
+            </span>
             <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
               <h2 className="line-clamp-2 min-w-0 w-full max-w-full break-words font-serif text-xl font-bold leading-tight text-zinc-50">
                 <MobileStackedPitcherName name={pitcher.name} />
