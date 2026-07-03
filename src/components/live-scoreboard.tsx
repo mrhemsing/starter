@@ -369,6 +369,27 @@ function LiveScoreboardSection({
   );
 }
 
+export function LiveScoreboardRowSkeleton({ muted = false, scored = true }: { muted?: boolean; scored?: boolean }) {
+  return (
+    <article className={`scroll-mt-24 grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`} data-skeleton-row="live-board">
+      <span className="route-shell-shimmer ml-0 block h-[65px] w-[52px] rounded" />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="route-shell-shimmer h-7 w-16 rounded" />
+          <span className="route-shell-shimmer h-3 w-24 rounded" />
+        </div>
+        <span className="route-shell-shimmer mt-2 block h-7 w-2/3 rounded" />
+        <span className="route-shell-shimmer mt-2 block h-4 w-5/6 rounded" />
+      </div>
+      <div className="text-right">
+        <span className={`route-shell-shimmer ml-auto block rounded ${scored ? "h-10 w-16" : "h-8 w-20"}`} />
+        <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-12 rounded" />
+        {scored ? <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-10 rounded" /> : null}
+      </div>
+    </article>
+  );
+}
+
 function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; muted?: boolean }) {
   const statusTone = statusClass(row.status);
   const liveOrFinalScore = isScoredRow(row);

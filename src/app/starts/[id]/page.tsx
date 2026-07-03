@@ -355,6 +355,56 @@ function BandHeader({ label, count, color }: { label: string; count: number; col
   );
 }
 
+export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = false }: { index?: number; band?: "Elite" | "Plus" | "Solid" | "Below" | "Poor"; grouped?: boolean }) {
+  const profile = rankedBandProfile(band);
+
+  return (
+    <article
+      className={`group relative scroll-mt-28 overflow-hidden border-l-4 px-4 sm:px-5 ${profile.paddingClass} ${profile.cardClass}`}
+      style={{
+        "--ranked-band-color": profile.railColor,
+        background: profile.background,
+        boxShadow: profile.shadow,
+        borderLeftColor: profile.railColor,
+      } as React.CSSProperties}
+      data-responsive-check="ranked-start-card"
+      data-skeleton-row="ranked-start"
+      data-grouped={grouped ? "true" : "false"}
+    >
+      {profile.ghostRank ? (
+        <div className="pointer-events-none absolute -left-2 top-1/2 hidden -translate-y-1/2 font-mono text-8xl font-black leading-none text-white/[0.035]" aria-hidden="true">
+          #{index + 1}
+        </div>
+      ) : null}
+      <div className={`relative grid items-center gap-x-4 gap-y-2 sm:pr-20 ${profile.gridClass}`}>
+        <div className="min-w-0">
+          <span className={`route-shell-shimmer block rounded ${profile.rankClass.includes("3xl") ? "h-8 w-11" : "h-7 w-9"}`} />
+          <span className="route-shell-shimmer mt-2 block h-3 w-14 rounded" />
+        </div>
+        <span className={`route-shell-shimmer ranked-start-plate block ${profile.plateClass}`} />
+        <div className="grid min-w-0 gap-1">
+          <span className={`route-shell-shimmer block rounded ${profile.nameClass.includes("3xl") ? "h-9 w-3/4" : "h-7 w-2/3"}`} />
+          <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            <span className="route-shell-shimmer h-7 w-14 rounded" />
+            <span className="route-shell-shimmer h-7 w-20 rounded" />
+          </div>
+        </div>
+        <div className={`order-4 min-w-0 sm:order-none ${profile.lineClass}`}>
+          <span className="route-shell-shimmer block h-4 w-32 rounded sm:ml-auto" />
+          <span className="route-shell-shimmer mt-2 block h-3 w-24 rounded sm:ml-auto" />
+        </div>
+        <div className="order-3 flex items-center justify-end gap-2 sm:order-none sm:text-right">
+          <div>
+            <span className={`route-shell-shimmer block rounded ${profile.scoreClass.includes("6xl") ? "h-16 w-20" : "h-12 w-16"}`} />
+            <span className="route-shell-shimmer mt-2 block h-3 w-10 rounded" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlight, provisionalLeader, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; formSummary?: FormSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean; grouped?: boolean }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const profile = rankedBandProfile(tier.label);

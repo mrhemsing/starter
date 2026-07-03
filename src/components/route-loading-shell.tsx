@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { NavKey } from "@/components/site-nav";
 import { logNavigationSkeletonShown } from "@/lib/navigation-skeleton-log";
 
@@ -11,6 +12,7 @@ type RouteLoadingShellProps = {
   controls?: "ranked" | "heat" | "upcoming" | "profile" | "none";
   rows?: number;
   layout?: "home" | "ranked" | "heat" | "upcoming" | "live" | "profile" | "watchlist";
+  children?: ReactNode;
 };
 
 export function RouteLoadingShell({
@@ -22,6 +24,7 @@ export function RouteLoadingShell({
   controls = "none",
   rows = 8,
   layout = "ranked",
+  children,
 }: RouteLoadingShellProps) {
   logNavigationSkeletonShown(route);
   const today = getToday();
@@ -37,7 +40,13 @@ export function RouteLoadingShell({
           {description ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{description}</p> : null}
           <LoadingControls kind={controls} />
         </header>
-        <LoadingRegion title={title} route={route} layout={layout} rows={rows} />
+        {children ? (
+          <section className="grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+            {children}
+          </section>
+        ) : (
+          <LoadingRegion title={title} route={route} layout={layout} rows={rows} />
+        )}
       </div>
     </main>
   );

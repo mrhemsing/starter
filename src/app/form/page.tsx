@@ -624,6 +624,49 @@ function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
   );
 }
 
+export function FormLeaderboardRowSkeleton({ view = "trend", index = 0 }: { view?: HeatCheckView; index?: number }) {
+  const seasonView = view === "season";
+  const treatment = seasonView ? seasonRowTreatment() : rowTreatmentSkeleton(index);
+  const bandColor = seasonView ? "#F6C445" : index % 5 === 0 ? "#FF5A1F" : index % 5 === 1 ? "#FF7A3D" : index % 5 === 3 ? "#8FCBFF" : "#888780";
+
+  return (
+    <article
+      className={`heat-check-row scroll-mt-24 grid items-start gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass}`}
+      style={{ borderLeftColor: bandColor }}
+      data-form-row
+      data-skeleton-row={seasonView ? "heat-season" : "heat-trend"}
+    >
+      <div className="min-w-0">
+        <span className="route-shell-shimmer block h-8 w-10 rounded" />
+        <span className="route-shell-shimmer mt-2 block h-3 w-16 rounded" />
+      </div>
+      <span className={`route-shell-shimmer ml-1 block ${headshotSkeletonSize(treatment.headshotSize)}`} />
+      <div className="grid min-w-0 gap-1">
+        <span className={`route-shell-shimmer block rounded ${seasonView ? "h-6 w-3/5" : "h-7 w-2/3"}`} />
+        <span className="route-shell-shimmer hidden h-3 w-5/6 rounded sm:block" />
+        <span className="route-shell-shimmer block h-3 w-4/5 rounded sm:hidden" />
+        <span className="route-shell-shimmer block h-3 w-3/5 rounded" />
+        <div className="flex flex-wrap gap-1.5">
+          <span className="route-shell-shimmer h-8 w-20 rounded" />
+          <span className="route-shell-shimmer h-8 w-24 rounded" />
+          <span className="route-shell-shimmer h-8 w-16 rounded" />
+        </div>
+      </div>
+      <div className={`col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
+        {seasonView ? null : <span className="route-shell-shimmer hidden h-[54px] rounded sm:block" />}
+        <div className="flex items-start justify-end gap-2">
+          <span className="route-shell-shimmer h-9 w-9 rounded" />
+          <div>
+            <span className="route-shell-shimmer block h-12 w-16 rounded" />
+            <span className="route-shell-shimmer mt-2 block h-3 w-12 rounded" />
+          </div>
+        </div>
+      </div>
+      {seasonView ? null : <span className="route-shell-shimmer col-span-full row-start-2 block h-[54px] rounded sm:hidden" />}
+    </article>
+  );
+}
+
 function FormLeaderboardRow({
   pitcher,
   rank,
@@ -757,6 +800,19 @@ function FormLeaderboardRow({
       {seasonView ? <SeasonDepthMobileDetails pitcher={pitcher} /> : null}
     </article>
   );
+}
+
+function rowTreatmentSkeleton(index: number) {
+  if (index % 5 === 0 || index % 5 === 4) {
+    return { padding: "py-4 sm:py-[18px]", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg" as const, borderClass: "border-white/10" };
+  }
+  return { padding: "py-3 sm:py-3.5", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none" };
+}
+
+function headshotSkeletonSize(size: "xl" | "lg" | "md" | "sm" | "xs") {
+  if (size === "lg") return "h-[65px] w-[52px] sm:h-20 sm:w-16 rounded";
+  if (size === "md") return "h-[55px] w-11 sm:h-[65px] sm:w-[52px] rounded";
+  return "h-[50px] w-10 rounded";
 }
 
 function SeasonDepthInlineStats({ pitcher }: { pitcher: FormSummary }) {

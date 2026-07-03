@@ -354,6 +354,76 @@ function watchCardKind(index: number) {
   return index === 0 ? "headliner" : "row";
 }
 
+export function UpcomingWatchCardSkeleton({ index = 0, headliner = false }: { index?: number; headliner?: boolean }) {
+  if (headliner) {
+    return (
+      <article className="heat-glow-card relative overflow-hidden rounded border border-amber-300/25 bg-[#101014] p-5 lg:p-6" data-responsive-check="must-watch-headliner" data-skeleton-row="upcoming-headliner">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgb(255_122_61/0.12),transparent_32%),radial-gradient(circle_at_82%_12%,rgb(91_168_255/0.12),transparent_30%)]" />
+        <div className="relative">
+          <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 md:flex-row md:items-start">
+            <div>
+              <span className="route-shell-shimmer block h-4 w-28 rounded" />
+              <span className="route-shell-shimmer mt-3 block h-10 w-64 max-w-full rounded" />
+              <span className="route-shell-shimmer mt-3 block h-3 w-80 max-w-full rounded" />
+            </div>
+            <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2">
+              <span className="route-shell-shimmer block h-3 w-24 rounded" />
+              <span className="route-shell-shimmer mt-2 block h-8 w-28 rounded" />
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(230px,0.78fr)_minmax(0,1fr)] lg:items-stretch">
+            <UpcomingStarterPanelSkeleton />
+            <span className="route-shell-shimmer min-h-32 rounded border border-white/10" />
+            <UpcomingStarterPanelSkeleton align="home" />
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className="heat-glow-card relative overflow-hidden rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="must-watch-row" data-skeleton-row="upcoming-row">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(255_122_61/0.08),transparent_35%,transparent_65%,rgb(91_168_255/0.08))]" />
+      <div className="relative grid gap-4 lg:grid-cols-[86px_minmax(0,1fr)] lg:items-start">
+        <div>
+          <span className="route-shell-shimmer block h-9 w-12 rounded" />
+          <span className="route-shell-shimmer mt-2 block h-3 w-16 rounded" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
+            <div>
+              <span className={`route-shell-shimmer block h-6 rounded ${index % 2 === 0 ? "w-48" : "w-40"}`} />
+              <span className="route-shell-shimmer mt-2 block h-3 w-72 max-w-full rounded" />
+            </div>
+            <span className="route-shell-shimmer h-12 w-20 rounded" />
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <UpcomingStarterPanelSkeleton />
+            <UpcomingStarterPanelSkeleton align="home" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function UpcomingStarterPanelSkeleton({ align = "away" }: { align?: "away" | "home" }) {
+  return (
+    <div className={`grid min-w-0 grid-cols-[52px_minmax(0,1fr)] gap-3 rounded border border-white/10 bg-black/20 p-3 ${align === "home" ? "lg:grid-cols-[minmax(0,1fr)_52px]" : ""}`}>
+      {align === "away" ? <span className="route-shell-shimmer h-[65px] w-[52px] rounded" /> : null}
+      <div className={`min-w-0 ${align === "home" ? "lg:text-right" : ""}`}>
+        <span className={`route-shell-shimmer block h-6 rounded ${align === "home" ? "lg:ml-auto" : ""} w-2/3`} />
+        <span className={`route-shell-shimmer mt-2 block h-3 rounded ${align === "home" ? "lg:ml-auto" : ""} w-5/6`} />
+        <div className={`mt-3 flex flex-wrap gap-1.5 ${align === "home" ? "lg:justify-end" : ""}`}>
+          <span className="route-shell-shimmer h-6 w-16 rounded" />
+          <span className="route-shell-shimmer h-6 w-20 rounded" />
+        </div>
+      </div>
+      {align === "home" ? <span className="route-shell-shimmer h-[65px] w-[52px] rounded" /> : null}
+    </div>
+  );
+}
+
 function watchScoreValue(game: TonightGame) {
   return game.gameWatchScore.toFixed(WATCH_SCORE_PRECISION);
 }
