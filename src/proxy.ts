@@ -2,8 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isIsoDateRouteParam, isValidDateRouteParam } from "@/lib/route-date-validation";
 
 export function proxy(request: NextRequest) {
-  if (hasInvalidDateParam(request.nextUrl)) {
-    return new NextResponse(null, { status: 404 });
+  const invalidPathDate = hasInvalidPathDate(request.nextUrl.pathname);
+  if (invalidPathDate || hasInvalidQueryDate(request.nextUrl)) {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      if (!invalidPathDate) return NextResponse.next();
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.rewrite(new URL("/404", request.url), { status: 404 });
   }
   return NextResponse.next();
 }
@@ -26,16 +31,16 @@ export const config = {
   ],
 };
 
-function hasInvalidDateParam(url: URL) {
-  return hasInvalidPathDate(url.pathname) || hasInvalidQueryDate(url);
-}
-
 function hasInvalidPathDate(pathname: string) {
   const segments = pathname.split("/").filter(Boolean);
   const [root, second, third, fourth] = segments;
 
   if (root === "upcoming") {
-    if (second === "week") return isInvalidRequiredDateSegment(third);
+    if (isUpcomingStaticSegment(second)) return false;
+    if (second === "week") {
+      if (isUpcomingStaticSegment(third)) return false;
+      return isInvalidRequiredDateSegment(third);
+    }
     return isInvalidRequiredDateSegment(second);
   }
 
@@ -84,4 +89,14 @@ function isInvalidDateSegment(value: string | undefined) {
 
 function isInvalidRequiredDateSegment(value: string | undefined) {
   return Boolean(value && !isValidDateRouteParam(value));
+}
+
+const UPCOMING_STATIC_SEGMENTS: ReadonlySet<string> = new Set([
+  "opengraph-image",
+  "streamers",
+]);
+
+function isUpcomingStaticSegment(value: string | undefined) {
+  // Reserved named Upcoming views must be listed here before the [date] guard.
+  return Boolean(value && UPCOMING_STATIC_SEGMENTS.has(value));
 }

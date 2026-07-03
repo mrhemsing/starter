@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [packageJson, routes, toggle, streamersService, streamersPage, streamersImage, sitemapRoute, siteNav] = await Promise.all([
+const [packageJson, routes, toggle, streamersService, streamersPage, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
   readFile("package.json", "utf8"),
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/slate-date-nav.tsx", "utf8"),
@@ -15,6 +15,8 @@ const [packageJson, routes, toggle, streamersService, streamersPage, streamersIm
   readFile("src/app/upcoming/streamers/opengraph-image.tsx", "utf8"),
   readFile("src/app/sitemaps/[kind]/route.ts", "utf8"),
   readFile("src/components/site-nav.tsx", "utf8"),
+  readFile("src/proxy.ts", "utf8"),
+  readFile("src/components/not-found-card.tsx", "utf8"),
 ]);
 
 assert(
@@ -25,6 +27,18 @@ assert(
 assert(
   routes.includes("export function upcomingStreamersHref()") && routes.includes('return "/upcoming/streamers";'),
   "routes must expose the crawlable Upcoming streamers path",
+);
+
+assert(
+  proxy.includes("const UPCOMING_STATIC_SEGMENTS") &&
+    proxy.includes('"streamers"') &&
+    proxy.includes("Reserved named Upcoming views must be listed here before the [date] guard.") &&
+    proxy.includes("isUpcomingStaticSegment(second)") &&
+    proxy.includes("isUpcomingStaticSegment(third)") &&
+    proxy.includes("if (!invalidPathDate) return NextResponse.next();") &&
+    proxy.includes('NextResponse.json({ error: "Not found" }') &&
+    proxy.includes('NextResponse.rewrite(new URL("/404", request.url), { status: 404 })'),
+  "proxy must reserve /upcoming/streamers ahead of the dynamic date segment, preserve API JSON 404s, and send invalid dated page paths to the branded 404",
 );
 
 assert(
@@ -134,6 +148,16 @@ assert(
 assert(
   sitemapRoute.includes("upcomingStreamersHref") && sitemapRoute.includes("url(upcomingStreamersHref(), now, \"daily\", 0.8)"),
   "static sitemap must publish only the clean /upcoming/streamers route",
+);
+
+assert(
+  notFoundCard.includes("export function NotFoundCard()") &&
+    notFoundCard.includes('data-responsive-check="not-found-card"') &&
+    notFoundCard.includes("Page not found") &&
+    notFoundCard.includes("Ranked Starts") &&
+    notFoundCard.includes("Upcoming") &&
+    notFoundCard.includes("Home"),
+  "404s must render a branded recovery card instead of a native browser page",
 );
 
 assert(

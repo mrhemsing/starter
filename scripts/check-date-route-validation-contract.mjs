@@ -44,17 +44,26 @@ assert(
 );
 
 assert(
-  proxy.includes("export function proxy(request: NextRequest)") &&
-    proxy.includes("return new NextResponse(null, { status: 404 });") &&
+    proxy.includes("export function proxy(request: NextRequest)") &&
+    proxy.includes('request.nextUrl.pathname.startsWith("/api/")') &&
+    proxy.includes('NextResponse.json({ error: "Not found" }') &&
+    proxy.includes('NextResponse.rewrite(new URL("/404", request.url), { status: 404 })') &&
     proxy.includes('"/upcoming/:path*"') &&
     proxy.includes('"/starts/:path*"') &&
     proxy.includes('"/live/:path*"') &&
     proxy.includes('"/api/upcoming"') &&
-    proxy.includes("hasInvalidPathDate(url.pathname)") &&
-    proxy.includes("hasInvalidQueryDate(url)") &&
+    proxy.includes("const invalidPathDate = hasInvalidPathDate(request.nextUrl.pathname);") &&
+    proxy.includes("hasInvalidQueryDate(request.nextUrl)") &&
+    proxy.includes("if (!invalidPathDate) return NextResponse.next();") &&
+    proxy.includes("const UPCOMING_STATIC_SEGMENTS") &&
+    proxy.includes('"opengraph-image"') &&
+    proxy.includes('"streamers"') &&
+    proxy.includes("Reserved named Upcoming views must be listed here before the [date] guard.") &&
+    proxy.includes("isUpcomingStaticSegment(second)") &&
+    proxy.includes("isUpcomingStaticSegment(third)") &&
     proxy.includes("isIsoDateRouteParam(value)") &&
     proxy.includes("!isValidDateRouteParam(value)"),
-  "proxy must hard-404 invalid dated paths and query dates before route modules run",
+  "proxy must hard-404 invalid dated paths before data routes run, preserving API JSON 404s while sending page paths through the branded 404 surface and allowing reserved static Upcoming subroutes through",
 );
 
 assert(
