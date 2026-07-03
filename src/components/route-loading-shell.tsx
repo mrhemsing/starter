@@ -8,6 +8,7 @@ type RouteLoadingShellProps = {
   active: NavKey | null;
   title: string;
   description?: ReactNode;
+  descriptionClassName?: string;
   eyebrow?: string;
   controls?: "ranked" | "heat" | "upcoming" | "profile" | "none";
   rows?: number;
@@ -21,6 +22,7 @@ export function RouteLoadingShell({
   active,
   title,
   description,
+  descriptionClassName = "mt-3 max-w-2xl text-sm leading-6 text-zinc-400",
   eyebrow,
   controls = "none",
   rows = 8,
@@ -39,7 +41,7 @@ export function RouteLoadingShell({
         <header className="mb-4">
           {eyebrow ? <p className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p> : null}
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">{title}</h1>
-          {description ? <div className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{description}</div> : null}
+          {description ? <div className={descriptionClassName}>{description}</div> : null}
           <LoadingControls kind={controls} />
         </header>
         {children && childrenMode === "content" ? (
@@ -100,7 +102,7 @@ function LoadingControls({ kind }: { kind: RouteLoadingShellProps["controls"] })
   if (kind === "none") return null;
   const controlCounts = kind === "profile" ? [3, 2] : kind === "ranked" ? [2, 3, 3] : [3, 4];
   return (
-    <div className="mt-5 grid gap-3 rounded border border-white/10 bg-[#101014]/95 p-4" data-navigation-shell-controls={kind}>
+    <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014]/95 p-4" data-navigation-shell-controls={kind}>
       {controlCounts.map((count, groupIndex) => (
         <div key={groupIndex} className="flex flex-wrap gap-2">
           {Array.from({ length: count }).map((_, index) => (

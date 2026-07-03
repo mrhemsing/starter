@@ -43,6 +43,8 @@ const upcomingIndexPage = await read("src/app/upcoming/page.tsx");
 const startsPage = await read("src/app/starts/[id]/page.tsx");
 const appLayout = await read("src/app/layout.tsx");
 const loadingPolicy = await read("docs/loading-state-policy.md");
+const routeLoadingShell = await read("src/components/route-loading-shell.tsx");
+const rankedStartsLoading = await read("src/app/starts/[id]/loading.tsx");
 
 assert(
   tonightService.includes('import { unstable_cache } from "next/cache";') &&
@@ -260,9 +262,25 @@ assert(
     loadingPolicy.includes("Navigation paints within 100 ms") &&
     loadingPolicy.includes("cached content is preferred") &&
     loadingPolicy.includes("destination shell plus scoped skeleton data regions") &&
+    loadingPolicy.includes("Shell elements render exactly once outside the streamed/skeleton data boundary") &&
+    loadingPolicy.includes("fallback and content for a swappable data region share the same root wrapper class") &&
     loadingPolicy.includes("Frozen screens, blocking overlays, blurred previous pages, and full-page dimming are forbidden") &&
+    loadingPolicy.includes("Scoped route-control pending is allowed only inside affected data regions") &&
     loadingPolicy.includes("[navigation-skeleton]"),
-  "navigation must keep shell-first route skeletons with per-route logging while avoiding overlays, dimming, and route-pending event loaders",
+  "navigation must keep shell-first route skeletons with stable shell/data boundaries, per-route logging, and no blocking overlays",
+);
+
+assert(
+  routeLoadingShell.includes("descriptionClassName?: string;") &&
+    routeLoadingShell.includes('descriptionClassName = "mt-3 max-w-2xl text-sm leading-6 text-zinc-400"') &&
+    routeLoadingShell.includes("<div className={descriptionClassName}>{description}</div>") &&
+    routeLoadingShell.includes('className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014]/95 p-4"') &&
+    rankedStartsLoading.includes('descriptionClassName="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400"') &&
+    rankedStartsLoading.includes('childrenMode="content"') &&
+    rankedStartsLoading.includes('className="space-y-4"') &&
+    rankedStartsLoading.includes('data-responsive-check="ranked-starts-recap"') &&
+    rankedStartsLoading.includes('data-navigation-skeleton-route="ranked-starts"'),
+  "Ranked Starts loading shell must match loaded subtitle spacing and use the same recap-region root wrapper to prevent shell movement",
 );
 
 assert(
