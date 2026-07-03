@@ -7,6 +7,7 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { HeatCheckClientTeamFilter } from "@/components/heat-check-client-team-filter";
 import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
@@ -18,6 +19,7 @@ import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
 import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
+import { PendingRegion } from "@/components/route-control-pending";
 import { SiteHeader } from "@/components/site-header";
 import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
@@ -209,6 +211,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
   const throughPrefix = seasonView ? "Season through" : "Form through";
   const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
+  const clientTeamFilterEnabled = !team && !query && !band && !motion;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -216,6 +219,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
       <HeatCheckScrollReset />
       <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
+      <HeatCheckClientTeamFilter enabled={clientTeamFilterEnabled} />
       <div className="mx-auto max-w-7xl">
         <header>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
@@ -321,20 +325,21 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
             </p>
           </section>
         ) : (
-          <div id="full-board" className="grid gap-4 scroll-mt-8" data-responsive-check="form-leaderboard">
+          <PendingRegion region="heat-check-board" className="grid gap-4 scroll-mt-8">
+            <div id="full-board" data-responsive-check="form-leaderboard" data-heat-client-team-board={clientTeamFilterEnabled ? "true" : undefined} data-heat-client-team-active="false">
             {trendView && leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}
             <section className="grid gap-2">
               {seasonView ? (
                 <>
-                  {seasonVisiblePitchers.map((pitcher) => (
-                    <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={seasonRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" />
+                  {seasonQualifiedPitchers.map((pitcher, index) => (
+                    <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={seasonRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} view="season" overflowHidden={!team && index >= seasonVisiblePitchers.length} />
                   ))}
                   <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonQualifiedPitchers.length} params={params} team={team} />
                   <SeasonQualificationDisclosure pitchers={seasonUnrankedPitchers} threshold={leaderboard.seasonQualificationThreshold} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} sort={sort} params={params} />
                 </>
               ) : showBandHeaders ? (
                 groupedBoard.map((group) => (
-                  <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2">
+                  <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2" data-heat-band-section={group.band.key}>
                     <BandHeader band={group.band} count={group.pitchers.length} />
                     {group.band.key === "even" && !evenExpanded ? (
                       <EvenBandCollapsed count={group.pitchers.length} href={heatCheckHref({ ...params, even: "show" })} />
@@ -343,8 +348,8 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                         {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
                         {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
                         {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
-                        {visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).map((pitcher, index) => (
-                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
+                        {group.pitchers.map((pitcher, index) => (
+                          <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} overflowHidden={!visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).includes(pitcher)} />
                         ))}
                       </>
                     )}
@@ -356,7 +361,8 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                 ))
               )}
             </section>
-          </div>
+            </div>
+          </PendingRegion>
         )}
       </div>
     </main>
@@ -730,6 +736,7 @@ function FormLeaderboardRow({
   view,
   startContext,
   unranked = false,
+  overflowHidden = false,
 }: {
   pitcher: FormSummary;
   rank: number;
@@ -740,6 +747,7 @@ function FormLeaderboardRow({
   view: HeatCheckView;
   startContext?: Map<string, TodayStartContext>;
   unranked?: boolean;
+  overflowHidden?: boolean;
 }) {
   const seasonView = view === "season";
   const qualityTier = qualityTierOf(pitcher.bgs);
@@ -765,6 +773,8 @@ function FormLeaderboardRow({
       className={`heat-check-row scroll-mt-24 grid items-start gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${unranked ? "opacity-70" : treatment.opacity} ${isPoleTier(pitcher) && fullWindow && !unranked ? "heat-glow-card" : ""}`}
       style={{ ...(isPoleTier(pitcher) && fullWindow && !unranked ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
+      data-heat-team={pitcher.team}
+      data-heat-overflow-hidden={overflowHidden ? "true" : undefined}
       data-heat-band={pitcher.tier}
       data-season-unranked={unranked ? "true" : undefined}
     >

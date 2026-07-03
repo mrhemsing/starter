@@ -214,8 +214,9 @@ assert(
     fastFilterLink.includes("usePathname") &&
     fastFilterLink.includes("useSearchParams") &&
     fastFilterLink.includes("const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : \"\"}`;") &&
-    fastFilterLink.includes("pendingIntent?.href === href && pendingIntent.from === currentHref") &&
-    fastFilterLink.includes("setPendingIntent({ href, from: currentHref })") &&
+    fastFilterLink.includes('import { useRouteControlPending } from "@/components/route-control-pending";') &&
+    fastFilterLink.includes("const { pending, beginPending } = useRouteControlPending") &&
+    fastFilterLink.includes("onClick={() => beginPending()}") &&
     fastFilterLink.includes('pending ? " opacity-70" : ""') &&
     fastFilterLink.includes("scroll?: boolean;") &&
     fastFilterLink.includes("scroll = true") &&

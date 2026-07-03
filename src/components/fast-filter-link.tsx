@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useRouteControlPending } from "@/components/route-control-pending";
 
 type FastFilterLinkProps = {
   href: string;
@@ -16,6 +17,7 @@ type FastFilterLinkProps = {
   scroll?: boolean;
   "data-control-link-active"?: string;
   "data-control-link-key"?: string;
+  pendingRegion?: string;
 };
 
 export function FastFilterLink({
@@ -29,14 +31,14 @@ export function FastFilterLink({
   scroll = true,
   "data-control-link-active": dataControlLinkActive,
   "data-control-link-key": dataControlLinkKey,
+  pendingRegion = "route-data",
 }: FastFilterLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentSearch = searchParams.toString();
   const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;
-  const [pendingIntent, setPendingIntent] = useState<{ href: string; from: string } | null>(null);
-  const pending = pendingIntent?.href === href && pendingIntent.from === currentHref;
+  const { pending, beginPending } = useRouteControlPending({ href, currentHref, active: Boolean(ariaCurrent), region: pendingRegion });
 
   useEffect(() => {
     if (prefetch) router.prefetch(href);
@@ -61,11 +63,7 @@ export function FastFilterLink({
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}
-      onClick={() => {
-        if (href !== currentHref) {
-          setPendingIntent({ href, from: currentHref });
-        }
-      }}
+      onClick={() => beginPending()}
     >
       {children}
     </Link>
