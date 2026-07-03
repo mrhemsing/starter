@@ -1,4 +1,5 @@
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
+import { readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";
 import type { ArchivedPitcherRecentArsenal, ArsenalPitchSummary, FeaturedStartHighlight, PitchEvent, StartLine, TeamSummary } from "@/lib/types";
 
 type SupabaseCompletedStartRow = {
@@ -81,7 +82,16 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
   };
 
   if (!configured) {
-    return { configured, env, starts: 0, firstDate: null, lastDate: null, error: null };
+    return {
+      configured,
+      env,
+      starts: 0,
+      firstDate: null,
+      lastDate: null,
+      freshness: archiveFreshness(null, options.expectedLastCompletedDate),
+      settledSlateGap: archiveSettledSlateGap(null, null),
+      error: null,
+    };
   }
 
   try {
@@ -91,12 +101,22 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
     const lastDate = manifest?.end_date ?? starts.at(-1)?.date ?? null;
     const startCount = manifest?.counts?.starts ?? starts.length;
     const freshness = archiveFreshness(lastDate, options.expectedLastCompletedDate);
+    const completeSlateDates = await readCompleteCanonicalSlateStateDates(season);
+    const latestCompleteSlateDate = latestCanonicalCompleteSlateDate(completeSlateDates, options.expectedLastCompletedDate);
+    const settledSlateGap = archiveSettledSlateGap(lastDate, latestCompleteSlateDate);
     if (freshness.stale) {
       console.error("[supabase-archive] archive freshness lag exceeds threshold", {
         expectedLastCompletedDate: freshness.expectedLastCompletedDate,
         lastDate,
         lagDays: freshness.lagDays,
         maxLagDays: ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
+      });
+    }
+    if (settledSlateGap.stale) {
+      console.error("[supabase-archive] archive trails canonical complete slate", {
+        latestCompleteSlateDate: settledSlateGap.latestCompleteSlateDate,
+        lastDate,
+        lagDays: settledSlateGap.lagDays,
       });
     }
 
@@ -107,6 +127,7 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
       firstDate,
       lastDate,
       freshness,
+      settledSlateGap,
       error: null,
     };
   } catch (error) {
@@ -117,6 +138,7 @@ export async function getSupabaseArchiveStatus(season: string, options: Supabase
       firstDate: null,
       lastDate: null,
       freshness: archiveFreshness(null, options.expectedLastCompletedDate),
+      settledSlateGap: archiveSettledSlateGap(null, null),
       error: error instanceof Error ? error.message : "Unknown Supabase archive error",
     };
   }
@@ -290,6 +312,21 @@ function archiveFreshness(lastDate: string | null, expectedLastCompletedDate: st
     lagDays,
     maxLagDays: ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
     stale: typeof lagDays === "number" && lagDays > ARCHIVE_FRESHNESS_MAX_LAG_DAYS,
+  };
+}
+
+function latestCanonicalCompleteSlateDate(dates: string[], expectedLastCompletedDate: string | undefined) {
+  const eligibleDates = expectedLastCompletedDate ? dates.filter((date) => date <= expectedLastCompletedDate) : dates;
+  return eligibleDates.at(-1) ?? null;
+}
+
+function archiveSettledSlateGap(lastDate: string | null, latestCompleteSlateDate: string | null) {
+  const lagDays = lastDate && latestCompleteSlateDate ? Math.max(0, daysBetween(lastDate, latestCompleteSlateDate)) : null;
+
+  return {
+    latestCompleteSlateDate,
+    lagDays,
+    stale: typeof lagDays === "number" && lagDays > 0,
   };
 }
 

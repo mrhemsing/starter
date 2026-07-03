@@ -200,12 +200,18 @@ assert(
 
 assert(
   startService.includes("export async function getRankedStartsArchiveNavigation") &&
-    startService.includes("const getCachedRankedArchivedCompletedSlateDates = unstable_cache(") &&
+    canonicalStore.includes("export async function readCompleteCanonicalSlateStateDates") &&
+    canonicalStore.includes('const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";') &&
+    canonicalStore.includes('url.searchParams.set("state", "eq.complete");') &&
+    canonicalStore.includes("row.counts.finalStarts >= row.counts.totalStarts") &&
+    startService.includes('readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";') &&
+    startService.includes("const getCachedRankedCompletedSlateDates = unstable_cache(") &&
     startService.includes('import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates,') &&
-    startService.includes('["ranked-starts-archive-dates-v3"]') &&
+    startService.includes('["ranked-starts-complete-slate-state-dates-v1"]') &&
     startService.includes("{ revalidate: 15 * 60 }") &&
-    startService.includes("const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== \"fixture\").map((start) => start.date))).sort();") &&
-    startService.includes("if (archivedDates.length > 0) return archivedDates;") &&
+    startService.includes("const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);") &&
+    startService.includes("if (canonicalCompleteDates.length > 0) return canonicalCompleteDates;") &&
+    !startService.includes("const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== \"fixture\").map((start) => start.date))).sort();") &&
     startService.includes("return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });") &&
     mlbStatsClient.includes("export async function fetchMlbCompletedScheduleDates") &&
     mlbStatsClient.includes("startDate,") &&

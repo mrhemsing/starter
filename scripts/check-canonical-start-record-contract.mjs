@@ -227,7 +227,7 @@ assert(
 
 assert(
   startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
-    startService.includes('import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";') &&
+    startService.includes("canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords") &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
     startService.includes("persistCanonical?: boolean;") &&

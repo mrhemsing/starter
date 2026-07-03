@@ -98,6 +98,46 @@ export async function readCanonicalStartRecords(date: string): Promise<Canonical
   return (await readCanonicalStartStore(date)).records;
 }
 
+export async function readCompleteCanonicalSlateStateDates(season: string): Promise<string[]> {
+  if (!/^\d{4}$/.test(season)) throw new Error("invalid canonical slate state season");
+
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) {
+    failOrBypassMissingDurableCanonicalStore("read");
+    return [];
+  }
+
+  const url = new URL(`/rest/v1/${CANONICAL_SLATE_STATES_TABLE}`, baseUrl);
+  url.searchParams.set("select", "date,state,counts,updated_at");
+  url.searchParams.set("date", `gte.${season}-01-01`);
+  url.searchParams.append("date", `lte.${season}-12-31`);
+  url.searchParams.set("state", "eq.complete");
+  url.searchParams.set("order", "date.asc");
+
+  try {
+    const response = await timedCanonicalStoreFetch("canonical-slate-states.complete-dates", url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey),
+      cache: "no-store",
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
+    if (!response.ok) {
+      const message = `${CANONICAL_SLATE_STATES_TABLE} complete-date read failed with HTTP ${response.status}: ${await response.text()}`;
+      console.warn(message);
+      return [];
+    }
+
+    const rows = await response.json() as CanonicalSlateStateRow[];
+    recordCanonicalStoreRead(rows.length);
+    return rows
+      .filter((row) => row.state === "complete" && row.counts.finalStarts >= row.counts.totalStarts && row.counts.totalStarts > 0)
+      .map((row) => row.date)
+      .sort();
+  } catch (error) {
+    console.warn("canonical slate state complete-date read failed", { season, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
 export async function withCanonicalStoreDiagnostics<T>(operation: () => Promise<T>): Promise<{ result: T; diagnostics: CanonicalStoreDiagnostics }> {
   const diagnostics: CanonicalStoreDiagnostics = {
     reads: 0,

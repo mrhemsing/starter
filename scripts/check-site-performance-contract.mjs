@@ -165,19 +165,39 @@ assert(
     supabaseArchive.includes('const ARCHIVE_MANIFESTS_TABLE = "toetheslab_mlb_archive_manifests";') &&
     supabaseArchive.includes("const manifest = await readSupabaseArchiveManifest(season);") &&
     supabaseArchive.includes("const starts = manifest ? [] : await readSupabaseArchivedSeasonCompletedStarts(season);") &&
+    supabaseArchive.includes('import { readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";') &&
     supabaseArchive.includes('select: "season,start_date,end_date,counts,synced_at"') &&
     supabaseArchive.includes('url.searchParams.set("select", String(filters.select ?? "*"));') &&
     supabaseArchive.includes("expectedLastCompletedDate?: string;") &&
     supabaseArchive.includes("archiveFreshness(lastDate, options.expectedLastCompletedDate)") &&
+    supabaseArchive.includes("const completeSlateDates = await readCompleteCanonicalSlateStateDates(season);") &&
+    supabaseArchive.includes("const settledSlateGap = archiveSettledSlateGap(lastDate, latestCompleteSlateDate);") &&
     supabaseArchive.includes("[supabase-archive] archive freshness lag exceeds threshold") &&
+    supabaseArchive.includes("[supabase-archive] archive trails canonical complete slate") &&
     supabaseArchive.includes("lagDays > ARCHIVE_FRESHNESS_MAX_LAG_DAYS") &&
+    supabaseArchive.includes("stale: typeof lagDays === \"number\" && lagDays > 0") &&
     archiveStatusRoute.includes("const expectedLastCompletedDate = addDays(defaultDate, -1);") &&
     archiveStatusRoute.includes("getSupabaseArchiveStatus(season, { expectedLastCompletedDate })") &&
     archiveStatusRoute.includes("expectedLastCompletedDate,") &&
     renderPathAudit.includes("idlePagePaths") &&
     renderPathAudit.includes("directUpstreamImports") &&
     packageJson.includes('"check:render-path-audit": "node scripts/check-render-path-audit.mjs"'),
-  "Supabase archive status must expose and error-log freshness lag when completed-start archive is more than two days behind",
+  "Supabase archive status must expose freshness lag and any complete-slate archive gap",
+);
+
+const seededMissingYesterdayArchiveGap = {
+  archiveLastDate: "2026-07-01",
+  latestCanonicalCompleteSlateDate: "2026-07-02",
+  lagDays: 1,
+};
+
+assert(
+  seededMissingYesterdayArchiveGap.archiveLastDate < seededMissingYesterdayArchiveGap.latestCanonicalCompleteSlateDate &&
+    seededMissingYesterdayArchiveGap.lagDays > 0 &&
+    supabaseArchive.includes("function archiveSettledSlateGap(lastDate: string | null, latestCompleteSlateDate: string | null)") &&
+    supabaseArchive.includes("stale: typeof lagDays === \"number\" && lagDays > 0") &&
+    supabaseArchive.includes("[supabase-archive] archive trails canonical complete slate"),
+  "Seeded missing-yesterday archive gap must trip the complete-slate gap alarm",
 );
 
 assert(

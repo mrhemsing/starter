@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
-import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
+import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords, readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";
 import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
@@ -226,15 +226,14 @@ export async function getRankedStartsArchiveNavigation(activeDate: string, today
   };
 }
 
-const getCachedRankedArchivedCompletedSlateDates = unstable_cache(
+const getCachedRankedCompletedSlateDates = unstable_cache(
   async (season: string) => {
-    const starts = await getArchivedSeasonStartSummaries(season);
-    const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== "fixture").map((start) => start.date))).sort();
-    if (archivedDates.length > 0) return archivedDates;
+    const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);
+    if (canonicalCompleteDates.length > 0) return canonicalCompleteDates;
 
     return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });
   },
-  ["ranked-starts-archive-dates-v3"],
+  ["ranked-starts-complete-slate-state-dates-v1"],
   { revalidate: 15 * 60 },
 );
 
@@ -281,7 +280,7 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = ne
 async function getRankedStartsCompletedSlateDates(activeDate: string, today: string) {
   const seasons = Array.from(new Set([activeDate.slice(0, 4), today.slice(0, 4)]));
   const [seasonDates, todayCompletion, activeCompletion] = await Promise.all([
-    Promise.all(seasons.map((season) => getCachedRankedArchivedCompletedSlateDates(season))),
+    Promise.all(seasons.map((season) => getCachedRankedCompletedSlateDates(season))),
     getRankedSlateCompletionState(today, today),
     activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today),
   ]);
