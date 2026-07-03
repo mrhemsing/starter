@@ -23,7 +23,7 @@ import { getHomeSlateDate, getStartDetail, summarizeSlateScoreScale } from "@/li
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
-import { entitySourceHref, entitySources, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
+import { entitySourceHref, entitySources, liveDateHref, parseEntitySource, pitcherHref, rankedStartsPath, sourceParams, startHref, startPath, startShareImagePath, upcomingDateHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -217,6 +217,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
       return a.rank - b.rank;
     });
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
+  const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
+  const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -226,16 +228,16 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <SiteHeader active="starts" today={today} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
           <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
-          {starts.length > 0 ? (
-            <section className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <RankedStartsArchiveNav
-                  activeDate={archiveNavigation.activeDate}
-                  previousDate={archiveNavigation.previousDate}
-                  nextDate={archiveNavigation.nextDate}
-                />
-                <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
-              </div>
+          <section className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <RankedStartsArchiveNav
+                activeDate={archiveNavigation.activeDate}
+                previousDate={archiveNavigation.previousDate}
+                nextDate={archiveNavigation.nextDate}
+              />
+              <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
+            </div>
+            {starts.length > 0 ? (
               <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]" data-responsive-check="ranked-start-controls">
                 <div className="flex min-w-0 gap-2" data-active-filter-summary={filterSummary}>
                   <RankedStartsDisclosure storageKey="ranked-starts-filters-open" label="Filters" meta={filterSummary} className="min-w-0 flex-1" panelClassName="grid gap-3 font-mono text-xs uppercase tracking-[0.14em]">
@@ -278,14 +280,26 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   </div>
                 </RankedStartsDisclosure>
               </div>
-            </section>
-          ) : null}
+            ) : null}
+          </section>
         </header>
 
         {starts.length === 0 ? (
-          <section className="rounded border border-white/10 bg-[#101014] p-6">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">No completed starts ready</p>
-            <p className="mt-3 text-sm text-zinc-400">Final gamefeed data has not settled for this date yet.</p>
+          <section className="rounded border border-white/10 bg-[#101014] p-6" role="status" data-responsive-check="ranked-starts-empty-state">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Ranked starts</p>
+            <p className="mt-3 text-sm text-zinc-400">{emptyRankedStartsCopy(completionState)}</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {previousRankedDate ? (
+                <CtaArrow href={rankedStartsPath(previousRankedDate)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+                  View yesterday&apos;s ranked starts
+                </CtaArrow>
+              ) : null}
+              {showLiveEmptyCta ? (
+                <CtaArrow href={liveDateHref(date)} tone="orange" className="bg-orange-300/10 hover:bg-orange-300 hover:text-zinc-950">
+                  Follow today live
+                </CtaArrow>
+              ) : null}
+            </div>
           </section>
         ) : (
           <>
@@ -1209,6 +1223,11 @@ function inProgressStartsLabel(state: { completedStarts: number; liveStarts: num
   const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);
   const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";
   return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;
+}
+
+function emptyRankedStartsCopy(state: { liveStarts: number }) {
+  if (state.liveStarts > 0) return `No starts have gone final yet. ${state.liveStarts} in progress now.`;
+  return "No starts have gone final yet today.";
 }
 
 function formatRankedFirstPitch(value: string | null) {

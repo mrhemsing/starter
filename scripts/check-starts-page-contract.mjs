@@ -467,6 +467,34 @@ assert(
   "ranked starts live status fixture must partition final, in-progress, and upcoming starts",
 );
 
+const rankedPregameNothingThrownFixture = { liveStarts: 0, completedStarts: 0 };
+const rankedFirstPitchThrownFixture = { liveStarts: 2, completedStarts: 0 };
+assert(
+  (rankedPregameNothingThrownFixture.liveStarts > 0 || rankedPregameNothingThrownFixture.completedStarts > 0) === false &&
+    (rankedFirstPitchThrownFixture.liveStarts > 0 || rankedFirstPitchThrownFixture.completedStarts > 0) === true &&
+    startService.includes("return state.liveStarts > 0 || state.completedStarts > 0;"),
+  "ranked starts resolver fixtures must keep pregame zero-thrown on yesterday and first-pitch/live slates on today",
+);
+
+assert(
+  startsPage.includes('data-responsive-check="ranked-starts-empty-state"') &&
+    startsPage.includes("<RankedStartsArchiveNav") &&
+    startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{starts.length > 0 ? (") &&
+    startsPage.includes("<RankedSlateStatus state={completionState} slateProgress={slateProgress} />") &&
+    startsPage.indexOf("<RankedSlateStatus state={completionState} slateProgress={slateProgress} />") < startsPage.indexOf("{starts.length > 0 ? (") &&
+    startsPage.includes("const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);") &&
+    startsPage.includes("const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;") &&
+    startsPage.includes("function emptyRankedStartsCopy(state: { liveStarts: number })") &&
+    startsPage.includes('return `No starts have gone final yet. ${state.liveStarts} in progress now.`;') &&
+    startsPage.includes('return "No starts have gone final yet today.";') &&
+    startsPage.includes("View yesterday&apos;s ranked starts") &&
+    startsPage.includes("Follow today live") &&
+    startsPage.includes("liveDateHref(date)") &&
+    !startsPage.includes("Final gamefeed data has not settled for this date yet.") &&
+    !startsPage.includes("No completed starts ready"),
+  "ranked starts empty state must keep shell navigation/status visible, use helpful CTAs, and avoid pipeline vocabulary",
+);
+
 assert(
   startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
     startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
