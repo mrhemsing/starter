@@ -290,8 +290,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             <p className="mt-3 text-sm text-zinc-400">{emptyRankedStartsCopy(completionState)}</p>
             <div className="mt-5 flex flex-wrap gap-3">
               {previousRankedDate ? (
-                <CtaArrow href={rankedStartsPath(previousRankedDate)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
-                  View yesterday&apos;s ranked starts
+                <CtaArrow href={rankedStartsPath(previousRankedDate)} direction="back" tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+                  Yesterday&apos;s slate
                 </CtaArrow>
               ) : null}
               {showLiveEmptyCta ? (

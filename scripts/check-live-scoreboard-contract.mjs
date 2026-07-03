@@ -314,10 +314,16 @@ assert(
 assert(
   ctaArrow.includes('export function CtaArrow') &&
     ctaArrow.includes('data-cta-arrow') &&
+    ctaArrow.includes('direction?: "back" | "forward";') &&
+    ctaArrow.includes('data-cta-arrow-direction={direction}') &&
     ctaArrow.includes('data-cta-arrow-tail') &&
+    ctaArrow.includes('data-cta-arrow-tail-direction={direction}') &&
     ctaArrow.includes('aria-hidden="true"') &&
     ctaArrow.includes('data-cta-arrow-shaft') &&
+    ctaArrow.includes('isBack ? "flex-row-reverse" : ""') &&
     ctaArrow.includes('group-hover/cta:w-10') &&
+    ctaArrow.includes("whitespace-nowrap") &&
+    !ctaArrow.includes("truncate") &&
     ctaArrow.includes('border-[#FF9A62]/50 text-[#FF9A62] hover:border-[#FF9A62]') &&
     ctaArrow.includes('border-[#F6C445]/50 text-[#F6C445] hover:border-[#F6C445]'),
   "shared CTA arrow must render a drawn tail that is hidden from assistive tech and uses site accent tones",

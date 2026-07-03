@@ -31,6 +31,7 @@ const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-arc
 const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
+const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
 const packageJson = await readFile("package.json", "utf8");
@@ -504,9 +505,17 @@ assert(
     startsPage.includes("function emptyRankedStartsCopy(state: { liveStarts: number })") &&
     startsPage.includes('return `No starts have gone final yet. ${state.liveStarts} in progress now.`;') &&
     startsPage.includes('return "No starts have gone final yet today.";') &&
-    startsPage.includes("View yesterday&apos;s ranked starts") &&
+    startsPage.includes('direction="back"') &&
+    startsPage.includes("Yesterday&apos;s slate") &&
     startsPage.includes("Follow today live") &&
     startsPage.includes("liveDateHref(date)") &&
+    ctaArrow.includes('direction?: "back" | "forward";') &&
+    ctaArrow.includes('data-cta-arrow-direction={direction}') &&
+    ctaArrow.includes('direction="back"') &&
+    ctaArrow.includes('data-cta-arrow-tail-direction={direction}') &&
+    ctaArrow.includes('isBack ? "flex-row-reverse" : ""') &&
+    ctaArrow.includes("whitespace-nowrap") &&
+    !ctaArrow.includes("truncate") &&
     !startsPage.includes("Final gamefeed data has not settled for this date yet.") &&
     !startsPage.includes("No completed starts ready"),
   "ranked starts empty state must keep shell navigation/status visible, use helpful CTAs, and avoid pipeline vocabulary",
