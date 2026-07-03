@@ -10,7 +10,7 @@ type RouteLoadingShellProps = {
   eyebrow?: string;
   controls?: "ranked" | "heat" | "upcoming" | "profile" | "none";
   rows?: number;
-  rowStyle?: "cards" | "table" | "profile";
+  layout?: "home" | "ranked" | "heat" | "upcoming" | "live" | "profile" | "watchlist";
 };
 
 export function RouteLoadingShell({
@@ -21,7 +21,7 @@ export function RouteLoadingShell({
   eyebrow,
   controls = "none",
   rows = 8,
-  rowStyle = "cards",
+  layout = "ranked",
 }: RouteLoadingShellProps) {
   logNavigationSkeletonShown(route);
   const today = getToday();
@@ -37,11 +37,7 @@ export function RouteLoadingShell({
           {description ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{description}</p> : null}
           <LoadingControls kind={controls} />
         </header>
-        <section className="grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route}>
-          {Array.from({ length: rows }).map((_, index) => (
-            <SkeletonRow key={index} index={index} style={rowStyle} />
-          ))}
-        </section>
+        <LoadingRegion title={title} route={route} layout={layout} rows={rows} />
       </div>
     </main>
   );
@@ -95,7 +91,7 @@ function LoadingControls({ kind }: { kind: RouteLoadingShellProps["controls"] })
       {controlCounts.map((count, groupIndex) => (
         <div key={groupIndex} className="flex flex-wrap gap-2">
           {Array.from({ length: count }).map((_, index) => (
-            <span key={index} className="h-10 w-24 animate-pulse rounded border border-white/10 bg-white/[0.06]" />
+            <span key={index} className="route-shell-shimmer h-10 w-24 rounded border border-white/10" />
           ))}
         </div>
       ))}
@@ -103,39 +99,185 @@ function LoadingControls({ kind }: { kind: RouteLoadingShellProps["controls"] })
   );
 }
 
-function SkeletonRow({ index, style }: { index: number; style: NonNullable<RouteLoadingShellProps["rowStyle"]> }) {
-  if (style === "profile") {
+function LoadingRegion({ title, route, layout, rows }: { title: string; route: string; layout: NonNullable<RouteLoadingShellProps["layout"]>; rows: number }) {
+  if (layout === "home") {
     return (
-      <div className="grid gap-4 rounded border border-white/10 bg-[#101014] p-4 sm:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="space-y-3">
-          <span className="block h-4 w-2/3 animate-pulse rounded bg-white/[0.08]" />
-          <span className="block h-3 w-full animate-pulse rounded bg-white/[0.06]" />
-          <span className="block h-3 w-5/6 animate-pulse rounded bg-white/[0.06]" />
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+        <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-[82px_minmax(0,1fr)_90px] sm:items-center">
+            <span className="route-shell-shimmer h-[104px] w-[78px] rounded" />
+            <div className="space-y-3">
+              <span className="route-shell-shimmer block h-7 w-2/3 rounded" />
+              <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+              <span className="route-shell-shimmer block h-3 w-3/4 rounded" />
+            </div>
+            <span className="route-shell-shimmer h-16 rounded" />
+          </div>
         </div>
-        <span className="block h-24 animate-pulse rounded bg-white/[0.06]" />
-      </div>
+        <div className="grid gap-3">
+          {Array.from({ length: 3 }).map((_, index) => <CompactCard key={index} index={index} />)}
+        </div>
+      </section>
     );
   }
 
-  if (style === "table") {
+  if (layout === "heat") {
     return (
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_96px] items-center gap-3 border-b border-white/10 py-3">
-        <span className="h-8 w-8 animate-pulse rounded bg-white/[0.08]" />
-        <span className={`h-4 animate-pulse rounded bg-white/[0.06] ${index % 3 === 0 ? "w-2/3" : "w-5/6"}`} />
-        <span className="h-8 animate-pulse rounded bg-white/[0.08]" />
-      </div>
+      <section className="grid gap-2" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+        {Array.from({ length: rows }).map((_, index) => <HeatRow key={index} index={index} />)}
+      </section>
+    );
+  }
+
+  if (layout === "upcoming") {
+    return (
+      <section className="grid gap-4 lg:grid-cols-2" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+        {Array.from({ length: rows }).map((_, index) => <UpcomingCard key={index} index={index} />)}
+      </section>
+    );
+  }
+
+  if (layout === "live") {
+    return (
+      <section className="grid gap-5" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+        <div className="rounded border border-[#FF7A3D]/30 bg-[#FF7A3D]/[0.06] p-4">
+          <span className="route-shell-shimmer block h-8 w-44 rounded" />
+          <span className="route-shell-shimmer mt-3 block h-3 w-full rounded" />
+        </div>
+        <div className="grid gap-2">
+          {Array.from({ length: rows }).map((_, index) => <LiveRow key={index} index={index} />)}
+        </div>
+      </section>
+    );
+  }
+
+  if (layout === "profile" || layout === "watchlist") {
+    return (
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+        <div className="grid gap-4">
+          <ProfilePanel large />
+          {Array.from({ length: rows }).map((_, index) => <ProfilePanel key={index} />)}
+        </div>
+        <aside className="grid h-fit gap-4">
+          <ProfilePanel />
+          <ProfilePanel />
+        </aside>
+      </section>
     );
   }
 
   return (
-    <div className="grid grid-cols-[48px_52px_minmax(0,1fr)_70px] items-center gap-4 rounded border border-white/10 bg-[#101014] p-4">
-      <span className="h-8 w-8 animate-pulse rounded bg-white/[0.08]" />
-      <span className="h-14 w-11 animate-pulse rounded bg-white/[0.08]" />
+    <section className="grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+      {Array.from({ length: rows }).map((_, index) => <RankedRow key={index} index={index} />)}
+    </section>
+  );
+}
+
+function CompactCard({ index }: { index: number }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-4">
+      <span className={`route-shell-shimmer block h-5 rounded ${index % 2 === 0 ? "w-2/3" : "w-1/2"}`} />
+      <span className="route-shell-shimmer mt-3 block h-3 w-full rounded" />
+      <span className="route-shell-shimmer mt-2 block h-3 w-4/5 rounded" />
+    </div>
+  );
+}
+
+function RankedRow({ index }: { index: number }) {
+  return (
+    <div className="grid grid-cols-[48px_52px_minmax(0,1fr)_70px] items-center gap-4 rounded border border-white/10 bg-[#101014] p-4 sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]">
+      <span className="route-shell-shimmer h-8 w-8 rounded" />
+      <span className="route-shell-shimmer h-14 w-11 rounded sm:h-16 sm:w-[52px]" />
       <div className="space-y-2">
-        <span className={`block h-5 animate-pulse rounded bg-white/[0.08] ${index % 2 === 0 ? "w-2/3" : "w-1/2"}`} />
-        <span className="block h-3 w-5/6 animate-pulse rounded bg-white/[0.06]" />
+        <span className={`route-shell-shimmer block h-5 rounded ${index % 2 === 0 ? "w-2/3" : "w-1/2"}`} />
+        <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
       </div>
-      <span className="h-12 animate-pulse rounded bg-white/[0.08]" />
+      <span className="route-shell-shimmer hidden h-8 w-20 rounded sm:block" />
+      <span className="route-shell-shimmer h-12 w-16 rounded" />
+    </div>
+  );
+}
+
+function HeatRow({ index }: { index: number }) {
+  return (
+    <div className="grid grid-cols-[44px_50px_minmax(0,1fr)_64px] items-start gap-3 rounded border border-white/10 bg-[#101014] p-3 sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_72px] sm:items-center">
+      <span className="route-shell-shimmer h-8 w-8 rounded" />
+      <span className="route-shell-shimmer h-14 w-11 rounded" />
+      <div className="min-w-0 space-y-2">
+        <span className={`route-shell-shimmer block h-5 rounded ${index % 2 === 0 ? "w-3/4" : "w-1/2"}`} />
+        <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+        <div className="flex gap-1.5">
+          <span className="route-shell-shimmer h-7 w-20 rounded" />
+          <span className="route-shell-shimmer h-7 w-24 rounded" />
+        </div>
+      </div>
+      <span className="route-shell-shimmer hidden h-10 rounded sm:block" />
+      <span className="route-shell-shimmer h-12 rounded" />
+    </div>
+  );
+}
+
+function UpcomingCard({ index }: { index: number }) {
+  return (
+    <article className="rounded border border-white/10 bg-[#101014] p-4">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="space-y-2">
+          <span className="route-shell-shimmer block h-4 w-28 rounded" />
+          <span className={`route-shell-shimmer block h-6 rounded ${index % 2 === 0 ? "w-44" : "w-36"}`} />
+        </div>
+        <span className="route-shell-shimmer h-12 w-16 rounded" />
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <PitcherMini />
+        <PitcherMini />
+      </div>
+    </article>
+  );
+}
+
+function PitcherMini() {
+  return (
+    <div className="grid grid-cols-[46px_minmax(0,1fr)] gap-3">
+      <span className="route-shell-shimmer h-14 w-11 rounded" />
+      <div className="space-y-2">
+        <span className="route-shell-shimmer block h-5 w-3/4 rounded" />
+        <span className="route-shell-shimmer block h-3 w-full rounded" />
+        <span className="route-shell-shimmer block h-7 w-24 rounded" />
+      </div>
+    </div>
+  );
+}
+
+function LiveRow({ index }: { index: number }) {
+  return (
+    <div className="grid grid-cols-[35px_minmax(0,1fr)_70px] items-center gap-3 rounded border border-white/10 bg-[#101014] p-3 md:grid-cols-[35px_59px_minmax(0,1fr)_92px]">
+      <span className="route-shell-shimmer h-6 w-6 rounded-full" />
+      <span className="route-shell-shimmer hidden h-[88px] w-[59px] rounded md:block" />
+      <div className="space-y-2">
+        <span className={`route-shell-shimmer block h-5 rounded ${index % 2 === 0 ? "w-2/3" : "w-1/2"}`} />
+        <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+      </div>
+      <span className="route-shell-shimmer h-14 rounded" />
+    </div>
+  );
+}
+
+function ProfilePanel({ large = false }: { large?: boolean }) {
+  return (
+    <div className={`rounded border border-white/10 bg-[#101014] p-4 ${large ? "sm:p-5" : ""}`}>
+      <div className={large ? "grid gap-4 sm:grid-cols-[92px_minmax(0,1fr)_110px] sm:items-start" : "grid gap-3"}>
+        {large ? <span className="route-shell-shimmer h-[132px] w-[88px] rounded" /> : null}
+        <div className="space-y-3">
+          <span className={`route-shell-shimmer block rounded ${large ? "h-8 w-2/3" : "h-5 w-3/4"}`} />
+          <span className="route-shell-shimmer block h-3 w-full rounded" />
+          <span className="route-shell-shimmer block h-3 w-5/6 rounded" />
+          <div className="flex gap-2">
+            <span className="route-shell-shimmer h-8 w-24 rounded" />
+            <span className="route-shell-shimmer h-8 w-20 rounded" />
+          </div>
+        </div>
+        {large ? <span className="route-shell-shimmer h-20 rounded" /> : null}
+      </div>
     </div>
   );
 }

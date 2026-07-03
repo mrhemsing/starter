@@ -457,6 +457,10 @@ p,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .route-shell-shimmer::after {
+    animation: none;
+  }
+
   .top-performer-card {
     opacity: 1;
     transform: none !important;
@@ -466,6 +470,30 @@ p,
     transform: none !important;
   }
 
+}
+
+@keyframes route-shell-shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.route-shell-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.055));
+}
+
+.route-shell-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.16), transparent);
+  animation: route-shell-shimmer 1.15s ease-in-out infinite;
 }
 
 @keyframes home-live-ticker-scroll {
