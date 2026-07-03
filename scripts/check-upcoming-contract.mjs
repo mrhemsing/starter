@@ -74,12 +74,27 @@ function isTransientFetchError(error) {
   );
 }
 
+async function isTransientNextRuntimeResponse(response) {
+  if (response.status < 500) return false;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) return false;
+
+  try {
+    const body = await response.clone().text();
+    return body.includes("Page changed from static to dynamic at runtime");
+  } catch {
+    return false;
+  }
+}
+
 globalThis.fetch = async (...args) => {
   let lastError;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      return await nativeFetch(...args);
+      const response = await nativeFetch(...args);
+      if (!(await isTransientNextRuntimeResponse(response)) || attempt === 2) return response;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
     } catch (error) {
       lastError = error;
       if (!isTransientFetchError(error) || attempt === 2) break;
@@ -1151,6 +1166,22 @@ async function assertInvalidDateApiResponse(response, label) {
   }
 }
 
+async function assertInvalidDatePageResponse(url, label) {
+  let lastStatus = 0;
+  let lastBody = "";
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(url);
+    lastStatus = response.status;
+    lastBody = await response.clone().text().catch(() => "");
+    if (response.status === 404) return;
+    if (response.status !== 200 || !lastBody.includes("data-navigation-shell")) break;
+    await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+  }
+
+  assert(lastStatus === 404, `${label} should return HTTP 404, got ${lastStatus}`);
+}
+
 async function readJson(response, label) {
   const text = await response.text();
   assert(text.trim().length > 0, `${label} should return a non-empty JSON body`);
@@ -1429,6 +1460,20 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must preserve API watch-rank order and only copy-sort the Start time view",
   );
   assert(
+    [
+      "data-visible-game-pks",
+      "data-visible-game-statuses",
+      "data-visible-starter-form-statuses",
+      "data-visible-starter-form-hrefs",
+      "data-visible-watch-scores",
+      "data-visible-watch-tiers",
+      "data-visible-watch-sort-groups",
+      "data-visible-component-keys",
+      "data-visible-component-values",
+    ].every((attribute) => tonightsMustWatchSource.includes(`${attribute}=`)),
+    "upcoming watch-list component must keep stable telemetry attributes for route/API contract checks",
+  );
+  assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
       tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
@@ -1460,6 +1505,89 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       upcomingApiSource,
     ].every((source) => source.includes('export const dynamic = "force-dynamic";')),
     "upcoming route pages, image routes, and APIs must stay force-dynamic so runtime slate/form data is not statically cached",
+  );
+  assert(
+    [
+      upcomingIndexPageSource,
+      upcomingIndexImageSource,
+      upcomingWeekIndexPageSource,
+      upcomingWeekIndexImageSource,
+    ].every(
+      (source) =>
+        source.includes('import { getDefaultUpcomingDate } from "@/lib/data/start-service";') &&
+        source.includes("await getDefaultUpcomingDate()") &&
+        !source.includes("getDefaultSlateDates"),
+    ),
+    "upcoming wrapper pages and image routes must resolve through the upcoming-only default date without loading ranked slate defaults",
+  );
+  assert(
+    upcomingIndexPageSource.includes(
+      "return <UpcomingDatePage params={Promise.resolve({ date: upcomingDate })} searchParams={searchParams} />;",
+    ) &&
+      upcomingWeekIndexPageSource.includes(
+        "return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} searchParams={searchParams} />;",
+      ),
+    "upcoming wrapper pages must preserve filter query params when delegating to dated route implementations",
+  );
+  assert(
+    upcomingIndexImageSource.includes('import Image from "./[date]/opengraph-image";') &&
+      upcomingIndexImageSource.includes('export const alt = "Toe the Slab upcoming starter watch card";') &&
+      upcomingIndexImageSource.includes("width: 1200") &&
+      upcomingIndexImageSource.includes("height: 630") &&
+      upcomingIndexImageSource.includes('export const contentType = "image/png";') &&
+      upcomingIndexImageSource.includes("return Image({ params: Promise.resolve({ date: upcomingDate }) });") &&
+      upcomingWeekIndexImageSource.includes('import Image from "./[startDate]/opengraph-image";') &&
+      upcomingWeekIndexImageSource.includes('export const alt = "Toe the Slab weekly upcoming starter watch card";') &&
+      upcomingWeekIndexImageSource.includes("width: 1200") &&
+      upcomingWeekIndexImageSource.includes("height: 630") &&
+      upcomingWeekIndexImageSource.includes('export const contentType = "image/png";') &&
+      upcomingWeekIndexImageSource.includes("return Image({ params: Promise.resolve({ startDate: upcomingDate }) });"),
+    "upcoming Open Graph wrapper routes must stay thin 1200x630 PNG delegates to the dated share-card routes",
+  );
+  assert(
+    [
+      upcomingIndexPageSource,
+      upcomingDatePageSource,
+      upcomingWeekIndexPageSource,
+      upcomingWeekPageSource,
+    ].every(
+      (source) =>
+        source.includes("images: [{ url: image, width: 1200, height: 630, alt: title }]") &&
+        source.includes('card: "summary_large_image"') &&
+        source.includes("images: [{ url: image, alt: title }]"),
+    ),
+    "upcoming page metadata must keep 1200x630 Open Graph images and title-aligned Twitter image alt text",
+  );
+  assert(
+    [
+      upcomingIndexPageSource,
+      upcomingDatePageSource,
+      upcomingWeekIndexPageSource,
+      upcomingWeekPageSource,
+    ].every(
+      (source) =>
+        source.includes("const image = `${url}/opengraph-image`;") &&
+        source.includes("canonical: url,") &&
+        source.includes("openGraph:") &&
+        source.includes("type: \"website\",") &&
+        source.includes("url,") &&
+        source.includes("images: [{ url: image, width: 1200, height: 630, alt: title }]"),
+    ),
+    "upcoming page metadata must derive share-card images and Open Graph URLs from the canonical route URL",
+  );
+  assert(
+    [
+      upcomingIndexPageSource,
+      upcomingDatePageSource,
+      upcomingWeekIndexPageSource,
+      upcomingWeekPageSource,
+    ].every(
+      (source) =>
+        source.includes("noIndexFollow") &&
+        source.includes("const query = await searchParams;") &&
+        source.includes("robots: query && Object.keys(query).length > 0 ? noIndexFollow() : undefined,"),
+    ),
+    "upcoming page metadata must keep clean-route canonicals while filtered query variants stay noindex/follow",
   );
   assert(
     upcomingMetadataSource.includes('itemListOrder: "https://schema.org/ItemListOrderDescending",') &&
@@ -4725,8 +4853,7 @@ try {
     assertNoLegacySlateLinks(filteredSortedPregameTeamDayHtml, `/upcoming/${filteredDate}?pregame=1&sort=time`);
   }
 
-  const invalidDayPage = await fetch(`${baseUrl}/upcoming/not-a-date`);
-  assert(invalidDayPage.status === 404, "/upcoming/not-a-date should return HTTP 404, got " + invalidDayPage.status);
+  await assertInvalidDatePageResponse(`${baseUrl}/upcoming/not-a-date`, "/upcoming/not-a-date");
 
   const invalidDayImage = await fetch(`${baseUrl}/upcoming/not-a-date/opengraph-image`);
   assert(invalidDayImage.status === 404, "/upcoming/not-a-date/opengraph-image should return HTTP 404, got " + invalidDayImage.status);
@@ -5149,8 +5276,7 @@ try {
     assertWeekDaySlateLinks(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time`, upcoming.days);
     assertNoLegacySlateLinks(filteredSortedPregameTeamWeekHtml, `/upcoming/week/${date}?pregame=1&sort=time`);
 
-    const invalidWeekPage = await fetch(`${baseUrl}/upcoming/week/not-a-date`);
-    assert(invalidWeekPage.status === 404, "/upcoming/week/not-a-date should return HTTP 404, got " + invalidWeekPage.status);
+    await assertInvalidDatePageResponse(`${baseUrl}/upcoming/week/not-a-date`, "/upcoming/week/not-a-date");
 
     const invalidWeekImage = await fetch(`${baseUrl}/upcoming/week/not-a-date/opengraph-image`);
     assert(invalidWeekImage.status === 404, "/upcoming/week/not-a-date/opengraph-image should return HTTP 404, got " + invalidWeekImage.status);

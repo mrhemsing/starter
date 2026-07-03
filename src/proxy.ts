@@ -35,30 +35,38 @@ function hasInvalidPathDate(pathname: string) {
   const [root, second, third, fourth] = segments;
 
   if (root === "upcoming") {
-    if (second === "week") return isInvalidDateSegment(third);
-    return isInvalidDateSegment(second);
+    if (second === "week") return isInvalidRequiredDateSegment(third);
+    return isInvalidRequiredDateSegment(second);
   }
 
-  if (root === "starts" || root === "live" || root === "duels") {
+  if (root === "live" || root === "duels") {
+    return isInvalidRequiredDateSegment(second);
+  }
+
+  if (root === "starts") {
     return isInvalidDateSegment(second);
   }
 
   if (root === "slate") {
-    return isInvalidDateSegment(third);
+    return isInvalidRequiredDateSegment(third);
   }
 
   if (root === "social" && second === "start-of-day") {
-    return isInvalidDateSegment(third);
+    return isInvalidRequiredDateSegment(third);
   }
 
   if (root !== "api") return false;
 
-  if (second === "live" || second === "starts") {
+  if (second === "live") {
+    return isInvalidRequiredDateSegment(third);
+  }
+
+  if (second === "starts") {
     return isInvalidDateSegment(third);
   }
 
   if (second === "slate") {
-    return isInvalidDateSegment(fourth);
+    return isInvalidRequiredDateSegment(fourth);
   }
 
   return false;
@@ -72,4 +80,8 @@ function hasInvalidQueryDate(url: URL) {
 
 function isInvalidDateSegment(value: string | undefined) {
   return Boolean(value && isIsoDateRouteParam(value) && !isValidDateRouteParam(value));
+}
+
+function isInvalidRequiredDateSegment(value: string | undefined) {
+  return Boolean(value && !isValidDateRouteParam(value));
 }

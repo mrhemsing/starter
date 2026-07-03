@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getDefaultSlateDates } from "@/lib/data/start-service";
+import { getDefaultUpcomingDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { noIndexFollow } from "@/lib/seo";
 import { upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
@@ -16,7 +16,7 @@ type UpcomingWeekIndexPageProps = {
 
 export async function generateMetadata({ searchParams }: UpcomingWeekIndexPageProps): Promise<Metadata> {
   const query = await searchParams;
-  const { upcomingDate: startDate } = await getDefaultSlateDates();
+  const startDate = await getDefaultUpcomingDate();
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const title = upcomingWeekTitle(upcoming.range.start);
   const description = upcomingWeekDescription(upcoming);
@@ -47,6 +47,6 @@ export async function generateMetadata({ searchParams }: UpcomingWeekIndexPagePr
 }
 
 export default async function UpcomingWeekIndexPage({ searchParams }: UpcomingWeekIndexPageProps) {
-  const { upcomingDate } = await getDefaultSlateDates();
+  const upcomingDate = await getDefaultUpcomingDate();
   return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} searchParams={searchParams} />;
 }
