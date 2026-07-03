@@ -17,6 +17,7 @@ import { HeatPitcherProfileLink } from "@/components/heat-pitcher-profile-link";
 import { HeatTeamClearLink } from "@/components/heat-team-clear-link";
 import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
+import { MobileCardShell } from "@/components/mobile-card-shell";
 import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PendingRegion } from "@/components/route-control-pending";
@@ -770,7 +771,7 @@ function FormLeaderboardRow({
   return (
     <article
       id={poleId}
-      className={`heat-check-row scroll-mt-24 grid items-start gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${unranked ? "opacity-70" : treatment.opacity} ${isPoleTier(pitcher) && fullWindow && !unranked ? "heat-glow-card" : ""}`}
+      className={`heat-check-row scroll-mt-24 block rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:grid sm:items-start sm:gap-x-3 sm:gap-y-2 sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${unranked ? "opacity-70" : treatment.opacity} ${isPoleTier(pitcher) && fullWindow && !unranked ? "heat-glow-card" : ""}`}
       style={{ ...(isPoleTier(pitcher) && fullWindow && !unranked ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
       data-form-row
       data-heat-team={pitcher.team}
@@ -778,14 +779,76 @@ function FormLeaderboardRow({
       data-heat-band={pitcher.tier}
       data-season-unranked={unranked ? "true" : undefined}
     >
-      <div className="min-w-0">
+      <MobileCardShell
+        left={(
+          <div className="grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2">
+            <div className="min-w-0">
+              <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>{unranked ? "-" : `#${rank}`}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{seasonView ? qualityTier.label : tierLabel(pitcher.tier)}</p>
+            </div>
+            <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
+              <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size="md" band={thermalBand} sampleSufficient={fullWindow} decorative />
+            </HeatPitcherProfileLink>
+            <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+              <h2 className="line-clamp-2 min-w-0 w-full max-w-full break-words font-serif text-xl font-bold leading-tight text-zinc-50">
+                <MobileStackedPitcherName name={pitcher.name} />
+              </h2>
+              <p className={`truncate font-mono text-[10px] uppercase tracking-[0.14em] ${treatment.metaClass}`}>{mobileMetaLine}</p>
+            </HeatPitcherProfileLink>
+          </div>
+        )}
+        score={(
+          <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={seasonView ? `${pitcher.name} season GS+ ${score}, ${pitcher.seasonStartCount} starts` : `${pitcher.name} Form ${score}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
+            <p className="font-mono text-4xl font-black leading-none tabular-nums" style={{ color: bandColor }}>{score}</p>
+            <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500">{seasonView ? "GS+" : "FORM"}</span>
+            {seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} compact /> : null}
+          </HeatPitcherProfileLink>
+        )}
+        chips={(
+          <>
+            <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
+            <PitcherAvailabilityNote availability={pitcher.availability} compact />
+            <TodayStartFreshnessChip pitcher={pitcher} compact />
+            {seasonView ? null : (
+              <FormDriverChips
+                chips={pitcher.driverChips}
+                compact
+                leading={<CrossoverPill pitcher={pitcher} />}
+              />
+            )}
+          </>
+        )}
+        details={(
+          <>
+            <p className="font-mono text-[10px] uppercase leading-4 tracking-[0.04em] text-zinc-400">{seasonView ? seasonMetaLine : mobileLastLine}</p>
+            <p className={`font-mono text-[10px] uppercase tracking-[0.08em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>Next start: {nextStartDetails(pitcher)}</p>
+          </>
+        )}
+        footer={seasonView ? null : (
+          <div className="h-9 overflow-hidden">
+            <FormSparkline
+              values={formSparkValues(pitcher)}
+              tier={pitcher.tier}
+              leagueMeanGS={leagueMeanGS}
+              baselineValue={formSparkBaseline(pitcher)}
+              deltaForm={pitcher.deltaForm}
+              window={window}
+              label={formSparklineLabel(pitcher, window)}
+              trend={pitcher.trend}
+              intensity={isPoleTier(pitcher) && fullWindow ? "pole" : "field"}
+              variant="mini"
+            />
+          </div>
+        )}
+      />
+      <div className="hidden min-w-0 sm:block">
         <p className={`${treatment.rankClass} font-serif leading-none text-zinc-500`}>{unranked ? "-" : `#${rank}`}</p>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{seasonView ? qualityTier.label : tierLabel(pitcher.tier)}</p>
       </div>
-      <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
+      <HeatPitcherProfileLink href={profileHref} className="hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:block" ariaLabel={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />
       </HeatPitcherProfileLink>
-      <div className="grid min-w-0 gap-1">
+      <div className="hidden min-w-0 gap-1 sm:grid">
         <HeatPitcherProfileLink href={profileHref} className="grid min-w-0 gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <h2 className={`${treatment.nameClass} pitcher-name break-words font-serif font-bold leading-tight text-zinc-50`}>
             <MobileStackedPitcherName name={pitcher.name} />
@@ -820,7 +883,7 @@ function FormLeaderboardRow({
           )}
         </div>
       </div>
-      <div className={`col-start-4 row-start-1 flex items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
+      <div className={`hidden items-start justify-end gap-2 text-right sm:col-span-2 sm:col-start-auto sm:row-auto sm:flex sm:gap-3 ${seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"}`}>
         {seasonView ? null : (
         <div className="hidden min-w-0 sm:block">
           <FormSparkline
@@ -846,7 +909,7 @@ function FormLeaderboardRow({
         </div>
       </div>
       {seasonView ? null : (
-      <div className="col-span-full row-start-2 min-w-0 sm:hidden">
+      <div className="hidden">
         <FormSparkline
           values={formSparkValues(pitcher)}
           tier={pitcher.tier}
@@ -962,11 +1025,11 @@ function SeasonBandMiniBar({ stats, showLabels = false }: { stats: FormSummary["
   );
 }
 
-function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary }) {
+function TodayStartFreshnessChip({ pitcher, compact = false }: { pitcher: FormSummary; compact?: boolean }) {
   if (!pitcher.flags?.todaysStartNotReflected) return null;
 
   return (
-    <span className="mt-1 inline-flex w-fit rounded border border-amber-300/35 bg-amber-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+    <span className={`${compact ? "" : "mt-1"} inline-flex min-h-8 w-fit items-center rounded border border-amber-300/35 bg-amber-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-200`}>
       TODAY&apos;S START NOT YET REFLECTED
     </span>
   );
@@ -1355,12 +1418,12 @@ function isPoleTier(pitcher: FormSummary) {
   return pitcher.tier === "onfire" || pitcher.tier === "ice";
 }
 
-function FormDeltaLabel({ summary }: { summary: Pick<FormSummary, "deltaForm"> }) {
+function FormDeltaLabel({ summary, compact = false }: { summary: Pick<FormSummary, "deltaForm">; compact?: boolean }) {
   const band = formDeltaBand(summary.deltaForm);
   const label = band.key === "steady" ? "steady" : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;
 
   return (
-    <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: band.color }}>
+    <span className={`${compact ? "text-[9px]" : "text-[10px]"} mt-1 block whitespace-nowrap font-mono font-semibold uppercase tracking-[0.08em]`} style={{ color: band.color }}>
       {label}
     </span>
   );

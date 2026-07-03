@@ -200,7 +200,8 @@ assert(
     liveScoreboard.includes('id={`live-start-${row.pitcherId}`}') &&
     formPage.includes('data-heat-start-status-chip="live"') &&
     formPage.includes('data-heat-start-status-chip="scheduled"') &&
-    formPage.indexOf('</HeatPitcherProfileLink>\n        <div className="grid gap-1">') < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
+    formPage.indexOf("chips={(\n          <>") < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
+    formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf('<PitcherAvailabilityNote availability={pitcher.availability} compact />') &&
     formPage.includes("border border-teal-300/35 bg-teal-300/10") &&
     formPage.includes("border-[#FF5A1F]/45 bg-[#FF5A1F]/10") &&
     formPage.includes("whitespace-nowrap") &&
@@ -221,7 +222,7 @@ assert(
     formService.includes("function attachTodayStartFreshnessFlag(summary: FormSummary, stalePitcherIds: Set<string>): FormSummary") &&
     formService.includes("todaysStartNotReflected: true,") &&
     formService.includes("start.date > formThroughDate") &&
-    formPage.includes("function TodayStartFreshnessChip({ pitcher }: { pitcher: FormSummary })") &&
+    formPage.includes("function TodayStartFreshnessChip({ pitcher, compact = false }: { pitcher: FormSummary; compact?: boolean })") &&
     formPage.includes("pitcher.flags?.todaysStartNotReflected") &&
     formPage.includes("TODAY&apos;S START NOT YET REFLECTED"),
   "Heat Check must flag pitchers whose completed start today is not yet reflected in rolling form",
@@ -604,18 +605,22 @@ assert(
 );
 
 assert(
-  formPage.includes("heat-check-row scroll-mt-24 grid items-start") &&
-    formPage.includes('seasonView ? "sm:flex" : "sm:grid sm:grid-cols-[minmax(120px,1fr)_auto]"') &&
-    formPage.includes('className="col-span-full row-start-2 min-w-0 sm:hidden"') &&
-    formPage.includes("<FormDeltaLabel summary={pitcher} />") &&
+  formPage.includes("heat-check-row scroll-mt-24 block rounded") &&
+    formPage.includes("<MobileCardShell") &&
+    formPage.includes('className="hidden min-w-0 gap-1 sm:grid"') &&
+    formPage.includes('className="hidden"') &&
+    formPage.includes("<FormDeltaLabel summary={pitcher} compact />") &&
     formPage.includes('fullWindow ? <FormDeltaLabel summary={pitcher} /> : null') &&
     formPage.includes('hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] sm:block') &&
     formPage.includes('const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;') &&
     formPage.includes('LAST: GS+ ${pitcher.lastStart.gsPlus} VS ${pitcher.lastStart.opp} · ${formatStartLine') &&
-    formPage.includes('font-mono text-[10px] uppercase leading-4 tracking-[0.08em] sm:hidden') &&
-    formPage.includes("<span>Next start:</span>") &&
+    formPage.includes('font-mono text-[10px] uppercase leading-4 tracking-[0.04em] text-zinc-400') &&
+    formPage.includes("Next start: {nextStartDetails(pitcher)}") &&
     formPage.includes('className="block sm:inline">{nextStartDetails(pitcher)}</span>') &&
     formPage.includes("function nextStartDetails(pitcher: FormSummary)") &&
+    globals.includes("@media (min-width: 640px)") &&
+    globals.includes(".heat-check-row {\n    content-visibility: auto;") &&
+    globals.includes("contain-intrinsic-size: auto;") &&
     formPage.includes('return " TBD";') &&
     formPage.includes("return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;") &&
     !formPage.includes("return ` ${matchup} · ${formatMonthDay(pitcher.nextStart.date)}`;"),

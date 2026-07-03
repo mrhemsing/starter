@@ -178,8 +178,14 @@ p,
 }
 
 .heat-check-row {
-  content-visibility: auto;
-  contain-intrinsic-size: 96px;
+  contain-intrinsic-size: auto;
+}
+
+@media (min-width: 640px) {
+  .heat-check-row {
+    content-visibility: auto;
+    contain-intrinsic-size: 96px;
+  }
 }
 
 .thermal-headshot {

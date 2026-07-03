@@ -30,6 +30,7 @@ const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8")
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
 const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
+const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
@@ -144,7 +145,18 @@ assert(
 );
 
 assert(
-  startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
+  mobileCardShell.includes("export function MobileCardShell") &&
+    mobileCardShell.includes("data-mobile-card-shell") &&
+    mobileCardShell.includes("data-mobile-card-header") &&
+    mobileCardShell.includes("data-mobile-card-score") &&
+    mobileCardShell.includes("data-mobile-card-chips") &&
+    mobileCardShell.includes("data-mobile-card-details") &&
+    startsPage.includes('import { MobileCardShell } from "@/components/mobile-card-shell";') &&
+    startsPage.includes("<MobileCardShell") &&
+    startsPage.includes("GSV2 {gameScoreV2} · {formatSigned(delta)} ADJ") &&
+    startsPage.includes("<DecisionChip result={start.result} compact />") &&
+    startsPage.includes("hidden items-start gap-x-3 gap-y-2 sm:grid") &&
+    startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(64px,auto)] sm:grid-cols-[48px_64px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(66px,auto)] sm:grid-cols-[48px_52px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("grid-cols-[minmax(0,1fr)_minmax(58px,auto)] sm:grid-cols-[48px_40px_minmax(0,1fr)_auto_auto]") &&
     startsPage.includes("headerClusterClass: \"col-start-1 row-start-1 grid min-w-0 grid-cols-[36px_44px_minmax(0,1fr)] items-start gap-x-2 sm:contents\"") &&
@@ -155,7 +167,6 @@ assert(
     startsPage.includes('nameClass: "text-xl sm:text-4xl"') &&
     startsPage.includes('rankClass: "text-2xl sm:text-4xl"') &&
     startsPage.includes("min-w-0 w-full max-w-full break-words") &&
-    startsPage.includes('max-w-[64px] whitespace-normal text-[9px] leading-tight') &&
     startsPage.includes('lineClass: "col-span-full row-start-3') &&
     startsPage.includes("whitespace-nowrap font-mono text-zinc-300") &&
     startsPage.includes("line-clamp-2 text-xs text-zinc-500 sm:truncate") &&
