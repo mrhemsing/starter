@@ -74,24 +74,15 @@ assert(
 
 assert(
   siteNav.includes("PrimaryNavLink") &&
-    primaryNavLink.includes('const documentNavigation = href === "/starts" || href.startsWith("/live/");') &&
-    primaryNavLink.includes("const canPrefetch = !documentNavigation;") &&
-    primaryNavLink.includes("const canClientNavigate = !documentNavigation;") &&
-    primaryNavLink.includes("prefetch={canPrefetch}") &&
+    primaryNavLink.includes("prefetch") &&
     primaryNavLink.includes("router.prefetch(href)") &&
-    primaryNavLink.includes("if (!canPrefetch) return;") &&
-    primaryNavLink.includes("if (!canClientNavigate)") &&
-    primaryNavLink.indexOf("if (!canClientNavigate)") < primaryNavLink.indexOf("event.preventDefault()") &&
-    primaryNavLink.includes("if (documentNavigation)") &&
-    primaryNavLink.includes("<a") &&
-    primaryNavLink.includes('data-document-nav="true"') &&
     primaryNavLink.includes("onPointerDown={warmRoute}") &&
     primaryNavLink.includes("event.preventDefault()") &&
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
     !primaryNavLink.includes("dispatchRoutePending") &&
-    !existsSync("src/app/starts/[id]/loading.tsx"),
-  "ranked starts navigation must keep prefetch warming without restoring the interim route skeleton after the P1-5 timing gate",
+    existsSync("src/app/starts/[id]/loading.tsx"),
+  "ranked starts navigation must use client navigation, prefetch warming, and the shell-first route skeleton fallback",
 );
 
 assert(
@@ -181,8 +172,7 @@ assert(
     !startsPage.includes("hideUpcoming") &&
     !siteHeader.includes("hideUpcoming") &&
     !siteNav.includes("hideUpcoming") &&
-    siteNav.includes('href: "/starts"') &&
-    !siteNav.includes("rankedStartsPath(") &&
+    siteNav.includes("href: rankedStartsPath(defaultDates.rankedDate)") &&
     startsIndexRoute.includes('export const dynamic = "force-dynamic";') &&
     startApiRoute.includes('export const dynamic = "force-dynamic";') &&
     startsIndexRoute.includes("NextResponse.redirect(location, 302)") &&

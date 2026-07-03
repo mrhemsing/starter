@@ -2,7 +2,7 @@ import { PrimaryNavLink } from "@/components/primary-nav-link";
 import { LiveNavLabel } from "@/components/live-nav-label";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getDefaultSlateDates } from "@/lib/data/start-service";
-import { heatCheckPath, liveDateHref, upcomingDateHref, watchlistPath } from "@/lib/routes";
+import { heatCheckPath, liveDateHref, rankedStartsPath, upcomingDateHref, watchlistPath } from "@/lib/routes";
 
 type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";
 export type { NavKey };
@@ -17,7 +17,7 @@ export async function SiteNav({ active, today, rankedDate }: { active: NavKey | 
   const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
-    { key: "starts" as const, label: "Ranked Starts", href: "/starts" },
+    { key: "starts" as const, label: "Ranked Starts", href: rankedStartsPath(defaultDates.rankedDate) },
     { key: "heat" as const, label: "Heat Check", href: heatCheckPath() },
     ...liveItem,
     ...upcomingItem,

@@ -240,20 +240,28 @@ assert(
 );
 
 assert(
-  !existsSync("src/app/loading.tsx") &&
-    !existsSync("src/app/starts/[id]/loading.tsx") &&
-    !existsSync("src/app/heat-check/loading.tsx") &&
-    !existsSync("src/app/heat-check/season/loading.tsx") &&
-    !existsSync("src/app/upcoming/loading.tsx") &&
-    !existsSync("src/app/upcoming/[date]/loading.tsx") &&
-    !existsSync("src/components/route-loading-skeleton.tsx") &&
+  existsSync("src/app/loading.tsx") &&
+    existsSync("src/app/starts/[id]/loading.tsx") &&
+    existsSync("src/app/heat-check/loading.tsx") &&
+    existsSync("src/app/heat-check/season/loading.tsx") &&
+    existsSync("src/app/live/[date]/loading.tsx") &&
+    existsSync("src/app/upcoming/loading.tsx") &&
+    existsSync("src/app/upcoming/[date]/loading.tsx") &&
+    existsSync("src/app/upcoming/week/loading.tsx") &&
+    existsSync("src/app/upcoming/week/[startDate]/loading.tsx") &&
+    existsSync("src/app/watchlist/loading.tsx") &&
+    existsSync("src/app/pitchers/[id]/loading.tsx") &&
+    existsSync("src/components/route-loading-shell.tsx") &&
     !existsSync("src/components/global-route-pending-overlay.tsx") &&
     !existsSync("src/lib/route-pending-event.ts") &&
     !appLayout.includes("GlobalRoutePendingOverlay") &&
     !fastFilterLink.includes("dispatchRoutePending") &&
-    loadingPolicy.includes("Initial navigation should render cached server HTML with page content already present") &&
-    loadingPolicy.includes("do not add page-level overlays, dimming, route skeletons, or spinner copy for idle slate pages"),
-  "idle navigation must not restore route skeletons, app-level overlays, dimming, or route-pending event loaders after the P1-5 timing gate",
+    loadingPolicy.includes("Navigation paints within 100 ms") &&
+    loadingPolicy.includes("cached content is preferred") &&
+    loadingPolicy.includes("destination shell plus scoped skeleton data regions") &&
+    loadingPolicy.includes("Frozen screens, blocking overlays, blurred previous pages, and full-page dimming are forbidden") &&
+    loadingPolicy.includes("[navigation-skeleton]"),
+  "navigation must keep shell-first route skeletons with per-route logging while avoiding overlays, dimming, and route-pending event loaders",
 );
 
 assert(

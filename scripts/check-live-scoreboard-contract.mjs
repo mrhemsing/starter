@@ -348,12 +348,13 @@ assert(
     liveNavLabel.includes('data-live-nav-active={active ? "true" : "false"}') &&
     liveNavLabel.includes('data-live-nav-route-active={routeActive ? "true" : "false"}') &&
     liveNavLabel.includes('{state === "idle" ? null : <span') &&
-    primaryNavLink.includes('const documentNavigation = href === "/starts" || href.startsWith("/live/");') &&
-    primaryNavLink.includes("if (documentNavigation)") &&
-    primaryNavLink.includes("<a") &&
-    primaryNavLink.includes('data-document-nav="true"') &&
+    primaryNavLink.includes("router.prefetch(href)") &&
+    primaryNavLink.includes("event.preventDefault()") &&
+    primaryNavLink.includes("router.push(href)") &&
+    !primaryNavLink.includes("documentNavigation") &&
+    !primaryNavLink.includes('data-document-nav="true"') &&
     !siteNav.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"'),
-  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding, document navigation, and a two-row mobile grid",
+  "primary nav must keep LIVE as a permanent scoreboard link with state-aware wayfinding, instant client navigation, and a two-row mobile grid",
 );
 
 assert(

@@ -295,10 +295,10 @@ assert(
 );
 
 assert(
-  !existsSync("src/app/pitchers/[id]/loading.tsx") &&
+  existsSync("src/app/pitchers/[id]/loading.tsx") &&
     !existsSync("src/app/pitchers/loading.tsx") &&
-    !existsSync("src/components/route-loading-shell.tsx"),
-  "canonical pitcher profile route must not provide a page-level loading shell during idle cached navigation",
+    existsSync("src/components/route-loading-shell.tsx"),
+  "canonical pitcher profile route must provide a shell-first loading fallback without adding a parent-level pitcher overlay",
 );
 
 assert(
