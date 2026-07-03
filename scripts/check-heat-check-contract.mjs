@@ -9,6 +9,9 @@ function assert(condition, message) {
 
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
 const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
+const heatLoading = await readFile("src/app/heat-check/loading.tsx", "utf8");
+const heatSeasonLoading = await readFile("src/app/heat-check/season/loading.tsx", "utf8");
+const heatLoadingShell = await readFile("src/components/heat-check-loading-shell.tsx", "utf8");
 const appLayout = await readFile("src/app/layout.tsx", "utf8");
 const escapeClear = await readFile("src/components/heat-check-escape-clear.tsx", "utf8");
 const bandNav = await readFile("src/components/heat-check-band-nav.tsx", "utf8");
@@ -679,6 +682,24 @@ assert(
     heatHero.includes("values={formSparkValues(pitcher)}") &&
     heatHero.includes("baselineValue={formSparkBaseline(pitcher)}"),
   "Heat Check sparkline stroke, endpoint, fill, and homepage Heat Check hero must follow shared form-delta coloring and baseline",
+);
+
+assert(
+  heatLoading.includes('description={<HeatCheckLoadingDescription view="trend" />}') &&
+    heatLoading.includes("<HeatCheckLoadingControls view=\"trend\" />") &&
+    heatLoading.includes("<MomentumHeroSkeleton />") &&
+    heatLoading.includes('childrenMode="content"') &&
+    !heatLoading.includes('controls="heat"') &&
+    heatSeasonLoading.includes('description={<HeatCheckLoadingDescription view="season" />}') &&
+    heatSeasonLoading.includes("<HeatCheckLoadingControls view=\"season\" />") &&
+    heatSeasonLoading.includes('childrenMode="content"') &&
+    !heatSeasonLoading.includes('controls="heat"') &&
+    heatLoadingShell.includes("useSearchParams") &&
+    heatLoadingShell.includes("How starting pitchers are trending over their last {window} starts.") &&
+    heatLoadingShell.includes('data-navigation-shell-controls="heat-real"') &&
+    formPage.includes("export function MomentumHeroSkeleton()") &&
+    formPage.includes('data-skeleton-row="heat-momentum-hero"'),
+  "Heat Check loading must render URL-derived filter/subtitle chrome as real shell and reserve skeletons for hero/list data regions",
 );
 
 console.log("heat check contract ok: bar filters, mobile band jumps, league counts, filter status, compact momentum hero, form cluster, top-aligned rows, and canonical pitcher links are locked");

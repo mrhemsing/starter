@@ -7,11 +7,12 @@ type RouteLoadingShellProps = {
   route: string;
   active: NavKey | null;
   title: string;
-  description?: string;
+  description?: ReactNode;
   eyebrow?: string;
   controls?: "ranked" | "heat" | "upcoming" | "profile" | "none";
   rows?: number;
   layout?: "home" | "ranked" | "heat" | "upcoming" | "live" | "profile" | "watchlist";
+  childrenMode?: "region" | "content";
   children?: ReactNode;
 };
 
@@ -24,6 +25,7 @@ export function RouteLoadingShell({
   controls = "none",
   rows = 8,
   layout = "ranked",
+  childrenMode = "region",
   children,
 }: RouteLoadingShellProps) {
   logNavigationSkeletonShown(route);
@@ -37,10 +39,12 @@ export function RouteLoadingShell({
         <header className="mb-4">
           {eyebrow ? <p className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p> : null}
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">{title}</h1>
-          {description ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{description}</p> : null}
+          {description ? <div className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{description}</div> : null}
           <LoadingControls kind={controls} />
         </header>
-        {children ? (
+        {children && childrenMode === "content" ? (
+          children
+        ) : children ? (
           <section className="grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
             {children}
           </section>

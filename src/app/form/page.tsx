@@ -547,6 +547,59 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
   );
 }
 
+export function MomentumHeroSkeleton() {
+  return (
+    <section className="my-5 overflow-hidden rounded border border-white/10 bg-[#101014]" data-responsive-check="heat-momentum-hero" data-skeleton-row="heat-momentum-hero">
+      <div className="grid gap-px bg-white/10 lg:grid-cols-2">
+        <MomentumPanelSkeleton role="riser" />
+        <MomentumPanelSkeleton role="faller" />
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 bg-black/20 px-4 py-3">
+        <span className="route-shell-shimmer h-3 w-24 rounded" />
+        <span className="route-shell-shimmer h-3 w-20 rounded" />
+        <span className="route-shell-shimmer h-3 w-20 rounded" />
+        <span className="route-shell-shimmer h-3 w-28 rounded" />
+      </div>
+    </section>
+  );
+}
+
+function MomentumPanelSkeleton({ role }: { role: "riser" | "faller" }) {
+  const isRiser = role === "riser";
+
+  return (
+    <article className="relative overflow-hidden bg-[#101014] p-4 sm:p-5" data-form-hero-card data-momentum-role={role}>
+      <div className={`pointer-events-none absolute inset-0 ${isRiser ? "bg-[radial-gradient(circle_at_8%_0%,rgba(255,122,61,0.16),transparent_45%)]" : "bg-[radial-gradient(circle_at_92%_0%,rgba(143,203,255,0.16),transparent_45%)]"}`} />
+      <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-start gap-x-2 gap-y-3 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-4 sm:items-center">
+        <span className="route-shell-shimmer relative col-start-1 row-start-1 block h-[92px] w-[64px] rounded sm:hidden" />
+        <span className="route-shell-shimmer relative hidden h-[132px] w-[88px] rounded sm:block" />
+        <div className="col-start-2 row-start-1 min-w-0 sm:col-start-auto sm:row-start-auto">
+          <div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-3">
+            <span className="route-shell-shimmer h-3 w-28 rounded" />
+            <span className="route-shell-shimmer h-7 w-20 rounded" />
+          </div>
+          <div className="mt-2 grid min-w-0 gap-2 sm:mt-3">
+            <span className="route-shell-shimmer h-7 w-3/4 rounded sm:h-9" />
+            <span className="route-shell-shimmer h-3 w-14 rounded" />
+            <span className="route-shell-shimmer h-7 w-24 rounded" />
+          </div>
+          <div className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1">
+            <span className="route-shell-shimmer h-10 w-28 rounded sm:h-12" />
+            <span className="route-shell-shimmer h-3 w-40 rounded" />
+          </div>
+        </div>
+        <div className="col-span-full row-start-2 min-w-0 sm:row-start-auto sm:col-span-2">
+          <span className="route-shell-shimmer block h-[74px] rounded" />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+            <span className="route-shell-shimmer h-3 w-56 max-w-full rounded" />
+            <span className="route-shell-shimmer h-9 w-24 rounded" />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: TodayStartContext | null }) {
   if (start) {
     const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
