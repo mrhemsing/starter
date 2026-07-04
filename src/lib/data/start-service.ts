@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
 import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords, readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";
-import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
+import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
@@ -234,7 +234,7 @@ const getCachedRankedCompletedSlateDates = unstable_cache(
     return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });
   },
   ["ranked-starts-complete-slate-state-dates-v1"],
-  { revalidate: 15 * 60 },
+  { revalidate: false, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {

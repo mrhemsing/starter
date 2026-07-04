@@ -72,7 +72,7 @@ assert(
 );
 
 assert(
-  startService.includes('import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+  startService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     startService.includes("const getCachedDefaultUpcomingDate = unstable_cache(") &&
     startService.includes("export async function getDefaultUpcomingDate") &&
     startService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
@@ -119,7 +119,8 @@ assert(
   liveService.includes('import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     liveService.includes("tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG]") &&
     rankedStartsPageService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
-    rankedStartsPageService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    rankedStartsPageService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, rankedStartsDateCacheTag(date)]") &&
+    warmLiveStartsJob.includes("options.revalidateTag?.(rankedStartsDateCacheTag(date), \"max\");") &&
     formService.includes('import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     formService.includes("tags: [HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG]") &&
     formService.includes("tags: [HEAT_CHECK_CACHE_TAG]"),
@@ -214,7 +215,6 @@ const cacheRoutes = [
   ["upcoming API", upcomingRoute, "UPCOMING_REVALIDATE_SECONDS", "stale-while-revalidate=300"],
   ["duels API", duelsRoute, "DUELS_REVALIDATE_SECONDS", "stale-while-revalidate=300"],
   ["home ranked API", rankedRoute, "HOME_RANKED_REVALIDATE_SECONDS", "stale-while-revalidate=300"],
-  ["home status API", homeStatusRoute, "HOME_STATUS_REVALIDATE_SECONDS", "stale-while-revalidate=300"],
   ["form home API", formHomeRoute, "FORM_HOME_REVALIDATE_SECONDS", "stale-while-revalidate=3600"],
   ["form leaderboard API", formLeaderboardRoute, "FORM_LEADERBOARD_REVALIDATE_SECONDS", "stale-while-revalidate=3600"],
   ["pitcher form API", pitcherFormRoute, "PITCHER_FORM_REVALIDATE_SECONDS", "stale-while-revalidate=3600"],
@@ -230,6 +230,13 @@ for (const [label, source, ttlConstant, staleWindow] of cacheRoutes) {
     `${label} must emit CDN cache headers`,
   );
 }
+
+assert(
+  homeStatusRoute.includes('export const dynamic = "force-dynamic";') &&
+    homeStatusRoute.includes('"Cache-Control": "no-store"') &&
+    !homeStatusRoute.includes("public, s-maxage="),
+  "home status API must avoid CDN caching so live slate islands correct stale snapshots immediately",
+);
 
 assert(
   fastFilterLink.includes('"use client";') &&

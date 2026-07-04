@@ -2,6 +2,7 @@ import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
+import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
@@ -39,6 +40,7 @@ export type WarmLiveStartsJobResult = {
     imageSource: string | null;
   } | null;
   homeLeaderRevalidated?: boolean;
+  rankedStartsPageWarmed?: boolean;
   revalidated?: boolean;
   durationMs?: number;
   generatedAt?: string;
@@ -138,8 +140,9 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
       for (const tag of DATA_CHANGE_CACHE_TAGS) {
         options.revalidateTag?.(tag, "max");
       }
+      options.revalidateTag?.(rankedStartsDateCacheTag(date), "max");
       await markWarmStepComplete(progressKey, progress, "revalidate-tags");
-      console.log("warm-live-starts batch revalidated tags", { date, tags: DATA_CHANGE_CACHE_TAGS.length });
+      console.log("warm-live-starts batch revalidated tags", { date, tags: DATA_CHANGE_CACHE_TAGS.length, rankedStartsDateTag: rankedStartsDateCacheTag(date) });
     }
     for (const path of ["/", "/heat-check", `/starts/${date}`]) {
       const step = `revalidate-path:${path}`;
@@ -162,6 +165,10 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
       console.log("warm-live-starts batch revalidated pitcher forms", { date, count: batch.length, batch: pitcherBatches });
     }
   }
+
+  const rankedStartsPageWarmed = completedStarts.length > 0
+    ? await warmRankedStartsPage(date, progressKey, progress)
+    : false;
 
   if (!hasCompletedWarmStep(progress, "form-global")) {
     await warmFormLeaderboards();
@@ -221,6 +228,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
         }
       : null,
     homeLeaderRevalidated,
+    rankedStartsPageWarmed,
     revalidated: completedStarts.length > 0,
     durationMs,
     generatedAt: finishedAt.toISOString(),
@@ -249,6 +257,15 @@ async function warmRankedHome(key: string, progress: WarmLiveStartsProgress) {
   await markWarmStepComplete(key, progress, "ranked-home");
   console.log("warm-live-starts batch warmed ranked home", { step: "ranked-home" });
   return rankedHome.topPerformer;
+}
+
+async function warmRankedStartsPage(date: string, key: string, progress: WarmLiveStartsProgress) {
+  const step = `ranked-starts-page:${date}`;
+  if (hasCompletedWarmStep(progress, step)) return false;
+  await getRankedStartsPageData(date, getHomeSlateDate());
+  await markWarmStepComplete(key, progress, step);
+  console.log("warm-live-starts batch warmed ranked starts page", { date, path: `/starts/${date}` });
+  return true;
 }
 
 async function revalidateHomeLeaderSnapshotOnChange(date: string, options: WarmLiveStartsRevalidators) {

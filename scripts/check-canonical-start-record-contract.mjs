@@ -188,6 +188,7 @@ assert(
     warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
     warmLiveStartsJob.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
     warmLiveStartsJob.includes('import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";') &&
+    warmLiveStartsJob.includes('import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";') &&
     warmLiveStartsJob.includes("export const WARM_LIVE_STARTS_BATCH_SIZE = 8;") &&
     warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
     warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap" | "already-running";') &&
@@ -202,6 +203,12 @@ assert(
     warmLiveStartsJob.includes("const progressKey = warmLiveStartsProgressKey(date, completion.finalGames, completedStarts.length);") &&
     warmLiveStartsJob.includes("const progress = await readWarmLiveStartsProgress(progressKey);") &&
     warmLiveStartsJob.includes('await markWarmStepComplete(progressKey, progress, "revalidate-tags");') &&
+    warmLiveStartsJob.includes("options.revalidateTag?.(rankedStartsDateCacheTag(date), \"max\");") &&
+    warmLiveStartsJob.includes("const rankedStartsPageWarmed = completedStarts.length > 0") &&
+    warmLiveStartsJob.includes("await warmRankedStartsPage(date, progressKey, progress)") &&
+    warmLiveStartsJob.includes("async function warmRankedStartsPage(date: string, key: string, progress: WarmLiveStartsProgress)") &&
+    warmLiveStartsJob.includes("await getRankedStartsPageData(date, getHomeSlateDate());") &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts batch warmed ranked starts page"') &&
     warmLiveStartsJob.includes("await markWarmStepComplete(progressKey, progress, batchKey);") &&
     warmLiveStartsJob.includes('console.log("warm-live-starts batch warmed form leaderboards"') &&
     warmLiveStartsJob.includes('console.log("warm-live-starts batch revalidated pitcher forms"') &&

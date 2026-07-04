@@ -33,6 +33,8 @@ const pageContextStrip = await readFile("src/components/page-context-strip.tsx",
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
+const rankedSlateStatusIsland = await readFile("src/components/ranked-slate-status-island.tsx", "utf8");
+const homeStatusRoute = await readFile("src/app/api/home/status/route.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
 const packageJson = await readFile("package.json", "utf8");
@@ -93,12 +95,16 @@ assert(
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
     rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v9";') &&
-    rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
-    rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
-    rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
-    rankedStartsPageService.includes("const getCachedLiveRankedStartsPageData = unstable_cache(") &&
-    rankedStartsPageService.includes("if (date < today) return getCachedFinalRankedStartsPageData(date, today);") &&
-    rankedStartsPageService.includes("if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);") &&
+    rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
+    rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
+    rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
+    rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "final")') &&
+    rankedStartsPageService.includes("if (date > today) return buildRankedStartsPageData(date, today);") &&
+    rankedStartsPageService.includes("if (completionState.totalGames === 0 && completionState.totalStarts === 0) return buildRankedStartsPageData(date, today);") &&
+    rankedStartsPageService.includes("function getCachedRankedStartsPageData(date: string, today: string, cacheMode: \"current\" | \"final\")") &&
+    rankedStartsPageService.includes("revalidate: false,") &&
+    rankedStartsPageService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, rankedStartsDateCacheTag(date)]") &&
+    startService.includes("{ revalidate: false, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }") &&
     rankedStartsPageService.includes("getRankedSlateCompletionState(date, today)") &&
     rankedStartsPageService.includes("getRankedSlateContextForStarts(date, today, slateStarts)") &&
     rankedStartsPageService.includes('measureRankedStartsSpan(timings, "daily-slate"') &&
@@ -125,7 +131,7 @@ assert(
     startsPage.includes("const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;") &&
     startsPage.includes("const highlights = new Map(pageData.highlights);") &&
     startsPage.includes("const formByPitcher = new Map(pageData.formByPitcher);"),
-  "ranked starts date pages must use a cached shared page-data payload, with long cache for final slates and short cache while live",
+  "ranked starts date pages must use a cached shared page-data payload with date tags and settle-driven revalidation for current/final slates",
 );
 
 assert(
@@ -216,7 +222,7 @@ assert(
     startService.includes("const getCachedRankedCompletedSlateDates = unstable_cache(") &&
     startService.includes('import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates,') &&
     startService.includes('["ranked-starts-complete-slate-state-dates-v1"]') &&
-    startService.includes("{ revalidate: 15 * 60 }") &&
+    startService.includes("{ revalidate: false, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }") &&
     startService.includes("const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);") &&
     startService.includes("if (canonicalCompleteDates.length > 0) return canonicalCompleteDates;") &&
     !startService.includes("const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== \"fixture\").map((start) => start.date))).sort();") &&
@@ -315,7 +321,7 @@ assert(
     !slateDateNav.includes("text-amber-300") &&
     !slateDateNav.includes("min-w-[23ch]") &&
     startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
-    startsPage.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
+    rankedSlateStatusIsland.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     !slateDateNav.includes("&lt;") &&
     !slateDateNav.includes("&gt;") &&
     !slateDateNav.includes("overflow-hidden rounded border border-white/10") &&
@@ -468,8 +474,10 @@ assert(
 );
 
 assert(
-    startsPage.includes("function RankedSlateStatus") &&
-    startsPage.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
+    !startsPage.includes("function RankedSlateStatus") &&
+    startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
+    startsPage.includes("<RankedSlateStatusIsland") &&
+    rankedSlateStatusIsland.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
     startsPage.includes('if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;') &&
     startsPage.includes("return inProgressStartsLabel(state);") &&
@@ -477,6 +485,10 @@ assert(
     startsPage.includes("const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);") &&
     startsPage.includes('const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";') &&
     startsPage.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
+    rankedSlateStatusIsland.includes("function rankedProgressStatusLabel(progress: SlateProgressState)") &&
+    rankedSlateStatusIsland.includes('if (progress.state === "all-starts-complete") return `SLATE COMPLETE · ${progress.totalStarts} STARTS`;') &&
+    rankedSlateStatusIsland.includes("if (progress.liveStarts > 0 || progress.state === \"starts-in-progress\") return inProgressStartsLabel(progress);") &&
+    rankedSlateStatusIsland.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
     startsPage.includes('return `WARMING · FIRST PITCH ${firstPitchLabel}`;') &&
     startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
     startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
@@ -512,8 +524,8 @@ assert(
   startsPage.includes('data-responsive-check="ranked-starts-empty-state"') &&
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{starts.length > 0 ? (") &&
-    startsPage.includes("<RankedSlateStatus state={completionState} slateProgress={slateProgress} />") &&
-    startsPage.indexOf("<RankedSlateStatus state={completionState} slateProgress={slateProgress} />") < startsPage.indexOf("{starts.length > 0 ? (") &&
+    startsPage.includes("<RankedSlateStatusIsland") &&
+    startsPage.indexOf("<RankedSlateStatusIsland") < startsPage.indexOf("{starts.length > 0 ? (") &&
     startsPage.includes("const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);") &&
     startsPage.includes("const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;") &&
     startsPage.includes("function emptyRankedStartsCopy(state: { liveStarts: number })") &&
@@ -538,7 +550,7 @@ assert(
 assert(
   startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
     startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
-    startsPage.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
+    rankedSlateStatusIsland.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     startsPage.includes('storageKey="ranked-starts-method-open" label="How rankings work"') &&
     startsPage.includes('className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology"') &&
     !startsPage.includes("border-amber-300/30 bg-amber-300/10 px-3"),
@@ -598,6 +610,26 @@ assert(
     startRanking.includes("const { rank: _staleRank, ...rest } = start;") &&
     startRanking.includes("export function validateRankedStartOrder"),
   "settled ranked pages must derive rank after canonical score overlay and render the shared archived Start of the Day hero with a no-photo variant",
+);
+
+assert(
+  startsPage.includes('import { RankedSlateStatusIsland } from "@/components/ranked-slate-status-island";') &&
+    startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
+    startsPage.includes("<RankedSlateStatusIsland") &&
+    startsPage.includes("initialLabel={statusLabel}") &&
+    startsPage.includes("initialLive={completionState.isToday && completionState.liveStarts > 0}") &&
+    startsPage.includes("initialProgress={slateProgress}") &&
+    !startsPage.includes("function RankedSlateStatus(") &&
+    rankedSlateStatusIsland.includes('"use client";') &&
+    rankedSlateStatusIsland.includes("void refresh();") &&
+    rankedSlateStatusIsland.includes("fetch(`/api/home/status?date=${encodeURIComponent(date)}`, { cache: \"no-store\" })") &&
+    rankedSlateStatusIsland.includes("if (shouldContinuePolling)") &&
+    rankedSlateStatusIsland.includes("window.setTimeout(refresh, RANKED_STATUS_POLL_MS)") &&
+    rankedSlateStatusIsland.includes('data-responsive-check="ranked-slate-status-island"') &&
+    rankedSlateStatusIsland.includes('data-slate-live-starts={progress.liveStarts}') &&
+    homeStatusRoute.includes('export const dynamic = "force-dynamic";') &&
+    homeStatusRoute.includes('"Cache-Control": "no-store"'),
+  "ranked starts status strip must hydrate live counts as a no-store slate-state island with one mount poll and live-only continued polling",
 );
 
 assert(

@@ -141,8 +141,11 @@ assert(
 );
 
 assert(
-  statusRoute.includes("getSlateStartProgress({ window: \"today\", date })"),
-  "homepage status API must return the shared slate progress state",
+  statusRoute.includes('export const dynamic = "force-dynamic";') &&
+    statusRoute.includes("getSlateStartProgress({ window: \"today\", date })") &&
+    statusRoute.includes('"Cache-Control": "no-store"') &&
+    !statusRoute.includes("s-maxage"),
+  "homepage status API must return the shared slate progress state without serving stale cache to live islands",
 );
 
 assert(

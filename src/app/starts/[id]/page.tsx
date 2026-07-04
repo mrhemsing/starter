@@ -12,6 +12,7 @@ import { MobileCardShell } from "@/components/mobile-card-shell";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitchChart } from "@/components/pitch-chart";
 import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";
+import { RankedSlateStatusIsland } from "@/components/ranked-slate-status-island";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
@@ -223,6 +224,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
   const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;
+  const statusLabel = completionStatusLabel(completionState, slateProgress);
   const startOfDayHero = (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]
     ? await resolveArchivedStartOfDayHero(qualifiedStarts[0], qualifiedStarts.length)
     : null;
@@ -242,7 +244,14 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 previousDate={archiveNavigation.previousDate}
                 nextDate={archiveNavigation.nextDate}
               />
-              <RankedSlateStatus state={completionState} slateProgress={slateProgress} />
+              {statusLabel ? (
+                <RankedSlateStatusIsland
+                  date={date}
+                  initialLabel={statusLabel}
+                  initialLive={completionState.isToday && completionState.liveStarts > 0}
+                  initialProgress={slateProgress}
+                />
+              ) : null}
             </div>
             {starts.length > 0 ? (
               <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]" data-responsive-check="ranked-start-controls">
@@ -1197,36 +1206,6 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
-}
-
-function RankedSlateStatus({
-  state,
-  slateProgress,
-}: {
-  state: {
-    date: string;
-    completedStarts: number;
-    totalStarts: number;
-    totalGames: number;
-    liveStarts: number;
-    warmingStarts: number;
-    isToday: boolean;
-    isPast: boolean;
-    isFinal: boolean;
-    isPartialToday: boolean;
-  };
-  slateProgress: SlateProgressState;
-}) {
-  const isLive = state.isToday && state.liveStarts > 0;
-  const label = completionStatusLabel(state, slateProgress);
-  if (!label) return null;
-
-  return (
-    <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400" role="status" aria-label={`Slate completion: ${label}`}>
-      {isLive ? <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" aria-hidden="true" /> : null}
-      <span>{label}</span>
-    </p>
-  );
 }
 
 function completionStatusLabel(

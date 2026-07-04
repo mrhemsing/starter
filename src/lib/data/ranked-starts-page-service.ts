@@ -8,7 +8,6 @@ import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/ty
 
 const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v9";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
-export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;
 
 export type RankedStartsPageData = {
   slateStarts: StartSummary[];
@@ -19,25 +18,30 @@ export type RankedStartsPageData = {
   formByPitcher: Array<[string, FormSummary]>;
 };
 
-const getCachedFinalRankedStartsPageData = unstable_cache(
-  async (date: string, today: string) => buildRankedStartsPageData(date, today),
-  ["ranked-starts-page-final", RANKED_STARTS_PAGE_CACHE_VERSION],
-  { revalidate: RANKED_STARTS_FINAL_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
-);
-
-const getCachedLiveRankedStartsPageData = unstable_cache(
-  async (date: string, today: string) => buildRankedStartsPageData(date, today),
-  ["ranked-starts-page-live", RANKED_STARTS_PAGE_CACHE_VERSION],
-  { revalidate: RANKED_STARTS_LIVE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
-);
+export function rankedStartsDateCacheTag(date: string) {
+  return `ranked-starts:${date}`;
+}
 
 export async function getRankedStartsPageData(date: string, today = getHomeSlateDate()) {
-  if (date < today) return getCachedFinalRankedStartsPageData(date, today);
+  if (date < today) return getCachedRankedStartsPageData(date, today, "final");
+  if (date > today) return buildRankedStartsPageData(date, today);
 
   const completionState = await getRankedSlateCompletionState(date, today);
-  if (completionState.isFinal) return getCachedFinalRankedStartsPageData(date, today);
+  if (completionState.totalGames === 0 && completionState.totalStarts === 0) return buildRankedStartsPageData(date, today);
+  if (completionState.isFinal) return getCachedRankedStartsPageData(date, today, "final");
 
-  return getCachedLiveRankedStartsPageData(date, today);
+  return getCachedRankedStartsPageData(date, today, "current");
+}
+
+function getCachedRankedStartsPageData(date: string, today: string, cacheMode: "current" | "final") {
+  return unstable_cache(
+    async () => buildRankedStartsPageData(date, today),
+    ["ranked-starts-page", RANKED_STARTS_PAGE_CACHE_VERSION, cacheMode, date, today],
+    {
+      revalidate: false,
+      tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, rankedStartsDateCacheTag(date)],
+    },
+  )();
 }
 
 async function buildRankedStartsPageData(date: string, today: string): Promise<RankedStartsPageData> {

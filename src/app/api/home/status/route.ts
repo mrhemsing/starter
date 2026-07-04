@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 
-const HOME_STATUS_REVALIDATE_SECONDS = 60;
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const requestedDate = new URL(request.url).searchParams.get("date");
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json(await getSlateStartProgress({ window: "today", date }), {
     headers: {
-      "Cache-Control": `public, s-maxage=${HOME_STATUS_REVALIDATE_SECONDS}, stale-while-revalidate=300`,
+      "Cache-Control": "no-store",
     },
   });
 }
