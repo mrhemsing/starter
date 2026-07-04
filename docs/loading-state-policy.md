@@ -10,4 +10,6 @@ Every navigation skeleton records a `[navigation-skeleton]` log with the route a
 
 The same empty-slot rule applies to pending modules and chips: if a profile/card module lacks its minimum viable data, do not render a placeholder module.
 
+Micro-mono type is reserved for eyebrows, chips, compact counters, and metadata. Any string that reads as a sentence renders at the standard body size, or one step below body size in dense panels. Empty-state copy, slate verdicts, and first-pitch sentences must not use label-scale type.
+
 Current audit: route-transition overlays remain absent. Scoped route-control pending is allowed only inside affected data regions through `src/components/route-control-pending.tsx`; full-page dimming or blocking route overlays remain forbidden. The active non-live navigation fallback is `src/components/route-loading-shell.tsx`; live-polling indicators still live inside `src/components/live-scoreboard.tsx`.

@@ -292,6 +292,8 @@ assert(
     loadingPolicy.includes("destination shell plus scoped skeleton data regions") &&
     loadingPolicy.includes("Shell elements render exactly once outside the streamed/skeleton data boundary") &&
     loadingPolicy.includes("fallback and content for a swappable data region share the same root wrapper class") &&
+    loadingPolicy.includes("Micro-mono type is reserved for eyebrows, chips, compact counters, and metadata") &&
+    loadingPolicy.includes("Any string that reads as a sentence renders at the standard body size") &&
     loadingPolicy.includes("Frozen screens, blocking overlays, blurred previous pages, and full-page dimming are forbidden") &&
     loadingPolicy.includes("Scoped route-control pending is allowed only inside affected data regions") &&
     loadingPolicy.includes("[navigation-skeleton]"),

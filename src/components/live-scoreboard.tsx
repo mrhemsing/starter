@@ -232,7 +232,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
           <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{verdictLine}</p>
-          {nextSlateLine ? <p className="mt-3 font-mono text-[10px] tracking-[0.08em] text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
+          {nextSlateLine ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
           <CtaArrow
             href={rankedStartsPath(board.date)}
             className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
@@ -273,7 +273,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
 }
 
 function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScoreboardRow[]) {
-  const eligibleRows = rows.filter((row) => row.gsPlus !== null && row.gsPlus >= 50 && inningsFromIP(row.line.inningsPitched) >= 9);
+  const eligibleRows = rows.filter((row) => row.gsPlus !== null && row.gsPlus >= 50);
   const leader = eligibleRows[0];
   if (!leader?.gsPlus) return `All ${board.totalStarts} starts are in.`;
 
@@ -576,11 +576,6 @@ function addPacificDays(date: string, days: number) {
 
 function daysBetweenPacificDates(left: string, right: string) {
   return Math.round((new Date(`${right}T00:00:00.000Z`).getTime() - new Date(`${left}T00:00:00.000Z`).getTime()) / 86_400_000);
-}
-
-function inningsFromIP(value: number) {
-  const whole = Math.trunc(value);
-  return whole * 3 + Math.round((value - whole) * 10);
 }
 
 function lastName(name: string) {

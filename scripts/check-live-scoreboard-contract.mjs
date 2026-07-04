@@ -258,9 +258,14 @@ assert(
     liveComponent.includes("const nextSlateLine = formatNextSlateLine(board);") &&
     liveComponent.includes("const verdictLine = formatSlateCompleteVerdict(board, rows);") &&
     liveComponent.includes("This slate is final.") &&
+    liveComponent.includes('data-live-next-slate>{nextSlateLine}</p>') &&
+    liveComponent.includes('className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300" data-live-next-slate') &&
+    !liveComponent.includes('font-mono text-[10px] tracking-[0.08em] text-zinc-300" data-live-next-slate') &&
     !liveComponent.includes("Today&apos;s slate is final.") &&
     liveComponent.includes("{verdictLine}") &&
     liveComponent.includes("function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScoreboardRow[])") &&
+    liveComponent.includes("const eligibleRows = rows.filter((row) => row.gsPlus !== null && row.gsPlus >= 50);") &&
+    !liveComponent.includes("inningsFromIP(row.line.inningsPitched) >= 9") &&
     liveComponent.includes("return `All ${board.totalStarts} starts are in.`;") &&
     liveComponent.includes("split the day at ${leader.gsPlus}.") &&
     liveComponent.includes("took the day.") &&
