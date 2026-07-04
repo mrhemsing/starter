@@ -2,6 +2,11 @@
   "startId": "2026-07-01-det-nyy-675512",
   "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/lyexlwgjabndgs3yosar.jpg",
   "alt": "Troy Melton strikes out Cody Bellinger",
+  "clean": true,
+  "focalPoint": {
+    "x": 40,
+    "y": 48
+  },
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
   "playUrl": "https://www.mlb.com/video/cody-bellinger-strikes-out-swinging-gl5lzg",

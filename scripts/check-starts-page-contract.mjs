@@ -48,6 +48,23 @@ const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
+const archivedStartOfDayActionFixtures = [
+  {
+    date: "2026-07-03",
+    pitcher: "Dylan Cease",
+    metadataPath: "public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-mlb-action-v4.json",
+  },
+  {
+    date: "2026-07-02",
+    pitcher: "Bryce Miller",
+    metadataPath: "public/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-action-v4.json",
+  },
+  {
+    date: "2026-07-01",
+    pitcher: "Troy Melton",
+    metadataPath: "public/images/top-performer-action-shots/2026-07-01-det-nyy-675512-mlb-action-v4.json",
+  },
+];
 
 const visibleTieBreakerOrder = [
   {
@@ -656,6 +673,28 @@ assert(
     startRanking.includes("export function validateRankedStartOrder"),
   "settled ranked pages must derive rank after canonical score overlay and render the shared archived Start of the Day hero with a no-photo variant",
 );
+
+for (const fixture of archivedStartOfDayActionFixtures) {
+  const metadata = JSON.parse(await readFile(fixture.metadataPath, "utf8"));
+  const hasAllowedActionUrl =
+    typeof metadata.imageUrl === "string" &&
+    (metadata.imageUrl.startsWith("/images/top-performer-action-shots/") ||
+      metadata.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
+      metadata.imageUrl.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
+      metadata.imageUrl.startsWith("https://s.hdnux.com/photos/"));
+
+  assert(
+    metadata.clean === true &&
+      Number.isFinite(metadata.focalPoint?.x) &&
+      Number.isFinite(metadata.focalPoint?.y) &&
+      metadata.focalPoint.x >= 0 &&
+      metadata.focalPoint.x <= 100 &&
+      metadata.focalPoint.y >= 0 &&
+      metadata.focalPoint.y <= 100 &&
+      hasAllowedActionUrl,
+    `archived Start of the Day action photo fixture must stay curator-clean with focal point metadata: ${fixture.date} ${fixture.pitcher}`,
+  );
+}
 
 assert(
   startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
