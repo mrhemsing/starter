@@ -17,9 +17,11 @@ import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
 import { RankedStartsArchiveNav } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
+import { TopPerformerCard } from "@/components/top-performer-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
@@ -29,6 +31,7 @@ import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
+import { rankStarts, validateRankedStartOrder } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
@@ -195,7 +198,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const pageData = await getRankedStartsPageData(date, today);
   const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;
   const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
-  const qualifiedStarts = starts.filter(isQualifiedRankedStart);
+  const qualifiedStarts = rankStarts(starts.filter(isQualifiedRankedStart));
+  validateRankedStartOrder(qualifiedStarts);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
   const scoreScale = summarizeSlateScoreScale(qualifiedStarts);
   const sort = isRankedStartSort(params?.sort) ? params?.sort ?? "rank" : "rank";
@@ -219,6 +223,9 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
   const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;
+  const startOfDayHero = (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]
+    ? await resolveArchivedStartOfDayHero(qualifiedStarts[0], qualifiedStarts.length)
+    : null;
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -303,6 +310,11 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           </section>
         ) : (
           <>
+            {startOfDayHero ? (
+              <section className="mb-6" data-responsive-check="ranked-starts-archived-hero">
+                <TopPerformerCard {...startOfDayHero} />
+              </section>
+            ) : null}
             {visibleStarts.length > 0 ? (
               <section className="space-y-4" data-responsive-check="ranked-starts-recap" data-sort={sort} data-band-filter={band}>
                 {groupedStarts.map((group) => (
@@ -368,6 +380,30 @@ function BandHeader({ label, count, color }: { label: string; count: number; col
       <span className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${color}, rgba(255,255,255,0.08))` }} />
     </div>
   );
+}
+
+async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: number) {
+  const [highlight, resolvedImage] = await Promise.all([
+    resolveFeaturedStartHighlight(start),
+    resolveTopPerformerImage(start, null),
+  ]);
+  const image = resolvedImage?.source === "action" ? resolvedImage : null;
+
+  return {
+    href: startHref(start, sourceParams("starts")),
+    pitcherName: start.pitcher.name,
+    team: start.pitcher.team,
+    opponent: start.opponent,
+    dateLabel: formatShortDate(start.date),
+    score: start.gameScorePlus,
+    line: start.line,
+    rank: start.rank,
+    slateCount,
+    image,
+    highlight,
+    status: "archived" as const,
+    scoreStatusLabel: null,
+  };
 }
 
 export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = false }: { index?: number; band?: "Elite" | "Plus" | "Solid" | "Below" | "Poor"; grouped?: boolean }) {
@@ -456,7 +492,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
   const tier = qualityTierOf(start.gameScorePlus);
   const profile = rankedBandProfile(tier.label);
   const tierTextColor = profile.scoreColor;
-  const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;
+  const contextLabel = rankedStartVenueLine(start);
   const gas = isGasStart(start, tier.label);
   const topReason = topInlineReason(start);
   const thermalBand = thermalBandForForm(formSummary);
@@ -626,6 +662,14 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       </div>
     </article>
   );
+}
+
+function rankedStartVenueLine(start: StartSummary) {
+  const matchup = start.side === "home"
+    ? `${start.opponent} @ ${start.pitcher.team}`
+    : `${start.pitcher.team} @ ${start.opponent}`;
+  const venue = start.context.parkLabel;
+  return venue ? `${matchup}, ${venue}` : matchup;
 }
 
 function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {

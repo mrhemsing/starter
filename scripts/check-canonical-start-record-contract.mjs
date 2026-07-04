@@ -232,12 +232,13 @@ assert(
     startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
     startService.includes("persistCanonical?: boolean;") &&
     startService.includes("return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);") &&
-    startService.includes("const slateStarts = await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts);") &&
+    startService.includes("const slateStarts = rankStarts(await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts));") &&
     startService.includes("function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], persistCanonical: boolean)") &&
+    startService.includes("return rankStarts(await readCanonicalizedStartSummaries(date, starts));") &&
+    startService.includes("const rankedStarts = Array.from(startsByDate.entries())") &&
     warmLiveStartsJob.includes('const starts = await getDailySlate({ window: "today", date, persistCanonical: true });') &&
-    startService.includes("return readCanonicalizedStartSummaries(date, starts);") &&
     startService.includes("export async function getArchivedSeasonStartSummaries"),
-  "daily slate and slate API must default to read-only canonical state while the warm pipeline opts into canonical writes explicitly",
+  "daily slate and slate API must default to read-only canonical state, rerank after canonical overlays, while the warm pipeline opts into canonical writes explicitly",
 );
 
 assert(

@@ -547,7 +547,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
   const starts = archivedStarts.length > 0
     ? archivedStarts
     : rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
-  const slateStarts = await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts);
+  const slateStarts = rankStarts(await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts));
   const completedStartStats = summarizeCompletedStartSource(slateStarts);
   const completedStartStatsCoverage = summarizeCompletedStartSourceCoverage(slateStarts);
 
@@ -693,6 +693,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
   if (!archived) return null;
 
   const { archive, game, start } = archived;
+  const rankedSlateStart = (await getArchivedSlateStarts(date)).find((candidate) => candidate.id === startId);
   const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
   const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
   const context = {
@@ -735,7 +736,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     id: startId,
     gamePk: start.gamePk,
     date,
-    rank: 1,
+    rank: rankedSlateStart?.rank ?? 1,
     pitcher: {
       id: String(start.pitcherMlbId),
       mlbId: start.pitcherMlbId,
@@ -1882,11 +1883,8 @@ function scheduledGameToStarts(
 export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
   const archivedStarts = await readCompletedStarts(date);
 
-  const starts = canonicalizeStartSummaries(archivedStarts
-    .map((start) => archivedCompletedStartToSummary(start))
-    .sort(compareRankedStarts)
-    .map((start, index) => ({ ...start, rank: index + 1 })));
-  return readCanonicalizedStartSummaries(date, starts);
+  const starts = canonicalizeStartSummaries(rankStarts(archivedStarts.map((start) => archivedCompletedStartToSummary(start))));
+  return rankStarts(await readCanonicalizedStartSummaries(date, starts));
 }
 
 function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], persistCanonical: boolean) {
@@ -1898,9 +1896,16 @@ function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], pers
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {
   const archivedStarts = await readSeasonCompletedStarts(season);
 
-  return canonicalizeStartSummaries(archivedStarts
-    .map((start) => archivedCompletedStartToSummary(start))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk));
+  const startsByDate = new Map<string, StartSummary[]>();
+  for (const start of archivedStarts.map((item) => archivedCompletedStartToSummary(item))) {
+    startsByDate.set(start.date, [...(startsByDate.get(start.date) ?? []), start]);
+  }
+
+  const rankedStarts = Array.from(startsByDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .flatMap(([, starts]) => rankStarts(starts));
+
+  return canonicalizeStartSummaries(rankedStarts).sort((a, b) => a.date.localeCompare(b.date) || a.rank - b.rank);
 }
 
 async function readCompletedStarts(date: string) {

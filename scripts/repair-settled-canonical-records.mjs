@@ -68,6 +68,9 @@ for (const row of rows) {
   const expectedVenue = scheduleVenue && validateVenue(scheduleVenue) === null ? scheduleVenue : record.venue;
   const venueIssue = validateVenue(expectedVenue);
   const recordDiffs = [];
+  const repairedContextSnapshot = record.contextSnapshot && expectedVenue
+    ? { ...record.contextSnapshot, parkLabel: expectedVenue }
+    : record.contextSnapshot;
 
   if (record.gameScoreV2 !== expectedGameScoreV2) {
     recordDiffs.push({ field: "gameScoreV2", before: record.gameScoreV2, after: expectedGameScoreV2 });
@@ -75,6 +78,10 @@ for (const row of rows) {
 
   if (expectedVenue && record.venue !== expectedVenue) {
     recordDiffs.push({ field: "venue", before: record.venue, after: expectedVenue });
+  }
+
+  if (expectedVenue && record.contextSnapshot?.parkLabel && record.contextSnapshot.parkLabel !== expectedVenue) {
+    recordDiffs.push({ field: "venue", before: record.contextSnapshot.parkLabel, after: expectedVenue });
   }
 
   if (venueIssue) {
@@ -94,6 +101,7 @@ for (const row of rows) {
       ...record,
       gameScoreV2: expectedGameScoreV2,
       venue: expectedVenue,
+      contextSnapshot: repairedContextSnapshot,
       updatedAt: now,
       audit: [
         ...(record.audit ?? []),
@@ -101,9 +109,7 @@ for (const row of rows) {
           at: now,
           event: "final-correction",
           source: record.source?.line ?? "archive-gamefeed",
-          note: record.id === "2026-07-02-mil-cin-694819"
-            ? "Second manual repair after freeze-sweep regression review: GSv2 restored from the earned-run pitcher line and the settled-record validation gate now guards future writes."
-            : "Settled canonical GSv2 repaired by formula-validation batch after the earned-run GSv2 guard was restored.",
+          note: repairAuditNote(record, recordDiffs),
           diffs: recordDiffs,
         },
       ],
@@ -205,6 +211,19 @@ function validateVenue(venue) {
   if (BANNED_VENUE_WORDS.test(trimmed)) return "implementation vocabulary";
   if (!KNOWN_MLB_VENUES.has(trimmed)) return "unknown venue";
   return null;
+}
+
+function repairAuditNote(record, recordDiffs) {
+  const fields = new Set(recordDiffs.map((diff) => diff.field));
+  if (fields.has("venue") && fields.has("gameScoreV2")) {
+    return "Settled canonical record repaired by batch audit: venue restored from MLB schedule data and GSv2 restored from the earned-run pitcher line.";
+  }
+  if (fields.has("venue")) {
+    return "Settled canonical venue repaired by batch audit after context-at-settle pollution review.";
+  }
+  return record.id === "2026-07-02-mil-cin-694819"
+    ? "Second manual repair after freeze-sweep regression review: GSv2 restored from the earned-run pitcher line and the settled-record validation gate now guards future writes."
+    : "Settled canonical GSv2 repaired by formula-validation batch after the earned-run GSv2 guard was restored.";
 }
 
 function supabaseHeaders() {

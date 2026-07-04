@@ -21,5 +21,28 @@ export function compareRankedStarts(a: RankableStart, b: RankableStart) {
 }
 
 export function rankStarts<T extends StartSummary>(starts: T[]) {
-  return [...starts].sort(compareRankedStarts).map((start, index) => ({ ...start, rank: index + 1 }));
+  return [...starts].sort(compareRankedStarts).map((start, index) => {
+    const { rank: _staleRank, ...rest } = start;
+    void _staleRank;
+    return { ...rest, rank: index + 1 } as T & { rank: number };
+  });
+}
+
+export function validateRankedStartOrder(starts: StartSummary[]) {
+  const expected = rankStarts(starts);
+  const issues = starts.flatMap((start, index) => {
+    const expectedStart = expected[index];
+    if (!expectedStart) return [`unexpected start ${start.id} at index ${index}`];
+    const messages: string[] = [];
+    if (start.id !== expectedStart.id) {
+      messages.push(`order ${index + 1} expected ${expectedStart.id} (${expectedStart.gameScorePlus}) but found ${start.id} (${start.gameScorePlus})`);
+    }
+    if (start.rank !== index + 1) {
+      messages.push(`${start.id} rank ${start.rank} must equal display position ${index + 1}`);
+    }
+    return messages;
+  });
+  if (issues.length > 0) {
+    throw new Error(`ranked start order invariant failed: ${issues.join("; ")}`);
+  }
 }

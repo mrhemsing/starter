@@ -20,7 +20,7 @@ type TopPerformerCardProps = {
   slateCount: number;
   image: TopPerformerImage | null;
   highlight?: FeaturedStartHighlight | null;
-  status: "final" | "live" | "previous";
+  status: "final" | "live" | "previous" | "archived";
   scoreStatusLabel?: "PROV" | null;
   whiffRate?: number | null;
   topVelo?: number | null;
@@ -50,6 +50,7 @@ export function TopPerformerCard({
   const [displayScore, setDisplayScore] = useState(score);
   const imageUrl = image?.imageUrl;
   const isPlaceholderImage = image?.source === "placeholder";
+  const noPhoto = status === "archived" && !imageUrl;
   const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");
   const imageMobileObjectPosition = image?.mobileObjectPosition ?? imageObjectPosition;
   const scoreText = displayScore.toString().padStart(2, "0");
@@ -120,24 +121,31 @@ export function TopPerformerCard({
       style={{ "--heat-glow-color": "246 196 69", "--heat-glow-opacity": "0.3" } as CSSProperties}
       data-responsive-check="home-top-performer-marquee"
       aria-label={`${pitcherName}, ${statusLabel.eyebrow}, ${score} GS+`}
+      data-top-performer-state={status}
+      data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}
     >
       <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">
         {finalScoreText}
       </div>
 
-      <div className="grid lg:min-h-[500px] lg:grid-cols-[45%_55%]">
+      <div className={`grid lg:min-h-[500px] ${noPhoto ? "lg:grid-cols-1" : "lg:grid-cols-[45%_55%]"}`}>
         <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#4A3E1C] bg-[#0A0B0D] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
-          <div className="hidden lg:block">
+          <div className={noPhoto ? "block" : "hidden lg:block"}>
             <p className="font-mono text-[10px] uppercase leading-[1.25] tracking-[0.22em] text-[#F6C445]">
               <TopPerformerEyebrow live={isLiveLeader} label={statusLabel.eyebrow} />
               <span className="mt-1 block">{statusLabel.detail}</span>
             </p>
-            <h2 className="pitcher-name mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] sm:text-5xl lg:text-6xl">
-              {pitcherName}
-            </h2>
-            <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
-              {team} vs {opponent}
-            </p>
+            <div className={noPhoto ? "mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end" : ""}>
+              <div>
+                <h2 className={`pitcher-name font-serif font-black leading-[0.92] text-[#F5F2EA] ${noPhoto ? "text-5xl sm:text-6xl" : "mt-3 max-w-[12ch] text-4xl sm:text-5xl lg:text-6xl"}`}>
+                  {pitcherName}
+                </h2>
+                <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
+                  {team} vs {opponent}
+                </p>
+              </div>
+              {noPhoto ? <ScoreBug score={scoreText} scoreStatusLabel={scoreStatusLabel} /> : null}
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -186,6 +194,7 @@ export function TopPerformerCard({
           </div>
         </div>
 
+        {noPhoto ? null : (
         <div className="relative order-1 min-h-[470px] overflow-hidden bg-[#15181C] lg:order-2 lg:min-h-[500px]">
           {imageUrl ? (
             <Image
@@ -250,9 +259,10 @@ export function TopPerformerCard({
           ) : null}
           {image?.attribution ? <CreditLine attribution={image.attribution} /> : null}
         </div>
+        )}
       </div>
 
-      <div className="border-t border-[#4A3E1C] bg-[#0A0B0D] px-4 py-3 sm:px-5 lg:hidden">
+      <div className={`border-t border-[#4A3E1C] bg-[#0A0B0D] px-4 py-3 sm:px-5 ${noPhoto ? "" : "lg:hidden"}`}>
         <p className="nowrap-token font-mono text-xs text-[#F5F2EA]">{context}</p>
       </div>
     </article>
@@ -270,11 +280,18 @@ function TopPerformerEyebrow({ live, label, compact = false }: { live: boolean; 
   );
 }
 
-function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string) {
+function formatTopPerformerStatusLabel(status: "final" | "live" | "previous" | "archived", dateLabel: string) {
   if (status === "live") {
     return {
       eyebrow: "Live GS+ leader",
       detail: `Today, ${dateLabel}`,
+    };
+  }
+
+  if (status === "archived") {
+    return {
+      eyebrow: `START OF THE DAY · ${dateLabel.toUpperCase()}`,
+      detail: "Final",
     };
   }
 

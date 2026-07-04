@@ -32,6 +32,7 @@ const startsDisclosure = await readFile("src/components/ranked-starts-disclosure
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
+const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
 const packageJson = await readFile("package.json", "utf8");
@@ -91,7 +92,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v8";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v9";') &&
     rankedStartsPageService.includes("export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;") &&
     rankedStartsPageService.includes("export const RANKED_STARTS_LIVE_REVALIDATE_SECONDS = 60;") &&
     rankedStartsPageService.includes("const getCachedFinalRankedStartsPageData = unstable_cache(") &&
@@ -575,6 +576,28 @@ assert(
     formService.includes('import { isScoredStarterSample } from "@/lib/start-classification";') &&
     formService.includes("isScoredStarterSample(start, FORM_CONFIG.ipFloor)"),
   "ranked starts must use a hard 2.0 IP eligibility floor while planned-starter workload remains available for form scoring",
+);
+
+assert(
+  startsPage.includes('import { TopPerformerCard } from "@/components/top-performer-card";') &&
+    startsPage.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";') &&
+    startsPage.includes("const qualifiedStarts = rankStarts(starts.filter(isQualifiedRankedStart));") &&
+    startsPage.includes("validateRankedStartOrder(qualifiedStarts);") &&
+    startsPage.includes('slateProgress.state === "all-starts-complete"') &&
+    startsPage.includes('data-responsive-check="ranked-starts-archived-hero"') &&
+    startsPage.includes("resolveArchivedStartOfDayHero") &&
+    startsPage.includes("function rankedStartVenueLine(start: StartSummary)") &&
+    startsPage.includes("const venue = start.context.parkLabel;") &&
+    !startsPage.includes('const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;') &&
+    startsPage.includes('status: "archived" as const') &&
+    startsPage.includes('resolvedImage?.source === "action" ? resolvedImage : null') &&
+    topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
+    topPerformerCard.includes('const noPhoto = status === "archived" && !imageUrl;') &&
+    topPerformerCard.includes('eyebrow: `START OF THE DAY · ${dateLabel.toUpperCase()}`,') &&
+    topPerformerCard.includes('data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}') &&
+    startRanking.includes("const { rank: _staleRank, ...rest } = start;") &&
+    startRanking.includes("export function validateRankedStartOrder"),
+  "settled ranked pages must derive rank after canonical score overlay and render the shared archived Start of the Day hero with a no-photo variant",
 );
 
 assert(

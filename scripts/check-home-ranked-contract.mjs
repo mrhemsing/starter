@@ -245,7 +245,7 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('status: "final" | "live" | "previous";') &&
+  topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
     topPerformerCard.includes('scoreStatusLabel?: "PROV" | null;') &&
     topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
     topPerformerCard.includes('const isLiveLeader = status === "live";') &&
@@ -268,7 +268,7 @@ assert(
 );
 
 assert(
-  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous", dateLabel: string)') &&
+  topPerformerCard.includes('function formatTopPerformerStatusLabel(status: "final" | "live" | "previous" | "archived", dateLabel: string)') &&
     topPerformerCard.includes('if (status === "live")') &&
     !topPerformerCard.includes('const livePrefix = "Live leader · ";') &&
     !topPerformerCard.includes("The one to beat") &&

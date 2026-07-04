@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
 const PAGE_SIZE = 1000;
 const CONTEXT_KEYS = new Set(["whiffDelta", "velocityDelta", "parkContext", "opponentQuality", "opponentOffense", "calibration"]);
+const BANNED_VENUE_WORDS = /\b(canonical|context|fixture|slate|settle|stored|pipeline|cache|snapshot|source|implementation)\b/i;
 
 const env = { ...process.env, ...(await loadDotEnv(".env.local")) };
 const baseUrl = env.THE_BUMP_SUPABASE_URL ?? env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL;
@@ -107,7 +108,7 @@ function buildContextSnapshot(record, breakdown) {
     whiffDeltaPct: round((whiff?.value ?? 0) / 0.35, 3),
     velocityDeltaMph: round((velocity?.value ?? 0) / 1.75, 3),
     parkRunFactor: round(1 - ((park?.value ?? 0) / 12), 3),
-    parkLabel: record.venue ?? "Context at settle park",
+    parkLabel: assertVenueForContextSnapshot(record.venue, record.id),
     opponentQualityRunValue: opponentQuality?.value ?? 0,
     opponentQualityLabel: labelContextAtSettle(opponentQuality?.description ?? `${record.opponent} opponent context.`),
     opponentOffenseRunValue: opponentOffense?.value ?? 0,
@@ -137,6 +138,7 @@ function labelContextAtSettle(value) {
 }
 
 function canonicalRowFromRecord(record) {
+  assertVenueForContextSnapshot(record.venue, record.id);
   return {
     date: record.date,
     start_id: record.id,
@@ -147,6 +149,14 @@ function canonicalRowFromRecord(record) {
     record,
     updated_at: record.updatedAt,
   };
+}
+
+function assertVenueForContextSnapshot(venue, id) {
+  const trimmed = venue?.trim();
+  if (!trimmed || BANNED_VENUE_WORDS.test(trimmed)) {
+    throw new Error(`refusing to freeze settled context for ${id}: invalid venue ${venue ?? "missing"}`);
+  }
+  return trimmed;
 }
 
 function supabaseHeaders() {
