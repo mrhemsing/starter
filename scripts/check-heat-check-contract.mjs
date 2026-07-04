@@ -241,29 +241,23 @@ assert(
 );
 
 assert(
-  formPage.includes("<HeatCheckBandNav bands={leagueBandCounts} />") &&
-    bandNav.includes('"use client";') &&
+  !formPage.includes('import { HeatCheckBandNav } from "@/components/heat-check-band-nav";') &&
+    !formPage.includes("<HeatCheckBandNav") &&
     formPage.includes('className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"') &&
     !bandNav.includes('data-temperature-job="jump"') &&
     !bandNav.includes('aria-label="Jump to heat zones"') &&
     !bandNav.includes("function TemperatureRail") &&
     !formPage.includes('lg:grid-cols-[80px_minmax(0,1fr)]') &&
-    bandNav.includes('href={`#band-${band.key}`}') &&
-    bandNav.includes("data-active-heat-band={active?.key ?? \"\"}") &&
-    bandNav.includes('aria-current={selected ? "location" : undefined}') &&
     !formPage.includes("function TemperatureRail({ bands, total, params }"),
-  "Heat Check must remove the unnecessary desktop temperature rail while keeping mobile band jumps active",
+  "Heat Check must remove unnecessary temperature rails and mobile jump filters",
 );
 
 assert(
-  bandNav.includes('data-temperature-job="mobile-jump"') &&
-    bandNav.includes("function MobileBandJumper") &&
-    bandNav.includes('aria-label="Jump to heat band"') &&
-    bandNav.includes("data-active-heat-band={active?.key ?? \"\"}") &&
-    bandNav.includes('aria-current={selected ? "location" : undefined}') &&
-    !bandNav.includes('className="sticky top-[76px]') &&
-    !bandNav.includes('{active.label} · {active.count}'),
-  "mobile Heat Check must replace the rail with a non-sticky band jumper that tracks the active band without duplicating the first section count",
+  !formPage.includes('data-temperature-job="mobile-jump"') &&
+    !formPage.includes('aria-label="Jump to heat band"') &&
+    !formPage.includes('data-active-heat-band=') &&
+    !formPage.includes('href={`#band-${band.key}`}'),
+  "mobile Heat Check must not render a band jump filter above the board",
 );
 
 assert(
@@ -340,7 +334,7 @@ assert(
     formPage.includes("{trendView && leagueView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
-    formPage.includes("{trendView && leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}") &&
+    !formPage.includes("<HeatCheckBandNav") &&
     !formPage.includes("Full board") &&
     !formPage.includes("League heat map") &&
     formPage.includes('Boolean(team) || params?.even === "show" || band === "even" || sort !== "form"') &&
@@ -749,4 +743,4 @@ assert(
   "Heat Check controls must show shared pending treatment and team links must filter locally when the loaded board has the dataset",
 );
 
-console.log("heat check contract ok: bar filters, mobile band jumps, league counts, filter status, compact momentum hero, form cluster, top-aligned rows, and canonical pitcher links are locked");
+console.log("heat check contract ok: bar filters, no mobile jump filter, league counts, filter status, compact momentum hero, form cluster, top-aligned rows, and canonical pitcher links are locked");

@@ -46,6 +46,7 @@ try {
 
     await page.goto(`${baseUrl}/heat-check`, { waitUntil: "load" });
     await page.locator("[data-form-row]:not([data-skeleton-row])").first().waitFor({ timeout: 10_000 });
+    await assertNoHeatBandJumpFilter(page, viewport.name);
     if (viewport.kind === "mobile") {
       await assertHeatRankHeadshotGap(page, viewport.name);
       await assertHeatScheduledChipBreak(page, viewport.name);
@@ -77,6 +78,11 @@ async function assertVisible(page, selector, expected, label) {
   );
   const visible = visibleCount > 0;
   assert(visible === expected, `${label} expected ${selector} visible=${expected}, got ${visible} (${visibleCount}/${count} visible)`);
+}
+
+async function assertNoHeatBandJumpFilter(page, viewportName) {
+  const count = await page.locator("[data-temperature-job='mobile-jump'], [aria-label='Jump to heat band']").count();
+  assert(count === 0, `heat ${viewportName} should not render a band jump filter, found ${count}`);
 }
 
 async function assertHeatScheduledChipBreak(page, viewportName) {

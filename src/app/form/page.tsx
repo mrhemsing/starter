@@ -8,7 +8,6 @@ import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatCheckClientTeamFilter } from "@/components/heat-check-client-team-filter";
-import { HeatCheckBandNav } from "@/components/heat-check-band-nav";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
@@ -328,7 +327,6 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
         ) : (
           <PendingRegion region="heat-check-board" className="grid gap-4 scroll-mt-8">
             <div id="full-board" data-responsive-check="form-leaderboard" data-heat-client-team-board={clientTeamFilterEnabled ? "true" : undefined} data-heat-client-team-active="false">
-            {trendView && leagueView ? <HeatCheckBandNav bands={leagueBandCounts} /> : null}
             <section className="grid gap-2">
               {seasonView ? (
                 <>
