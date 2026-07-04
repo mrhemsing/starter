@@ -248,6 +248,7 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
 
 function isAllowedCuratedActionImageUrl(url: string) {
   return (
+    url.startsWith("/images/top-performer-action-shots/") ||
     url.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
     url.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
     url.startsWith("https://s.hdnux.com/photos/")

@@ -1732,6 +1732,12 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming weekly JSON-LD must keep stable first-pitch and matchup-label tie-breaking",
   );
   assert(
+    upcomingWeekImageSource.includes("b.game.gameWatchScore - a.game.gameWatchScore ||") &&
+      upcomingWeekImageSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
+      upcomingWeekImageSource.includes("a.game.label.localeCompare(b.game.label),"),
+    "upcoming weekly Open Graph image must use the same deterministic watch-score, first-pitch, and matchup-label ordering as weekly metadata",
+  );
+  assert(
     upcomingMetadataSource.includes("const itemListGames = upcoming.games.slice(0, 10);") &&
       upcomingMetadataSource.includes("const itemListGames = games.slice(0, 20);") &&
       upcomingMetadataSource.includes("numberOfItems: itemListGames.length,") &&

@@ -24,7 +24,12 @@ export default async function Image({ params }: UpcomingWeekImageProps) {
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const games = upcoming.days
     .flatMap((day) => day.games.map((game) => ({ date: day.date, game })))
-    .sort((a, b) => b.game.gameWatchScore - a.game.gameWatchScore);
+    .sort(
+      (a, b) =>
+        b.game.gameWatchScore - a.game.gameWatchScore ||
+        a.game.firstPitch.localeCompare(b.game.firstPitch) ||
+        a.game.label.localeCompare(b.game.label),
+    );
   const topGame = games[0];
   const topTier = topGame ? watchTierOf(topGame.game.gameWatchScore) : null;
 

@@ -1,10 +1,15 @@
 {
   "startId": "2026-07-03-tor-sea-656302",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/recmjjsvwwhj0lgepsbk.jpg",
-  "alt": "Dylan Cease fans nine against Mariners",
-  "clean": false,
-  "objectPosition": "50% 50%",
-  "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/video/dylan-cease-fans-nine-against-mariners",
-  "expiresAt": 1785775048460
+  "imageUrl": "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg",
+  "alt": "Dylan Cease delivers a pitch against the Mariners",
+  "attribution": "Lindsey Wasson/AP Photo via Hearst",
+  "clean": true,
+  "focalPoint": {
+    "x": 42,
+    "y": 43
+  },
+  "objectPosition": "42% 43%",
+  "mobileObjectPosition": "42% 43%",
+  "playUrl": "https://www.sfchronicle.com/sports/article/dylan-cease-strikes-out-9-in-7-innings-as-blue-22332256.php",
+  "expiresAt": 4102444800000
 }

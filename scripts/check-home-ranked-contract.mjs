@@ -496,6 +496,7 @@ assert(
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
     imageService.includes("function isAllowedCuratedActionImageUrl(url: string)") &&
+    imageService.includes('url.startsWith("/images/top-performer-action-shots/")') &&
     imageService.includes("url.startsWith(\"https://img.mlbstatic.com/mlb-images/image/upload/\")") &&
     imageService.includes("url.startsWith(\"https://images2.minutemediacdn.com/image/upload/\")") &&
     imageService.includes("url.startsWith(\"https://s.hdnux.com/photos/\")") &&
