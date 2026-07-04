@@ -1,14 +1,17 @@
 {
   "startId": "2026-07-02-sea-laa-682243",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
-  "alt": "Bryce Miller strikes out eight in superb start",
+  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
+  "alt": "Bryce Miller pitching action photo for 2026-07-02",
+  "attribution": "Bryce Miller strikes out eight in superb start - thumbnail",
   "clean": true,
   "focalPoint": {
-    "x": 54,
-    "y": 47
+    "x": 50,
+    "y": 50
   },
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/video/bryce-miller-strikes-out-eight-in-superb-start",
-  "expiresAt": 1785780437277
+  "playUrl": "https://www.mlb.com/gameday/823119",
+  "reviewedAt": "2026-07-04T18:29:09.603Z",
+  "reviewNote": "Curated Start of the Day action image: Bryce Miller strikes out eight in superb start",
+  "expiresAt": 1814725749571
 }

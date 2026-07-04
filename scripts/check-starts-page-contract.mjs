@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 
 function assert(condition, message) {
@@ -65,6 +65,55 @@ const archivedStartOfDayActionFixtures = [
     metadataPath: "public/images/top-performer-action-shots/2026-07-01-det-nyy-675512-mlb-action-v4.json",
   },
 ];
+
+function archivedStartInnings(ip) {
+  const value = Number(ip) || 0;
+  const whole = Math.trunc(value);
+  const outs = Math.round((value - whole) * 10);
+  return whole + outs / 3;
+}
+
+function compareArchivedStartOfDay(a, b) {
+  return (
+    b.gameScorePlus - a.gameScorePlus ||
+    archivedStartInnings(b.line.inningsPitched) - archivedStartInnings(a.line.inningsPitched) ||
+    a.line.earnedRuns - b.line.earnedRuns ||
+    b.line.strikeouts - a.line.strikeouts ||
+    a.line.walks - b.line.walks ||
+    a.line.hits - b.line.hits ||
+    a.date.localeCompare(b.date) ||
+    (a.gamePk ?? 0) - (b.gamePk ?? 0) ||
+    (a.pitcherName ?? "").localeCompare(b.pitcherName ?? "")
+  );
+}
+
+async function readArchivedStartOfDayLeaders() {
+  const archiveDir = "data/mlb-archive/2026/dates";
+  const files = (await readdir(archiveDir)).filter((file) => file.endsWith(".json")).sort();
+  const leaders = [];
+
+  for (const file of files) {
+    const date = file.replace(/\.json$/, "");
+    const archive = JSON.parse(await readFile(`${archiveDir}/${file}`, "utf8"));
+    const starts = [];
+    for (const game of archive.games ?? []) {
+      for (const start of game.starts ?? []) {
+        if (archivedStartInnings(start.line?.inningsPitched) < 2) continue;
+        starts.push({
+          ...start,
+          date,
+          gamePk: game.gamePk,
+          startId: `${date}-${start.team.toLowerCase()}-${start.opponent.toLowerCase()}-${start.pitcherMlbId}`,
+        });
+      }
+    }
+    if (starts.length === 0) continue;
+    starts.sort(compareArchivedStartOfDay);
+    leaders.push(starts[0]);
+  }
+
+  return leaders;
+}
 
 const visibleTieBreakerOrder = [
   {
@@ -693,6 +742,37 @@ for (const fixture of archivedStartOfDayActionFixtures) {
       metadata.focalPoint.y <= 100 &&
       hasAllowedActionUrl,
     `archived Start of the Day action photo fixture must stay curator-clean with focal point metadata: ${fixture.date} ${fixture.pitcher}`,
+  );
+}
+
+for (const leader of await readArchivedStartOfDayLeaders()) {
+  const metadataPath = `public/images/top-performer-action-shots/${leader.startId}-mlb-action-v4.json`;
+  assert(
+    existsSync(metadataPath),
+    `every archived 2026 Start of the Day leader must have stored action-photo metadata: ${leader.date} ${leader.pitcherName}`,
+  );
+
+  const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
+  const hasAllowedActionUrl =
+    typeof metadata.imageUrl === "string" &&
+    (metadata.imageUrl.startsWith("/images/top-performer-action-shots/") ||
+      metadata.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
+      metadata.imageUrl.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
+      metadata.imageUrl.startsWith("https://s.hdnux.com/photos/"));
+
+  assert(
+    metadata.clean === true &&
+      metadata.startId === leader.startId &&
+      typeof metadata.alt === "string" &&
+      metadata.alt.toLowerCase().includes("pitching action") &&
+      Number.isFinite(metadata.focalPoint?.x) &&
+      Number.isFinite(metadata.focalPoint?.y) &&
+      metadata.focalPoint.x >= 0 &&
+      metadata.focalPoint.x <= 100 &&
+      metadata.focalPoint.y >= 0 &&
+      metadata.focalPoint.y <= 100 &&
+      hasAllowedActionUrl,
+    `archived 2026 Start of the Day action photo must stay stored, curator-clean, and mobile-croppable: ${leader.date} ${leader.pitcherName}`,
   );
 }
 

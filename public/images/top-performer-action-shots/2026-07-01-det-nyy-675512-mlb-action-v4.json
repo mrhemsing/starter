@@ -1,14 +1,17 @@
 {
   "startId": "2026-07-01-det-nyy-675512",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/lyexlwgjabndgs3yosar.jpg",
-  "alt": "Troy Melton strikes out Cody Bellinger",
+  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/lyexlwgjabndgs3yosar.jpg",
+  "alt": "Troy Melton pitching action photo for 2026-07-01",
+  "attribution": "AP26182646699434",
   "clean": true,
   "focalPoint": {
-    "x": 40,
-    "y": 48
+    "x": 50,
+    "y": 50
   },
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/video/cody-bellinger-strikes-out-swinging-gl5lzg",
-  "expiresAt": 1785564157304
+  "playUrl": "https://www.mlb.com/gameday/823530",
+  "reviewedAt": "2026-07-04T18:29:09.602Z",
+  "reviewNote": "Curated Start of the Day action image: Troy Melton strikes out Cody Bellinger",
+  "expiresAt": 1814725749571
 }
