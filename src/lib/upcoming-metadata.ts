@@ -21,13 +21,11 @@ export function upcomingWeekTitle(startDate: string) {
 }
 
 export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range" | "days">) {
-  const games = upcoming.days.flatMap((day) => day.games);
-  const topGame = games.reduce<TonightGame | null>(
-    (best, game) => (!best || game.gameWatchScore > best.gameWatchScore ? game : best),
-    null,
-  );
+  const games = orderedUpcomingWeekGames(upcoming);
+  const scheduledGameCount = upcoming.days.reduce((total, day) => total + day.scheduledGames, 0);
+  const topGame = games[0]?.game;
   const lead = topGame ? `Top watch: ${topGame.label} at ${formatWatchScore(topGame.gameWatchScore)}.` : "Updates as probable starters are named.";
-  return `${games.length} upcoming MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
+  return `${scheduledGameCount} scheduled MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
 }
 
 export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
@@ -50,7 +48,7 @@ export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
 }
 
 export function jsonLdForUpcomingWeek(upcoming: UpcomingResponse) {
-  const games = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game })));
+  const games = orderedUpcomingWeekGames(upcoming);
   const itemListGames = games.slice(0, 20);
 
   return {
@@ -67,6 +65,17 @@ export function jsonLdForUpcomingWeek(upcoming: UpcomingResponse) {
       item: jsonLdForUpcomingGame({ ...game, date: day }),
     })),
   };
+}
+
+function orderedUpcomingWeekGames(upcoming: Pick<UpcomingResponse, "days">) {
+  return upcoming.days
+    .flatMap((day) => day.games.map((game) => ({ day: day.date, game })))
+    .sort(
+      (a, b) =>
+        b.game.gameWatchScore - a.game.gameWatchScore ||
+        a.game.firstPitch.localeCompare(b.game.firstPitch) ||
+        a.game.label.localeCompare(b.game.label),
+    );
 }
 
 function jsonLdForUpcomingGame(game: TonightGame) {

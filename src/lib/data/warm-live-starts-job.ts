@@ -40,6 +40,7 @@ export type WarmLiveStartsJobResult = {
     pitcherName: string;
     imageSource: string | null;
   } | null;
+  openingRevalidated?: boolean;
   homeLeaderRevalidated?: boolean;
   rankedStartsPageWarmed?: boolean;
   revalidated?: boolean;
@@ -59,6 +60,11 @@ type WarmLiveStartsLock = {
 
 type WarmHomeLiveLeaderState = {
   signature: HomeLiveLeaderSignature | null;
+  updatedAt: string;
+};
+
+type WarmSlateLifecycleState = {
+  signature: string;
   updatedAt: string;
 };
 
@@ -106,22 +112,46 @@ export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {
 }
 
 async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, date: string, startedAt: Date): Promise<WarmLiveStartsJobResult> {
-  const [tonight, completion] = await Promise.all([
+  const [tonight, completion, liveBoard] = await Promise.all([
     getTonightMustWatch({ date, window: 5 }),
     getRankedSlateCompletionState(date, getHomeSlateDate()),
+    getLiveScoreboard({ date }).catch(() => null),
   ]);
-  const liveGames = tonight.games.filter((game) => game.status === "live").length;
-  const activeGames = liveGames + completion.finalGames;
+  const liveGames = liveBoard ? Math.ceil(liveBoard.liveStarts / 2) : 0;
+  const warmingGames = liveBoard ? Math.ceil(liveBoard.warmingStarts / 2) : 0;
+  const activeGames = liveGames + warmingGames + completion.finalGames;
+  const openingRevalidated = await revalidateSlateLifecycleTransition({
+    date,
+    options,
+    reason: slateLifecycleRevalidationReason({
+      liveStarts: liveBoard?.liveStarts ?? 0,
+      warmingStarts: liveBoard?.warmingStarts ?? 0,
+      completedStarts: liveBoard?.finalStarts ?? 0,
+      totalStarts: liveBoard?.totalStarts ?? completion.totalGames * 2,
+    }),
+    signature: slateLifecycleSignature({
+      date,
+      totalGames: liveBoard?.slateProgress.totalGames ?? completion.totalGames,
+      totalStarts: liveBoard?.totalStarts ?? completion.totalGames * 2,
+      scheduledStarts: liveBoard?.scheduledStarts ?? Math.max(0, completion.totalGames * 2 - completion.finalGames * 2),
+      warmingStarts: liveBoard?.warmingStarts ?? 0,
+      liveStarts: liveBoard?.liveStarts ?? 0,
+      completedStarts: liveBoard?.finalStarts ?? completion.finalGames * 2,
+      progressState: liveBoard?.slateProgress.state ?? (completion.isFinal ? "all-starts-complete" : activeGames > 0 ? "starts-in-progress" : "pre-first-pitch"),
+    }),
+  });
 
   if (activeGames === 0) {
-    console.log("warm-live-starts end", { date, warmed: false, reason: "no-live-or-final-games" });
+    console.log("warm-live-starts end", { date, warmed: openingRevalidated, reason: "no-live-or-final-games", openingRevalidated });
     return {
-      warmed: false,
+      warmed: openingRevalidated,
       date,
       reason: "no-live-or-final-games",
       liveGames,
       finalGames: completion.finalGames,
       totalGames: completion.totalGames,
+      openingRevalidated,
+      revalidated: openingRevalidated,
     };
   }
 
@@ -228,9 +258,10 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
           imageSource: topPerformer.image?.source ?? null,
         }
       : null,
+    openingRevalidated,
     homeLeaderRevalidated,
     rankedStartsPageWarmed,
-    revalidated: completedStarts.length > 0,
+    revalidated: completedStarts.length > 0 || openingRevalidated || homeLeaderRevalidated,
     durationMs,
     generatedAt: finishedAt.toISOString(),
   };
@@ -279,6 +310,7 @@ async function revalidateHomeLeaderSnapshotOnChange(date: string, options: WarmL
 
   options.revalidateTag?.(HOME_RANKED_CACHE_TAG, "max");
   options.revalidatePath?.("/");
+  revalidateRankedStartsDate(date, options, "leader-change");
   await writeRuntimeState(stateKey, { signature, updatedAt: new Date().toISOString() });
   console.log("warm-live-starts revalidated home live leader snapshot", {
     date,
@@ -287,6 +319,81 @@ async function revalidateHomeLeaderSnapshotOnChange(date: string, options: WarmL
     tag: HOME_RANKED_CACHE_TAG,
   });
   return true;
+}
+
+async function revalidateSlateLifecycleTransition({
+  date,
+  options,
+  reason,
+  signature,
+}: {
+  date: string;
+  options: WarmLiveStartsRevalidators;
+  reason: "slate-open" | "warming" | "first-pitch" | "settle-progress" | "slate-complete";
+  signature: string;
+}) {
+  const stateKey = slateLifecycleStateKey(date);
+  const previous = await readRuntimeState<WarmSlateLifecycleState>(stateKey);
+  if (previous?.signature === signature) return false;
+
+  revalidateRankedStartsDate(date, options, reason);
+  await writeRuntimeState(stateKey, { signature, updatedAt: new Date().toISOString() });
+  console.log("warm-live-starts revalidated slate lifecycle transition", {
+    date,
+    reason,
+    previous: previous?.signature ?? null,
+    next: signature,
+  });
+  return true;
+}
+
+function slateLifecycleRevalidationReason({
+  liveStarts,
+  warmingStarts,
+  completedStarts,
+  totalStarts,
+}: {
+  liveStarts: number;
+  warmingStarts: number;
+  completedStarts: number;
+  totalStarts: number;
+}): "slate-open" | "warming" | "first-pitch" | "settle-progress" | "slate-complete" {
+  if (totalStarts > 0 && completedStarts >= totalStarts) return "slate-complete";
+  if (completedStarts > 0) return "settle-progress";
+  if (liveStarts > 0) return "first-pitch";
+  if (warmingStarts > 0) return "warming";
+  return "slate-open";
+}
+
+function slateLifecycleSignature({
+  date,
+  totalGames,
+  totalStarts,
+  scheduledStarts,
+  warmingStarts,
+  liveStarts,
+  completedStarts,
+  progressState,
+}: {
+  date: string;
+  totalGames: number;
+  totalStarts: number;
+  scheduledStarts: number;
+  warmingStarts: number;
+  liveStarts: number;
+  completedStarts: number;
+  progressState: string;
+}) {
+  return [
+    date,
+    `state:${progressState}`,
+    `games:${totalGames}`,
+    `starts:${totalStarts}`,
+    `scheduled:${scheduledStarts}`,
+    `warming:${warmingStarts}`,
+    `live:${liveStarts}`,
+    `complete:${completedStarts}`,
+  ].join("|");
 }
 
 async function markWarmStepComplete(key: string, progress: WarmLiveStartsProgress, step: string) {
@@ -303,6 +410,10 @@ function warmLiveStartsProgressKey(date: string, finalGames: number, completedSt
 
 function homeLiveLeaderStateKey(date: string) {
   return `home-live-leader:${date}`;
+}
+
+function slateLifecycleStateKey(date: string) {
+  return `slate-lifecycle:${date}`;
 }
 
 function sameHomeLiveLeaderSignature(left: HomeLiveLeaderSignature | null, right: HomeLiveLeaderSignature | null) {

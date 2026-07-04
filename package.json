@@ -9,6 +9,7 @@
     "lint": "eslint",
     "archive:mlb-season": "node scripts/archive-mlb-season.mjs",
     "sync:supabase-mlb-archive": "node scripts/sync-supabase-mlb-archive.mjs",
+    "backfill:canonical-slate-state": "node --experimental-strip-types scripts/backfill-canonical-slate-state.mjs",
     "freeze:gs-plus-context": "node scripts/freeze-gs-plus-context-snapshots.mjs",
     "ingest:featured-highlights": "node scripts/ingest-featured-start-highlights.mjs",
     "check:mlb-archive": "node scripts/check-mlb-archive.mjs",

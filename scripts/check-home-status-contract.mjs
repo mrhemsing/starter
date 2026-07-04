@@ -12,6 +12,8 @@ const [
   slateState,
   startService,
   slateCounts,
+  liveNavLabel,
+  siteNav,
   statusRoute,
   scoreComponentList,
   slateSyncScript,
@@ -24,6 +26,8 @@ const [
   readFile("src/lib/slate-state.ts", "utf8"),
   readFile("src/lib/data/start-service.ts", "utf8"),
   readFile("src/components/slate-counts.tsx", "utf8"),
+  readFile("src/components/live-nav-label.tsx", "utf8"),
+  readFile("src/components/site-nav.tsx", "utf8"),
   readFile("src/app/api/home/status/route.ts", "utf8"),
   readFile("src/components/score-component-list.tsx", "utf8"),
   readFile("scripts/check-slate-sync.mjs", "utf8"),
@@ -158,7 +162,7 @@ assert(
 );
 
 assert(
-  !slateCounts.includes("Upcoming") &&
+  !slateCounts.includes(">Upcoming<") &&
     slateCounts.includes("shouldLinkLiveScoreboard(state)") &&
     slateCounts.includes('state.state === "starts-in-progress"') &&
     slateCounts.includes('state.state === "pre-first-pitch"') &&
@@ -174,12 +178,31 @@ assert(
     statusRoute.includes('import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
     statusRoute.includes("getLiveScoreboard({ date }).catch(() => null)") &&
     statusRoute.includes("reconcileSlateProgressWithLiveBoard(slateProgress, liveBoard?.slateProgress ?? null)") &&
+    statusRoute.includes("const progress = reconcileSlateProgressWithLiveBoard(slateProgress, liveBoard?.slateProgress ?? null);") &&
+    statusRoute.includes("nav: {") &&
+    statusRoute.includes("liveStarts: liveBoard?.liveStarts ?? progress.liveStarts") &&
+    statusRoute.includes('warmingStarts: liveBoard?.warmingStarts ?? (progress.state === "pre-first-pitch" ? 1 : 0)') &&
     statusRoute.includes('if (liveProgress.state === "all-starts-complete" && progress.state !== "all-starts-complete") return liveProgress;') &&
     statusRoute.includes("if (liveProgress.completedStarts > progress.completedStarts) return liveProgress;") &&
     statusRoute.includes("if (progress.liveStarts > 0 && liveProgress.liveStarts === 0 && liveProgress.completedStarts >= progress.completedStarts) return liveProgress;") &&
     statusRoute.includes('"Cache-Control": "no-store"') &&
     !statusRoute.includes("s-maxage"),
   "homepage status API must return no-store slate progress reconciled against the Live Board so count islands cannot trail final live rows",
+);
+
+assert(
+  liveNavLabel.includes("const LIVE_NAV_POLL_MS = 30_000;") &&
+    liveNavLabel.includes("void refresh();") &&
+    liveNavLabel.includes("fetch(`/api/home/status?date=${encodeURIComponent(statusDate)}`") &&
+    liveNavLabel.includes("normalizeLiveNavSnapshot(nextState)") &&
+    liveNavLabel.includes("shouldContinuePolling = nextSnapshot.liveStarts > 0 || nextSnapshot.warmingStarts > 0;") &&
+    liveNavLabel.includes("window.setTimeout(refresh, LIVE_NAV_POLL_MS)") &&
+    liveNavLabel.includes('data-live-nav-island="true"') &&
+    liveNavLabel.includes("data-live-nav-live-starts={snapshot.liveStarts}") &&
+    liveNavLabel.includes("data-live-nav-warming-starts={snapshot.warmingStarts}") &&
+    siteNav.includes("statusDate={today}") &&
+    siteNav.includes("initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }}"),
+  "nav LIVE indicator must hydrate from the shared slate status island feed with mount poll, using server state only as first paint",
 );
 
 assert(
@@ -206,7 +229,9 @@ assert(
     slateSyncCron.includes('console.error("[slate-sync] divergence"') &&
     slateSyncCron.includes("fetchJson<SlateProgress>(origin, statusPath)") &&
     slateSyncCron.includes("fetchJson<LiveBoardProbe>(origin, `/api/live/${slateState.date}`)") &&
-    slateSyncCron.includes("compareSlateProgress(slateState, liveBoard.slateProgress)") &&
+    slateSyncCron.includes("compareSlateProgress(slateState, liveBoard)") &&
+    slateSyncCron.includes('field: "nav.liveStarts"') &&
+    slateSyncCron.includes('field: "nav.warmingStarts"') &&
     vercelConfig.includes('"path": "/api/cron/slate-sync"') &&
     vercelConfig.includes('"schedule": "0 * * * *"'),
   "slate synchronization must have a browser production probe and scheduled cron divergence alert",

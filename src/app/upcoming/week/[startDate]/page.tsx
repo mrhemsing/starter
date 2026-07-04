@@ -66,7 +66,14 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const rankedDate = addDays(today, -1);
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
   const resolvedStartDate = upcoming.range.start;
-  const bestGame = upcoming.days.flatMap((day) => day.games.map((game) => ({ day: day.date, game }))).sort((a, b) => b.game.gameWatchScore - a.game.gameWatchScore)[0];
+  const bestGame = upcoming.days
+    .flatMap((day) => day.games.map((game) => ({ day: day.date, game })))
+    .sort(
+      (a, b) =>
+        b.game.gameWatchScore - a.game.gameWatchScore ||
+        a.game.firstPitch.localeCompare(b.game.firstPitch) ||
+        a.game.label.localeCompare(b.game.label),
+    )[0];
   const jsonLd = jsonLdForUpcomingWeek(upcoming);
   const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));
   const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);

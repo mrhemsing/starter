@@ -13,7 +13,7 @@ export async function SiteNav({ active, today, rankedDate }: { active: NavKey | 
     getDefaultSlateDates(today),
     getLiveScoreboard({ date: today }),
   ]);
-  const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} routeActive={active !== null && active === "live"} />, href: liveDateHref(today) }];
+  const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveDateHref(today) }];
   const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },

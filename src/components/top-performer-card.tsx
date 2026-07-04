@@ -122,6 +122,9 @@ export function TopPerformerCard({
       data-responsive-check="home-top-performer-marquee"
       aria-label={`${pitcherName}, ${statusLabel.eyebrow}, ${score} GS+`}
       data-top-performer-state={status}
+      data-top-performer-pitcher={pitcherName}
+      data-top-performer-score={score}
+      data-top-performer-rank={rank}
       data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}
     >
       <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">

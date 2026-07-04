@@ -13,8 +13,15 @@ export async function GET(request: Request) {
     getSlateStartProgress({ window: "today", date }),
     getLiveScoreboard({ date }).catch(() => null),
   ]);
+  const progress = reconcileSlateProgressWithLiveBoard(slateProgress, liveBoard?.slateProgress ?? null);
 
-  return NextResponse.json(reconcileSlateProgressWithLiveBoard(slateProgress, liveBoard?.slateProgress ?? null), {
+  return NextResponse.json({
+    ...progress,
+    nav: {
+      liveStarts: liveBoard?.liveStarts ?? progress.liveStarts,
+      warmingStarts: liveBoard?.warmingStarts ?? (progress.state === "pre-first-pitch" ? 1 : 0),
+    },
+  }, {
     headers: {
       "Cache-Control": "no-store",
     },

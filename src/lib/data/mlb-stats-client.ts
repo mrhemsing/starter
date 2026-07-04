@@ -416,6 +416,7 @@ export async function fetchMlbCompletedScheduleDates(startDate: string, endDate:
 
   const params = new URLSearchParams({
     sportId: "1",
+    gameTypes: "R",
     startDate,
     endDate,
   });
@@ -426,7 +427,7 @@ export async function fetchMlbCompletedScheduleDates(startDate: string, endDate:
 
     const payload = (await response.json()) as MlbScheduleApiResponse;
     return (payload.dates ?? [])
-      .filter((entry) => entry.date && (entry.games ?? []).some((game) => isFinalMlbApiGame(game)))
+      .filter((entry) => entry.date && (entry.games ?? []).some((game) => game.gameType === "R" && isFinalMlbApiGame(game)))
       .map((entry) => entry.date as string)
       .sort();
   } catch {

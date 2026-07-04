@@ -43,6 +43,7 @@ const homeStatusRoute = await readFile("src/app/api/home/status/route.ts", "utf8
 const globals = await readFile("src/app/globals.css", "utf8");
 const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
 const packageJson = await readFile("package.json", "utf8");
+const slateStateBackfillScript = await readFile("scripts/backfill-canonical-slate-state.mjs", "utf8");
 const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \{[\s\S]*?\n\}/)?.[0] ?? "";
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
@@ -99,13 +100,15 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v14";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v16";') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
     rankedStartsPageService.includes('getValidatedCachedRankedStartsPageData(date, today, "final"') &&
     rankedStartsPageService.includes("rankedStartsPageDataCoversCompletion") &&
     rankedStartsPageService.includes('console.error("[ranked-starts-render] cached page data incomplete; rebuilding"') &&
+    rankedStartsPageService.includes("[ranked-starts-render] rebuild returned fewer starts than cached page; serving cached floor") &&
+    rankedStartsPageService.includes("[ranked-starts-render] rebuild failed; serving cached floor") &&
     rankedStartsPageService.includes("if (date > today) return buildRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("if (completionState.totalGames === 0 && completionState.totalStarts === 0) return buildRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("function getCachedRankedStartsPageData(date: string, today: string, cacheMode: \"current\" | \"final\")") &&
@@ -243,22 +246,28 @@ assert(
 assert(
   startService.includes("export async function getRankedStartsArchiveNavigation") &&
     canonicalStore.includes("export async function readCompleteCanonicalSlateStateDates") &&
+    canonicalStore.includes("export async function writeCanonicalSlateStateSnapshot") &&
     canonicalStore.includes('const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";') &&
     canonicalStore.includes('url.searchParams.set("state", "eq.complete");') &&
     canonicalStore.includes("row.counts.finalStarts >= row.counts.totalStarts") &&
-    startService.includes('readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";') &&
-    startService.includes("const getCachedRankedCompletedSlateDates = unstable_cache(") &&
+    !startService.includes('readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";') &&
+    startService.includes("const getCachedRankedScheduleRegistryDates = unstable_cache(") &&
     startService.includes('import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates,') &&
-    startService.includes('["ranked-starts-complete-slate-state-dates-v1"]') &&
+    startService.includes('["ranked-starts-schedule-registry-dates-v1"]') &&
     startService.includes("{ revalidate: false, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }") &&
-    startService.includes("const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);") &&
-    startService.includes("if (canonicalCompleteDates.length > 0) return canonicalCompleteDates;") &&
+    !startService.includes("const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);") &&
     !startService.includes("const archivedDates = Array.from(new Set(starts.filter((start) => start.source?.line !== \"fixture\").map((start) => start.date))).sort();") &&
     startService.includes("return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });") &&
     mlbStatsClient.includes("export async function fetchMlbCompletedScheduleDates") &&
+    mlbStatsClient.includes('gameTypes: "R"') &&
     mlbStatsClient.includes("startDate,") &&
     mlbStatsClient.includes("endDate,") &&
-    mlbStatsClient.includes("(entry.games ?? []).some((game) => isFinalMlbApiGame(game))") &&
+    mlbStatsClient.includes('(entry.games ?? []).some((game) => game.gameType === "R" && isFinalMlbApiGame(game))') &&
+    packageJson.includes('"backfill:canonical-slate-state": "node --experimental-strip-types scripts/backfill-canonical-slate-state.mjs"') &&
+    slateStateBackfillScript.includes("writeCanonicalSlateStateSnapshot") &&
+    slateStateBackfillScript.includes('state: "complete"') &&
+    slateStateBackfillScript.includes("beforeCompleteSlateStateRows") &&
+    slateStateBackfillScript.includes("afterCompleteSlateStateRows") &&
     startService.includes("const recentDates = Array.from({ length: 4 }, (_, index) => addDays(today, -index));") &&
     startService.includes("const activeState = activityStates.find(hasRankedSlateActivity);") &&
     startService.includes("function hasRankedSlateActivity(state: RankedSlateCompletionState)") &&
@@ -638,6 +647,9 @@ assert(
     startsPage.includes('resolvedImage?.source === "action" ? resolvedImage : null') &&
     topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
     topPerformerCard.includes('const noPhoto = status === "archived" && !imageUrl;') &&
+    globals.includes(".top-performer-card {\n  opacity: 1;\n  transform: none;\n}") &&
+    !globals.includes(".top-performer-card {\n  opacity: 0;") &&
+    !globals.includes(".top-performer-card.is-visible {\n  opacity: 1;\n  transform: translateY(0);\n}") &&
     topPerformerCard.includes('eyebrow: `START OF THE DAY · ${dateLabel.toUpperCase()}`,') &&
     topPerformerCard.includes('data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}') &&
     startRanking.includes("const { rank: _staleRank, ...rest } = start;") &&

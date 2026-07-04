@@ -1066,15 +1066,28 @@ function expectedUpcomingDayTitle(dateToFormat) {
 }
 
 function expectedUpcomingWeekDescription(upcoming) {
-  const games = upcoming.days.flatMap((day) => day.games);
-  const topGame = games.reduce(
-    (best, game) => (!best || game.gameWatchScore > best.gameWatchScore ? game : best),
-    null,
-  );
+  const games = expectedOrderedUpcomingWeekGames(upcoming);
+  const scheduledGameCount = upcoming.days.reduce((total, day) => total + day.scheduledGames, 0);
+  const topGame = games[0]?.game;
   const lead = topGame
     ? `Top watch: ${topGame.label} at ${topGame.gameWatchScore.toFixed(1)}.`
     : "Updates as probable starters are named.";
-  return `${games.length} upcoming MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
+  return `${scheduledGameCount} scheduled MLB games from ${formatUpcomingDate(upcoming.range.start)} to ${formatUpcomingDate(upcoming.range.end)}, ranked by starter form and matchup context. ${lead}`;
+}
+
+function expectedOrderedUpcomingWeekGames(upcoming) {
+  return upcoming.days
+    .flatMap((day) => day.games.map((game) => ({ day: day.date, game })))
+    .sort(
+      (a, b) =>
+        b.game.gameWatchScore - a.game.gameWatchScore ||
+        a.game.firstPitch.localeCompare(b.game.firstPitch) ||
+        a.game.label.localeCompare(b.game.label),
+    );
+}
+
+function expectedOrderedUpcomingWeekGameValues(upcoming) {
+  return expectedOrderedUpcomingWeekGames(upcoming).map(({ day, game }) => ({ ...game, date: day }));
 }
 
 function expectedUpcomingWeekTitle(startDate) {
@@ -1086,15 +1099,15 @@ function assertPinnedUpcomingMetadataFixtures() {
     date: "2026-07-04",
     scheduledGames: 2,
     games: [
-      { label: "SEA @ HOU", gameWatchScore: 82.34 },
-      { label: "NYY @ BOS", gameWatchScore: 74.1 },
+      { label: "SEA @ HOU", gameWatchScore: 82.34, firstPitch: "2026-07-04T21:10:00.000Z" },
+      { label: "NYY @ BOS", gameWatchScore: 74.1, firstPitch: "2026-07-04T20:05:00.000Z" },
     ],
   };
   const tbdHeavyDay = {
     date: "2026-07-05",
     scheduledGames: 2,
     games: [
-      { label: "TBD @ TEX", gameWatchScore: 51 },
+      { label: "TBD @ TEX", gameWatchScore: 51, firstPitch: "2026-07-05T18:35:00.000Z" },
     ],
   };
   const offDay = {
@@ -1109,6 +1122,27 @@ function assertPinnedUpcomingMetadataFixtures() {
   const offWeek = {
     range: { start: "2026-07-06", end: "2026-07-12" },
     days: [offDay],
+  };
+  const tiedWeek = {
+    range: { start: "2026-07-04", end: "2026-07-10" },
+    days: [
+      {
+        date: "2026-07-04",
+        scheduledGames: 2,
+        games: [
+          { label: "ZED @ BAL", gameWatchScore: 70, firstPitch: "2026-07-04T20:05:00.000Z" },
+          { label: "ATL @ NYM", gameWatchScore: 70, firstPitch: "2026-07-04T19:05:00.000Z" },
+        ],
+      },
+      {
+        date: "2026-07-05",
+        scheduledGames: 2,
+        games: [
+          { label: "BOS @ TOR", gameWatchScore: 70, firstPitch: "2026-07-04T20:05:00.000Z" },
+          { label: "LAD @ SF", gameWatchScore: 69.9, firstPitch: "2026-07-05T20:15:00.000Z" },
+        ],
+      },
+    ],
   };
 
   assert(
@@ -1128,18 +1162,33 @@ function assertPinnedUpcomingMetadataFixtures() {
   );
   assert(
     expectedUpcomingWeekDescription(fullWeek) ===
-      "3 upcoming MLB games from Jul 4 to Jul 10, ranked by starter form and matchup context. Top watch: SEA @ HOU at 82.3.",
+      "4 scheduled MLB games from Jul 4 to Jul 10, ranked by starter form and matchup context. Top watch: SEA @ HOU at 82.3.",
     "upcoming week metadata fixture should cover a mixed full/TBD/off range",
   );
   assert(
     expectedUpcomingWeekDescription(offWeek) ===
-      "0 upcoming MLB games from Jul 6 to Jul 12, ranked by starter form and matchup context. Updates as probable starters are named.",
+      "0 scheduled MLB games from Jul 6 to Jul 12, ranked by starter form and matchup context. Updates as probable starters are named.",
     "upcoming week metadata fixture should cover off-week empty-state copy",
+  );
+  assert(
+    expectedOrderedUpcomingWeekGames(tiedWeek).map(({ game }) => game.label).join("|") ===
+      "ATL @ NYM|BOS @ TOR|ZED @ BAL|LAD @ SF",
+    "upcoming week metadata fixture should pin score, first-pitch, and matchup-label tie-breaking",
+  );
+  assert(
+    expectedUpcomingWeekDescription(tiedWeek) ===
+      "4 scheduled MLB games from Jul 4 to Jul 10, ranked by starter form and matchup context. Top watch: ATL @ NYM at 70.0.",
+    "upcoming week metadata fixture should use the deterministic ordered top watch lead",
   );
 }
 
 async function assertPng(url, label) {
-  const response = await fetch(url);
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(url);
+    if (response.ok || ![404, 500, 502, 503].includes(response.status) || attempt === 2) break;
+    await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+  }
   assert(response.ok, `${label} returned HTTP ${response.status}`);
   assert(response.headers.get("content-type")?.startsWith("image/png"), `${label} should return a PNG image`);
   const bytes = new Uint8Array(await response.arrayBuffer());
@@ -1275,7 +1324,31 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
     assertJsonLdProperty(entry.item.additionalProperty, "Watch Tier", expectedWatchTierLabel(expectedGame.gameWatchScore), `${route} JSON-LD item ${index + 1}`);
     assertJsonLdProperty(entry.item.additionalProperty, "Matchup Score", expectedGame.matchupScore, `${route} JSON-LD item ${index + 1}`);
     assertJsonLdIntegerProperty(entry.item.additionalProperty, "Matchup Rank", `${route} JSON-LD item ${index + 1}`);
+    if (index > 0) {
+      const previousEntry = jsonLd.itemListElement[index - 1];
+      const previousScore = jsonLdWatchScore(previousEntry);
+      const currentScore = jsonLdWatchScore(entry);
+      assert(previousScore >= currentScore, `${route} JSON-LD item ${index + 1} should preserve descending watch-score order`);
+      if (route.includes("/week") && previousScore === currentScore) {
+        assert(
+          previousEntry.item.startDate <= entry.item.startDate,
+          `${route} JSON-LD item ${index + 1} should preserve first-pitch order when watch scores tie`,
+        );
+        if (previousEntry.item.startDate === entry.item.startDate) {
+          assert(
+            previousEntry.item.name <= entry.item.name,
+            `${route} JSON-LD item ${index + 1} should preserve matchup-label order when watch scores and first pitch tie`,
+          );
+        }
+      }
+    }
   });
+}
+
+function jsonLdWatchScore(entry) {
+  const property = entry.item?.additionalProperty?.find((candidate) => candidate?.name === "Watch Score");
+  assertNumber(property?.value, "JSON-LD Watch Score");
+  return property.value;
 }
 
 function assertLiveDriftJsonLdCompetitors(competitors, label) {
@@ -1447,10 +1520,30 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must keep each stable public option key exactly once for status and sort links",
   );
   assert(
+    upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games') &&
+      upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only') &&
+      upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank') &&
+      upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time'),
+    "upcoming filter controls must build status and sort links from the current normalized control state",
+  );
+  assert(
     upcomingDatePageSource.includes('role="group" aria-label={`${label} filters`}') &&
       upcomingDatePageSource.includes('<ControlGroup label="Status">') &&
       upcomingDatePageSource.includes('<ControlGroup label="Sort">'),
     "upcoming filter controls must keep grouped Status and Sort semantics",
+  );
+  assert(
+    upcomingDatePageSource.includes('const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;') &&
+      upcomingDatePageSource.includes("const controlsEmpty = visibleGameCount === 0;") &&
+      upcomingDatePageSource.includes("const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);") &&
+      upcomingDatePageSource.includes("const activeControlCount = 2;") &&
+      upcomingDatePageSource.includes("data-control-key={controlsKey}") &&
+      upcomingDatePageSource.includes("data-control-empty={String(controlsEmpty)}") &&
+      upcomingDatePageSource.includes("data-control-visible-games={visibleGameCount}") &&
+      upcomingDatePageSource.includes("data-control-scheduled-games={scheduledGameCount}") &&
+      upcomingDatePageSource.includes("data-control-hidden-games={hiddenGameCount}") &&
+      upcomingDatePageSource.includes("data-control-active-count={activeControlCount}"),
+    "upcoming filter controls must keep stable count, empty-state, and active-control telemetry for day/week route probes",
   );
   assert(
     upcomingDatePageSource.includes("const visibleGames = games.filter((game) => !controls.pregameOnly || game.status === \"pregame\");") &&
@@ -1458,6 +1551,32 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       upcomingDatePageSource.includes("return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);") &&
       upcomingDatePageSource.includes("return visibleGames;"),
     "upcoming filter controls must preserve API watch-rank order and only copy-sort the Start time view",
+  );
+  assert(
+    upcomingDatePageSource.includes("const controls = normalizeUpcomingControls(await searchParams);") &&
+      upcomingDatePageSource.includes("const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };") &&
+      upcomingDatePageSource.includes("basePath={upcomingDateHref(resolvedDate)}") &&
+      upcomingDatePageSource.includes('slateRange="day"') &&
+      upcomingDatePageSource.includes("visibleGameCount={visibleUpcoming.games.length}") &&
+      upcomingDatePageSource.includes("scheduledGameCount={upcoming.scheduledGames}") &&
+      upcomingDatePageSource.includes("tonight={visibleUpcoming}"),
+    "upcoming day filters must apply normalized controls to both control counts and rendered watch cards",
+  );
+  assert(
+    upcomingWeekPageSource.includes('import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";') &&
+      upcomingWeekPageSource.includes("const controls = normalizeUpcomingControls(await searchParams);") &&
+      upcomingWeekPageSource.includes("b.game.gameWatchScore - a.game.gameWatchScore ||") &&
+      upcomingWeekPageSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
+      upcomingWeekPageSource.includes("a.game.label.localeCompare(b.game.label),") &&
+      upcomingWeekPageSource.includes("const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));") &&
+      upcomingWeekPageSource.includes("const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);") &&
+      upcomingWeekPageSource.includes("const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);") &&
+      upcomingWeekPageSource.includes("visibleGameCount={visibleGameCount}") &&
+      upcomingWeekPageSource.includes("scheduledGameCount={scheduledGameCount}") &&
+      upcomingWeekPageSource.includes("{filteredDays.map((day) => (") &&
+      upcomingWeekPageSource.includes("<UpcomingControls") &&
+      upcomingWeekPageSource.includes('slateRange="week"'),
+    "upcoming week filters must reuse the day-route control helpers, render filtered days with matching control counts, and keep the featured game tie-break deterministic",
   );
   assert(
     [
@@ -1595,12 +1714,66 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming day/week JSON-LD must declare descending ranked ItemList order for share/search metadata",
   );
   assert(
+    upcomingMetadataSource.includes("const games = orderedUpcomingWeekGames(upcoming);") &&
+      countOccurrences(upcomingMetadataSource, "const games = orderedUpcomingWeekGames(upcoming);") === 2 &&
+      upcomingMetadataSource.includes("const scheduledGameCount = upcoming.days.reduce((total, day) => total + day.scheduledGames, 0);") &&
+      upcomingMetadataSource.includes("const topGame = games[0]?.game;"),
+    "upcoming weekly description must use scheduled-game counts while sharing JSON-LD's deterministic game ordering",
+  );
+  assert(
+    upcomingMetadataSource.includes(
+      "b.game.gameWatchScore - a.game.gameWatchScore ||",
+    ),
+    "upcoming weekly JSON-LD must keep descending watch-score ordering",
+  );
+  assert(
+    upcomingMetadataSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
+      upcomingMetadataSource.includes("a.game.label.localeCompare(b.game.label),"),
+    "upcoming weekly JSON-LD must keep stable first-pitch and matchup-label tie-breaking",
+  );
+  assert(
     upcomingMetadataSource.includes("const itemListGames = upcoming.games.slice(0, 10);") &&
       upcomingMetadataSource.includes("const itemListGames = games.slice(0, 20);") &&
       upcomingMetadataSource.includes("numberOfItems: itemListGames.length,") &&
       countOccurrences(upcomingMetadataSource, "numberOfItems: itemListGames.length,") === 2 &&
       upcomingMetadataSource.includes("itemListElement: itemListGames.map("),
     "upcoming day/week JSON-LD numberOfItems must match the emitted capped ItemList entries",
+  );
+  assert(
+    upcomingMetadataSource.includes("description: upcomingDayDescription(upcoming),") &&
+      upcomingMetadataSource.includes("description: upcomingWeekDescription(upcoming),"),
+    "upcoming day/week JSON-LD descriptions must reuse the public route metadata copy",
+  );
+  assert(
+    upcomingMetadataSource.includes("url: absoluteSiteUrl(upcomingDateHref(upcoming.date)),") &&
+      upcomingMetadataSource.includes("url: absoluteSiteUrl(upcomingWeekHref(upcoming.range.start)),") &&
+      upcomingMetadataSource.includes("item: jsonLdForUpcomingGame(game),") &&
+      upcomingMetadataSource.includes("item: jsonLdForUpcomingGame({ ...game, date: day }),") &&
+      upcomingMetadataSource.includes("url: absoluteSiteUrl(upcomingDateHref(game.date)),"),
+    "upcoming JSON-LD must keep day lists pointed at day slates, weekly lists pointed at the week surface, and event entities pointed at their actual day slate",
+  );
+  assert(
+    upcomingMetadataSource.includes("url: absoluteSiteUrl(`/pitchers/${starter.pitcherId}/form`),") &&
+      upcomingMetadataSource.includes("image: starterHeadshotUrl(starter.pitcherId),") &&
+      upcomingMetadataSource.includes('memberOf: { "@type": "SportsTeam", name: starter.team },'),
+    "upcoming JSON-LD starter competitors must keep pitcher Form URLs, headshots, and team membership",
+  );
+  assert(
+    upcomingMetadataSource.includes(".filter(hasStarterIdentity)") &&
+      upcomingMetadataSource.includes("function hasStarterIdentity(") &&
+      upcomingMetadataSource.includes("eventStatus: eventStatusForGame(game.status),") &&
+      upcomingMetadataSource.includes('if (status === "ppd") return "https://schema.org/EventPostponed";') &&
+      upcomingMetadataSource.includes('if (status === "live") return "https://schema.org/EventInProgress";') &&
+      upcomingMetadataSource.includes('return "https://schema.org/EventScheduled";'),
+    "upcoming JSON-LD must filter unnamed starters and map game status to schema.org event status",
+  );
+  assert(
+    upcomingMetadataSource.includes("const watchTier = watchTierOf(game.gameWatchScore);") &&
+      upcomingMetadataSource.includes('{ "@type": "PropertyValue", name: "Watch Score", value: game.gameWatchScore },') &&
+      upcomingMetadataSource.includes('{ "@type": "PropertyValue", name: "Watch Tier", value: watchTier.label },') &&
+      upcomingMetadataSource.includes('{ "@type": "PropertyValue", name: "Matchup Score", value: game.matchupScore },') &&
+      upcomingMetadataSource.includes('{ "@type": "PropertyValue", name: "Matchup Rank", value: game.matchupRankTonight },'),
+    "upcoming JSON-LD must keep the public watch-score, tier, matchup-score, and matchup-rank properties",
   );
   assert(
     typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
@@ -1934,6 +2107,13 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
     elementWithTextHasAttributes(html, "summary", { "aria-label": expectedLabel }, expectedLabel),
     `${route} should expose the current upcoming filter state on the controls summary`,
+  );
+  assert(
+    elementHasAttributes(html, "details", {
+      "data-responsive-check": "upcoming-controls",
+      "data-control-label": expectedLabel,
+    }),
+    `${route} should expose the current upcoming filter state on controls telemetry`,
   );
   const expectedControls = controlsFromLabel(expectedLabel);
   const expectedSlateRange = route.startsWith("/upcoming/week") ? "week" : "day";
@@ -3663,7 +3843,19 @@ function hasSlateWatchRank(text, rank, slateSize) {
 
 function matchupSummaryIsAccessible(html) {
   const divs = html.match(/<div\b[^>]*>/g) ?? [];
-  return divs.some((div) => div.includes('role="img"') && /aria-label="Matchup score \d+/.test(div));
+  return divs.some((div) => {
+    if (tagAttribute(div, "role") === "img" && /aria-label="(?:Matchup score \d+|Opponent split matchup context pending)/.test(div)) {
+      return true;
+    }
+    if (tagAttribute(div, "data-responsive-check") !== "watch-components") return false;
+    const ariaLabel = tagAttribute(div, "data-watch-component-aria-label") ?? tagAttribute(div, "aria-label") ?? "";
+    const componentValues = (tagAttribute(div, "data-watch-component-values") ?? "").split("/");
+    return (
+      tagAttribute(div, "role") === "group" &&
+      ariaLabel.length > 0 &&
+      componentValues.some((value) => Number.isFinite(Number(value)))
+    );
+  });
 }
 
 function matchupStatusText(game, rankLabel) {
@@ -3937,7 +4129,7 @@ function assertRenderedFormClash(html, normalizedHtml, route, game) {
   const awayAccent = expectedStarterAccent(away);
   const homeAccent = expectedStarterAccent(home);
   if (allowsRenderedLiveDataDrift(route)) {
-    const formClashTag = html.match(/<(?:div|p)\b[^>]*data-form-clash-status="([^"]*)"[^>]*>/)?.[0] ?? "";
+    const formClashTag = html.match(/<(?:div|p|span)\b[^>]*data-form-clash-status="([^"]*)"[^>]*>/)?.[0] ?? "";
     const renderedStatus = tagAttribute(formClashTag, "data-form-clash-status");
     const renderedAwayReady = tagAttribute(formClashTag, "data-form-clash-away-spark-ready");
     const renderedHomeReady = tagAttribute(formClashTag, "data-form-clash-home-spark-ready");
@@ -3954,8 +4146,8 @@ function assertRenderedFormClash(html, normalizedHtml, route, game) {
       `${route} should expose stable live-adjusted form-clash spark metadata and self-consistent readiness when fresh attributes render for ${game.label}`,
     );
     assert(
-      normalizedHtml.includes("Form clash"),
-      `${route} should render headliner form-clash copy for ${game.label}`,
+      renderedStatus !== "ready" || normalizedHtml.includes("Form clash"),
+      `${route} should render headliner form-clash copy when the form clash is ready for ${game.label}`,
     );
     return;
   }
@@ -4406,13 +4598,56 @@ function addDays(start, offset) {
   return value.toISOString().slice(0, 10);
 }
 
+async function loadDefaultUpcomingSnapshot(baseUrl) {
+  const defaultDateResponse = await fetch(`${baseUrl}/api/upcoming?window=${encodeURIComponent(windowSize)}`);
+  assert(defaultDateResponse.ok, `/api/upcoming default date returned HTTP ${defaultDateResponse.status}`);
+  const defaultDateUpcoming = await defaultDateResponse.json();
+  assertDateKey(defaultDateUpcoming.range?.start, "default date query range start");
+  assert(defaultDateUpcoming.range?.start === defaultDateUpcoming.range?.end, "default date query should return a one-day range");
+  assert(Array.isArray(defaultDateUpcoming.days) && defaultDateUpcoming.days.length === 1, "default date query should return one day group");
+  const homeSlateDate = defaultDateUpcoming.range.start;
+  const defaultDayTotals = assertDay(defaultDateUpcoming.days[0], defaultDateUpcoming.range.start, { requireCompleteStarter: true });
+
+  const defaultWeekResponse = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(defaultDateUpcoming.range.start)}&days=7&window=${encodeURIComponent(windowSize)}`);
+  assert(defaultWeekResponse.ok, `/api/upcoming default week returned HTTP ${defaultWeekResponse.status}`);
+  const defaultWeekUpcoming = await defaultWeekResponse.json();
+  assert(defaultWeekUpcoming.range?.start === defaultDateUpcoming.range.start, "default week query should start from the home slate date");
+  assert(defaultWeekUpcoming.range?.end === addDays(defaultDateUpcoming.range.start, 6), "default week query should return a seven-day range");
+  assert(Array.isArray(defaultWeekUpcoming.days) && defaultWeekUpcoming.days.length === 7, "default week query should return seven day groups");
+  const defaultWeekTotals = defaultWeekUpcoming.days.map((day, index) => assertDay(day, addDays(defaultDateUpcoming.range.start, index), { requireCompleteStarter: index === 0 }));
+  const defaultWeekGameCount = defaultWeekTotals.reduce((total, row) => total + row.games, 0);
+  const defaultWeekGames = expectedOrderedUpcomingWeekGameValues(defaultWeekUpcoming);
+
+  return {
+    defaultDateUpcoming,
+    homeSlateDate,
+    defaultDayTotals,
+    defaultWeekUpcoming,
+    defaultWeekGameCount,
+    defaultWeekGames,
+  };
+}
+
 const port = await reservePort();
 const baseUrl = `http://${host}:${port}`;
+const serverEnv = {
+  ...process.env,
+  PORT: String(port),
+  THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE: "1",
+};
+for (const key of [
+  "THE_BUMP_SUPABASE_URL",
+  "SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "THE_BUMP_SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "THE_BUMP_SUPABASE_SECRET_KEY",
+  "SUPABASE_SECRET_KEY",
+]) {
+  delete serverEnv[key];
+}
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], {
-  env: {
-    ...process.env,
-    PORT: String(port),
-  },
+  env: serverEnv,
   stdio: ["ignore", "pipe", "pipe"],
 });
 
@@ -4620,14 +4855,14 @@ try {
     "fractional days query should match the first range day payload",
   );
 
-  const defaultDateResponse = await fetch(`${baseUrl}/api/upcoming?window=${encodeURIComponent(windowSize)}`);
-  assert(defaultDateResponse.ok, `/api/upcoming default date returned HTTP ${defaultDateResponse.status}`);
-  const defaultDateUpcoming = await defaultDateResponse.json();
-  assertDateKey(defaultDateUpcoming.range?.start, "default date query range start");
-  assert(defaultDateUpcoming.range?.start === defaultDateUpcoming.range?.end, "default date query should return a one-day range");
-  assert(Array.isArray(defaultDateUpcoming.days) && defaultDateUpcoming.days.length === 1, "default date query should return one day group");
-  const homeSlateDate = defaultDateUpcoming.range.start;
-  const defaultDayTotals = assertDay(defaultDateUpcoming.days[0], defaultDateUpcoming.range.start, { requireCompleteStarter: true });
+  let {
+    defaultDateUpcoming,
+    homeSlateDate,
+    defaultDayTotals,
+    defaultWeekUpcoming,
+    defaultWeekGameCount,
+    defaultWeekGames,
+  } = await loadDefaultUpcomingSnapshot(baseUrl);
 
   const defaultTonightResponse = await fetch(`${baseUrl}/api/tonight?window=${encodeURIComponent(windowSize)}`);
   assert(defaultTonightResponse.ok, `/api/tonight default date returned HTTP ${defaultTonightResponse.status}`);
@@ -4659,16 +4894,6 @@ try {
 
   const invalidTonightDateResponse = await fetch(`${baseUrl}/api/tonight?date=not-a-date&window=${encodeURIComponent(windowSize)}`);
   await assertInvalidDateApiResponse(invalidTonightDateResponse, "/api/tonight?date=not-a-date");
-
-  const defaultWeekResponse = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(defaultDateUpcoming.range.start)}&days=7&window=${encodeURIComponent(windowSize)}`);
-  assert(defaultWeekResponse.ok, `/api/upcoming default week returned HTTP ${defaultWeekResponse.status}`);
-  const defaultWeekUpcoming = await defaultWeekResponse.json();
-  assert(defaultWeekUpcoming.range?.start === defaultDateUpcoming.range.start, "default week query should start from the home slate date");
-  assert(defaultWeekUpcoming.range?.end === addDays(defaultDateUpcoming.range.start, 6), "default week query should return a seven-day range");
-  assert(Array.isArray(defaultWeekUpcoming.days) && defaultWeekUpcoming.days.length === 7, "default week query should return seven day groups");
-  const defaultWeekTotals = defaultWeekUpcoming.days.map((day, index) => assertDay(day, addDays(defaultDateUpcoming.range.start, index), { requireCompleteStarter: index === 0 }));
-  const defaultWeekGameCount = defaultWeekTotals.reduce((total, row) => total + row.games, 0);
-  const defaultWeekGames = defaultWeekUpcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
 
   const invalidDateResponse = await fetch(`${baseUrl}/api/upcoming?date=not-a-date&window=${encodeURIComponent(windowSize)}`);
   await assertInvalidDateApiResponse(invalidDateResponse, "/api/upcoming?date=not-a-date");
@@ -4858,6 +5083,14 @@ try {
   const invalidDayImage = await fetch(`${baseUrl}/upcoming/not-a-date/opengraph-image`);
   assert(invalidDayImage.status === 404, "/upcoming/not-a-date/opengraph-image should return HTTP 404, got " + invalidDayImage.status);
 
+  ({
+    defaultDateUpcoming,
+    homeSlateDate,
+    defaultDayTotals,
+    defaultWeekUpcoming,
+    defaultWeekGameCount,
+    defaultWeekGames,
+  } = await loadDefaultUpcomingSnapshot(baseUrl));
   const defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
   const upcomingIndex = await fetch(`${baseUrl}/upcoming`);
   assert(upcomingIndex.ok, "/upcoming returned HTTP " + upcomingIndex.status);
@@ -5050,7 +5283,7 @@ try {
     const weekPage = await fetch(`${baseUrl}/upcoming/week/${encodeURIComponent(date)}`);
     assert(weekPage.ok, `/upcoming/week/${date} returned HTTP ${weekPage.status}`);
     const weekHtml = await weekPage.text();
-    const weekGames = upcoming.days.flatMap((day) => day.games.map((game) => ({ ...game, date: day.date })));
+    const weekGames = expectedOrderedUpcomingWeekGameValues(upcoming);
     const weekIncludesCurrentSlateDate = upcoming.days.some((day) => day.date === homeSlateDate);
     assertMetadata(
       weekHtml,

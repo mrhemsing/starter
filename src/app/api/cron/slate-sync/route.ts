@@ -9,9 +9,15 @@ type SlateProgress = {
   totalStarts: number;
   completedStarts: number;
   liveStarts: number;
+  nav?: {
+    liveStarts: number;
+    warmingStarts: number;
+  };
 };
 
 type LiveBoardProbe = {
+  liveStarts: number;
+  warmingStarts: number;
   slateProgress: SlateProgress;
 };
 
@@ -28,7 +34,7 @@ export async function GET(request: Request) {
   try {
     const slateState = await fetchJson<SlateProgress>(origin, statusPath);
     const liveBoard = await fetchJson<LiveBoardProbe>(origin, `/api/live/${slateState.date}`);
-    const mismatches = compareSlateProgress(slateState, liveBoard.slateProgress);
+    const mismatches = compareSlateProgress(slateState, liveBoard);
 
     if (mismatches.length > 0) {
       console.error("[slate-sync] divergence", {
@@ -62,11 +68,20 @@ async function fetchJson<T>(origin: string, path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function compareSlateProgress(left: SlateProgress, right: SlateProgress) {
+function compareSlateProgress(left: SlateProgress, rightBoard: LiveBoardProbe) {
+  const right = rightBoard.slateProgress;
   const mismatches = [];
   for (const key of ["state", "totalStarts", "completedStarts", "liveStarts"] as const) {
     if (left[key] !== right[key]) {
       mismatches.push({ field: key, status: left[key], live: right[key] });
+    }
+  }
+  if (left.nav) {
+    if (left.nav.liveStarts !== rightBoard.liveStarts) {
+      mismatches.push({ field: "nav.liveStarts", status: left.nav.liveStarts, live: rightBoard.liveStarts });
+    }
+    if (left.nav.warmingStarts !== rightBoard.warmingStarts) {
+      mismatches.push({ field: "nav.warmingStarts", status: left.nav.warmingStarts, live: rightBoard.warmingStarts });
     }
   }
   return mismatches;

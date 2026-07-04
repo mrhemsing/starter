@@ -236,7 +236,7 @@ assert(
 
 assert(
   startService.includes('import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";') &&
-    startService.includes("canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords") &&
+    startService.includes("canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalSlateState, readCanonicalStartRecords") &&
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
     startService.includes("persistCanonical?: boolean;") &&
@@ -285,8 +285,11 @@ assert(
     startService.includes("export function getRankedSlateCompletionStateFromInputs(") &&
     startService.includes("getRankedSlateContextForStarts(date, today, [])") &&
     startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
-    startService.includes("const totalStarts = totalGames * 2;") &&
-    startService.includes("const completedStarts = Math.min(totalStarts, startCounts.finalStarts);") &&
+    startService.includes("const expectedTotalStarts = canonicalSlateState?.counts.totalStarts ?? totalGames * 2;") &&
+    canonicalStore.includes("export async function readCanonicalSlateState(date: string): Promise<CanonicalSlateStateSnapshot | null>") &&
+    canonicalStore.includes("if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return null;") &&
+    startService.includes("const completedStarts = startCounts.finalStarts;") &&
+    startService.includes("const totalStarts = isFinal ? startCounts.totalStarts : Math.max(startCounts.totalStarts, expectedTotalStarts);") &&
     startService.includes('console.error("[ranked-slate] reconciling missing settled starts"') &&
     startService.includes("const liveGames = countableGames.filter(isLiveGameState).length;") &&
     startService.includes("const completedStartsInFinalGames = finalGames * 2;") &&

@@ -134,13 +134,8 @@ p,
 }
 
 .top-performer-card {
-  opacity: 0;
-  transform: translateY(18px);
-}
-
-.top-performer-card.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 .top-performer-photo-wrap {

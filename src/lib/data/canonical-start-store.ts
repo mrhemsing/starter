@@ -32,6 +32,13 @@ type CanonicalSlateStateRow = {
   updated_at: string;
 };
 
+export type CanonicalSlateStateSnapshot = {
+  date: string;
+  state: string;
+  counts: CanonicalSlateStateRow["counts"];
+  updatedAt: string;
+};
+
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 const CANONICAL_STARTS_TABLE = "toetheslab_canonical_start_records";
 const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
@@ -135,6 +142,77 @@ export async function readCompleteCanonicalSlateStateDates(season: string): Prom
   } catch (error) {
     console.warn("canonical slate state complete-date read failed", { season, error: error instanceof Error ? error.message : String(error) });
     return [];
+  }
+}
+
+export async function readCanonicalSlateState(date: string): Promise<CanonicalSlateStateSnapshot | null> {
+  assertCanonicalStartStoreDate(date);
+  if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return null;
+
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) {
+    failOrBypassMissingDurableCanonicalStore("read");
+    return null;
+  }
+
+  const url = new URL(`/rest/v1/${CANONICAL_SLATE_STATES_TABLE}`, baseUrl);
+  url.searchParams.set("select", "date,state,counts,updated_at");
+  url.searchParams.set("date", `eq.${date}`);
+  url.searchParams.set("limit", "1");
+
+  try {
+    const response = await timedCanonicalStoreFetch("canonical-slate-state.read", url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey),
+      cache: "no-store",
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
+    if (!response.ok) {
+      console.warn(`${CANONICAL_SLATE_STATES_TABLE} state read failed with HTTP ${response.status}: ${await response.text()}`);
+      return null;
+    }
+
+    const rows = await response.json() as CanonicalSlateStateRow[];
+    recordCanonicalStoreRead(rows.length);
+    const row = rows[0];
+    return row
+      ? {
+          date: row.date,
+          state: row.state,
+          counts: row.counts,
+          updatedAt: row.updated_at,
+        }
+      : null;
+  } catch (error) {
+    console.warn("canonical slate state read failed", { date, error: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+export async function writeCanonicalSlateStateSnapshot(snapshot: Omit<CanonicalSlateStateSnapshot, "updatedAt"> & { updatedAt?: string }): Promise<boolean> {
+  assertCanonicalStartStoreDate(snapshot.date);
+  if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return false;
+  if (isCanonicalStoreCircuitOpen()) return false;
+
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) {
+    failOrBypassMissingDurableCanonicalStore("write");
+    return false;
+  }
+
+  try {
+    await upsertCanonicalSlateStateRow(baseUrl, serviceKey, {
+      date: snapshot.date,
+      state: snapshot.state,
+      counts: snapshot.counts,
+      updated_at: snapshot.updatedAt ?? new Date().toISOString(),
+    });
+    canonicalStoreWriteFailures = 0;
+    return true;
+  } catch (error) {
+    console.warn("canonical slate state durable write failed", { date: snapshot.date, error: error instanceof Error ? error.message : String(error) });
+    noteCanonicalStoreWriteFailure(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 

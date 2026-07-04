@@ -78,6 +78,7 @@ export function SlateCounts({ initialState, initialLabel, variant }: SlateCounts
 function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: string }) {
   const mobilePreFirstPitchLine = splitPreFirstPitchStatusLine(label, state.state);
   const liveHref = shouldLinkLiveScoreboard(state) ? liveDateHref(state.date) : null;
+  const upcomingStarts = slateUpcomingStarts(state);
   const content = mobilePreFirstPitchLine ? (
     <>
       <span className="sm:hidden" aria-hidden="true">
@@ -98,10 +99,12 @@ function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: s
       className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-counts="home"
+      data-slate-date={state.date}
       data-slate-state={state.state}
       data-slate-total-starts={state.totalStarts}
       data-slate-completed-starts={state.completedStarts}
       data-slate-live-starts={state.liveStarts}
+      data-slate-upcoming-starts={upcomingStarts}
       aria-label={label}
     >
       {liveHref ? (
@@ -117,6 +120,7 @@ function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: s
 
 function RankedSlateCounts({ state, label }: { state: SlateProgressState; label: string }) {
   const ariaLabel = useMemo(() => `Slate completion: ${label}`, [label]);
+  const upcomingStarts = slateUpcomingStarts(state);
 
   return (
     <p
@@ -125,9 +129,12 @@ function RankedSlateCounts({ state, label }: { state: SlateProgressState; label:
       aria-label={ariaLabel}
       data-responsive-check="ranked-slate-status-island"
       data-slate-counts="ranked"
+      data-slate-date={state.date}
       data-slate-state={state.state}
+      data-slate-total-starts={state.totalStarts}
       data-slate-live-starts={state.liveStarts}
       data-slate-completed-starts={state.completedStarts}
+      data-slate-upcoming-starts={upcomingStarts}
     >
       {state.liveStarts > 0 ? <span className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]" aria-hidden="true" /> : null}
       <span>{label}</span>
@@ -153,9 +160,13 @@ function rankedProgressStatusLabel(progress: SlateProgressState) {
 function inProgressStartsLabel(state: { completedStarts: number; liveStarts: number; totalStarts: number }) {
   const finalStarts = Math.max(0, state.completedStarts);
   const liveStarts = Math.max(0, state.liveStarts);
-  const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);
+  const upcomingStarts = slateUpcomingStarts(state);
   const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";
   return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;
+}
+
+function slateUpcomingStarts(state: { completedStarts: number; liveStarts: number; totalStarts: number }) {
+  return Math.max(0, state.totalStarts - Math.max(0, state.completedStarts) - Math.max(0, state.liveStarts));
 }
 
 function formatRankedFirstPitch(value: string | null) {

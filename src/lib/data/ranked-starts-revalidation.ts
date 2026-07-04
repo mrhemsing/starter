@@ -8,8 +8,12 @@ export type RankedStartsRevalidators = {
 };
 
 export type RankedStartsRevalidationReason =
+  | "slate-open"
+  | "warming"
+  | "first-pitch"
   | "settle-progress"
   | "slate-complete"
+  | "leader-change"
   | "archive-backstop";
 
 export function revalidateRankedStartsDate(

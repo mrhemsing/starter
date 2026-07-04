@@ -34,14 +34,17 @@ try {
 
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   await assertRenderedCounts(page, "home", slateState);
+  await assertLiveNavIndicator(page, "home", slateState);
   await assertNoBannedArchiveVocabulary(page, "home");
 
   await page.goto(`${baseUrl}/live/${date}`, { waitUntil: "networkidle" });
+  await assertLiveNavIndicator(page, "live", slateState);
   await assertLiveBoard(page, liveBoard);
   await assertNoBannedArchiveVocabulary(page, "live");
 
   await page.goto(`${baseUrl}/starts/${date}`, { waitUntil: "networkidle" });
   await assertRenderedCounts(page, "ranked", slateState);
+  await assertLiveNavIndicator(page, "current-ranked", slateState);
   await assertNoBannedArchiveVocabulary(page, "current-ranked");
 
   await page.goto(`${baseUrl}/starts/${settledDate}?openers=1`, { waitUntil: "networkidle" });
@@ -113,6 +116,41 @@ async function assertRenderedCounts(page, variant, expected) {
     },
     { selector, expected: compactProgress(expected) },
     { timeout: 15_000 },
+  );
+}
+
+async function assertLiveNavIndicator(page, surface, expected) {
+  const selector = "[data-live-nav-island]";
+  await page.locator(selector).first().waitFor({ state: "attached", timeout: 15_000 });
+  const expectedSnapshot = expected.nav ?? {
+    liveStarts: expected.liveStarts,
+    warmingStarts: expected.state === "pre-first-pitch" ? 1 : 0,
+  };
+  const expectedState = expectedSnapshot.liveStarts > 0 ? "active" : expectedSnapshot.warmingStarts > 0 ? "warming" : "idle";
+
+  await page.waitForFunction(
+    ({ selector, expectedState, expectedSnapshot }) => {
+      const elements = Array.from(document.querySelectorAll(selector));
+      if (elements.length === 0) return false;
+      return elements.every((element) =>
+        element.getAttribute("data-live-nav-state") === expectedState &&
+        Number(element.getAttribute("data-live-nav-live-starts")) === expectedSnapshot.liveStarts &&
+        Number(element.getAttribute("data-live-nav-warming-starts")) === expectedSnapshot.warmingStarts
+      );
+    },
+    { selector, expectedState, expectedSnapshot },
+    { timeout: 15_000 },
+  );
+
+  const rendered = await page.locator(selector).evaluateAll((elements) => elements.map((element) => ({
+    state: element.getAttribute("data-live-nav-state"),
+    liveStarts: Number(element.getAttribute("data-live-nav-live-starts")),
+    warmingStarts: Number(element.getAttribute("data-live-nav-warming-starts")),
+  })));
+  assert(
+    rendered.every((item) => item.state === expectedState && item.liveStarts === expectedSnapshot.liveStarts && item.warmingStarts === expectedSnapshot.warmingStarts),
+    `${surface} LIVE nav indicator must match slate status API`,
+    { surface, expectedState, expectedSnapshot, rendered },
   );
 }
 

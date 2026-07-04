@@ -6,7 +6,7 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRank
 import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v14";
+const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v16";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 
 export type RankedStartsPageData = {
@@ -53,7 +53,35 @@ async function getValidatedCachedRankedStartsPageData(
     expectedStarts: completionState.totalStarts,
     isFinal: completionState.isFinal,
   });
-  return buildRankedStartsPageData(date, today);
+  try {
+    const rebuiltData = await buildRankedStartsPageData(date, today);
+    if (countRankedPageStarts(rebuiltData) < countRankedPageStarts(cachedData)) {
+      console.error("[ranked-starts-render] rebuild returned fewer starts than cached page; serving cached floor", {
+        date,
+        today,
+        cacheMode,
+        cachedStarts: countRankedPageStarts(cachedData),
+        rebuiltStarts: countRankedPageStarts(rebuiltData),
+        expectedStarts: completionState.totalStarts,
+      });
+      return cachedData;
+    }
+
+    return rebuiltData;
+  } catch (error) {
+    if (countRankedPageStarts(cachedData) > 0) {
+      console.error("[ranked-starts-render] rebuild failed; serving cached floor", {
+        date,
+        today,
+        cacheMode,
+        cachedStarts: countRankedPageStarts(cachedData),
+        expectedStarts: completionState.totalStarts,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return cachedData;
+    }
+    throw error;
+  }
 }
 
 function getCachedRankedStartsPageData(date: string, today: string, cacheMode: "current" | "final") {

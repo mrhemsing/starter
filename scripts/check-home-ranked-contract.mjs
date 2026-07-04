@@ -468,43 +468,30 @@ assert(
 );
 
 assert(
-    imageService.includes("const NOLAN_MCLEAN_MLB_ID = 690997;") &&
-    imageService.includes('const PROVIDERS = ["ap", "getty", "usat", "reuters"] as const;') &&
-    imageService.includes('const NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE = "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/rljrivvswnciz9owcoem.jpg";') &&
-    imageService.includes("const CAM_SCHLITTLER_MLB_ID = 693645;") &&
-    imageService.includes("const CAM_SCHLITTLER_REDS_ACTION_IMAGE =") &&
-    imageService.includes('const CADE_CAVALLI_JUNE_30_START_ID = "2026-06-30-wsh-bos-676917";') &&
-    imageService.includes('const PAYTON_TOLLE_YANKEES_START_ID = "2026-06-26-bos-nyy-801139";') &&
-    imageService.includes('const PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE = "https://s.hdnux.com/photos/01/66/54/02/31113390/3/rawImage.jpg";') &&
-    imageService.includes("const JAKE_BENNETT_MLB_ID = 687562;") &&
-    imageService.includes("const JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE =") &&
-    !imageService.includes("const CHRIS_SALE_MLB_ID = 519242;") &&
-    !imageService.includes("CHRIS_SALE_BREWERS_ACTION_IMAGE") &&
-    !imageService.includes("const BRANDON_WOODRUFF_MLB_ID = 605540;") &&
-    !imageService.includes("BRANDON_WOODRUFF_PERFECT_GAME_IMAGE") &&
-    imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
-    imageService.includes("if (actionShot) return actionShot;") &&
-    imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
+  imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
     imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
-    imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, cachedMlbGameContentAction.objectPosition)") &&
-    imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
-      imageService.indexOf("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
-    imageService.includes("const cached = await readCachedActionShot(start.id);") &&
-    imageService.indexOf("const cached = await readCachedActionShot(start.id);") < imageService.indexOf("const apiKey = process.env.SPORTRADAR_IMAGES_API_KEY ?? process.env.SPORTRADAR_API_KEY;") &&
+    imageService.includes("const objectPosition = objectPositionFromFocalPoint(cachedMlbGameContentAction.focalPoint) ?? cachedMlbGameContentAction.objectPosition;") &&
+    imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition)") &&
+    !imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
+    !imageService.includes("if (actionShot) return actionShot;") &&
     imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
-    imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
-    imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
-    imageService.indexOf("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") <
-      imageService.indexOf("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
-    imageService.indexOf("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") <
-      imageService.indexOf("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
+    !imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
+    !imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
+    imageService.includes("return null;") &&
+    imageService.includes("clean: false,") &&
+    imageService.includes("if (value.clean !== true) return null;") &&
+    imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
+    imageService.includes("if (!isValidFocalPoint(value)) return null;") &&
+    imageService.includes('return `${value.x}% ${value.y}%`;') &&
     imageService.includes('mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, "50% 50%")') &&
     imageService.includes('if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";') &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
     imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&
+    imageService.includes('source: "placeholder"') &&
+    imageService.includes("imageUrl: PLACEHOLDER_IMAGE_URL") &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
     imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
     imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&
@@ -539,30 +526,15 @@ assert(
     imageService.includes("gettyimages|imagn|usa today|reuters") &&
     imageService.includes("^ap\\d+") &&
     imageService.includes('cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")') &&
-    imageService.includes('objectPosition: actionShotObjectPosition()') &&
-    imageService.includes('return "50% 50%";') &&
     !imageService.includes("resolvePitcherHeadshotImage") &&
     !imageService.includes('source: "headshot"') &&
     !imageService.includes("/people/${start.pitcher.mlbId}/headshot/67/current") &&
-    imageService.includes("if (start.pitcher.mlbId === NOLAN_MCLEAN_MLB_ID)") &&
-    imageService.includes("if (start.pitcher.mlbId === CAM_SCHLITTLER_MLB_ID)") &&
-    imageService.includes("if (start.id === PAYTON_TOLLE_YANKEES_START_ID)") &&
-    imageService.includes("if (start.pitcher.mlbId === JAKE_BENNETT_MLB_ID)") &&
-    imageService.includes("imageUrl: PAYTON_TOLLE_YANKEES_AP_ACTION_IMAGE,") &&
-    imageService.includes('attribution: "CREDIT: Mary Schwalm/AP Photo",') &&
-    imageService.includes('alt: "Cam Schlittler delivers a pitch against Cincinnati",') &&
-    imageService.includes("imageUrl: JAKE_BENNETT_BLUE_JAYS_ACTION_IMAGE,") &&
-    imageService.includes('alt: "Jake Bennett delivers a pitch for the Red Sox",') &&
-    imageService.includes('playUrl: "https://www.mlb.com/redsox/video/jake-bennett-fans-five-against-blue-jays",') &&
-    imageService.includes('source: "action",') &&
-    imageService.includes("imageUrl: NOLAN_MCLEAN_BASES_LOADED_JAM_IMAGE,") &&
-    imageService.includes("imageUrl: CAM_SCHLITTLER_REDS_ACTION_IMAGE,") &&
     !imageService.includes('"2026-06-18-sea-bal-693433": "Bryan Woo fans Adley Rutschman for first K of game"') &&
     !imageService.includes("PREFERRED_MLB_CONTENT_HEADLINES_BY_START_ID") &&
     !imageService.includes("resolveMlbGameContentImage") &&
     !imageService.includes('source: "highlight"') &&
     !imageService.includes("highlight.thumbnailUrl"),
-  "home top performer image resolver must reject text-heavy MLB content/highlight thumbnails and never fall back to MLB headshots",
+  "home top performer image resolver must render only curator-clean action metadata, otherwise the slab placeholder; no provider, preferred, highlight, or headshot bypasses",
 );
 
 assert(

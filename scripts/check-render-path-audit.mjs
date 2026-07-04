@@ -34,10 +34,11 @@ for (const path of idlePagePaths) {
   }
 }
 
-const [formService, tonightService, rankedStartsPageService, warmLiveStartsCron, warmLiveStartsJob, supabaseArchive, sitePerformanceContract, packageJson] = await Promise.all([
+const [formService, tonightService, rankedStartsPageService, startService, warmLiveStartsCron, warmLiveStartsJob, supabaseArchive, sitePerformanceContract, packageJson] = await Promise.all([
   read("src/lib/data/form-service.ts"),
   read("src/lib/data/tonight-service.ts"),
   read("src/lib/data/ranked-starts-page-service.ts"),
+  read("src/lib/data/start-service.ts"),
   read("src/app/api/cron/warm-live-starts/route.ts"),
   read("src/lib/data/warm-live-starts-job.ts"),
   read("src/lib/data/supabase-archive.ts"),
@@ -71,6 +72,45 @@ assert(
   "Ranked Starts render must keep canonical store diagnostics until the P1-5 timing gate clears",
 );
 
+const getDailySlateSource = startService.slice(
+  startService.indexOf("export async function getDailySlate"),
+  startService.indexOf("export async function getCanonicalStartReconciliationReport"),
+);
+assert(
+  getDailySlateSource.includes("const archivedStarts = await getArchivedSlateStarts(params.date);") &&
+    getDailySlateSource.indexOf("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") <
+      getDailySlateSource.indexOf("const schedule = await fetchMlbSchedule(params.date"),
+  "settled getDailySlate render path must return archive rows before any upstream schedule fetch",
+);
+
+const rankedSlateContextSource = startService.slice(
+  startService.indexOf("export async function getRankedSlateContextForStarts"),
+  startService.indexOf("export function getRankedSlateCompletionStateFromInputs"),
+);
+assert(
+  rankedSlateContextSource.includes("const settled = date < today;") &&
+    rankedSlateContextSource.includes("readArchivedSchedule(date)") &&
+    rankedSlateContextSource.includes("readCanonicalSlateState(date)") &&
+    rankedSlateContextSource.includes("fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) })") &&
+    rankedSlateContextSource.indexOf("const [liveSchedule, archivedSchedule, canonicalSlateState] = settled") <
+      rankedSlateContextSource.indexOf("fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) })"),
+  "settled ranked slate context must prefer stored archive/canonical state and avoid render-time upstream schedule fetches",
+);
+
+assert(
+  startService.includes("const expectedTotalStarts = canonicalSlateState?.counts.totalStarts ?? totalGames * 2;") &&
+    startService.includes("const totalStarts = isFinal ? startCounts.totalStarts : Math.max(startCounts.totalStarts, expectedTotalStarts);") &&
+    !startService.includes("const totalStarts = totalGames * 2;"),
+  "ranked visible completion counts must be coupled to rendered start rows, with schedule/canonical totals used only as expectations",
+);
+
+assert(
+  rankedStartsPageService.includes("[ranked-starts-render] rebuild returned fewer starts than cached page; serving cached floor") &&
+    rankedStartsPageService.includes("if (countRankedPageStarts(rebuiltData) < countRankedPageStarts(cachedData))") &&
+    rankedStartsPageService.includes("[ranked-starts-render] rebuild failed; serving cached floor"),
+  "Ranked Starts final cache validator must never replace a cached page with a smaller rebuilt dataset",
+);
+
 assert(
   warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag })") || warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });")
     ? warmLiveStartsJob.includes("await warmFormLeaderboards();") &&
@@ -90,7 +130,7 @@ assert(
 );
 
 assert(
-  sitePerformanceContract.includes("Supabase archive status must expose and error-log freshness lag") &&
+  sitePerformanceContract.includes("Supabase archive status must expose freshness lag and any complete-slate archive gap") &&
     packageJson.includes('"check:render-path-audit": "node scripts/check-render-path-audit.mjs"'),
   "render-path audit must be runnable and referenced by source contracts",
 );

@@ -1,7 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
-import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalStartRecords, readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";
+import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalSlateState, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
+import type { CanonicalSlateStateSnapshot } from "@/lib/data/canonical-start-store";
 import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
@@ -157,8 +158,8 @@ export async function getDailySlate(params?: DailySlateParams): Promise<StartSum
   if (!params?.date) return canonicalizeStartSummaries(demoSlateStarts);
 
   const archivedStarts = await getArchivedSlateStarts(params.date);
-  const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;
+  const schedule = await fetchMlbSchedule(params.date, { fetchLive: shouldFetchLiveSchedule(params.date) });
   if (archivedStarts.length > 0 && archivedStartsCoverSettledSchedule(schedule, archivedStarts)) return archivedStarts;
   if (archivedStarts.length > 0) {
     console.warn("[start-service] ignoring archive rows for active slate date", {
@@ -227,14 +228,11 @@ export async function getRankedStartsArchiveNavigation(activeDate: string, today
   };
 }
 
-const getCachedRankedCompletedSlateDates = unstable_cache(
+const getCachedRankedScheduleRegistryDates = unstable_cache(
   async (season: string) => {
-    const canonicalCompleteDates = await readCompleteCanonicalSlateStateDates(season);
-    if (canonicalCompleteDates.length > 0) return canonicalCompleteDates;
-
     return fetchMlbCompletedScheduleDates(`${season}-01-01`, `${season}-12-31`, { fetchLive: true });
   },
-  ["ranked-starts-complete-slate-state-dates-v1"],
+  ["ranked-starts-schedule-registry-dates-v1"],
   { revalidate: false, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -281,7 +279,7 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = ne
 async function getRankedStartsCompletedSlateDates(activeDate: string, today: string) {
   const seasons = Array.from(new Set([activeDate.slice(0, 4), today.slice(0, 4)]));
   const [seasonDates, todayCompletion, activeCompletion] = await Promise.all([
-    Promise.all(seasons.map((season) => getCachedRankedCompletedSlateDates(season))),
+    Promise.all(seasons.map((season) => getCachedRankedScheduleRegistryDates(season))),
     getRankedSlateCompletionState(today, today),
     activeDate === today ? Promise.resolve(null) : getRankedSlateCompletionState(activeDate, today),
   ]);
@@ -317,20 +315,38 @@ export async function getRankedSlateCompletionState(date: string, today = getHom
 }
 
 export async function getRankedSlateContextForStarts(date: string, today: string, slateStarts: StartSummary[]) {
-  const [liveSchedule, archivedSchedule] = await Promise.all([
-    fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
-    readArchivedSchedule(date),
-  ]);
-  const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
+  const settled = date < today;
+  const [liveSchedule, archivedSchedule, canonicalSlateState] = settled
+    ? await Promise.all([
+        Promise.resolve(null),
+        readArchivedSchedule(date),
+        readCanonicalSlateState(date),
+      ])
+    : await Promise.all([
+        fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
+        readArchivedSchedule(date),
+        readCanonicalSlateState(date),
+      ]);
+  if (settled) {
+    console.info("[ranked-archive] file shard availability", {
+      date,
+      archivedScheduleGames: archivedSchedule?.games.length ?? 0,
+      canonicalSlateState: canonicalSlateState?.state ?? null,
+      canonicalTotalStarts: canonicalSlateState?.counts.totalStarts ?? null,
+    });
+  }
+  const scheduleFallback = emptySchedule(date);
+  const liveScheduleInput = liveSchedule ?? archivedSchedule ?? scheduleFallback;
+  const schedule = liveScheduleInput.source === "live" ? liveScheduleInput : archivedSchedule ?? liveScheduleInput;
   const completionState = slateStarts.length > 0
-    ? getRankedSlateCompletionStateFromInputs(date, today, slateStarts, liveSchedule, archivedSchedule)
+    ? getRankedSlateCompletionStateFromInputs(date, today, slateStarts, liveScheduleInput, archivedSchedule, canonicalSlateState)
     : null;
   const slateProgress = slateStarts.length > 0
     ? getSlateProgressState(schedule, summarizeCanonicalStartBuckets(slateStarts).finalStarts)
     : null;
 
   return {
-    liveSchedule,
+    liveSchedule: liveScheduleInput,
     archivedSchedule,
     schedule,
     completionState,
@@ -344,6 +360,7 @@ export function getRankedSlateCompletionStateFromInputs(
   slateStarts: StartSummary[],
   liveSchedule: MlbSchedule,
   archivedSchedule: MlbSchedule | null,
+  canonicalSlateState?: CanonicalSlateStateSnapshot | null,
 ): RankedSlateCompletionState {
   const schedule = liveSchedule.source === "live" ? liveSchedule : archivedSchedule ?? liveSchedule;
   const countableGames = schedule.games.filter((game) => !isPostponedGameState(game));
@@ -351,20 +368,25 @@ export function getRankedSlateCompletionStateFromInputs(
   const liveGames = countableGames.filter(isLiveGameState).length;
   const totalGames = countableGames.length;
   const startCounts = summarizeCanonicalStartBuckets(slateStarts);
-  const totalStarts = totalGames * 2;
-  const completedStarts = Math.min(totalStarts, startCounts.finalStarts);
+  const expectedTotalStarts = canonicalSlateState?.counts.totalStarts ?? totalGames * 2;
+  const completedStarts = startCounts.finalStarts;
+  const completeByStoredExpectation = expectedTotalStarts > 0 && completedStarts >= expectedTotalStarts;
+  const completeByRowsOnly = expectedTotalStarts === 0 && startCounts.totalStarts > 0 && completedStarts >= startCounts.totalStarts;
+  const isFinal = completeByStoredExpectation || completeByRowsOnly;
+  const totalStarts = isFinal ? startCounts.totalStarts : Math.max(startCounts.totalStarts, expectedTotalStarts);
   const completedStartsInFinalGames = finalGames * 2;
   const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));
   const liveStarts = Math.max(0, liveGames * 2 - completedStartsInLiveGames);
   const isToday = date === today;
   const isPast = date < today;
-  const isFinal = totalStarts > 0 && completedStarts >= totalStarts;
-  if (!isFinal && finalGames >= totalGames && totalGames > 0) {
+  if (!isFinal && (finalGames >= totalGames && totalGames > 0 || canonicalSlateState?.state === "complete")) {
     const missingStarts = findMissingScheduledStarts(schedule, slateStarts);
     console.error("[ranked-slate] reconciling missing settled starts", {
       date,
       completedStarts,
       totalStarts,
+      expectedTotalStarts,
+      renderedStarts: startCounts.totalStarts,
       missingStarts,
     });
   }
@@ -402,6 +424,14 @@ function findMissingScheduledStarts(schedule: MlbSchedule, slateStarts: StartSum
         team: pitcher.teamAbbreviation,
         opponent: pitcher.opponentAbbreviation,
       })));
+}
+
+function emptySchedule(date: string): MlbSchedule {
+  return {
+    date,
+    source: "fixture",
+    games: [],
+  };
 }
 
 export async function getSlateSchedule(params: SlateRouteParams) {
