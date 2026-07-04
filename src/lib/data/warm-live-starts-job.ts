@@ -8,6 +8,7 @@ import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-st
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";
 
 export const WARM_LIVE_STARTS_BATCH_SIZE = 8;
@@ -224,7 +225,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
   }
 
   const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);
-  const topPerformer = await warmRankedHome(progressKey, progress);
+  const topPerformer = await warmRankedHome(progressKey, progress, options);
   const finishedAt = new Date();
   const durationMs = finishedAt.getTime() - startedAt.getTime();
   console.log("warm-live-starts end", {
@@ -282,15 +283,28 @@ function hasCompletedWarmStep(progress: WarmLiveStartsProgress, step: string) {
   return progress.completedSteps.includes(step);
 }
 
-async function warmRankedHome(key: string, progress: WarmLiveStartsProgress) {
+async function warmRankedHome(key: string, progress: WarmLiveStartsProgress, options: WarmLiveStartsRevalidators) {
   const rankedHome = await getRankedHome();
+  const refreshedLiveImage = rankedHome.topPerformer?.status === "live" && rankedHome.topPerformer.image?.source === "placeholder"
+    ? await resolveTopPerformerImage(rankedHome.topPerformer.start, null).catch(() => null)
+    : null;
+  if (refreshedLiveImage?.source === "action") {
+    options.revalidateTag?.(HOME_RANKED_CACHE_TAG, "max");
+    options.revalidatePath?.("/");
+    console.log("warm-live-starts promoted live top performer action photo", {
+      step: "ranked-home-live-photo-refresh",
+      topPerformerStartId: rankedHome.topPerformer?.start.id ?? null,
+      pitcherName: rankedHome.topPerformer?.start.pitcher.name ?? null,
+      imageSource: refreshedLiveImage.source,
+    });
+  }
   await markWarmStepComplete(key, progress, "ranked-home");
   console.log("warm-live-starts batch warmed ranked home", {
     step: "ranked-home",
     topPerformerStartId: rankedHome.topPerformer?.start.id ?? null,
     topPerformerStatus: rankedHome.topPerformer?.status ?? null,
-    imageSource: rankedHome.topPerformer?.image?.source ?? null,
-    photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && rankedHome.topPerformer.image?.source === "placeholder",
+    imageSource: refreshedLiveImage?.source ?? rankedHome.topPerformer?.image?.source ?? null,
+    photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && (refreshedLiveImage?.source ?? rankedHome.topPerformer.image?.source) === "placeholder",
   });
   return rankedHome.topPerformer;
 }

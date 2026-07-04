@@ -25,6 +25,7 @@ type CachedMlbGameContentActionImage = {
   imageUrl: string;
   alt: string;
   attribution?: string;
+  autoPromoted?: boolean;
   clean?: boolean;
   focalPoint?: {
     x: number;
@@ -68,6 +69,11 @@ type MlbGameContent = {
   };
 };
 
+type MlbGameContentActionCandidate = {
+  item: MlbGameContentItem;
+  score: number;
+};
+
 export async function resolveTopPerformerImage(start: StartSummary | null, _highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
   void _highlight;
   if (!start) return null;
@@ -106,24 +112,27 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
   if (!response.ok) return null;
 
   const content = await response.json() as MlbGameContent;
-  const item = selectMlbGameContentActionItem(content, start);
+  const candidate = selectMlbGameContentActionCandidate(content, start);
+  const item = candidate?.item ?? null;
   const cut = selectMlbImageCut(item);
-  if (!item || !cut?.src) return null;
+  if (!candidate || !item || !cut?.src) return null;
+  const autoPromoted = isAutoPromotableMlbGameContentAction(candidate, start);
+  const objectPosition = autoPromoted ? objectPositionFromFocalPoint(autoPromoted.focalPoint) ?? "50% 50%" : "50% 50%";
 
   const image = {
     source: "action",
     imageUrl: normalizeMlbImageUrl(cut.src),
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
-    objectPosition: "50% 50%",
-    mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, "50% 50%"),
+    objectPosition,
+    mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
   } satisfies TopPerformerImage;
 
-  await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);
-  return null;
+  await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
+  return autoPromoted ? image : null;
 }
 
-function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary) {
+function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null {
   const items = [
     ...(content.highlights?.highlights?.items ?? []),
     ...content.media?.epgAlternate?.flatMap((group) => group.items ?? []) ?? [],
@@ -139,7 +148,7 @@ function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSum
     })
     .map((item) => ({ item, score: mlbGameContentActionScore(item, start) }))
     .filter((candidate) => candidate.score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.item ?? null;
+    .sort((a, b) => b.score - a.score)[0] ?? null;
 }
 
 function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary) {
@@ -209,6 +218,20 @@ function broadSummaryMlbTitlePattern() {
   return /\b(dominant start|quality start|outing|game highlights?|win|strikes? out \d+|fans? \d+)\b|\d+\s*-\s*\d+/i;
 }
 
+function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary): { focalPoint: { x: number; y: number } } | null {
+  const { item, score } = candidate;
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const fullName = start.pitcher.name.toLowerCase();
+  const last = lastName(start.pitcher.name).toLowerCase();
+  const isPitcherNamed = text.includes(fullName) || text.includes(last);
+  const hasTrustedPhotoCredit = isPhotoCreditImageTitle(item.image?.title ?? "");
+  const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
+  if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;
+  if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;
+  if (score < 125 && !hasPitchingActionCopy) return null;
+  return { focalPoint: { x: 62, y: 50 } };
+}
+
 function selectMlbImageCut(item: MlbGameContentItem | null) {
   const cuts = item?.image?.cuts ?? [];
   return cuts
@@ -220,14 +243,16 @@ function normalizeMlbImageUrl(src: string) {
   return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/");
 }
 
-async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage) {
+async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage, autoPromotion: { focalPoint: { x: number; y: number } } | null) {
   await mkdir(CACHE_DIR, { recursive: true });
   const value: CachedMlbGameContentActionImage = {
     startId,
     imageUrl: image.imageUrl,
     alt: image.alt,
     attribution: image.attribution,
-    clean: false,
+    autoPromoted: Boolean(autoPromotion),
+    clean: Boolean(autoPromotion),
+    focalPoint: autoPromotion?.focalPoint,
     objectPosition: image.objectPosition ?? "50% 50%",
     mobileObjectPosition: image.mobileObjectPosition,
     playUrl: image.playUrl,

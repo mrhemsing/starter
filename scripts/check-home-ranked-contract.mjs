@@ -392,8 +392,11 @@ assert(
     warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     warmLiveStartsJob.includes('import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";') &&
     warmLiveStartsJob.includes("const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);") &&
-    warmLiveStartsJob.includes("const topPerformer = await warmRankedHome(progressKey, progress);") &&
-    warmLiveStartsJob.includes('photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && rankedHome.topPerformer.image?.source === "placeholder",') &&
+    warmLiveStartsJob.includes("const topPerformer = await warmRankedHome(progressKey, progress, options);") &&
+    warmLiveStartsJob.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";') &&
+    warmLiveStartsJob.includes('await resolveTopPerformerImage(rankedHome.topPerformer.start, null).catch(() => null)') &&
+    warmLiveStartsJob.includes('console.log("warm-live-starts promoted live top performer action photo"') &&
+    warmLiveStartsJob.includes('photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && (refreshedLiveImage?.source ?? rankedHome.topPerformer.image?.source) === "placeholder",') &&
     warmLiveStartsJob.includes("options.revalidateTag?.(HOME_RANKED_CACHE_TAG, \"max\");") &&
     warmLiveStartsJob.includes("options.revalidatePath?.(\"/\");") &&
     warmLiveStartsJob.includes("sameHomeLiveLeaderSignature(previous?.signature ?? null, signature)"),
@@ -484,14 +487,20 @@ assert(
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
     !imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     !imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
-    imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image).catch(() => undefined);") &&
-    imageService.includes("return null;") &&
-    imageService.includes("clean: false,") &&
+    imageService.includes("const autoPromoted = isAutoPromotableMlbGameContentAction(candidate, start);") &&
+    imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);") &&
+    imageService.includes("return autoPromoted ? image : null;") &&
+    imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
+    imageService.includes("clean: Boolean(autoPromotion),") &&
+    imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
+    imageService.includes("if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;") &&
+    imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
+    imageService.includes("return { focalPoint: { x: 62, y: 50 } };") &&
     imageService.includes("if (value.clean !== true) return null;") &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
     imageService.includes("if (!isValidFocalPoint(value)) return null;") &&
     imageService.includes('return `${value.x}% ${value.y}%`;') &&
-    imageService.includes('mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, "50% 50%")') &&
+    imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition)") &&
     imageService.includes('if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";') &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
@@ -504,7 +513,7 @@ assert(
     imageService.includes('source: "placeholder"') &&
     imageService.includes("imageUrl: PLACEHOLDER_IMAGE_URL") &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
-    imageService.includes("function selectMlbGameContentActionItem(content: MlbGameContent, start: StartSummary)") &&
+    imageService.includes("function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null") &&
     imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function nonActionMlbContentPattern()") &&
     imageService.includes("function nonActionMlbTitlePattern()") &&
