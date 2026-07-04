@@ -223,6 +223,7 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
   const nextSlateLine = formatNextSlateLine(board);
+  const verdictLine = formatSlateCompleteVerdict(board, rows);
 
   return (
     <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6">
@@ -230,8 +231,8 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
           <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Live returns with the next slate. Full tiers, filters, and breakdowns are ready on Ranked Starts.</p>
-          {nextSlateLine ? <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{verdictLine}</p>
+          {nextSlateLine ? <p className="mt-3 font-mono text-[10px] tracking-[0.08em] text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
           <CtaArrow
             href={rankedStartsPath(board.date)}
             className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
@@ -269,6 +270,20 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
       </div>
     </div>
   );
+}
+
+function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScoreboardRow[]) {
+  const eligibleRows = rows.filter((row) => row.gsPlus !== null && row.gsPlus >= 50 && inningsFromIP(row.line.inningsPitched) >= 9);
+  const leader = eligibleRows[0];
+  if (!leader?.gsPlus) return `All ${board.totalStarts} starts are in.`;
+
+  const tiedLeaders = eligibleRows.filter((row) => row.gsPlus === leader.gsPlus);
+  if (tiedLeaders.length === 2) {
+    return `All ${board.totalStarts} starts are in. ${lastName(tiedLeaders[0].pitcherName)} and ${lastName(tiedLeaders[1].pitcherName)} split the day at ${leader.gsPlus}.`;
+  }
+  if (tiedLeaders.length > 2) return `All ${board.totalStarts} starts are in.`;
+
+  return `All ${board.totalStarts} starts are in. ${possessiveLastName(leader.pitcherName)} ${leader.gsPlus} took the day.`;
 }
 
 function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboardData; slateProgress: SlateProgressState; nowMs: number | null }) {
@@ -513,16 +528,9 @@ function formatNextSlateLine(board: LiveScoreboardData) {
     timeZone: "America/Los_Angeles",
     timeZoneName: "short",
   }).format(parsed).replace(/\bPST\b|\bPDT\b/, "PT");
+  const relative = formatRelativePacificDate(parsed);
 
-  if (toPacificDate(parsed) !== board.date) {
-    const dayLabel = new Intl.DateTimeFormat("en-US", {
-      weekday: "long",
-      timeZone: "America/Los_Angeles",
-    }).format(parsed);
-    return `Next slate begins ${dayLabel}, ${timeLabel}`;
-  }
-
-  return `Next slate begins ${timeLabel}`;
+  return `Next first pitch: ${relative} at ${timeLabel}.`;
 }
 
 function toPacificDate(date: Date) {
@@ -536,6 +544,52 @@ function toPacificDate(date: Date) {
   const month = parts.find((part) => part.type === "month")?.value ?? String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = parts.find((part) => part.type === "day")?.value ?? String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatRelativePacificDate(date: Date, now = new Date()) {
+  const targetDate = toPacificDate(date);
+  const today = toPacificDate(now);
+  const tomorrow = addPacificDays(today, 1);
+  if (targetDate === today) return "today";
+  if (targetDate === tomorrow) return "tomorrow";
+
+  const deltaDays = daysBetweenPacificDates(today, targetDate);
+  if (deltaDays > 1 && deltaDays <= 6) {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      timeZone: "America/Los_Angeles",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "America/Los_Angeles",
+  }).format(date);
+}
+
+function addPacificDays(date: string, days: number) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function daysBetweenPacificDates(left: string, right: string) {
+  return Math.round((new Date(`${right}T00:00:00.000Z`).getTime() - new Date(`${left}T00:00:00.000Z`).getTime()) / 86_400_000);
+}
+
+function inningsFromIP(value: number) {
+  const whole = Math.trunc(value);
+  return whole * 3 + Math.round((value - whole) * 10);
+}
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
+}
+
+function possessiveLastName(name: string) {
+  const namePart = lastName(name);
+  return `${namePart}'s`;
 }
 
 function formatPregameCountdown(countdownLabel: string | null) {

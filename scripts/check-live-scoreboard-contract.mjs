@@ -24,6 +24,9 @@ const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, ml
   readFile("src/app/globals.css", "utf8"),
   stat("public/images/slab-2.png"),
 ]);
+const deletedFinalPanelCopy = "Live returns" + " with the next slate.";
+const deletedFinalPanelRankedCopy = "Full tiers, filters," + " and breakdowns are ready on Ranked Starts.";
+const deletedFinalSubtitleCopy = "Full tiers, filters," + " and breakdowns live on Ranked Starts.";
 
 assert(
   mlbClient.includes("export async function fetchMlbLivePitchingLines") &&
@@ -150,7 +153,8 @@ assert(
     !livePage.includes("Daily board") &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
     livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
-    livePage.includes("This slate is final. Full tiers, filters, and breakdowns live on Ranked Starts.") &&
+    livePage.includes('const boardDescription = slateComplete\n    ? "This slate is final."') &&
+    !livePage.includes(deletedFinalSubtitleCopy) &&
     livePage.includes('<LiveScoreboard initialBoard={board} initialSlateProgress={board.slateProgress} />') &&
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
@@ -252,15 +256,24 @@ assert(
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&
     liveComponent.includes("const nextSlateLine = formatNextSlateLine(board);") &&
+    liveComponent.includes("const verdictLine = formatSlateCompleteVerdict(board, rows);") &&
     liveComponent.includes("This slate is final.") &&
     !liveComponent.includes("Today&apos;s slate is final.") &&
-    liveComponent.includes("Live returns with the next slate.") &&
+    liveComponent.includes("{verdictLine}") &&
+    liveComponent.includes("function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScoreboardRow[])") &&
+    liveComponent.includes("return `All ${board.totalStarts} starts are in.`;") &&
+    liveComponent.includes("split the day at ${leader.gsPlus}.") &&
+    liveComponent.includes("took the day.") &&
+    !liveComponent.includes(deletedFinalPanelCopy) &&
+    !liveComponent.includes(deletedFinalPanelRankedCopy) &&
     liveComponent.includes("data-live-next-slate") &&
     liveComponent.includes("function formatNextSlateLine(board: LiveScoreboardData)") &&
     liveComponent.includes("if (!board.nextSlateFirstPitchAt) return null;") &&
-    liveComponent.includes("if (toPacificDate(parsed) !== board.date)") &&
-    liveComponent.includes("return `Next slate begins ${dayLabel}, ${timeLabel}`;") &&
-    liveComponent.includes("return `Next slate begins ${timeLabel}`;") &&
+    liveComponent.includes("const relative = formatRelativePacificDate(parsed);") &&
+    liveComponent.includes("return `Next first pitch: ${relative} at ${timeLabel}.`;") &&
+    liveComponent.includes('if (targetDate === today) return "today";') &&
+    liveComponent.includes('if (targetDate === tomorrow) return "tomorrow";') &&
+    liveComponent.includes("deltaDays > 1 && deltaDays <= 6") &&
     liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes('import { CtaArrow } from "@/components/cta-arrow";') &&
