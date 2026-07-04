@@ -33,7 +33,7 @@ const pageContextStrip = await readFile("src/components/page-context-strip.tsx",
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
-const rankedSlateStatusIsland = await readFile("src/components/ranked-slate-status-island.tsx", "utf8");
+const slateCounts = await readFile("src/components/slate-counts.tsx", "utf8");
 const homeStatusRoute = await readFile("src/app/api/home/status/route.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const mobileCardLayoutCheck = await readFile("scripts/check-mobile-card-layout.mjs", "utf8");
@@ -321,7 +321,7 @@ assert(
     !slateDateNav.includes("text-amber-300") &&
     !slateDateNav.includes("min-w-[23ch]") &&
     startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
-    rankedSlateStatusIsland.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
+    slateCounts.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     !slateDateNav.includes("&lt;") &&
     !slateDateNav.includes("&gt;") &&
     !slateDateNav.includes("overflow-hidden rounded border border-white/10") &&
@@ -476,8 +476,8 @@ assert(
 assert(
     !startsPage.includes("function RankedSlateStatus") &&
     startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
-    startsPage.includes("<RankedSlateStatusIsland") &&
-    rankedSlateStatusIsland.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
+    startsPage.includes("<SlateCounts") &&
+    slateCounts.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
     startsPage.includes('if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;') &&
     startsPage.includes("return inProgressStartsLabel(state);") &&
@@ -485,10 +485,10 @@ assert(
     startsPage.includes("const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);") &&
     startsPage.includes('const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";') &&
     startsPage.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
-    rankedSlateStatusIsland.includes("function rankedProgressStatusLabel(progress: SlateProgressState)") &&
-    rankedSlateStatusIsland.includes('if (progress.state === "all-starts-complete") return `SLATE COMPLETE · ${progress.totalStarts} STARTS`;') &&
-    rankedSlateStatusIsland.includes("if (progress.liveStarts > 0 || progress.state === \"starts-in-progress\") return inProgressStartsLabel(progress);") &&
-    rankedSlateStatusIsland.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
+    slateCounts.includes("function rankedProgressStatusLabel(progress: SlateProgressState)") &&
+    slateCounts.includes('if (progress.state === "all-starts-complete") return `SLATE COMPLETE · ${progress.totalStarts} STARTS`;') &&
+    slateCounts.includes("if (progress.liveStarts > 0 || progress.state === \"starts-in-progress\") return inProgressStartsLabel(progress);") &&
+    slateCounts.includes("return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;") &&
     startsPage.includes('return `WARMING · FIRST PITCH ${firstPitchLabel}`;') &&
     startsPage.includes('return `PROBABLES · FIRST PITCH ${firstPitchLabel}`;') &&
     startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&
@@ -524,8 +524,8 @@ assert(
   startsPage.includes('data-responsive-check="ranked-starts-empty-state"') &&
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{starts.length > 0 ? (") &&
-    startsPage.includes("<RankedSlateStatusIsland") &&
-    startsPage.indexOf("<RankedSlateStatusIsland") < startsPage.indexOf("{starts.length > 0 ? (") &&
+    startsPage.includes("<SlateCounts") &&
+    startsPage.indexOf("<SlateCounts") < startsPage.indexOf("{starts.length > 0 ? (") &&
     startsPage.includes("const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);") &&
     startsPage.includes("const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;") &&
     startsPage.includes("function emptyRankedStartsCopy(state: { liveStarts: number })") &&
@@ -550,7 +550,7 @@ assert(
 assert(
   startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
     startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
-    rankedSlateStatusIsland.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
+    slateCounts.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     startsPage.includes('storageKey="ranked-starts-method-open" label="How rankings work"') &&
     startsPage.includes('className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology"') &&
     !startsPage.includes("border-amber-300/30 bg-amber-300/10 px-3"),
@@ -613,20 +613,20 @@ assert(
 );
 
 assert(
-  startsPage.includes('import { RankedSlateStatusIsland } from "@/components/ranked-slate-status-island";') &&
+  startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
     startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
-    startsPage.includes("<RankedSlateStatusIsland") &&
+    startsPage.includes("<SlateCounts") &&
     startsPage.includes("initialLabel={statusLabel}") &&
-    startsPage.includes("initialLive={completionState.isToday && completionState.liveStarts > 0}") &&
-    startsPage.includes("initialProgress={slateProgress}") &&
+    startsPage.includes("initialState={slateProgress}") &&
+    startsPage.includes('variant="ranked"') &&
     !startsPage.includes("function RankedSlateStatus(") &&
-    rankedSlateStatusIsland.includes('"use client";') &&
-    rankedSlateStatusIsland.includes("void refresh();") &&
-    rankedSlateStatusIsland.includes("fetch(`/api/home/status?date=${encodeURIComponent(date)}`, { cache: \"no-store\" })") &&
-    rankedSlateStatusIsland.includes("if (shouldContinuePolling)") &&
-    rankedSlateStatusIsland.includes("window.setTimeout(refresh, RANKED_STATUS_POLL_MS)") &&
-    rankedSlateStatusIsland.includes('data-responsive-check="ranked-slate-status-island"') &&
-    rankedSlateStatusIsland.includes('data-slate-live-starts={progress.liveStarts}') &&
+    slateCounts.includes('"use client";') &&
+    slateCounts.includes("void refresh();") &&
+    slateCounts.includes("fetch(`/api/home/status?date=${encodeURIComponent(initialState.date)}`, { cache: \"no-store\" })") &&
+    slateCounts.includes("if (shouldContinuePolling)") &&
+    slateCounts.includes("window.setTimeout(refresh, SLATE_COUNTS_POLL_MS)") &&
+    slateCounts.includes('data-responsive-check="ranked-slate-status-island"') &&
+    slateCounts.includes('data-slate-live-starts={state.liveStarts}') &&
     homeStatusRoute.includes('export const dynamic = "force-dynamic";') &&
     homeStatusRoute.includes('"Cache-Control": "no-store"'),
   "ranked starts status strip must hydrate live counts as a no-store slate-state island with one mount poll and live-only continued polling",

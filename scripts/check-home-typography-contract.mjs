@@ -10,7 +10,7 @@ const [
   globals,
   wrapSafeText,
   homePage,
-  homeStatusLine,
+  slateCounts,
   siteHeader,
   topPerformerCard,
   mustWatch,
@@ -28,7 +28,7 @@ const [
   readFile("src/app/globals.css", "utf8"),
   readFile("src/components/wrap-safe-text.tsx", "utf8"),
   readFile("src/app/page.tsx", "utf8"),
-  readFile("src/components/home-slate-status-line.tsx", "utf8"),
+  readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/components/site-header.tsx", "utf8"),
   readFile("src/components/top-performer-card.tsx", "utf8"),
   readFile("src/components/tonights-must-watch.tsx", "utf8"),
@@ -165,11 +165,11 @@ assert(
 );
 
 assert(
-  homeStatusLine.includes("whitespace-nowrap") &&
-    homeStatusLine.includes("overflow-hidden") &&
-    homeStatusLine.includes("text-ellipsis") &&
-    homeStatusLine.includes("{line}") &&
-    !homeStatusLine.includes("Upcoming"),
+  slateCounts.includes("whitespace-nowrap") &&
+    slateCounts.includes("overflow-hidden") &&
+    slateCounts.includes("text-ellipsis") &&
+    slateCounts.includes("{label}") &&
+    !slateCounts.includes("Upcoming"),
   "homepage status line must stay one line tall without the upcoming arrow link",
 );
 

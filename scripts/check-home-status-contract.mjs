@@ -6,11 +6,12 @@ function assert(condition, message) {
   }
 }
 
-const [homePage, slateState, startService, statusLine, statusRoute] = await Promise.all([
+const [homePage, startsPage, slateState, startService, slateCounts, statusRoute] = await Promise.all([
   readFile("src/app/page.tsx", "utf8"),
+  readFile("src/app/starts/[id]/page.tsx", "utf8"),
   readFile("src/lib/slate-state.ts", "utf8"),
   readFile("src/lib/data/start-service.ts", "utf8"),
-  readFile("src/components/home-slate-status-line.tsx", "utf8"),
+  readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/app/api/home/status/route.ts", "utf8"),
 ]);
 
@@ -96,47 +97,55 @@ assert(
 );
 
 assert(
-  statusLine.includes('window.setInterval(refresh, 30 * 1000)'),
-  "homepage status line must refresh live state without a manual reload",
+  slateCounts.includes("const SLATE_COUNTS_POLL_MS = 30_000;") &&
+    slateCounts.includes("void refresh();") &&
+    slateCounts.includes("if (shouldContinuePolling)") &&
+    slateCounts.includes("window.setTimeout(refresh, SLATE_COUNTS_POLL_MS)") &&
+    !slateCounts.includes("window.setInterval(refresh"),
+  "shared slate counts island must mount-poll immediately and continue only while live starts remain",
 );
 
 assert(
-  statusLine.includes('window.setInterval(updateCountdown, 60 * 1000)') && !statusLine.includes("window.setInterval(updateCountdown, 1000)"),
+  slateCounts.includes('window.setInterval(updateCountdown, 60 * 1000)') && !slateCounts.includes("window.setInterval(updateCountdown, 1000)"),
   "homepage countdown must not tick every second",
 );
 
 assert(
-  statusLine.includes('data-responsive-check="home-slate-status-line"') &&
-    statusLine.includes("sm:whitespace-nowrap") &&
-    statusLine.includes("overflow-hidden") &&
-    statusLine.includes("sm:text-ellipsis") &&
-    statusLine.includes("data-slate-total-starts={slateState.totalStarts}") &&
-    statusLine.includes("data-slate-completed-starts={slateState.completedStarts}") &&
-    statusLine.includes("aria-label={line}"),
+  homePage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
+    startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
+    homePage.includes('<SlateCounts initialState={slateStatus} variant="home" />') &&
+    startsPage.includes('<SlateCounts') &&
+    startsPage.includes('variant="ranked"') &&
+    slateCounts.includes('data-responsive-check="home-slate-status-line"') &&
+    slateCounts.includes('data-responsive-check="ranked-slate-status-island"') &&
+    slateCounts.includes("sm:whitespace-nowrap") &&
+    slateCounts.includes("overflow-hidden") &&
+    slateCounts.includes("sm:text-ellipsis") &&
+    slateCounts.includes("data-slate-total-starts={state.totalStarts}") &&
+    slateCounts.includes("data-slate-completed-starts={state.completedStarts}") &&
+    slateCounts.includes("aria-label={label}"),
   "homepage status line must keep the full state-aware line available",
 );
 
 assert(
-  statusLine.includes('const marker = " · FIRST ";') &&
-    statusLine.includes('state !== "pre-first-pitch"') &&
-    statusLine.includes("mobilePreFirstPitchLine.prefix") &&
-    statusLine.includes("mobilePreFirstPitchLine.detail") &&
-    statusLine.includes("<br />") &&
-    statusLine.includes('className="hidden sm:inline"') &&
-    statusLine.includes("`FIRST ${line.slice(markerIndex + marker.length)}`"),
+  slateCounts.includes('const marker = " · FIRST ";') &&
+    slateCounts.includes('state !== "pre-first-pitch"') &&
+    slateCounts.includes("mobilePreFirstPitchLine.prefix") &&
+    slateCounts.includes("mobilePreFirstPitchLine.detail") &&
+    slateCounts.includes("<br />") &&
+    slateCounts.includes('className="hidden sm:inline"') &&
+    slateCounts.includes("`FIRST ${line.slice(markerIndex + marker.length)}`"),
   "homepage pre-first-pitch status must force a mobile break before FIRST without the leading dot",
 );
 
 assert(
-  !statusLine.includes("Upcoming") &&
-    statusLine.includes("shouldLinkLiveScoreboard(slateState)") &&
-    statusLine.includes('state.state === "starts-in-progress"') &&
-    statusLine.includes('state.state === "pre-first-pitch"') &&
-    statusLine.includes('state.state === "all-starts-complete"') &&
-    !statusLine.includes("state.liveGames > 0") &&
-    statusLine.includes("liveDateHref(slateState.date)") &&
-    !statusLine.includes("ranked-live-dot") &&
-    !statusLine.includes('rounded-full bg-[#FF5A1F]"'),
+  !slateCounts.includes("Upcoming") &&
+    slateCounts.includes("shouldLinkLiveScoreboard(state)") &&
+    slateCounts.includes('state.state === "starts-in-progress"') &&
+    slateCounts.includes('state.state === "pre-first-pitch"') &&
+    slateCounts.includes('state.state === "all-starts-complete"') &&
+    !slateCounts.includes("state.liveGames > 0") &&
+    slateCounts.includes("liveDateHref(state.date)"),
   "homepage status eyebrow must link to the live board during games and off-hours without adding a redundant live dot",
 );
 
@@ -170,7 +179,10 @@ assert(
 );
 
 assert(
-  !homePage.includes("FirstPitchCountdownEyebrow") && !homePage.includes("SlateStatusPill"),
+  !homePage.includes("FirstPitchCountdownEyebrow") &&
+    !homePage.includes("SlateStatusPill") &&
+    !homePage.includes("HomeSlateStatusLine") &&
+    !startsPage.includes("RankedSlateStatusIsland"),
   "homepage must not render separate stacked countdown/status fragments",
 );
 

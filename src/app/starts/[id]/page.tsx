@@ -12,12 +12,12 @@ import { MobileCardShell } from "@/components/mobile-card-shell";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitchChart } from "@/components/pitch-chart";
 import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";
-import { RankedSlateStatusIsland } from "@/components/ranked-slate-status-island";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
 import { RankedStartsArchiveNav } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
+import { SlateCounts } from "@/components/slate-counts";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
@@ -245,11 +245,10 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 nextDate={archiveNavigation.nextDate}
               />
               {statusLabel ? (
-                <RankedSlateStatusIsland
-                  date={date}
+                <SlateCounts
                   initialLabel={statusLabel}
-                  initialLive={completionState.isToday && completionState.liveStarts > 0}
-                  initialProgress={slateProgress}
+                  initialState={slateProgress}
+                  variant="ranked"
                 />
               ) : null}
             </div>

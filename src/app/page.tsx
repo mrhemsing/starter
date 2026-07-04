@@ -1,7 +1,7 @@
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { HomeLiveBoardProvider } from "@/components/home-live-board-provider";
 import { HomeLiveTicker } from "@/components/home-live-ticker";
-import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
+import { SlateCounts } from "@/components/slate-counts";
 import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
@@ -104,7 +104,7 @@ export default async function Home() {
 
             <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
               <div className="min-w-0 lg:max-w-3xl">
-                <HomeSlateStatusLine initialState={slateStatus} />
+                <SlateCounts initialState={slateStatus} variant="home" />
                 <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
                   <span className="block">Every MLB start,</span>
                   <span className="block">ranked.</span>

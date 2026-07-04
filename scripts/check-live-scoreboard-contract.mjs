@@ -20,7 +20,7 @@ const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, ml
   readFile("src/components/site-nav.tsx", "utf8"),
   readFile("src/components/primary-nav-link.tsx", "utf8"),
   readFile("src/lib/data/home-ranked-service.ts", "utf8"),
-  readFile("src/components/home-slate-status-line.tsx", "utf8"),
+  readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/app/globals.css", "utf8"),
   stat("public/images/slab-2.png"),
 ]);
@@ -367,10 +367,10 @@ assert(
   homeRanked.includes("getLiveScoreboard({ date: today })") &&
     homeRanked.includes("resolveLiveLeaderStart(liveBoard, todaySlateStarts)") &&
     homeRanked.includes("href: liveDateHref(today),") &&
-    homeStatus.includes("shouldLinkLiveScoreboard(slateState)") &&
+    homeStatus.includes("shouldLinkLiveScoreboard(state)") &&
     homeStatus.includes('state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "all-starts-complete"') &&
     !homeStatus.includes("state.liveGames > 0") &&
-    homeStatus.includes("liveDateHref(slateState.date)"),
+    homeStatus.includes("liveDateHref(state.date)"),
   "homepage hero and status line must become live-board entry points during active starts and off-hours",
 );
 
