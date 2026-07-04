@@ -17,11 +17,12 @@ const statusPath = explicitDate ? `/api/home/status?date=${encodeURIComponent(ex
 const slateState = await fetchJson(statusPath);
 const date = slateState.date;
 const settledDate = explicitSettledDate ?? previousDate(date);
-const [liveBoard, slateApi, settledState, settledSlateApi] = await Promise.all([
+const [liveBoard, slateApi, settledState, settledSlateApi, settledLiveBoard] = await Promise.all([
   fetchJson(`/api/live/${date}`),
   fetchJson(`/api/slate/today/${date}`),
   fetchJson(`/api/home/status?date=${encodeURIComponent(settledDate)}`),
   fetchJson(`/api/slate/yesterday/${settledDate}`),
+  fetchJson(`/api/live/${settledDate}`),
 ]);
 
 assertSlateProgressAgreement("status-api/live-board", slateState, liveBoard.slateProgress);
@@ -43,9 +44,10 @@ try {
   await assertRenderedCounts(page, "ranked", slateState);
   await assertNoBannedArchiveVocabulary(page, "current-ranked");
 
-  await page.goto(`${baseUrl}/starts/${settledDate}`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/starts/${settledDate}?openers=1`, { waitUntil: "networkidle" });
   await assertRenderedCounts(page, "ranked", settledState);
   assert(settledState.state === "all-starts-complete", "settled date status API must report complete", { settledDate, settledState });
+  await assertSettledRankedCompleteness(page, settledSlateApi, settledLiveBoard, settledState);
   await assertSettledRankedLeader(page, settledSlateApi);
   await assertNoBannedArchiveVocabulary(page, "settled-ranked");
 } finally {
@@ -156,6 +158,46 @@ async function assertSettledRankedLeader(page, slateApi) {
     "settled ranked #1 must match top canonical GS+",
     { rendered, api: { pitcherName: topApiStart.pitcherName, gameScorePlus: topApiStart.gameScorePlus, rank: topApiStart.rank } },
   );
+}
+
+async function assertSettledRankedCompleteness(page, slateApi, liveBoard, settledState) {
+  const expectedStarts = expectedSettledStarts(slateApi, liveBoard);
+  const expectedNames = expectedStarts.map((start) => start.pitcherName).filter(Boolean);
+  const apiNames = (slateApi.starts ?? []).map((start) => start.pitcherName).filter(Boolean);
+  const rendered = await page.locator('[data-responsive-check="ranked-start-card"]:not([data-skeleton-row])').evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("data-pitcher-name")).filter(Boolean),
+  );
+  const bodyText = await page.locator("body").innerText({ timeout: 10_000 });
+  const renderedNameSet = new Set(rendered);
+  const apiNameSet = new Set(apiNames);
+  const missingFromApi = expectedNames.filter((name) => !apiNameSet.has(name));
+  const missingFromPage = expectedNames.filter((name) => !renderedNameSet.has(name) && !bodyText.includes(name));
+  const expectedCount = settledState.totalStarts || liveBoard.totalStarts || slateApi.counts?.starts || expectedNames.length;
+
+  assert(
+    apiNames.length >= expectedCount && missingFromApi.length === 0,
+    `${slateApi.date ?? settledState.date} ranked API dataset missing ${missingFromApi.length || Math.max(0, expectedCount - apiNames.length)} of ${expectedCount} scheduled starts: ${formatNameList(missingFromApi)}`,
+    { expectedCount, apiCount: apiNames.length, missingFromApi },
+  );
+  assert(
+    rendered.length + countNamesInText(expectedNames, bodyText, renderedNameSet) >= expectedCount && missingFromPage.length === 0,
+    `${slateApi.date ?? settledState.date} ranked page missing ${missingFromPage.length || Math.max(0, expectedCount - rendered.length)} of ${expectedCount} scheduled starts: ${formatNameList(missingFromPage)}`,
+    { expectedCount, renderedCount: rendered.length, missingFromPage },
+  );
+}
+
+function countNamesInText(names, text, knownNames) {
+  return names.filter((name) => !knownNames.has(name) && text.includes(name)).length;
+}
+
+function expectedSettledStarts(slateApi, liveBoard) {
+  const liveRows = (liveBoard.rows ?? []).map((row) => ({ pitcherName: row.pitcherName })).filter((row) => row.pitcherName);
+  const apiStarts = (slateApi.starts ?? []).map((start) => ({ pitcherName: start.pitcherName })).filter((start) => start.pitcherName);
+  return liveRows.length > apiStarts.length ? liveRows : apiStarts;
+}
+
+function formatNameList(names) {
+  return names.length > 0 ? names.join(", ") : "none";
 }
 
 function numberFromText(text, pattern) {

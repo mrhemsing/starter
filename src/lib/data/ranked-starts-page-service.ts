@@ -6,7 +6,7 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRank
 import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v10";
+const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v14";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 
 export type RankedStartsPageData = {
@@ -23,14 +23,37 @@ export function rankedStartsDateCacheTag(date: string) {
 }
 
 export async function getRankedStartsPageData(date: string, today = getHomeSlateDate()) {
-  if (date < today) return getCachedRankedStartsPageData(date, today, "final");
+  if (date < today) return getValidatedCachedRankedStartsPageData(date, today, "final");
   if (date > today) return buildRankedStartsPageData(date, today);
 
   const completionState = await getRankedSlateCompletionState(date, today);
   if (completionState.totalGames === 0 && completionState.totalStarts === 0) return buildRankedStartsPageData(date, today);
-  if (completionState.isFinal) return getCachedRankedStartsPageData(date, today, "final");
+  if (completionState.isFinal) return getValidatedCachedRankedStartsPageData(date, today, "final", completionState);
 
   return getCachedRankedStartsPageData(date, today, "current");
+}
+
+async function getValidatedCachedRankedStartsPageData(
+  date: string,
+  today: string,
+  cacheMode: "current" | "final",
+  knownCompletionState?: Awaited<ReturnType<typeof getRankedSlateCompletionState>>,
+) {
+  const [cachedData, completionState] = await Promise.all([
+    getCachedRankedStartsPageData(date, today, cacheMode),
+    knownCompletionState ? Promise.resolve(knownCompletionState) : getRankedSlateCompletionState(date, today),
+  ]);
+  if (rankedStartsPageDataCoversCompletion(cachedData, completionState)) return cachedData;
+
+  console.error("[ranked-starts-render] cached page data incomplete; rebuilding", {
+    date,
+    today,
+    cacheMode,
+    cachedStarts: countRankedPageStarts(cachedData),
+    expectedStarts: completionState.totalStarts,
+    isFinal: completionState.isFinal,
+  });
+  return buildRankedStartsPageData(date, today);
 }
 
 function getCachedRankedStartsPageData(date: string, today: string, cacheMode: "current" | "final") {
@@ -42,6 +65,18 @@ function getCachedRankedStartsPageData(date: string, today: string, cacheMode: "
       tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, rankedStartsDateCacheTag(date)],
     },
   )();
+}
+
+function rankedStartsPageDataCoversCompletion(
+  data: RankedStartsPageData,
+  completionState: Awaited<ReturnType<typeof getRankedSlateCompletionState>>,
+) {
+  if (!completionState.isFinal || completionState.totalStarts <= 0) return true;
+  return countRankedPageStarts(data) >= completionState.totalStarts;
+}
+
+function countRankedPageStarts(data: RankedStartsPageData) {
+  return data.slateStarts.filter((start) => start.source?.line !== "fixture").length;
 }
 
 async function buildRankedStartsPageData(date: string, today: string): Promise<RankedStartsPageData> {

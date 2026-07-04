@@ -62,14 +62,16 @@ assert(
     slateState.includes('completedStarts: number;') &&
     slateState.includes('liveStarts: number;') &&
     slateState.includes("const totalStarts = totalGames * 2;") &&
-    slateState.includes("const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));") &&
+    slateState.includes("const completedStartCount = Math.min(totalStarts, Math.max(0, completedStarts));") &&
+    slateState.includes('state: "reconciling"') &&
     slateState.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStartCount - completedStartsInFinalGames));") &&
     slateState.includes("const liveStartCount = Math.max(0, liveGames * 2 - completedStartsInLiveGames);"),
-  "homepage slate state must count starter outings and derive in-progress starts from settled starter lines",
+  "homepage slate state must count starter outings from settled starter lines and expose a reconciling state instead of manufacturing completion",
 );
 
 assert(
   slateState.includes('state: "starts-in-progress"') &&
+    slateState.includes('state: "reconciling"') &&
     slateState.includes('return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
     !slateState.includes('return `TODAY · ${state.liveGames} LIVE') &&
     slateState.includes('return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),

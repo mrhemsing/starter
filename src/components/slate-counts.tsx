@@ -142,6 +142,7 @@ function slateCountsLabel(variant: "home" | "ranked", state: SlateProgressState)
 function rankedProgressStatusLabel(progress: SlateProgressState) {
   if (progress.totalGames === 0 && progress.totalStarts === 0) return "";
   if (progress.state === "all-starts-complete") return `SLATE COMPLETE · ${progress.totalStarts} STARTS`;
+  if (progress.state === "reconciling") return `RECONCILING · ${progress.completedStarts} OF ${progress.totalStarts} STARTS FINAL`;
   if (progress.liveStarts > 0 || progress.state === "starts-in-progress") return inProgressStartsLabel(progress);
 
   const firstPitchLabel = formatRankedFirstPitch(progress.firstPitchAt);
@@ -170,7 +171,7 @@ function formatRankedFirstPitch(value: string | null) {
 }
 
 function shouldLinkLiveScoreboard(state: SlateProgressState) {
-  return state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "all-starts-complete";
+  return state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "reconciling" || state.state === "all-starts-complete";
 }
 
 function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {

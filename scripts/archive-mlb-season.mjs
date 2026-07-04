@@ -171,9 +171,10 @@ async function readJson(filePath) {
 function toDateEntries(payload) {
   return (payload.dates ?? []).map((entry) => {
     const regularGames = (entry.games ?? []).filter((game) => game.gameType === "R");
-    if (regularGames.length > 0 && regularGames.some((game) => !isCompletedGame(game))) {
-      const completedGames = regularGames.filter(isCompletedGame).length;
-      console.log(`${entry.date}: skipped archive, slate incomplete (${completedGames}/${regularGames.length} games final)`);
+    const requiredGames = regularGames.filter((game) => !isPostponedGame(game));
+    if (requiredGames.length > 0 && requiredGames.some((game) => !isCompletedGame(game))) {
+      const completedGames = requiredGames.filter(isCompletedGame).length;
+      console.log(`${entry.date}: skipped archive, slate incomplete (${completedGames}/${requiredGames.length} countable games final)`);
       return { date: entry.date, games: [] };
     }
 
@@ -201,12 +202,23 @@ function readGameStatus(game) {
 }
 
 function isCompletedGame(game) {
+  if (isPostponedGame(game)) return false;
   const status = readGameStatus(game);
   return status.abstract === "Final" || status.detailed === "Final" || status.detailed === "Completed Early";
 }
 
 function isArchivedCompletedGame(game) {
+  if (isArchivedPostponedGame(game)) return false;
   return game.status?.abstract === "Final" || game.status?.detailed === "Final" || game.status?.detailed === "Completed Early";
+}
+
+function isPostponedGame(game) {
+  const status = readGameStatus(game);
+  return /\b(postponed|cancelled|canceled|ppd)\b/i.test(`${status.abstract} ${status.detailed}`);
+}
+
+function isArchivedPostponedGame(game) {
+  return /\b(postponed|cancelled|canceled|ppd)\b/i.test(`${game.status?.abstract ?? ""} ${game.status?.detailed ?? ""}`);
 }
 
 function assertArchivedTeam(team, label) {
@@ -292,8 +304,9 @@ function assertArchivedGameStartLayout(game, label) {
   const starts = game.starts ?? [];
   const sides = new Set(starts.map((start) => start.side));
   const pitcherIds = new Set(starts.map((start) => start.pitcherMlbId));
-  if (isArchivedCompletedGame(game) && starts.length === 1) {
-    throw new Error(`${label} completed game must store zero or two starter rows`);
+  if (isArchivedCompletedGame(game) && starts.length !== 2) {
+    const missingSides = ["away", "home"].filter((side) => !starts.some((start) => start.side === side));
+    throw new Error(`${label} completed game must store two starter rows; missing ${missingSides.join(", ") || "unknown sides"}`);
   }
   if (starts.length > 2) {
     throw new Error(`${label} must not store more than two starter rows`);
@@ -654,11 +667,8 @@ function assertManifest(manifest) {
       if (dateSummary.completedGames > dateSummary.games) {
         throw new Error(`manifest ${dateSummary.date} completedGames cannot exceed games`);
       }
-      if (dateSummary.starts > dateSummary.completedGames * 2) {
-        throw new Error(`manifest ${dateSummary.date} starts cannot exceed two starts per completed game`);
-      }
-      if (dateSummary.starts % 2 !== 0) {
-        throw new Error(`manifest ${dateSummary.date} starts must be even`);
+      if (dateSummary.starts !== dateSummary.completedGames * 2) {
+        throw new Error(`manifest ${dateSummary.date} starts must equal two starts per completed game`);
       }
 
       return {
@@ -677,11 +687,8 @@ function assertManifest(manifest) {
   if (manifest.counts.completedGames > manifest.counts.games) {
     throw new Error("manifest completedGames cannot exceed games");
   }
-  if (manifest.counts.starts > manifest.counts.completedGames * 2) {
-    throw new Error("manifest starts cannot exceed two starts per completed game");
-  }
-  if (manifest.counts.starts % 2 !== 0) {
-    throw new Error("manifest starts must be even");
+  if (manifest.counts.starts !== manifest.counts.completedGames * 2) {
+    throw new Error("manifest starts must equal two starts per completed game");
   }
   if (manifest.counts.games !== totals.games || manifest.counts.completedGames !== totals.completedGames || manifest.counts.starts !== totals.starts || manifest.counts.pitchEvents !== totals.pitchEvents) {
     throw new Error("manifest counts must match date summary totals");

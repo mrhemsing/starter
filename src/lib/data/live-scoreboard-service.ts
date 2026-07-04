@@ -335,7 +335,7 @@ function fallbackSlateProgress(board: Omit<LiveScoreboard, "slateProgress"> & { 
   if (board.liveStarts > 0 || board.finalStarts > 0 || board.delayStarts > 0) {
     return {
       date,
-      state: "starts-in-progress",
+      state: board.finalStarts > 0 && board.liveStarts === 0 && board.scheduledStarts === 0 ? "reconciling" : "starts-in-progress",
       totalGames,
       liveGames,
       finalGames,

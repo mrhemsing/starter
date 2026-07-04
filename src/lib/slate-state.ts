@@ -12,7 +12,7 @@ export type SlateStartBucketCounts = {
   delayStarts: number;
 };
 
-export type SlateProgressStateKey = "pre-first-pitch" | "starts-in-progress" | "all-starts-complete" | "no-games";
+export type SlateProgressStateKey = "pre-first-pitch" | "starts-in-progress" | "reconciling" | "all-starts-complete" | "no-games";
 
 export type SlateProgressState = {
   date: string;
@@ -58,8 +58,8 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
   const delayedGames = countableGames.filter((game) => normalizeScheduleStatus(game) === "delayed").length;
   const totalGames = countableGames.length;
   const totalStarts = totalGames * 2;
-  const completedStartCount = Math.min(totalStarts, Math.max(completedStarts, finalGames * 2));
-  const completedStartsInFinalGames = finalGames * 2;
+  const completedStartCount = Math.min(totalStarts, Math.max(0, completedStarts));
+  const completedStartsInFinalGames = Math.min(finalGames * 2, completedStartCount);
   const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStartCount - completedStartsInFinalGames));
   const liveStartCount = Math.max(0, liveGames * 2 - completedStartsInLiveGames);
   const firstPitchAt = resolveFirstPitchAt(countableGames);
@@ -83,6 +83,21 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
     return {
       date: schedule.date,
       state: "all-starts-complete",
+      totalGames,
+      liveGames,
+      finalGames,
+      totalStarts,
+      completedStarts: completedStartCount,
+      liveStarts: 0,
+      firstPitchAt,
+      countdownLabel: null,
+    };
+  }
+
+  if (finalGames >= totalGames && totalGames > 0) {
+    return {
+      date: schedule.date,
+      state: "reconciling",
       totalGames,
       liveGames,
       finalGames,
@@ -129,6 +144,7 @@ export function formatSlateStatusLine(state: SlateProgressState) {
 
   if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
   if (state.state === "all-starts-complete") return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "reconciling") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
   if (state.state === "starts-in-progress" && state.liveStarts > 0) return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
   if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
 

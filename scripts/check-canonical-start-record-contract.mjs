@@ -205,7 +205,7 @@ assert(
     warmLiveStartsJob.includes("const progress = await readWarmLiveStartsProgress(progressKey);") &&
     warmLiveStartsJob.includes('await markWarmStepComplete(progressKey, progress, "revalidate-tags");') &&
     warmLiveStartsJob.includes('import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";') &&
-    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");') &&
+    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.isFinal ? "slate-complete" : "settle-progress");') &&
     warmLiveStartsJob.includes("const rankedStartsPageWarmed = completedStarts.length > 0") &&
     warmLiveStartsJob.includes("await warmRankedStartsPage(date, progressKey, progress)") &&
     warmLiveStartsJob.includes("async function warmRankedStartsPage(date: string, key: string, progress: WarmLiveStartsProgress)") &&
@@ -285,8 +285,9 @@ assert(
     startService.includes("export function getRankedSlateCompletionStateFromInputs(") &&
     startService.includes("getRankedSlateContextForStarts(date, today, [])") &&
     startService.includes("const startCounts = summarizeCanonicalStartBuckets(slateStarts);") &&
-    startService.includes("const totalStarts = startCounts.totalStarts;") &&
+    startService.includes("const totalStarts = totalGames * 2;") &&
     startService.includes("const completedStarts = Math.min(totalStarts, startCounts.finalStarts);") &&
+    startService.includes('console.error("[ranked-slate] reconciling missing settled starts"') &&
     startService.includes("const liveGames = countableGames.filter(isLiveGameState).length;") &&
     startService.includes("const completedStartsInFinalGames = finalGames * 2;") &&
     startService.includes("const completedStartsInLiveGames = Math.min(liveGames * 2, Math.max(0, completedStarts - completedStartsInFinalGames));") &&

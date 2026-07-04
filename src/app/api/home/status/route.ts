@@ -23,6 +23,7 @@ export async function GET(request: Request) {
 
 function reconcileSlateProgressWithLiveBoard(progress: SlateProgressState, liveProgress: SlateProgressState | null) {
   if (!liveProgress || liveProgress.date !== progress.date) return progress;
+  if (progress.state === "reconciling" && liveProgress.completedStarts < progress.totalStarts) return progress;
   if (liveProgress.state === "all-starts-complete" && progress.state !== "all-starts-complete") return liveProgress;
   if (liveProgress.completedStarts > progress.completedStarts) return liveProgress;
   if (progress.liveStarts > 0 && liveProgress.liveStarts === 0 && liveProgress.completedStarts >= progress.completedStarts) return liveProgress;

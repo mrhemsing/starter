@@ -178,7 +178,12 @@ function isValidInningsPitched(value: unknown): value is number {
 }
 
 function isCompletedArchivedGame(game: ArchivedGame) {
+  if (isPostponedArchivedGame(game)) return false;
   return game.status?.abstract === "Final" || game.status?.detailed === "Final" || game.status?.detailed === "Completed Early";
+}
+
+function isPostponedArchivedGame(game: ArchivedGame) {
+  return /\b(postponed|cancelled|canceled|ppd)\b/i.test(`${game.status?.abstract ?? ""} ${game.status?.detailed ?? ""}`);
 }
 
 function archivedGameDateBelongsToShard(gameDate: unknown, archiveDate: string) {
@@ -268,7 +273,7 @@ function hasValidArchivedGameStartLayout(game: ArchivedGame) {
   const sides = new Set(starts.map((start) => start.side));
   const pitcherIds = new Set(starts.map((start) => start.pitcherMlbId));
   return (
-    (!isCompletedArchivedGame(game) || starts.length !== 1) &&
+    (!isCompletedArchivedGame(game) || starts.length === 2) &&
     starts.length <= 2 &&
     (starts.length !== 2 || (starts[0].side === "away" && starts[1].side === "home")) &&
     sides.size === starts.length &&
@@ -529,7 +534,7 @@ function hasConsistentManifestCounts(manifest: SeasonArchiveManifest) {
       !isNonNegativeInteger(dateSummary.starts) ||
       !isNonNegativeInteger(dateSummary.pitchEvents)
     ) return false;
-    if (dateSummary.completedGames > dateSummary.games || dateSummary.starts > dateSummary.completedGames * 2 || dateSummary.starts % 2 !== 0) return false;
+    if (dateSummary.completedGames > dateSummary.games || dateSummary.starts !== dateSummary.completedGames * 2) return false;
     manifestDateKeys.add(dateSummary.date);
   }
 
@@ -553,8 +558,7 @@ function hasConsistentManifestCounts(manifest: SeasonArchiveManifest) {
     normalizedArchiveRootPath(manifest.archiveRoot) === `data/mlb-archive/${manifest.season}` &&
     manifest.counts.dates === manifest.dates.length &&
     manifest.counts.completedGames <= manifest.counts.games &&
-    manifest.counts.starts <= manifest.counts.completedGames * 2 &&
-    manifest.counts.starts % 2 === 0 &&
+    manifest.counts.starts === manifest.counts.completedGames * 2 &&
     manifest.counts.games === totals.games &&
     manifest.counts.completedGames === totals.completedGames &&
     manifest.counts.starts === totals.starts &&

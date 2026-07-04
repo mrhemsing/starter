@@ -141,7 +141,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
       for (const tag of DATA_CHANGE_CACHE_TAGS) {
         options.revalidateTag?.(tag, "max");
       }
-      revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");
+      revalidateRankedStartsDate(date, options, completion.isFinal ? "slate-complete" : "settle-progress");
       await markWarmStepComplete(progressKey, progress, "revalidate-tags");
       console.log("warm-live-starts batch revalidated tags", { date, tags: DATA_CHANGE_CACHE_TAGS.length, rankedStartsDateTag: rankedStartsDateCacheTag(date) });
     }

@@ -381,7 +381,7 @@ assert(
     homeRanked.includes("resolveLiveLeaderStart(liveBoard, todaySlateStarts)") &&
     homeRanked.includes("href: liveDateHref(today),") &&
     homeStatus.includes("shouldLinkLiveScoreboard(state)") &&
-    homeStatus.includes('state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "all-starts-complete"') &&
+    homeStatus.includes('state.state === "starts-in-progress" || state.state === "pre-first-pitch" || state.state === "reconciling" || state.state === "all-starts-complete"') &&
     !homeStatus.includes("state.liveGames > 0") &&
     homeStatus.includes("liveDateHref(state.date)"),
   "homepage hero and status line must become live-board entry points during active starts and off-hours",

@@ -99,11 +99,13 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v10";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v14";') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
-    rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "final")') &&
+    rankedStartsPageService.includes('getValidatedCachedRankedStartsPageData(date, today, "final"') &&
+    rankedStartsPageService.includes("rankedStartsPageDataCoversCompletion") &&
+    rankedStartsPageService.includes('console.error("[ranked-starts-render] cached page data incomplete; rebuilding"') &&
     rankedStartsPageService.includes("if (date > today) return buildRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("if (completionState.totalGames === 0 && completionState.totalStarts === 0) return buildRankedStartsPageData(date, today);") &&
     rankedStartsPageService.includes("function getCachedRankedStartsPageData(date: string, today: string, cacheMode: \"current\" | \"final\")") &&
@@ -149,7 +151,7 @@ assert(
     rankedStartsRevalidation.includes('console.log("[ranked-starts-revalidation]"') &&
     warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
     warmLiveStartsJob.includes("if (dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
-    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");') &&
+    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.isFinal ? "slate-complete" : "settle-progress");') &&
     archiveRevalidationRoute.includes('revalidateRankedStartsDate(date, { revalidatePath, revalidateTag }, "archive-backstop")') &&
     archiveRevalidationRoute.includes("isAuthorizedArchiveRevalidationRequest") &&
     archiveSyncScript.includes("await revalidateArchivedDates(dateFiles.map((file) => file.replace(/\\.json$/, \"\")));") &&

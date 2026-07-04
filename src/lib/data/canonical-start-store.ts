@@ -89,7 +89,7 @@ export async function readCanonicalizedStartSummaries(date: string, starts: Star
   }
 
   return starts.map((start) => {
-    const record = recordsById.get(start.id) ?? canonicalStartRecordFromSummary(start, now);
+    const record = upsertCanonicalStartRecord(recordsById.get(start.id), start, now);
     return startSummaryFromCanonicalRecord(record, start);
   });
 }
@@ -154,8 +154,13 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 
   if (!existing) return next;
 
-  assertValidCanonicalSettledRecord(existing);
   assertValidCanonicalSettledRecord(next);
+  try {
+    assertValidCanonicalSettledRecord(existing);
+  } catch (error) {
+    if (next.status === "final") return next;
+    throw error;
+  }
 
   if (existing.frozen) {
     if (next.status !== "final") return existing;

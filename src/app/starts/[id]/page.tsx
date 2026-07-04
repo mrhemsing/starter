@@ -49,6 +49,8 @@ type StartPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params, searchParams }: StartPageProps): Promise<Metadata> {
   const { id } = await params;
   const query = await searchParams;
