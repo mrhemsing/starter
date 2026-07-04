@@ -18,6 +18,7 @@ const pitchingDuels = await readFile("src/components/pitching-duels.tsx", "utf8"
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
+const topPerformerMetrics = await readFile("src/lib/data/top-performer-metrics.ts", "utf8");
 const homeLiveLeader = await readFile("src/lib/home-live-leader.ts", "utf8");
 const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
 const cacheTags = await readFile("src/lib/data/cache-tags.ts", "utf8");
@@ -40,7 +41,7 @@ assert(
 
 assert(
   rankedService.includes('import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";') &&
-    rankedService.includes('import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";') &&
+    rankedService.includes('import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";') &&
     rankedService.includes("highlight: FeaturedStartHighlight | null;") &&
     rankedService.includes("resolveFeaturedStartHighlight(state.start),") &&
     homeDeferredSections.includes("highlight={view.highlight}") &&
@@ -100,10 +101,12 @@ assert(
 );
 
 assert(
-  rankedService.includes("async function resolveTopPerformerMetrics(start: StartSummary | null)") &&
-    rankedService.includes("const detail = await getStartDetail(start.id);") &&
-    rankedService.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
-  "home ranked service must enrich the top performer with real start-detail velocity metrics",
+  rankedService.includes('import { resolveTopPerformerMetrics, type TopPerformerMetrics } from "@/lib/data/top-performer-metrics";') &&
+    rankedService.includes("metrics: TopPerformerMetrics | null;") &&
+    topPerformerMetrics.includes("export async function resolveTopPerformerMetrics(start: StartSummary | null)") &&
+    topPerformerMetrics.includes("const detail = await getStartDetail(start.id);") &&
+    topPerformerMetrics.includes("veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),"),
+  "home ranked service must enrich the top performer with shared real start-detail velocity metrics",
 );
 
 assert(

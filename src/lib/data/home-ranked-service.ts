@@ -2,13 +2,14 @@ import { unstable_cache } from "next/cache";
 import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
+import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { resolveTopPerformerMetrics, type TopPerformerMetrics } from "@/lib/data/top-performer-metrics";
 import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
-import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
@@ -40,11 +41,7 @@ type TopPerformerState = {
 type TopPerformerPayload = TopPerformerState & {
   image: TopPerformerImage | null;
   highlight: FeaturedStartHighlight | null;
-  metrics: {
-    topVelo: number | null;
-    whiffRate: number | null;
-    veloSparkline: number[];
-  } | null;
+  metrics: TopPerformerMetrics | null;
 };
 
 const getCachedRankedHome = unstable_cache(
@@ -105,28 +102,6 @@ async function resolveTopPerformerPayload(state: TopPerformerState | null): Prom
   ]);
 
   return { ...state, highlight, image, metrics };
-}
-
-async function resolveTopPerformerMetrics(start: StartSummary | null) {
-  if (!start) return null;
-
-  const detail = await getStartDetail(start.id);
-  if (!detail || detail.pitchEvents.length === 0) return null;
-
-  const velocityTrend = detail.velocityTrend ?? [];
-  const velocities = detail.pitchEvents.map((pitch) => pitch.velocityMph).filter((velocity) => Number.isFinite(velocity));
-  const swings = detail.pitchEvents.filter(isSwing).length;
-  const whiffs = detail.pitchEvents.filter((pitch) => pitch.result === "swinging_strike").length;
-
-  return {
-    topVelo: velocities.length > 0 ? Math.max(...velocities) : null,
-    whiffRate: swings > 0 ? (whiffs / swings) * 100 : null,
-    veloSparkline: velocityTrend.map((inning) => inning.avgVelocityMph),
-  };
-}
-
-function isSwing(pitch: PitchEvent) {
-  return pitch.result === "swinging_strike" || pitch.result === "foul" || pitch.result === "hit_into_play";
 }
 
 function resolveTopPerformerState({

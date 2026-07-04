@@ -23,6 +23,7 @@ import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-ser
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { resolveTopPerformerMetrics } from "@/lib/data/top-performer-metrics";
 import { FORM_CONFIG, QUALITY_BANDS, qualityTierOf } from "@/lib/form-tokens";
 import { formatSigned, formatStartLine } from "@/lib/format";
 import { inningsFromIP } from "@/lib/innings";
@@ -391,9 +392,10 @@ function BandHeader({ label, count, color }: { label: string; count: number; col
 }
 
 async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: number) {
-  const [highlight, resolvedImage] = await Promise.all([
+  const [highlight, resolvedImage, metrics] = await Promise.all([
     resolveFeaturedStartHighlight(start),
     resolveTopPerformerImage(start, null),
+    resolveTopPerformerMetrics(start),
   ]);
   const image = resolvedImage?.source === "action" ? resolvedImage : null;
 
@@ -411,6 +413,9 @@ async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: nu
     highlight,
     status: "archived" as const,
     scoreStatusLabel: null,
+    topVelo: metrics?.topVelo ?? null,
+    whiffRate: metrics?.whiffRate ?? null,
+    veloSparkline: metrics?.veloSparkline ?? [],
   };
 }
 

@@ -99,7 +99,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v9";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v10";') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
@@ -617,8 +617,9 @@ assert(
 );
 
 assert(
-  startsPage.includes('import { TopPerformerCard } from "@/components/top-performer-card";') &&
+    startsPage.includes('import { TopPerformerCard } from "@/components/top-performer-card";') &&
     startsPage.includes('import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";') &&
+    startsPage.includes('import { resolveTopPerformerMetrics } from "@/lib/data/top-performer-metrics";') &&
     startsPage.includes("const qualifiedStarts = rankStarts(starts.filter(isQualifiedRankedStart));") &&
     startsPage.includes("validateRankedStartOrder(qualifiedStarts);") &&
     startsPage.includes('slateProgress.state === "all-starts-complete"') &&
@@ -628,6 +629,10 @@ assert(
     startsPage.includes("const venue = start.context.parkLabel;") &&
     !startsPage.includes('const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;') &&
     startsPage.includes('status: "archived" as const') &&
+    startsPage.includes("resolveTopPerformerMetrics(start),") &&
+    startsPage.includes("topVelo: metrics?.topVelo ?? null,") &&
+    startsPage.includes("whiffRate: metrics?.whiffRate ?? null,") &&
+    startsPage.includes("veloSparkline: metrics?.veloSparkline ?? [],") &&
     startsPage.includes('resolvedImage?.source === "action" ? resolvedImage : null') &&
     topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
     topPerformerCard.includes('const noPhoto = status === "archived" && !imageUrl;') &&
