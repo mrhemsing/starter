@@ -104,7 +104,7 @@ function buildContextSnapshot(record, breakdown) {
   const opponentOffense = components.get("opponentOffense");
 
   return {
-    label: `${record.team} vs ${record.opponent} context at settle`,
+    label: `${record.team} vs ${record.opponent} settled context`,
     whiffDeltaPct: round((whiff?.value ?? 0) / 0.35, 3),
     velocityDeltaMph: round((velocity?.value ?? 0) / 1.75, 3),
     parkRunFactor: round(1 - ((park?.value ?? 0) / 12), 3),
@@ -134,7 +134,7 @@ function freezeComponent(component) {
 }
 
 function labelContextAtSettle(value) {
-  return /\bcontext at settle\b/i.test(value) ? value : `${value} Context at settle.`;
+  return value.replace(/\s*context at settle\.?/gi, "").trim();
 }
 
 function canonicalRowFromRecord(record) {

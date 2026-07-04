@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/featured-highlights",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/slate-sync",
+      "schedule": "0 * * * *"
     }
   ]
 }

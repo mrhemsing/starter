@@ -516,6 +516,9 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         borderLeftColor: profile.railColor,
       } as React.CSSProperties}
       data-responsive-check="ranked-start-card"
+      data-rank={displayRank}
+      data-gs-plus={start.gameScorePlus}
+      data-pitcher-name={start.pitcher.name}
       data-band={qualityBandSlug(tier.label)}
       data-gas={gas ? "true" : "false"}
       data-grouped={grouped ? "true" : "false"}

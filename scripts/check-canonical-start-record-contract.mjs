@@ -49,8 +49,9 @@ assert(
     canonicalRecord.includes("function freezeStartContextSnapshot(context: StartContext): StartContext") &&
     canonicalRecord.includes("function freezeGameScorePlusBreakdown(") &&
     canonicalRecord.includes("function labelContextAtSettle(value: string)") &&
-    canonicalRecord.includes("Context at settle."),
-  "canonical start record must apply shared GS+ display precision, freeze context snapshots, and keep breakdown totals aligned",
+    canonicalRecord.includes('return value.replace(/\\s*context at settle\\.?/gi, "").trim();') &&
+    !canonicalRecord.includes("Context at settle."),
+  "canonical start record must apply shared GS+ display precision, freeze context snapshots, keep breakdown totals aligned, and avoid implementation-language labels",
 );
 
 assert(

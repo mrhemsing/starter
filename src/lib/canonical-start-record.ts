@@ -272,7 +272,7 @@ function freezeGameScorePlusBreakdown(breakdown: StartApiGameScorePlusBreakdown,
 }
 
 function labelContextAtSettle(value: string) {
-  return /\bcontext at settle\b/i.test(value) ? value : `${value} Context at settle.`;
+  return value.replace(/\s*context at settle\.?/gi, "").trim();
 }
 
 export function deriveStartEventFlags(result: StartSummary["result"], gameScorePlus: number): StartEventFlag[] {

@@ -6,13 +6,30 @@ function assert(condition, message) {
   }
 }
 
-const [homePage, startsPage, slateState, startService, slateCounts, statusRoute] = await Promise.all([
+const [
+  homePage,
+  startsPage,
+  slateState,
+  startService,
+  slateCounts,
+  statusRoute,
+  scoreComponentList,
+  slateSyncScript,
+  slateSyncCron,
+  packageJson,
+  vercelConfig,
+] = await Promise.all([
   readFile("src/app/page.tsx", "utf8"),
   readFile("src/app/starts/[id]/page.tsx", "utf8"),
   readFile("src/lib/slate-state.ts", "utf8"),
   readFile("src/lib/data/start-service.ts", "utf8"),
   readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/app/api/home/status/route.ts", "utf8"),
+  readFile("src/components/score-component-list.tsx", "utf8"),
+  readFile("scripts/check-slate-sync.mjs", "utf8"),
+  readFile("src/app/api/cron/slate-sync/route.ts", "utf8"),
+  readFile("package.json", "utf8"),
+  readFile("vercel.json", "utf8"),
 ]);
 
 assert(
@@ -171,6 +188,26 @@ assert(
     startService.includes("return getSlateProgressState(schedule, startCounts.finalStarts);") &&
     !startService.includes("return getSlateProgressState(schedule, completedLines.size);"),
   "homepage slate progress must use canonicalized start counts instead of a separate completed-line count",
+);
+
+assert(
+  packageJson.includes('"check:slate-sync": "node scripts/check-slate-sync.mjs"') &&
+    slateSyncScript.includes("chromium.launch") &&
+    slateSyncScript.includes("assertRenderedCounts(page, \"home\", slateState)") &&
+    slateSyncScript.includes("assertRenderedCounts(page, \"ranked\", slateState)") &&
+    slateSyncScript.includes("assertLiveBoard(page, liveBoard)") &&
+    slateSyncScript.includes("assertSettledRankedLeader(page, settledSlateApi)") &&
+    slateSyncScript.includes("assertNoBannedArchiveVocabulary") &&
+    scoreComponentList.includes("function cleanSettledContextCopy") &&
+    scoreComponentList.includes('value.replace(/\\s*context at settle\\.?/gi, "").trim()') &&
+    slateSyncScript.includes('console.error("[slate-sync] divergence"') &&
+    slateSyncCron.includes('console.error("[slate-sync] divergence"') &&
+    slateSyncCron.includes("fetchJson<SlateProgress>(origin, statusPath)") &&
+    slateSyncCron.includes("fetchJson<LiveBoardProbe>(origin, `/api/live/${slateState.date}`)") &&
+    slateSyncCron.includes("compareSlateProgress(slateState, liveBoard.slateProgress)") &&
+    vercelConfig.includes('"path": "/api/cron/slate-sync"') &&
+    vercelConfig.includes('"schedule": "0 * * * *"'),
+  "slate synchronization must have a browser production probe and scheduled cron divergence alert",
 );
 
 assert(

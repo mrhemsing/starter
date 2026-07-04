@@ -9,14 +9,18 @@ export function ScoreComponentList({ components, compact = false }: { components
       {components.map((component) => (
         <div key={component.key} className={compact ? "rounded border border-white/10 bg-black/15 p-3" : "border-t border-white/5 pt-3"}>
           <div className="flex items-baseline justify-between gap-3">
-            <p className="font-mono text-xs font-semibold text-zinc-200">{component.label}</p>
+            <p className="font-mono text-xs font-semibold text-zinc-200">{cleanSettledContextCopy(component.label)}</p>
             <p className={`shrink-0 font-mono text-xs ${component.value >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
               {formatSigned(component.value)}
             </p>
           </div>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">{component.description}</p>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">{cleanSettledContextCopy(component.description)}</p>
         </div>
       ))}
     </div>
   );
+}
+
+function cleanSettledContextCopy(value: string) {
+  return value.replace(/\s*context at settle\.?/gi, "").trim();
 }
