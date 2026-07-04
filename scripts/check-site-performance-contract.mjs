@@ -87,10 +87,11 @@ assert(
     cacheTags.includes('export const HEAT_CHECK_CACHE_TAG = "heat-check-surfaces";') &&
     cacheTags.includes('export const RANKED_STARTS_CACHE_TAG = "ranked-starts-surfaces";') &&
     cacheTags.includes('export const LIVE_CACHE_TAG = "live-surfaces";') &&
+    cacheTags.includes('export const HOME_RANKED_CACHE_TAG = "home-ranked-surfaces";') &&
     cacheTags.includes("export const DATA_CHANGE_CACHE_TAGS = [") &&
     warmLiveStartsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
     warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
-    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     warmLiveStartsJob.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
     warmLiveStartsJob.includes('options.revalidateTag?.(tag, "max");'),
   "data-change cron must push revalidation through shared cache tags for slate surfaces",
@@ -106,10 +107,10 @@ assert(
 
 assert(
   rankedService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    rankedService.includes('import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     rankedService.includes("export const HOME_RANKED_REVALIDATE_SECONDS = 60;") &&
     rankedService.includes("const getCachedRankedHome = unstable_cache(") &&
-    rankedService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    rankedService.includes("tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
     rankedService.includes("return getCachedRankedHome(getHomeSlateDate());"),
   "Home ranked data must use Next data cache for repeated homepage/API loads",
 );

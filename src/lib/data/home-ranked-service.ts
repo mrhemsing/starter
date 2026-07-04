@@ -1,16 +1,15 @@
 import { unstable_cache } from "next/cache";
-import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
+import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress, getStartDetail } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref } from "@/lib/routes";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import type { FeaturedStartHighlight, PitchEvent, StartSummary } from "@/lib/types";
 
-const LIVE_TOP_PERFORMER_FLOOR = 50;
-const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;
 export const HOME_RANKED_REVALIDATE_SECONDS = 60;
 
 export type RankedHomeResponse = {
@@ -51,7 +50,7 @@ type TopPerformerPayload = TopPerformerState & {
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
   ["home-ranked", "v13"],
-  { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
+  { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 export async function getRankedHome(): Promise<RankedHomeResponse> {
@@ -198,8 +197,8 @@ function resolveTopPerformerState({
 }
 
 function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStarts: StartSummary[]) {
-  const leader = liveBoard?.leader;
-  if (!leader || !liveBoard?.hasActiveStarts || leader.gsPlus === null) return null;
+  const leader = resolveHomeLiveLeaderRow(liveBoard);
+  if (!leader || leader.gsPlus === null) return null;
 
   const baseline = todaySlateStarts.find((start) => start.id === leader.startId);
   if (!baseline) return null;
@@ -240,7 +239,7 @@ function isCompletedRankedStart(start: StartSummary) {
 }
 
 function isLiveTopPerformerEligibleStart(start: StartSummary) {
-  return start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS;
+  return start.gameScorePlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(start.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;
 }
 
 function formatLongDate(date: string) {

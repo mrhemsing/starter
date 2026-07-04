@@ -3,6 +3,7 @@ export const UPCOMING_CACHE_TAG = "upcoming-surfaces";
 export const HEAT_CHECK_CACHE_TAG = "heat-check-surfaces";
 export const RANKED_STARTS_CACHE_TAG = "ranked-starts-surfaces";
 export const LIVE_CACHE_TAG = "live-surfaces";
+export const HOME_RANKED_CACHE_TAG = "home-ranked-surfaces";
 
 export const DATA_CHANGE_CACHE_TAGS = [
   SLATE_CACHE_TAG,
@@ -10,4 +11,5 @@ export const DATA_CHANGE_CACHE_TAGS = [
   HEAT_CHECK_CACHE_TAG,
   RANKED_STARTS_CACHE_TAG,
   LIVE_CACHE_TAG,
+  HOME_RANKED_CACHE_TAG,
 ] as const;

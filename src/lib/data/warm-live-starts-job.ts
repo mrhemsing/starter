@@ -1,10 +1,12 @@
-import { DATA_CHANGE_CACHE_TAGS } from "@/lib/data/cache-tags";
+import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
+import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";
 
 export const WARM_LIVE_STARTS_BATCH_SIZE = 8;
 const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";
@@ -36,6 +38,7 @@ export type WarmLiveStartsJobResult = {
     pitcherName: string;
     imageSource: string | null;
   } | null;
+  homeLeaderRevalidated?: boolean;
   revalidated?: boolean;
   durationMs?: number;
   generatedAt?: string;
@@ -49,6 +52,11 @@ type WarmLiveStartsProgress = {
 type WarmLiveStartsLock = {
   startedAt: string;
   expiresAt: string;
+};
+
+type WarmHomeLiveLeaderState = {
+  signature: HomeLiveLeaderSignature | null;
+  updatedAt: string;
 };
 
 export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {}): Promise<WarmLiveStartsJobResult> {
@@ -177,7 +185,8 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
     console.log("warm-live-starts team form warming deferred", { date, teams: slateTeams.length, flag: WARM_TEAM_FORM_ON_CRON_FLAG });
   }
 
-  const topPerformer = hasCompletedWarmStep(progress, "ranked-home")
+  const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);
+  const topPerformer = hasCompletedWarmStep(progress, "ranked-home") && !homeLeaderRevalidated
     ? null
     : await warmRankedHome(progressKey, progress);
   const finishedAt = new Date();
@@ -211,6 +220,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
           imageSource: topPerformer.image?.source ?? null,
         }
       : null,
+    homeLeaderRevalidated,
     revalidated: completedStarts.length > 0,
     durationMs,
     generatedAt: finishedAt.toISOString(),
@@ -241,6 +251,26 @@ async function warmRankedHome(key: string, progress: WarmLiveStartsProgress) {
   return rankedHome.topPerformer;
 }
 
+async function revalidateHomeLeaderSnapshotOnChange(date: string, options: WarmLiveStartsRevalidators) {
+  const board = await getLiveScoreboard({ date }).catch(() => null);
+  const signature = homeLiveLeaderSignature(resolveHomeLiveLeaderRow(board));
+  const stateKey = homeLiveLeaderStateKey(date);
+  const previous = await readRuntimeState<WarmHomeLiveLeaderState>(stateKey);
+
+  if (sameHomeLiveLeaderSignature(previous?.signature ?? null, signature)) return false;
+
+  options.revalidateTag?.(HOME_RANKED_CACHE_TAG, "max");
+  options.revalidatePath?.("/");
+  await writeRuntimeState(stateKey, { signature, updatedAt: new Date().toISOString() });
+  console.log("warm-live-starts revalidated home live leader snapshot", {
+    date,
+    previous: previous?.signature ?? null,
+    next: signature,
+    tag: HOME_RANKED_CACHE_TAG,
+  });
+  return true;
+}
+
 async function markWarmStepComplete(key: string, progress: WarmLiveStartsProgress, step: string) {
   if (!progress.completedSteps.includes(step)) {
     progress.completedSteps.push(step);
@@ -251,6 +281,15 @@ async function markWarmStepComplete(key: string, progress: WarmLiveStartsProgres
 
 function warmLiveStartsProgressKey(date: string, finalGames: number, completedStarts: number) {
   return `warm-live-starts:${date}:g${finalGames}:s${completedStarts}`;
+}
+
+function homeLiveLeaderStateKey(date: string) {
+  return `home-live-leader:${date}`;
+}
+
+function sameHomeLiveLeaderSignature(left: HomeLiveLeaderSignature | null, right: HomeLiveLeaderSignature | null) {
+  if (!left || !right) return left === right;
+  return left.startId === right.startId && left.gsPlus === right.gsPlus && left.scoreLabel === right.scoreLabel;
 }
 
 async function acquireWarmLiveStartsLock(key: string): Promise<{ acquired: boolean; expiresAt?: string }> {

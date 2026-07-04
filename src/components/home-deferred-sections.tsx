@@ -17,14 +17,12 @@ import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
-import { inningsFromIP } from "@/lib/innings";
+import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 const HOME_LIVE_LEADER_POLL_MS = 30 * 1000;
-const HOME_LIVE_LEADER_FLOOR = 50;
-const HOME_LIVE_LEADER_MIN_INNINGS = 3;
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
@@ -364,16 +362,6 @@ function homeTopPerformerImageFromLiveRow(): HomeTopPerformer["image"] {
     objectPosition: "50% 45%",
     mobileObjectPosition: "50% 45%",
   };
-}
-
-function resolveHomeLiveLeaderRow(board: LiveScoreboard) {
-  const leader = board.leader;
-  if (!leader || !isHomeLiveLeaderEligibleRow(leader)) return null;
-  return leader;
-}
-
-function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow) {
-  return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.gsPlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;
 }
 
 function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResponse["liveLeaderboard"]> }) {

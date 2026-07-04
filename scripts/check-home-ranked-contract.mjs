@@ -17,6 +17,9 @@ const pitchingDuels = await readFile("src/components/pitching-duels.tsx", "utf8"
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const rankedService = await readFile("src/lib/data/home-ranked-service.ts", "utf8");
+const homeLiveLeader = await readFile("src/lib/home-live-leader.ts", "utf8");
+const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
+const cacheTags = await readFile("src/lib/data/cache-tags.ts", "utf8");
 const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
@@ -329,10 +332,9 @@ assert(
 assert(
   rankedService.includes("if (isTodaySlateStarted)") &&
     rankedService.includes("if (!todayLeader || !isLiveTopPerformerEligibleStart(todayLeader)) return null;") &&
-    rankedService.includes("const LIVE_TOP_PERFORMER_FLOOR = 50;") &&
-    rankedService.includes("const LIVE_TOP_PERFORMER_MIN_INNINGS = 3;") &&
+    rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
-    rankedService.includes("start.gameScorePlus >= LIVE_TOP_PERFORMER_FLOOR && inningsFromIP(start.line.inningsPitched) >= LIVE_TOP_PERFORMER_MIN_INNINGS") &&
+    rankedService.includes("start.gameScorePlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(start.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS") &&
     rankedService.includes('["home-ranked", "v13"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
@@ -353,18 +355,35 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("const HOME_LIVE_LEADER_FLOOR = 50;") &&
-    homeDeferredSections.includes("const HOME_LIVE_LEADER_MIN_INNINGS = 3;") &&
-    homeDeferredSections.includes("function resolveHomeLiveLeaderRow(board: LiveScoreboard)") &&
-    homeDeferredSections.includes("const leader = board.leader;") &&
-    homeDeferredSections.includes("function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
-    homeDeferredSections.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.gsPlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;') &&
+  homeLiveLeader.includes("export const HOME_LIVE_LEADER_FLOOR = 50;") &&
+    homeLiveLeader.includes("export const HOME_LIVE_LEADER_MIN_INNINGS = 3;") &&
+    homeLiveLeader.includes("export function resolveHomeLiveLeaderRow(board: LiveScoreboard | null): LiveScoreboardRow | null") &&
+    homeLiveLeader.includes(".filter(isHomeLiveLeaderEligibleRow)") &&
+    homeLiveLeader.includes("function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
+    homeLiveLeader.includes('return row.scoreLabel !== "PROJ"') &&
+    homeLiveLeader.includes("&& row.gsPlus >= HOME_LIVE_LEADER_FLOOR") &&
+    homeLiveLeader.includes("&& inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;") &&
+    rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
+    homeDeferredSections.includes('import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     homeDeferredSections.includes('data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}') &&
     homeDeferredSections.includes("function homeTopPerformerImageFromLiveRow(): HomeTopPerformer[\"image\"]") &&
     homeDeferredSections.includes('imageUrl: "/images/top-performer-placeholder.jpg"') &&
     !homeDeferredSections.includes("https://img.mlbstatic.com/mlb-photos/image/upload/w_960,q_auto:best/v1/people/${row.pitcherMlbId}/headshot/67/current") &&
     homeDeferredSections.includes('if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {'),
   "home live leader island must preserve the Start of the Day threshold, avoid projected rows, refresh ranked-home action imagery on leader changes, never synthesize headshots, mark final rows settled, and stop polling after the live slate closes",
+);
+
+assert(
+  cacheTags.includes('export const HOME_RANKED_CACHE_TAG = "home-ranked-surfaces";') &&
+    rankedService.includes('import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    rankedService.includes("tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
+    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsJob.includes('import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";') &&
+    warmLiveStartsJob.includes("const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);") &&
+    warmLiveStartsJob.includes("options.revalidateTag?.(HOME_RANKED_CACHE_TAG, \"max\");") &&
+    warmLiveStartsJob.includes("options.revalidatePath?.(\"/\");") &&
+    warmLiveStartsJob.includes("sameHomeLiveLeaderSignature(previous?.signature ?? null, signature)"),
+  "home live leader changes must revalidate the cached homepage hero tag whenever the shared leader identity or score changes",
 );
 
 assert(
