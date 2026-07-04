@@ -24,6 +24,7 @@ type CachedMlbGameContentActionImage = {
   startId: string;
   imageUrl: string;
   alt: string;
+  attribution?: string;
   clean?: boolean;
   focalPoint?: {
     x: number;
@@ -78,6 +79,7 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
       source: "action",
       imageUrl: cachedMlbGameContentAction.imageUrl,
       alt: cachedMlbGameContentAction.alt,
+      attribution: cachedMlbGameContentAction.attribution,
       objectPosition,
       mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
       playUrl: cachedMlbGameContentAction.playUrl,
@@ -224,6 +226,7 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     startId,
     imageUrl: image.imageUrl,
     alt: image.alt,
+    attribution: image.attribution,
     clean: false,
     objectPosition: image.objectPosition ?? "50% 50%",
     mobileObjectPosition: image.mobileObjectPosition,
@@ -237,10 +240,18 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   const body = await readFile(mlbGameContentActionImageCachePath(startId), "utf8").catch(() => null);
   if (!body) return null;
   const value = JSON.parse(body) as CachedMlbGameContentActionImage;
-  if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;
+  if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
   if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;
   return value.imageUrl && value.alt && value.objectPosition ? value : null;
+}
+
+function isAllowedCuratedActionImageUrl(url: string) {
+  return (
+    url.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
+    url.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
+    url.startsWith("https://s.hdnux.com/photos/")
+  );
 }
 
 function isValidFocalPoint(value: CachedMlbGameContentActionImage["focalPoint"]): value is { x: number; y: number } {

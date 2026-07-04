@@ -495,7 +495,11 @@ assert(
     imageService.includes('if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";') &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&
     imageService.includes('return path.join(CACHE_DIR, `${safeFilePart(startId)}-mlb-action-v4.json`);') &&
-    imageService.includes('if (!value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return null;') &&
+    imageService.includes("function isAllowedCuratedActionImageUrl(url: string)") &&
+    imageService.includes("url.startsWith(\"https://img.mlbstatic.com/mlb-images/image/upload/\")") &&
+    imageService.includes("url.startsWith(\"https://images2.minutemediacdn.com/image/upload/\")") &&
+    imageService.includes("url.startsWith(\"https://s.hdnux.com/photos/\")") &&
+    imageService.includes("if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;") &&
     imageService.includes('source: "placeholder"') &&
     imageService.includes("imageUrl: PLACEHOLDER_IMAGE_URL") &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
