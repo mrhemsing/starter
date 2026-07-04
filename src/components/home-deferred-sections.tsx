@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
+import { useHomeLiveBoard } from "@/components/home-live-board-provider";
 import { PitchingDuelsModule } from "@/components/pitching-duels";
 import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
@@ -22,7 +23,6 @@ import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsR
 
 const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
-const HOME_LIVE_LEADER_POLL_MS = 30 * 1000;
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
@@ -138,7 +138,7 @@ export function HomeDeferredSections({
         ranked === null ? (
           null
         ) : ranked.topPerformer ? (
-          <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} today={today} />
+          <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
         ) : ranked.liveLeaderboard ? (
           <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
         ) : null,
@@ -182,7 +182,7 @@ export function HomeDeferredSections({
       {ranked === null ? (
         null
       ) : ranked.topPerformer ? (
-        <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} today={today} />
+        <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
       ) : ranked.liveLeaderboard ? (
         <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
       ) : null}
@@ -235,22 +235,17 @@ type HomeTopPerformerView = {
   veloSparkline: number[];
 };
 
-function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTopPerformer; today: string }) {
+function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerformer }) {
+  const { board, shouldPoll } = useHomeLiveBoard();
   const initialView = homeTopPerformerViewFromPayload(topPerformer);
   const viewRef = useRef<HomeTopPerformerView>(initialView);
   const [view, setView] = useState<HomeTopPerformerView>(initialView);
-  const shouldPollLiveLeader = topPerformer.status === "live";
+  const shouldPollLiveLeader = topPerformer.status === "live" && shouldPoll;
 
   useEffect(() => {
-    if (!shouldPollLiveLeader) return;
-
     let cancelled = false;
-    let livePoll = 0;
-
     const syncLiveLeader = async () => {
-      const board = await fetchJson<LiveScoreboard>(`/api/live/${today}`);
-      if (cancelled) return;
-
+      if (topPerformer.status !== "live" || !board) return;
       const leader = resolveHomeLiveLeaderRow(board);
       if (leader) {
         const rankedSnapshot = leader.startId !== viewRef.current.startId ? await resolveRankedHomeTopPerformer(leader.startId) : null;
@@ -259,22 +254,14 @@ function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTop
         viewRef.current = next;
         setView(next);
       }
-
-      if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {
-        window.clearInterval(livePoll);
-      }
     };
 
     syncLiveLeader().catch(() => undefined);
-    livePoll = window.setInterval(() => {
-      syncLiveLeader().catch(() => undefined);
-    }, HOME_LIVE_LEADER_POLL_MS);
 
     return () => {
       cancelled = true;
-      window.clearInterval(livePoll);
     };
-  }, [shouldPollLiveLeader, today, topPerformer.dateLabel]);
+  }, [board, topPerformer.dateLabel, topPerformer.status]);
 
   return (
     <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}>

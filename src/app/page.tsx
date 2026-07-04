@@ -1,4 +1,5 @@
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
+import { HomeLiveBoardProvider } from "@/components/home-live-board-provider";
 import { HomeLiveTicker } from "@/components/home-live-ticker";
 import { HomeSlateStatusLine } from "@/components/home-slate-status-line";
 import { SiteHeader } from "@/components/site-header";
@@ -73,65 +74,67 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
       <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[#08080a]" />
-        <div
-          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-[0.44] saturate-[0.92] sm:h-[440px] lg:hidden"
-          style={{
-            backgroundImage: "url('/images/header-baseball-bg.jpg')",
-            backgroundPosition: "right -54px top 82px",
-            backgroundSize: "clamp(360px, 108vw, 520px) auto",
-          }}
-          aria-hidden="true"
-          data-responsive-check="home-header-background-mobile"
-        />
-        <div
-          className="absolute inset-x-0 top-0 hidden h-[380px] bg-no-repeat opacity-100 saturate-[0.92] lg:block"
-          style={{
-            backgroundImage: "url('/images/header-baseball-bg.jpg')",
-            backgroundPosition: "76% 74%",
-            backgroundSize: "min(720px, 115vw) auto",
-          }}
-          aria-hidden="true"
-          data-responsive-check="home-header-background"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-7xl">
-          <SiteHeader active="home" today={today} rankedDate={rankedDate} />
-          <HomeLiveTicker initialBoard={homeTickerBoard} today={today} />
+      <HomeLiveBoardProvider initialBoard={homeTickerBoard} today={today}>
+        <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
+          <div className="absolute inset-0 bg-[#08080a]" />
+          <div
+            className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-[0.44] saturate-[0.92] sm:h-[440px] lg:hidden"
+            style={{
+              backgroundImage: "url('/images/header-baseball-bg.jpg')",
+              backgroundPosition: "right -54px top 82px",
+              backgroundSize: "clamp(360px, 108vw, 520px) auto",
+            }}
+            aria-hidden="true"
+            data-responsive-check="home-header-background-mobile"
+          />
+          <div
+            className="absolute inset-x-0 top-0 hidden h-[380px] bg-no-repeat opacity-100 saturate-[0.92] lg:block"
+            style={{
+              backgroundImage: "url('/images/header-baseball-bg.jpg')",
+              backgroundPosition: "76% 74%",
+              backgroundSize: "min(720px, 115vw) auto",
+            }}
+            aria-hidden="true"
+            data-responsive-check="home-header-background"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
+          <div className="relative z-10 mx-auto max-w-7xl">
+            <SiteHeader active="home" today={today} rankedDate={rankedDate} />
+            <HomeLiveTicker />
 
-          <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
-            <div className="min-w-0 lg:max-w-3xl">
-              <HomeSlateStatusLine initialState={slateStatus} />
-              <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
-                <span className="block">Every MLB start,</span>
-                <span className="block">ranked.</span>
-              </h1>
-              <p className="blurb mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
-                <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">GS+ scores a single start 0-100, league average ~50.</span>
-                <a href="/methodology" className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline">
-                  Methodology
-                </a>
-              </p>
+            <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
+              <div className="min-w-0 lg:max-w-3xl">
+                <HomeSlateStatusLine initialState={slateStatus} />
+                <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
+                  <span className="block">Every MLB start,</span>
+                  <span className="block">ranked.</span>
+                </h1>
+                <p className="blurb mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
+                  <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">GS+ scores a single start 0-100, league average ~50.</span>
+                  <a href="/methodology" className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline">
+                    Methodology
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <HomeDeferredSections
-        today={today}
-        tomorrow={tomorrow}
-        slatePhase={homeSlatePhase}
-        slatePhaseExperiment={homeSlatePhaseExperiment}
-        initialData={{
-          ranked,
-          todayWatch,
-          tomorrowWatch,
-          duels,
-          bestStarts,
-          formHome,
-        }}
-      />
+        <HomeDeferredSections
+          today={today}
+          tomorrow={tomorrow}
+          slatePhase={homeSlatePhase}
+          slatePhaseExperiment={homeSlatePhaseExperiment}
+          initialData={{
+            ranked,
+            todayWatch,
+            tomorrowWatch,
+            duels,
+            bestStarts,
+            formHome,
+          }}
+        />
+      </HomeLiveBoardProvider>
     </main>
   );
 }

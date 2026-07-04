@@ -308,6 +308,14 @@ p,
   box-shadow: 0 0 0 0 rgb(255 90 31 / 0.32);
 }
 
+.home-live-ticker-scrollbarless {
+  scrollbar-width: none;
+}
+
+.home-live-ticker-scrollbarless::-webkit-scrollbar {
+  display: none;
+}
+
 @media (min-width: 640px) {
   .ranked-start-details:not([open]) {
     height: 0;
@@ -359,14 +367,6 @@ p,
   .home-live-ticker-track:active,
   .home-live-ticker-track[data-touch-paused="true"] {
     animation-play-state: paused;
-  }
-
-  .home-live-ticker-scrollbarless {
-    scrollbar-width: none;
-  }
-
-  .home-live-ticker-scrollbarless::-webkit-scrollbar {
-    display: none;
   }
 
 }
@@ -474,6 +474,10 @@ p,
 
   .top-performer-photo-wrap {
     transform: none !important;
+  }
+
+  .home-live-ticker-track [data-ticker-duplicate="true"] {
+    display: none;
   }
 
 }

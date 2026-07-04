@@ -9,6 +9,7 @@ function assert(condition, message) {
 const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
+const homeLiveBoardProvider = await readFile("src/components/home-live-board-provider.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const heatHighlightModal = await readFile("src/components/heat-highlight-modal.tsx", "utf8");
 const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
@@ -203,18 +204,21 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("const HOME_LIVE_LEADER_POLL_MS = 30 * 1000;") &&
+  homeLiveBoardProvider.includes("export const HOME_LIVE_BOARD_POLL_MS = 30 * 1000;") &&
+    homeLiveBoardProvider.includes("const shouldPoll = Boolean(board?.hasGames && board.liveStarts > 0 && board.slateProgress.state !== \"all-starts-complete\");") &&
+    homeLiveBoardProvider.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
+    homeLiveBoardProvider.includes("syncLiveBoard().catch(() => undefined);") &&
+    homeLiveBoardProvider.includes("}, HOME_LIVE_BOARD_POLL_MS);") &&
+    homeDeferredSections.includes('import { useHomeLiveBoard } from "@/components/home-live-board-provider";') &&
     homeDeferredSections.includes('import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
-    homeDeferredSections.includes("function HomeTopPerformerIsland({ topPerformer, today }: { topPerformer: HomeTopPerformer; today: string })") &&
-    homeDeferredSections.includes('const shouldPollLiveLeader = topPerformer.status === "live";') &&
-    homeDeferredSections.includes("if (!shouldPollLiveLeader) return;") &&
-    homeDeferredSections.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
+    homeDeferredSections.includes("function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerformer })") &&
+    homeDeferredSections.includes("const { board, shouldPoll } = useHomeLiveBoard();") &&
+    homeDeferredSections.includes('const shouldPollLiveLeader = topPerformer.status === "live" && shouldPoll;') &&
+    !homeDeferredSections.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
     homeDeferredSections.includes('fetchJson<RankedHomeResponse>("/api/home/ranked")') &&
-    homeDeferredSections.includes("}, HOME_LIVE_LEADER_POLL_MS);") &&
-    homeDeferredSections.includes("window.clearInterval(livePoll);") &&
     !homeDeferredSections.includes("const rankedRefresh") &&
     !homeDeferredSections.includes("window.clearInterval(rankedRefresh);"),
-  "home live leader hero must keep the server snapshot and poll the Live Board feed only while the hero is live",
+  "home live leader hero must keep the server snapshot and consume the shared homepage Live Board poll only while the hero is live",
 );
 
 assert(
@@ -369,7 +373,8 @@ assert(
     homeDeferredSections.includes("function homeTopPerformerImageFromLiveRow(): HomeTopPerformer[\"image\"]") &&
     homeDeferredSections.includes('imageUrl: "/images/top-performer-placeholder.jpg"') &&
     !homeDeferredSections.includes("https://img.mlbstatic.com/mlb-photos/image/upload/w_960,q_auto:best/v1/people/${row.pitcherMlbId}/headshot/67/current") &&
-    homeDeferredSections.includes('if (!board.hasActiveStarts || board.slateProgress.state === "all-starts-complete") {'),
+    homeLiveBoardProvider.includes('if (nextBoard.slateProgress.state === "all-starts-complete" || nextBoard.liveStarts === 0) {') &&
+    homeLiveBoardProvider.includes("window.clearInterval(livePoll);"),
   "home live leader island must preserve the Start of the Day threshold, avoid projected rows, refresh ranked-home action imagery on leader changes, never synthesize headshots, mark final rows settled, and stop polling after the live slate closes",
 );
 

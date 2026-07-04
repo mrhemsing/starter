@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
+import { useHomeLiveBoard } from "@/components/home-live-board-provider";
 import { upcomingDateHref } from "@/lib/routes";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 
-const HOME_LIVE_TICKER_POLL_MS = 30 * 1000;
-const HOME_LIVE_TICKER_FIRST_PITCH_GRACE_MS = 15 * 1000;
 const HOME_LIVE_TICKER_AUTO_RESUME_MS = 4 * 1000;
 
 type TickerEntry = {
@@ -19,73 +17,12 @@ type TickerEntry = {
   state: "live" | "final" | "upcoming";
 };
 
-export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScoreboard | null; today: string }) {
-  const [board, setBoard] = useState(initialBoard);
+export function HomeLiveTicker() {
+  const { board, shouldPoll } = useHomeLiveBoard();
   const [touchPaused, setTouchPaused] = useState(false);
   const autoResumeTimer = useRef(0);
-  const staleSlateVerifyKey = useRef<string | null>(null);
   const visible = shouldRenderTicker(board);
-  const shouldPoll = Boolean(board?.hasActiveStarts && visible);
-  const shouldVerifyStaleSlate = Boolean(visible && board && !shouldPoll && (board.finalStarts > 0 || board.delayStarts > 0));
-  const phase = board && (board.liveStarts > 0 || board.delayStarts > 0) ? "live" : "today";
-
-  useEffect(() => {
-    if (!board) return;
-    window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }));
-  }, [board]);
-
-  useEffect(() => {
-    if (!visible || !board) return;
-
-    let cancelled = false;
-    let livePoll = 0;
-    let firstPitchTimer = 0;
-
-    const syncTicker = async () => {
-      const nextBoard = await fetchJson<LiveScoreboard>(`/api/live/${today}`);
-      if (cancelled) return;
-      setBoard(nextBoard);
-
-      if (!nextBoard.hasActiveStarts && nextBoard.slateProgress.state !== "all-starts-complete") {
-        scheduleFirstPitchSync(nextBoard);
-      }
-
-      if (nextBoard.slateProgress.state === "all-starts-complete") {
-        window.clearInterval(livePoll);
-        window.clearTimeout(firstPitchTimer);
-      }
-    };
-
-    const scheduleFirstPitchSync = (current: LiveScoreboard) => {
-      window.clearTimeout(firstPitchTimer);
-      const firstPitchMs = current.slateProgress.firstPitchAt ? new Date(current.slateProgress.firstPitchAt).getTime() : NaN;
-      if (!Number.isFinite(firstPitchMs)) return;
-      const delayMs = Math.max(HOME_LIVE_TICKER_FIRST_PITCH_GRACE_MS, firstPitchMs - Date.now() + HOME_LIVE_TICKER_FIRST_PITCH_GRACE_MS);
-      firstPitchTimer = window.setTimeout(() => {
-        syncTicker().catch(() => undefined);
-      }, delayMs);
-    };
-
-    if (shouldPoll) {
-      syncTicker().catch(() => undefined);
-      livePoll = window.setInterval(() => {
-        syncTicker().catch(() => undefined);
-      }, HOME_LIVE_TICKER_POLL_MS);
-    } else {
-      const verifyKey = `${board.date}:${board.liveStarts}:${board.finalStarts}:${board.warmingStarts}:${board.scheduledStarts}:${board.delayStarts}`;
-      if (shouldVerifyStaleSlate && staleSlateVerifyKey.current !== verifyKey) {
-        staleSlateVerifyKey.current = verifyKey;
-        syncTicker().catch(() => undefined);
-      }
-      scheduleFirstPitchSync(board);
-    }
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(livePoll);
-      window.clearTimeout(firstPitchTimer);
-    };
-  }, [board, shouldPoll, shouldVerifyStaleSlate, today, visible]);
+  const phase = board && board.liveStarts > 0 ? "live" : "today";
 
   useEffect(() => () => window.clearTimeout(autoResumeTimer.current), []);
 
@@ -124,7 +61,19 @@ export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScor
             onPointerCancel={scheduleTouchResume}
             onPointerLeave={scheduleTouchResume}
           >
-            {marqueeEntries.map((entry, index) => <TickerEntryItem key={`${entry.key}-${index}`} entry={entry} duplicate={index >= entries.length} />)}
+            {marqueeEntries.map((entry, index) => {
+              const cycleIndex = index % entries.length;
+              const previous = cycleIndex > 0 ? entries[cycleIndex - 1] : null;
+              const showNextDivider = entry.state === "upcoming" && previous?.state !== "upcoming";
+              return (
+                <TickerEntryItem
+                  key={`${entry.key}-${index}`}
+                  entry={entry}
+                  duplicate={index >= entries.length}
+                  showNextDivider={showNextDivider}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
@@ -132,20 +81,22 @@ export function HomeLiveTicker({ initialBoard, today }: { initialBoard: LiveScor
   );
 }
 
-function TickerEntryItem({ entry, duplicate }: { entry: TickerEntry; duplicate: boolean }) {
+function TickerEntryItem({ entry, duplicate, showNextDivider }: { entry: TickerEntry; duplicate: boolean; showNextDivider: boolean }) {
   return (
-    <a
-      href={entry.href}
-      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.13em] hover:text-amber-200 ${entry.state === "final" ? "text-zinc-500" : "text-zinc-300"}`}
-      aria-hidden={duplicate ? "true" : undefined}
-      tabIndex={duplicate ? -1 : undefined}
-    >
-      {entry.state === "upcoming" ? <span className="text-zinc-500">NEXT</span> : null}
-      <span className={entry.state === "final" ? "font-semibold text-zinc-400" : "font-semibold text-zinc-50"}>{entry.label}</span>
-      {entry.score !== undefined ? <span className={entry.state === "final" ? "text-zinc-500" : "text-zinc-300"}>{Math.round(entry.score)}</span> : entry.state === "live" ? <span className="text-zinc-500">--</span> : null}
-      {entry.glyph ? <span className={entry.glyph === "up" ? "text-[#FF9A62]" : "text-[#7EC8FF]"}>{entry.glyph === "up" ? "▲" : "▼"}</span> : null}
-      {entry.time ? <span className="text-zinc-400">{entry.time}</span> : null}
-    </a>
+    <span className="flex shrink-0 items-center gap-5" data-ticker-duplicate={duplicate ? "true" : "false"}>
+      {showNextDivider ? <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">NEXT</span> : null}
+      <a
+        href={entry.href}
+        className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.13em] hover:text-amber-200 ${entry.state === "final" ? "text-zinc-500" : "text-zinc-300"}`}
+        aria-hidden={duplicate ? "true" : undefined}
+        tabIndex={duplicate ? -1 : undefined}
+      >
+        <span className={entry.state === "final" ? "font-semibold text-zinc-400" : "font-semibold text-zinc-50"}>{entry.label}</span>
+        {entry.score !== undefined ? <span className={entry.state === "final" ? "text-zinc-500" : "text-zinc-300"}>{Math.round(entry.score)}</span> : entry.state === "live" ? <span className="text-zinc-500">--</span> : null}
+        {entry.glyph ? <span className={entry.glyph === "up" ? "text-[#FF9A62]" : "text-[#7EC8FF]"}>{entry.glyph === "up" ? "▲" : "▼"}</span> : null}
+        {entry.time ? <span className="text-zinc-400">{entry.time}</span> : null}
+      </a>
+    </span>
   );
 }
 
@@ -221,10 +172,4 @@ function formatTickerTime(value: string) {
     minute: "2-digit",
     timeZone: "America/Los_Angeles",
   }).format(parsed).replace(/\s/g, "");
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Request failed: ${url}`);
-  return response.json() as Promise<T>;
 }
