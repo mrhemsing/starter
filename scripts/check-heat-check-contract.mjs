@@ -219,6 +219,11 @@ assert(
     formPage.includes("whitespace-nowrap") &&
     formPage.includes("min-h-8") &&
     formDriverChips.includes("leading?: React.ReactNode") &&
+    formDriverChips.includes("className?: string") &&
+    formDriverChips.includes("flushTop?: boolean") &&
+    formDriverChips.includes('const topMargin = flushTop ? "" : compact ? "mt-2" : "mt-3";') &&
+    formDriverChips.includes('${topMargin} ${className}') &&
+    formPage.includes("flushTop") &&
     formDriverChips.includes("{leading}") &&
     formDriverChips.includes("flex min-w-0 max-w-full flex-wrap gap-1.5") &&
     formDriverChips.includes("inline-flex min-h-8") &&

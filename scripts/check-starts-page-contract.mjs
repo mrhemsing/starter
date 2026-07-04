@@ -150,6 +150,12 @@ assert(
 assert(
   mobileCardShell.includes("export function MobileCardShell") &&
     mobileCardShell.includes("data-mobile-card-shell") &&
+    mobileCardShell.includes("gap-x-1.5 gap-y-1") &&
+    startsPage.includes("data-ranked-desktop-layout") &&
+    globals.includes("[data-ranked-desktop-layout]") &&
+    globals.includes("[data-ranked-desktop-chip-row]") &&
+    globals.includes("[data-ranked-desktop-detail-block]") &&
+    globals.includes("[data-ranked-desktop-score-stack]") &&
     mobileCardShell.includes("data-mobile-card-header") &&
     mobileCardShell.includes("data-mobile-card-score") &&
     mobileCardShell.includes("data-mobile-card-chips") &&
@@ -179,7 +185,8 @@ assert(
     startsPage.includes("data-ranked-desktop-score-stack") &&
     startsPage.indexOf("data-ranked-desktop-chip-row") < startsPage.indexOf("data-ranked-desktop-detail-block") &&
     startsPage.indexOf("data-ranked-desktop-detail-block") < startsPage.indexOf("data-ranked-desktop-score-stack") &&
-    startsPage.includes('className="mt-1 flex min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row') &&
+    startsPage.includes('className="mt-1 flex max-sm:!hidden min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row') &&
+    startsPage.includes("hidden max-sm:!hidden items-start") &&
     packageJson.includes('"check:mobile-card-layout": "node scripts/check-mobile-card-layout.mjs"') &&
     mobileCardLayoutCheck.includes("/starts/${rankedDate}") &&
     mobileCardLayoutCheck.includes("/heat-check") &&

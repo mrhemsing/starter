@@ -814,6 +814,7 @@ function FormLeaderboardRow({
               <FormDriverChips
                 chips={pitcher.driverChips}
                 compact
+                flushTop
                 leading={<CrossoverPill pitcher={pitcher} />}
               />
             )}

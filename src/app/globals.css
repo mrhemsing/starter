@@ -534,6 +534,15 @@ p,
   color: rgb(9 9 11);
 }
 
+@media (max-width: 639.98px) {
+  [data-ranked-desktop-layout],
+  [data-ranked-desktop-chip-row],
+  [data-ranked-desktop-detail-block],
+  [data-ranked-desktop-score-stack] {
+    display: none !important;
+  }
+}
+
 @keyframes home-live-ticker-scroll {
   from {
     transform: translateX(0);

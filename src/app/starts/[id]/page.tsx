@@ -424,7 +424,7 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
           </>
         )}
       />
-      <div className={`relative hidden items-start gap-x-3 gap-y-2 sm:grid sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
+      <div className={`relative hidden max-sm:!hidden items-start gap-x-3 gap-y-2 sm:grid sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`} data-ranked-desktop-layout>
         <div className={profile.headerClusterClass}>
           <div className="min-w-0 row-start-1">
             <span className={`route-shell-shimmer block rounded ${profile.rankClass.includes("3xl") ? "h-8 w-11" : "h-7 w-9"}`} />
@@ -523,7 +523,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           </>
         )}
       />
-      <div className={`relative hidden items-start gap-x-3 gap-y-2 sm:grid sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`}>
+      <div className={`relative hidden max-sm:!hidden items-start gap-x-3 gap-y-2 sm:grid sm:items-center sm:gap-x-4 sm:pr-20 ${profile.gridClass}`} data-ranked-desktop-layout>
         <div className={profile.headerClusterClass}>
           <div className="min-w-0 row-start-1">
             <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
@@ -534,7 +534,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
             <h2 className={`${profile.nameClass} min-w-0 w-full max-w-full break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
             <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
-            <div className="mt-1 flex min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row>
+            <div className="mt-1 flex max-sm:!hidden min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row>
               {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
               {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
               <PitcherAvailabilityNote availability={formSummary?.availability} compact />

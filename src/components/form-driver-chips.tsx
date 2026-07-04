@@ -1,12 +1,27 @@
-import type React from "react";
 import type { FormDriverChip } from "@/lib/types";
+import type React from "react";
 
-export function FormDriverChips({ chips, limit = 3, compact = false, leading }: { chips?: FormDriverChip[]; limit?: number; compact?: boolean; leading?: React.ReactNode }) {
+export function FormDriverChips({
+  chips,
+  limit = 3,
+  compact = false,
+  leading,
+  className = "",
+  flushTop = false,
+}: {
+  chips?: FormDriverChip[];
+  limit?: number;
+  compact?: boolean;
+  leading?: React.ReactNode;
+  className?: string;
+  flushTop?: boolean;
+}) {
   const shown = (chips ?? []).slice(0, limit);
   if (shown.length === 0 && !leading) return null;
+  const topMargin = flushTop ? "" : compact ? "mt-2" : "mt-3";
 
   return (
-    <div className={`flex min-w-0 max-w-full flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-3"}`} aria-label="Form drivers">
+    <div className={`flex min-w-0 max-w-full flex-wrap gap-1.5 ${topMargin} ${className}`} aria-label="Form drivers">
       {leading}
       {shown.map((chip) => (
         <span

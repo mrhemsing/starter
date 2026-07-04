@@ -19,7 +19,7 @@ export function MobileCardShell({ left, score, chips, details, footer, className
         </div>
       </div>
       {chips ? (
-        <div className="flex min-w-0 flex-wrap gap-1.5" data-mobile-card-chips>
+        <div className="flex min-w-0 flex-wrap gap-x-1.5 gap-y-1" data-mobile-card-chips>
           {chips}
         </div>
       ) : null}

@@ -109,6 +109,7 @@ async function assertHeatScheduledChipBreak(page, viewportName) {
   assert(geometry.hasBreak, `heat ${viewportName} scheduled chip row must include a mobile row break: ${JSON.stringify(geometry)}`);
   assert(geometry.next, `heat ${viewportName} scheduled chip should be followed by another visible chip row item: ${JSON.stringify(geometry)}`);
   assert(geometry.next.top >= geometry.chip.bottom - 1, `heat ${viewportName} chips after scheduled STARTS must begin on the next row: ${JSON.stringify(geometry)}`);
+  assert(geometry.next.top - geometry.chip.bottom <= 10, `heat ${viewportName} chips after scheduled STARTS should keep a tight row gap: ${JSON.stringify(geometry)}`);
 }
 
 async function assertHeatRankHeadshotGap(page, viewportName) {
