@@ -204,6 +204,7 @@ assert(
     formPage.includes('data-heat-start-status-chip="live"') &&
     formPage.includes('data-heat-start-status-chip="scheduled"') &&
     formPage.includes("function MobileStartStatusRowBreak({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null })") &&
+    formPage.includes("if (!status) return null;") &&
     formPage.includes('return <span className="h-0 basis-full sm:hidden" aria-hidden="true" data-heat-mobile-start-status-break />;') &&
     formPage.includes("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("function ScheduledStartChipLabel({ label }: { label: string })") &&
@@ -230,7 +231,7 @@ assert(
     formDriverChips.includes("whitespace-nowrap") &&
     !formDriverChips.includes("whitespace-normal") &&
     !formDriverChips.includes("[overflow-wrap:anywhere]"),
-  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS WEEKDAY/STARTS MM/DD first, with mobile scheduled chips breaking after STARTS and driver chips in a wrapping row",
+  "Heat Check cards must render LIVE NOW/STARTS TODAY/STARTS WEEKDAY/STARTS MM/DD first, with every mobile start-status chip breaking before the driver chips",
 );
 
 assert(

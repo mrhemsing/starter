@@ -86,30 +86,34 @@ async function assertNoHeatBandJumpFilter(page, viewportName) {
 }
 
 async function assertHeatScheduledChipBreak(page, viewportName) {
-  const scheduled = page.locator("[data-mobile-card-shell] [data-heat-start-status-chip='scheduled']").first();
-  await scheduled.waitFor({ timeout: 10_000 });
-  const geometry = await scheduled.evaluate((chip) => {
-    const chipRect = chip.getBoundingClientRect();
-    const row = chip.closest("[data-mobile-card-chips]");
-    const nextVisible = Array.from(row?.children ?? []).find((element) => {
-      if (element === chip || element.hasAttribute("data-heat-mobile-start-status-break")) return false;
-      const rect = element.getBoundingClientRect();
-      const style = window.getComputedStyle(element);
-      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && rect.left >= chipRect.left - 1 && rect.top >= chipRect.top - 1;
-    });
-    const nextRect = nextVisible?.getBoundingClientRect();
+  const statusChips = page.locator("[data-mobile-card-shell] [data-heat-start-status-chip]");
+  await statusChips.first().waitFor({ timeout: 10_000 });
+  const geometries = await statusChips.evaluateAll((chips) =>
+    chips.map((chip) => {
+      const chipRect = chip.getBoundingClientRect();
+      const row = chip.closest("[data-mobile-card-chips]");
+      const nextVisible = Array.from(row?.children ?? []).find((element) => {
+        if (element === chip || element.hasAttribute("data-heat-mobile-start-status-break")) return false;
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && rect.left >= chipRect.left - 1 && rect.top >= chipRect.top - 1;
+      });
+      const nextRect = nextVisible?.getBoundingClientRect();
 
-    return {
-      chip: { top: chipRect.top, bottom: chipRect.bottom, height: chipRect.height },
-      next: nextRect ? { top: nextRect.top, bottom: nextRect.bottom, height: nextRect.height } : null,
-      hasBreak: Boolean(row?.querySelector("[data-heat-mobile-start-status-break]")),
-    };
-  });
+      return {
+        kind: chip.getAttribute("data-heat-start-status-chip"),
+        chip: { top: chipRect.top, bottom: chipRect.bottom, height: chipRect.height },
+        next: nextRect ? { top: nextRect.top, bottom: nextRect.bottom, height: nextRect.height } : null,
+        hasBreak: Boolean(row?.querySelector("[data-heat-mobile-start-status-break]")),
+      };
+    }),
+  );
 
-  assert(geometry.hasBreak, `heat ${viewportName} scheduled chip row must include a mobile row break: ${JSON.stringify(geometry)}`);
-  assert(geometry.next, `heat ${viewportName} scheduled chip should be followed by another visible chip row item: ${JSON.stringify(geometry)}`);
-  assert(geometry.next.top >= geometry.chip.bottom - 1, `heat ${viewportName} chips after scheduled STARTS must begin on the next row: ${JSON.stringify(geometry)}`);
-  assert(geometry.next.top - geometry.chip.bottom <= 10, `heat ${viewportName} chips after scheduled STARTS should keep a tight row gap: ${JSON.stringify(geometry)}`);
+  const checked = geometries.filter((geometry) => geometry.next);
+  const invalid = checked.filter((geometry) => !geometry.hasBreak || !geometry.next || geometry.next.top < geometry.chip.bottom - 1 || geometry.next.top - geometry.chip.bottom > 10);
+  assert(checked.some((geometry) => geometry.kind === "scheduled"), `heat ${viewportName} scheduled STARTS chip must be covered by spacing check: ${JSON.stringify(geometries)}`);
+  assert(checked.length > 0, `heat ${viewportName} start-status chip spacing check needs visible rows: ${JSON.stringify(geometries)}`);
+  assert(invalid.length === 0, `heat ${viewportName} chips after LIVE NOW/STARTS must share the same tight next-row gap: ${JSON.stringify(geometries)}`);
 }
 
 async function assertHeatRankHeadshotGap(page, viewportName) {

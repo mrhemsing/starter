@@ -1029,7 +1029,7 @@ function SeasonBandMiniBar({ stats, showLabels = false }: { stats: FormSummary["
 
 function MobileStartStatusRowBreak({ pitcher, todayStart }: { pitcher: FormSummary; todayStart: TodayStartContext | null }) {
   const status = startStatusLabel(pitcher, todayStart);
-  if (status?.kind !== "scheduled") return null;
+  if (!status) return null;
 
   return <span className="h-0 basis-full sm:hidden" aria-hidden="true" data-heat-mobile-start-status-break />;
 }
