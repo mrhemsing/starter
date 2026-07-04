@@ -224,9 +224,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
   }
 
   const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);
-  const topPerformer = hasCompletedWarmStep(progress, "ranked-home") && !homeLeaderRevalidated
-    ? null
-    : await warmRankedHome(progressKey, progress);
+  const topPerformer = await warmRankedHome(progressKey, progress);
   const finishedAt = new Date();
   const durationMs = finishedAt.getTime() - startedAt.getTime();
   console.log("warm-live-starts end", {
@@ -287,7 +285,13 @@ function hasCompletedWarmStep(progress: WarmLiveStartsProgress, step: string) {
 async function warmRankedHome(key: string, progress: WarmLiveStartsProgress) {
   const rankedHome = await getRankedHome();
   await markWarmStepComplete(key, progress, "ranked-home");
-  console.log("warm-live-starts batch warmed ranked home", { step: "ranked-home" });
+  console.log("warm-live-starts batch warmed ranked home", {
+    step: "ranked-home",
+    topPerformerStartId: rankedHome.topPerformer?.start.id ?? null,
+    topPerformerStatus: rankedHome.topPerformer?.status ?? null,
+    imageSource: rankedHome.topPerformer?.image?.source ?? null,
+    photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && rankedHome.topPerformer.image?.source === "placeholder",
+  });
   return rankedHome.topPerformer;
 }
 

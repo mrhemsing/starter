@@ -248,7 +248,8 @@ function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerform
       if (topPerformer.status !== "live" || !board) return;
       const leader = resolveHomeLiveLeaderRow(board);
       if (leader) {
-        const rankedSnapshot = leader.startId !== viewRef.current.startId ? await resolveRankedHomeTopPerformer(leader.startId) : null;
+        const needsPhotoRefresh = leader.startId === viewRef.current.startId && isPlaceholderTopPerformerImage(viewRef.current.image);
+        const rankedSnapshot = leader.startId !== viewRef.current.startId || needsPhotoRefresh ? await resolveRankedHomeTopPerformer(leader.startId) : null;
         if (cancelled) return;
         const next = homeTopPerformerViewFromLiveRow(viewRef.current, leader, board, topPerformer.dateLabel, rankedSnapshot);
         viewRef.current = next;
@@ -331,14 +332,18 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     line: row.line,
     rank: 1,
     slateCount: board.totalStarts,
-    image: sameStart ? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),
-    highlight: sameStart ? current.highlight : rankedView?.highlight ?? null,
+    image: sameStart ? rankedView?.image ?? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),
+    highlight: sameStart ? rankedView?.highlight ?? current.highlight : rankedView?.highlight ?? null,
     status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",
     scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,
-    whiffRate: sameStart ? current.whiffRate : rankedView?.whiffRate ?? null,
-    topVelo: sameStart ? current.topVelo : rankedView?.topVelo ?? null,
-    veloSparkline: sameStart ? current.veloSparkline : rankedView?.veloSparkline ?? [],
+    whiffRate: sameStart ? rankedView?.whiffRate ?? current.whiffRate : rankedView?.whiffRate ?? null,
+    topVelo: sameStart ? rankedView?.topVelo ?? current.topVelo : rankedView?.topVelo ?? null,
+    veloSparkline: sameStart ? rankedView?.veloSparkline ?? current.veloSparkline : rankedView?.veloSparkline ?? [],
   };
+}
+
+function isPlaceholderTopPerformerImage(image: HomeTopPerformer["image"]) {
+  return !image || image.source === "placeholder";
 }
 
 function homeTopPerformerImageFromLiveRow(): HomeTopPerformer["image"] {

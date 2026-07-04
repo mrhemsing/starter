@@ -357,7 +357,11 @@ assert(
     homeDeferredSections.includes("href: row.liveHref,") &&
     homeDeferredSections.includes('status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",') &&
     homeDeferredSections.includes('scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,') &&
-    homeDeferredSections.includes("image: sameStart ? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),"),
+    homeDeferredSections.includes("const needsPhotoRefresh = leader.startId === viewRef.current.startId && isPlaceholderTopPerformerImage(viewRef.current.image);") &&
+    homeDeferredSections.includes("const rankedSnapshot = leader.startId !== viewRef.current.startId || needsPhotoRefresh ? await resolveRankedHomeTopPerformer(leader.startId) : null;") &&
+    homeDeferredSections.includes("image: sameStart ? rankedView?.image ?? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),") &&
+    homeDeferredSections.includes('function isPlaceholderTopPerformerImage(image: HomeTopPerformer["image"])') &&
+    homeDeferredSections.includes('return !image || image.source === "placeholder";'),
   "home top performer must promote the live GS+ leader into the hero, hydrate label/photo/score from the Live Board feed, and link to the live board",
 );
 
@@ -388,10 +392,12 @@ assert(
     warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     warmLiveStartsJob.includes('import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";') &&
     warmLiveStartsJob.includes("const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);") &&
+    warmLiveStartsJob.includes("const topPerformer = await warmRankedHome(progressKey, progress);") &&
+    warmLiveStartsJob.includes('photoRefreshNeeded: rankedHome.topPerformer?.status === "live" && rankedHome.topPerformer.image?.source === "placeholder",') &&
     warmLiveStartsJob.includes("options.revalidateTag?.(HOME_RANKED_CACHE_TAG, \"max\");") &&
     warmLiveStartsJob.includes("options.revalidatePath?.(\"/\");") &&
     warmLiveStartsJob.includes("sameHomeLiveLeaderSignature(previous?.signature ?? null, signature)"),
-  "home live leader changes must revalidate the cached homepage hero tag whenever the shared leader identity or score changes",
+  "home live leader changes must revalidate the cached homepage hero tag, and active warm runs must keep checking placeholder leaders for newly available photos",
 );
 
 assert(
