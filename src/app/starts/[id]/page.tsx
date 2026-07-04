@@ -240,8 +240,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <SiteHeader active="starts" today={today} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
           <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
-          <section className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <section className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls">
+            <div className="grid min-w-0 justify-items-start gap-3">
               <RankedStartsArchiveNav
                 activeDate={archiveNavigation.activeDate}
                 previousDate={archiveNavigation.previousDate}

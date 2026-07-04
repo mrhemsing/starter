@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PageContextStrip } from "@/components/page-context-strip";
 import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink, RankedStartsDatePicker } from "@/components/ranked-starts-archive-link";
 import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingStreamersHref, upcomingWeekHref } from "@/lib/routes";
 
@@ -84,35 +83,34 @@ export function RankedStartsArchiveNav({
   const nextHref = nextDate ? rankedStartsPath(nextDate) : null;
 
   return (
-    <nav className="min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
+    <nav className="w-full min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
-      <PageContextStrip
-        primary={<RankedEyebrowDateLabel date={activeDate} />}
-        leading={
-          <span className="inline-flex shrink-0 items-center gap-1.5" aria-label="Step ranked starts slates">
-            {previousDate ? (
-              <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={previousHref ?? rankedStartsPath(previousDate)} ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`} dataArchiveStep="previous">
-                <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
-              </RankedStartsArchiveLink>
-            ) : (
-              <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No previous slate" data-archive-step="previous">
-                <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
-              </span>
-            )}
-            <RankedStartsDatePicker activeDate={activeDate} className={rankedStartsArchiveDatePickerClass} />
-            {nextDate ? (
-              <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
-                <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
-              </RankedStartsArchiveLink>
-            ) : (
-              <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No next slate" data-archive-step="next">
-                <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
-              </span>
-            )}
-          </span>
-        }
-        primaryClassName="ml-2 font-mono text-2xl font-semibold leading-none tracking-normal"
-      />
+      <div className="grid min-w-0 justify-items-start gap-2">
+        <span className="inline-flex max-w-full shrink-0 items-center gap-1.5" aria-label="Step ranked starts slates">
+          {previousDate ? (
+            <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={previousHref ?? rankedStartsPath(previousDate)} ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`} dataArchiveStep="previous">
+              <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
+            </RankedStartsArchiveLink>
+          ) : (
+            <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No previous slate" data-archive-step="previous">
+              <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
+            </span>
+          )}
+          <RankedStartsDatePicker activeDate={activeDate} className={rankedStartsArchiveDatePickerClass} />
+          {nextDate ? (
+            <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
+              <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
+            </RankedStartsArchiveLink>
+          ) : (
+            <span className={rankedStartsArchiveStepDisabledClass} aria-disabled="true" aria-label="No next slate" data-archive-step="next">
+              <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
+            </span>
+          )}
+        </span>
+        <span className="block w-full min-w-0 font-mono text-xl font-semibold leading-tight tracking-normal text-zinc-100 sm:text-2xl sm:leading-none" data-context-primary>
+          <RankedEyebrowDateLabel date={activeDate} />
+        </span>
+      </div>
     </nav>
   );
 }
@@ -136,7 +134,7 @@ function RankedEyebrowDateLabel({ date }: { date: string }) {
   if (!parts) return <span data-ranked-date-label>{label}</span>;
 
   return (
-    <span className="inline-flex items-baseline" aria-label={label} data-ranked-date-label>
+    <span className="flex min-w-0 flex-wrap items-baseline" aria-label={label} data-ranked-date-label>
       <span>{parts.weekday},</span>
       <span className="ml-[0.2em]">{parts.date}</span>
     </span>

@@ -398,21 +398,22 @@ assert(
     pageContextStrip.includes("export function PageContextStrip") &&
     pageContextStrip.includes("data-context-primary") &&
     pageContextStrip.includes("data-context-meta") &&
-    slateDateNav.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
+    !slateDateNav.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink, RankedStartsDatePicker } from "@/components/ranked-starts-archive-link";') &&
     slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
     slateDateNav.includes("<RankedStartsDatePicker activeDate={activeDate} className={rankedStartsArchiveDatePickerClass} />") &&
-    slateDateNav.includes('className="min-w-0 font-mono uppercase"') &&
-    slateDateNav.includes("primaryClassName=\"ml-2 font-mono text-2xl font-semibold leading-none tracking-normal\"") &&
-    slateDateNav.includes("primary={<RankedEyebrowDateLabel date={activeDate} />}") &&
+    slateDateNav.includes('className="w-full min-w-0 font-mono uppercase"') &&
+    slateDateNav.includes('className="grid min-w-0 justify-items-start gap-2"') &&
+    slateDateNav.includes('className="block w-full min-w-0 font-mono text-xl font-semibold leading-tight tracking-normal text-zinc-100 sm:text-2xl sm:leading-none" data-context-primary') &&
+    slateDateNav.includes("<RankedEyebrowDateLabel date={activeDate} />") &&
     slateDateNav.includes("function RankedEyebrowDateLabel") &&
-    slateDateNav.includes('className="inline-flex items-baseline"') &&
+    slateDateNav.includes('className="flex min-w-0 flex-wrap items-baseline"') &&
     slateDateNav.includes("aria-label={label}") &&
     slateDateNav.includes('<span>{parts.weekday},</span>') &&
     slateDateNav.includes('className="ml-[0.2em]"') &&
     slateDateNav.includes("function formatRankedEyebrowDateParts") &&
     slateDateNav.includes("data-ranked-date-label") &&
-    slateDateNav.includes('className="inline-flex shrink-0 items-center gap-1.5"') &&
+    slateDateNav.includes('className="inline-flex max-w-full shrink-0 items-center gap-1.5"') &&
     slateDateNav.includes("const rankedStartsArchiveStepClass =") &&
     slateDateNav.includes('"inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
     slateDateNav.includes("const rankedStartsArchiveStepDisabledClass =") &&
@@ -426,7 +427,9 @@ assert(
     slateDateNav.includes('<span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>') &&
     !slateDateNav.includes("text-amber-300") &&
     !slateDateNav.includes("min-w-[23ch]") &&
-    startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
+    startsPage.includes('className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
+    startsPage.includes('className="grid min-w-0 justify-items-start gap-3"') &&
+    !startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
     slateCounts.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     !slateDateNav.includes("&lt;") &&
     !slateDateNav.includes("&gt;") &&
@@ -660,8 +663,9 @@ assert(
 );
 
 assert(
-  startsPage.includes('className="mt-4 grid gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
-    startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
+  startsPage.includes('className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
+    startsPage.includes('className="grid min-w-0 justify-items-start gap-3"') &&
+    !startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
     slateCounts.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     startsPage.includes('storageKey="ranked-starts-method-open" label="How rankings work"') &&
     startsPage.includes('className="w-fit text-amber-300 underline-offset-4 hover:underline" href="/methodology"') &&
