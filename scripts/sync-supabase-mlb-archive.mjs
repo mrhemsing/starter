@@ -12,6 +12,8 @@ const archiveRoot = readArg("dir", process.env.THE_BUMP_ARCHIVE_DIR ?? path.join
 const supabaseUrl = process.env.THE_BUMP_SUPABASE_URL ?? process.env.SUPABASE_URL;
 const serviceKey = process.env.THE_BUMP_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 const batchSize = Number(process.env.THE_BUMP_SUPABASE_SYNC_BATCH_SIZE ?? 500);
+const revalidationBaseUrl = readRevalidationBaseUrl();
+const cronSecret = process.env.CRON_SECRET;
 
 if (!supabaseUrl || !serviceKey) {
   throw new Error("Set THE_BUMP_SUPABASE_URL and THE_BUMP_SUPABASE_SERVICE_ROLE_KEY before syncing");
@@ -113,6 +115,8 @@ await upsert("toetheslab_mlb_archive_manifests", [{
   dates: manifest.dates,
 }], "season");
 
+await revalidateArchivedDates(dateFiles.map((file) => file.replace(/\.json$/, "")));
+
 console.log(`supabase archive sync ok: ${season}, dates ${dateFiles.length}, starts ${rows.length}, pitcher arsenals ${pitcherArsenalRows.length}, statcast pitch enrichments ${statcastRows.length}`);
 
 async function upsert(table, body, conflictColumns) {
@@ -133,6 +137,37 @@ async function upsert(table, body, conflictColumns) {
   if (!response.ok) {
     throw new Error(`${table} upsert failed with HTTP ${response.status}: ${await response.text()}`);
   }
+}
+
+async function revalidateArchivedDates(dates) {
+  if (!revalidationBaseUrl) {
+    console.log(`archive revalidation backstop skipped: no THE_BUMP_REVALIDATE_BASE_URL/NEXT_PUBLIC_SITE_URL/VERCEL_URL for ${dates.length} date(s)`);
+    return;
+  }
+
+  for (const date of dates) {
+    const url = new URL("/api/archive/revalidate", revalidationBaseUrl);
+    url.searchParams.set("date", date);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: cronSecret ? { authorization: `Bearer ${cronSecret}` } : undefined,
+    });
+    if (!response.ok) {
+      throw new Error(`archive revalidation backstop failed for ${date} with HTTP ${response.status}: ${await response.text()}`);
+    }
+    console.log(`archive revalidation backstop ok: ${date}`);
+  }
+}
+
+function readRevalidationBaseUrl() {
+  const configured = process.env.THE_BUMP_REVALIDATE_BASE_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return normalizeBaseUrl(configured);
+  if (process.env.VERCEL_URL) return normalizeBaseUrl(process.env.VERCEL_URL);
+  return null;
+}
+
+function normalizeBaseUrl(value) {
+  return /^https?:\/\//.test(value) ? value : `https://${value}`;
 }
 
 function buildPitcherArsenalRows(starts, manifest) {

@@ -182,9 +182,9 @@ assert(
 );
 
 assert(
-  warmLiveStartsCron.includes("export const maxDuration = 60;") &&
+    warmLiveStartsCron.includes("export const maxDuration = 60;") &&
     warmLiveStartsCron.includes('import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";') &&
-    warmLiveStartsCron.includes('const date = !process.env.VERCEL_ENV ? new URL(request.url).searchParams.get("date") ?? undefined : undefined;') &&
+    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
     warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
     warmLiveStartsJob.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
     warmLiveStartsJob.includes('import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";') &&
@@ -203,7 +203,8 @@ assert(
     warmLiveStartsJob.includes("const progressKey = warmLiveStartsProgressKey(date, completion.finalGames, completedStarts.length);") &&
     warmLiveStartsJob.includes("const progress = await readWarmLiveStartsProgress(progressKey);") &&
     warmLiveStartsJob.includes('await markWarmStepComplete(progressKey, progress, "revalidate-tags");') &&
-    warmLiveStartsJob.includes("options.revalidateTag?.(rankedStartsDateCacheTag(date), \"max\");") &&
+    warmLiveStartsJob.includes('import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";') &&
+    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");') &&
     warmLiveStartsJob.includes("const rankedStartsPageWarmed = completedStarts.length > 0") &&
     warmLiveStartsJob.includes("await warmRankedStartsPage(date, progressKey, progress)") &&
     warmLiveStartsJob.includes("async function warmRankedStartsPage(date: string, key: string, progress: WarmLiveStartsProgress)") &&
@@ -221,7 +222,7 @@ assert(
     warmLiveStartsJob.includes("async function acquireWarmLiveStartsLock(key: string)") &&
     warmLiveStartsJob.includes("function warmLiveStartsLockKey(date: string)") &&
     warmLiveStartsJob.includes("function shouldWarmTeamFormOnCron()") &&
-    warmLiveStartsJob.includes("if (!process.env.VERCEL_ENV && dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
+    warmLiveStartsJob.includes("if (dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
     runtimeStateStore.includes('const RUNTIME_STATE_TABLE = "toetheslab_runtime_state";') &&
     runtimeStateStore.includes("export async function readRuntimeState") &&
     runtimeStateStore.includes("export async function writeRuntimeState") &&

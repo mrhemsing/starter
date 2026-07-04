@@ -21,6 +21,11 @@ const slateState = await readFile("src/lib/slate-state.ts", "utf8");
 const canonicalStore = await readFile("src/lib/data/canonical-start-store.ts", "utf8");
 const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const rankedStartsPageService = await readFile("src/lib/data/ranked-starts-page-service.ts", "utf8");
+const rankedStartsRevalidation = await readFile("src/lib/data/ranked-starts-revalidation.ts", "utf8");
+const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
+const warmLiveStartsCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
+const archiveRevalidationRoute = await readFile("src/app/api/archive/revalidate/route.ts", "utf8");
+const archiveSyncScript = await readFile("scripts/sync-supabase-mlb-archive.mjs", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
@@ -132,6 +137,27 @@ assert(
     startsPage.includes("const highlights = new Map(pageData.highlights);") &&
     startsPage.includes("const formByPitcher = new Map(pageData.formByPitcher);"),
   "ranked starts date pages must use a cached shared page-data payload with date tags and settle-driven revalidation for current/final slates",
+);
+
+assert(
+  rankedStartsRevalidation.includes('export type RankedStartsRevalidationReason =') &&
+    rankedStartsRevalidation.includes('"settle-progress"') &&
+    rankedStartsRevalidation.includes('"slate-complete"') &&
+    rankedStartsRevalidation.includes('"archive-backstop"') &&
+    rankedStartsRevalidation.includes("rankedStartsDateCacheTag(date)") &&
+    rankedStartsRevalidation.includes("rankedStartsPath(date)") &&
+    rankedStartsRevalidation.includes('console.log("[ranked-starts-revalidation]"') &&
+    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
+    warmLiveStartsJob.includes("if (dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
+    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");') &&
+    archiveRevalidationRoute.includes('revalidateRankedStartsDate(date, { revalidatePath, revalidateTag }, "archive-backstop")') &&
+    archiveRevalidationRoute.includes("isAuthorizedArchiveRevalidationRequest") &&
+    archiveSyncScript.includes("await revalidateArchivedDates(dateFiles.map((file) => file.replace(/\\.json$/, \"\")));") &&
+    archiveSyncScript.includes('new URL("/api/archive/revalidate", revalidationBaseUrl)') &&
+    archiveSyncScript.includes('url.searchParams.set("date", date)') &&
+    archiveSyncScript.includes('method: "POST"') &&
+    archiveSyncScript.includes('authorization: `Bearer ${cronSecret}`'),
+  "ranked starts settle and archive revalidation must be date-addressed, logged by slate date, and backed up by the archive sync job",
 );
 
 assert(

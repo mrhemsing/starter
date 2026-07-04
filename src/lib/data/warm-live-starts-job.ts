@@ -3,6 +3,7 @@ import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";
+import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
 import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
@@ -140,7 +141,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
       for (const tag of DATA_CHANGE_CACHE_TAGS) {
         options.revalidateTag?.(tag, "max");
       }
-      options.revalidateTag?.(rankedStartsDateCacheTag(date), "max");
+      revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");
       await markWarmStepComplete(progressKey, progress, "revalidate-tags");
       console.log("warm-live-starts batch revalidated tags", { date, tags: DATA_CHANGE_CACHE_TAGS.length, rankedStartsDateTag: rankedStartsDateCacheTag(date) });
     }
@@ -236,7 +237,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
 }
 
 function warmLiveStartsDate(dateOverride: string | undefined) {
-  if (!process.env.VERCEL_ENV && dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride)) return dateOverride;
+  if (dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride)) return dateOverride;
   return getHomeSlateDate();
 }
 

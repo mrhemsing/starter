@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const date = !process.env.VERCEL_ENV ? new URL(request.url).searchParams.get("date") ?? undefined : undefined;
+  const date = new URL(request.url).searchParams.get("date") ?? undefined;
   const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });
   return NextResponse.json(result);
 }

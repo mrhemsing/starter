@@ -120,7 +120,7 @@ assert(
     liveService.includes("tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG]") &&
     rankedStartsPageService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     rankedStartsPageService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, rankedStartsDateCacheTag(date)]") &&
-    warmLiveStartsJob.includes("options.revalidateTag?.(rankedStartsDateCacheTag(date), \"max\");") &&
+    warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.finalGames >= completion.totalGames ? "slate-complete" : "settle-progress");') &&
     formService.includes('import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     formService.includes("tags: [HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG]") &&
     formService.includes("tags: [HEAT_CHECK_CACHE_TAG]"),
