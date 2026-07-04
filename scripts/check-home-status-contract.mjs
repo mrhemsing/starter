@@ -152,9 +152,15 @@ assert(
 assert(
   statusRoute.includes('export const dynamic = "force-dynamic";') &&
     statusRoute.includes("getSlateStartProgress({ window: \"today\", date })") &&
+    statusRoute.includes('import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+    statusRoute.includes("getLiveScoreboard({ date }).catch(() => null)") &&
+    statusRoute.includes("reconcileSlateProgressWithLiveBoard(slateProgress, liveBoard?.slateProgress ?? null)") &&
+    statusRoute.includes('if (liveProgress.state === "all-starts-complete" && progress.state !== "all-starts-complete") return liveProgress;') &&
+    statusRoute.includes("if (liveProgress.completedStarts > progress.completedStarts) return liveProgress;") &&
+    statusRoute.includes("if (progress.liveStarts > 0 && liveProgress.liveStarts === 0 && liveProgress.completedStarts >= progress.completedStarts) return liveProgress;") &&
     statusRoute.includes('"Cache-Control": "no-store"') &&
     !statusRoute.includes("s-maxage"),
-  "homepage status API must return the shared slate progress state without serving stale cache to live islands",
+  "homepage status API must return no-store slate progress reconciled against the Live Board so count islands cannot trail final live rows",
 );
 
 assert(
