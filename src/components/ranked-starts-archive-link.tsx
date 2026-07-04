@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { rankedStartsPath } from "@/lib/routes";
 
 type RankedStartsArchiveLinkProps = {
   href: string;
@@ -54,6 +55,32 @@ export function RankedStartsArchiveLink({
     >
       {children}
     </Link>
+  );
+}
+
+export function RankedStartsDatePicker({ activeDate, className }: { activeDate: string; className: string }) {
+  const router = useRouter();
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextDate = event.target.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) return;
+
+    const href = rankedStartsPath(nextDate);
+    router.prefetch(href);
+    router.push(href);
+  };
+
+  return (
+    <label className={className} aria-label="Jump to ranked starts date" data-archive-step="date-picker">
+      <span className="sr-only">Jump to ranked starts date</span>
+      <input
+        className="h-8 w-[9.3rem] max-w-[42vw] bg-transparent font-mono text-xs text-zinc-100 [color-scheme:dark] focus:outline-none"
+        type="date"
+        value={activeDate}
+        onChange={handleChange}
+        aria-label="Jump to ranked starts date"
+      />
+    </label>
   );
 }
 

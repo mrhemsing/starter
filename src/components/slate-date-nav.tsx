@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageContextStrip } from "@/components/page-context-strip";
-import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink } from "@/components/ranked-starts-archive-link";
+import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink, RankedStartsDatePicker } from "@/components/ranked-starts-archive-link";
 import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingStreamersHref, upcomingWeekHref } from "@/lib/routes";
 
 type SlateRangeOption = {
@@ -99,6 +99,7 @@ export function RankedStartsArchiveNav({
                 <span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>
               </span>
             )}
+            <RankedStartsDatePicker activeDate={activeDate} className={rankedStartsArchiveDatePickerClass} />
             {nextDate ? (
               <RankedStartsArchiveLink className={rankedStartsArchiveStepClass} href={nextHref ?? rankedStartsPath(nextDate)} ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`} dataArchiveStep="next">
                 <span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>
@@ -121,6 +122,9 @@ const rankedStartsArchiveStepClass =
 
 const rankedStartsArchiveStepDisabledClass =
   "inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700";
+
+const rankedStartsArchiveDatePickerClass =
+  "inline-flex h-10 items-center justify-center rounded border border-white/10 bg-[#101014] px-2 text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 focus-within:border-amber-300/80 focus-within:ring-2 focus-within:ring-amber-300";
 
 export function slateRangeToggleClass(active: boolean) {
   return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
