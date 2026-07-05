@@ -110,6 +110,20 @@ export default async function MethodologyPage() {
           </p>
         </section>
 
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Data sources</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Strikeout projections and market lines</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Upcoming strikeout projection starts with the pitcher&apos;s season K/9, multiplies it by projected innings, and rounds to one decimal. Projected innings use recent workload when available, fall back to season innings per start, and are capped from 3.5 to 7.5 innings. Likely openers use a 2.0 inning profile.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            K prop lines come from The Odds API snapshots written by cron and read during render. Once a starter&apos;s game begins, the line stops updating and remains the last pre-first-pitch capture. Edges are projection minus line, shown at one decimal, with no pick language or recommendation.
+          </p>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">
+            Lines The Odds API · 21+ only. For help call 1-800-GAMBLER
+          </p>
+        </section>
+
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           <MethodCard title="GS+" id="gs-plus">
             GS+ scores a single completed start on a 0-100 style scale, with league-average work around 50. It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.

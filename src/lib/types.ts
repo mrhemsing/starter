@@ -410,6 +410,7 @@ export type TonightStarter = {
     strikeoutPropLine: number | null;
     strikeoutEdge: number | null;
     opposingTeamTotal: number | null;
+    capturedAt: string | null;
     label: string;
   };
   workload?: FormWorkload & {

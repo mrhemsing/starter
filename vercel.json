@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/slate-sync",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/odds-sync",
+      "schedule": "15 14,18,21 * * *"
     }
   ]
 }

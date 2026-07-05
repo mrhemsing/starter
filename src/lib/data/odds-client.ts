@@ -29,6 +29,16 @@ export type MlbOddsGameMarketContext = {
   gameTotal: number | null;
   teamTotals: Map<string, number>;
   pitcherStrikeouts: Map<string, number>;
+  capturedAt?: string;
+};
+
+export type MlbOddsFetchDiagnostics = {
+  contexts: Map<string, MlbOddsGameMarketContext>;
+  capturedAt: string;
+  credits: {
+    used: string | null;
+    remaining: string | null;
+  };
 };
 
 const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
@@ -46,29 +56,44 @@ type CachedOddsContext = {
 const oddsCache = new Map<string, CachedOddsContext>();
 
 export async function fetchMlbOddsMarketContexts(games: MlbScheduleGame[]): Promise<Map<string, MlbOddsGameMarketContext>> {
+  return (await fetchMlbOddsMarketContextsWithDiagnostics(games)).contexts;
+}
+
+export async function fetchMlbOddsMarketContextsWithDiagnostics(games: MlbScheduleGame[]): Promise<MlbOddsFetchDiagnostics> {
   const apiKey = process.env.THE_BUMP_ODDS_API_KEY;
-  if (!apiKey || games.length === 0) return new Map();
+  const capturedAt = new Date().toISOString();
+  if (!apiKey || games.length === 0) return emptyDiagnostics(capturedAt);
 
   const dateKey = games[0]?.gameDate.slice(0, 10) ?? "unknown";
-  if (!isOddsEligibleDate(dateKey)) return new Map();
+  if (!isOddsEligibleDate(dateKey)) return emptyDiagnostics(capturedAt);
 
   const cacheKey = `${dateKey}:${games.map((game) => game.gamePk).join(",")}:${ODDS_REGION}:${ODDS_BOOKMAKERS ?? "all"}`;
   const cached = oddsCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  if (cached && cached.expiresAt > Date.now()) {
+    return {
+      contexts: await cached.promise,
+      capturedAt,
+      credits: { used: null, remaining: null },
+    };
+  }
 
-  const promise = buildMlbOddsMarketContexts(games, apiKey).catch((error) => {
+  const diagnosticPromise = buildMlbOddsMarketContexts(games, apiKey, capturedAt).catch((error) => {
     console.warn("odds market fetch failed", error);
-    return new Map<string, MlbOddsGameMarketContext>();
+    return emptyDiagnostics(capturedAt);
   });
+  const promise = diagnosticPromise.then((result) => result.contexts);
   oddsCache.set(cacheKey, {
     expiresAt: Date.now() + ODDS_CACHE_TTL_MS,
     promise,
   });
-  return promise;
+  return diagnosticPromise;
 }
 
-async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: string) {
-  const events = await fetchOddsEvents(apiKey);
+async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: string, capturedAt: string): Promise<MlbOddsFetchDiagnostics> {
+  const credits = { used: null as string | null, remaining: null as string | null };
+  const eventsResult = await fetchOddsEvents(apiKey);
+  mergeCredits(credits, eventsResult.credits);
+  const events = eventsResult.events;
   const eventByGamePk = new Map<string, OddsEvent>();
   for (const game of games) {
     const event = events.find((candidate) => isMatchingEvent(game, candidate));
@@ -78,30 +103,41 @@ async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: stri
   const entries = await Promise.all(
     [...eventByGamePk.entries()].map(async ([gamePk, event]) => {
       const detail = await fetchEventMarkets(apiKey, event.id);
-      return [gamePk, summarizeEventMarkets(detail ?? event)] as const;
+      if (detail) mergeCredits(credits, detail.credits);
+      return [gamePk, { ...summarizeEventMarkets(detail?.event ?? event), capturedAt }] as const;
     }),
   );
 
-  return new Map(entries);
+  return {
+    contexts: new Map(entries),
+    capturedAt,
+    credits,
+  };
 }
 
-async function fetchOddsEvents(apiKey: string): Promise<OddsEvent[]> {
+async function fetchOddsEvents(apiKey: string): Promise<{ events: OddsEvent[]; credits: MlbOddsFetchDiagnostics["credits"] }> {
   const params = oddsParams(apiKey, "h2h");
   const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/odds?${params.toString()}`, {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
   if (!response.ok) throw new Error(`The Odds API events returned ${response.status}`);
-  return await response.json() as OddsEvent[];
+  return {
+    events: await response.json() as OddsEvent[],
+    credits: oddsCredits(response),
+  };
 }
 
-async function fetchEventMarkets(apiKey: string, eventId: string): Promise<OddsEvent | null> {
+async function fetchEventMarkets(apiKey: string, eventId: string): Promise<{ event: OddsEvent; credits: MlbOddsFetchDiagnostics["credits"] } | null> {
   const params = oddsParams(apiKey, "pitcher_strikeouts,team_totals,totals");
   const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`, {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`The Odds API event ${eventId} returned ${response.status}`);
-  return await response.json() as OddsEvent;
+  return {
+    event: await response.json() as OddsEvent,
+    credits: oddsCredits(response),
+  };
 }
 
 function oddsParams(apiKey: string, markets: string) {
@@ -146,6 +182,26 @@ function summarizeEventMarkets(event: OddsEvent): MlbOddsGameMarketContext {
     gameTotal: median(gameTotals),
     teamTotals: collapseLineMap(teamTotals),
     pitcherStrikeouts: collapseLineMap(pitcherStrikeouts),
+  };
+}
+
+function oddsCredits(response: Response): MlbOddsFetchDiagnostics["credits"] {
+  return {
+    used: response.headers.get("x-requests-used"),
+    remaining: response.headers.get("x-requests-remaining"),
+  };
+}
+
+function mergeCredits(target: MlbOddsFetchDiagnostics["credits"], next: MlbOddsFetchDiagnostics["credits"]) {
+  target.used = next.used ?? target.used;
+  target.remaining = next.remaining ?? target.remaining;
+}
+
+function emptyDiagnostics(capturedAt: string): MlbOddsFetchDiagnostics {
+  return {
+    contexts: new Map(),
+    capturedAt,
+    credits: { used: null, remaining: null },
   };
 }
 

@@ -44,6 +44,7 @@ export function TonightsMustWatch({
   const rows = shownGames.slice(1);
   const headingId = `${sectionId}-heading`;
   const eyebrowLabel = eyebrow ?? slateTimeWordTitle(tonight);
+  const marketAttribution = marketAttributionForGames(shownGames);
 
   return (
     <section
@@ -241,6 +242,7 @@ export function TonightsMustWatch({
             </div>
           </div>
         )}
+        {marketAttribution ? <MarketAttributionLine attribution={marketAttribution} /> : null}
       </div>
     </section>
   );
@@ -1386,21 +1388,7 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
   const justify = align === "home" ? "lg:justify-end" : "";
   const strikeoutPropLine = market.strikeoutPropLine;
   const opposingTeamTotal = market.opposingTeamTotal;
-  if (strikeoutPropLine === null && opposingTeamTotal === null) {
-    return (
-      <span
-        className="hidden"
-        aria-hidden="true"
-        data-market-status={market.status}
-        data-market-source={market.source}
-        data-market-label={market.label}
-        data-projected-strikeouts={market.projectedStrikeouts === null ? "pending" : market.projectedStrikeouts.toFixed(1)}
-        data-strikeout-prop-line={market.strikeoutPropLine === null ? "pending" : market.strikeoutPropLine.toFixed(1)}
-        data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
-        data-opposing-team-total={market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
-      />
-    );
-  }
+  const edgeTone = market.strikeoutEdge === null ? "text-zinc-400" : market.strikeoutEdge >= 0 ? "text-emerald-300" : "text-rose-300";
 
   return (
     <div
@@ -1414,12 +1402,19 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
       data-strikeout-prop-line={market.strikeoutPropLine === null ? "pending" : market.strikeoutPropLine.toFixed(1)}
       data-strikeout-edge={market.strikeoutEdge === null ? "pending" : market.strikeoutEdge.toFixed(1)}
       data-opposing-team-total={market.opposingTeamTotal === null ? "pending" : market.opposingTeamTotal.toFixed(1)}
+      data-market-captured-at={market.capturedAt ?? "pending"}
     >
       {strikeoutPropLine !== null ? (
-        <span className="inline-flex min-h-6 items-center rounded border border-emerald-300/20 bg-emerald-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-200">
-          K edge {market.strikeoutEdge === null ? "--" : formatSigned(market.strikeoutEdge)}
+        <span className="inline-flex min-h-6 flex-wrap items-center gap-x-1.5 rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+          <span>K line {strikeoutPropLine.toFixed(1)}</span>
+          {market.projectedStrikeouts !== null ? <span className="text-zinc-500">Proj {market.projectedStrikeouts.toFixed(1)}</span> : null}
+          {market.strikeoutEdge !== null ? <span className={edgeTone}>Edge {formatSigned(market.strikeoutEdge)}</span> : null}
         </span>
-      ) : null}
+      ) : (
+        <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+          K line pending
+        </span>
+      )}
       {opposingTeamTotal !== null ? (
         <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
           Team total {opposingTeamTotal.toFixed(1)}
@@ -1427,6 +1422,37 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
       ) : null}
     </div>
   );
+}
+
+function MarketAttributionLine({ attribution }: { attribution: { capturedAt: string | null } }) {
+  return (
+    <p className="mt-4 px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600" data-market-attribution="the-odds-api">
+      Lines The Odds API{attribution.capturedAt ? ` · captured ${formatMarketCapturedAt(attribution.capturedAt)}` : ""} · 21+ only. For help call 1-800-GAMBLER
+    </p>
+  );
+}
+
+function marketAttributionForGames(games: TonightGame[]) {
+  const markets = games.flatMap((game) => game.starters.map((starter) => starter.marketContext).filter((market): market is NonNullable<TonightStarter["marketContext"]> => Boolean(market)));
+  if (markets.length === 0) return null;
+  if (!markets.some((market) => market.source === "the-odds-api" || market.source === "odds-deferred")) return null;
+  const capturedAt = markets
+    .map((market) => market.capturedAt)
+    .filter((value): value is string => typeof value === "string")
+    .sort()
+    .at(-1) ?? null;
+  return { capturedAt };
+}
+
+function formatMarketCapturedAt(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: SITE_TIME_ZONE,
+    timeZoneName: "short",
+  }).format(parsed);
 }
 
 function EraAnchor({ starter }: { starter: TonightStarter }) {

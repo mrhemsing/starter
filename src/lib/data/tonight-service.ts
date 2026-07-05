@@ -3,6 +3,7 @@ import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
+import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service";
 import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
@@ -62,11 +63,14 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
     getSlateSchedule({ window: "today", date }),
     getFormLeaderboard({ window, qualifiedOnly: false }),
   ]);
+  const oddsRequestGames = schedule.games.filter((game) => !isStartedStatus(normalizeGameStatus(game)));
   const probables = getProbablesFromSchedule(date, schedule);
-  const [opponentSplits, marketContexts] = await Promise.all([
+  const [opponentSplits, snapshotMarketContexts, requestMarketContexts] = await Promise.all([
     shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
-    enrichAtRequestTime ? fetchMlbOddsMarketContexts(schedule.games) : Promise.resolve(new Map()),
+    readOddsSnapshotMarketContexts(date),
+    enrichAtRequestTime ? fetchMlbOddsMarketContexts(oddsRequestGames) : Promise.resolve(new Map()),
   ]);
+  const marketContexts = mergeMarketContexts(snapshotMarketContexts, requestMarketContexts);
   const probablePitcherIds = schedule.games.flatMap((game) => [
     game.probableAwayPitcher?.id,
     game.probableHomePitcher?.id,
@@ -528,8 +532,9 @@ function buildMarketContext(
       strikeoutPropLine,
       strikeoutEdge,
       opposingTeamTotal,
+      capturedAt: marketContext.capturedAt ?? null,
       label: strikeoutPropLine !== null || opposingTeamTotal !== null
-        ? "Market context from The Odds API."
+        ? marketContext.capturedAt ? `Market context from The Odds API, captured ${formatMarketCaptureTime(marketContext.capturedAt)}.` : "Market context from The Odds API."
         : "The Odds API event matched, but starter prop/team-total lines were not available yet.",
     };
   }
@@ -542,6 +547,7 @@ function buildMarketContext(
       strikeoutPropLine: null,
       strikeoutEdge: null,
       opposingTeamTotal: null,
+      capturedAt: null,
       label: "Market lines deferred to conserve The Odds API credits; odds hydrate only for near-term slates.",
     };
   }
@@ -553,8 +559,25 @@ function buildMarketContext(
     strikeoutPropLine: null,
     strikeoutEdge: null,
     opposingTeamTotal: null,
+    capturedAt: null,
     label: "K prop and implied team total feed pending. Add THE_BUMP_ODDS_API_KEY to enable market lines.",
   };
+}
+
+function mergeMarketContexts(snapshotContexts: Map<string, MlbOddsGameMarketContext>, requestContexts: Map<string, MlbOddsGameMarketContext>) {
+  if (requestContexts.size === 0) return snapshotContexts;
+  return new Map([...snapshotContexts.entries(), ...requestContexts.entries()]);
+}
+
+function formatMarketCaptureTime(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(parsed);
 }
 
 function starterWatchValue(starter: TonightStarter, leagueMeanGS: number) {

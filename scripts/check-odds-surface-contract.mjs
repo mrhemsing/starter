@@ -1,0 +1,89 @@
+import { readFile } from "node:fs/promises";
+import assert from "node:assert/strict";
+
+const [
+  oddsClient,
+  oddsSnapshot,
+  tonightService,
+  mustWatch,
+  methodology,
+  oddsCron,
+  vercelConfig,
+] = await Promise.all([
+  readFile("src/lib/data/odds-client.ts", "utf8"),
+  readFile("src/lib/data/odds-snapshot-service.ts", "utf8"),
+  readFile("src/lib/data/tonight-service.ts", "utf8"),
+  readFile("src/components/tonights-must-watch.tsx", "utf8"),
+  readFile("src/app/methodology/page.tsx", "utf8"),
+  readFile("src/app/api/cron/odds-sync/route.ts", "utf8"),
+  readFile("vercel.json", "utf8"),
+]);
+
+assert(
+  oddsClient.includes("fetchMlbOddsMarketContextsWithDiagnostics") &&
+    oddsClient.includes('response.headers.get("x-requests-used")') &&
+    oddsClient.includes('response.headers.get("x-requests-remaining")'),
+  "odds client must expose credit diagnostics from The Odds API response headers",
+);
+
+assert(
+  oddsSnapshot.includes('const ODDS_SNAPSHOT_VERSION = 1') &&
+    oddsSnapshot.includes('readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date))') &&
+    oddsSnapshot.includes("writeRuntimeState(oddsSnapshotStateKey(date), snapshot)") &&
+    oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "probables-confirm-midday-pre-first-pitch"') &&
+    oddsSnapshot.includes("hasGameStarted(game)") &&
+    oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })"),
+  "odds snapshots must use runtime-state storage, document cadence, and freeze existing rows after first pitch",
+);
+
+assert(
+  tonightService.includes('import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service";') &&
+    tonightService.includes("const oddsRequestGames = schedule.games.filter((game) => !isStartedStatus(normalizeGameStatus(game)));") &&
+    tonightService.includes("readOddsSnapshotMarketContexts(date)") &&
+    tonightService.includes("mergeMarketContexts(snapshotMarketContexts, requestMarketContexts)") &&
+    tonightService.includes("fetchMlbOddsMarketContexts(oddsRequestGames)") &&
+    !tonightService.includes("writeRuntimeState("),
+  "render path must read odds snapshots and must not write odds state during render",
+);
+
+assert(
+  mustWatch.includes("K line pending") &&
+    mustWatch.includes("K line {strikeoutPropLine.toFixed(1)}") &&
+    mustWatch.includes("Proj {market.projectedStrikeouts.toFixed(1)}") &&
+    mustWatch.includes("Edge {formatSigned(market.strikeoutEdge)}") &&
+    mustWatch.includes('data-market-attribution="the-odds-api"') &&
+    mustWatch.includes("1-800-GAMBLER"),
+  "Must-Watch and Upcoming shared cards must render K line, projection, edge, pending state, and one attribution line",
+);
+
+assert(
+  methodology.includes("season K/9") &&
+    methodology.includes("Projected innings use recent workload") &&
+    methodology.includes("K prop lines come from The Odds API snapshots written by cron") &&
+    methodology.includes("Edges are projection minus line"),
+  "methodology must document strikeout projection inputs and odds source",
+);
+
+assert(
+  oddsCron.includes("syncOddsSnapshotsForDefaultDates") &&
+    oddsCron.includes("CRON_SECRET") &&
+    vercelConfig.includes('"/api/cron/odds-sync"') &&
+    vercelConfig.includes('"15 14,18,21 * * *"'),
+  "odds sync cron must be scheduled and use the existing cron auth pattern",
+);
+
+const prohibitedAdvice = new RegExp(`\\b(${[
+  ["BE", "ST", "\\s+", "BE", "T"].join(""),
+  ["LO", "CK"].join(""),
+  ["PL", "AY"].join(""),
+  ["HA", "MM", "ER"].join(""),
+].join("|")})\\b`, "i");
+for (const [label, source] of [
+  ["must-watch", mustWatch],
+  ["methodology", methodology],
+  ["odds snapshot", oddsSnapshot],
+]) {
+  assert(!prohibitedAdvice.test(source), `${label} must not add betting advice language`);
+}
+
+console.log("odds surface contract ok: snapshot-backed K prop rows, cron sync, and methodology docs are pinned");
