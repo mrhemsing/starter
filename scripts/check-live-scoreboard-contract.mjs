@@ -229,6 +229,7 @@ assert(
     liveComponent.includes('className="w-full max-w-4xl text-left"') &&
     !liveComponent.includes("flex-col justify-end px-4 py-5") &&
     liveComponent.includes('data-live-pregame-countdown-mode={countdown.mode}') &&
+    liveComponent.includes('style={{ marginTop: "2rem" }}') &&
     liveComponent.includes('aria-label={countdown.ariaLabel}') &&
     liveComponent.includes('<ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />') &&
     liveComponent.includes('<ClockUnit value={countdown.minutes} label="MIN" toneClass={countdown.toneClass} />') &&

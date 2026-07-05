@@ -307,7 +307,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
               Scoreboard opens at first pitch
             </p>
-            <div className="mt-5" data-live-pregame-countdown-mode={countdown.mode}>
+            <div className="mt-5" style={{ marginTop: "2rem" }} data-live-pregame-countdown-mode={countdown.mode}>
               {countdown.mode === "clock" ? (
                 <div className="grid max-w-[720px] grid-cols-3 gap-2 sm:gap-3" aria-label={countdown.ariaLabel}>
                   <ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />
