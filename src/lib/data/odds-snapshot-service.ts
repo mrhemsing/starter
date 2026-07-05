@@ -56,6 +56,13 @@ export type OddsSnapshotSyncResult = {
     remaining: string | null;
   };
   persisted: boolean;
+  diagnostics: {
+    requestedGames: number;
+    eventsSeen: number;
+    matchedGames: number;
+    marketFetches: number;
+    error: string | null;
+  };
 };
 
 export async function readOddsSnapshotMarketContexts(date: string): Promise<Map<string, MlbOddsGameMarketContext>> {
@@ -131,6 +138,11 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
     frozenGames,
     creditsUsed: diagnostics.credits.used,
     creditsRemaining: diagnostics.credits.remaining,
+    requestedGames: diagnostics.requestedGames,
+    eventsSeen: diagnostics.eventsSeen,
+    matchedGames: diagnostics.matchedGames,
+    marketFetches: diagnostics.marketFetches,
+    error: diagnostics.error,
     persisted,
   });
 
@@ -143,6 +155,13 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
     frozenGames,
     credits: diagnostics.credits,
     persisted,
+    diagnostics: {
+      requestedGames: diagnostics.requestedGames,
+      eventsSeen: diagnostics.eventsSeen,
+      matchedGames: diagnostics.matchedGames,
+      marketFetches: diagnostics.marketFetches,
+      error: diagnostics.error,
+    },
   };
 }
 
@@ -230,6 +249,13 @@ function emptySyncResult(date: string, capturedAt: string, reason: string): Odds
     frozenGames: 0,
     credits: { used: null, remaining: null },
     persisted: false,
+    diagnostics: {
+      requestedGames: 0,
+      eventsSeen: 0,
+      matchedGames: 0,
+      marketFetches: 0,
+      error: reason,
+    },
   };
 }
 

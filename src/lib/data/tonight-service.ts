@@ -552,6 +552,19 @@ function buildMarketContext(
     };
   }
 
+  if (process.env.THE_BUMP_ODDS_API_KEY) {
+    return {
+      status: "pending-feed",
+      source: "odds-deferred",
+      projectedStrikeouts,
+      strikeoutPropLine: null,
+      strikeoutEdge: null,
+      opposingTeamTotal: null,
+      capturedAt: null,
+      label: "K prop and implied team total feed pending; odds sync has not captured a matching market snapshot yet.",
+    };
+  }
+
   return {
     status: "pending-feed",
     source: "not-configured",

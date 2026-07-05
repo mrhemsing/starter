@@ -35,6 +35,11 @@ export type MlbOddsGameMarketContext = {
 export type MlbOddsFetchDiagnostics = {
   contexts: Map<string, MlbOddsGameMarketContext>;
   capturedAt: string;
+  requestedGames: number;
+  eventsSeen: number;
+  matchedGames: number;
+  marketFetches: number;
+  error: string | null;
   credits: {
     used: string | null;
     remaining: string | null;
@@ -50,7 +55,7 @@ const ODDS_MAX_DAYS_AHEAD = envPositiveInt("THE_BUMP_ODDS_MAX_DAYS_AHEAD", 1);
 
 type CachedOddsContext = {
   expiresAt: number;
-  promise: Promise<Map<string, MlbOddsGameMarketContext>>;
+  promise: Promise<MlbOddsFetchDiagnostics>;
 };
 
 const oddsCache = new Map<string, CachedOddsContext>();
@@ -70,21 +75,20 @@ export async function fetchMlbOddsMarketContextsWithDiagnostics(games: MlbSchedu
   const cacheKey = `${dateKey}:${games.map((game) => game.gamePk).join(",")}:${ODDS_REGION}:${ODDS_BOOKMAKERS ?? "all"}`;
   const cached = oddsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
-    return {
-      contexts: await cached.promise,
-      capturedAt,
-      credits: { used: null, remaining: null },
-    };
+    const cachedDiagnostics = await cached.promise;
+    return { ...cachedDiagnostics, capturedAt, credits: { used: null, remaining: null } };
   }
 
   const diagnosticPromise = buildMlbOddsMarketContexts(games, apiKey, capturedAt).catch((error) => {
     console.warn("odds market fetch failed", error);
-    return emptyDiagnostics(capturedAt);
+    return emptyDiagnostics(capturedAt, games.length, error instanceof Error ? error.message : String(error));
   });
-  const promise = diagnosticPromise.then((result) => result.contexts);
+  void diagnosticPromise.then((result) => {
+    if (result.error || result.contexts.size === 0) oddsCache.delete(cacheKey);
+  });
   oddsCache.set(cacheKey, {
     expiresAt: Date.now() + ODDS_CACHE_TTL_MS,
-    promise,
+    promise: diagnosticPromise,
   });
   return diagnosticPromise;
 }
@@ -111,6 +115,11 @@ async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: stri
   return {
     contexts: new Map(entries),
     capturedAt,
+    requestedGames: games.length,
+    eventsSeen: events.length,
+    matchedGames: eventByGamePk.size,
+    marketFetches: entries.length,
+    error: null,
     credits,
   };
 }
@@ -197,10 +206,15 @@ function mergeCredits(target: MlbOddsFetchDiagnostics["credits"], next: MlbOddsF
   target.remaining = next.remaining ?? target.remaining;
 }
 
-function emptyDiagnostics(capturedAt: string): MlbOddsFetchDiagnostics {
+function emptyDiagnostics(capturedAt: string, requestedGames = 0, error: string | null = null): MlbOddsFetchDiagnostics {
   return {
     contexts: new Map(),
     capturedAt,
+    requestedGames,
+    eventsSeen: 0,
+    matchedGames: 0,
+    marketFetches: 0,
+    error,
     credits: { used: null, remaining: null },
   };
 }

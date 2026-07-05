@@ -22,8 +22,11 @@ const [
 assert(
   oddsClient.includes("fetchMlbOddsMarketContextsWithDiagnostics") &&
     oddsClient.includes('response.headers.get("x-requests-used")') &&
-    oddsClient.includes('response.headers.get("x-requests-remaining")'),
-  "odds client must expose credit diagnostics from The Odds API response headers",
+    oddsClient.includes('response.headers.get("x-requests-remaining")') &&
+    oddsClient.includes("eventsSeen") &&
+    oddsClient.includes("matchedGames") &&
+    oddsClient.includes("if (result.error || result.contexts.size === 0) oddsCache.delete(cacheKey)"),
+  "odds client must expose credit/match diagnostics and must not cache empty failure results",
 );
 
 assert(
@@ -31,9 +34,10 @@ assert(
     oddsSnapshot.includes('readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date))') &&
     oddsSnapshot.includes("writeRuntimeState(oddsSnapshotStateKey(date), snapshot)") &&
     oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "probables-confirm-midday-pre-first-pitch"') &&
+    oddsSnapshot.includes("eventsSeen: diagnostics.eventsSeen") &&
     oddsSnapshot.includes("hasGameStarted(game)") &&
     oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })"),
-  "odds snapshots must use runtime-state storage, document cadence, and freeze existing rows after first pitch",
+  "odds snapshots must use runtime-state storage, document cadence, expose diagnostics, and freeze existing rows after first pitch",
 );
 
 assert(
@@ -65,10 +69,10 @@ assert(
 );
 
 assert(
-  oddsCron.includes("syncOddsSnapshotsForDefaultDates") &&
+    oddsCron.includes("syncOddsSnapshotsForDefaultDates") &&
     oddsCron.includes("CRON_SECRET") &&
     vercelConfig.includes('"/api/cron/odds-sync"') &&
-    vercelConfig.includes('"15 14,18,21 * * *"'),
+    vercelConfig.includes('"15 12,13,14,18,21 * * *"'),
   "odds sync cron must be scheduled and use the existing cron auth pattern",
 );
 
