@@ -9,6 +9,7 @@ import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } fr
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
+import { WATCH_SCORE_FALLBACK_FORM_HAIRCUT, isFallbackWatchScoreSide, watchScoreConfidenceForSideCounts } from "@/lib/watch-score-confidence";
 
 type TonightOptions = {
   date?: string;
@@ -35,7 +36,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v9"],
+  ["tonight-must-watch", "v10"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -146,7 +147,15 @@ async function buildTonightGame(
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const splitMatchupScore = scoreOpponentSplitMatchup([awayStarter, homeStarter], parkContext, weatherContext);
   const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
-  const starterScores = [starterWatchValue(awayStarter, leagueMeanGS), starterWatchValue(homeStarter, leagueMeanGS)];
+  const watchScoreQualifiedStartCounts = {
+    away: starterQualifiedStartCount(awayStarter),
+    home: starterQualifiedStartCount(homeStarter),
+  };
+  const watchScoreConfidence = watchScoreConfidenceForSideCounts(watchScoreQualifiedStartCounts.away, watchScoreQualifiedStartCounts.home);
+  const starterScores = [
+    adjustedStarterWatchValue(awayStarter, leagueMeanGS),
+    adjustedStarterWatchValue(homeStarter, leagueMeanGS),
+  ];
   const normMatchup = normalizeMatchupScore(matchupScore);
   const topArm = roundWatchScore(Math.max(starterScores[0], starterScores[1]));
   const pairing = roundWatchScore(mean(starterScores) * (tbd ? MUSTWATCH_CONFIG.tbdStarter.pairingMultiplier : 1));
@@ -183,6 +192,8 @@ async function buildTonightGame(
     },
     starters: [awayStarter, homeStarter],
     gameWatchScore,
+    watchScoreConfidence,
+    watchScoreQualifiedStartCounts,
     watchTier,
     matchupConfidence,
     watchSortGroup: watchSortGroup(status),
@@ -367,8 +378,7 @@ function isLikelyOpenerProfile(completeness: MlbPitcherStartCompleteness | null)
 
 function matchupConfidenceForStarters(starters: TonightGame["starters"]) {
   if (starters.some((starter) => starter.formStatus === "join_gap")) return "NONE";
-  if (starters.some((starter) => starter.formStatus === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
-  return "HIGH";
+  return watchScoreConfidenceForSideCounts(starterQualifiedStartCount(starters[0]), starterQualifiedStartCount(starters[1]));
 }
 
 function applyTrustGateWatchScore(score: number, confidence: TonightGame["matchupConfidence"], hasMlbDebut: boolean) {
@@ -597,6 +607,16 @@ function starterWatchValue(starter: TonightStarter, leagueMeanGS: number) {
   if (starter.formStatus === "ok" && starter.rgs !== undefined) return starter.rgs;
   if (starter.formStatus === "cold_start" && starter.lastStart?.gsPlus) return starter.lastStart.gsPlus;
   return leagueMeanGS;
+}
+
+function adjustedStarterWatchValue(starter: TonightStarter, leagueMeanGS: number) {
+  const value = starterWatchValue(starter, leagueMeanGS);
+  if (!isFallbackWatchScoreSide(starterQualifiedStartCount(starter))) return value;
+  return roundWatchScore(value * WATCH_SCORE_FALLBACK_FORM_HAIRCUT);
+}
+
+function starterQualifiedStartCount(starter: TonightStarter) {
+  return starter.formCompleteness?.matched ?? starter.windowCount ?? 0;
 }
 
 function scoreOpponentSplitMatchup(starters: TonightStarter[], parkContext: DecisionParkContext, weatherContext: DecisionWeatherContext) {

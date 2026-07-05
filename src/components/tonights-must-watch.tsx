@@ -10,6 +10,7 @@ import { HEAT_BANDS, MUSTWATCH_CONFIG } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { slateTimeWordTitle } from "@/lib/time-words";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
+import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 
 const SITE_TIME_ZONE = process.env.THE_BUMP_TIME_ZONE ?? "America/Los_Angeles";
 const WATCH_COMPONENT_KEYS = ["top-arm", "pairing", "matchup"] as const;
@@ -112,7 +113,7 @@ export function TonightsMustWatch({
       data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
-      data-visible-starter-market-labels={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.label ?? "none").join("|")).join(",") : "none"}
+      data-visible-starter-market-labels={shownGames.length ? shownGames.map((game) => game.starters.map(starterMarketLabelDataValue).join("|")).join(",") : "none"}
       data-visible-starter-projection-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-confidences={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-gs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.projectedGsPlus)).join("/")).join(",") : "none"}
@@ -148,6 +149,9 @@ export function TonightsMustWatch({
       data-visible-watch-rank-labels={shownGames.length ? shownGames.map(() => watchRankLabelValue(rankLabel)).join("|") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map(watchScoreValue).join(",") : "none"}
       data-visible-watch-score-labels={shownGames.length ? shownGames.map((game) => watchScoreLabel(game)).join("|") : "none"}
+      data-visible-watch-score-confidences={shownGames.length ? shownGames.map((game) => game.watchScoreConfidence).join(",") : "none"}
+      data-visible-watch-score-confidence-labels={shownGames.length ? shownGames.map((game) => watchScoreConfidenceLabel(game.watchScoreConfidence) || "none").join("|") : "none"}
+      data-visible-watch-score-qualified-counts={shownGames.length ? shownGames.map((game) => `${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-tier-labels={shownGames.length ? shownGames.map(watchTierLabel).join("|") : "none"}
       data-visible-matchup-confidences={shownGames.length ? shownGames.map((game) => game.matchupConfidence).join(",") : "none"}
@@ -291,6 +295,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-watch-sort-group-label={watchSortGroupLabelValue(game)}
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
+      data-watch-score-confidence={game.watchScoreConfidence}
+      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
+      data-watch-score-qualified-starts={`${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
@@ -326,7 +333,10 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200">Top watch score</p>
-            <p className="mt-1 font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
+              <p className="font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
+              <WatchScoreConfidenceChip game={game} compact />
+            </div>
           </div>
         </div>
 
@@ -434,6 +444,21 @@ function watchScoreLabel(game: TonightGame) {
   return `Watch score ${watchScoreValue(game)}`;
 }
 
+function WatchScoreConfidenceChip({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
+  const label = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  if (!label) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 font-mono uppercase tracking-[0.12em] text-amber-100 ${compact ? "px-1.5 py-0.5 text-[8px]" : "px-2 py-1 text-[10px]"}`}
+      data-watch-score-confidence-chip={game.watchScoreConfidence}
+      data-watch-score-confidence-chip-label={label}
+    >
+      {label}
+    </span>
+  );
+}
+
 function leagueMeanGsValue(value: number) {
   return value.toFixed(WATCH_SCORE_PRECISION);
 }
@@ -502,6 +527,9 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-watch-sort-group-label={watchSortGroupLabelValue(game)}
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
+      data-watch-score-confidence={game.watchScoreConfidence}
+      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
+      data-watch-score-qualified-starts={`${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
@@ -522,6 +550,9 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
         <div>
           <p className="font-serif text-3xl text-zinc-500">#{rank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tier.color }}>{tier.label}</p>
+          <div className="mt-2">
+            <WatchScoreConfidenceChip game={game} compact />
+          </div>
         </div>
         <div className="min-w-0">
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
@@ -691,12 +722,17 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
       data-responsive-check="watch-hook"
       data-hook-score={watchScoreValue(game)}
       data-hook-score-label="score"
+      data-hook-score-confidence={game.watchScoreConfidence}
+      data-hook-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
       data-hook-reason-key={reasonKey}
       data-hook-reason={reason}
     >
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">The hook</p>
-        <p className="mt-1 font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
+        <div className="mt-1 flex flex-wrap items-end justify-center gap-2">
+          <p className="font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
+          <WatchScoreConfidenceChip game={game} />
+        </div>
         <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
         <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
       </div>
@@ -1272,9 +1308,11 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
   const projection = starter.projection;
   if (!projection) return null;
   const justify = align === "home" ? "lg:justify-end" : "";
+  const baselineProjection = starter.formStatus === "cold_start";
   const projectionData = {
     "data-projection-status": projection.status,
     "data-projection-confidence": projection.confidence,
+    "data-projection-baseline": String(baselineProjection),
     "data-projection-notes": projection.notes.join("; "),
     "data-projection-line-token-count": String([
       projection.line.inningsPitched,
@@ -1313,9 +1351,9 @@ function StarterProjectionLine({ starter, compact = false, align }: { starter: T
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
         {projection.confidence} confidence
       </span>
-      {starter.formStatus === "cold_start" ? (
+      {baselineProjection ? (
         <span className="inline-flex min-h-6 items-center rounded border border-amber-300/25 bg-amber-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
-          Baseline
+          BASELINE
         </span>
       ) : null}
       {starter.formStatus === "mlb_debut" ? (
@@ -1351,6 +1389,10 @@ function workloadNumberValue(value: number | null | undefined) {
 
 function splitNumberValue(value: number | null | undefined, precision: number) {
   return value === null || value === undefined ? "none" : value.toFixed(precision);
+}
+
+function starterMarketLabelDataValue(starter: TonightStarter) {
+  return (starter.marketContext?.label ?? "none").replaceAll(",", ";");
 }
 
 function OpponentSplitLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {

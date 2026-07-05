@@ -131,6 +131,10 @@ export const MUSTWATCH_CONFIG = {
     min: 0,
     max: 100,
   },
+  watchConfidence: {
+    minQualifiedStarts: 3,
+    fallbackFormHaircut: 0.85,
+  },
   tbdStarter: {
     pairingMultiplier: 0.6,
     maxWatchScore: 47.9,

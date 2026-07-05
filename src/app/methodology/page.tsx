@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getDailySlate, getHomeSlateDate, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { rankedStartsPath } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
+import { WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED, WATCH_SCORE_FALLBACK_FORM_HAIRCUT } from "@/lib/watch-score-confidence";
 
 const title = "Methodology - GS+, Form & Watch Scores";
 const description = "How Toe the Slab ranks MLB starting pitcher performances, recent form, probable matchups, Heat Check bands, and pitching duels.";
@@ -122,6 +123,21 @@ export default async function MethodologyPage() {
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">
             Lines The Odds API · 21+ only. For help call 1-800-GAMBLER
           </p>
+        </section>
+
+        <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Watch Score Confidence</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Limited samples carry a visible tag</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Watch score confidence uses the same recent-start window as form. HIGH means both probable starters have at least {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED} qualified starts in the payload. MEDIUM means one side is below {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED}; LOW means both sides are below {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED}.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            When a side is below the threshold, that side&apos;s form-derived watch component is multiplied by {WATCH_SCORE_FALLBACK_FORM_HAIRCUT.toFixed(2)} before the game score is composed. The card then shows LIMITED DATA or LOW CONFIDENCE beside the watch score. Baseline projected GS+ values are tagged BASELINE so placeholder-derived values do not read like measured form.
+          </p>
+          <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
+            <FormulaItem label="Minimum qualified starts" value={String(WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED)} />
+            <FormulaItem label="Fallback form multiplier" value={WATCH_SCORE_FALLBACK_FORM_HAIRCUT.toFixed(2)} />
+          </dl>
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">

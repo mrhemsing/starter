@@ -364,7 +364,8 @@ export type WatchTierKey = "mustwatch" | "worthit" | "background";
 export type WatchSortPolicy = "status-then-watch-score";
 export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";
 export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;
-export type MatchupConfidence = "HIGH" | "LOW" | "NONE";
+export type MatchupConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";
+export type WatchScoreConfidence = "HIGH" | "MEDIUM" | "LOW";
 export type ProbableStarterConfidence = "CONFIRMED" | "REPORTED" | "TBD";
 export type ProbableStarterSource = "mlb-stats-api" | "secondary-feed" | "none";
 
@@ -449,6 +450,11 @@ export type TonightGame = {
   };
   starters: [TonightStarter, TonightStarter];
   gameWatchScore: number;
+  watchScoreConfidence: WatchScoreConfidence;
+  watchScoreQualifiedStartCounts: {
+    away: number;
+    home: number;
+  };
   watchTier: WatchTierKey;
   watchSortGroup: number;
   watchComponents: {

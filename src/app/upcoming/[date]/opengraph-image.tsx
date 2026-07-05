@@ -3,6 +3,7 @@ import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
+import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 
 type UpcomingImageProps = {
   params: Promise<{
@@ -24,6 +25,7 @@ export default async function Image({ params }: UpcomingImageProps) {
   const upcoming = await getTonightMustWatch({ date, window: 5 });
   const topGame = upcoming.games[0];
   const topTier = topGame ? watchTierOf(topGame.gameWatchScore) : null;
+  const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.watchScoreConfidence) : "";
   const starters = topGame?.starters.filter((starter) => starter.name) ?? [];
 
   return new ImageResponse(
@@ -51,6 +53,9 @@ export default async function Image({ params }: UpcomingImageProps) {
             <div style={{ alignItems: "center", display: "flex", gap: 28, marginTop: 18 }}>
               <div style={{ color: topTier?.color ?? "#EF9F27", display: "flex", fontSize: 96, fontWeight: 800 }}>{Math.round(topGame.gameWatchScore)}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {confidenceLabel ? (
+                  <div style={{ border: "1px solid rgba(239,159,39,0.45)", color: "#fef3c7", display: "flex", fontSize: 20, fontWeight: 700, letterSpacing: 3, padding: "8px 12px", textTransform: "uppercase", width: "max-content" }}>{confidenceLabel}</div>
+                ) : null}
                 <div style={{ display: "flex", fontSize: 42, fontWeight: 700 }}>{topGame.label}</div>
                 <div style={{ color: "#a1a1aa", display: "flex", fontSize: 26 }}>
                   {topTier?.label} / {starters.map((starter) => starter.name).join(" vs ") || "Probables updating"} / matchup rank {topGame.matchupRankTonight}
