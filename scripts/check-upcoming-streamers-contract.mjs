@@ -57,8 +57,11 @@ assert(
     streamersService.includes("targetFantasyWeekStart") &&
     streamersService.includes("STREAMERS_RISER_FUNNEL_CONFIG") &&
     streamersService.includes("softOpponentShare: 1 / 3") &&
-    streamersService.includes("twoStartPitchers = candidates.filter((candidate) => candidate.matchups.length >= 2)") &&
+    streamersService.includes("twoStartPitcherIds = new Set(candidates.filter((candidate) => candidate.matchups.length >= 2).map((candidate) => candidate.pitcherId))") &&
     streamersService.includes("withSoftMatchup = withNextStart.filter(hasSoftMatchup)") &&
+    streamersService.includes("formRisers = withSoftMatchup.filter((candidate) => !twoStartPitcherIds.has(candidate.pitcherId))") &&
+    streamersService.includes("formRiser: withSoftMatchup.some((riser) => riser.pitcherId === candidate.pitcherId)") &&
+    streamersService.includes("dedupedTwoStartRisers") &&
     streamersService.includes('console.info("[streamers:funnel]"') &&
     streamersService.includes("streamerFunnelEmptyReason") &&
     streamersService.includes("matchupRunValueForStreamer") &&
@@ -67,9 +70,12 @@ assert(
     streamersService.includes("fantasyWeekStart") &&
     streamersService.includes("starter.seasonDecisionRecord") &&
     streamersService.includes("starter.seasonStats?.qualityStarts") &&
+    streamersService.includes("spark: starter.spark ?? []") &&
+    streamersService.includes('formTier: starter.tier ?? "even"') &&
+    streamersService.includes("matchupDataAvailable") &&
     streamersService.includes("opponentLineupTier") &&
     streamersService.includes("parkFactor"),
-  "streamers service must target the correct fantasy week, log the riser funnel, and score candidates from Upcoming data with one config",
+  "streamers service must target the correct fantasy week, log the riser funnel, dedupe columns, and score candidates from Upcoming data with one config",
 );
 
 assert(
@@ -80,6 +86,8 @@ assert(
     streamersPage.includes('const imagePath = `${canonicalPath}/opengraph-image`;') &&
     streamersPage.includes("const imageUrl = absoluteUrl(imagePath);") &&
     streamersPage.includes('import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";') &&
+    streamersPage.includes('import { Headshot } from "@/components/headshot";') &&
+    streamersPage.includes('import { FormSparkline } from "@/components/form-visuals";') &&
     streamersPage.includes("const jsonLd = jsonLdForUpcomingStreamers(streamers);") &&
     streamersPage.includes('<script type="application/ld+json"') &&
     streamersPage.includes("card: \"summary_large_image\"") &&
@@ -102,14 +110,32 @@ assert(
     streamersPage.includes("data-streamer-card") &&
     streamersPage.includes("data-streamer-rank={rank}") &&
     streamersPage.includes("data-stream-score={candidate.streamScore}") &&
+    streamersPage.includes("data-streamer-form-riser={String(candidate.formRiser)}") &&
+    streamersPage.includes("<Headshot playerId={candidate.pitcherId}") &&
+    streamersPage.includes("band={candidate.heatBand}") &&
+    streamersPage.includes("candidate.formRiser") &&
+    streamersPage.includes("Form riser") &&
+    streamersPage.includes("data-streamer-form-spark") &&
+    streamersPage.includes("<FormSparkline") &&
+    streamersPage.includes("values={spark}") &&
+    streamersPage.includes("variant=\"mini\"") &&
+    streamersPage.includes("data-streamer-week-strip") &&
+    streamersPage.includes("Array.from({ length: 7 }") &&
+    streamersPage.includes("const startsByDate = new Map(candidate.matchups.map((matchup) => [matchup.date, matchup.dayHref]))") &&
     streamersPage.includes("W-L-ND") &&
     streamersPage.includes("QS {candidate.seasonContext.qualityStarts ?? \"--\"}") &&
     streamersPage.includes("K/9") &&
     streamersPage.includes("CHANGED · NOW 1 START") &&
+    streamersPage.includes('pending={!candidate.matchupDataAvailable}') &&
+    streamersPage.includes('pending ? "PENDING" : value.toFixed(1)') &&
+    streamersPage.includes("function matchupTierClass") &&
+    streamersPage.includes('tier === "Soft"') &&
+    streamersPage.includes('tier === "Tough"') &&
+    streamersPage.includes('tier === "Pending"') &&
     streamersPage.includes("opponentLineupTier") &&
     streamersPage.includes("Park {matchup.parkFactor.toFixed(2)}") &&
     streamersPage.includes("label.toUpperCase()"),
-  "streamers page must explain streaming, expose coverage/funnel empty states, and render score components plus fantasy context labels",
+  "streamers page must explain streaming, expose coverage/funnel empty states, and render headshots, form sparks, week strips, tier coloring, and fantasy context labels",
 );
 
 assert(

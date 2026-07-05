@@ -29,6 +29,10 @@ export type StreamerCandidate = {
   heatBand: "onfire" | "hot" | null;
   heatLabel: "On Fire" | "Heating Up" | "Streamer";
   trendDelta: number;
+  spark: number[];
+  formTier: NonNullable<TonightStarter["tier"]>;
+  formTrend: NonNullable<TonightStarter["trend"]>;
+  matchupDataAvailable: boolean;
   streamScore: number;
   components: {
     form: number;
@@ -42,6 +46,7 @@ export type StreamerCandidate = {
   };
   matchups: StreamerMatchup[];
   changed: boolean;
+  formRiser: boolean;
 };
 
 export type UpcomingStreamersResponse = {
@@ -115,14 +120,18 @@ export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Pro
     .map(({ starter, matchups }) => buildStreamerCandidate(starter, matchups))
     .filter((candidate): candidate is StreamerCandidate => Boolean(candidate))
     .sort(compareStreamerCandidates);
-  const twoStartPitchers = candidates.filter((candidate) => candidate.matchups.length >= 2);
+  const twoStartPitcherIds = new Set(candidates.filter((candidate) => candidate.matchups.length >= 2).map((candidate) => candidate.pitcherId));
   const risers = candidates.filter(isFormRiser);
   const withNextStart = risers.filter((candidate) => candidate.matchups.length > 0);
-  const withSoftMatchup = withNextStart.filter(hasSoftMatchup).slice(0, STREAMERS_RISER_FUNNEL_CONFIG.maxFormRisers);
+  const withSoftMatchup = withNextStart.filter(hasSoftMatchup);
+  const twoStartPitchers = candidates
+    .filter((candidate) => twoStartPitcherIds.has(candidate.pitcherId))
+    .map((candidate) => ({ ...candidate, formRiser: withSoftMatchup.some((riser) => riser.pitcherId === candidate.pitcherId) }));
+  const formRisers = withSoftMatchup.filter((candidate) => !twoStartPitcherIds.has(candidate.pitcherId)).slice(0, STREAMERS_RISER_FUNNEL_CONFIG.maxFormRisers);
   const funnel = {
     risers: risers.length,
     withNextStart: withNextStart.length,
-    withSoftMatchup: withSoftMatchup.length,
+    withSoftMatchup: formRisers.length,
     emptyReason: streamerFunnelEmptyReason(risers.length, withNextStart.length, withSoftMatchup.length),
   };
 
@@ -132,6 +141,7 @@ export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Pro
     risers: funnel.risers,
     withNextStart: funnel.withNextStart,
     withSoftMatchup: funnel.withSoftMatchup,
+    dedupedTwoStartRisers: twoStartPitchers.filter((candidate) => candidate.formRiser).length,
   });
 
   return {
@@ -140,7 +150,7 @@ export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Pro
     coverage: buildCoverage(upcoming),
     funnel,
     twoStartPitchers,
-    formRisers: withSoftMatchup,
+    formRisers,
   };
 }
 
@@ -149,6 +159,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
   const heatBand = starter.tier === "onfire" ? "onfire" : starter.tier === "hot" ? "hot" : null;
   const components = streamScoreComponents(starter, matchups);
   const record = starter.seasonDecisionRecord;
+  const matchupDataAvailable = matchups.some((matchup) => typeof matchup.opponentRunValue === "number");
 
   return {
     pitcherId: starter.pitcherId,
@@ -158,6 +169,10 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     heatBand,
     heatLabel: heatBand === "onfire" ? "On Fire" : heatBand === "hot" ? "Heating Up" : "Streamer",
     trendDelta: roundToScorePrecision(starter.deltaForm ?? 0, 1),
+    spark: starter.spark ?? [],
+    formTier: starter.tier ?? "even",
+    formTrend: starter.trend ?? "steady",
+    matchupDataAvailable,
     streamScore: roundToScorePrecision(components.form * STREAMER_SCORE_CONFIG.formWeight + components.matchup * STREAMER_SCORE_CONFIG.matchupWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight, 1),
     components,
     seasonContext: {
@@ -167,6 +182,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     },
     matchups,
     changed: false,
+    formRiser: false,
   };
 }
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { FormSparkline } from "@/components/form-visuals";
+import { Headshot } from "@/components/headshot";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { LocalTime } from "@/components/local-time";
@@ -75,7 +77,7 @@ export default async function UpcomingStreamersPage() {
       </div>
 
       <section
-        className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+        className="mx-auto grid min-w-0 max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
         data-responsive-check="upcoming-streamers"
         data-two-start-count={streamers.twoStartPitchers.length}
         data-form-riser-count={streamers.formRisers.length}
@@ -86,6 +88,7 @@ export default async function UpcomingStreamersPage() {
           description="Two starts in one fantasy week doubles the counting stats."
           emptyCopy="No two-start streamers are visible yet."
           candidates={streamers.twoStartPitchers}
+          range={streamers.range}
         />
         <StreamerSection
           title="Form risers with soft matchups"
@@ -93,6 +96,7 @@ export default async function UpcomingStreamersPage() {
           description="Trending arms drawing a weak lineup in their next start."
           emptyCopy={streamers.funnel.emptyReason ?? "No form risers with soft matchups are visible yet."}
           candidates={streamers.formRisers}
+          range={streamers.range}
           maxVisible={10}
         />
       </section>
@@ -106,6 +110,7 @@ function StreamerSection({
   description,
   emptyCopy,
   candidates,
+  range,
   maxVisible,
 }: {
   eyebrow: string;
@@ -113,20 +118,21 @@ function StreamerSection({
   description: string;
   emptyCopy: string;
   candidates: StreamerCandidate[];
+  range: UpcomingStreamersResponse["range"];
   maxVisible?: number;
 }) {
   const visibleCandidates = maxVisible ? candidates.slice(0, maxVisible) : candidates;
   const hiddenCandidates = maxVisible ? candidates.slice(maxVisible) : [];
 
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-4" aria-labelledby={`${slugLabel(title)}-heading`}>
+    <section className="min-w-0 rounded border border-white/10 bg-[#101014] p-4" aria-labelledby={`${slugLabel(title)}-heading`}>
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">{eyebrow}</p>
       <h2 id={`${slugLabel(title)}-heading`} className="mt-2 font-serif text-2xl font-black text-zinc-50">
         {title}
       </h2>
       <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
       <div className="mt-4 space-y-3">
-        {visibleCandidates.length ? visibleCandidates.map((candidate, index) => <StreamerCard key={`${candidate.pitcherId}-${index}`} candidate={candidate} rank={index + 1} />) : (
+        {visibleCandidates.length ? visibleCandidates.map((candidate, index) => <StreamerCard key={`${candidate.pitcherId}-${index}`} candidate={candidate} rank={index + 1} range={range} />) : (
           <p className="rounded border border-dashed border-white/10 p-4 text-sm text-zinc-500">{emptyCopy}</p>
         )}
         {hiddenCandidates.length ? (
@@ -134,7 +140,7 @@ function StreamerSection({
             <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">Show {hiddenCandidates.length} more</summary>
             <div className="mt-3 space-y-3">
               {hiddenCandidates.map((candidate, index) => (
-                <StreamerCard key={`${candidate.pitcherId}-hidden-${index}`} candidate={candidate} rank={visibleCandidates.length + index + 1} />
+                <StreamerCard key={`${candidate.pitcherId}-hidden-${index}`} candidate={candidate} rank={visibleCandidates.length + index + 1} range={range} />
               ))}
             </div>
           </details>
@@ -144,10 +150,11 @@ function StreamerSection({
   );
 }
 
-function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank: number }) {
+function StreamerCard({ candidate, rank, range }: { candidate: StreamerCandidate; rank: number; range: UpcomingStreamersResponse["range"] }) {
   return (
-    <article className="rounded border border-white/10 bg-[#0b0b0e] p-4" data-streamer-card data-streamer-rank={rank} data-stream-score={candidate.streamScore}>
-      <div className="flex items-start justify-between gap-3">
+    <article className="min-w-0 rounded border border-white/10 bg-[#0b0b0e] p-4" data-streamer-card data-streamer-rank={rank} data-stream-score={candidate.streamScore} data-streamer-form-riser={String(candidate.formRiser)}>
+      <div className="grid min-w-0 grid-cols-[52px_minmax(0,1fr)_auto] items-start gap-3">
+        <Headshot playerId={candidate.pitcherId} name={candidate.pitcherName} team={candidate.team} size="lg" band={candidate.heatBand} />
         <div className="min-w-0">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
             #{rank} · {candidate.team} · {candidate.heatLabel}
@@ -157,6 +164,9 @@ function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank:
               {candidate.pitcherName}
             </Link>
           </h3>
+          {candidate.formRiser ? (
+            <span className="mt-2 inline-flex rounded border border-amber-300/40 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-300">Form riser</span>
+          ) : null}
         </div>
         <div className="shrink-0 text-right">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Stream</p>
@@ -164,11 +174,13 @@ function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank:
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-        <ScoreChip label="Form" value={candidate.components.form} />
-        <ScoreChip label="Matchup" value={candidate.components.matchup} />
+      <div className="mt-4 grid grid-cols-1 gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 min-[520px]:grid-cols-3">
+        <ScoreChip label="Form" value={candidate.components.form} spark={candidate.spark} tier={candidate.formTier} trend={candidate.formTrend} pitcherName={candidate.pitcherName} />
+        <ScoreChip label="Matchup" value={candidate.components.matchup} pending={!candidate.matchupDataAvailable} />
         <ScoreChip label="Park" value={candidate.components.park} />
       </div>
+
+      <StreamerWeekStrip candidate={candidate} range={range} />
 
       <div className="mt-4 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
         <span className="rounded border border-white/10 px-2 py-1">W-L-ND {candidate.seasonContext.record}</span>
@@ -182,7 +194,7 @@ function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank:
         {candidate.matchups.map((matchup) => (
           <Link key={`${matchup.date}-${matchup.gamePk}`} href={matchup.dayHref} className="flex items-center justify-between gap-3 rounded border border-white/10 px-3 py-2 text-sm text-zinc-300 hover:border-amber-300/40 hover:text-zinc-50">
             <span className="min-w-0 truncate">
-              {formatUpcomingDate(matchup.date)} · vs {matchup.opponent} · {matchup.opponentLineupTier} lineup{matchup.opponentLineupRank ? ` #${matchup.opponentLineupRank}` : ""} · Park {matchup.parkFactor.toFixed(2)}
+              {formatUpcomingDate(matchup.date)} · vs {matchup.opponent} · <span className={matchupTierClass(matchup.opponentLineupTier)}>{matchup.opponentLineupTier}</span> lineup{matchup.opponentLineupRank ? ` #${matchup.opponentLineupRank}` : ""} · Park {matchup.parkFactor.toFixed(2)}
             </span>
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
               <LocalTime value={matchup.firstPitch} fallback="First pitch" />
@@ -194,15 +206,77 @@ function StreamerCard({ candidate, rank }: { candidate: StreamerCandidate; rank:
   );
 }
 
-function ScoreChip({ label, value }: { label: string; value: number }) {
+function ScoreChip({
+  label,
+  value,
+  pending = false,
+  spark = [],
+  tier = "even",
+  trend = "steady",
+  pitcherName,
+}: {
+  label: string;
+  value: number;
+  pending?: boolean;
+  spark?: number[];
+  tier?: StreamerCandidate["formTier"];
+  trend?: StreamerCandidate["formTrend"];
+  pitcherName?: string;
+}) {
   return (
-    <span className="rounded border border-white/10 px-2 py-2">
+    <div className="rounded border border-white/10 px-2 py-2">
       <span className="block text-zinc-500">{label}</span>
-      <span className="mt-1 block text-sm text-zinc-100">
-        {label.toUpperCase()} {value.toFixed(1)}
-      </span>
-    </span>
+      <div className="mt-1 flex items-center gap-2 text-sm text-zinc-100">
+        <span>{label.toUpperCase()} {pending ? "PENDING" : value.toFixed(1)}</span>
+        {label === "Form" && spark.length ? (
+          <div className="min-w-20 flex-1" data-streamer-form-spark>
+            <FormSparkline values={spark} tier={tier} leagueMeanGS={50} label={`${pitcherName ?? "Pitcher"} recent form GS+: ${spark.join(", ")}`} trend={trend} variant="mini" />
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
+}
+
+function StreamerWeekStrip({ candidate, range }: { candidate: StreamerCandidate; range: UpcomingStreamersResponse["range"] }) {
+  const startsByDate = new Map(candidate.matchups.map((matchup) => [matchup.date, matchup.dayHref]));
+  const days = Array.from({ length: 7 }, (_, index) => addDays(range.start, index));
+
+  return (
+    <div className="mt-4 grid grid-cols-7 gap-1.5" aria-label={`${candidate.pitcherName} weekly start schedule`} data-streamer-week-strip>
+      {days.map((date) => {
+        const href = startsByDate.get(date);
+        const label = formatWeekdayInitial(date);
+        const marker = (
+          <>
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500">{label}</span>
+            <span className={`mt-1 h-2 w-2 rounded-full ${href ? "bg-amber-300" : "bg-zinc-700"}`} aria-hidden="true" />
+          </>
+        );
+
+        return href ? (
+          <Link key={date} href={href} className="grid min-h-10 place-items-center rounded border border-amber-300/30 bg-amber-300/10 hover:border-amber-300/60" aria-label={`${candidate.pitcherName} starts ${formatUpcomingDate(date)}`}>
+            {marker}
+          </Link>
+        ) : (
+          <span key={date} className="grid min-h-10 place-items-center rounded border border-white/10 bg-white/[0.02]" aria-label={`${formatUpcomingDate(date)} no scheduled start`}>
+            {marker}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function matchupTierClass(tier: StreamerCandidate["matchups"][number]["opponentLineupTier"]) {
+  if (tier === "Soft") return "font-semibold text-[var(--level-hot)]";
+  if (tier === "Tough") return "font-semibold text-[var(--level-cooling)]";
+  if (tier === "Pending") return "font-semibold text-zinc-500";
+  return "font-semibold text-zinc-300";
+}
+
+function formatWeekdayInitial(date: string) {
+  return new Intl.DateTimeFormat("en-US", { weekday: "narrow", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
 }
 
 function addDays(date: string, days: number) {
