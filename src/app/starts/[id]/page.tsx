@@ -33,6 +33,7 @@ import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
+import { startMatchupLabel, startVenueLine } from "@/lib/start-matchup-label";
 import { rankStarts, validateRankedStartOrder } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
@@ -74,11 +75,12 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
     };
   }
 
-  const title = `${start.pitcher.name} vs ${start.opponent} - ${formatShortDate(start.date)} (GS+ ${start.gameScorePlus})`;
+  const matchupLabel = startMatchupLabel(start);
+  const title = `${start.pitcher.name} ${matchupLabel} - ${formatShortDate(start.date)} (GS+ ${start.gameScorePlus})`;
   const hasPitchDetails = start.pitchDetailSource !== "fixture" && start.pitchEvents.length > 0;
   const description = hasPitchDetails
-    ? `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`
-    : `${start.pitcher.name}'s ${formatLongDate(start.date)} start vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus} and ranking breakdown.`;
+    ? `${start.pitcher.name}'s ${formatLongDate(start.date)} start, ${matchupLabel}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`
+    : `${start.pitcher.name}'s ${formatLongDate(start.date)} start, ${matchupLabel}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus} and ranking breakdown.`;
   const url = startPath(start.id);
   const image = startShareImagePath(start.id);
 
@@ -547,7 +549,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate row-start-1 ${profile.plateClass}`} />
             <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
               <h2 className={`${profile.nameClass} line-clamp-2 min-w-0 w-full max-w-full break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
-              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel(start)}</p>
             </div>
           </div>
         )}
@@ -588,7 +590,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate row-start-1 ${profile.plateClass}`} />
           <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
             <h2 className={`${profile.nameClass} min-w-0 w-full max-w-full break-words [overflow-wrap:anywhere] font-serif font-bold leading-tight text-zinc-50`}>{start.pitcher.name}</h2>
-            <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent}</p>
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel(start)}</p>
             <div className="mt-1 flex max-sm:!hidden min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row>
               {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
               {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
@@ -670,7 +672,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
         <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="block min-w-0 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
         </Link>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.pitcher.team} vs {start.opponent} / not ranked</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel(start)} / not ranked</p>
         <PitcherAvailabilityNote availability={formSummary?.availability} compact className="mt-1" />
       </div>
       <div className="font-mono text-xs text-zinc-400 sm:text-right">
@@ -684,11 +686,7 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
 }
 
 function rankedStartVenueLine(start: StartSummary) {
-  const matchup = start.side === "home"
-    ? `${start.opponent} @ ${start.pitcher.team}`
-    : `${start.pitcher.team} @ ${start.opponent}`;
-  const venue = start.context.parkLabel;
-  return venue ? `${matchup}, ${venue}` : matchup;
+  return startVenueLine(start, start.context.parkLabel);
 }
 
 function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {
@@ -1121,10 +1119,10 @@ function jsonLdForRankedStarts(date: string, starts: StartSummary[]) {
         "@type": "ListItem",
         position: index + 1,
         url: absoluteUrl(startPath(start.id)),
-        name: `${start.pitcher.name} vs ${start.opponent}`,
+        name: `${start.pitcher.name} ${startMatchupLabel(start)}`,
         item: {
           "@type": "SportsEvent",
-          name: `${start.pitcher.name} vs ${start.opponent}`,
+          name: `${start.pitcher.name} ${startMatchupLabel(start)}`,
           startDate: start.date,
           location: { "@type": "Place", name: start.context.parkLabel },
           performer: { "@type": "Person", name: start.pitcher.name, identifier: start.pitcher.id },
@@ -1150,7 +1148,7 @@ function jsonLdForStartDetail(start: NonNullable<Awaited<ReturnType<typeof getSt
     {
       "@context": "https://schema.org",
       "@type": "SportsEvent",
-      name: `${start.pitcher.name} vs ${start.opponent} - ${formatLongDate(start.date)}`,
+      name: `${start.pitcher.name} ${startMatchupLabel(start)} - ${formatLongDate(start.date)}`,
       url: absoluteUrl(startPath(start.id)),
       startDate: start.date,
       eventStatus: "https://schema.org/EventCompleted",

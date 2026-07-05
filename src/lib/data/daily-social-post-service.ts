@@ -5,6 +5,7 @@ import { formatStartLine } from "@/lib/format";
 import { formatPitchEventQualityHeadline, formatPitchEventQualitySentence, summarizePitchEventQuality } from "@/lib/pitch-event-quality";
 import { absoluteUrl, formatLongDate } from "@/lib/seo";
 import { isRankedRegularStart } from "@/lib/start-classification";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { StartLine, StartSummary } from "@/lib/types";
 
 export type DailySocialPlatform = "instagram" | "x";
@@ -167,7 +168,7 @@ export function dailySocialPreviewPath(date: string) {
 export function buildDailySocialCopy(start: StartOfDay): DailySocialCopy {
   const dateLabel = formatLongDate(start.date);
   const line = formatDailySocialLine(start.line);
-  const matchup = `${start.team} vs ${start.opponent}`;
+  const matchup = startMatchupLabel({ pitcher: { team: start.team }, opponent: start.opponent, side: start.homeAway });
   const rankingsUrl = absoluteUrl(`/starts/${start.date}`);
 
   return {

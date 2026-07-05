@@ -9,6 +9,7 @@ import { getDailySlate, getHomeSlateDate, getStartDetail } from "@/lib/data/star
 import { formatStartLine } from "@/lib/format";
 import { sourceParams, startHref, startPath } from "@/lib/routes";
 import { formatMonth, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 type BestStartsPageProps = {
@@ -66,7 +67,7 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
                 <p className="font-serif text-2xl text-zinc-500">#{index + 1}</p>
                 <div className="min-w-0">
                   <p className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</p>
-                  <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.pitcher.team} vs {start.opponent} / {formatStartLine(start.line)}</p>
+                  <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{startMatchupLabel(start)} / {formatStartLine(start.line)}</p>
                 </div>
                 <p className="font-serif text-3xl font-bold text-amber-300">{start.gameScorePlus}</p>
               </Link>
@@ -95,7 +96,7 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{label}</p>
           <h3 className="mt-1 truncate font-serif text-3xl font-bold text-zinc-50">{start.pitcher.name}</h3>
-          <p className="mt-2 font-mono text-xs text-zinc-400">{start.pitcher.team} vs {start.opponent} / {formatShortDate(start.date)}</p>
+          <p className="mt-2 font-mono text-xs text-zinc-400">{startMatchupLabel(start)} / {formatShortDate(start.date)}</p>
         </div>
         <p className="font-serif text-5xl font-bold text-amber-300">{start.gameScorePlus}</p>
       </Link>

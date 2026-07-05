@@ -351,13 +351,13 @@ assert(
     !startsPage.includes("hideUpcoming") &&
     !siteHeader.includes("hideUpcoming") &&
     !siteNav.includes("hideUpcoming") &&
-    siteNav.includes("href: rankedStartsPath(defaultDates.rankedDate)") &&
+    siteNav.includes("href: rankedStartsLatestPath()") &&
     startsIndexRoute.includes('export const dynamic = "force-dynamic";') &&
     startApiRoute.includes('export const dynamic = "force-dynamic";') &&
     startsIndexRoute.includes("NextResponse.redirect(location, 302)") &&
     startsIndexRoute.includes('response.headers.set("X-Robots-Tag", "noindex, follow")') &&
     startsIndexRoute.includes("rankedStartsPath(await getRankedStartsDefaultDate(today))") &&
-    siteNav.includes('const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: upcomingDateHref(defaultDates.upcomingDate) }];') &&
+    siteNav.includes('const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: "/upcoming" }];') &&
     startsPage.includes('import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";') &&
     startsDisclosure.includes('"use client";') &&
     startsDisclosure.includes("window.sessionStorage.getItem(storageKey)") &&
@@ -736,7 +736,7 @@ assert(
     startsPage.includes('data-responsive-check="ranked-starts-archived-hero"') &&
     startsPage.includes("resolveArchivedStartOfDayHero") &&
     startsPage.includes("function rankedStartVenueLine(start: StartSummary)") &&
-    startsPage.includes("const venue = start.context.parkLabel;") &&
+    startsPage.includes("return startVenueLine(start, start.context.parkLabel);") &&
     !startsPage.includes('const contextLabel = start.context.label.split(" / ").at(-1) ?? start.context.label;') &&
     startsPage.includes('status: "archived" as const') &&
     startsPage.includes("resolveTopPerformerMetrics(start),") &&

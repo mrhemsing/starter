@@ -183,7 +183,9 @@ export type FormStartPoint = {
   id: string;
   gameDate: string;
   gamePk: string;
+  team: string;
   opp: string;
+  side?: "home" | "away";
   park: string;
   ip: number;
   h: number;

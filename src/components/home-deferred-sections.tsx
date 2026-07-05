@@ -14,6 +14,7 @@ import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
 import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
@@ -221,6 +222,7 @@ type HomeTopPerformerView = {
   pitcherName: string;
   team: string;
   opponent: string;
+  side?: "home" | "away";
   dateLabel: string;
   score: number;
   line: HomeTopPerformer["start"]["line"];
@@ -272,6 +274,7 @@ function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerform
           pitcherName={view.pitcherName}
           team={view.team}
           opponent={view.opponent}
+          side={view.side}
           dateLabel={view.dateLabel}
           score={view.score}
           line={view.line}
@@ -302,6 +305,7 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
     pitcherName: topPerformer.start.pitcher.name,
     team: topPerformer.start.pitcher.team,
     opponent: topPerformer.start.opponent,
+    side: topPerformer.start.side,
     dateLabel: topPerformer.dateLabel,
     score: topPerformer.start.gameScorePlus,
     line: topPerformer.start.line,
@@ -327,6 +331,7 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     pitcherName: row.pitcherName,
     team: row.team,
     opponent: row.opponent,
+    side: row.side,
     dateLabel,
     score: row.gsPlus ?? current.score,
     line: row.line,
@@ -467,7 +472,7 @@ function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge
             {start.pitcher.name}
           </a>
           <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">
-            <MetaLine segments={[`${start.pitcher.team} vs ${start.opponent}`, formatShortDate(start.date)]} />
+            <MetaLine segments={[startMatchupLabel(start), formatShortDate(start.date)]} />
           </p>
           <span
             className="mt-2 inline-flex rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400"

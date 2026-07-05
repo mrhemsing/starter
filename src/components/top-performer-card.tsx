@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { StartLineText } from "@/components/wrap-safe-text";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FeaturedStartHighlight, StartLine } from "@/lib/types";
 
 type TopPerformerCardProps = {
@@ -13,6 +14,7 @@ type TopPerformerCardProps = {
   pitcherName: string;
   team: string;
   opponent: string;
+  side?: "home" | "away";
   dateLabel: string;
   score: number;
   line: StartLine;
@@ -32,6 +34,7 @@ export function TopPerformerCard({
   pitcherName,
   team,
   opponent,
+  side,
   dateLabel,
   score,
   line,
@@ -58,6 +61,7 @@ export function TopPerformerCard({
   const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
   const isLiveLeader = status === "live";
   const context = `#${rank} of ${slateCount} · league avg 50`;
+  const matchupLabel = startMatchupLabel({ pitcher: { team }, opponent, side });
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
   useEffect(() => {
@@ -144,7 +148,7 @@ export function TopPerformerCard({
                   {pitcherName}
                 </h2>
                 <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
-                  {team} vs {opponent}
+                  {matchupLabel}
                 </p>
               </div>
               {noPhoto ? <ScoreBug score={scoreText} scoreStatusLabel={scoreStatusLabel} /> : null}
@@ -242,7 +246,7 @@ export function TopPerformerCard({
               {pitcherName}
             </h3>
             <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#F5F2EA] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-              {team} vs {opponent}
+              {matchupLabel}
             </p>
           </div>
           <div className="absolute bottom-7 right-7 z-10 hidden text-right lg:block">

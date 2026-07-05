@@ -5,6 +5,7 @@ import { ScoreComponentList } from "@/components/score-component-list";
 import { formatStartLine } from "@/lib/format";
 import { pitchResults, pitchTypes } from "@/lib/pitch-taxonomy";
 import { summarizePitchEventQuality } from "@/lib/pitch-event-quality";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { PitchEvent, PitchResultKey, PitchTypeKey, StartApiGameScorePlusBreakdown, StartApiPitchSequenceRow, StartDetail } from "@/lib/types";
 
 const strikeZone = { xMin: -0.83, xMax: 0.83, zMin: 1.5, zMax: 3.5 };
@@ -120,7 +121,7 @@ export function PitchChart({ start }: { start: StartDetail }) {
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Start log / {start.date}</p>
             <h2 className="font-serif text-4xl font-bold text-zinc-50 sm:text-5xl">{start.pitcher.name}</h2>
             <p className="mt-3 font-mono text-sm text-zinc-400">
-              {start.pitcher.team} vs {start.opponent} / {formatStartLine(start.line)}
+              {startMatchupLabel(start)} / {formatStartLine(start.line)}
             </p>
           </div>
           <div className="md:text-right">

@@ -1,5 +1,6 @@
 import { formatDailySocialLine, type DailySocialRenderVariant, type StartOfDay } from "@/lib/data/daily-social-post-service";
 import { formatLongDate } from "@/lib/seo";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
 const COLORS = {
   ink: "#08080A",
@@ -21,6 +22,7 @@ export function DailySocialCard({ start, variant }: { start: StartOfDay; variant
   const isPortrait = variant === "instagram";
   const imageUrl = start.image?.imageUrl ?? start.headshotUrl;
   const line = formatDailySocialLine(start.line);
+  const matchupLabel = startMatchupLabel({ pitcher: { team: start.team }, opponent: start.opponent, side: start.homeAway });
 
   return (
     <div
@@ -79,7 +81,7 @@ export function DailySocialCard({ start, variant }: { start: StartOfDay; variant
             <div style={{ color: COLORS.gold, display: "flex", fontSize: isPortrait ? 22 : 20, fontWeight: 800, letterSpacing: 6, textTransform: "uppercase" }}>Today&apos;s best start</div>
             <div style={{ display: "flex", fontFamily: "Georgia, serif", fontSize: isPortrait ? 102 : 84, fontWeight: 900, lineHeight: 0.9 }}>{start.name}</div>
             <div style={{ color: COLORS.white, display: "flex", fontSize: isPortrait ? 31 : 26, fontWeight: 800, letterSpacing: 5, textTransform: "uppercase" }}>
-              {start.team} vs {start.opponent}
+              {matchupLabel}
             </div>
             <div style={{ background: COLORS.gold, display: "flex", height: 2, marginTop: isPortrait ? 8 : 4, width: isPortrait ? 420 : 360 }} />
             <div style={{ display: "flex", fontFamily: "monospace", fontSize: isPortrait ? 28 : 23, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>{line}</div>

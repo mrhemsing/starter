@@ -22,7 +22,8 @@ import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, HeatBandKey, PitcherApiResponse, PitcherApiSplitGroup, PitcherPitchMixStart, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, PitcherApiResponse, PitcherApiSplitGroup, PitcherPitchMixStart, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -268,8 +269,8 @@ async function PitcherProfileBody({
         ) : null}
         {pitcher ? <AdvancedPercentilePanel pitcher={pitcher} /> : null}
         <SplitsPanel splits={pitcher?.splits.groups ?? []} venueSplit={summary.venueSplit ?? null} />
-        <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} vs ${best.opp}`} href={startHref(best.id, sourceParams(source))} />
-        <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} vs ${worst.opp}`} href={startHref(worst.id, sourceParams(source))} />
+        <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} ${formStartMatchupLabel(best)}`} href={startHref(best.id, sourceParams(source))} />
+        <Callout label="Worst start" value={`GS+ ${worst.gsPlus}`} detail={`${worst.gameDate} ${formStartMatchupLabel(worst)}`} href={startHref(worst.id, sourceParams(source))} />
         <div className="rounded border border-white/10 bg-[#101014] p-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Current streak</p>
           <p className="mt-2 font-serif text-3xl text-zinc-50">{streak}</p>
@@ -652,7 +653,7 @@ function GameLogRow({
   pitcherName,
   source,
 }: {
-  start: { id: string; startHref: string; gameDate: string; opp: string; park: string; ip: number; h: number; er: number; bb: number; k: number; gsPlus: number; result: FormStartPoint["result"]; tier: HeatBandKey };
+  start: FormStartPoint;
   depth: StartDetail | null;
   highlight: FeaturedStartHighlight | null;
   pitcherName: string;
@@ -664,7 +665,7 @@ function GameLogRow({
       <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[120px_minmax(0,1fr)_90px_auto] md:items-center">
         <Link href={href} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
         <Link href={href} className="min-w-0 text-zinc-200 hover:text-amber-300">
-          <span className="block text-zinc-50">vs {start.opp} / {start.park}</span>
+          <span className="block text-zinc-50">{formStartMatchupLabel(start)} / {start.park}</span>
           <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
         </Link>
         <Link href={href} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
@@ -689,7 +690,7 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
     <article className="mt-4 grid gap-4 rounded border border-white/10 bg-black/20 p-4 transition hover:border-amber-300/40 md:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: tier.color }}>{start.date} / {tier.label}</p>
-        <Link href={startHref(start.id, sourceParams(source))} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">vs {start.opponent}</Link>
+        <Link href={startHref(start.id, sourceParams(source))} className="mt-1 block font-serif text-2xl font-bold text-zinc-50 hover:text-amber-300">{startMatchupLabel(start)}</Link>
         <p className="mt-2 font-mono text-xs text-zinc-400">{formatStartLine(start.line)}</p>
         <DecisionPill result={start.result} className="mt-3" />
         {highlight ? (
@@ -729,6 +730,10 @@ function decisionLabel(result: FormStartPoint["result"]) {
   if (result === "W") return "Win";
   if (result === "L") return "Loss";
   return "No decision";
+}
+
+function formStartMatchupLabel(start: FormStartPoint) {
+  return startMatchupLabel({ pitcher: { team: start.team }, opponent: start.opp, side: start.side });
 }
 
 function MiniStat({ label, value, color }: { label: string; value: string; color?: string }) {

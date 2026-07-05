@@ -11,6 +11,7 @@ import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath,
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { isIsoDateRouteParam } from "@/lib/route-date-validation";
 import { absoluteUrl, formatLongDate, formatShortDate, jsonLdScript } from "@/lib/seo";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { StartDetail, StartSummary } from "@/lib/types";
 
 type StartRecapPageProps = {
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: StartRecapPageProps): Promise
   const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
   const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
   const description = [
-    `${start.pitcher.name} vs ${start.opponent}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`,
+    `${start.pitcher.name} ${startMatchupLabel(start)}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`,
     arsenalSentence,
     qualitySentence,
   ].filter(Boolean).join(" ");
@@ -82,7 +83,7 @@ export default async function StartRecapPage({ params }: StartRecapPageProps) {
             <div>
               <h1 className="font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl">{start.pitcher.name}</h1>
               <p className="mt-3 font-mono text-sm uppercase tracking-[0.14em] text-zinc-400">
-                {start.pitcher.team} vs {start.opponent} · {formatStartLine(start.line)}
+                {startMatchupLabel(start)} · {formatStartLine(start.line)}
               </p>
             </div>
             <div className="md:text-right">
@@ -184,7 +185,7 @@ function jsonLdForStartRecap(start: StartDetail, canonicalPath: string) {
   return {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
-    name: `${start.pitcher.name} start recap vs ${start.opponent}`,
+    name: `${start.pitcher.name} start recap, ${startMatchupLabel(start)}`,
     startDate: start.game.date,
     url: absoluteUrl(canonicalPath),
     competitor: [

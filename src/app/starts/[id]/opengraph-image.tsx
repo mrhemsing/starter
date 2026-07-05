@@ -6,6 +6,7 @@ import { qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { isIsoDateRouteParam } from "@/lib/route-date-validation";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
 type StartImageProps = {
   params: Promise<{
@@ -62,7 +63,7 @@ export default async function Image({ params }: StartImageProps) {
 
             <div style={{ display: "flex", flex: 1, flexDirection: "column", gap: 18, minWidth: 0 }}>
               <div style={{ color: "#a1a1aa", display: "flex", fontSize: 28, letterSpacing: 5, textTransform: "uppercase" }}>
-                Start card / {start.pitcher.team} vs {start.opponent}
+                Start card / {startMatchupLabel(start)}
               </div>
               <div style={{ display: "flex", fontSize: 82, fontWeight: 900, lineHeight: 0.92 }}>{start.pitcher.name}</div>
               <div style={{ color: "#d4d4d8", display: "flex", fontSize: 32, fontWeight: 700 }}>{formatStartLine(start.line)}</div>
