@@ -33,12 +33,11 @@ export function RouteLoadingShell({
 }: RouteLoadingShellProps) {
   logNavigationSkeletonShown(route);
   const today = getToday();
-  const rankedDate = addDays(today, -1);
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8" data-navigation-shell={route}>
       <div className="mx-auto max-w-7xl">
-        <InstantShellHeader active={active} today={today} rankedDate={rankedDate} />
+        <InstantShellHeader active={active} today={today} />
         <header className="mb-4">
           {eyebrow ? <p className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p> : null}
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">{title}</h1>
@@ -59,13 +58,13 @@ export function RouteLoadingShell({
   );
 }
 
-function InstantShellHeader({ active, today, rankedDate }: { active: NavKey | null; today: string; rankedDate: string }) {
+function InstantShellHeader({ active, today }: { active: NavKey | null; today: string }) {
   const items = [
     { key: "home" as const, label: "Home", href: "/" },
-    { key: "starts" as const, label: "Ranked Starts", href: `/starts/${rankedDate}` },
+    { key: "starts" as const, label: "Ranked Starts", href: "/starts/latest" },
     { key: "heat" as const, label: "Heat Check", href: "/heat-check" },
-    { key: "live" as const, label: "Live", href: `/live/${today}` },
-    { key: "upcoming" as const, label: "Upcoming", href: `/upcoming/${today}` },
+    { key: "live" as const, label: "Live", href: "/live" },
+    { key: "upcoming" as const, label: "Upcoming", href: "/upcoming" },
     { key: "watchlist" as const, label: "Watchlist", href: "/watchlist" },
   ];
 
@@ -77,18 +76,11 @@ function InstantShellHeader({ active, today, rankedDate }: { active: NavKey | nu
         </Link>
         <MlbSeasonKicker season={today.slice(0, 4)} />
       </div>
-      <nav className="hidden items-center gap-6 font-mono text-xs uppercase tracking-[0.18em] text-zinc-400 md:flex" aria-label="Primary">
-        {items.map((item) => (
-          <Link key={item.key} className={active !== null && item.key === active ? "text-zinc-50" : undefined} href={item.href}>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-      <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden" aria-label="Primary mobile">
+      <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:flex md:w-auto md:items-center md:gap-6 md:p-0 md:text-xs md:tracking-[0.18em]" aria-label="Primary">
         {items.map((item) => (
           <Link
             key={item.key}
-            className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center ${active !== null && item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400"}`}
+            className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center md:min-h-0 md:rounded-none md:border-0 md:p-0 ${active !== null && item.key === active ? "border-amber-300/50 text-zinc-50" : "border-white/10 text-zinc-400 md:text-zinc-400"}`}
             href={item.href}
           >
             {item.label}
@@ -325,10 +317,4 @@ function getToday() {
   const month = parts.find((part) => part.type === "month")?.value ?? "01";
   const day = parts.find((part) => part.type === "day")?.value ?? "01";
   return `${year}-${month}-${day}`;
-}
-
-function addDays(date: string, days: number) {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
 }

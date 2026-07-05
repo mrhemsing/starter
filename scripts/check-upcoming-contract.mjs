@@ -2213,6 +2213,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     activeUpcomingControlCurrentLinkCount(html) === 2,
     `${route} should expose native current-state semantics on the two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
   );
+  assertUpcomingControlGroups(html, route);
   assert(
     upcomingFastFilterLinkCount(html) === 4,
     `${route} should render all four upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
@@ -2262,6 +2263,22 @@ function upcomingFastFilterLinkCount(html) {
   const controlHtml = controlMatch?.[0] ?? html;
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
   return scopedCount >= 4 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
+}
+
+function assertUpcomingControlGroups(html, route) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedGroupTags = controlHtml.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
+  const groupTags =
+    scopedGroupTags.length === 2
+      ? scopedGroupTags
+      : html.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
+  assert(
+    groupTags.length === 2 &&
+      groupTags.some((tag) => tag.includes('aria-label="Status filters"')) &&
+      groupTags.some((tag) => tag.includes('aria-label="Sort filters"')),
+    `${route} should render the upcoming controls as exactly two accessible filter groups: Status and Sort`,
+  );
 }
 
 function assertUpcomingControlPendingRegions(html, route) {

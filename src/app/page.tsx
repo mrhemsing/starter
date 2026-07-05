@@ -15,7 +15,7 @@ import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { TonightResponse } from "@/lib/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";

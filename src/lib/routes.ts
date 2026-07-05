@@ -112,8 +112,16 @@ export function rankedStartsPath(date: string) {
   return `/starts/${date}`;
 }
 
+export function rankedStartsLatestPath() {
+  return "/starts/latest";
+}
+
 export function liveDateHref(date: string) {
   return `/live/${date}`;
+}
+
+export function liveHref() {
+  return "/live";
 }
 
 export function heatCheckPath(params?: Record<string, string>) {

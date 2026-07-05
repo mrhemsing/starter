@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Tourney } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { BAverageBadge } from "@/components/b-average-badge";
+import { TTS_BUILD_STAMP } from "@/lib/build-stamp";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -49,6 +50,9 @@ export const metadata: Metadata = {
     title: "Toe the Slab - MLB Starting Pitcher Rankings & GS+ Scores",
     description: "Daily starting-pitcher rankings, rolling form, probable matchups, and GS+ scores for every MLB start.",
     images: [{ url: "/opengraph-image", alt: "Toe the Slab MLB starting pitcher rankings" }],
+  },
+  other: {
+    "tts-build": TTS_BUILD_STAMP,
   },
 };
 

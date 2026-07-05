@@ -24,6 +24,7 @@
     "check:daily-social": "node scripts/check-daily-social-contract.mjs",
     "check:site-performance": "node scripts/check-site-performance-contract.mjs",
     "check:render-path-audit": "node scripts/check-render-path-audit.mjs",
+    "check:stale-shell": "node scripts/check-stale-shell-contract.mjs",
     "check:statcast-archive": "node scripts/check-statcast-archive-contract.mjs",
     "check:home-ranked": "node scripts/check-home-ranked-contract.mjs",
     "check:home-live-ticker": "node scripts/check-home-live-ticker-contract.mjs",
