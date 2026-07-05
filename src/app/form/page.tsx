@@ -1078,16 +1078,7 @@ function StartStatusChip({ pitcher, todayStart }: { pitcher: FormSummary; todayS
 }
 
 function ScheduledStartChipLabel({ label }: { label: string }) {
-  if (!label.startsWith("STARTS ")) return <>{label}</>;
-  const startDateLabel = label.slice("STARTS ".length);
-
-  return (
-    <span className="grid gap-0.5 text-left leading-none sm:inline">
-      <span className="block sm:inline">STARTS</span>
-      <span className="hidden sm:inline"> </span>
-      <span className="block sm:inline">{startDateLabel}</span>
-    </span>
-  );
+  return <span className="whitespace-nowrap">{label}</span>;
 }
 
 function MobileDetailLine({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {

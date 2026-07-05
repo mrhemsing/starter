@@ -207,10 +207,9 @@ assert(
     formPage.includes('return <span className="h-0 basis-full sm:hidden" aria-hidden="true" data-heat-mobile-start-status-break />;') &&
     formPage.includes("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("function ScheduledStartChipLabel({ label }: { label: string })") &&
-    formPage.includes('if (!label.startsWith("STARTS ")) return <>{label}</>;') &&
-    formPage.includes('const startDateLabel = label.slice("STARTS ".length);') &&
-    formPage.includes('<span className="block sm:inline">STARTS</span>') &&
-    formPage.includes('<span className="block sm:inline">{startDateLabel}</span>') &&
+    formPage.includes('return <span className="whitespace-nowrap">{label}</span>;') &&
+    !formPage.includes('const startDateLabel = label.slice("STARTS ".length);') &&
+    !formPage.includes('<span className="block sm:inline">STARTS</span>') &&
     formPage.indexOf("chips={(\n          <>") < formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.indexOf("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.indexOf("<MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />") < formPage.indexOf('<PitcherAvailabilityNote availability={pitcher.availability} compact />') &&
