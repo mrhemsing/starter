@@ -75,7 +75,7 @@ assert(
     oddsCron.includes("syncOddsSnapshotsForDefaultDates") &&
     oddsCron.includes("CRON_SECRET") &&
     vercelConfig.includes('"/api/cron/odds-sync"') &&
-    vercelConfig.includes('"15 13 * * *"') &&
+    vercelConfig.includes('"15 14 * * *"') &&
     oddsClient.includes('const ODDS_MARKETS = process.env.THE_BUMP_ODDS_INCLUDE_TOTALS === "1" ? "pitcher_strikeouts,team_totals,totals" : "pitcher_strikeouts"'),
   "odds sync cron must be scheduled and use the existing cron auth pattern",
 );
