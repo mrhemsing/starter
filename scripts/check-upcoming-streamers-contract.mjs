@@ -6,13 +6,14 @@ function assert(condition, message) {
   }
 }
 
-const [packageJson, routes, toggle, streamersService, tonightService, streamersPage, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
+const [packageJson, routes, toggle, streamersService, tonightService, streamersPage, streamersLoading, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
   readFile("package.json", "utf8"),
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/slate-date-nav.tsx", "utf8"),
   readFile("src/lib/data/streamers-service.ts", "utf8"),
   readFile("src/lib/data/tonight-service.ts", "utf8"),
   readFile("src/app/upcoming/streamers/page.tsx", "utf8"),
+  readFile("src/app/upcoming/streamers/loading.tsx", "utf8"),
   readFile("src/app/upcoming/streamers/opengraph-image.tsx", "utf8"),
   readFile("src/app/sitemaps/[kind]/route.ts", "utf8"),
   readFile("src/components/site-nav.tsx", "utf8"),
@@ -45,10 +46,11 @@ assert(
 assert(
   toggle.includes("streamersActive = false") &&
     toggle.includes('key: "streamers"') &&
-    toggle.includes('label: "Streamers"') &&
+    toggle.includes('label: "Fantasy"') &&
     toggle.includes("href: upcomingStreamersHref()") &&
-    toggle.includes("active: streamersActive"),
-  "Upcoming range toggle must include Streamers as a fourth pill without changing primary nav",
+    toggle.includes("active: streamersActive") &&
+    toggle.includes('ariaLabel: "View fantasy week pickups and two-start pitchers"'),
+  "Upcoming range toggle must include Fantasy as the fourth pill while keeping the streamers route key",
 );
 
 assert(
@@ -119,12 +121,14 @@ assert(
     streamersPage.includes("images: [{ url: imageUrl, alt: title }]") &&
     streamersPage.includes("<UpcomingSlateRangeToggle") &&
     streamersPage.includes("streamersActive") &&
-    streamersPage.includes("Widely-available arms worth a one-start pickup this week, plus everyone scheduled to start twice.") &&
+    streamersPage.includes("Two-start pitchers and form risers for the fantasy week. Streamer pickups are flagged where lineups are soft.") &&
     streamersPage.includes("What is streaming?") &&
     streamersPage.includes("WEEK OF") &&
     streamersPage.includes("data-streamers-coverage") &&
     streamersPage.includes("Two-start pitchers") &&
     streamersPage.includes("Two starts in one fantasy week doubles the counting stats.") &&
+    streamersPage.includes('emptyCopy="No two-start pitchers are visible yet."') &&
+    !streamersPage.includes("No two-start streamers are visible yet.") &&
     streamersPage.includes("Form risers with soft matchups") &&
     streamersPage.includes("Trending arms drawing a weak lineup in their next start.") &&
     streamersPage.includes("data-responsive-check=\"upcoming-streamers\"") &&
@@ -161,6 +165,13 @@ assert(
     streamersPage.includes("Park {matchup.parkFactor.toFixed(2)}") &&
     streamersPage.includes("label.toUpperCase()"),
   "streamers page must explain streaming, expose coverage/funnel empty states, and render headshots, form sparks, week strips, tier coloring, and fantasy context labels",
+);
+
+assert(
+  streamersLoading.includes('title="Fantasy Week"') &&
+    streamersLoading.includes('description="Two-start pitchers and form risers for the fantasy week. Streamer pickups are flagged where lineups are soft."') &&
+    !streamersLoading.includes('title="Streamers"'),
+  "streamers loading shell must use the Fantasy Week view label without flashing the old Streamers heading",
 );
 
 assert(

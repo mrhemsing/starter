@@ -60,10 +60,10 @@ export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActi
         },
         {
           key: "streamers",
-          label: "Streamers",
+          label: "Fantasy",
           href: upcomingStreamersHref(),
           active: streamersActive,
-          ariaLabel: "View upcoming fantasy streamers",
+          ariaLabel: "View fantasy week pickups and two-start pitchers",
         },
       ]}
     />

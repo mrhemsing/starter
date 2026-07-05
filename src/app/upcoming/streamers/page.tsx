@@ -56,7 +56,7 @@ export default async function UpcomingStreamersPage() {
           <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Widely-available arms worth a one-start pickup this week, plus everyone scheduled to start twice.
+            Two-start pitchers and form risers for the fantasy week. Streamer pickups are flagged where lineups are soft.
           </p>
           <details className="mt-3 max-w-2xl rounded border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-zinc-400">
             <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300">What is streaming?</summary>
@@ -86,7 +86,7 @@ export default async function UpcomingStreamersPage() {
           title="Two-start pitchers"
           eyebrow="Fantasy week"
           description="Two starts in one fantasy week doubles the counting stats."
-          emptyCopy="No two-start streamers are visible yet."
+          emptyCopy="No two-start pitchers are visible yet."
           candidates={streamers.twoStartPitchers}
           range={streamers.range}
         />
