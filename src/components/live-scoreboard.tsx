@@ -355,7 +355,7 @@ function SlabImage() {
         alt=""
         width={1280}
         height={853}
-        className="h-auto w-full object-cover"
+        className="live-slab-image h-auto w-full object-cover"
         priority={false}
       />
     </div>

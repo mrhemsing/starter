@@ -170,6 +170,9 @@ assert(
     liveComponent.includes('className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30"') &&
     !liveComponent.includes('className="mt-6 overflow-hidden rounded border border-white/10 bg-black/30"') &&
     liveComponent.includes('src="/images/slab-2.png"') &&
+    liveComponent.includes('className="live-slab-image h-auto w-full object-cover"') &&
+    globals.includes(".live-slab-image.object-cover") &&
+    globals.includes("object-fit: inherit;") &&
     liveComponent.includes('alt=""') &&
     liveComponent.includes('width={1280}') &&
     liveComponent.includes('height={853}') &&
@@ -357,12 +360,13 @@ assert(
 
 assert(
   routes.includes("export function liveDateHref(date: string)") &&
+    routes.includes("export function liveHref()") &&
     siteNav.includes('type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";') &&
     siteNav.includes('import { LiveNavLabel } from "@/components/live-nav-label";') &&
     siteNav.includes('import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
-    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveDateHref(today) }];') &&
-    siteNav.includes("href: liveDateHref(today)") &&
-    siteNav.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden"') &&
+    siteNav.includes('const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveHref() }];') &&
+    siteNav.includes("href: liveHref()") &&
+    siteNav.includes('className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:flex md:w-auto md:items-center md:gap-6 md:p-0 md:text-xs md:tracking-[0.18em]"') &&
     siteNav.includes('className={`flex min-h-11 items-center justify-center rounded border px-2 py-2 text-center') &&
     !siteNav.includes("overflow-x-auto pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:hidden") &&
     !siteNav.includes("shrink-0 items-center rounded border") &&

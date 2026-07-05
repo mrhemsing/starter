@@ -107,6 +107,10 @@ p,
   width: 1.32em;
 }
 
+.live-slab-image.object-cover {
+  object-fit: inherit;
+}
+
 .site-logo-season-kicker::before,
 .site-logo-season-kicker::after {
   background: rgb(161 161 170 / 0.48);
