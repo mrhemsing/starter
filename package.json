@@ -37,6 +37,8 @@
     "check:mobile-card-layout": "node scripts/check-mobile-card-layout.mjs",
     "check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs",
     "check:starts-page": "node scripts/check-starts-page-contract.mjs",
+    "check:starts-rendered-photos": "node scripts/check-starts-rendered-photos.mjs",
+    "mirror:top-performer-images": "node scripts/mirror-top-performer-action-images.mjs",
     "check:upcoming-streamers": "node scripts/check-upcoming-streamers-contract.mjs",
     "test:contracts": "npm run test:slate-contract && npm run test:start-contract && npm run test:pitcher-contract && npm run check:home-ranked && npm run check:home-status && npm run check:home-best-starts && npm run check:pitcher-pages && npm run check:starts-page",
     "test:fixture-gates": "node scripts/run-fixture-gates.mjs",

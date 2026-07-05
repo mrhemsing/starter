@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-02-kc-cin-702070",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/ogifaq2iieewfw0cfequ.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-02-kc-cin-702070-action.jpg",
   "alt": "Noah Cameron pitching action photo for 2026-06-02",
   "attribution": "Noah Cameron K's eight in strong outing - thumbnail",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824511",
   "reviewedAt": "2026-07-04T18:29:09.594Z",
   "reviewNote": "Curated Start of the Day action image: Noah Cameron K's eight in strong outing",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/ogifaq2iieewfw0cfequ.jpg",
+  "storage": "local-static"
 }

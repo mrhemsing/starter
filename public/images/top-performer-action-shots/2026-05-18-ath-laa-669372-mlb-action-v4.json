@@ -1,6 +1,6 @@
 {
   "startId": "2026-05-18-ath-laa-669372",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/lqujkm90m6fcan4hfzfo.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-05-18-ath-laa-669372-action.jpg",
   "alt": "J.T. Ginn pitching action photo for 2026-05-18",
   "attribution": "GettyImages-2277008047",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824035",
   "reviewedAt": "2026-07-04T18:29:09.590Z",
   "reviewNote": "Curated Start of the Day action image: J.T. Ginn fans 10 in no-no bid",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/lqujkm90m6fcan4hfzfo.jpg",
+  "storage": "local-static"
 }

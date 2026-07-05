@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-26-tex-tor-543135",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/z5hc6wtyrdp9kctlhc38.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-26-tex-tor-543135-action.jpg",
   "alt": "Nathan Eovaldi pitching action photo for 2026-06-26",
   "attribution": "87d9b56d-e5f0-4427-89d7-125ebbeff333Hall",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/822796",
   "reviewedAt": "2026-07-04T18:29:09.601Z",
   "reviewNote": "Curated Start of the Day action image: Nathan Eovaldi strikes out Kazuma Okamoto",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/z5hc6wtyrdp9kctlhc38.jpg",
+  "storage": "local-static"
 }

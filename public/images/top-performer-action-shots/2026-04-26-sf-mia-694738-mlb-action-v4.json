@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-26-sf-mia-694738",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/vbl9x8ygnlbghwbpkdty.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-26-sf-mia-694738-action.jpg",
   "alt": "Landen Roupp pitching action photo for 2026-04-26",
   "attribution": "MLB image feed",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/823230",
   "reviewedAt": "2026-07-04T18:29:09.583Z",
   "reviewNote": "Curated Start of the Day action image: Landen Roupp first strikeout of the day",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/vbl9x8ygnlbghwbpkdty.jpg",
+  "storage": "local-static"
 }

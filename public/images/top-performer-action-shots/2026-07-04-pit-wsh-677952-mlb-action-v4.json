@@ -1,6 +1,6 @@
 {
   "startId": "2026-07-04-pit-wsh-677952",
-  "imageUrl": "https://images2.minutemediacdn.com/image/upload/c_crop,x_501,y_101,w_2699,h_1518/c_fill,w_1440,ar_1440:810,f_auto,q_auto,g_auto/images/ReutersImages/mmsport/pittsburgh_pirates/01kwhgp55wta4094j5p8.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-04-pit-wsh-677952-action.jpg",
   "alt": "Braxton Ashcraft delivers a pitch for the Pirates",
   "attribution": "Charles LeClaire-Imagn Images via Reuters Connect",
   "clean": true,
@@ -11,5 +11,7 @@
   "objectPosition": "50% 43%",
   "mobileObjectPosition": "50% 43%",
   "playUrl": "https://www.si.com/mlb/pirates/onsi/pittsburgh-pirates-announce-starting-pitchers-nationals-series",
-  "expiresAt": 1785775563710
+  "expiresAt": 1785775563710,
+  "sourceImageUrl": "https://images2.minutemediacdn.com/image/upload/c_crop,x_501,y_101,w_2699,h_1518/c_fill,w_1440,ar_1440:810,f_auto,q_auto,g_auto/images/ReutersImages/mmsport/pittsburgh_pirates/01kwhgp55wta4094j5p8.jpg",
+  "storage": "local-static"
 }

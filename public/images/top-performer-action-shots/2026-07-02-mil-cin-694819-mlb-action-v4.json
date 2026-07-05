@@ -1,6 +1,6 @@
 {
   "startId": "2026-07-02-mil-cin-694819",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/s9zxzxwqesegiks29nfa.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-action.jpg",
   "alt": "Jacob Misiorowski's first strikeout of the game",
   "clean": true,
   "focalPoint": {
@@ -10,5 +10,7 @@
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
   "playUrl": "https://www.mlb.com/video/elly-de-la-cruz-called-out-on-strikes-omip1j",
-  "expiresAt": 1785612366971
+  "expiresAt": 1785612366971,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/s9zxzxwqesegiks29nfa.jpg",
+  "storage": "local-static"
 }

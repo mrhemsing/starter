@@ -737,12 +737,10 @@ assert(
 
 for (const fixture of archivedStartOfDayActionFixtures) {
   const metadata = JSON.parse(await readFile(fixture.metadataPath, "utf8"));
-  const hasAllowedActionUrl =
+  const hasStoredActionUrl =
     typeof metadata.imageUrl === "string" &&
-    (metadata.imageUrl.startsWith("/images/top-performer-action-shots/") ||
-      metadata.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
-      metadata.imageUrl.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
-      metadata.imageUrl.startsWith("https://s.hdnux.com/photos/"));
+    metadata.imageUrl.startsWith("/images/top-performer-action-shots/") &&
+    existsSync(`public${metadata.imageUrl}`);
 
   assert(
     metadata.clean === true &&
@@ -752,8 +750,8 @@ for (const fixture of archivedStartOfDayActionFixtures) {
       metadata.focalPoint.x <= 100 &&
       metadata.focalPoint.y >= 0 &&
       metadata.focalPoint.y <= 100 &&
-      hasAllowedActionUrl,
-    `archived Start of the Day action photo fixture must stay curator-clean with focal point metadata: ${fixture.date} ${fixture.pitcher}`,
+      hasStoredActionUrl,
+    `archived Start of the Day action photo fixture must stay stored locally, curator-clean, and focal-pointed: ${fixture.date} ${fixture.pitcher}`,
   );
 }
 
@@ -765,12 +763,10 @@ for (const leader of await readArchivedStartOfDayLeaders()) {
   );
 
   const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
-  const hasAllowedActionUrl =
+  const hasStoredActionUrl =
     typeof metadata.imageUrl === "string" &&
-    (metadata.imageUrl.startsWith("/images/top-performer-action-shots/") ||
-      metadata.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") ||
-      metadata.imageUrl.startsWith("https://images2.minutemediacdn.com/image/upload/") ||
-      metadata.imageUrl.startsWith("https://s.hdnux.com/photos/"));
+    metadata.imageUrl.startsWith("/images/top-performer-action-shots/") &&
+    existsSync(`public${metadata.imageUrl}`);
 
   assert(
     metadata.clean === true &&
@@ -783,8 +779,8 @@ for (const leader of await readArchivedStartOfDayLeaders()) {
       metadata.focalPoint.x <= 100 &&
       metadata.focalPoint.y >= 0 &&
       metadata.focalPoint.y <= 100 &&
-      hasAllowedActionUrl,
-    `archived 2026 Start of the Day action photo must stay stored, curator-clean, and mobile-croppable: ${leader.date} ${leader.pitcherName}`,
+      hasStoredActionUrl,
+    `archived 2026 Start of the Day action photo must stay stored locally, curator-clean, and mobile-croppable: ${leader.date} ${leader.pitcherName}`,
   );
 }
 

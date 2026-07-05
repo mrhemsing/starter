@@ -1,8 +1,17 @@
 {
   "startId": "2026-06-25-hou-det-837227",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/zz27oislrhk2tbrv4dro.jpg",
-  "alt": "Tatsuya Imai's first strikeout of the game",
-  "objectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/video/kevin-mcgonigle-strikes-out-swinging-dujtru",
-  "expiresAt": 1785074594046
+  "imageUrl": "/images/top-performer-action-shots/2026-06-25-hou-det-837227-action.jpg",
+  "alt": "Tatsuya Imai pitching action photo",
+  "clean": true,
+  "objectPosition": "50% 45%",
+  "mobileObjectPosition": "50% 45%",
+  "playUrl": "https://www.mlb.com/video/tatsuya-imai-s-first-strikeout-of-the-game",
+  "expiresAt": 1785785882333,
+  "focalPoint": {
+    "x": 50,
+    "y": 45
+  },
+  "reviewNote": "Curated rendered Start of the Day action image: Tatsuya Imai, 2026-06-25",
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/zz27oislrhk2tbrv4dro.jpg",
+  "storage": "local-static"
 }

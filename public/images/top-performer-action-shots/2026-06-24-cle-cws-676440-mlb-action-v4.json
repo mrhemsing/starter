@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-24-cle-cws-676440",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/a3zd2pfcm8e9axd7rrgb.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-24-cle-cws-676440-action.jpg",
   "alt": "Tanner Bibee pitching action photo for 2026-06-24",
   "attribution": "20260624_CLE_BIBEE_FIRST_K_B2",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824583",
   "reviewedAt": "2026-07-04T18:29:09.600Z",
   "reviewNote": "Curated Start of the Day action image: Tanner Bibee K's Andrew Benintendi",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/a3zd2pfcm8e9axd7rrgb.jpg",
+  "storage": "local-static"
 }

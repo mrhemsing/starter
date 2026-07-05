@@ -1,6 +1,6 @@
 {
   "startId": "2026-03-29-kc-atl-607625",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/g3tkjrff0jdcu6is7rh6.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-03-29-kc-atl-607625-action.jpg",
   "alt": "Seth Lugo pitching action photo for 2026-03-29",
   "attribution": "GettyImages-2268463567",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824944",
   "reviewedAt": "2026-07-04T18:29:09.574Z",
   "reviewNote": "Curated Start of the Day action image: Seth Lugo K's three vs. Braves",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/g3tkjrff0jdcu6is7rh6.jpg",
+  "storage": "local-static"
 }

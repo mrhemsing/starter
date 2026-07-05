@@ -1,6 +1,6 @@
 {
   "startId": "2026-05-25-mil-stl-694819",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/enaf3kkoecthtvy8z8st.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-05-25-mil-stl-694819-action.jpg",
   "alt": "Jacob Misiorowski pitching action photo for 2026-05-25",
   "attribution": "Jacob Misiorowski's dominant start vs. Cardinals - thumbnail",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/823784",
   "reviewedAt": "2026-07-04T18:29:09.592Z",
   "reviewNote": "Curated Start of the Day action image: Jacob Misiorowski K's 12, flirts with no-hitter",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/enaf3kkoecthtvy8z8st.jpg",
+  "storage": "local-static"
 }

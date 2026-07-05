@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-03-det-tb-675512",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/jhemt5laregzvobrhjgl.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-03-det-tb-675512-action.jpg",
   "alt": "Troy Melton pitching action photo for 2026-06-03",
   "attribution": "Troy Melton's five strikeouts - thumbnail",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/822973",
   "reviewedAt": "2026-07-04T18:29:09.594Z",
   "reviewNote": "Curated Start of the Day action image: Troy Melton's five strikeouts",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/jhemt5laregzvobrhjgl.jpg",
+  "storage": "local-static"
 }

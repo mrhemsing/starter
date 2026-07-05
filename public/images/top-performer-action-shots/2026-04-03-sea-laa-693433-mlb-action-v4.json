@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-03-sea-laa-693433",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/su9xdc6zfyea1w1blnbu.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-03-sea-laa-693433-action.jpg",
   "alt": "Bryan Woo pitching action photo for 2026-04-03",
   "attribution": "MLB image feed",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824056",
   "reviewedAt": "2026-07-04T18:29:09.576Z",
   "reviewNote": "Curated Start of the Day action image: Bryan Woo strikes out Yoan Moncada",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/su9xdc6zfyea1w1blnbu.jpg",
+  "storage": "local-static"
 }

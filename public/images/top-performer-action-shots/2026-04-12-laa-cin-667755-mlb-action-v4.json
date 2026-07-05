@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-12-laa-cin-667755",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/hcqr2g7vku05uuzzht19.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-12-laa-cin-667755-action.jpg",
   "alt": "José Soriano pitching action photo for 2026-04-12",
   "attribution": "gettyimages-2271026853-612x612",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824533",
   "reviewedAt": "2026-07-04T18:29:09.579Z",
   "reviewNote": "Curated Start of the Day action image: José Soriano's dominant 10-strikeout performance",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/hcqr2g7vku05uuzzht19.jpg",
+  "storage": "local-static"
 }

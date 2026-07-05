@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-09-tb-bos-607259",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/cux7u9xmiuoaio13sf5e.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-09-tb-bos-607259-action.jpg",
   "alt": "Nick Martinez pitching action photo for 2026-06-09",
   "attribution": "AP26160831016900",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/822969",
   "reviewedAt": "2026-07-04T18:29:09.596Z",
   "reviewNote": "Curated Start of the Day action image: Nick Martinez fans Willson Contreras ",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/cux7u9xmiuoaio13sf5e.jpg",
+  "storage": "local-static"
 }

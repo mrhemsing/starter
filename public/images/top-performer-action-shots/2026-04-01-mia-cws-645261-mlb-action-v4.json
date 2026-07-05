@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-01-mia-cws-645261",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/t1g7ibdqdxkqe3zs4scn.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-01-mia-cws-645261-action.jpg",
   "alt": "Sandy Alcantara pitching action photo for 2026-04-01",
   "attribution": "GettyImages-2269425119",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/823889",
   "reviewedAt": "2026-07-04T18:29:09.575Z",
   "reviewNote": "Curated Start of the Day action image: Sandy Alcantara complete-game shutout action photo",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/t1g7ibdqdxkqe3zs4scn.jpg",
+  "storage": "local-static"
 }

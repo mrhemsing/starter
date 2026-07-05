@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-11-kc-cws-608379",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/javgilcebjmrfg14wswt.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-11-kc-cws-608379-action.jpg",
   "alt": "Michael Wacha pitching action photo for 2026-04-11",
   "attribution": "MLB image feed",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824129",
   "reviewedAt": "2026-07-04T18:29:09.578Z",
   "reviewNote": "Curated Start of the Day action image: Michael Wacha strikes out seven",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/javgilcebjmrfg14wswt.jpg",
+  "storage": "local-static"
 }

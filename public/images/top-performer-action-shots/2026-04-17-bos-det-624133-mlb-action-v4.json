@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-17-bos-det-624133",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/ydjxzfljq7vdm2a7geqb.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-17-bos-det-624133-action.jpg",
   "alt": "Ranger Suarez pitching action photo for 2026-04-17",
   "attribution": "GettyImages-2271849696",
   "clean": true,
@@ -13,5 +13,7 @@
   "playUrl": "https://www.mlb.com/gameday/824778",
   "reviewedAt": "2026-07-04T18:29:09.580Z",
   "reviewNote": "Curated Start of the Day action image: Ranger Suarez strikes out Kevin McGonigle",
-  "expiresAt": 1814725749571
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/ydjxzfljq7vdm2a7geqb.jpg",
+  "storage": "local-static"
 }
