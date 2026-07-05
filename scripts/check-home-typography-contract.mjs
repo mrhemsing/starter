@@ -24,6 +24,7 @@ const [
   methodologyPage,
   leaderboardPage,
   pitchersPage,
+  mlbSeasonKicker,
 ] = await Promise.all([
   readFile("src/app/globals.css", "utf8"),
   readFile("src/components/wrap-safe-text.tsx", "utf8"),
@@ -42,6 +43,7 @@ const [
   readFile("src/app/methodology/page.tsx", "utf8"),
   readFile("src/app/leaderboard/page.tsx", "utf8"),
   readFile("src/app/pitchers/page.tsx", "utf8"),
+  readFile("src/components/mlb-season-kicker.tsx", "utf8"),
 ]);
 
 assert(
@@ -68,14 +70,26 @@ assert(
 assert(
   siteHeader.includes("site-header-nav") &&
     siteHeader.includes('import { currentSeasonFromDate } from "@/lib/season";') &&
+    siteHeader.includes('import { MlbSeasonKicker } from "@/components/mlb-season-kicker";') &&
     siteHeader.includes("const currentSeason = currentSeasonFromDate(today);") &&
     siteHeader.includes('className="site-logo-lockup"') &&
     siteHeader.includes('<Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">') &&
-    siteHeader.includes('<p className="site-logo-season-kicker">{currentSeason} MLB Season</p>') &&
+    siteHeader.includes("<MlbSeasonKicker season={currentSeason} />") &&
     siteHeader.includes("items-center justify-between gap-4 pb-5") &&
     !siteHeader.includes("border-b border-white/10") &&
     siteHeader.includes("<SiteNav active={active} today={today} rankedDate={rankedDate} />"),
-  "site header must own the shared home-linking logo/nav and season kicker without a bottom hairline",
+  "site header must own the shared home-linking logo/nav and MLB season kicker without a bottom hairline",
+);
+
+assert(
+  mlbSeasonKicker.includes("function MlbLogoMark()") &&
+    mlbSeasonKicker.includes('viewBox="0 0 171.69131 92.56002"') &&
+    mlbSeasonKicker.includes('fill="#BF0D3E"') &&
+    mlbSeasonKicker.includes('fill="#041E42"') &&
+    mlbSeasonKicker.includes('className="site-logo-mlb-mark"') &&
+    mlbSeasonKicker.includes("site-logo-mlb-lockup") &&
+    mlbSeasonKicker.includes("<span>MLB</span>"),
+  "season kicker must render the supplied inline MLB SVG mark before the MLB label",
 );
 
 assert(
@@ -166,12 +180,15 @@ assert(
 );
 
 assert(
-  slateCounts.includes("whitespace-nowrap") &&
+  slateCounts.includes("sm:whitespace-nowrap") &&
     slateCounts.includes("overflow-hidden") &&
-    slateCounts.includes("text-ellipsis") &&
+    slateCounts.includes("sm:text-ellipsis") &&
     slateCounts.includes("{label}") &&
-    !slateCounts.includes("Upcoming"),
-  "homepage status line must stay one line tall without the upcoming arrow link",
+    slateCounts.includes("splitPreFirstPitchStatusLine(label, state.state)") &&
+    slateCounts.includes("router.refresh()") &&
+    slateCounts.includes('aria-label={label}') &&
+    slateCounts.includes("liveDateHref(state.date)"),
+  "homepage status line must keep desktop ellipsis, mobile pre-first-pitch wrapping, and stale-shell refresh behavior",
 );
 
 assert(
