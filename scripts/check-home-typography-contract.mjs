@@ -91,6 +91,7 @@ assert(
     globals.includes(".site-logo-season-kicker") &&
     globals.includes("box-sizing: border-box;") &&
     globals.includes("display: flex;") &&
+    globals.includes("margin-top: 5px;") &&
     globals.includes("padding-inline: 0;") &&
     globals.includes("white-space: nowrap;") &&
     globals.includes(".site-logo-season-kicker::before,") &&
