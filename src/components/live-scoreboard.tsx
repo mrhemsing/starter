@@ -297,7 +297,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="absolute inset-0 -z-20 h-full w-full object-cover"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"
           priority={false}
         />
 

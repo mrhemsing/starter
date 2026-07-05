@@ -111,6 +111,10 @@ p,
   object-fit: inherit;
 }
 
+.live-slab-background-image.object-cover {
+  object-fit: initial;
+}
+
 .site-logo-season-kicker::before,
 .site-logo-season-kicker::after {
   background: rgb(161 161 170 / 0.48);

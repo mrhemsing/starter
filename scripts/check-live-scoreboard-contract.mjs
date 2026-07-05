@@ -170,6 +170,9 @@ assert(
     liveComponent.includes('className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30"') &&
     !liveComponent.includes('className="mt-6 overflow-hidden rounded border border-white/10 bg-black/30"') &&
     liveComponent.includes('src="/images/slab-2.png"') &&
+    liveComponent.includes('className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"') &&
+    globals.includes(".live-slab-background-image.object-cover") &&
+    globals.includes("object-fit: initial;") &&
     liveComponent.includes('className="live-slab-image h-auto w-full object-cover"') &&
     globals.includes(".live-slab-image.object-cover") &&
     globals.includes("object-fit: inherit;") &&
