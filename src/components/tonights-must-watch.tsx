@@ -808,8 +808,10 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           <LikelyOpenerBadge starter={starter} align={align} />
           {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
-              <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
-              {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
+              <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
+                <StarterFormScoreLine starter={starter} accentColor={accent.color} />
+                {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
+              </div>
               <StarterStatusChips starter={starter} />
               <FormDriverChips chips={starter.driverChips} limit={3} compact />
             </div>
@@ -1161,7 +1163,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       <div className="ml-auto text-right">
         {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
           <>
-            <p className={`font-mono text-sm ${tierTextClass(starter.tier)}`} style={{ color: accent.color }}>{starter.rgs.toFixed(1)}<EraAnchor starter={starter} /></p>
+            <StarterFormScoreLine starter={starter} accentColor={accent.color} />
             {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
           </>
         ) : (
@@ -1461,6 +1463,19 @@ function EraAnchor({ starter }: { starter: TonightStarter }) {
   if (typeof era !== "number") return <span className="text-zinc-500"> · —</span>;
   if (ip < 10) return null;
   return <span className="font-normal text-zinc-500" title="ERA over the selected recent-start form window"> · {era.toFixed(2)} L5 ERA</span>;
+}
+
+function StarterFormScoreLine({ starter, accentColor }: { starter: TonightStarter; accentColor: string }) {
+  return (
+    <p
+      className={`font-mono text-[11px] leading-none ${starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`}
+      style={{ color: accentColor }}
+      data-starter-form-context-line="rgs-era"
+    >
+      {starter.rgs?.toFixed(1)}
+      <EraAnchor starter={starter} />
+    </p>
+  );
 }
 
 function formatSigned(value: number) {
