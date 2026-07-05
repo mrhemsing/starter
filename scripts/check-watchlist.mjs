@@ -58,6 +58,13 @@ assert(
     watchlistPageSource.includes('SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)}'),
   "watchlist page should pin followed live arms with provisional GS+ and live-board links",
 );
+assert(
+  watchlistPageSource.includes('data-responsive-check="watchlist-summary-stats"') &&
+    watchlistPageSource.includes("mt-5 grid grid-cols-3 gap-2 font-mono text-xs sm:gap-3") &&
+    watchlistPageSource.includes("min-w-0 rounded border border-white/10 bg-[#101014] p-2 sm:p-3") &&
+    watchlistPageSource.includes("text-[8px] uppercase leading-4 tracking-[0.12em] text-zinc-500 sm:text-[10px]"),
+  "watchlist summary stats must render as three equal mobile columns with compact labels",
+);
 
 async function reservePort() {
   const server = net.createServer();

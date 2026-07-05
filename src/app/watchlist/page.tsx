@@ -70,7 +70,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
             <span className="block">Follow starters from Heat Check or pitcher pages.</span>
             <span className="block lg:whitespace-nowrap">This view joins your followed arms to current Form, next scheduled start, and digest-worthy events.</span>
           </p>
-          <div className="mt-5 grid gap-3 font-mono text-xs sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-xs sm:gap-3" data-responsive-check="watchlist-summary-stats">
             <SummaryStat label="Followed" value={String(watchlist.entries.length)} />
             <SummaryStat label="Digest events" value={String(watchlist.digestEvents.length)} />
             <SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)} />
@@ -331,9 +331,9 @@ function FollowSearchResults({ results, followedIds, query }: { results: FormSum
 
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-3">
+    <div className="min-w-0 rounded border border-white/10 bg-[#101014] p-2 sm:p-3">
       <p className="text-zinc-50">{value}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</p>
+      <p className="mt-1 text-[8px] uppercase leading-4 tracking-[0.12em] text-zinc-500 sm:text-[10px] sm:tracking-[0.16em]">{label}</p>
     </div>
   );
 }
