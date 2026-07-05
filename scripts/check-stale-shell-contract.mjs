@@ -23,8 +23,9 @@ const [
 
 assert(
   layout.includes('import { TTS_BUILD_STAMP } from "@/lib/build-stamp";') &&
-    layout.includes('"tts-build": TTS_BUILD_STAMP'),
-  "root layout must emit exactly one tts-build meta tag from the shared metadata object",
+    layout.includes('<meta name="tts-build" content={TTS_BUILD_STAMP} />') &&
+    !layout.includes('"tts-build": TTS_BUILD_STAMP'),
+  "root layout must emit the tts-build meta tag directly so every route receives the same build stamp",
 );
 
 assert(
@@ -80,8 +81,45 @@ assert(
   "homepage must render dynamically while the stale-shell remediation is active",
 );
 
-console.log("stale shell contract ok: primary nav uses stable links, request-time redirects, and tts-build metadata");
+assertDeepEqual(
+  [
+    "/",
+    "/starts/latest",
+    "/starts/2026-07-04",
+    "/heat-check",
+    "/upcoming",
+    "/live",
+    "/watchlist",
+    "/duels",
+    "/pitchers/676440/form",
+    "/starts/2026-07-04",
+    "/starts/2026-07-04/logan-gilbert-669302",
+    "/methodology",
+    "/best-starts/2026-07",
+  ].filter((route, index, routes) => routes.indexOf(route) === index),
+  [
+    "/",
+    "/starts/latest",
+    "/starts/2026-07-04",
+    "/heat-check",
+    "/upcoming",
+    "/live",
+    "/watchlist",
+    "/duels",
+    "/pitchers/676440/form",
+    "/starts/2026-07-04/logan-gilbert-669302",
+    "/methodology",
+    "/best-starts/2026-07",
+  ],
+  "stale shell verification route set must cover home, starts, heat-check, upcoming, live, watchlist, duels, pitchers, start detail, methodology, and best-starts",
+);
+
+console.log("stale shell contract ok: primary nav uses stable links, request-time redirects, and root tts-build metadata");
 
 function countOccurrences(value, needle) {
   return value.split(needle).length - 1;
+}
+
+function assertDeepEqual(actual, expected, message) {
+  assert.deepEqual(actual, expected, message);
 }

@@ -14,6 +14,7 @@ const files = {
   socialCard: "src/lib/daily-social-card.tsx",
   socialPost: "src/lib/data/daily-social-post-service.ts",
   formService: "src/lib/data/form-service.ts",
+  mlbArchive: "src/lib/data/mlb-archive.ts",
   types: "src/lib/types.ts",
 };
 
@@ -27,7 +28,7 @@ assert.match(helper, /\$\{start\.pitcher\.team\} vs \$\{start\.opponent\}/, "Hom
 assert.match(helper, /export function startVenueLine/, "Venue lines must share the matchup formatter.");
 
 for (const [name, path] of Object.entries(files)) {
-  if (name === "helper" || name === "types" || name === "formService") continue;
+  if (name === "helper" || name === "types" || name === "formService" || name === "mlbArchive") continue;
   const source = read(path);
   assert.match(source, /startMatchupLabel/, `${path} must use the shared matchup formatter.`);
 }
@@ -39,9 +40,16 @@ assert.doesNotMatch(rankedStarts, /\{start\.pitcher\.team\} vs \{start\.opponent
 const formService = read(files.formService);
 assert.match(formService, /team: start\.pitcher\.team/, "Form points must carry team for pitcher game-log direction labels.");
 assert.match(formService, /side: start\.side/, "Form points must carry side for pitcher game-log direction labels.");
+assert.match(formService, /import \{ startMatchupLabel \} from "@\/lib\/start-matchup-label";/, "Pitcher form fallback starts must use the shared matchup formatter.");
+assert.match(formService, /const matchupLabel = startMatchupLabel\(\{ pitcher: \{ team: profile\.team \}, opponent: start\.opponent, side: start\.side \}\);/, "Pitcher profile fallback context labels must preserve home/away orientation.");
+assert.match(formService, /opponent: start\.opponent,\s+side: start\.side,\s+result: start\.result,/m, "Pitcher profile fallback summaries must carry side through to form points.");
+
+const mlbArchive = read(files.mlbArchive);
+assert.match(mlbArchive, /opponent: start\.opponent,\s+side: start\.side,\s+result: start\.result,/m, "Archived pitcher season profiles must preserve side for pitcher page game-log orientation.");
 
 const types = read(files.types);
 assert.match(types, /team: string;[\s\S]*opp: string;[\s\S]*side\?: "home" \| "away";/, "FormStartPoint must expose team and side.");
+assert.match(types, /Pick<StartSummary, "id" \| "date" \| "opponent" \| "side" \| "result"/, "PitcherStartLogEntry must carry side from the schedule source.");
 
 const forbidden = [
   "src/app/starts/[id]/page.tsx",

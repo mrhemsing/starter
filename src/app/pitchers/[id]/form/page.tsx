@@ -131,7 +131,9 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{summary.team} / Last {window} qualified starts</p>
               <h1 className="mt-3 break-words font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl lg:text-7xl">{summary.name}</h1>
               <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
-                Form through {form.formThroughDate ?? "pending"}{form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}
+                {form.formThroughDate
+                  ? `Form through ${form.formThroughDate}${form.stale && form.latestScoredStartDate ? ` / updating from ${form.latestScoredStartDate}` : ""}`
+                  : "Form data loading"}
               </p>
               <PitcherAvailabilityNote availability={summary.availability} className="mt-3" />
               <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">

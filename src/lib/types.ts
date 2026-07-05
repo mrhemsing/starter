@@ -799,7 +799,7 @@ export type FeaturedStartHighlight = {
   watchUrl: string;
 };
 
-export type PitcherStartLogEntry = Pick<StartSummary, "id" | "date" | "opponent" | "result" | "line" | "gameScorePlus" | "gameScoreV2"> & {
+export type PitcherStartLogEntry = Pick<StartSummary, "id" | "date" | "opponent" | "side" | "result" | "line" | "gameScorePlus" | "gameScoreV2"> & {
   gamePk?: number;
   pitchEvents?: PitchEvent[];
 };

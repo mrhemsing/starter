@@ -838,6 +838,7 @@ export async function readArchivedPitcherSeasonProfile(pitcherMlbId: number, sea
           gamePk: start.gamePk,
           date,
           opponent: start.opponent,
+          side: start.side,
           result: start.result,
           line: start.line,
           gameScorePlus: scoreArchivedPitcherStartLine(start.line),

@@ -7,6 +7,7 @@ import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } fro
 import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonDepthStats, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
@@ -327,8 +328,9 @@ async function buildPitcherSeasonFallbackStarts(pitcherId: string, season: strin
 }
 
 function pitcherProfileStartToSummary(profile: SeasonFallbackProfile, start: SeasonFallbackProfile["starts"][number], index: number): StartSummary {
+  const matchupLabel = startMatchupLabel({ pitcher: { team: profile.team }, opponent: start.opponent, side: start.side });
   const context = {
-    label: `${profile.team} vs ${start.opponent}`,
+    label: matchupLabel,
     whiffDeltaPct: 0,
     velocityDeltaMph: 0,
     parkRunFactor: 1,
@@ -353,6 +355,7 @@ function pitcherProfileStartToSummary(profile: SeasonFallbackProfile, start: Sea
       headshotUrl: profile.headshotUrl ?? `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${profile.mlbId}/headshot/67/current`,
     },
     opponent: start.opponent,
+    side: start.side,
     result: start.result,
     line: start.line,
     gameScorePlus: start.gameScorePlus,

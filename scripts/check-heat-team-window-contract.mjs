@@ -8,6 +8,9 @@ function assert(condition, message) {
 
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const formPage = await readFile("src/app/form/page.tsx", "utf8");
+const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
+const heatLoadingShell = await readFile("src/components/heat-check-loading-shell.tsx", "utf8");
+const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
 const leaderboardApi = await readFile("src/app/api/form/leaderboard/route.ts", "utf8");
 const heatCheckWarmup = await readFile("src/components/heat-check-filter-warmup.tsx", "utf8");
 const warmCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
@@ -29,6 +32,20 @@ assert(
   formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
     leaderboardApi.includes("team: searchParams.get(\"team\") ?? undefined,"),
   "Heat Check page and API must pass team filters into the form leaderboard builder",
+);
+
+assert(
+  formPage.includes("const formThroughLabel = leaderboard.formThroughDate") &&
+    formPage.includes(': seasonView ? "Season data loading" : "Form data loading";') &&
+    heatHero.includes('"Form data loading"') &&
+    heatLoadingShell.includes('"Season data loading"') &&
+    heatLoadingShell.includes('"Form data loading"') &&
+    pitcherFormPage.includes('"Form data loading"') &&
+    !formPage.includes("through pending") &&
+    !heatHero.includes("through pending") &&
+    !heatLoadingShell.includes("through pending") &&
+    !pitcherFormPage.includes("through pending"),
+  "Heat Check and pitcher profile form-through fallbacks must not render sentence templates ending in pending",
 );
 
 assert(

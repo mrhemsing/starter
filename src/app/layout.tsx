@@ -51,9 +51,6 @@ export const metadata: Metadata = {
     description: "Daily starting-pitcher rankings, rolling form, probable matchups, and GS+ scores for every MLB start.",
     images: [{ url: "/opengraph-image", alt: "Toe the Slab MLB starting pitcher rankings" }],
   },
-  other: {
-    "tts-build": TTS_BUILD_STAMP,
-  },
 };
 
 export default function RootLayout({
@@ -66,6 +63,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${tourney.variable} h-full antialiased`}
       >
+      <head>
+        <meta name="tts-build" content={TTS_BUILD_STAMP} />
+      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">

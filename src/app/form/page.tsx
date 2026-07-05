@@ -190,10 +190,15 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const allTeamsView = !team;
   const trendPulseView = trendView && !query && !band && !motion;
   const pulsePitchers = team ? trendQualifiedPitchers : qualifiedPitchers;
-  const pulseBandCounts = HEAT_BANDS.map((candidate) => ({
+  const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
-    count: pulsePitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
+    count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
   }));
+  const teamBandCounts = HEAT_BANDS.map((candidate) => ({
+    ...candidate,
+    count: trendQualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
+  }));
+  const pulseBandCounts = team ? teamBandCounts : leagueBandCounts;
   const pulseHeatingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "heating").length;
   const pulseCoolingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "cooling").length;
   const pulseMeanGS = meanGsPlus(pulsePitchers) ?? leaderboard.leagueMeanGS;
@@ -215,7 +220,9 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
   const throughPrefix = seasonView ? "Season through" : "Form through";
-  const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
+  const formThroughLabel = leaderboard.formThroughDate
+    ? `${throughPrefix} ${leaderboard.formThroughDate}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`
+    : seasonView ? "Season data loading" : "Form data loading";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">

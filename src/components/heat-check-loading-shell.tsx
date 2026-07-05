@@ -46,7 +46,7 @@ export function HeatCheckLoadingControls({ view }: HeatCheckLoadingShellProps) {
       <div className="grid gap-4" data-responsive-check="heat-team-filter">
         <div className="border-b border-white/10 pb-3">
           <p className="font-mono text-xs uppercase leading-4 tracking-[0.16em] text-zinc-400">
-            {view === "season" ? "Season through pending" : "Form through pending"}
+            {view === "season" ? "Season data loading" : "Form data loading"}
           </p>
         </div>
         <div className="hidden sm:flex sm:flex-wrap sm:items-end sm:gap-3">
