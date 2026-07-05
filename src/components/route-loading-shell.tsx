@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
 import type { NavKey } from "@/components/site-nav";
 import { logNavigationSkeletonShown } from "@/lib/navigation-skeleton-log";
 
@@ -74,7 +75,7 @@ function InstantShellHeader({ active, today, rankedDate }: { active: NavKey | nu
         <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
           Toe the Slab
         </Link>
-        <p className="site-logo-season-kicker">{today.slice(0, 4)} MLB Season</p>
+        <MlbSeasonKicker season={today.slice(0, 4)} />
       </div>
       <nav className="hidden items-center gap-6 font-mono text-xs uppercase tracking-[0.18em] text-zinc-400 md:flex" aria-label="Primary">
         {items.map((item) => (

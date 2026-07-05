@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
 import { SiteNav, type NavKey } from "@/components/site-nav";
 import { currentSeasonFromDate } from "@/lib/season";
 
@@ -23,7 +24,7 @@ export async function SiteHeader({
         <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
           Toe the Slab
         </Link>
-        <p className="site-logo-season-kicker">{currentSeason} MLB Season</p>
+        <MlbSeasonKicker season={currentSeason} />
       </div>
       <SiteNav active={active} today={today} rankedDate={rankedDate} />
     </header>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
 
 export function NotFoundCard() {
   return (
@@ -9,7 +10,7 @@ export function NotFoundCard() {
             <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
               Toe the Slab
             </Link>
-            <p className="site-logo-season-kicker">MLB Season</p>
+            <MlbSeasonKicker />
           </div>
         </header>
         <section className="mt-8 max-w-2xl rounded border border-white/10 bg-white/[0.03] p-5 sm:p-6" data-responsive-check="not-found-card">
