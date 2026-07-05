@@ -24,7 +24,8 @@ export function SlateCounts({ initialState, initialLabel, variant }: SlateCounts
 
     const refresh = async () => {
       try {
-        const response = await fetch(`/api/home/status?date=${encodeURIComponent(initialState.date)}`, { cache: "no-store" });
+        const statusPath = variant === "home" ? "/api/home/status" : `/api/home/status?date=${encodeURIComponent(initialState.date)}`;
+        const response = await fetch(statusPath, { cache: "no-store" });
         if (!response.ok) return;
         const nextState = (await response.json()) as SlateProgressState;
         if (cancelled) return;
@@ -96,7 +97,7 @@ function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: s
 
   return (
     <div
-      className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
+      className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
       data-responsive-check="home-slate-status-line"
       data-slate-counts="home"
       data-slate-date={state.date}
@@ -188,12 +189,12 @@ function shouldLinkLiveScoreboard(state: SlateProgressState) {
 function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {
   if (state !== "pre-first-pitch") return null;
 
-  const marker = " · FIRST ";
+  const marker = " · first ";
   const markerIndex = line.indexOf(marker);
   if (markerIndex === -1) return null;
 
   return {
     prefix: line.slice(0, markerIndex),
-    detail: `FIRST ${line.slice(markerIndex + marker.length)}`,
+    detail: `first ${line.slice(markerIndex + marker.length)}`,
   };
 }

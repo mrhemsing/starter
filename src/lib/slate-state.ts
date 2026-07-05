@@ -140,16 +140,20 @@ export function getSlateProgressState(schedule: MlbSchedule, completedStarts = 0
 
 export function formatSlateStatusLine(state: SlateProgressState) {
   const dateLabel = formatStatusDate(state.date);
-  const todayDateLabel = `TODAY, ${dateLabel}`;
+  const todayDateLabel = `Today · ${dateLabel}`;
 
-  if (state.state === "no-games") return `${dateLabel} · NO GAMES TODAY`;
-  if (state.state === "all-starts-complete") return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;
-  if (state.state === "reconciling") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
-  if (state.state === "starts-in-progress" && state.liveStarts > 0) return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
-  if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;
+  if (state.state === "no-games") return `${dateLabel} · no games today`;
+  if (state.state === "all-starts-complete") return `${todayDateLabel} · all ${state.totalStarts} starts final`;
+  if (state.state === "reconciling") return `${todayDateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;
+  if (state.state === "starts-in-progress" && state.liveStarts > 0) return `Today · ${state.liveStarts} live · ${state.completedStarts} of ${state.totalStarts} starts final`;
+  if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;
 
-  const countdown = state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED" ? state.countdownLabel : `IN ${state.countdownLabel}`;
-  return `${todayDateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;
+  const countdown = state.countdownLabel === "STARTING SOON"
+    ? "starting soon"
+    : state.countdownLabel === "DELAYED"
+      ? "delayed"
+      : `in ${state.countdownLabel}`;
+  return `${todayDateLabel} · first starter toes the slab ${countdown}`;
 }
 
 export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
@@ -157,11 +161,11 @@ export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
   if (durationMs <= 60 * 1000) return "STARTING SOON";
 
   const totalMinutes = Math.max(0, Math.ceil(durationMs / 60000));
-  if (totalMinutes < 60) return `${totalMinutes}M`;
+  if (totalMinutes < 60) return `${totalMinutes} m`;
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return `${hours}H ${minutes}M`;
+  return `${hours} Hr ${minutes} m`;
 }
 
 export function normalizeScheduleStatus(game: MlbSchedule["games"][number]): NormalizedScheduleStatus {
@@ -190,5 +194,5 @@ function formatStatusDate(date: string) {
     month: "long",
     day: "numeric",
     timeZone: "UTC",
-  }).format(parsed).toUpperCase();
+  }).format(parsed);
 }

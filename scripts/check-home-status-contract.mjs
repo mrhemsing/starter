@@ -76,32 +76,32 @@ assert(
 assert(
   slateState.includes('state: "starts-in-progress"') &&
     slateState.includes('state: "reconciling"') &&
-    slateState.includes('return `TODAY · ${state.liveStarts} LIVE · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;') &&
+    slateState.includes('return `Today · ${state.liveStarts} live · ${state.completedStarts} of ${state.totalStarts} starts final`;') &&
     !slateState.includes('return `TODAY · ${state.liveGames} LIVE') &&
-    slateState.includes('return `${todayDateLabel} · ${state.completedStarts} OF ${state.totalStarts} STARTS FINAL`;'),
+    slateState.includes('return `${todayDateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;'),
   "homepage in-progress line must render live and completed starts",
 );
 
 assert(
   slateState.includes('state: "all-starts-complete"') &&
-    slateState.includes('return `${todayDateLabel} · ALL ${state.totalStarts} STARTS FINAL`;'),
+    slateState.includes('return `${todayDateLabel} · all ${state.totalStarts} starts final`;'),
   "homepage all-final line must render completed starts",
 );
 
 assert(
-  slateState.includes('return `${dateLabel} · NO GAMES TODAY`;'),
+  slateState.includes('return `${dateLabel} · no games today`;'),
   "homepage no-games line must render the off-day state",
 );
 
 assert(
-  slateState.includes('const todayDateLabel = `TODAY, ${dateLabel}`;') &&
-    slateState.includes('return `${todayDateLabel} · LIVE GS+ · FIRST STARTER TOES THE SLAB ${countdown}`;'),
-  "homepage pre-first-pitch line must use TODAY, date before LIVE GS+",
+  slateState.includes('const todayDateLabel = `Today · ${dateLabel}`;') &&
+    slateState.includes('return `${todayDateLabel} · first starter toes the slab ${countdown}`;'),
+  "homepage pre-first-pitch line must use Today, date, and first starter countdown copy",
 );
 
 assert(
-  slateState.includes(".format(parsed).toUpperCase()"),
-  "homepage status date label must render uppercase full month text like JUNE 17",
+  !slateState.includes(".format(parsed).toUpperCase()"),
+  "homepage status date label must not force uppercase month text",
 );
 
 assert(
@@ -114,7 +114,10 @@ assert(
     slateState.includes("durationMs <= 60 * 1000") &&
     slateState.includes('return "STARTING SOON";') &&
     slateState.includes('return "DELAYED";') &&
-    slateState.includes('state.countdownLabel === "STARTING SOON" || state.countdownLabel === "DELAYED"') &&
+    slateState.includes('state.countdownLabel === "STARTING SOON"') &&
+    slateState.includes('state.countdownLabel === "DELAYED"') &&
+    slateState.includes('return `${totalMinutes} m`;') &&
+    slateState.includes('return `${hours} Hr ${minutes} m`;') &&
     !slateState.includes("totalSeconds"),
   "homepage countdown must use minute granularity with starting-soon and delayed guards",
 );
@@ -122,10 +125,11 @@ assert(
 assert(
   slateCounts.includes("const SLATE_COUNTS_POLL_MS = 30_000;") &&
     slateCounts.includes("void refresh();") &&
+    slateCounts.includes('const statusPath = variant === "home" ? "/api/home/status" : `/api/home/status?date=${encodeURIComponent(initialState.date)}`;') &&
     slateCounts.includes("if (shouldContinuePolling)") &&
     slateCounts.includes("window.setTimeout(refresh, SLATE_COUNTS_POLL_MS)") &&
     !slateCounts.includes("window.setInterval(refresh"),
-  "shared slate counts island must mount-poll immediately and continue only while live starts remain",
+  "shared slate counts island must mount-poll immediately, let home refresh to the current date, and continue only while live starts remain",
 );
 
 assert(
@@ -151,13 +155,13 @@ assert(
 );
 
 assert(
-  slateCounts.includes('const marker = " · FIRST ";') &&
+  slateCounts.includes('const marker = " · first ";') &&
     slateCounts.includes('state !== "pre-first-pitch"') &&
     slateCounts.includes("mobilePreFirstPitchLine.prefix") &&
     slateCounts.includes("mobilePreFirstPitchLine.detail") &&
     slateCounts.includes("<br />") &&
     slateCounts.includes('className="hidden sm:inline"') &&
-    slateCounts.includes("`FIRST ${line.slice(markerIndex + marker.length)}`"),
+    slateCounts.includes("`first ${line.slice(markerIndex + marker.length)}`"),
   "homepage pre-first-pitch status must force a mobile break before FIRST without the leading dot",
 );
 
