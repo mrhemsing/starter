@@ -100,7 +100,18 @@ function InstantShellHeader({ active, today, rankedDate }: { active: NavKey | nu
 
 function LoadingControls({ kind }: { kind: RouteLoadingShellProps["controls"] }) {
   if (kind === "none") return null;
-  const controlCounts = kind === "profile" ? [3, 2] : kind === "ranked" ? [2, 3, 3] : [3, 4];
+  if (kind === "ranked") {
+    return (
+      <div className="mt-4 rounded border border-white/10 bg-[#101014]/95 p-2" data-navigation-shell-controls={kind}>
+        <div className="flex min-w-0 gap-2 overflow-hidden pr-14">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <span key={index} className="route-shell-shimmer h-[4.75rem] min-w-[3.5rem] rounded border border-white/10" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  const controlCounts = kind === "profile" ? [3, 2] : [3, 4];
   return (
     <div className="mt-4 grid gap-3 rounded border border-white/10 bg-[#101014]/95 p-4" data-navigation-shell-controls={kind}>
       {controlCounts.map((count, groupIndex) => (

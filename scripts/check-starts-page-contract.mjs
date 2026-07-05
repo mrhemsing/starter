@@ -399,50 +399,49 @@ assert(
     pageContextStrip.includes("data-context-primary") &&
     pageContextStrip.includes("data-context-meta") &&
     !slateDateNav.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
-    slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveLink, RankedStartsDatePicker } from "@/components/ranked-starts-archive-link";') &&
+    slateDateNav.includes('import { RankedStartsArchiveKeyboard, RankedStartsArchiveStrip, RankedStartsDatePicker } from "@/components/ranked-starts-archive-link";') &&
     slateDateNav.includes("<RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />") &&
-    slateDateNav.includes("<RankedStartsDatePicker activeDate={activeDate} className={rankedStartsArchiveDatePickerClass} />") &&
+    slateDateNav.includes("<RankedStartsArchiveStrip activeDate={activeDate} availableDates={availableDates} />") &&
+    slateDateNav.includes("<RankedStartsDatePicker activeDate={activeDate} min={minDate} max={maxDate} className={rankedStartsArchiveDatePickerClass} />") &&
     slateDateNav.includes('className="w-full min-w-0 font-mono uppercase"') &&
-    slateDateNav.includes('className="grid min-w-0 justify-items-start gap-2"') &&
-    slateDateNav.includes('className="block w-full min-w-0 font-mono text-xl font-semibold leading-tight tracking-normal text-zinc-100 sm:text-2xl sm:leading-none" data-context-primary') &&
-    slateDateNav.includes("<RankedEyebrowDateLabel date={activeDate} />") &&
-    slateDateNav.includes("function RankedEyebrowDateLabel") &&
-    slateDateNav.includes('className="flex min-w-0 flex-wrap items-baseline"') &&
-    slateDateNav.includes("aria-label={label}") &&
-    slateDateNav.includes('<span>{parts.weekday},</span>') &&
-    slateDateNav.includes('className="ml-[0.2em]"') &&
-    slateDateNav.includes("function formatRankedEyebrowDateParts") &&
-    slateDateNav.includes("data-ranked-date-label") &&
-    slateDateNav.includes('className="inline-flex max-w-full shrink-0 items-center gap-1.5"') &&
-    slateDateNav.includes("const rankedStartsArchiveStepClass =") &&
-    slateDateNav.includes('"inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 active:border-amber-300 active:bg-amber-300/15 active:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"') &&
-    slateDateNav.includes("const rankedStartsArchiveStepDisabledClass =") &&
-    slateDateNav.includes('"inline-flex h-10 w-10 items-center justify-center rounded border border-white/10 bg-[#101014] text-zinc-700"') &&
+    slateDateNav.includes('className="relative flex min-w-0 items-stretch rounded border border-white/10 bg-[#101014]/95 p-2"') &&
+    !slateDateNav.includes("<RankedEyebrowDateLabel") &&
+    !slateDateNav.includes("function RankedEyebrowDateLabel") &&
+    !slateDateNav.includes("rankedStartsArchiveStepClass") &&
+    !slateDateNav.includes("rankedStartsArchiveStepDisabledClass") &&
     slateDateNav.includes("const rankedStartsArchiveDatePickerClass =") &&
+    slateDateNav.includes('"absolute right-2 top-2 inline-flex h-[4.75rem] w-12 items-center justify-center rounded border border-white/10 bg-[#101014]') &&
     slateDateNav.includes("focus-within:border-amber-300/80") &&
-    slateDateNav.includes('ariaLabel={`Previous slate, ${formatRankedEyebrowDate(previousDate)}`}') &&
-    slateDateNav.includes('ariaLabel={`Next slate, ${formatRankedEyebrowDate(nextDate)}`}') &&
-    slateDateNav.includes('aria-label="No next slate"') &&
-    slateDateNav.includes('<span className="text-3xl font-semibold leading-none" aria-hidden="true">‹</span>') &&
-    slateDateNav.includes('<span className="text-3xl font-semibold leading-none" aria-hidden="true">›</span>') &&
-    !slateDateNav.includes("text-amber-300") &&
+    slateDateNav.includes("const minDate = availableDates[0];") &&
+    slateDateNav.includes("const maxDate = availableDates.at(-1);") &&
     !slateDateNav.includes("min-w-[23ch]") &&
     startsPage.includes('className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls"') &&
     startsPage.includes('className="grid min-w-0 justify-items-start gap-3"') &&
+    startsPage.includes("availableDates={archiveNavigation.availableDates}") &&
     !startsPage.includes('className="flex flex-wrap items-center justify-between gap-3"') &&
     slateCounts.includes('className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400"') &&
     !slateDateNav.includes("&lt;") &&
     !slateDateNav.includes("&gt;") &&
     !slateDateNav.includes("overflow-hidden rounded border border-white/10") &&
-    slateDateNav.includes('dataArchiveStep="previous"') &&
-    slateDateNav.includes('dataArchiveStep="next"') &&
+    !slateDateNav.includes('dataArchiveStep="previous"') &&
+    !slateDateNav.includes('dataArchiveStep="next"') &&
     rankedStartsArchiveLink.includes('"use client";') &&
     rankedStartsArchiveLink.includes('import { rankedStartsPath } from "@/lib/routes";') &&
     rankedStartsArchiveLink.includes("router.prefetch(href);") &&
     rankedStartsArchiveLink.includes("event.preventDefault();") &&
     rankedStartsArchiveLink.includes("router.push(href);") &&
+    rankedStartsArchiveLink.includes("export function RankedStartsArchiveStrip") &&
+    rankedStartsArchiveLink.includes('data-slate-strip="ranked-starts"') &&
+    rankedStartsArchiveLink.includes("availableDates.map((date, index)") &&
+    rankedStartsArchiveLink.includes('ariaCurrent={active ? "page" : undefined}') &&
+    rankedStartsArchiveLink.includes("anchorRef={active ? activeChipRef : undefined}") &&
+    rankedStartsArchiveLink.includes("strip.scrollTo({") &&
+    rankedStartsArchiveLink.includes('[scrollbar-width:none]') &&
+    rankedStartsArchiveLink.includes("maskImage: \"linear-gradient(to right, #000 0, #000 calc(100% - 5rem), transparent 100%)\"") &&
     rankedStartsArchiveLink.includes("export function RankedStartsDatePicker") &&
     rankedStartsArchiveLink.includes("value={activeDate}") &&
+    rankedStartsArchiveLink.includes("min={min}") &&
+    rankedStartsArchiveLink.includes("max={max}") &&
     rankedStartsArchiveLink.includes('data-archive-step="date-picker"') &&
     rankedStartsArchiveLink.includes('type="date"') &&
     rankedStartsArchiveLink.includes("const href = rankedStartsPath(nextDate);") &&

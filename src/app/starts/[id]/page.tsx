@@ -246,6 +246,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 activeDate={archiveNavigation.activeDate}
                 previousDate={archiveNavigation.previousDate}
                 nextDate={archiveNavigation.nextDate}
+                availableDates={archiveNavigation.availableDates}
               />
               {statusLabel ? (
                 <SlateCounts
