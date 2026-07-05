@@ -424,7 +424,7 @@ function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; mut
         <Link href={row.pitcherHref} className="pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [overflow-wrap:anywhere]">
           <MobileStackedPitcherName name={row.pitcherName} />
         </Link>
-        <p className="mt-1 font-mono text-xs text-zinc-400">
+        <p className="mt-1 font-mono text-xs leading-5 text-zinc-400">
           {liveOrFinalScore ? formatLine(row) : projectionLabel(row)}
           {row.inningLabel ? <InningLabel label={row.inningLabel} /> : null}
         </p>
@@ -496,8 +496,30 @@ function statusClass(status: LiveScoreboardRow["status"]) {
 
 function formatLine(row: LiveScoreboardRow) {
   const line = row.line;
-  const pitches = typeof row.pitchCount === "number" ? `, ${row.pitchCount} pitches` : "";
-  return `${line.inningsPitched.toFixed(1)} IP, ${line.strikeouts} K, ${line.earnedRuns} ER${pitches}`;
+  const stats = [
+    `${line.inningsPitched.toFixed(1)} IP`,
+    `${line.hits} H`,
+    `${line.earnedRuns} ER`,
+    `${line.walks} BB`,
+    `${line.strikeouts} K`,
+  ];
+
+  return (
+    <>
+      {stats.map((stat, index) => (
+        <span key={stat}>
+          {index > 0 ? ", " : null}
+          <span className="whitespace-nowrap">{stat}</span>
+        </span>
+      ))}
+      {typeof row.pitchCount === "number" ? (
+        <span className="hidden sm:inline">
+          {", "}
+          <span className="whitespace-nowrap">{row.pitchCount} pitches</span>
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 function formatScore(score: number | null) {

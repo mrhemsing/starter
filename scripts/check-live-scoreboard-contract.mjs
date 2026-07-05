@@ -306,6 +306,14 @@ assert(
     liveComponent.includes('status === "scheduled" ? "Scheduled" : "Warming"') &&
     countOccurrences(liveComponent, "<p suppressHydrationWarning>{updatedLabel}</p>") === 2 &&
     liveComponent.includes("{liveOrFinalScore ? formatLine(row) : projectionLabel(row)}") &&
+    liveComponent.includes("`${line.inningsPitched.toFixed(1)} IP`") &&
+    liveComponent.includes("`${line.hits} H`") &&
+    liveComponent.includes("`${line.earnedRuns} ER`") &&
+    liveComponent.includes("`${line.walks} BB`") &&
+    liveComponent.includes("`${line.strikeouts} K`") &&
+    liveComponent.includes('className="hidden sm:inline"') &&
+    liveComponent.includes("{row.pitchCount} pitches") &&
+    !liveComponent.includes("${line.strikeouts} K, ${line.earnedRuns} ER") &&
     liveComponent.includes("formatFirstPitch(row.firstPitch)") &&
     liveComponent.includes("function formatFirstPitch") &&
     liveComponent.includes("First pitch") &&
