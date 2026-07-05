@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [packageJson, homePage, ticker, provider, deferredSections, globals, methodology] = await Promise.all([
+const [packageJson, homePage, ticker, provider, deferredSections, globals, methodology, rankedStartsRevalidation, warmLiveStartsJob] = await Promise.all([
   readFile("package.json", "utf8"),
   readFile("src/app/page.tsx", "utf8"),
   readFile("src/components/home-live-ticker.tsx", "utf8"),
@@ -14,6 +14,8 @@ const [packageJson, homePage, ticker, provider, deferredSections, globals, metho
   readFile("src/components/home-deferred-sections.tsx", "utf8"),
   readFile("src/app/globals.css", "utf8"),
   readFile("src/app/methodology/page.tsx", "utf8"),
+  readFile("src/lib/data/ranked-starts-revalidation.ts", "utf8"),
+  readFile("src/lib/data/warm-live-starts-job.ts", "utf8"),
 ]);
 
 assert(
@@ -38,14 +40,23 @@ assert(
     provider.includes('"use client";') &&
     provider.includes('import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";') &&
     provider.includes("export const HOME_LIVE_BOARD_POLL_MS = 30 * 1000") &&
+    provider.includes("export const HOME_LIVE_BOARD_STALE_INITIAL_MS = 90 * 1000;") &&
+    provider.includes("Prevent stale ISR HTML from briefly showing a LIVE slate before the first no-store sync corrects it.") &&
     provider.includes("HOME_LIVE_BOARD_FIRST_PITCH_GRACE_MS = 15 * 1000") &&
-    provider.includes("const shouldPoll = Boolean(board?.hasGames && board.liveStarts > 0 && board.slateProgress.state !== \"all-starts-complete\");") &&
+    provider.includes("const [boardUnverified, setBoardUnverified] = useState(() => shouldVerifyStaleInitialBoard(initialBoard));") &&
+    provider.includes("const shouldPoll = Boolean(board?.hasGames && (board.liveStarts > 0 || boardUnverified) && board.slateProgress.state !== \"all-starts-complete\");") &&
     provider.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
+    provider.includes("setBoardUnverified(false);") &&
     provider.includes("syncLiveBoard().catch(() => undefined);") &&
     provider.includes("}, HOME_LIVE_BOARD_POLL_MS);") &&
+    provider.includes("function shouldVerifyStaleInitialBoard(board: LiveScoreboard | null)") &&
+    provider.includes("if (!board || board.liveStarts + board.warmingStarts === 0) return false;") &&
+    provider.includes("Date.now() - generatedAtMs > HOME_LIVE_BOARD_STALE_INITIAL_MS") &&
     provider.includes("window.setTimeout(() =>") &&
     provider.includes('row.status === "scheduled" || row.status === "warming"') &&
-    provider.includes("window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }))") &&
+    provider.includes("window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, {") &&
+    provider.includes("liveStarts: boardUnverified ? 0 : board.liveStarts") &&
+    provider.includes("warmingStarts: boardUnverified ? 0 : board.warmingStarts") &&
     ticker.includes('"use client";') &&
     ticker.includes('import { useHomeLiveBoard } from "@/components/home-live-board-provider";') &&
     !ticker.includes("fetchJson<LiveScoreboard>") &&
@@ -54,18 +65,24 @@ assert(
     ticker.includes("data-responsive-check=\"home-live-gs-ticker\"") &&
     ticker.includes('data-home-live-ticker-phase={phase}') &&
     ticker.includes('data-home-live-ticker-polling={shouldPoll ? "true" : "false"}') &&
+    ticker.includes('data-home-live-ticker-unverified={boardUnverified ? "true" : "false"}') &&
     ticker.includes('phase === "live" ? "LIVE" : "TODAY"') &&
-    ticker.includes('const phase = board && board.liveStarts > 0 ? "live" : "today";') &&
+    ticker.includes('const phase = board && board.liveStarts > 0 && !boardUnverified ? "live" : "today";') &&
     !ticker.includes("board.liveStarts > 0 || board.finalStarts > 0 || board.delayStarts > 0") &&
     !ticker.includes("shouldVerifyStaleSlate") &&
     !ticker.includes("scheduleFirstPitchSync") &&
-    ticker.includes("row.status === \"live\"") &&
+    ticker.includes('const liveRows = boardUnverified ? [] : board.rows') &&
+    ticker.includes('const upcomingRows = boardUnverified ? [] : board.rows') &&
     ticker.includes('entry.state === "live" ? <span className="text-zinc-500">--</span> : null') &&
     ticker.includes("row.scoreLabel === \"FINAL\"") &&
     ticker.includes('state: "final" as const') &&
     ticker.includes("row.scoreLabel === \"PROJ\"") &&
     ticker.includes("row.status === \"scheduled\" || row.status === \"warming\"") &&
     ticker.includes("board.finalStarts < board.totalStarts") &&
+    ticker.includes('key: "checking-live-board"') &&
+    ticker.includes('label: "CHECKING"') &&
+    ticker.includes('time: "SYNCING"') &&
+    ticker.includes("liveDateHref(board.date)") &&
     ticker.includes("return [") &&
     ticker.includes("const showNextDivider = entry.state === \"upcoming\" && previous?.state !== \"upcoming\";") &&
     ticker.includes("showNextDivider={showNextDivider}") &&
@@ -82,6 +99,17 @@ assert(
     !ticker.includes("text-green") &&
     !ticker.includes("text-red"),
   "ticker must render all slate day, poll only through the shared live endpoint when active, include live scoreless arms, carry finals, use projection glyphs, site colors, collision initials, and accessible duplicate handling",
+);
+
+assert(
+  warmLiveStartsJob.includes("const openingRevalidated = await revalidateSlateLifecycleTransition({") &&
+    warmLiveStartsJob.includes("reason: slateLifecycleRevalidationReason({") &&
+    warmLiveStartsJob.includes('if (totalStarts > 0 && completedStarts >= totalStarts) return "slate-complete";') &&
+    warmLiveStartsJob.includes('if (liveStarts > 0) return "first-pitch";') &&
+    warmLiveStartsJob.includes("revalidateRankedStartsDate(date, options, reason);") &&
+    rankedStartsRevalidation.includes('const paths = ["/", rankedStartsPath(date)];') &&
+    rankedStartsRevalidation.includes('revalidators.revalidatePath?.(path);'),
+  "home page must be revalidated from the warm-live slate lifecycle path on first pitch and slate complete, never from request-time rendering",
 );
 
 assert(

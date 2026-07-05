@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHomeLiveBoard } from "@/components/home-live-board-provider";
-import { upcomingDateHref } from "@/lib/routes";
+import { liveDateHref, upcomingDateHref } from "@/lib/routes";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 
 const HOME_LIVE_TICKER_AUTO_RESUME_MS = 4 * 1000;
@@ -18,15 +18,15 @@ type TickerEntry = {
 };
 
 export function HomeLiveTicker() {
-  const { board, shouldPoll } = useHomeLiveBoard();
+  const { board, boardUnverified, shouldPoll } = useHomeLiveBoard();
   const [touchPaused, setTouchPaused] = useState(false);
   const autoResumeTimer = useRef(0);
-  const visible = shouldRenderTicker(board);
-  const phase = board && board.liveStarts > 0 ? "live" : "today";
+  const visible = shouldRenderTicker(board, boardUnverified);
+  const phase = board && board.liveStarts > 0 && !boardUnverified ? "live" : "today";
 
   useEffect(() => () => window.clearTimeout(autoResumeTimer.current), []);
 
-  const entries = useMemo(() => buildTickerEntries(board), [board]);
+  const entries = useMemo(() => buildTickerEntries(board, boardUnverified), [board, boardUnverified]);
   if (!visible || entries.length === 0) return null;
 
   const marqueeEntries = [...entries, ...entries];
@@ -46,6 +46,7 @@ export function HomeLiveTicker() {
       data-responsive-check="home-live-gs-ticker"
       data-home-live-ticker-phase={phase}
       data-home-live-ticker-polling={shouldPoll ? "true" : "false"}
+      data-home-live-ticker-unverified={boardUnverified ? "true" : "false"}
     >
       <div className="flex min-h-11 items-center gap-3">
         <div className="flex min-h-11 shrink-0 items-center gap-2 border-r border-white/10 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
@@ -100,26 +101,27 @@ function TickerEntryItem({ entry, duplicate, showNextDivider }: { entry: TickerE
   );
 }
 
-function shouldRenderTicker(board: LiveScoreboard | null) {
+function shouldRenderTicker(board: LiveScoreboard | null, boardUnverified: boolean) {
+  if (boardUnverified) return Boolean(board?.hasGames && board.totalStarts > 0);
   return Boolean(board?.hasGames && board.totalStarts > 0 && board.finalStarts < board.totalStarts);
 }
 
-function buildTickerEntries(board: LiveScoreboard | null): TickerEntry[] {
+function buildTickerEntries(board: LiveScoreboard | null, boardUnverified: boolean): TickerEntry[] {
   if (!board) return [];
-  const liveRows = board.rows
+  const liveRows = boardUnverified ? [] : board.rows
     .filter((row) => row.status === "live")
     .sort((a, b) => (b.gsPlus ?? 0) - (a.gsPlus ?? 0) || a.pitcherName.localeCompare(b.pitcherName));
   const finalRows = board.rows
     .filter((row) => row.scoreLabel === "FINAL")
     .sort((a, b) => (b.gsPlus ?? 0) - (a.gsPlus ?? 0) || a.pitcherName.localeCompare(b.pitcherName));
-  const upcomingRows = board.rows
+  const upcomingRows = boardUnverified ? [] : board.rows
     .filter((row) => row.scoreLabel === "PROJ" && (row.status === "scheduled" || row.status === "warming"))
     .sort((a, b) => Number(b.status === "warming") - Number(a.status === "warming") || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime());
   const liveNames = disambiguatedNames(liveRows);
   const finalNames = disambiguatedNames(finalRows);
   const upcomingNames = disambiguatedNames(upcomingRows);
 
-  return [
+  const entries = [
     ...liveRows.map((row) => ({
       key: `live-${row.id}`,
       label: liveNames.get(row.id) ?? lastName(row.pitcherName),
@@ -143,6 +145,16 @@ function buildTickerEntries(board: LiveScoreboard | null): TickerEntry[] {
       state: "upcoming" as const,
     })),
   ];
+
+  if (entries.length > 0) return entries;
+
+  return [{
+    key: "checking-live-board",
+    label: "CHECKING",
+    href: liveDateHref(board.date),
+    time: "SYNCING",
+    state: "upcoming" as const,
+  }];
 }
 
 function disambiguatedNames(rows: LiveScoreboardRow[]) {

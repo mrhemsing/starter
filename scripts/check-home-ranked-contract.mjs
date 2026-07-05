@@ -208,7 +208,8 @@ assert(
 
 assert(
   homeLiveBoardProvider.includes("export const HOME_LIVE_BOARD_POLL_MS = 30 * 1000;") &&
-    homeLiveBoardProvider.includes("const shouldPoll = Boolean(board?.hasGames && board.liveStarts > 0 && board.slateProgress.state !== \"all-starts-complete\");") &&
+    homeLiveBoardProvider.includes("const shouldPoll = Boolean(board?.hasGames && (board.liveStarts > 0 || boardUnverified) && board.slateProgress.state !== \"all-starts-complete\");") &&
+    homeLiveBoardProvider.includes("function shouldVerifyStaleInitialBoard(board: LiveScoreboard | null)") &&
     homeLiveBoardProvider.includes("fetchJson<LiveScoreboard>(`/api/live/${today}`)") &&
     homeLiveBoardProvider.includes("syncLiveBoard().catch(() => undefined);") &&
     homeLiveBoardProvider.includes("}, HOME_LIVE_BOARD_POLL_MS);") &&
