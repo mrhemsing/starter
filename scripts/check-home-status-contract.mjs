@@ -124,12 +124,17 @@ assert(
 
 assert(
   slateCounts.includes("const SLATE_COUNTS_POLL_MS = 30_000;") &&
+    slateCounts.includes('import { useRouter } from "next/navigation";') &&
+    slateCounts.includes("const router = useRouter();") &&
     slateCounts.includes("void refresh();") &&
+    slateCounts.includes("let refreshedStaleShell = false;") &&
     slateCounts.includes('const statusPath = variant === "home" ? "/api/home/status" : `/api/home/status?date=${encodeURIComponent(initialState.date)}`;') &&
+    slateCounts.includes('if (variant === "home" && nextState.date !== initialState.date && !refreshedStaleShell)') &&
+    slateCounts.includes("router.refresh();") &&
     slateCounts.includes("if (shouldContinuePolling)") &&
     slateCounts.includes("window.setTimeout(refresh, SLATE_COUNTS_POLL_MS)") &&
     !slateCounts.includes("window.setInterval(refresh"),
-  "shared slate counts island must mount-poll immediately, let home refresh to the current date, and continue only while live starts remain",
+  "shared slate counts island must mount-poll immediately, let home refresh to the current date, refresh stale ISR shells, and continue only while live starts remain",
 );
 
 assert(

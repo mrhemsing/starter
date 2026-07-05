@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { liveDateHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, formatSlateStatusLine, type SlateProgressState } from "@/lib/slate-state";
@@ -14,12 +15,14 @@ type SlateCountsProps = {
 };
 
 export function SlateCounts({ initialState, initialLabel, variant }: SlateCountsProps) {
+  const router = useRouter();
   const [slateState, setSlateState] = useState(initialState);
   const [label, setLabel] = useState(initialLabel ?? slateCountsLabel(variant, initialState));
 
   useEffect(() => {
     let cancelled = false;
     let timeout: number | undefined;
+    let refreshedStaleShell = false;
     let shouldContinuePolling = initialState.liveStarts > 0;
 
     const refresh = async () => {
@@ -32,6 +35,10 @@ export function SlateCounts({ initialState, initialLabel, variant }: SlateCounts
 
         setSlateState(nextState);
         setLabel(slateCountsLabel(variant, nextState));
+        if (variant === "home" && nextState.date !== initialState.date && !refreshedStaleShell) {
+          refreshedStaleShell = true;
+          router.refresh();
+        }
         shouldContinuePolling = nextState.liveStarts > 0;
 
         if (shouldContinuePolling) {
@@ -50,7 +57,7 @@ export function SlateCounts({ initialState, initialLabel, variant }: SlateCounts
       cancelled = true;
       if (timeout) window.clearTimeout(timeout);
     };
-  }, [initialState.date, initialState.liveStarts, variant]);
+  }, [initialState.date, initialState.liveStarts, router, variant]);
 
   useEffect(() => {
     if (variant !== "home" || slateState.state !== "pre-first-pitch" || !slateState.firstPitchAt) return;

@@ -815,7 +815,8 @@ assert(
     !startsPage.includes("function RankedSlateStatus(") &&
     slateCounts.includes('"use client";') &&
     slateCounts.includes("void refresh();") &&
-    slateCounts.includes("fetch(`/api/home/status?date=${encodeURIComponent(initialState.date)}`, { cache: \"no-store\" })") &&
+    slateCounts.includes('const statusPath = variant === "home" ? "/api/home/status" : `/api/home/status?date=${encodeURIComponent(initialState.date)}`;') &&
+    slateCounts.includes("fetch(statusPath, { cache: \"no-store\" })") &&
     slateCounts.includes("if (shouldContinuePolling)") &&
     slateCounts.includes("window.setTimeout(refresh, SLATE_COUNTS_POLL_MS)") &&
     slateCounts.includes('data-responsive-check="ranked-slate-status-island"') &&
