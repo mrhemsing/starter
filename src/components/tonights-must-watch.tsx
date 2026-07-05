@@ -108,6 +108,8 @@ export function TonightsMustWatch({
       data-visible-starter-top-driver-directions={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0]?.direction ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-top-driver-deltas={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0] ? starter.driverChips[0].delta.toFixed(1) : "none").join("/")).join(",") : "none"}
       data-visible-starter-top-driver-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.driverChips?.[0] ? starter.driverChips[0].score.toFixed(1) : "none").join("/")).join(",") : "none"}
+      data-visible-starter-role-contexts={shownGames.length ? shownGames.map((game) => game.starters.map(starterRoleContextDataValue).join("/")).join(",") : "none"}
+      data-visible-starter-role-usages={shownGames.length ? shownGames.map((game) => game.starters.map(starterRoleUsageDataValue).join("/")).join(",") : "none"}
       data-visible-starter-accent-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).source).join("/")).join(",") : "none"}
       data-visible-starter-accent-bands={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).band).join("/")).join(",") : "none"}
       data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
@@ -811,6 +813,8 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       data-starter-probable-source={starter.probableSource}
       data-starter-probable-confidence={starter.probableConfidence}
       data-starter-likely-opener={String(starter.likelyOpener === true)}
+      data-starter-role-context={starterRoleContextDataValue(starter)}
+      data-starter-role-usage={starterRoleUsageDataValue(starter)}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -842,6 +846,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           </h4>
           <ProbableConfidenceChip starter={starter} align={align} />
           <LikelyOpenerBadge starter={starter} align={align} />
+          <StarterRoleContextLine starter={starter} align={align} />
           {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
@@ -1163,6 +1168,8 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       data-starter-probable-source={starter.probableSource}
       data-starter-probable-confidence={starter.probableConfidence}
       data-starter-likely-opener={String(starter.likelyOpener === true)}
+      data-starter-role-context={starterRoleContextDataValue(starter)}
+      data-starter-role-usage={starterRoleUsageDataValue(starter)}
       data-starter-accent-source={accent.source}
       data-starter-accent-band={accent.band}
       data-starter-accent-color={accent.color}
@@ -1182,6 +1189,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         </p>
         <ProbableConfidenceChip starter={starter} compact />
         <LikelyOpenerBadge starter={starter} compact />
+        <StarterRoleContextLine starter={starter} compact />
         <p className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
           {starter.team}
@@ -1304,6 +1312,26 @@ function LikelyOpenerBadge({ starter, align, compact = false }: { starter: Tonig
   );
 }
 
+function StarterRoleContextLine({ starter, align, compact = false }: { starter: TonightStarter; align?: "away" | "home"; compact?: boolean }) {
+  const role = starter.roleContext;
+  if (!role) return null;
+
+  return (
+    <div
+      className={`mt-1 flex flex-wrap gap-1.5 ${align === "home" ? "lg:justify-end" : ""}`}
+      data-starter-role-context-line={role.label}
+      data-starter-role-usage-line={starterRoleUsageDataValue(starter)}
+    >
+      <span className={`inline-flex items-center rounded border border-sky-300/30 bg-sky-300/10 px-1.5 py-0.5 font-mono uppercase tracking-[0.12em] text-sky-200 ${compact ? "text-[8px]" : "text-[9px]"}`}>
+        {role.label}
+      </span>
+      <span className={`inline-flex items-center rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono uppercase tracking-[0.12em] text-zinc-400 ${compact ? "text-[8px]" : "text-[9px]"}`}>
+        {starterRoleUsageLine(starter)}
+      </span>
+    </div>
+  );
+}
+
 function StarterProjectionLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
   const projection = starter.projection;
   if (!projection) return null;
@@ -1393,6 +1421,20 @@ function splitNumberValue(value: number | null | undefined, precision: number) {
 
 function starterMarketLabelDataValue(starter: TonightStarter) {
   return (starter.marketContext?.label ?? "none").replaceAll(",", ";");
+}
+
+function starterRoleContextDataValue(starter: TonightStarter) {
+  return starter.roleContext?.label ?? "none";
+}
+
+function starterRoleUsageLine(starter: TonightStarter) {
+  const role = starter.roleContext;
+  if (!role) return "none";
+  return `2026: ${role.seasonStarts} GS / ${role.seasonReliefAppearances} RP`;
+}
+
+function starterRoleUsageDataValue(starter: TonightStarter) {
+  return starterRoleUsageLine(starter);
 }
 
 function OpponentSplitLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {

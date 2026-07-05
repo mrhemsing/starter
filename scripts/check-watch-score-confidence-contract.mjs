@@ -20,7 +20,9 @@ const [
   packageJson,
   config,
   helper,
+  roleHelper,
   types,
+  mlbStatsClient,
   tonightService,
   mustWatch,
   methodology,
@@ -30,7 +32,9 @@ const [
   readFile("package.json", "utf8"),
   readFile("src/lib/form-tokens.ts", "utf8"),
   readFile("src/lib/watch-score-confidence.ts", "utf8"),
+  readFile("src/lib/spot-start-role.ts", "utf8"),
   readFile("src/lib/types.ts", "utf8"),
+  readFile("src/lib/data/mlb-stats-client.ts", "utf8"),
   readFile("src/lib/data/tonight-service.ts", "utf8"),
   readFile("src/components/tonights-must-watch.tsx", "utf8"),
   readFile("src/app/methodology/page.tsx", "utf8"),
@@ -62,11 +66,29 @@ assert(
 );
 
 assert(
+  roleHelper.includes('export type StarterRoleContextLabel = "SPOT START" | "RECENT CALL-UP" | "STRETCHING OUT" | "FIRST STARTS";') &&
+    roleHelper.includes("reliefAppearances > input.gamesStarted && input.gamesStarted <= 2") &&
+    roleHelper.includes("input.totalAppearances < 3") &&
+    roleHelper.includes("input.gamesStarted <= 3 && input.lastTwoAppearancesStarted"),
+  "spot-start role helper must classify spot starts, recent call-ups, stretching-out arms, and first starts from one shared function",
+);
+
+assert(
+  mlbStatsClient.includes("seasonAppearances") &&
+    mlbStatsClient.includes("readPitchingGamesPlayed") &&
+    mlbStatsClient.includes("lastTwoAppearancesStarted") &&
+    mlbStatsClient.includes("latestAppearances.length === 2"),
+  "MLB Stats completeness payload must include season appearances and last-two-appearance role context",
+);
+
+assert(
   types.includes('export type MatchupConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";') &&
     types.includes('export type WatchScoreConfidence = "HIGH" | "MEDIUM" | "LOW";') &&
     types.includes("watchScoreConfidence: WatchScoreConfidence;") &&
-    types.includes("watchScoreQualifiedStartCounts"),
-  "TonightGame payload must store watch-score confidence and side qualified counts",
+    types.includes("watchScoreQualifiedStartCounts") &&
+    types.includes("roleContext?:") &&
+    types.includes("StarterRoleContextLabel"),
+  "TonightGame payload must store watch-score confidence, side qualified counts, and limited-starter role context",
 );
 
 assert(
@@ -76,8 +98,11 @@ assert(
     tonightService.includes("adjustedStarterWatchValue(awayStarter, leagueMeanGS)") &&
     tonightService.includes("value * WATCH_SCORE_FALLBACK_FORM_HAIRCUT") &&
     tonightService.includes("watchScoreConfidence,") &&
-    tonightService.includes("watchScoreQualifiedStartCounts,"),
-  "tonight-service must compute and store confidence at score-build time with the fallback haircut",
+    tonightService.includes("watchScoreQualifiedStartCounts,") &&
+    tonightService.includes("shouldFetchLimitedStarterCompleteness") &&
+    tonightService.includes("buildStarterRoleContext") &&
+    tonightService.includes("classifyStarterRoleContext"),
+  "tonight-service must compute and store confidence and limited-starter role context at score-build time",
 );
 
 assert(
@@ -89,8 +114,12 @@ assert(
     mustWatch.includes("data-hook-score-confidence={game.watchScoreConfidence}") &&
     mustWatch.includes("data-watch-score-confidence-chip={game.watchScoreConfidence}") &&
     mustWatch.includes("BASELINE") &&
-    mustWatch.includes('"data-projection-baseline": String(baselineProjection)'),
-  "Must-Watch cards must render and expose confidence chips, side counts, and BASELINE projection tags",
+    mustWatch.includes('"data-projection-baseline": String(baselineProjection)') &&
+    mustWatch.includes("function StarterRoleContextLine") &&
+    mustWatch.includes("data-visible-starter-role-contexts") &&
+    mustWatch.includes("data-visible-starter-role-usages") &&
+    mustWatch.includes("2026: ${role.seasonStarts} GS / ${role.seasonReliefAppearances} RP"),
+  "Must-Watch cards must render and expose confidence chips, side counts, BASELINE projection tags, and role usage lines",
 );
 
 assert(

@@ -8,6 +8,7 @@ import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@
 import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
+import { classifyStarterRoleContext } from "@/lib/spot-start-role";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
 import { WATCH_SCORE_FALLBACK_FORM_HAIRCUT, isFallbackWatchScoreSide, watchScoreConfidenceForSideCounts } from "@/lib/watch-score-confidence";
 
@@ -66,20 +67,23 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
   ]);
   const oddsRequestGames = schedule.games.filter((game) => !isStartedStatus(normalizeGameStatus(game)));
   const probables = getProbablesFromSchedule(date, schedule);
-  const [opponentSplits, snapshotMarketContexts, requestMarketContexts] = await Promise.all([
-    shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
-    readOddsSnapshotMarketContexts(date),
-    enrichAtRequestTime ? fetchMlbOddsMarketContexts(oddsRequestGames) : Promise.resolve(new Map()),
-  ]);
-  const marketContexts = mergeMarketContexts(snapshotMarketContexts, requestMarketContexts);
   const probablePitcherIds = schedule.games.flatMap((game) => [
     game.probableAwayPitcher?.id,
     game.probableHomePitcher?.id,
   ]).filter((id): id is number => typeof id === "number");
-  const completenessByPitcher = enrichAtRequestTime
-    ? await fetchMlbPitcherStartCompleteness(probablePitcherIds, date.slice(0, 4), date, { fetchLive: true })
-    : new Map();
   const formByPitcher = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
+  const completenessPitcherIds = enrichAtRequestTime
+    ? probablePitcherIds
+    : probablePitcherIds.filter((id) => shouldFetchLimitedStarterCompleteness(formByPitcher.get(String(id))));
+  const [opponentSplits, snapshotMarketContexts, requestMarketContexts, completenessByPitcher] = await Promise.all([
+    shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
+    readOddsSnapshotMarketContexts(date),
+    enrichAtRequestTime ? fetchMlbOddsMarketContexts(oddsRequestGames) : Promise.resolve(new Map()),
+    completenessPitcherIds.length > 0
+      ? fetchMlbPitcherStartCompleteness(completenessPitcherIds, date.slice(0, 4), date, { fetchLive: true })
+      : Promise.resolve(new Map()),
+  ]);
+  const marketContexts = mergeMarketContexts(snapshotMarketContexts, requestMarketContexts);
   const probableScoresByGame = groupProbableMatchupScores(probables);
   const builtGames = await Promise.all(
     schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null, enrichAtRequestTime)),
@@ -285,6 +289,7 @@ function buildTonightStarter(
   const form = formByPitcher.get(String(probable.id));
   const completeness = completenessByPitcher.get(String(probable.id)) ?? null;
   const formCompleteness = classifyStarterForm(form, completeness);
+  const roleContext = buildStarterRoleContext(formCompleteness.matched, completeness);
   const likelyOpener = isLikelyOpenerProfile(completeness);
   const opponentSplit = form?.throws ? opponentSplits.get(teamSplitKey(opponent, form.throws === "L" ? "vs-lhp" : "vs-rhp")) ?? null : null;
   if (!form) {
@@ -305,6 +310,7 @@ function buildTonightStarter(
         expected: formCompleteness.expected,
         careerGS: formCompleteness.careerGS,
       },
+      roleContext,
       likelyOpener,
       projection,
       marketContext: buildMarketContext(projection, probable.fullName, opponentMarketName, date, marketContext),
@@ -340,6 +346,7 @@ function buildTonightStarter(
       expected: formCompleteness.expected,
       careerGS: formCompleteness.careerGS,
     },
+    roleContext,
     likelyOpener,
     rgs: form.rgs,
     tier: form.tier,
@@ -366,6 +373,32 @@ function buildTonightStarter(
       ...(formCompleteness.status === "join_gap" ? { joinGap: true } : null),
       ...(likelyOpener ? { likelyOpener: true } : null),
     },
+  };
+}
+
+function shouldFetchLimitedStarterCompleteness(form: FormSummary | undefined) {
+  return !form || isFallbackWatchScoreSide(form.seasonStartCount ?? form.windowCount ?? 0);
+}
+
+function buildStarterRoleContext(matchedStarts: number, completeness: MlbPitcherStartCompleteness | null): TonightStarter["roleContext"] {
+  if (!completeness || !isFallbackWatchScoreSide(matchedStarts)) return undefined;
+  const seasonStarts = completeness.seasonStarts ?? 0;
+  const seasonAppearances = completeness.seasonAppearances;
+  if (seasonAppearances === null) return undefined;
+  const seasonReliefAppearances = Math.max(0, seasonAppearances - seasonStarts);
+
+  return {
+    label: classifyStarterRoleContext({
+      gamesStarted: seasonStarts,
+      totalAppearances: seasonAppearances,
+      lastTwoAppearancesStarted: completeness.lastTwoAppearancesStarted,
+    }),
+    seasonStarts,
+    seasonReliefAppearances,
+    seasonAppearances,
+    recentStarts: completeness.recentStarts,
+    recentReliefAppearances: completeness.recentReliefAppearances,
+    lastTwoAppearancesStarted: completeness.lastTwoAppearancesStarted,
   };
 }
 

@@ -271,6 +271,7 @@ type MlbTeamOffenseContext = {
 };
 
 type MlbGameFeedPitchingStats = {
+  gamesPlayed?: number;
   gamesStarted?: number;
   inningsPitched?: string;
   hits?: number;
@@ -288,11 +289,13 @@ type MlbGameFeedPitchingStats = {
 
 export type MlbPitcherStartCompleteness = {
   pitcherMlbId: number;
+  seasonAppearances: number | null;
   seasonStarts: number | null;
   careerStarts: number | null;
   recentAppearances: number;
   recentStarts: number;
   recentReliefAppearances: number;
+  lastTwoAppearancesStarted: boolean;
   mlbDebutDate: string | null;
   providerMlbDebut: boolean;
   source: "live-people-stats";
@@ -760,6 +763,7 @@ async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season:
       gameLogResponse.json(),
     ])) as [MlbPeopleApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse, MlbPersonStatsApiResponse];
     const person = personPayload.people?.[0];
+    const seasonAppearances = readPitchingGamesPlayed(seasonPayload);
     const seasonStarts = readPitchingGamesStarted(seasonPayload);
     const careerStarts = readPitchingGamesStarted(careerPayload);
     const recentUsage = readRecentPitchingUsage(gameLogPayload, asOfDate);
@@ -768,11 +772,13 @@ async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season:
 
     return {
       pitcherMlbId,
+      seasonAppearances,
       seasonStarts,
       careerStarts,
       recentAppearances: recentUsage.appearances,
       recentStarts: recentUsage.starts,
       recentReliefAppearances: recentUsage.reliefAppearances,
+      lastTwoAppearancesStarted: recentUsage.lastTwoAppearancesStarted,
       mlbDebutDate,
       providerMlbDebut,
       source: "live-people-stats",
@@ -780,6 +786,11 @@ async function fetchSinglePitcherStartCompleteness(pitcherMlbId: number, season:
   } catch {
     return null;
   }
+}
+
+function readPitchingGamesPlayed(payload: MlbPersonStatsApiResponse) {
+  const value = payload.stats?.[0]?.splits?.[0]?.stat?.gamesPlayed;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function readPitchingGamesStarted(payload: MlbPersonStatsApiResponse) {
@@ -797,11 +808,15 @@ function readRecentPitchingUsage(payload: MlbPersonStatsApiResponse, asOfDate: s
     return Number.isFinite(dateMs) && dateMs >= startMs && dateMs < endMs;
   });
   const starts = recentSplits.filter((split) => split.stat?.gamesStarted === 1).length;
+  const latestAppearances = [...recentSplits]
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+    .slice(0, 2);
 
   return {
     appearances: recentSplits.length,
     starts,
     reliefAppearances: Math.max(0, recentSplits.length - starts),
+    lastTwoAppearancesStarted: latestAppearances.length === 2 && latestAppearances.every((split) => split.stat?.gamesStarted === 1),
   };
 }
 

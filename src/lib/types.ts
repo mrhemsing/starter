@@ -1,3 +1,5 @@
+import type { StarterRoleContextLabel } from "@/lib/spot-start-role";
+
 export type PitchTypeKey = "FF" | "SI" | "SL" | "CH" | "CU" | "FC";
 
 export type PitchResultKey =
@@ -383,6 +385,15 @@ export type TonightStarter = {
     matched: number;
     expected: number;
     careerGS: number | null;
+  };
+  roleContext?: {
+    label: StarterRoleContextLabel;
+    seasonStarts: number;
+    seasonReliefAppearances: number;
+    seasonAppearances: number;
+    recentStarts: number;
+    recentReliefAppearances: number;
+    lastTwoAppearancesStarted: boolean;
   };
   rgs?: number;
   tier?: FormTier;
