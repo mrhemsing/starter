@@ -291,7 +291,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
 
   return (
     <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
-      <div className="relative isolate overflow-hidden">
+      <div className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}>
         <Image
           src="/images/slab-2.png"
           alt=""
