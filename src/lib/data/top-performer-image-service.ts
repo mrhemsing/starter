@@ -225,11 +225,26 @@ function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCan
   const last = lastName(start.pitcher.name).toLowerCase();
   const isPitcherNamed = text.includes(fullName) || text.includes(last);
   const hasTrustedPhotoCredit = isPhotoCreditImageTitle(item.image?.title ?? "");
+  const hasTrustedMlbPitcherThumbnail = isTrustedMlbPitcherHighlightThumbnail(item, start);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
-  if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;
+  if (!isPitcherNamed || (!hasTrustedPhotoCredit && !hasTrustedMlbPitcherThumbnail)) return null;
   if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;
   if (score < 125 && !hasPitchingActionCopy) return null;
   return { focalPoint: { x: 62, y: 50 } };
+}
+
+function isTrustedMlbPitcherHighlightThumbnail(item: MlbGameContentItem, start: StartSummary) {
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const fullName = start.pitcher.name.toLowerCase();
+  const cut = selectMlbImageCut(item);
+  return (
+    item.type === "video" &&
+    !!cut?.src &&
+    text.includes(fullName) &&
+    pitcherActionHighlightPattern().test(text) &&
+    !nonActionMlbContentPattern().test(text) &&
+    !nonActionMlbTitlePattern().test(text)
+  );
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {

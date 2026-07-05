@@ -494,9 +494,12 @@ assert(
     imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
     imageService.includes("clean: Boolean(autoPromotion),") &&
     imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
-    imageService.includes("if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;") &&
+    imageService.includes("const hasTrustedMlbPitcherThumbnail = isTrustedMlbPitcherHighlightThumbnail(item, start);") &&
+    imageService.includes("if (!isPitcherNamed || (!hasTrustedPhotoCredit && !hasTrustedMlbPitcherThumbnail)) return null;") &&
     imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
     imageService.includes("return { focalPoint: { x: 62, y: 50 } };") &&
+    imageService.includes("function isTrustedMlbPitcherHighlightThumbnail(item: MlbGameContentItem, start: StartSummary)") &&
+    imageService.includes('text.includes(fullName)') &&
     imageService.includes("if (value.clean !== true) return null;") &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
     imageService.includes("if (!isValidFocalPoint(value)) return null;") &&
