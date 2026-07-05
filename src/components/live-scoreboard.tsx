@@ -349,7 +349,7 @@ function ClockUnit({ value, label, toneClass }: { value: string; label: string; 
 
 function SlabImage() {
   return (
-    <div className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30">
+    <div className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30">
       <Image
         src="/images/slab-2.png"
         alt=""
