@@ -70,7 +70,6 @@ function TeamMenuLink({ active, href, team, label, onSelect }: { active: boolean
       role="menuitem"
       data-team={team || "all"}
       data-team-jump-link="true"
-      data-heat-client-team-link="true"
       ariaCurrent={active ? "page" : undefined}
       onSelect={onSelect}
     >

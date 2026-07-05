@@ -7,7 +7,6 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
-import { HeatCheckClientTeamFilter } from "@/components/heat-check-client-team-filter";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
@@ -185,19 +184,25 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const seasonUnrankedPitchers = seasonPitchers.filter((pitcher) => !isSeasonQualifiedPitcher(pitcher));
   const pitchers = trendView ? trendPitchers : seasonPitchers;
   const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => pitcher.status === "ok");
+  const trendQualifiedPitchers = trendPitchers.filter((pitcher) => pitcher.status === "ok");
   const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);
   const seasonRankByPitcherId = buildGlobalSeasonRankMap(leaderboard.pitchers.filter(isSeasonQualifiedPitcher));
-  const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
+  const allTeamsView = !team;
+  const trendPulseView = trendView && !query && !band && !motion;
+  const pulsePitchers = team ? trendQualifiedPitchers : qualifiedPitchers;
+  const pulseBandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
-    count: qualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
+    count: pulsePitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
   }));
-  const heroCandidates = qualifiedPitchers;
+  const pulseHeatingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "heating").length;
+  const pulseCoolingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "cooling").length;
+  const pulseMeanGS = meanGsPlus(pulsePitchers) ?? leaderboard.leagueMeanGS;
+  const heroCandidates = pulsePitchers;
   const riserCandidates = [...heroCandidates].sort((a, b) => compareMovementRisers(a, b, startContext));
   const fallerCandidates = [...heroCandidates].sort((a, b) => compareMovementFallers(a, b, startContext));
   const biggestRiser = riserCandidates[0] ?? null;
   const biggestFaller = fallerCandidates[0] ?? null;
   const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
-  const allTeamsView = !team;
   const leagueView = allTeamsView && trendView;
   const boardPitchers = pitchers;
   const seasonVisiblePitchers = visibleSeasonPitchers(seasonQualifiedPitchers, team, params?.show);
@@ -211,7 +216,6 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
   const throughPrefix = seasonView ? "Season through" : "Form through";
   const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`;
-  const clientTeamFilterEnabled = !team && !query && !band && !motion;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -219,7 +223,6 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
       <HeatCheckScrollReset />
       <HeatCheckFilterWarmup activeTeam={team} />
       {activeFilterLabel !== "All arms" ? <HeatCheckEscapeClear href={clearFilterHref} /> : null}
-      <HeatCheckClientTeamFilter enabled={clientTeamFilterEnabled} />
       <div className="mx-auto max-w-7xl">
         <header>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
@@ -233,30 +236,31 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           <TeamFilterControl teams={teams} activeTeam={team} params={params} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
         </section>
 
-        {trendView && leagueView && biggestRiser && biggestFaller ? (
+        {trendPulseView && biggestRiser && biggestFaller ? (
           <section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">
             <MomentumHero
               riser={biggestRiser}
               faller={biggestFaller}
               window={window}
-              leagueMeanGS={leaderboard.leagueMeanGS}
+              leagueMeanGS={pulseMeanGS}
               followedIds={followedIds}
               startContext={startContext}
-              qualifiedCount={leaderboard.qualifiedCount}
-              heatingCount={leaderboard.heatingCount}
-              coolingCount={leaderboard.coolingCount}
+              qualifiedCount={pulsePitchers.length}
+              heatingCount={pulseHeatingCount}
+              coolingCount={pulseCoolingCount}
+              meanLabel={team ? `${team} mean` : "league mean"}
             />
             <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4" data-responsive-check="heat-league-stat-strip">
-              <SummaryStat label="Rising" value={String(leaderboard.heatingCount)} />
-              <SummaryStat label="Falling" value={String(leaderboard.coolingCount)} />
-              <SummaryStat label="Even" value={String(leagueBandCounts.find((candidate) => candidate.key === "even")?.count ?? 0)} />
-              <SummaryStat label="League mean GS+" value={leaderboard.leagueMeanGS.toFixed(1)} />
+              <SummaryStat label="Rising" value={String(pulseHeatingCount)} />
+              <SummaryStat label="Falling" value={String(pulseCoolingCount)} />
+              <SummaryStat label="Even" value={String(pulseBandCounts.find((candidate) => candidate.key === "even")?.count ?? 0)} />
+              <SummaryStat label={team ? `${team} mean GS+` : "League mean GS+"} value={pulseMeanGS.toFixed(1)} />
             </div>
             <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
           </section>
         ) : null}
 
-        {trendView && leagueView ? (
+        {trendView && (leagueView || Boolean(team)) ? (
           <section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">
             {!team && activeFilterLabel !== "All arms" ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
@@ -269,7 +273,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                 </Link>
               </div>
             ) : null}
-            <BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params} />
+            <BandDistribution bands={pulseBandCounts} total={pulsePitchers.length} activeBand={band} params={params} scopeLabel={team ? `${team} temperature` : "League temperature"} />
             <details className="mt-4">
               <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300">
                 Filters / {sortOptions.find((option) => option.key === sort)?.label ?? "Form"} / {band ? HEAT_BANDS.find((candidate) => candidate.key === band)?.label : "All bands"}
@@ -326,7 +330,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           </section>
         ) : (
           <PendingRegion region="heat-check-board" className="grid gap-4 scroll-mt-8">
-            <div id="full-board" data-responsive-check="form-leaderboard" data-heat-client-team-board={clientTeamFilterEnabled ? "true" : undefined} data-heat-client-team-active="false">
+            <div id="full-board" data-responsive-check="form-leaderboard">
             <section className="grid gap-2">
               {seasonView ? (
                 <>
@@ -377,17 +381,17 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BandDistribution({ bands, total, activeBand, params }: { bands: Array<HeatBand & { count: number }>; total: number; activeBand: string; params: Record<string, string | undefined> }) {
+function BandDistribution({ bands, total, activeBand, params, scopeLabel }: { bands: Array<HeatBand & { count: number }>; total: number; activeBand: string; params: Record<string, string | undefined>; scopeLabel: string }) {
   const onFire = bands.find((band) => band.key === "onfire")?.count ?? 0;
   const ice = bands.find((band) => band.key === "ice")?.count ?? 0;
   return (
     <div className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-band-distribution" data-temperature-job="filter">
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
-          <p className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>
+          <p className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{scopeLabel}</p>
           <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>
         </div>
-        <p className="font-mono text-xs text-zinc-500">{activeBand ? "Click the active segment again to show all" : "Click a segment to filter · league totals stay visible"}</p>
+        <p className="font-mono text-xs text-zinc-500">{activeBand ? "Click the active segment again to show all" : "Click a segment to filter"}</p>
       </div>
       <div className="flex h-12 overflow-hidden rounded border border-white/10">
         {bands.map((band) => {
@@ -470,6 +474,7 @@ function MomentumHero({
   qualifiedCount,
   heatingCount,
   coolingCount,
+  meanLabel,
 }: {
   riser: FormSummary;
   faller: FormSummary;
@@ -480,6 +485,7 @@ function MomentumHero({
   qualifiedCount: number;
   heatingCount: number;
   coolingCount: number;
+  meanLabel: string;
 }) {
   return (
     <section className="my-5 overflow-hidden rounded border border-white/10 bg-[#101014]" data-responsive-check="heat-momentum-hero">
@@ -491,7 +497,7 @@ function MomentumHero({
         <span>{qualifiedCount} qualified</span>
         <span>{heatingCount} rising</span>
         <span>{coolingCount} falling</span>
-        <span>league mean {leagueMeanGS.toFixed(1)}</span>
+        <span>{meanLabel} {leagueMeanGS.toFixed(1)}</span>
       </div>
     </section>
   );
@@ -1443,6 +1449,11 @@ function formatNullable(value: number | null | undefined, precision: number) {
 
 function formatPct(value: number) {
   return `${value.toFixed(value % 1 === 0 ? 0 : 1)}%`;
+}
+
+function meanGsPlus(pitchers: FormSummary[]) {
+  if (pitchers.length === 0) return null;
+  return pitchers.reduce((sum, pitcher) => sum + pitcher.rgs, 0) / pitchers.length;
 }
 
 function isPoleTier(pitcher: FormSummary) {

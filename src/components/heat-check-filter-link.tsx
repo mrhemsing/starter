@@ -19,7 +19,6 @@ type HeatCheckFilterLinkProps = {
   "data-team"?: string;
   "data-team-drawer-link"?: string;
   "data-team-jump-link"?: string;
-  "data-heat-client-team-link"?: string;
 };
 
 export function HeatCheckFilterLink({
@@ -35,7 +34,6 @@ export function HeatCheckFilterLink({
   "data-team": dataTeam,
   "data-team-drawer-link": dataTeamDrawerLink,
   "data-team-jump-link": dataTeamJumpLink,
-  "data-heat-client-team-link": dataHeatClientTeamLink,
 }: HeatCheckFilterLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,18 +67,11 @@ export function HeatCheckFilterLink({
         data-team={dataTeam}
         data-team-drawer-link={dataTeamDrawerLink}
         data-team-jump-link={dataTeamJumpLink}
-        data-heat-client-team-link={dataHeatClientTeamLink}
         onPointerEnter={warmRoute}
         onPointerDown={warmRoute}
         onFocus={warmRoute}
-        onClick={(event) => {
-          beginPending(() => {
-            if (dataHeatClientTeamLink) {
-              event.currentTarget.dispatchEvent(new CustomEvent("heat-client-team-filter-request", { bubbles: true, cancelable: true, detail: { team: dataTeam === "all" ? "" : dataTeam, href } }));
-              if (event.currentTarget.dataset.heatClientTeamHandled === "true") event.preventDefault();
-              delete event.currentTarget.dataset.heatClientTeamHandled;
-            }
-          });
+        onClick={() => {
+          beginPending();
           onSelect?.();
         }}
       >

@@ -87,7 +87,6 @@ function TeamDrawerLink({ active, href, team, label, onSelect }: { active: boole
       className={`flex min-h-12 items-center gap-3 rounded border px-3 py-2 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 bg-black/20 text-zinc-200"}`}
       data-team-drawer-link="true"
       data-team={team || "all"}
-      data-heat-client-team-link="true"
       ariaCurrent={active ? "page" : undefined}
       onSelect={onSelect}
     >

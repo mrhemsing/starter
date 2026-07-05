@@ -12,7 +12,6 @@ const heatRoute = await readFile("src/app/heat-check/page.tsx", "utf8");
 const heatLoading = await readFile("src/app/heat-check/loading.tsx", "utf8");
 const heatSeasonLoading = await readFile("src/app/heat-check/season/loading.tsx", "utf8");
 const heatLoadingShell = await readFile("src/components/heat-check-loading-shell.tsx", "utf8");
-const heatClientTeamFilter = await readFile("src/components/heat-check-client-team-filter.tsx", "utf8");
 const routeControlPending = await readFile("src/components/route-control-pending.tsx", "utf8");
 const heatCheckFilterLinkSource = await readFile("src/components/heat-check-filter-link.tsx", "utf8");
 const fastFilterLinkSource = await readFile("src/components/fast-filter-link.tsx", "utf8");
@@ -730,23 +729,25 @@ assert(
 
 assert(
   formPage.includes('import { PendingRegion } from "@/components/route-control-pending";') &&
-    formPage.includes('import { HeatCheckClientTeamFilter } from "@/components/heat-check-client-team-filter";') &&
-    formPage.includes("<HeatCheckClientTeamFilter enabled={clientTeamFilterEnabled} />") &&
+    !formPage.includes('import { HeatCheckClientTeamFilter } from "@/components/heat-check-client-team-filter";') &&
+    !formPage.includes("<HeatCheckClientTeamFilter") &&
+    !formPage.includes("clientTeamFilterEnabled") &&
     formPage.includes('<PendingRegion region="heat-check-board"') &&
-    formPage.includes("data-heat-client-team-board={clientTeamFilterEnabled ? \"true\" : undefined}") &&
+    formPage.includes('<div id="full-board" data-responsive-check="form-leaderboard">') &&
+    !formPage.includes("data-heat-client-team-board") &&
     formPage.includes("data-heat-team={pitcher.team}") &&
     formPage.includes("data-heat-overflow-hidden={overflowHidden ? \"true\" : undefined}") &&
-    teamDrawer.includes('data-heat-client-team-link="true"') &&
-    teamJumpMenu.includes('data-heat-client-team-link="true"') &&
-    heatClientTeamFilter.includes("window.history.pushState") &&
-    heatClientTeamFilter.includes("heat-client-team-filter-request") &&
-    heatClientTeamFilter.includes("route-control-pending-clear") &&
+    !teamDrawer.includes('data-heat-client-team-link="true"') &&
+    !teamJumpMenu.includes('data-heat-client-team-link="true"') &&
+    !heatCheckFilterLinkSource.includes("heat-client-team-filter-request") &&
+    !heatCheckFilterLinkSource.includes("heatClientTeamHandled") &&
+    !existsSync("src/components/heat-check-client-team-filter.tsx") &&
     routeControlPending.includes("export function useRouteControlPending") &&
     routeControlPending.includes("export function PendingRegion") &&
     routeControlPending.includes("const PENDING_MIN_MS = 150;") &&
     heatCheckFilterLinkSource.includes("useRouteControlPending") &&
     fastFilterLinkSource.includes("useRouteControlPending"),
-  "Heat Check controls must show shared pending treatment and team links must filter locally when the loaded board has the dataset",
+  "Heat Check controls must show shared pending treatment and team links must always use server navigation so trend and season modules cannot diverge from the URL",
 );
 
 console.log("heat check contract ok: bar filters, no mobile jump filter, league counts, filter status, compact momentum hero, form cluster, top-aligned rows, and canonical pitcher links are locked");

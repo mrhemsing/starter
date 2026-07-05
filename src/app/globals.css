@@ -511,26 +511,8 @@ p,
   transition: opacity 180ms ease;
 }
 
-[data-heat-client-team-board][data-heat-client-team-active="true"] [data-form-row] {
+[data-form-row][data-heat-overflow-hidden="true"] {
   display: none;
-}
-
-[data-heat-client-team-board][data-heat-client-team-active="false"] [data-form-row][data-heat-overflow-hidden="true"] {
-  display: none;
-}
-
-[data-heat-client-team-board][data-heat-client-team-active="true"] [data-form-row][data-heat-client-visible="true"] {
-  display: grid;
-}
-
-[data-heat-client-team-board][data-heat-client-team-active="true"] [data-heat-band-section][data-heat-band-client-empty="true"] {
-  display: none;
-}
-
-[data-heat-client-team-link][data-heat-client-active="true"] {
-  border-color: rgb(252 211 77);
-  background: rgb(252 211 77);
-  color: rgb(9 9 11);
 }
 
 @media (max-width: 639.98px) {
