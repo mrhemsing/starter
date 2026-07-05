@@ -103,10 +103,15 @@ function LoadingControls({ kind }: { kind: RouteLoadingShellProps["controls"] })
   if (kind === "ranked") {
     return (
       <div className="mt-4 rounded border border-white/10 bg-[#101014]/95 p-2" data-navigation-shell-controls={kind}>
-        <div className="flex min-w-0 gap-2 overflow-hidden pr-14">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <span key={index} className="route-shell-shimmer h-[4.75rem] min-w-[3.5rem] rounded border border-white/10" />
-          ))}
+        <div className="flex min-w-0 items-stretch gap-2 overflow-hidden">
+          <span className="route-shell-shimmer h-[4.75rem] w-10 shrink-0 rounded border border-white/10" />
+          <div className="grid min-w-0 flex-1 grid-cols-5 gap-2 sm:grid-cols-7">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <span key={index} className={`route-shell-shimmer h-[4.75rem] rounded border border-white/10 ${index === 0 || index === 6 ? "hidden sm:block" : "block"}`} />
+            ))}
+          </div>
+          <span className="route-shell-shimmer h-[4.75rem] w-10 shrink-0 rounded border border-white/10" />
+          <span className="route-shell-shimmer h-[4.75rem] w-10 shrink-0 rounded border border-white/10 sm:w-12" />
         </div>
       </div>
     );

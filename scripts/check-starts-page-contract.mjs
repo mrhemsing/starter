@@ -33,6 +33,7 @@ const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
+const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
@@ -404,13 +405,13 @@ assert(
     slateDateNav.includes("<RankedStartsArchiveStrip activeDate={activeDate} availableDates={availableDates} />") &&
     slateDateNav.includes("<RankedStartsDatePicker activeDate={activeDate} min={minDate} max={maxDate} className={rankedStartsArchiveDatePickerClass} />") &&
     slateDateNav.includes('className="w-full min-w-0 font-mono uppercase"') &&
-    slateDateNav.includes('className="relative flex min-w-0 items-stretch rounded border border-white/10 bg-[#101014]/95 p-2"') &&
+    slateDateNav.includes('className="flex min-w-0 items-stretch gap-2 rounded border border-white/10 bg-[#101014]/95 p-2"') &&
     !slateDateNav.includes("<RankedEyebrowDateLabel") &&
     !slateDateNav.includes("function RankedEyebrowDateLabel") &&
     !slateDateNav.includes("rankedStartsArchiveStepClass") &&
     !slateDateNav.includes("rankedStartsArchiveStepDisabledClass") &&
     slateDateNav.includes("const rankedStartsArchiveDatePickerClass =") &&
-    slateDateNav.includes('"absolute right-2 top-2 inline-flex h-[4.75rem] w-12 items-center justify-center rounded border border-white/10 bg-[#101014]') &&
+    slateDateNav.includes('"relative inline-flex h-[4.75rem] w-10 shrink-0 items-center justify-center rounded border border-white/10 bg-[#101014]') &&
     slateDateNav.includes("focus-within:border-amber-300/80") &&
     slateDateNav.includes("const minDate = availableDates[0];") &&
     slateDateNav.includes("const maxDate = availableDates.at(-1);") &&
@@ -432,12 +433,25 @@ assert(
     rankedStartsArchiveLink.includes("router.push(href);") &&
     rankedStartsArchiveLink.includes("export function RankedStartsArchiveStrip") &&
     rankedStartsArchiveLink.includes('data-slate-strip="ranked-starts"') &&
-    rankedStartsArchiveLink.includes("availableDates.map((date, index)") &&
+    rankedStartsArchiveLink.includes("const DESKTOP_ARCHIVE_WINDOW_SIZE = 7;") &&
+    rankedStartsArchiveLink.includes("const MOBILE_ARCHIVE_WINDOW_SIZE = 5;") &&
+    rankedStartsArchiveLink.includes("function getArchiveWindowStart") &&
+    rankedStartsArchiveLink.includes("activeIndex - Math.floor(DESKTOP_ARCHIVE_WINDOW_SIZE / 2)") &&
+    rankedStartsArchiveLink.includes("function getMobileVisibleIndexes") &&
+    rankedStartsArchiveLink.includes("availableDates.slice(windowStart, windowStart + DESKTOP_ARCHIVE_WINDOW_SIZE)") &&
+    rankedStartsArchiveLink.includes('data-slate-strip-page="earlier"') &&
+    rankedStartsArchiveLink.includes('data-slate-strip-page="later"') &&
+    rankedStartsArchiveLink.includes('start: Math.max(0, Math.min(maxWindowStart, direction === "earlier" ? windowStart - visibleCount : windowStart + visibleCount))') &&
+    rankedStartsArchiveLink.includes('className="grid min-w-0 flex-1 grid-cols-5 gap-2 sm:grid-cols-7"') &&
+    rankedStartsArchiveLink.includes("windowedDates.map((date, index)") &&
     rankedStartsArchiveLink.includes('ariaCurrent={active ? "page" : undefined}') &&
-    rankedStartsArchiveLink.includes("anchorRef={active ? activeChipRef : undefined}") &&
-    rankedStartsArchiveLink.includes("strip.scrollTo({") &&
-    rankedStartsArchiveLink.includes('[scrollbar-width:none]') &&
-    rankedStartsArchiveLink.includes("maskImage: \"linear-gradient(to right, #000 0, #000 calc(100% - 5rem), transparent 100%)\"") &&
+    !rankedStartsArchiveLink.includes("activeChipRef") &&
+    !rankedStartsArchiveLink.includes("stripRef") &&
+    !rankedStartsArchiveLink.includes("strip.scrollTo({") &&
+    !rankedStartsArchiveLink.includes("overflow-x-auto") &&
+    !rankedStartsArchiveLink.includes("[scrollbar-width:none]") &&
+    !rankedStartsArchiveLink.includes("maskImage") &&
+    !rankedStartsArchiveLink.includes("WebkitMaskImage") &&
     rankedStartsArchiveLink.includes("export function RankedStartsDatePicker") &&
     rankedStartsArchiveLink.includes("value={activeDate}") &&
     rankedStartsArchiveLink.includes("min={min}") &&
@@ -445,6 +459,13 @@ assert(
     rankedStartsArchiveLink.includes('data-archive-step="date-picker"') &&
     rankedStartsArchiveLink.includes('type="date"') &&
     rankedStartsArchiveLink.includes("const href = rankedStartsPath(nextDate);") &&
+    routeLoadingShell.includes('data-navigation-shell-controls={kind}') &&
+    routeLoadingShell.includes('className="flex min-w-0 items-stretch gap-2 overflow-hidden"') &&
+    routeLoadingShell.includes('className="grid min-w-0 flex-1 grid-cols-5 gap-2 sm:grid-cols-7"') &&
+    routeLoadingShell.includes("Array.from({ length: 7 })") &&
+    routeLoadingShell.includes('index === 0 || index === 6 ? "hidden sm:block" : "block"') &&
+    !routeLoadingShell.includes("overflow-hidden pr-14") &&
+    !routeLoadingShell.includes("Array.from({ length: 10 })") &&
     rankedStartsArchiveLink.includes('event.key === "ArrowLeft" ? previousHref : event.key === "ArrowRight" ? nextHref : null') &&
     slateDateNav.includes('data-responsive-check="ranked-starts-archive-nav"') &&
     !slateDateNav.includes('data-latest-state="latest"') &&

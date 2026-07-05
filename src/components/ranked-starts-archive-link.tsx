@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { rankedStartsPath } from "@/lib/routes";
 
 type RankedStartsArchiveLinkProps = {
@@ -68,55 +68,77 @@ export function RankedStartsArchiveLink({
 }
 
 export function RankedStartsArchiveStrip({ activeDate, availableDates }: { activeDate: string; availableDates: string[] }) {
-  const stripRef = useRef<HTMLDivElement | null>(null);
-  const activeChipRef = useRef<HTMLAnchorElement | null>(null);
-  const hasCentered = useRef(false);
+  const [visibleCount, setVisibleCount] = useState(DESKTOP_ARCHIVE_WINDOW_SIZE);
+  const [pagedWindow, setPagedWindow] = useState(() => ({
+    activeDate,
+    availableCount: availableDates.length,
+    start: getArchiveWindowStart(availableDates, activeDate),
+  }));
 
   useEffect(() => {
-    const activeChip = activeChipRef.current;
-    const strip = stripRef.current;
-    if (!activeChip || !strip) return;
+    const mediaQuery = window.matchMedia("(min-width: 640px)");
+    const syncVisibleCount = () => setVisibleCount(mediaQuery.matches ? DESKTOP_ARCHIVE_WINDOW_SIZE : MOBILE_ARCHIVE_WINDOW_SIZE);
+    syncVisibleCount();
+    mediaQuery.addEventListener("change", syncVisibleCount);
+    return () => mediaQuery.removeEventListener("change", syncVisibleCount);
+  }, []);
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const targetLeft = activeChip.offsetLeft - (strip.clientWidth - activeChip.clientWidth) / 2;
-    strip.scrollTo({
-      left: Math.max(0, targetLeft),
-      behavior: hasCentered.current && !prefersReducedMotion ? "smooth" : "auto",
+  const windowStart = pagedWindow.activeDate === activeDate && pagedWindow.availableCount === availableDates.length ? pagedWindow.start : getArchiveWindowStart(availableDates, activeDate);
+  const maxWindowStart = Math.max(0, availableDates.length - DESKTOP_ARCHIVE_WINDOW_SIZE);
+  const windowedDates = useMemo(() => availableDates.slice(windowStart, windowStart + DESKTOP_ARCHIVE_WINDOW_SIZE), [availableDates, windowStart]);
+  const visibleMobileIndexes = getMobileVisibleIndexes(windowStart, windowedDates.length, availableDates.length);
+  const canPageEarlier = windowStart > 0 && availableDates.length > visibleCount;
+  const canPageLater = windowStart < maxWindowStart && availableDates.length > visibleCount;
+
+  const pageWindow = (direction: "earlier" | "later") => {
+    setPagedWindow({
+      activeDate,
+      availableCount: availableDates.length,
+      start: Math.max(0, Math.min(maxWindowStart, direction === "earlier" ? windowStart - visibleCount : windowStart + visibleCount)),
     });
-    hasCentered.current = true;
-  }, [activeDate]);
+  };
 
   return (
-    <div
-      ref={stripRef}
-      className="flex min-w-0 flex-1 gap-2 overflow-x-auto pr-14 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{
-        WebkitMaskImage: "linear-gradient(to right, #000 0, #000 calc(100% - 5rem), transparent 100%)",
-        maskImage: "linear-gradient(to right, #000 0, #000 calc(100% - 5rem), transparent 100%)",
-      }}
-      data-slate-strip="ranked-starts"
-    >
-      {availableDates.map((date, index) => {
+    <div className="flex min-w-0 flex-1 items-stretch gap-2" data-slate-strip="ranked-starts" data-slate-strip-window-start={windowStart}>
+      <button
+        type="button"
+        className={rankedStartsArchivePageButtonClass(canPageEarlier)}
+        disabled={!canPageEarlier}
+        aria-label="Show earlier slates"
+        data-slate-strip-page="earlier"
+        onClick={() => pageWindow("earlier")}
+      >
+        <ChevronLeftIcon />
+      </button>
+      <div className="grid min-w-0 flex-1 grid-cols-5 gap-2 sm:grid-cols-7">
+        {windowedDates.map((date, index) => {
         const parsed = parseArchiveDate(date);
         const month = parsed ? formatArchiveChipMonth(parsed) : "";
-        const previousParsed = index > 0 ? parseArchiveDate(availableDates[index - 1] ?? "") : null;
-        const previousMonth = previousParsed ? formatArchiveChipMonth(previousParsed) : "";
-        const showMonth = Boolean(month && month !== previousMonth);
+        const previousWindowParsed = index > 0 ? parseArchiveDate(windowedDates[index - 1] ?? "") : null;
+        const previousWindowMonth = previousWindowParsed ? formatArchiveChipMonth(previousWindowParsed) : "";
+        const previousMobileIndex = visibleMobileIndexes.filter((visibleIndex) => visibleIndex < index).at(-1);
+        const previousMobileParsed = previousMobileIndex !== undefined ? parseArchiveDate(windowedDates[previousMobileIndex] ?? "") : null;
+        const previousMobileMonth = previousMobileParsed ? formatArchiveChipMonth(previousMobileParsed) : "";
+        const showDesktopMonth = Boolean(month && (index === 0 || month !== previousWindowMonth));
+        const showMobileMonth = Boolean(month && (index === visibleMobileIndexes[0] || month !== previousMobileMonth));
         const active = date === activeDate;
+        const hiddenOnMobile = !visibleMobileIndexes.includes(index);
 
         return (
           <RankedStartsArchiveLink
             key={date}
-            className={rankedStartsArchiveChipClass(active)}
+            className={`${rankedStartsArchiveChipClass(active)} ${hiddenOnMobile ? "hidden sm:grid" : "grid"}`}
             href={rankedStartsPath(date)}
             ariaLabel={`View slate for ${formatArchiveChipFullDate(date)}`}
             ariaCurrent={active ? "page" : undefined}
-            anchorRef={active ? activeChipRef : undefined}
             dataArchiveDate={date}
           >
             <span className="grid min-w-0 justify-items-center gap-1">
-              <span className="h-3 font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.16em] text-zinc-500 group-aria-[current=page]:text-amber-950">
-                {showMonth ? month : ""}
+              <span className="h-3 font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.16em] text-zinc-500 group-aria-[current=page]:text-amber-950 sm:hidden">
+                {showMobileMonth ? month : ""}
+              </span>
+              <span className="hidden h-3 font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.16em] text-zinc-500 group-aria-[current=page]:text-amber-950 sm:block">
+                {showDesktopMonth ? month : ""}
               </span>
               <span className="font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.14em]">{parsed ? formatArchiveChipWeekday(parsed) : date.slice(5)}</span>
               <span className="font-mono text-lg font-semibold leading-none tracking-normal">{parsed ? parsed.getUTCDate() : date.slice(-2)}</span>
@@ -125,6 +147,17 @@ export function RankedStartsArchiveStrip({ activeDate, availableDates }: { activ
           </RankedStartsArchiveLink>
         );
       })}
+      </div>
+      <button
+        type="button"
+        className={rankedStartsArchivePageButtonClass(canPageLater)}
+        disabled={!canPageLater}
+        aria-label="Show later slates"
+        data-slate-strip-page="later"
+        onClick={() => pageWindow("later")}
+      >
+        <ChevronRightIcon />
+      </button>
     </div>
   );
 }
@@ -197,10 +230,49 @@ export function RankedStartsArchiveKeyboard({ previousHref, nextHref }: { previo
 }
 
 function rankedStartsArchiveChipClass(active: boolean) {
-  const base = "group grid h-[4.75rem] min-w-[3.5rem] place-items-center rounded border px-2 py-1.5 text-center font-mono uppercase transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300";
+  const base = "group h-[4.75rem] min-w-0 place-items-center rounded border px-2 py-1.5 text-center font-mono uppercase transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300";
   if (active) return `${base} border-amber-300 bg-amber-300 text-zinc-950`;
   return `${base} border-white/10 bg-[#101014] text-zinc-300 hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200`;
 }
+
+function rankedStartsArchivePageButtonClass(enabled: boolean) {
+  const base = "inline-flex h-[4.75rem] w-10 shrink-0 items-center justify-center rounded border text-zinc-300 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:w-10";
+  if (!enabled) return `${base} border-white/10 text-zinc-700`;
+  return `${base} border-white/10 hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200`;
+}
+
+function getArchiveWindowStart(availableDates: string[], activeDate: string) {
+  const activeIndex = Math.max(0, availableDates.indexOf(activeDate));
+  const maxStart = Math.max(0, availableDates.length - DESKTOP_ARCHIVE_WINDOW_SIZE);
+  return Math.max(0, Math.min(maxStart, activeIndex - Math.floor(DESKTOP_ARCHIVE_WINDOW_SIZE / 2)));
+}
+
+function getMobileVisibleIndexes(windowStart: number, windowLength: number, availableCount: number) {
+  const indexes = Array.from({ length: windowLength }, (_, index) => index);
+  if (windowLength <= MOBILE_ARCHIVE_WINDOW_SIZE) return indexes;
+  if (windowStart === 0) return indexes.slice(0, MOBILE_ARCHIVE_WINDOW_SIZE);
+  if (windowStart + windowLength >= availableCount) return indexes.slice(windowLength - MOBILE_ARCHIVE_WINDOW_SIZE);
+  return indexes.slice(1, 1 + MOBILE_ARCHIVE_WINDOW_SIZE);
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+const DESKTOP_ARCHIVE_WINDOW_SIZE = 7;
+const MOBILE_ARCHIVE_WINDOW_SIZE = 5;
 
 function parseArchiveDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);

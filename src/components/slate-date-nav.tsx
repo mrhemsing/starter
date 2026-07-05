@@ -89,7 +89,7 @@ export function RankedStartsArchiveNav({
   return (
     <nav className="w-full min-w-0 font-mono uppercase" aria-label="Ranked starts archive navigation" data-responsive-check="ranked-starts-archive-nav">
       <RankedStartsArchiveKeyboard previousHref={previousHref} nextHref={nextHref} />
-      <div className="relative flex min-w-0 items-stretch rounded border border-white/10 bg-[#101014]/95 p-2">
+      <div className="flex min-w-0 items-stretch gap-2 rounded border border-white/10 bg-[#101014]/95 p-2">
         <RankedStartsArchiveStrip activeDate={activeDate} availableDates={availableDates} />
         <RankedStartsDatePicker activeDate={activeDate} min={minDate} max={maxDate} className={rankedStartsArchiveDatePickerClass} />
       </div>
@@ -98,7 +98,7 @@ export function RankedStartsArchiveNav({
 }
 
 const rankedStartsArchiveDatePickerClass =
-  "absolute right-2 top-2 inline-flex h-[4.75rem] w-12 items-center justify-center rounded border border-white/10 bg-[#101014] text-[10px] font-semibold tracking-[0.14em] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 focus-within:border-amber-300/80 focus-within:ring-2 focus-within:ring-amber-300";
+  "relative inline-flex h-[4.75rem] w-10 shrink-0 items-center justify-center rounded border border-white/10 bg-[#101014] text-[10px] font-semibold tracking-[0.14em] text-zinc-200 transition hover:border-amber-300/60 hover:bg-amber-300/10 hover:text-amber-200 focus-within:border-amber-300/80 focus-within:ring-2 focus-within:ring-amber-300 sm:w-12";
 
 export function slateRangeToggleClass(active: boolean) {
   return `inline-flex min-h-11 items-center rounded border px-3 ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
