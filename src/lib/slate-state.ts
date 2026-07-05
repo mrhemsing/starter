@@ -149,11 +149,11 @@ export function formatSlateStatusLine(state: SlateProgressState) {
   if (state.state === "starts-in-progress") return `${todayDateLabel} · ${state.completedStarts} of ${state.totalStarts} starts final`;
 
   const countdown = state.countdownLabel === "STARTING SOON"
-    ? "starting soon"
+    ? "Starting soon"
     : state.countdownLabel === "DELAYED"
-      ? "delayed"
+      ? "Delayed"
       : `in ${state.countdownLabel}`;
-  return `${todayDateLabel} · first starter toes the slab ${countdown}`;
+  return `${todayDateLabel} · First starter toes the slab ${countdown}`;
 }
 
 export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
@@ -161,11 +161,13 @@ export function formatFirstPitchCountdown(durationMs: number, delayed = false) {
   if (durationMs <= 60 * 1000) return "STARTING SOON";
 
   const totalMinutes = Math.max(0, Math.ceil(durationMs / 60000));
-  if (totalMinutes < 60) return `${totalMinutes} m`;
+  if (totalMinutes < 60) return `${totalMinutes} ${pluralizeTimeUnit(totalMinutes, "minute", "minutes")}`;
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return `${hours} Hr ${minutes} m`;
+  const hourLabel = pluralizeTimeUnit(hours, "Hour", "Hours");
+  if (minutes === 0) return `${hours} ${hourLabel}`;
+  return `${hours} ${hourLabel} ${minutes} ${pluralizeTimeUnit(minutes, "minute", "minutes")}`;
 }
 
 export function normalizeScheduleStatus(game: MlbSchedule["games"][number]): NormalizedScheduleStatus {
@@ -195,4 +197,8 @@ function formatStatusDate(date: string) {
     day: "numeric",
     timeZone: "UTC",
   }).format(parsed);
+}
+
+function pluralizeTimeUnit(value: number, singular: string, plural: string) {
+  return value === 1 ? singular : plural;
 }

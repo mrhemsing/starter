@@ -196,12 +196,12 @@ function shouldLinkLiveScoreboard(state: SlateProgressState) {
 function splitPreFirstPitchStatusLine(line: string, state: SlateProgressState["state"]) {
   if (state !== "pre-first-pitch") return null;
 
-  const marker = " · first ";
+  const marker = " · First ";
   const markerIndex = line.indexOf(marker);
   if (markerIndex === -1) return null;
 
   return {
     prefix: line.slice(0, markerIndex),
-    detail: `first ${line.slice(markerIndex + marker.length)}`,
+    detail: `First ${line.slice(markerIndex + marker.length)}`,
   };
 }

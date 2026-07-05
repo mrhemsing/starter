@@ -95,7 +95,7 @@ assert(
 
 assert(
   slateState.includes('const todayDateLabel = `Today · ${dateLabel}`;') &&
-    slateState.includes('return `${todayDateLabel} · first starter toes the slab ${countdown}`;'),
+    slateState.includes('return `${todayDateLabel} · First starter toes the slab ${countdown}`;'),
   "homepage pre-first-pitch line must use Today, date, and first starter countdown copy",
 );
 
@@ -116,10 +116,11 @@ assert(
     slateState.includes('return "DELAYED";') &&
     slateState.includes('state.countdownLabel === "STARTING SOON"') &&
     slateState.includes('state.countdownLabel === "DELAYED"') &&
-    slateState.includes('return `${totalMinutes} m`;') &&
-    slateState.includes('return `${hours} Hr ${minutes} m`;') &&
+    slateState.includes('return `${totalMinutes} ${pluralizeTimeUnit(totalMinutes, "minute", "minutes")}`;') &&
+    slateState.includes('return `${hours} ${hourLabel} ${minutes} ${pluralizeTimeUnit(minutes, "minute", "minutes")}`;') &&
+    slateState.includes('function pluralizeTimeUnit') &&
     !slateState.includes("totalSeconds"),
-  "homepage countdown must use minute granularity with starting-soon and delayed guards",
+  "homepage countdown must use full minute/hour labels with starting-soon and delayed guards",
 );
 
 assert(
@@ -160,14 +161,14 @@ assert(
 );
 
 assert(
-  slateCounts.includes('const marker = " · first ";') &&
+  slateCounts.includes('const marker = " · First ";') &&
     slateCounts.includes('state !== "pre-first-pitch"') &&
     slateCounts.includes("mobilePreFirstPitchLine.prefix") &&
     slateCounts.includes("mobilePreFirstPitchLine.detail") &&
     slateCounts.includes("<br />") &&
     slateCounts.includes('className="hidden sm:inline"') &&
-    slateCounts.includes("`first ${line.slice(markerIndex + marker.length)}`"),
-  "homepage pre-first-pitch status must force a mobile break before FIRST without the leading dot",
+    slateCounts.includes("`First ${line.slice(markerIndex + marker.length)}`"),
+  "homepage pre-first-pitch status must force a mobile break before First without the leading dot",
 );
 
 assert(
