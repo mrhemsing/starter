@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type React from "react";
 import { FastFilterLink } from "@/components/fast-filter-link";
+import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
@@ -101,16 +102,18 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
           />
         </header>
       </div>
-      <TonightsMustWatch
-        tonight={visibleUpcoming}
-        fullSlateHref={upcomingWeekHref(resolvedDate)}
-        fullSlateLabel="Week view"
-        fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
-        eyebrow={formatUpcomingSectionDate(resolvedDate)}
-        title="Matchup Board"
-        rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
-        compactTopPadding
-      />
+      <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
+        <TonightsMustWatch
+          tonight={visibleUpcoming}
+          fullSlateHref={upcomingWeekHref(resolvedDate)}
+          fullSlateLabel="Week view"
+          fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
+          eyebrow={formatUpcomingSectionDate(resolvedDate)}
+          title="Matchup Board"
+          rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
+          compactTopPadding
+        />
+      </PendingRegion>
     </main>
   );
 }
@@ -248,7 +251,7 @@ function ControlGroup({ label, children }: { label: string; children: React.Reac
 
 function ControlLink({ controlKey, active, href, children }: { controlKey: string; active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "location" : undefined} data-control-link-active={String(active)} data-control-link-key={controlKey} scroll={false}>
+    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "location" : undefined} aria-controls="upcoming-board" data-control-link-active={String(active)} data-control-link-key={controlKey} pendingRegion="upcoming-board" pendingLabel="Upcoming matchup board" scroll={false}>
       {children}
     </FastFilterLink>
   );

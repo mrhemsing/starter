@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
@@ -117,7 +118,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
         </header>
       </div>
 
-      <div className="space-y-8">
+      <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="space-y-8 transition data-[route-pending=true]:opacity-70">
         {filteredDays.map((day) => (
           <TonightsMustWatch
             key={day.date}
@@ -131,7 +132,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             sectionId={`must-watch-${day.date}`}
           />
         ))}
-      </div>
+      </PendingRegion>
     </main>
   );
 }

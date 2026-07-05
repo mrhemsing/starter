@@ -60,7 +60,7 @@ export function useRouteControlPending({
   return { pending: pending || isTransitionPending, beginPending };
 }
 
-export function PendingRegion({ region, className, children }: { region: string; className?: string; children: React.ReactNode }) {
+export function PendingRegion({ region, label, id, className, children }: { region: string; label?: string; id?: string; className?: string; children: React.ReactNode }) {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
@@ -95,7 +95,17 @@ export function PendingRegion({ region, className, children }: { region: string;
   }, [region]);
 
   return (
-    <div className={className} data-route-pending-region={region} data-route-pending={pending ? "true" : "false"}>
+    <div
+      id={id}
+      className={className}
+      data-route-pending-region={region}
+      data-route-pending-label={label ?? region}
+      data-route-pending-has-label={label ? "true" : "false"}
+      data-route-pending={pending ? "true" : "false"}
+      aria-busy={pending ? "true" : "false"}
+      role={label ? "region" : undefined}
+      aria-label={label}
+    >
       {children}
     </div>
   );

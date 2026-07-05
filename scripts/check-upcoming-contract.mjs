@@ -49,6 +49,8 @@ const upcomingWeekImageSource = readFileSync("src/app/upcoming/week/[startDate]/
 const tonightApiSource = readFileSync("src/app/api/tonight/route.ts", "utf8");
 const upcomingApiSource = readFileSync("src/app/api/upcoming/route.ts", "utf8");
 const tonightsMustWatchSource = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
+const fastFilterLinkSource = readFileSync("src/components/fast-filter-link.tsx", "utf8");
+const routeControlPendingSource = readFileSync("src/components/route-control-pending.tsx", "utf8");
 const tonightServiceSource = readFileSync("src/lib/data/tonight-service.ts", "utf8");
 const formServiceSource = readFileSync("src/lib/data/form-service.ts", "utf8");
 const upcomingMetadataSource = readFileSync("src/lib/upcoming-metadata.ts", "utf8");
@@ -1510,10 +1512,50 @@ function assertUpcomingRangeToggle(html, route, today, expectedWeekStart = today
 function assertUpcomingControls(html, route, expectedLabel = "Filters / All statuses / Watch rank", linkExpectations = null) {
   assert(
     upcomingDatePageSource.includes('import { FastFilterLink } from "@/components/fast-filter-link";') &&
+      upcomingDatePageSource.includes('import { PendingRegion } from "@/components/route-control-pending";') &&
+      routeControlPendingSource.includes('aria-busy={pending ? "true" : "false"}') &&
       upcomingDatePageSource.includes('<FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]') &&
       upcomingDatePageSource.includes('ariaCurrent={active ? "location" : undefined}') &&
-      upcomingDatePageSource.includes('data-control-link-active={String(active)} data-control-link-key={controlKey} scroll={false}'),
-    "upcoming filter controls must use FastFilterLink with stable link keys, active current-state semantics, and scroll disabled so mobile taps do not jump to the page top",
+      upcomingDatePageSource.includes('aria-controls="upcoming-board" data-control-link-active={String(active)} data-control-link-key={controlKey} pendingRegion="upcoming-board" pendingLabel="Upcoming matchup board" scroll={false}') &&
+      upcomingDatePageSource.includes('<PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">'),
+    "upcoming filter controls must use FastFilterLink with stable link keys, active current-state semantics, accessible pending regions, and scroll disabled so mobile taps do not jump to the page top",
+  );
+  assert(
+      fastFilterLinkSource.includes("pendingRegion?: string;") &&
+      fastFilterLinkSource.includes("pendingLabel?: string;") &&
+      fastFilterLinkSource.includes('"aria-controls"?: string;') &&
+      fastFilterLinkSource.includes('pendingRegion = "route-data",') &&
+      fastFilterLinkSource.includes("const pathname = usePathname();") &&
+      fastFilterLinkSource.includes("const searchParams = useSearchParams();") &&
+      fastFilterLinkSource.includes("const currentSearch = searchParams.toString();") &&
+      fastFilterLinkSource.includes('const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;') &&
+      fastFilterLinkSource.includes("useRouteControlPending({ href, currentHref, active: Boolean(ariaCurrent), region: pendingRegion })") &&
+      fastFilterLinkSource.includes("data-route-pending-region={pendingRegion}") &&
+      fastFilterLinkSource.includes("data-route-pending-label={pendingLabel ?? pendingRegion}") &&
+      fastFilterLinkSource.includes("data-route-pending-target={ariaControls}") &&
+      fastFilterLinkSource.includes("aria-controls={ariaControls}") &&
+      fastFilterLinkSource.includes("onPointerEnter={warmRoute}") &&
+      fastFilterLinkSource.includes("onPointerDown={warmRoute}") &&
+      fastFilterLinkSource.includes("onFocus={warmRoute}") &&
+      fastFilterLinkSource.includes("onClick={() => beginPending()}"),
+    "fast filter links must compare against the full current path/query, forward their pendingRegion prop into the shared route-control pending signal, expose region/label/target telemetry plus aria-controls targeting, warm routes before interaction, and begin pending feedback on click",
+  );
+  assert(
+    routeControlPendingSource.includes('if (detail?.region && detail.region !== region) return;') &&
+      routeControlPendingSource.includes("window.addEventListener(PENDING_EVENT, onPending);") &&
+      routeControlPendingSource.includes("window.addEventListener(PENDING_CLEAR_EVENT, onClear);") &&
+      routeControlPendingSource.includes("window.removeEventListener(PENDING_EVENT, onPending);") &&
+      routeControlPendingSource.includes("window.removeEventListener(PENDING_CLEAR_EVENT, onClear);"),
+    "upcoming board pending feedback must stay scoped by region and clean up its event listeners",
+  );
+  assert(
+    routeControlPendingSource.includes("data-route-pending-label={label ?? region}") &&
+      routeControlPendingSource.includes("id={id}") &&
+      routeControlPendingSource.includes('data-route-pending-has-label={label ? "true" : "false"}') &&
+      routeControlPendingSource.includes('aria-busy={pending ? "true" : "false"}') &&
+      routeControlPendingSource.includes('role={label ? "region" : undefined}') &&
+      routeControlPendingSource.includes("aria-label={label}"),
+    "shared pending regions must expose stable label telemetry and only create named accessible regions when a label is provided",
   );
   assert(
     UPCOMING_CONTROL_LINK_KEYS.every((key) => countOccurrences(upcomingDatePageSource, `controlKey="${key}"`) === 1),
@@ -1564,6 +1606,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   );
   assert(
     upcomingWeekPageSource.includes('import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";') &&
+      upcomingWeekPageSource.includes('import { PendingRegion } from "@/components/route-control-pending";') &&
       upcomingWeekPageSource.includes("const controls = normalizeUpcomingControls(await searchParams);") &&
       upcomingWeekPageSource.includes("b.game.gameWatchScore - a.game.gameWatchScore ||") &&
       upcomingWeekPageSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
@@ -1575,6 +1618,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       upcomingWeekPageSource.includes("scheduledGameCount={scheduledGameCount}") &&
       upcomingWeekPageSource.includes("{filteredDays.map((day) => (") &&
       upcomingWeekPageSource.includes("<UpcomingControls") &&
+      upcomingWeekPageSource.includes('<PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="space-y-8 transition data-[route-pending=true]:opacity-70">') &&
       upcomingWeekPageSource.includes('slateRange="week"'),
     "upcoming week filters must reuse the day-route control helpers, render filtered days with matching control counts, and keep the featured game tie-break deterministic",
   );
@@ -1595,7 +1639,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v9"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v5"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
@@ -2110,6 +2155,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must expose whether they are rendering the day or week slate range",
   );
   assert(html.includes('data-responsive-check="upcoming-controls"'), `${route} should render the upcoming filter controls`);
+  assertUpcomingPendingRegion(html, route);
+  assertUpcomingActiveControlState(html, route);
   assert(
     elementWithTextHasAttributes(html, "summary", { "aria-label": expectedLabel }, expectedLabel),
     `${route} should expose the current upcoming filter state on the controls summary`,
@@ -2170,6 +2217,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     upcomingFastFilterLinkCount(html) === 4,
     `${route} should render all four upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
   );
+  assertUpcomingControlPendingRegions(html, route);
   assertUpcomingControlLinkKeys(html, route);
   if (linkExpectations) {
     assert(
@@ -2214,6 +2262,43 @@ function upcomingFastFilterLinkCount(html) {
   const controlHtml = controlMatch?.[0] ?? html;
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
   return scopedCount >= 4 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
+}
+
+function assertUpcomingControlPendingRegions(html, route) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-route-pending-region="upcoming-board")(?=[^>]*data-route-pending-label="Upcoming matchup board")[^>]*>/g) ?? []).length;
+  const count =
+    scopedCount >= 4
+      ? scopedCount
+      : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-route-pending-region="upcoming-board")(?=[^>]*data-route-pending-label="Upcoming matchup board")[^>]*>/g) ?? [])
+          .length;
+  const scopedControlsCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-controls="upcoming-board")(?=[^>]*data-route-pending-target="upcoming-board")[^>]*>/g) ?? []).length;
+  const controlsCount =
+    scopedControlsCount >= 4
+      ? scopedControlsCount
+      : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-controls="upcoming-board")(?=[^>]*data-route-pending-target="upcoming-board")[^>]*>/g) ?? []).length;
+  const defaultRegionCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-route-pending-region="route-data")[^>]*>/g) ?? []).length;
+  assert(count === 4, `${route} should scope all four upcoming filter controls to the labeled upcoming-board pending region; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(controlsCount === 4, `${route} should point all four upcoming filter controls at the matchup board region with matching aria-controls and target telemetry; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(defaultRegionCount === 0, `${route} upcoming filter controls should not fall back to the default route-data pending region; rendered controls: ${controlAnchorSummary(html)}`);
+}
+
+function assertUpcomingActiveControlState(html, route) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedControls = controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
+  const controlAnchors = scopedControls.length >= 4 ? scopedControls : html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
+  const activeControls = controlAnchors.filter((anchor) => anchor.includes('data-control-link-active="true"'));
+  const activeStatusControls = activeControls.filter((anchor) => /data-control-link-key="status-(all|pregame)"/.test(anchor));
+  const activeSortControls = activeControls.filter((anchor) => /data-control-link-key="sort-(watch|time)"/.test(anchor));
+  assert(activeControls.length === 2, `${route} should render exactly two active upcoming filter controls; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(activeStatusControls.length === 1, `${route} should render exactly one active upcoming Status filter; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(activeSortControls.length === 1, `${route} should render exactly one active upcoming Sort filter; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(
+    controlHtml.includes('data-control-active-count="2"'),
+    `${route} should keep the active-control telemetry aligned with the rendered active controls`,
+  );
 }
 
 function assertUpcomingControlLinkKeys(html, route) {
@@ -2361,6 +2446,29 @@ function elementHasAttributes(html, tagName, attributes) {
   const elements = html.match(new RegExp(`<${tagName}\\b[^>]*>`, "g")) ?? [];
   return elements.some((element) =>
     Object.entries(attributes).every(([name, value]) => element.includes(`${name}="${escapeHtmlAttribute(value)}"`)),
+  );
+}
+
+function assertUpcomingPendingRegion(html, route) {
+  const expectedAttributes = {
+    "data-route-pending-region": "upcoming-board",
+    id: "upcoming-board",
+    "data-route-pending-label": "Upcoming matchup board",
+    "data-route-pending-has-label": "true",
+    "data-route-pending": "false",
+    "aria-busy": "false",
+    role: "region",
+    "aria-label": "Upcoming matchup board",
+  };
+  const renderedPendingRegionCount = countDivsWithAttributes(html, expectedAttributes);
+  const upcomingBoardIdCount = (html.match(/\bid="upcoming-board"/g) ?? []).length;
+  assert(
+    renderedPendingRegionCount === 1,
+    `${route} should render exactly one board-scoped accessible pending region around the matchup cards; found ${renderedPendingRegionCount}. Rebuild the app if the source guard passes but the served .next HTML is stale`,
+  );
+  assert(
+    upcomingBoardIdCount === 1,
+    `${route} should render one unique upcoming-board target for filter controls; found ${upcomingBoardIdCount}`,
   );
 }
 
@@ -4873,6 +4981,16 @@ try {
   const defaultTonightResponse = await fetch(`${baseUrl}/api/tonight?window=${encodeURIComponent(windowSize)}`);
   assert(defaultTonightResponse.ok, `/api/tonight default date returned HTTP ${defaultTonightResponse.status}`);
   const defaultTonight = await defaultTonightResponse.json();
+  if (defaultTonight.date !== defaultDateUpcoming.range.start) {
+    ({
+      defaultDateUpcoming,
+      homeSlateDate,
+      defaultDayTotals,
+      defaultWeekUpcoming,
+      defaultWeekGameCount,
+      defaultWeekGames,
+    } = await loadDefaultUpcomingSnapshot(baseUrl));
+  }
   assertDay(defaultTonight, defaultDateUpcoming.range.start, { requireCompleteStarter: true });
   assert(
     dayApiSignature(defaultTonight) === dayApiSignature(defaultDateUpcoming.days[0]),

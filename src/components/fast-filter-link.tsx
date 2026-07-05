@@ -17,7 +17,9 @@ type FastFilterLinkProps = {
   scroll?: boolean;
   "data-control-link-active"?: string;
   "data-control-link-key"?: string;
+  "aria-controls"?: string;
   pendingRegion?: string;
+  pendingLabel?: string;
 };
 
 export function FastFilterLink({
@@ -31,7 +33,9 @@ export function FastFilterLink({
   scroll = true,
   "data-control-link-active": dataControlLinkActive,
   "data-control-link-key": dataControlLinkKey,
+  "aria-controls": ariaControls,
   pendingRegion = "route-data",
+  pendingLabel,
 }: FastFilterLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,6 +64,10 @@ export function FastFilterLink({
       data-fast-filter-link
       data-control-link-active={dataControlLinkActive}
       data-control-link-key={dataControlLinkKey}
+      data-route-pending-region={pendingRegion}
+      data-route-pending-label={pendingLabel ?? pendingRegion}
+      data-route-pending-target={ariaControls}
+      aria-controls={ariaControls}
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}
