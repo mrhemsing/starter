@@ -3,8 +3,9 @@ import { fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, normaliz
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import type { MlbScheduleGame } from "@/lib/types";
 
-export const ODDS_SYNC_CADENCE_LABEL = "probables-confirm-midday-pre-first-pitch";
+export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier";
 const ODDS_SNAPSHOT_VERSION = 1;
+const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60);
 
 type StoredLine = {
   name: string;
@@ -73,7 +74,8 @@ export async function readOddsSnapshotMarketContexts(date: string): Promise<Map<
 
 export async function syncOddsSnapshotsForDefaultDates() {
   const today = getHomeSlateDate();
-  const dates = [today, addDays(today, 1)];
+  const includeNextDate = process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1";
+  const dates = includeNextDate ? [today, addDays(today, 1)] : [today];
   const uniqueDates = [...new Set(dates)].filter(isOddsEligibleDate);
   return Promise.all(uniqueDates.map((date) => syncOddsSnapshotForDate(date)));
 }
@@ -93,7 +95,13 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
   }
 
   const previous = await readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date));
-  const previousGames = new Map(isOddsSnapshotState(previous) ? previous.games.map((game) => [game.gamePk, game]) : []);
+  const previousSnapshot = isOddsSnapshotState(previous) ? previous : null;
+  const previousGames = new Map(previousSnapshot ? previousSnapshot.games.map((game) => [game.gamePk, game]) : []);
+  if (previousSnapshot && isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)) {
+    const frozenGames = schedule.games.filter((game) => hasGameStarted(game) && previousGames.has(String(game.gamePk))).length;
+    return skippedWithPreviousSnapshot(date, capturedAt, "fresh-snapshot", schedule.games.length, previousSnapshot.games.length, frozenGames);
+  }
+
   const pregameGames = schedule.games.filter((game) => !hasGameStarted(game));
   const diagnostics = await fetchMlbOddsMarketContextsWithDiagnostics(pregameGames);
   const nextGames: StoredGameSnapshot[] = [];
@@ -237,6 +245,22 @@ function oddsSnapshotStateKey(date: string) {
   return `odds-snapshot:${date}`;
 }
 
+function isFreshEnoughSnapshot(snapshot: unknown, scheduleGames: MlbScheduleGame[], capturedAt: string) {
+  if (!isOddsSnapshotState(snapshot)) return false;
+  const capturedMs = Date.parse(snapshot.capturedAt);
+  const nowMs = Date.parse(capturedAt);
+  if (!Number.isFinite(capturedMs) || !Number.isFinite(nowMs)) return false;
+  if (nowMs - capturedMs >= ODDS_MIN_SYNC_INTERVAL_MINUTES * 60 * 1000) return false;
+
+  const snapshotGames = new Map(snapshot.games.map((game) => [game.gamePk, game]));
+  const pregameGames = scheduleGames.filter((game) => !hasGameStarted(game));
+  return pregameGames.length > 0 && pregameGames.every((game) => {
+    const previousGame = snapshotGames.get(String(game.gamePk));
+    if (!previousGame) return false;
+    return previousGame.starters.some((starter) => starter.strikeoutPropLine !== null);
+  });
+}
+
 function emptySyncResult(date: string, capturedAt: string, reason: string): OddsSnapshotSyncResult {
   console.log("[odds-sync] skipped", { date, reason, capturedAt });
   return {
@@ -257,6 +281,35 @@ function emptySyncResult(date: string, capturedAt: string, reason: string): Odds
       error: reason,
     },
   };
+}
+
+function skippedWithPreviousSnapshot(date: string, capturedAt: string, reason: string, games: number, updatedGames: number, frozenGames: number): OddsSnapshotSyncResult {
+  console.log("[odds-sync] skipped", { date, reason, capturedAt, games, updatedGames, frozenGames });
+  return {
+    date,
+    attempted: false,
+    reason,
+    capturedAt,
+    games,
+    updatedGames,
+    frozenGames,
+    credits: { used: null, remaining: null },
+    persisted: false,
+    diagnostics: {
+      requestedGames: 0,
+      eventsSeen: 0,
+      matchedGames: 0,
+      marketFetches: 0,
+      error: reason,
+    },
+  };
+}
+
+function envPositiveInt(name: string, fallback: number) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
 function addDays(date: string, days: number) {

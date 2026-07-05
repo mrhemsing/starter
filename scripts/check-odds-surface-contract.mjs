@@ -33,11 +33,14 @@ assert(
   oddsSnapshot.includes('const ODDS_SNAPSHOT_VERSION = 1') &&
     oddsSnapshot.includes('readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date))') &&
     oddsSnapshot.includes("writeRuntimeState(oddsSnapshotStateKey(date), snapshot)") &&
-    oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "probables-confirm-midday-pre-first-pitch"') &&
+    oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier"') &&
+    oddsSnapshot.includes('const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60)') &&
+    oddsSnapshot.includes('process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1"') &&
+    oddsSnapshot.includes('isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)') &&
     oddsSnapshot.includes("eventsSeen: diagnostics.eventsSeen") &&
     oddsSnapshot.includes("hasGameStarted(game)") &&
     oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })"),
-  "odds snapshots must use runtime-state storage, document cadence, expose diagnostics, and freeze existing rows after first pitch",
+  "odds snapshots must use runtime-state storage, document free-tier cadence, skip fresh snapshots, expose diagnostics, and freeze existing rows after first pitch",
 );
 
 assert(
@@ -72,7 +75,8 @@ assert(
     oddsCron.includes("syncOddsSnapshotsForDefaultDates") &&
     oddsCron.includes("CRON_SECRET") &&
     vercelConfig.includes('"/api/cron/odds-sync"') &&
-    vercelConfig.includes('"15 12,13,14,18,21 * * *"'),
+    vercelConfig.includes('"15 13 * * *"') &&
+    oddsClient.includes('const ODDS_MARKETS = process.env.THE_BUMP_ODDS_INCLUDE_TOTALS === "1" ? "pitcher_strikeouts,team_totals,totals" : "pitcher_strikeouts"'),
   "odds sync cron must be scheduled and use the existing cron auth pattern",
 );
 

@@ -52,6 +52,7 @@ const ODDS_BOOKMAKERS = process.env.THE_BUMP_ODDS_BOOKMAKERS;
 const ODDS_CACHE_TTL_MS = envPositiveInt("THE_BUMP_ODDS_CACHE_MINUTES", 30) * 60 * 1000;
 const ODDS_REVALIDATE_SECONDS = Math.max(60, Math.floor(ODDS_CACHE_TTL_MS / 1000));
 const ODDS_MAX_DAYS_AHEAD = envPositiveInt("THE_BUMP_ODDS_MAX_DAYS_AHEAD", 1);
+const ODDS_MARKETS = process.env.THE_BUMP_ODDS_INCLUDE_TOTALS === "1" ? "pitcher_strikeouts,team_totals,totals" : "pitcher_strikeouts";
 
 type CachedOddsContext = {
   expiresAt: number;
@@ -137,7 +138,7 @@ async function fetchOddsEvents(apiKey: string): Promise<{ events: OddsEvent[]; c
 }
 
 async function fetchEventMarkets(apiKey: string, eventId: string): Promise<{ event: OddsEvent; credits: MlbOddsFetchDiagnostics["credits"] } | null> {
-  const params = oddsParams(apiKey, "pitcher_strikeouts,team_totals,totals");
+  const params = oddsParams(apiKey, ODDS_MARKETS);
   const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`, {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
