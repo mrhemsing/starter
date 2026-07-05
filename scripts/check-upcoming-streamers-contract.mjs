@@ -6,11 +6,12 @@ function assert(condition, message) {
   }
 }
 
-const [packageJson, routes, toggle, streamersService, streamersPage, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
+const [packageJson, routes, toggle, streamersService, tonightService, streamersPage, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
   readFile("package.json", "utf8"),
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/slate-date-nav.tsx", "utf8"),
   readFile("src/lib/data/streamers-service.ts", "utf8"),
+  readFile("src/lib/data/tonight-service.ts", "utf8"),
   readFile("src/app/upcoming/streamers/page.tsx", "utf8"),
   readFile("src/app/upcoming/streamers/opengraph-image.tsx", "utf8"),
   readFile("src/app/sitemaps/[kind]/route.ts", "utf8"),
@@ -67,6 +68,15 @@ assert(
     streamersService.includes("matchupRunValueForStreamer") &&
     streamersService.includes("Probables confirmed through") &&
     streamersService.includes("STREAMER_SCORE_CONFIG") &&
+    streamersService.includes("forceOpponentSplits: true") &&
+    streamersService.includes("function streamScoreFromComponents") &&
+    streamersService.includes("const availableWeight = STREAMER_SCORE_CONFIG.formWeight + STREAMER_SCORE_CONFIG.parkWeight;") &&
+    streamersService.includes("function hasMeaningfulMatchupData") &&
+    streamersService.includes('matchup.opponentLineupTier !== "Pending"') &&
+    streamersService.includes("function streamersRunValueCoverage") &&
+    streamersService.includes("matchupRunValues: runValueCoverage.count") &&
+    streamersService.includes("matchupRunValueMin: runValueCoverage.min") &&
+    streamersService.includes("matchupRunValueMax: runValueCoverage.max") &&
     streamersService.includes("fantasyWeekStart") &&
     streamersService.includes("starter.seasonDecisionRecord") &&
     streamersService.includes("starter.seasonStats?.qualityStarts") &&
@@ -74,8 +84,21 @@ assert(
     streamersService.includes('formTier: starter.tier ?? "even"') &&
     streamersService.includes("matchupDataAvailable") &&
     streamersService.includes("opponentLineupTier") &&
+    streamersService.includes("opponentLineupCount") &&
+    streamersService.includes("const byOpponent = new Map") &&
+    streamersService.includes("const uniqueRunValues = new Set") &&
+    streamersService.includes("if (uniqueRunValues.size <= 1) return;") &&
     streamersService.includes("parkFactor"),
   "streamers service must target the correct fantasy week, log the riser funnel, dedupe columns, and score candidates from Upcoming data with one config",
+);
+
+assert(
+  tonightService.includes("forceOpponentSplits?: boolean;") &&
+    tonightService.includes('const cacheKey = `${date}:${window}:${forceOpponentSplits ? "splits" : "default"}`;') &&
+    tonightService.includes("const shouldFetchOpponentSplits = enrichAtRequestTime || forceOpponentSplits;") &&
+    tonightService.includes("shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts") &&
+    tonightService.includes("forceOpponentSplits: options.forceOpponentSplits"),
+  "Upcoming must-watch must allow streamers to force opponent split enrichment without enabling all request-time enrichment",
 );
 
 assert(
@@ -128,6 +151,8 @@ assert(
     streamersPage.includes("CHANGED · NOW 1 START") &&
     streamersPage.includes('pending={!candidate.matchupDataAvailable}') &&
     streamersPage.includes('pending ? "PENDING" : value.toFixed(1)') &&
+    streamersPage.includes("function formatLineupRank") &&
+    streamersPage.includes('` #${matchup.opponentLineupRank} of ${matchup.opponentLineupCount}`') &&
     streamersPage.includes("function matchupTierClass") &&
     streamersPage.includes('tier === "Soft"') &&
     streamersPage.includes('tier === "Tough"') &&

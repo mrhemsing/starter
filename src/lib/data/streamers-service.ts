@@ -17,6 +17,7 @@ export type StreamerMatchup = {
   parkFactor: number;
   dayHref: string;
   opponentLineupRank: number | null;
+  opponentLineupCount: number | null;
   opponentLineupTier: "Soft" | "Neutral" | "Tough" | "Pending";
   opponentRunValue: number | null;
 };
@@ -97,7 +98,7 @@ export const STREAMERS_RISER_FUNNEL_CONFIG = {
 
 export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Promise<UpcomingStreamersResponse> {
   const start = targetFantasyWeekStart(anchorDate);
-  const upcoming = await getUpcomingMustWatch({ start, days: STREAMERS_WEEK_TARGETING_CONFIG.weekLengthDays, window: FORM_CONFIG.windowDefault });
+  const upcoming = await getUpcomingMustWatch({ start, days: STREAMERS_WEEK_TARGETING_CONFIG.weekLengthDays, window: FORM_CONFIG.windowDefault, forceOpponentSplits: true });
   const byPitcher = new Map<string, CandidateAccumulator>();
   const allMatchups: StreamerMatchup[] = [];
 
@@ -115,6 +116,7 @@ export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Pro
   }
 
   applyOpponentLineupTiers(allMatchups);
+  const runValueCoverage = streamersRunValueCoverage(allMatchups);
 
   const candidates = [...byPitcher.values()]
     .map(({ starter, matchups }) => buildStreamerCandidate(starter, matchups))
@@ -142,6 +144,9 @@ export async function getUpcomingStreamers(anchorDate = getHomeSlateDate()): Pro
     withNextStart: funnel.withNextStart,
     withSoftMatchup: funnel.withSoftMatchup,
     dedupedTwoStartRisers: twoStartPitchers.filter((candidate) => candidate.formRiser).length,
+    matchupRunValues: runValueCoverage.count,
+    matchupRunValueMin: runValueCoverage.min,
+    matchupRunValueMax: runValueCoverage.max,
   });
 
   return {
@@ -159,7 +164,8 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
   const heatBand = starter.tier === "onfire" ? "onfire" : starter.tier === "hot" ? "hot" : null;
   const components = streamScoreComponents(starter, matchups);
   const record = starter.seasonDecisionRecord;
-  const matchupDataAvailable = matchups.some((matchup) => typeof matchup.opponentRunValue === "number");
+  const matchupDataAvailable = hasMeaningfulMatchupData(matchups);
+  const streamScore = streamScoreFromComponents(components, matchupDataAvailable);
 
   return {
     pitcherId: starter.pitcherId,
@@ -173,7 +179,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     formTier: starter.tier ?? "even",
     formTrend: starter.trend ?? "steady",
     matchupDataAvailable,
-    streamScore: roundToScorePrecision(components.form * STREAMER_SCORE_CONFIG.formWeight + components.matchup * STREAMER_SCORE_CONFIG.matchupWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight, 1),
+    streamScore,
     components,
     seasonContext: {
       record: record ? `${record.wins}-${record.losses}-${record.noDecisions}` : "--",
@@ -202,6 +208,7 @@ function buildStreamerMatchup(date: string, game: TonightGame, starter: TonightS
     parkFactor: game.parkContext.runFactor,
     dayHref: upcomingDateHref(date),
     opponentLineupRank: null,
+    opponentLineupCount: null,
     opponentLineupTier: "Pending",
     opponentRunValue: matchupRunValueForStreamer(game, starter),
   };
@@ -215,13 +222,32 @@ function matchupRunValueForStreamer(game: TonightGame, starter: TonightStarter) 
 
 function streamScoreComponents(starter: TonightStarter, matchups: StreamerMatchup[]) {
   const form = clampScore(((starter.rgs ?? 45) - 35) * 2.5 + Math.max(0, starter.deltaForm ?? 0));
-  const matchup = clampScore(mean(matchups.map((matchup) => matchupSoftness(matchup))));
+  const matchup = hasMeaningfulMatchupData(matchups) ? clampScore(mean(matchups.map((matchup) => matchupSoftness(matchup)))) : 0;
   const park = clampScore(mean(matchups.map((matchup) => parkScore(matchup.parkFactor))));
   return {
     form: roundToScorePrecision(form, 1),
     matchup: roundToScorePrecision(matchup, 1),
     park: roundToScorePrecision(park, 1),
   };
+}
+
+function streamScoreFromComponents(components: StreamerCandidate["components"], matchupDataAvailable: boolean) {
+  if (matchupDataAvailable) {
+    return roundToScorePrecision(
+      components.form * STREAMER_SCORE_CONFIG.formWeight + components.matchup * STREAMER_SCORE_CONFIG.matchupWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight,
+      1,
+    );
+  }
+
+  const availableWeight = STREAMER_SCORE_CONFIG.formWeight + STREAMER_SCORE_CONFIG.parkWeight;
+  return roundToScorePrecision(
+    (components.form * STREAMER_SCORE_CONFIG.formWeight + components.park * STREAMER_SCORE_CONFIG.parkWeight) / availableWeight,
+    1,
+  );
+}
+
+function hasMeaningfulMatchupData(matchups: StreamerMatchup[]) {
+  return matchups.some((matchup) => typeof matchup.opponentRunValue === "number" && matchup.opponentLineupTier !== "Pending");
 }
 
 function matchupSoftness(matchup: StreamerMatchup) {
@@ -266,16 +292,49 @@ function targetFantasyWeekStart(anchorDate: string) {
 }
 
 function applyOpponentLineupTiers(matchups: StreamerMatchup[]) {
-  const scored = matchups
-    .filter((matchup) => typeof matchup.opponentRunValue === "number")
-    .sort((a, b) => (a.opponentRunValue ?? 0) - (b.opponentRunValue ?? 0) || a.opponent.localeCompare(b.opponent));
-  const softCutoff = Math.max(1, Math.ceil(scored.length * STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare));
-  const toughCutoff = Math.max(softCutoff, Math.floor(scored.length * (1 - STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare)));
+  const byOpponent = new Map<string, { opponent: string; values: number[] }>();
+  for (const matchup of matchups) {
+    if (typeof matchup.opponentRunValue !== "number") continue;
+    const current = byOpponent.get(matchup.opponent) ?? { opponent: matchup.opponent, values: [] };
+    current.values.push(matchup.opponentRunValue);
+    byOpponent.set(matchup.opponent, current);
+  }
 
-  scored.forEach((matchup, index) => {
-    matchup.opponentLineupRank = index + 1;
-    matchup.opponentLineupTier = index < softCutoff ? "Soft" : index >= toughCutoff ? "Tough" : "Neutral";
+  const scoredOpponents = [...byOpponent.values()]
+    .map((opponent) => ({ opponent: opponent.opponent, runValue: mean(opponent.values) }))
+    .sort((a, b) => a.runValue - b.runValue || a.opponent.localeCompare(b.opponent));
+  const uniqueRunValues = new Set(scoredOpponents.map((opponent) => opponent.runValue.toFixed(3)));
+  if (uniqueRunValues.size <= 1) return;
+
+  const softCutoff = Math.max(1, Math.ceil(scoredOpponents.length * STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare));
+  const toughCutoff = Math.max(softCutoff, Math.floor(scoredOpponents.length * (1 - STREAMERS_RISER_FUNNEL_CONFIG.softOpponentShare)));
+  const rankedOpponents = new Map<string, { rank: number; count: number; tier: StreamerMatchup["opponentLineupTier"] }>();
+
+  scoredOpponents.forEach((opponent, index) => {
+    rankedOpponents.set(opponent.opponent, {
+      rank: index + 1,
+      count: scoredOpponents.length,
+      tier: index < softCutoff ? "Soft" : index >= toughCutoff ? "Tough" : "Neutral",
+    });
   });
+
+  matchups.forEach((matchup) => {
+    const ranked = rankedOpponents.get(matchup.opponent);
+    if (!ranked) return;
+    matchup.opponentLineupRank = ranked.rank;
+    matchup.opponentLineupCount = ranked.count;
+    matchup.opponentLineupTier = ranked.tier;
+  });
+}
+
+function streamersRunValueCoverage(matchups: StreamerMatchup[]) {
+  const values = matchups.map((matchup) => matchup.opponentRunValue).filter((value): value is number => typeof value === "number");
+  if (values.length === 0) return { count: 0, min: null, max: null };
+  return {
+    count: values.length,
+    min: Number(Math.min(...values).toFixed(3)),
+    max: Number(Math.max(...values).toFixed(3)),
+  };
 }
 
 function buildCoverage(upcoming: UpcomingResponse): UpcomingStreamersResponse["coverage"] {

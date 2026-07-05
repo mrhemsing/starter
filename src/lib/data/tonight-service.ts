@@ -12,6 +12,7 @@ import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProba
 type TonightOptions = {
   date?: string;
   window?: 3 | 5 | 10;
+  forceOpponentSplits?: boolean;
 };
 
 type CachedTonight = {
@@ -32,19 +33,20 @@ const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";
 const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
-  async (date: string, window: 3 | 5 | 10) => buildTonightMustWatch(date, window),
-  ["tonight-must-watch", "v8"],
+  async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
+  ["tonight-must-watch", "v9"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
   const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();
   const window = options.window ?? MUSTWATCH_CONFIG.windowDefault;
-  const cacheKey = `${date}:${window}`;
+  const forceOpponentSplits = options.forceOpponentSplits === true;
+  const cacheKey = `${date}:${window}:${forceOpponentSplits ? "splits" : "default"}`;
   const cached = tonightCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.promise;
 
-  const promise = getCachedTonightMustWatch(date, window);
+  const promise = getCachedTonightMustWatch(date, window, forceOpponentSplits);
   tonightCache.set(cacheKey, {
     expiresAt: Date.now() + TONIGHT_CACHE_TTL_MS,
     promise,
@@ -53,15 +55,16 @@ export async function getTonightMustWatch(options: TonightOptions = {}): Promise
   return promise;
 }
 
-async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<TonightResponse> {
+async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOpponentSplits = false): Promise<TonightResponse> {
   const enrichAtRequestTime = isRequestTimeEnrichmentEnabled();
+  const shouldFetchOpponentSplits = enrichAtRequestTime || forceOpponentSplits;
   const [schedule, leaderboard] = await Promise.all([
     getSlateSchedule({ window: "today", date }),
     getFormLeaderboard({ window, qualifiedOnly: false }),
   ]);
   const probables = getProbablesFromSchedule(date, schedule);
   const [opponentSplits, marketContexts] = await Promise.all([
-    enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
+    shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts(date.slice(0, 4), { fetchLive: true }) : Promise.resolve(new Map()),
     enrichAtRequestTime ? fetchMlbOddsMarketContexts(schedule.games) : Promise.resolve(new Map()),
   ]);
   const probablePitcherIds = schedule.games.flatMap((game) => [
@@ -104,11 +107,11 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10): Promise<
   };
 }
 
-export async function getUpcomingMustWatch(options: { date?: string; start?: string; days?: number; window?: 3 | 5 | 10 } = {}): Promise<UpcomingResponse> {
+export async function getUpcomingMustWatch(options: { date?: string; start?: string; days?: number; window?: 3 | 5 | 10; forceOpponentSplits?: boolean } = {}): Promise<UpcomingResponse> {
   const start = normalizeDateKey(options.start ?? options.date) ?? await getDefaultUpcomingDate();
   const days = normalizeUpcomingDays(options.days);
   const dateList = Array.from({ length: days }, (_, index) => addDays(start, index));
-  const upcomingDays = await Promise.all(dateList.map((date) => getTonightMustWatch({ date, window: options.window })));
+  const upcomingDays = await Promise.all(dateList.map((date) => getTonightMustWatch({ date, window: options.window, forceOpponentSplits: options.forceOpponentSplits })));
 
   return {
     range: {
