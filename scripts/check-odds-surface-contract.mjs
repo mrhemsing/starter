@@ -25,8 +25,14 @@ assert(
     oddsClient.includes('response.headers.get("x-requests-remaining")') &&
     oddsClient.includes("eventsSeen") &&
     oddsClient.includes("matchedGames") &&
-    oddsClient.includes("if (result.error || result.contexts.size === 0) oddsCache.delete(cacheKey)"),
-  "odds client must expose credit/match diagnostics and must not cache empty failure results",
+    oddsClient.includes("if (result.error || result.contexts.size === 0) oddsCache.delete(cacheKey)") &&
+    oddsClient.includes('export type OddsProviderSource = "the-odds-api" | "prop-line";') &&
+    oddsClient.includes("THE_BUMP_PROPLINE_API_KEY") &&
+    oddsClient.includes("THE_BUMP_ODDS_PROVIDER") &&
+    oddsClient.includes("PROPLINE_API_BASE") &&
+    oddsClient.includes("oddsEventsUrl(provider)") &&
+    oddsClient.includes("normalizedTeamKeys"),
+  "odds client must expose credit/match diagnostics, support PropLine as a provider, and must not cache empty failure results",
 );
 
 assert(
@@ -38,6 +44,8 @@ assert(
     oddsSnapshot.includes('process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1"') &&
     oddsSnapshot.includes('isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)') &&
     oddsSnapshot.includes("eventsSeen: diagnostics.eventsSeen") &&
+    oddsSnapshot.includes("provider: diagnostics.provider") &&
+    oddsSnapshot.includes("source: context.source") &&
     oddsSnapshot.includes("hasGameStarted(game)") &&
     oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })"),
   "odds snapshots must use runtime-state storage, document free-tier cadence, skip fresh snapshots, expose diagnostics, and freeze existing rows after first pitch",
@@ -58,15 +66,16 @@ assert(
     mustWatch.includes("K line {strikeoutPropLine.toFixed(1)}") &&
     mustWatch.includes("Proj {market.projectedStrikeouts.toFixed(1)}") &&
     mustWatch.includes("Edge {formatSigned(market.strikeoutEdge)}") &&
-    mustWatch.includes('data-market-attribution="the-odds-api"') &&
+    mustWatch.includes('data-market-attribution={attribution.source}') &&
+    mustWatch.includes('attribution.source === "prop-line" ? "PropLine" : "The Odds API"') &&
     mustWatch.includes("1-800-GAMBLER"),
   "Must-Watch and Upcoming shared cards must render K line, projection, edge, pending state, and one attribution line",
 );
 
 assert(
-  methodology.includes("season K/9") &&
+    methodology.includes("season K/9") &&
     methodology.includes("Projected innings use recent workload") &&
-    methodology.includes("K prop lines come from The Odds API snapshots written by cron") &&
+    methodology.includes("K prop lines come from PropLine or The Odds API snapshots written by cron") &&
     methodology.includes("Edges are projection minus line"),
   "methodology must document strikeout projection inputs and odds source",
 );

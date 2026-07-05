@@ -118,10 +118,10 @@ export default async function MethodologyPage() {
             Upcoming strikeout projection starts with the pitcher&apos;s season K/9, multiplies it by projected innings, and rounds to one decimal. Projected innings use recent workload when available, fall back to season innings per start, and are capped from 3.5 to 7.5 innings. Likely openers use a 2.0 inning profile.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            K prop lines come from The Odds API snapshots written by cron and read during render. Once a starter&apos;s game begins, the line stops updating and remains the last pre-first-pitch capture. Edges are projection minus line, shown at one decimal, with no pick language or recommendation.
+            K prop lines come from PropLine or The Odds API snapshots written by cron and read during render. Once a starter&apos;s game begins, the line stops updating and remains the last pre-first-pitch capture. Edges are projection minus line, shown at one decimal, with no pick language or recommendation.
           </p>
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">
-            Lines The Odds API · 21+ only. For help call 1-800-GAMBLER
+            Lines PropLine or The Odds API · 21+ only. For help call 1-800-GAMBLER
           </p>
         </section>
 

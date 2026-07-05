@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
-import { fetchMlbOddsMarketContexts, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
+import { fetchMlbOddsMarketContexts, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
 import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service";
 import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
@@ -568,21 +568,22 @@ function buildMarketContext(
   const opposingTeamTotal = teamTotal ?? (marketContext?.gameTotal ? round1(marketContext.gameTotal / 2) : null);
   const strikeoutEdge = projectedStrikeouts !== null && strikeoutPropLine !== null ? round1(projectedStrikeouts - strikeoutPropLine) : null;
   if (marketContext) {
+    const providerLabel = oddsProviderLabel(marketContext.source);
     return {
       status: strikeoutPropLine !== null || opposingTeamTotal !== null ? "ready" : "pending-feed",
-      source: "the-odds-api",
+      source: marketContext.source,
       projectedStrikeouts,
       strikeoutPropLine,
       strikeoutEdge,
       opposingTeamTotal,
       capturedAt: marketContext.capturedAt ?? null,
       label: strikeoutPropLine !== null || opposingTeamTotal !== null
-        ? marketContext.capturedAt ? `Market context from The Odds API, captured ${formatMarketCaptureTime(marketContext.capturedAt)}.` : "Market context from The Odds API."
-        : "The Odds API event matched, but starter prop/team-total lines were not available yet.",
+        ? marketContext.capturedAt ? `Market context from ${providerLabel}, captured ${formatMarketCaptureTime(marketContext.capturedAt)}.` : `Market context from ${providerLabel}.`
+        : `${providerLabel} event matched, but starter prop/team-total lines were not available yet.`,
     };
   }
 
-  if (process.env.THE_BUMP_ODDS_API_KEY && !isOddsEligibleDate(date)) {
+  if (isOddsProviderConfigured() && !isOddsEligibleDate(date)) {
     return {
       status: "pending-feed",
       source: "odds-deferred",
@@ -591,11 +592,11 @@ function buildMarketContext(
       strikeoutEdge: null,
       opposingTeamTotal: null,
       capturedAt: null,
-      label: "Market lines deferred to conserve The Odds API credits; odds hydrate only for near-term slates.",
+      label: "Market lines deferred to conserve odds API credits; odds hydrate only for near-term slates.",
     };
   }
 
-  if (process.env.THE_BUMP_ODDS_API_KEY) {
+  if (isOddsProviderConfigured()) {
     return {
       status: "pending-feed",
       source: "odds-deferred",
@@ -616,8 +617,12 @@ function buildMarketContext(
     strikeoutEdge: null,
     opposingTeamTotal: null,
     capturedAt: null,
-    label: "K prop and implied team total feed pending. Add THE_BUMP_ODDS_API_KEY to enable market lines.",
+    label: "K prop and implied team total feed pending. Add THE_BUMP_ODDS_API_KEY or THE_BUMP_PROPLINE_API_KEY to enable market lines.",
   };
+}
+
+function oddsProviderLabel(source: OddsProviderSource) {
+  return source === "prop-line" ? "PropLine" : "The Odds API";
 }
 
 function mergeMarketContexts(snapshotContexts: Map<string, MlbOddsGameMarketContext>, requestContexts: Map<string, MlbOddsGameMarketContext>) {

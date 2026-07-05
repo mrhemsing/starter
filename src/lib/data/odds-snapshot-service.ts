@@ -1,5 +1,5 @@
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
-import { fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, normalizeOddsName, type MlbOddsGameMarketContext } from "@/lib/data/odds-client";
+import { fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import type { MlbScheduleGame } from "@/lib/types";
 
@@ -27,7 +27,7 @@ type StoredGameSnapshot = {
   eventId: string;
   firstPitch: string;
   capturedAt: string;
-  source: "the-odds-api";
+  source: OddsProviderSource;
   frozen: boolean;
   gameTotal: number | null;
   teamTotals: StoredLine[];
@@ -40,7 +40,7 @@ type OddsSnapshotState = {
   date: string;
   capturedAt: string;
   cadence: typeof ODDS_SYNC_CADENCE_LABEL;
-  source: "the-odds-api";
+  source: OddsProviderSource;
   games: StoredGameSnapshot[];
 };
 
@@ -62,6 +62,7 @@ export type OddsSnapshotSyncResult = {
     eventsSeen: number;
     matchedGames: number;
     marketFetches: number;
+    provider: OddsProviderSource | "none";
     error: string | null;
   };
 };
@@ -82,7 +83,7 @@ export async function syncOddsSnapshotsForDefaultDates() {
 
 export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapshotSyncResult> {
   const capturedAt = new Date().toISOString();
-  if (!process.env.THE_BUMP_ODDS_API_KEY) {
+  if (!isOddsProviderConfigured()) {
     return emptySyncResult(date, capturedAt, "missing-api-key");
   }
   if (!isOddsEligibleDate(date)) {
@@ -132,7 +133,7 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
     date,
     capturedAt: diagnostics.capturedAt,
     cadence: ODDS_SYNC_CADENCE_LABEL,
-    source: "the-odds-api",
+    source: diagnostics.provider === "none" ? "the-odds-api" : diagnostics.provider,
     games: nextGames,
   };
   const persisted = await writeRuntimeState(oddsSnapshotStateKey(date), snapshot);
@@ -150,6 +151,7 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
     eventsSeen: diagnostics.eventsSeen,
     matchedGames: diagnostics.matchedGames,
     marketFetches: diagnostics.marketFetches,
+    provider: diagnostics.provider,
     error: diagnostics.error,
     persisted,
   });
@@ -168,6 +170,7 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
       eventsSeen: diagnostics.eventsSeen,
       matchedGames: diagnostics.matchedGames,
       marketFetches: diagnostics.marketFetches,
+      provider: diagnostics.provider,
       error: diagnostics.error,
     },
   };
@@ -179,7 +182,7 @@ function contextToStoredGame(game: MlbScheduleGame, context: MlbOddsGameMarketCo
     eventId: context.eventId,
     firstPitch: game.gameDate,
     capturedAt,
-    source: "the-odds-api",
+    source: context.source,
     frozen: false,
     gameTotal: context.gameTotal,
     teamTotals: mapToStoredLines(context.teamTotals),
@@ -207,7 +210,7 @@ function storedSnapshotToContexts(snapshot: OddsSnapshotState) {
   const contexts = new Map<string, MlbOddsGameMarketContext>();
   for (const game of snapshot.games) {
     contexts.set(game.gamePk, {
-      source: "the-odds-api",
+      source: game.source,
       eventId: game.eventId,
       gameTotal: game.gameTotal,
       teamTotals: storedLinesToMap(game.teamTotals),
@@ -278,6 +281,7 @@ function emptySyncResult(date: string, capturedAt: string, reason: string): Odds
       eventsSeen: 0,
       matchedGames: 0,
       marketFetches: 0,
+      provider: "none",
       error: reason,
     },
   };
@@ -300,6 +304,7 @@ function skippedWithPreviousSnapshot(date: string, capturedAt: string, reason: s
       eventsSeen: 0,
       matchedGames: 0,
       marketFetches: 0,
+      provider: "none",
       error: reason,
     },
   };

@@ -1510,10 +1510,13 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
   );
 }
 
-function MarketAttributionLine({ attribution }: { attribution: { capturedAt: string | null } }) {
+type MarketAttributionSource = "the-odds-api" | "prop-line" | "odds-deferred";
+
+function MarketAttributionLine({ attribution }: { attribution: { capturedAt: string | null; source: MarketAttributionSource } }) {
+  const label = attribution.source === "prop-line" ? "PropLine" : "The Odds API";
   return (
-    <p className="mt-4 px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600" data-market-attribution="the-odds-api">
-      Lines The Odds API{attribution.capturedAt ? ` · captured ${formatMarketCapturedAt(attribution.capturedAt)}` : ""} · 21+ only. For help call 1-800-GAMBLER
+    <p className="mt-4 px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600" data-market-attribution={attribution.source}>
+      Lines {label}{attribution.capturedAt ? ` · captured ${formatMarketCapturedAt(attribution.capturedAt)}` : ""} · 21+ only. For help call 1-800-GAMBLER
     </p>
   );
 }
@@ -1521,13 +1524,18 @@ function MarketAttributionLine({ attribution }: { attribution: { capturedAt: str
 function marketAttributionForGames(games: TonightGame[]) {
   const markets = games.flatMap((game) => game.starters.map((starter) => starter.marketContext).filter((market): market is NonNullable<TonightStarter["marketContext"]> => Boolean(market)));
   if (markets.length === 0) return null;
-  if (!markets.some((market) => market.source === "the-odds-api" || market.source === "odds-deferred")) return null;
+  if (!markets.some((market) => market.source === "the-odds-api" || market.source === "prop-line" || market.source === "odds-deferred")) return null;
+  const source: MarketAttributionSource = markets.some((market) => market.source === "prop-line")
+    ? "prop-line"
+    : markets.some((market) => market.source === "the-odds-api")
+      ? "the-odds-api"
+      : "odds-deferred";
   const capturedAt = markets
     .map((market) => market.capturedAt)
     .filter((value): value is string => typeof value === "string")
     .sort()
     .at(-1) ?? null;
-  return { capturedAt };
+  return { capturedAt, source };
 }
 
 function formatMarketCapturedAt(value: string) {

@@ -1,5 +1,7 @@
 import type { MlbScheduleGame } from "@/lib/types";
 
+export type OddsProviderSource = "the-odds-api" | "prop-line";
+
 type OddsOutcome = {
   name?: string;
   description?: string;
@@ -24,7 +26,7 @@ type OddsEvent = {
 };
 
 export type MlbOddsGameMarketContext = {
-  source: "the-odds-api";
+  source: OddsProviderSource;
   eventId: string;
   gameTotal: number | null;
   teamTotals: Map<string, number>;
@@ -44,9 +46,11 @@ export type MlbOddsFetchDiagnostics = {
     used: string | null;
     remaining: string | null;
   };
+  provider: OddsProviderSource | "none";
 };
 
 const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
+const PROPLINE_API_BASE = "https://api.prop-line.com/v1";
 const ODDS_REGION = process.env.THE_BUMP_ODDS_REGION ?? "us";
 const ODDS_BOOKMAKERS = process.env.THE_BUMP_ODDS_BOOKMAKERS;
 const ODDS_CACHE_TTL_MS = envPositiveInt("THE_BUMP_ODDS_CACHE_MINUTES", 30) * 60 * 1000;
@@ -66,21 +70,21 @@ export async function fetchMlbOddsMarketContexts(games: MlbScheduleGame[]): Prom
 }
 
 export async function fetchMlbOddsMarketContextsWithDiagnostics(games: MlbScheduleGame[]): Promise<MlbOddsFetchDiagnostics> {
-  const apiKey = process.env.THE_BUMP_ODDS_API_KEY;
   const capturedAt = new Date().toISOString();
-  if (!apiKey || games.length === 0) return emptyDiagnostics(capturedAt);
+  const provider = oddsProviderConfig();
+  if (!provider || games.length === 0) return emptyDiagnostics(capturedAt);
 
   const dateKey = games[0]?.gameDate.slice(0, 10) ?? "unknown";
   if (!isOddsEligibleDate(dateKey)) return emptyDiagnostics(capturedAt);
 
-  const cacheKey = `${dateKey}:${games.map((game) => game.gamePk).join(",")}:${ODDS_REGION}:${ODDS_BOOKMAKERS ?? "all"}`;
+  const cacheKey = `${provider.source}:${dateKey}:${games.map((game) => game.gamePk).join(",")}:${ODDS_REGION}:${ODDS_BOOKMAKERS ?? "all"}`;
   const cached = oddsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     const cachedDiagnostics = await cached.promise;
     return { ...cachedDiagnostics, capturedAt, credits: { used: null, remaining: null } };
   }
 
-  const diagnosticPromise = buildMlbOddsMarketContexts(games, apiKey, capturedAt).catch((error) => {
+  const diagnosticPromise = buildMlbOddsMarketContexts(games, provider, capturedAt).catch((error) => {
     console.warn("odds market fetch failed", error);
     return emptyDiagnostics(capturedAt, games.length, error instanceof Error ? error.message : String(error));
   });
@@ -94,9 +98,9 @@ export async function fetchMlbOddsMarketContextsWithDiagnostics(games: MlbSchedu
   return diagnosticPromise;
 }
 
-async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: string, capturedAt: string): Promise<MlbOddsFetchDiagnostics> {
+async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], provider: OddsProviderConfig, capturedAt: string): Promise<MlbOddsFetchDiagnostics> {
   const credits = { used: null as string | null, remaining: null as string | null };
-  const eventsResult = await fetchOddsEvents(apiKey);
+  const eventsResult = await fetchOddsEvents(provider);
   mergeCredits(credits, eventsResult.credits);
   const events = eventsResult.events;
   const eventByGamePk = new Map<string, OddsEvent>();
@@ -107,9 +111,9 @@ async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: stri
 
   const entries = await Promise.all(
     [...eventByGamePk.entries()].map(async ([gamePk, event]) => {
-      const detail = await fetchEventMarkets(apiKey, event.id);
+      const detail = await fetchEventMarkets(provider, event.id);
       if (detail) mergeCredits(credits, detail.credits);
-      return [gamePk, { ...summarizeEventMarkets(detail?.event ?? event), capturedAt }] as const;
+      return [gamePk, { ...summarizeEventMarkets(detail?.event ?? event, provider.source), capturedAt }] as const;
     }),
   );
 
@@ -122,32 +126,71 @@ async function buildMlbOddsMarketContexts(games: MlbScheduleGame[], apiKey: stri
     marketFetches: entries.length,
     error: null,
     credits,
+    provider: provider.source,
   };
 }
 
-async function fetchOddsEvents(apiKey: string): Promise<{ events: OddsEvent[]; credits: MlbOddsFetchDiagnostics["credits"] }> {
-  const params = oddsParams(apiKey, "h2h");
-  const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/odds?${params.toString()}`, {
+type OddsProviderConfig = {
+  source: OddsProviderSource;
+  apiKey: string;
+};
+
+function oddsProviderConfig(): OddsProviderConfig | null {
+  const requested = (process.env.THE_BUMP_ODDS_PROVIDER ?? "auto").trim().toLowerCase();
+  const propLineKey = process.env.THE_BUMP_PROPLINE_API_KEY;
+  const oddsApiKey = process.env.THE_BUMP_ODDS_API_KEY;
+
+  if ((requested === "prop-line" || requested === "propline") && propLineKey) return { source: "prop-line", apiKey: propLineKey };
+  if (requested === "the-odds-api" && oddsApiKey) return { source: "the-odds-api", apiKey: oddsApiKey };
+  if (requested === "auto" && propLineKey) return { source: "prop-line", apiKey: propLineKey };
+  if ((requested === "auto" || requested === "the-odds-api") && oddsApiKey) return { source: "the-odds-api", apiKey: oddsApiKey };
+  return null;
+}
+
+export function isOddsProviderConfigured() {
+  return oddsProviderConfig() !== null;
+}
+
+async function fetchOddsEvents(provider: OddsProviderConfig): Promise<{ events: OddsEvent[]; credits: MlbOddsFetchDiagnostics["credits"] }> {
+  const response = await fetch(oddsEventsUrl(provider), {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
-  if (!response.ok) throw new Error(`The Odds API events returned ${response.status}`);
+  if (!response.ok) throw new Error(`${oddsProviderLabel(provider.source)} events returned ${response.status}`);
   return {
     events: await response.json() as OddsEvent[],
     credits: oddsCredits(response),
   };
 }
 
-async function fetchEventMarkets(apiKey: string, eventId: string): Promise<{ event: OddsEvent; credits: MlbOddsFetchDiagnostics["credits"] } | null> {
-  const params = oddsParams(apiKey, ODDS_MARKETS);
-  const response = await fetch(`${ODDS_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`, {
+async function fetchEventMarkets(provider: OddsProviderConfig, eventId: string): Promise<{ event: OddsEvent; credits: MlbOddsFetchDiagnostics["credits"] } | null> {
+  const response = await fetch(eventMarketsUrl(provider, eventId), {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },
   });
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`The Odds API event ${eventId} returned ${response.status}`);
+  if (!response.ok) throw new Error(`${oddsProviderLabel(provider.source)} event ${eventId} returned ${response.status}`);
   return {
     event: await response.json() as OddsEvent,
     credits: oddsCredits(response),
   };
+}
+
+function oddsEventsUrl(provider: OddsProviderConfig) {
+  if (provider.source === "prop-line") {
+    const params = propLineParams(provider.apiKey);
+    return `${PROPLINE_API_BASE}/sports/baseball_mlb/events?${params.toString()}`;
+  }
+  const params = oddsParams(provider.apiKey, "h2h");
+  return `${ODDS_API_BASE}/sports/baseball_mlb/odds?${params.toString()}`;
+}
+
+function eventMarketsUrl(provider: OddsProviderConfig, eventId: string) {
+  if (provider.source === "prop-line") {
+    const params = propLineParams(provider.apiKey);
+    params.set("markets", ODDS_MARKETS);
+    return `${PROPLINE_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`;
+  }
+  const params = oddsParams(provider.apiKey, ODDS_MARKETS);
+  return `${ODDS_API_BASE}/sports/baseball_mlb/events/${eventId}/odds?${params.toString()}`;
 }
 
 function oddsParams(apiKey: string, markets: string) {
@@ -161,7 +204,11 @@ function oddsParams(apiKey: string, markets: string) {
   return params;
 }
 
-function summarizeEventMarkets(event: OddsEvent): MlbOddsGameMarketContext {
+function propLineParams(apiKey: string) {
+  return new URLSearchParams({ apiKey });
+}
+
+function summarizeEventMarkets(event: OddsEvent, source: OddsProviderSource): MlbOddsGameMarketContext {
   const teamTotals = new Map<string, number[]>();
   const pitcherStrikeouts = new Map<string, number[]>();
   const gameTotals: number[] = [];
@@ -187,7 +234,7 @@ function summarizeEventMarkets(event: OddsEvent): MlbOddsGameMarketContext {
   }
 
   return {
-    source: "the-odds-api",
+    source,
     eventId: event.id,
     gameTotal: median(gameTotals),
     teamTotals: collapseLineMap(teamTotals),
@@ -197,8 +244,8 @@ function summarizeEventMarkets(event: OddsEvent): MlbOddsGameMarketContext {
 
 function oddsCredits(response: Response): MlbOddsFetchDiagnostics["credits"] {
   return {
-    used: response.headers.get("x-requests-used"),
-    remaining: response.headers.get("x-requests-remaining"),
+    used: response.headers.get("x-requests-used") ?? response.headers.get("x-ratelimit-used"),
+    remaining: response.headers.get("x-requests-remaining") ?? response.headers.get("x-ratelimit-remaining"),
   };
 }
 
@@ -217,6 +264,7 @@ function emptyDiagnostics(capturedAt: string, requestedGames = 0, error: string 
     marketFetches: 0,
     error,
     credits: { used: null, remaining: null },
+    provider: "none",
   };
 }
 
@@ -250,8 +298,8 @@ function median(values: number[]) {
 }
 
 function isMatchingEvent(game: MlbScheduleGame, event: OddsEvent) {
-  const homeMatches = normalizeName(event.home_team) === normalizeName(game.homeTeam.name);
-  const awayMatches = normalizeName(event.away_team) === normalizeName(game.awayTeam.name);
+  const homeMatches = normalizedTeamKeys(game.homeTeam.name, game.homeTeam.abbreviation).has(normalizeTeamName(event.home_team));
+  const awayMatches = normalizedTeamKeys(game.awayTeam.name, game.awayTeam.abbreviation).has(normalizeTeamName(event.away_team));
   if (!homeMatches || !awayMatches) return false;
 
   const eventTime = new Date(event.commence_time).valueOf();
@@ -294,3 +342,60 @@ function envPositiveInt(name: string, fallback: number) {
 function normalizeName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
+
+function normalizeTeamName(value: string) {
+  const normalized = normalizeName(value);
+  return TEAM_NAME_ALIASES[normalized] ?? normalized;
+}
+
+function normalizedTeamKeys(name: string, abbreviation: string) {
+  return new Set([normalizeTeamName(name), normalizeTeamName(abbreviation), normalizeTeamName(`${abbreviation} ${name}`)]);
+}
+
+function oddsProviderLabel(provider: OddsProviderSource) {
+  return provider === "prop-line" ? "PropLine" : "The Odds API";
+}
+
+const TEAM_NAME_ALIASES: Record<string, string> = {
+  ari: "arizona diamondbacks",
+  "ari diamondbacks": "arizona diamondbacks",
+  az: "arizona diamondbacks",
+  bal: "baltimore orioles",
+  bos: "boston red sox",
+  chc: "chicago cubs",
+  "chi cubs": "chicago cubs",
+  cws: "chicago white sox",
+  "chi white sox": "chicago white sox",
+  cin: "cincinnati reds",
+  cle: "cleveland guardians",
+  col: "colorado rockies",
+  "col rockies": "colorado rockies",
+  det: "detroit tigers",
+  hou: "houston astros",
+  kc: "kansas city royals",
+  "kc royals": "kansas city royals",
+  laa: "los angeles angels",
+  lad: "los angeles dodgers",
+  mia: "miami marlins",
+  mil: "milwaukee brewers",
+  "mil brewers": "milwaukee brewers",
+  min: "minnesota twins",
+  nym: "new york mets",
+  "ny mets": "new york mets",
+  nyy: "new york yankees",
+  "ny yankees": "new york yankees",
+  oak: "athletics",
+  ath: "athletics",
+  phi: "philadelphia phillies",
+  pit: "pittsburgh pirates",
+  sd: "san diego padres",
+  sf: "san francisco giants",
+  "sf giants": "san francisco giants",
+  sea: "seattle mariners",
+  stl: "st louis cardinals",
+  "stl cardinals": "st louis cardinals",
+  tb: "tampa bay rays",
+  tex: "texas rangers",
+  tor: "toronto blue jays",
+  wsh: "washington nationals",
+};
