@@ -15,12 +15,13 @@ const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 assert(
   audit.includes("GS+ already adjusts completed-start scores for both park and opponent context.") &&
     audit.includes("A formula rewrite is not the first move for P1-5.") &&
-    audit.includes("Treat P1-5 as transparency and calibration, not an immediate GS+ v2 rewrite."),
+    audit.includes("Treat P1-5 as transparency and calibration, not an immediate GS+ v2 rewrite.") &&
+    audit.includes("`context-v8` corrects completed-start GS+"),
   "GS+ adjustment audit must state the scoped verdict",
 );
 
 assert(
-  audit.includes("Park context: `(1 - parkRunFactor) * 12`") &&
+  audit.includes("Park context: `(parkRunFactor - 1) * 12`") &&
     audit.includes("Opponent quality: `opponentQualityRunValue`") &&
     audit.includes("Opponent offense: `opponentOffenseRunValue`"),
   "GS+ adjustment audit must name the current park and opponent components",
@@ -28,13 +29,15 @@ assert(
 
 assert(
   startService.includes('key: "parkContext" as const') &&
-    startService.includes("value: (NEUTRAL_PARK_RUN_FACTOR - context.parkRunFactor) * 12") &&
+    startService.includes("value: (context.parkRunFactor - NEUTRAL_PARK_RUN_FACTOR) * 12") &&
+    startService.includes("Expected GS+ projects run prevention") &&
+    startService.includes("(NEUTRAL_PARK_RUN_FACTOR - context.parkRunFactor) * 10") &&
     startService.includes('key: "opponentQuality" as const') &&
     startService.includes("value: context.opponentQualityRunValue") &&
     startService.includes('key: "opponentOffense" as const') &&
     startService.includes("value: context.opponentOffenseRunValue") &&
-    startService.includes('formulaVersion: "context-v7"'),
-  "completed-start GS+ must still expose park, opponent quality, opponent offense, and context-v7",
+    startService.includes('formulaVersion: "context-v8"'),
+  "completed-start GS+ must expose park, opponent quality, opponent offense, and context-v8 while expected GS+ keeps projection sign",
 );
 
 assert(

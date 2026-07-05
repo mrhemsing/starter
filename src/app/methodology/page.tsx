@@ -57,12 +57,12 @@ export default async function MethodologyPage() {
             <FormulaItem label="Walks" value="-1.5 per BB" />
             <FormulaItem label="Whiff context" value="+0.35 per pct point" />
             <FormulaItem label="Velocity context" value="+1.75 per mph" />
-            <FormulaItem label="Park context" value="(1.00 - run factor) x 12" />
+            <FormulaItem label="Park context" value="(run factor - 1.00) x 12" />
             <FormulaItem label="Opponent quality" value="team quality run value" />
             <FormulaItem label="Opponent offense" value="offense run value" />
             <FormulaItem label="Display transform" value="50 + (raw - 54.3) x 0.72, capped 20-80" />
           </dl>
-          <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. When a start settles, GS+ freezes with the context available at settle; later league-context updates do not move that final score. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
+          <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Hitter-friendly parks add context credit for equivalent lines, and pitcher-friendly parks trim it. When a start settles, GS+ freezes with the context available at settle; later league-context updates do not move that final score. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
         </section>
 
         <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
@@ -73,6 +73,9 @@ export default async function MethodologyPage() {
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
             Jul 2: settled starts now freeze GS+ and adjustment context at post-game reconciliation. A one-time season sweep applies that rule to completed starts so final scores stay fixed between polls.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Jul 4: completed-start GS+ moved to context-v8. Park adjustment now credits equivalent lines in higher run environments and trims equivalent lines in lower run environments. The x12 weight is unchanged; broader calibration remains a separate season-store review.
           </p>
         </section>
 

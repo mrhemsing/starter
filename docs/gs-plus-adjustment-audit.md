@@ -9,7 +9,7 @@ GS+ already adjusts completed-start scores for both park and opponent context. A
 
 ## Current Formula
 
-Completed starts use `context-v7` in `src/lib/data/start-service.ts`.
+Completed starts use `context-v8` in `src/lib/data/start-service.ts`.
 
 The scoring breakdown starts with the line:
 
@@ -24,7 +24,7 @@ It then applies context when available:
 
 - Whiff context: `whiffDeltaPct * 0.35`
 - Velocity context: `velocityDeltaMph * 1.75`
-- Park context: `(1 - parkRunFactor) * 12`
+- Park context: `(parkRunFactor - 1) * 12`
 - Opponent quality: `opponentQualityRunValue`
 - Opponent offense: `opponentOffenseRunValue`
 
@@ -34,11 +34,13 @@ The raw total is transformed onto the displayed 20 to 80 GS+ range using the sha
 
 Park context is present in the completed-start breakdown as the `parkContext` component. The current value rewards equivalent lines in harder run environments and trims equivalent lines in easier run environments through the run factor term.
 
+July 4, 2026 note: this audit described the intended direction, but the shipped `context-v7` code used the inverted `(1 - parkRunFactor) * 12` term. `context-v8` corrects completed-start GS+ to `(parkRunFactor - 1) * 12` without retuning the x12 weight.
+
 Evidence:
 
 - `summarizeGameScorePlus` includes a `parkContext` component.
 - `scoreCompletedLine` calls `summarizeGameScorePlus`.
-- Existing slate/start contracts require `gameScorePlusBreakdown.formulaVersion === "context-v7"` and the `parkContext` component.
+- Existing slate/start contracts require generated slate scale data to use `context-v8`, while allowing `context-v7` on frozen historical start rows until a human-approved recompute runs.
 
 ## Opponent Adjustment
 
@@ -64,7 +66,7 @@ What is still missing from P1-5:
 
 - A clearer methodology section naming park and opponent adjustment as first-class GS+ credibility inputs.
 - A compact raw-to-adjusted summary in expanded start rows.
-- A version note for `context-v7` that explains that park and opponent are already included.
+- A version note for `context-v8` that explains that park and opponent are already included.
 
 ## Recommendation
 

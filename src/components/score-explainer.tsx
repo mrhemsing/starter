@@ -32,7 +32,7 @@ export function ScoreExplainer({ scoreScale }: ScoreExplainerProps) {
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">How rankings work</p>
           <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">Game Score+ composition</h3>
         </div>
-        <p className="font-mono text-xs text-amber-300">{scoreScale?.formulaVersion ?? "context-v7"}</p>
+        <p className="font-mono text-xs text-amber-300">{scoreScale?.formulaVersion ?? "context-v8"}</p>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">

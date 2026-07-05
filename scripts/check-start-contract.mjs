@@ -10,6 +10,7 @@ const expectedStartArchivePitchEvents = readOptionalIntegerEnv("THE_BUMP_EXPECT_
 const expectedStartLinePitches = readOptionalIntegerEnv("THE_BUMP_EXPECT_START_LINE_PITCHES");
 const pitchResultKeys = new Set(["called_strike", "swinging_strike", "foul", "ball", "hit_into_play"]);
 const pitchTypeKeys = new Set(["FF", "SI", "SL", "CH", "CU", "FC"]);
+const allowedFrozenFormulaVersions = new Set(["context-v7", "context-v8"]);
 
 function assert(condition, message) {
   if (!condition) {
@@ -233,7 +234,10 @@ assert(Array.isArray(start.inningTimeline) && start.inningTimeline.length === st
 assert(Array.isArray(start.countLeverage) && start.countLeverage.length === start.pitchCounts.byInning.length, "countLeverage must match inning count");
 assert(Array.isArray(start.pitchSequence) && start.pitchSequence.length === start.pitchCounts.total, "pitchSequence length must match pitch total");
 assert(start.gameScorePlusBreakdown?.total === start.gameScorePlus, "gameScorePlusBreakdown total must match gameScorePlus");
-assert(start.gameScorePlusBreakdown?.formulaVersion === "context-v7", "gameScorePlusBreakdown formulaVersion must be context-v7");
+assert(
+  allowedFrozenFormulaVersions.has(start.gameScorePlusBreakdown?.formulaVersion),
+  "gameScorePlusBreakdown formulaVersion must be context-v8, or context-v7 for pre-recompute frozen rows",
+);
 assert(start.gameScorePlusBreakdown.total >= 20 && start.gameScorePlusBreakdown.total <= 80, "gameScorePlusBreakdown total must use the 20-80 display scale");
 assert(typeof start.gameScorePlusBreakdown.gradeBand?.label === "string" && start.gameScorePlusBreakdown.gradeBand.label.length > 0, "gameScorePlusBreakdown gradeBand label must be present");
 assert(typeof start.gameScorePlusBreakdown.gradeBand?.percentileLabel === "string" && start.gameScorePlusBreakdown.gradeBand.percentileLabel.length > 0, "gameScorePlusBreakdown gradeBand percentileLabel must be present");

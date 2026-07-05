@@ -13,6 +13,7 @@ const expectedArchiveStarts = readOptionalIntegerEnv("THE_BUMP_EXPECT_ARCHIVE_ST
 const expectedArchivePitchEvents = readOptionalIntegerEnv("THE_BUMP_EXPECT_ARCHIVE_PITCH_EVENTS");
 const expectedArchiveStartsWithPitchEvents = readOptionalIntegerEnv("THE_BUMP_EXPECT_ARCHIVE_STARTS_WITH_PITCH_EVENTS");
 const expectedArchiveMissingPitchStarts = readOptionalIntegerEnv("THE_BUMP_EXPECT_ARCHIVE_MISSING_PITCH_STARTS");
+const allowedFrozenFormulaVersions = new Set(["context-v7", "context-v8"]);
 
 function assert(condition, message) {
   if (!condition) {
@@ -112,7 +113,7 @@ async function checkSlate(window, date) {
   const slateGamePks = new Set(slate.games.map((game) => game.gamePk));
   const slateGamesByPk = new Map(slate.games.map((game) => [game.gamePk, game]));
   assert(slateGamePks.size === slate.games.length, `${window} slate games must not contain duplicate gamePk values`);
-  assert(slate.scoreScale?.formulaVersion === "context-v7", `${window} slate scoreScale formula mismatch`);
+  assert(slate.scoreScale?.formulaVersion === "context-v8", `${window} slate scoreScale formula mismatch`);
   assert(slate.scoreScale?.displayRange === "20-80", `${window} slate scoreScale display range mismatch`);
   assert(typeof slate.scoreScale?.average === "number", `${window} slate scoreScale missing average`);
   assert(Number.isInteger(slate.scoreScale?.low), `${window} slate scoreScale missing low`);
@@ -341,7 +342,10 @@ async function checkSlate(window, date) {
     gameStarts.opponents.add(start.opponent);
     observedStartsByGame.set(start.gamePk, gameStarts);
     assert(start.gameScorePlusBreakdown?.total === start.gameScorePlus, `${window} start ${start.id} GS+ breakdown total mismatch`);
-    assert(start.gameScorePlusBreakdown?.formulaVersion === "context-v7", `${window} start ${start.id} GS+ breakdown formula mismatch`);
+    assert(
+      allowedFrozenFormulaVersions.has(start.gameScorePlusBreakdown?.formulaVersion),
+      `${window} start ${start.id} GS+ breakdown formula must be context-v8, or context-v7 for pre-recompute frozen rows`,
+    );
     assert(start.gameScorePlusBreakdown.total >= 20 && start.gameScorePlusBreakdown.total <= 80, `${window} start ${start.id} GS+ total must use the 20-80 display scale`);
     assert(typeof start.gameScorePlusBreakdown.preciseTotal === "number", `${window} start ${start.id} GS+ precise total missing`);
     assert(Math.round(start.gameScorePlusBreakdown.preciseTotal) === start.gameScorePlus, `${window} start ${start.id} GS+ precise total must round to displayed total`);

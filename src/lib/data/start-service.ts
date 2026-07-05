@@ -1494,6 +1494,7 @@ function withStartSummaries(start: StartDetail): StartDetail {
 
 function summarizeExpectedGameScorePlus(line: StartLine, context?: StartContext) {
   const computedInnings = inningsFromIP(line.inningsPitched);
+  // Expected GS+ projects run prevention, so pitcher-friendly parks intentionally lift the pregame expectation.
   const raw = 45
     + computedInnings * 3.2
     + line.strikeouts * 2.6
@@ -1638,7 +1639,7 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
         {
           key: "parkContext" as const,
           label: "Park context",
-          value: (NEUTRAL_PARK_RUN_FACTOR - context.parkRunFactor) * 12,
+          value: (context.parkRunFactor - NEUTRAL_PARK_RUN_FACTOR) * 12,
           description: `${context.parkLabel} at ${context.parkRunFactor.toFixed(2)} run factor.`,
         },
         {
@@ -1685,7 +1686,7 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
   return {
     total: scoredTotal,
     preciseTotal: Number(preciseTotal.toFixed(3)),
-    formulaVersion: "context-v7",
+    formulaVersion: "context-v8",
     gradeBand: getGameScorePlusGradeBand(scoredTotal),
     components,
     rankingReasons,
@@ -1754,7 +1755,7 @@ export function summarizeSlateScoreScale(starts: StartSummary[]): SlateApiScoreS
   }
 
   return {
-    formulaVersion: "context-v7",
+    formulaVersion: "context-v8",
     displayRange: "20-80",
     low,
     high,
