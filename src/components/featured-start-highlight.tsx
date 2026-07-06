@@ -53,9 +53,11 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
       </div>
       <a
         href={highlight.watchUrl}
-        className="mt-2 inline-flex font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 underline-offset-4 hover:text-amber-300 hover:underline"
+        target="_blank"
+        rel="noopener"
+        className="mt-2 inline-flex font-mono text-[10px] tracking-[0.14em] text-zinc-500 underline-offset-4 hover:text-amber-300 hover:underline"
       >
-        Highlight via MLB on YouTube
+        Highlight · MLB on YouTube
       </a>
     </div>
   );

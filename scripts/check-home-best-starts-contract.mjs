@@ -20,7 +20,9 @@ const homeDeferredSections = await readFile("src/components/home-deferred-sectio
 const rawScoreHelper = await readFile("src/lib/gs-plus-raw.ts", "utf8");
 const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "utf8");
 const bestStartsRanking = await readFile("src/lib/best-starts-ranking.ts", "utf8");
+const bestStartsHubPage = await readFile("src/app/best-starts/page.tsx", "utf8");
 const monthlyBestStartsPage = await readFile("src/app/best-starts/[month]/page.tsx", "utf8");
+const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
 const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
 const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
@@ -194,7 +196,32 @@ assert(
 
 assert(
   bestStartsService.includes('import { rankBestStarts } from "@/lib/best-starts-ranking";') &&
-    monthlyBestStartsPage.includes('import { bestStartWindow, rankBestStarts } from "@/lib/best-starts-ranking";') &&
+    bestStartsHubPage.includes('export const metadata: Metadata =') &&
+    bestStartsHubPage.includes('title: "Best Starts of 2026"') &&
+    bestStartsHubPage.includes('alternates: { canonical: "/best-starts" }') &&
+    bestStartsHubPage.includes("getBestStartsHome()") &&
+    bestStartsHubPage.includes("data-best-starts-rolling-heroes=\"true\"") &&
+    bestStartsHubPage.includes(">2026 leaderboard</h2>") &&
+    bestStartsHubPage.includes("rankBestStarts(seasonStarts).slice(0, 25)") &&
+    bestStartsHubPage.includes('href={`/best-starts/${month}`}') &&
+    monthlyBestStartsPage.includes('import { rankBestStarts } from "@/lib/best-starts-ranking";') &&
+    monthlyBestStartsPage.includes("data-best-starts-month-hero=\"true\"") &&
+    monthlyBestStartsPage.includes("Season hub") &&
+    monthlyBestStartsPage.includes("No settled starts this month yet.") &&
+    monthlyBestStartsPage.includes("data-best-starts-stat-strip=\"true\"") &&
+    monthlyBestStartsPage.includes("data-best-starts-month-pager=\"true\"") &&
+    monthlyBestStartsPage.includes("data-best-starts-rich-row=\"true\"") &&
+    monthlyBestStartsPage.includes("data-best-starts-compact-row=\"true\"") &&
+    monthlyBestStartsPage.includes("The strongest starts of {monthLabel}, ranked by GS+. Capped 80s show their raw score.") &&
+    !monthlyBestStartsPage.includes("7-DAY BEST") &&
+    !monthlyBestStartsPage.includes("30-DAY BEST") &&
+    !monthlyBestStartsPage.includes(["Monthly", "leaderboard"].join(" ")) &&
+    !homeDeferredSections.includes('href={`/best-starts/${monthKey}`}') &&
+    homeDeferredSections.includes('href="/best-starts"') &&
+    featuredStartHighlight.includes("Highlight · MLB on YouTube") &&
+    featuredStartHighlight.includes('target="_blank"') &&
+    featuredStartHighlight.includes('rel="noopener"') &&
+    !featuredStartHighlight.includes(["Highlight", "via", "MLB", "on", "YouTube"].join(" ")) &&
     bestStartsRanking.includes('import { rawGameScorePlus } from "@/lib/gs-plus-raw";') &&
     bestStartsRanking.includes("bestStartRawScore(b) - bestStartRawScore(a)") &&
     bestStartsRanking.includes("b.line.strikeouts - a.line.strikeouts") &&
@@ -205,8 +232,6 @@ assert(
     rawScoreComponent.includes("cappedRawGameScorePlus(score, breakdown)") &&
     rawScoreComponent.includes("RAW {raw.toFixed(1)}") &&
     monthlyBestStartsPage.includes("<RawGsPlusLine") &&
-    monthlyBestStartsPage.includes('label: "7 AND 30-DAY BEST"') &&
-    monthlyBestStartsPage.includes('label: "30-DAY NEXT BEST"') &&
     homeDeferredSections.includes("function SeasonTopStartsPanel") &&
     homeDeferredSections.includes("function SeasonTopStartRow") &&
     homeDeferredSections.includes("data-home-top-start-row={rank}") &&

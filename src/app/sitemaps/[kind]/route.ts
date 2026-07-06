@@ -82,6 +82,7 @@ async function urlsForKind(kind: SitemapKind): Promise<SitemapUrl[]> {
       url(rankedStartsPath(date), dateLastmod(date), date === defaults.rankedDate ? "hourly" : "monthly", date === defaults.rankedDate ? 0.9 : 0.7),
       url(duelsPath(date), dateLastmod(date), date >= today ? "hourly" : "monthly", 0.6),
     ]),
+    url("/best-starts", now, "daily", 0.8),
     ...months.map((month) => url(`/best-starts/${month}`, `${month}-01T12:00:00.000Z`, "monthly", 0.6)),
   ];
 }

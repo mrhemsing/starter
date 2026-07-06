@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "@vercel/analytics";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
@@ -437,7 +438,6 @@ function BestStartsLite({
   monthlyRunnerUpHighlight?: FeaturedStartHighlight | null;
   seasonTopStarts?: HomeSeasonTopStart[];
 }) {
-  const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
   const sameWindowWinner = Boolean(weekly && monthly && weekly.id === monthly.id);
   const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameWindowWinner
     ? [
@@ -462,9 +462,9 @@ function BestStartsLite({
             <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Recent Gems</h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The best starts of the last 7 and 30 days, worth revisiting.</p>
           </div>
-          <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
+          <Link href="/best-starts" className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
             Season archive
-          </a>
+          </Link>
         </div>
         <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]" data-responsive-check="home-best-starts-2026-layout">
           <div className="grid gap-3 lg:grid-rows-2">
@@ -472,7 +472,7 @@ function BestStartsLite({
               <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} compact />
             ))}
           </div>
-          {topStarts.length > 0 ? <SeasonTopStartsPanel starts={topStarts} monthKey={monthKey} /> : null}
+          {topStarts.length > 0 ? <SeasonTopStartsPanel starts={topStarts} /> : null}
         </div>
       </div>
     </section>
@@ -517,7 +517,7 @@ function BestStartCard({ start, badge, highlight, compact = false }: { start: St
   );
 }
 
-function SeasonTopStartsPanel({ starts, monthKey }: { starts: HomeSeasonTopStart[]; monthKey: string }) {
+function SeasonTopStartsPanel({ starts }: { starts: HomeSeasonTopStart[] }) {
   return (
     <article className="min-h-full rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="home-top-starts-2026">
       <div className="mb-3 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
@@ -525,9 +525,9 @@ function SeasonTopStartsPanel({ starts, monthKey }: { starts: HomeSeasonTopStart
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Top starts of 2026</p>
           <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">Season leaderboard</h3>
         </div>
-        <a href={`/best-starts/${monthKey}`} className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300 underline-offset-4 hover:underline">
+        <Link href="/best-starts" className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300 underline-offset-4 hover:underline">
           Season archive
-        </a>
+        </Link>
       </div>
       <div className="grid min-h-0 gap-2 lg:h-[calc(100%-4.25rem)] lg:grid-rows-5">
         {starts.map((entry, index) => (
