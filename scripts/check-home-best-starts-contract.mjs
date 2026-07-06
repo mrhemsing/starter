@@ -216,6 +216,7 @@ assert(
     homeDeferredSections.includes('data-home-top-start-framed-photo="true"') &&
     homeDeferredSections.includes('data-home-top-start-score-panel="true"') &&
     homeDeferredSections.includes('data-home-top-start-gem-lockup="true"') &&
+    homeDeferredSections.includes('const imagePosition = "50% 4%";') &&
     homeDeferredSections.includes("Gem number ${rank}") &&
     homeDeferredSections.includes("sm:min-h-[160px]") &&
     homeDeferredSections.includes("min-h-[120px]") &&

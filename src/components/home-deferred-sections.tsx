@@ -543,7 +543,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
   const color = scoreBandColor(start.gameScorePlus);
   const actionImage = entry.image?.source === "action" ? entry.image : null;
   const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
-  const imagePosition = actionImage?.objectPosition ?? "center 30%";
+  const imagePosition = "50% 4%";
   const rowHref = startHref(start, sourceParams("home"));
   const fullBleed = Boolean(actionImage);
 
