@@ -849,7 +849,11 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
                 <StarterFormScoreLine starter={starter} accentColor={accent.color} />
-                {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
+                {starter.trend && starter.deltaForm !== undefined ? (
+                  <span className="mt-1.5 inline-flex sm:mt-0">
+                    <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
+                  </span>
+                ) : null}
               </div>
               <StarterStatusChips starter={starter} />
               <FormDriverChips chips={starter.driverChips} limit={3} compact />
@@ -1206,7 +1210,11 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
           <>
             <StarterFormScoreLine starter={starter} accentColor={accent.color} />
-            {starter.trend && starter.deltaForm !== undefined ? <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact /> : null}
+            {starter.trend && starter.deltaForm !== undefined ? (
+              <span className="mt-1.5 inline-flex sm:mt-0">
+                <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
+              </span>
+            ) : null}
           </>
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
