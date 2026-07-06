@@ -257,6 +257,9 @@ assert(
     homeDeferredSections.includes('data-home-top-start-framed-photo="true"') &&
     homeDeferredSections.includes('data-home-top-start-score-panel="true"') &&
     homeDeferredSections.includes('data-home-top-start-gem-lockup="true"') &&
+    homeDeferredSections.includes('data-home-top-start-gem-watermark="true"') &&
+    homeDeferredSections.includes("backgroundImage") &&
+    homeDeferredSections.includes("opacity-[0.09]") &&
     homeDeferredSections.includes('const imagePosition = "50% 4%";') &&
     homeDeferredSections.includes("Gem number ${rank}") &&
     homeDeferredSections.includes("sm:min-h-[160px]") &&

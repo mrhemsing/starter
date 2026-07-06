@@ -563,14 +563,26 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
       ) : null}
       <a href={rowHref} className="absolute inset-0 z-[2]" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div
-        className="relative z-10 flex min-h-full w-[56px] flex-col items-center justify-center border-r border-white/15 px-2 py-3 sm:w-[72px]"
+        className="relative z-10 flex min-h-full w-[56px] flex-col items-center justify-center overflow-hidden border-r border-white/15 px-2 py-3 sm:w-[72px]"
         style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.64) 60%, rgba(0,0,0,0.22) 100%)" }}
         data-home-top-start-gem-lockup="true"
       >
-        <span className={`font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--level-onfire)] ${rank === 1 ? "drop-shadow-[0_0_8px_rgba(251,146,60,0.85)]" : ""}`} data-home-top-start-gem-kicker={rank === 1 ? "elite" : "standard"}>
+        <span
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[92px] w-[92px] -translate-x-1/2 -translate-y-1/2 opacity-[0.09] sm:h-[118px] sm:w-[118px]"
+          style={{
+            backgroundImage:
+              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 120 120\'%3E%3Cpath fill=\'%23fb5938\' d=\'M33 14h54l25 30-52 62L8 44 33 14Z\'/%3E%3Cpath fill=\'%23ffcc66\' fill-opacity=\'.7\' d=\'M33 14h54L72 44H48L33 14Z\'/%3E%3Cpath fill=\'%23000\' fill-opacity=\'.22\' d=\'M48 44h24l-12 62L48 44Z\'/%3E%3Cpath fill=\'none\' stroke=\'%23fff\' stroke-opacity=\'.55\' stroke-width=\'5\' d=\'M33 14h54l25 30-52 62L8 44 33 14Z\'/%3E%3C/svg%3E")',
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "contain",
+          }}
+          aria-hidden="true"
+          data-home-top-start-gem-watermark="true"
+        />
+        <span className={`relative z-10 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--level-onfire)] ${rank === 1 ? "drop-shadow-[0_0_8px_rgba(251,146,60,0.85)]" : ""}`} data-home-top-start-gem-kicker={rank === 1 ? "elite" : "standard"}>
           Gem
         </span>
-        <span className="mt-1 font-serif text-[32px] font-black leading-none sm:text-[44px]" style={{ color }}>#{rank}</span>
+        <span className="relative z-10 mt-1 font-serif text-[32px] font-black leading-none sm:text-[44px]" style={{ color }}>#{rank}</span>
       </div>
       {!fullBleed ? (
         <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r" data-home-top-start-framed-photo="true">
