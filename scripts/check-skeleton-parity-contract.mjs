@@ -25,9 +25,60 @@ function walk(directory, files = []) {
 
 const liveLoading = read("src/app/live/[date]/loading.tsx");
 const liveScoreboard = read("src/components/live-scoreboard.tsx");
+const rootLoading = read("src/app/loading.tsx");
+const bestStartsLoading = read("src/app/best-starts/loading.tsx");
+const bestStartsMonthLoading = read("src/app/best-starts/[month]/loading.tsx");
 const startsLoading = read("src/app/starts/[id]/loading.tsx");
 const watchlistLoading = read("src/app/watchlist/loading.tsx");
 const inventory = read("docs/skeleton-parity-inventory.md");
+
+const crossRouteBannedStrings = [
+  "Every MLB start, ranked.",
+  "The best starts of the 2026 season, with rolling 7 and 30-day leaders up top.",
+  "Best Starts of 2026",
+  "Upcoming Matchups",
+  "Heat Check",
+  "Watchlist",
+];
+
+assert(
+  rootLoading.includes('route="shared"') &&
+    rootLoading.includes("active={null}") &&
+    rootLoading.includes('title="Loading"') &&
+    !rootLoading.includes('route="home"') &&
+    !rootLoading.includes('active="home"') &&
+    !rootLoading.includes("Every MLB start, ranked.") &&
+    !rootLoading.includes("GS_PLUS_SCALE_SENTENCE"),
+  "Shared root loading boundary must be neutral and must not render homepage copy or a hardcoded HOME active state.",
+);
+
+for (const banned of crossRouteBannedStrings) {
+  assert(!rootLoading.includes(banned), `Shared root loading boundary must not contain registered page copy: ${banned}`);
+}
+
+assert(
+  bestStartsLoading.includes('route="best-starts"') &&
+    bestStartsLoading.includes('active="starts"') &&
+    bestStartsLoading.includes("BestStartsHeroPlaceholder") &&
+    bestStartsLoading.includes("BestStartsRowPlaceholder") &&
+    bestStartsLoading.includes('data-navigation-skeleton-layout="season-hub"') &&
+    bestStartsLoading.includes('data-navigation-skeleton-layout="season-leaderboard"') &&
+    !bestStartsLoading.includes("Every MLB start, ranked.") &&
+    !bestStartsLoading.includes('active="home"'),
+  "Best Starts season hub must have a route-specific loading boundary that cannot render homepage copy.",
+);
+
+assert(
+  bestStartsMonthLoading.includes('route="best-starts-month"') &&
+    bestStartsMonthLoading.includes('active="starts"') &&
+    bestStartsMonthLoading.includes('eyebrow="Best starts archive"') &&
+    bestStartsMonthLoading.includes('data-navigation-skeleton-layout="month-stat-strip"') &&
+    bestStartsMonthLoading.includes('data-navigation-skeleton-layout="month-hero"') &&
+    bestStartsMonthLoading.includes('data-navigation-skeleton-layout="month-leaderboard"') &&
+    !bestStartsMonthLoading.includes("Every MLB start, ranked.") &&
+    !bestStartsMonthLoading.includes('active="home"'),
+  "Best Starts monthly archives must have a route-specific loading boundary that cannot render homepage copy or HOME active nav.",
+);
 
 assert(
   liveLoading.includes("getLiveScoreboard") &&
@@ -64,6 +115,12 @@ assert(
 );
 
 assert(
+  inventory.includes("Route-to-boundary map") &&
+    inventory.includes("src/app/loading.tsx`, shared neutral fallback") &&
+    inventory.includes("src/app/best-starts/loading.tsx") &&
+    inventory.includes("src/app/best-starts/[month]/loading.tsx") &&
+    inventory.includes("prevents monthly archives from inheriting the shared fallback or homepage copy") &&
+    inventory.includes("Static pages without async data use the shared neutral fallback as an explicit exemption") &&
   inventory.includes("src/app/live/[date]/loading.tsx") &&
     inventory.includes("src/app/starts/[id]/loading.tsx") &&
     inventory.includes("src/app/watchlist/loading.tsx") &&
