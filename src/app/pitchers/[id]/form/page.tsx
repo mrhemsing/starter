@@ -352,7 +352,7 @@ function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
           <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
         </div>
         <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline.text}</p>
-        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
       </a>
     );
   }
@@ -361,7 +361,7 @@ function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
     <div className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
       <p className="mt-2 text-xs leading-5 text-zinc-500">{event.sentence}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{relativeEventTime(event.detectedAt)}</p>
     </div>
   );
 }

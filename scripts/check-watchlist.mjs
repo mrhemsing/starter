@@ -112,8 +112,10 @@ assert(
     headlineServiceSource.includes("normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline)") &&
     headlineServiceSource.includes('const SYNDICATOR_HOSTS = ["msn.com"];') &&
     headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
+    headlineServiceSource.includes("HEADLINE_SOURCE_SUFFIX_PATTERN") &&
+    headlineServiceSource.includes("stripSourceSuffix(headline.headline, headline.source)") &&
     headlineServiceSource.includes("HEADLINE_TOPIC_STOP_WORDS"),
-  "watchlist headline events must collapse same-topic and syndicated story clusters before storage and render",
+  "watchlist headline events must collapse same-topic clusters and strip duplicated source suffixes before storage and render",
 );
 assert(
   headlineServiceSource.includes('source: "google-news"') &&
@@ -148,8 +150,9 @@ assert(
     watchlistPageSource.includes('target="_blank"') &&
     watchlistPageSource.includes('rel="noopener"') &&
     watchlistPageSource.includes(">NEWS<") &&
-    watchlistPageSource.includes("event.headline?.source"),
-  "watchlist Wire NEWS items must render as external headline links with visible source attribution",
+    watchlistPageSource.includes("event.headline?.source") &&
+    watchlistPageSource.includes("text-zinc-500"),
+  "watchlist Wire NEWS items must render as external headline links with visible, separate source attribution",
 );
 assert(
   headlineCronSource.includes('import { ingestWatchlistHeadlines } from "@/lib/data/watchlist-headlines-service";') &&

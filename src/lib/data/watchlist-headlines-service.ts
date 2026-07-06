@@ -209,7 +209,8 @@ async function fetchEspnHeadlines(pitcher: FormSummary): Promise<HeadlineCandida
 }
 
 function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSummary, allPitchers: FormSummary[]) {
-  const headline = truncateHeadline(decodeHtml(stripTags(candidate.headline)).trim());
+  const source = truncateHeadline(decodeHtml(stripTags(candidate.source)).trim());
+  const headline = truncateHeadline(stripSourceSuffix(decodeHtml(stripTags(candidate.headline)).trim(), source));
   const url = canonicalUrl(candidate.url);
   const publishedAt = normalizePublishedAt(candidate.publishedAt);
   if (!headline || !url || !publishedAt) return null;
@@ -229,7 +230,7 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
     headline,
     url,
     publishedAt,
-    source: truncateHeadline(decodeHtml(stripTags(candidate.source)).trim()),
+    source,
   };
 }
 
@@ -270,15 +271,16 @@ async function appendHeadline(candidate: HeadlineCandidate) {
 }
 
 function headlineToWireEvent(headline: StoredHeadline): WatchlistWireEvent {
+  const displayHeadline = truncateHeadline(stripSourceSuffix(headline.headline, headline.source));
   return {
     key: "headlines",
     label: "NEWS",
     sentence: null,
     detectedAt: headline.detectedAt,
     priority: HEADLINE_PRIORITY,
-    payloadValues: [headline.headline, headline.source, headline.url, headline.publishedAt],
+    payloadValues: [displayHeadline, headline.source, headline.url, headline.publishedAt],
     headline: {
-      text: headline.headline,
+      text: displayHeadline,
       source: headline.source,
       url: headline.url,
       publishedAt: headline.publishedAt,
@@ -513,8 +515,13 @@ function headlineTopicTokens(value: string) {
   return Array.from(new Set(normalizeText(stripSourceSuffix(value)).split(" ").filter((token) => token.length > 2 && !HEADLINE_TOPIC_STOP_WORDS.has(token))));
 }
 
-function stripSourceSuffix(value: string) {
-  return value.replace(/\s+-\s+(msn|yahoo sports|espn|mlb trade rumors|google news)\s*$/i, "");
+function stripSourceSuffix(value: string, source?: string) {
+  let clean = value.trim();
+  const sourceLabel = source?.trim();
+  if (sourceLabel) {
+    clean = clean.replace(new RegExp(`\\s+-\\s+${escapeRegExp(sourceLabel)}\\s*$`, "i"), "");
+  }
+  return clean.replace(HEADLINE_SOURCE_SUFFIX_PATTERN, "").trim();
 }
 
 export function normalizeHeadlineTitle(value: string) {
@@ -544,6 +551,12 @@ const HEADLINE_TOPIC_STOP_WORDS = new Set([
   "toronto",
   "with",
 ]);
+
+const HEADLINE_SOURCE_SUFFIX_PATTERN = /\s+-\s+(?:espn|fantasypros|google news|jays journal|mlb trade rumors|msn|roundtable\.io|sportsnet(?:\.ca)?|toronto star|yahoo sports)\s*$/i;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 function canonicalUrl(raw: string) {
   try {

@@ -195,7 +195,7 @@ function WireEventCard({ event }: { event: WatchlistEntry["wireEvents"][number] 
         <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
       </div>
       <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.pitcherName}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
     </a>
   );
 }
