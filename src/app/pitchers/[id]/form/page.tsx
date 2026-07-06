@@ -175,7 +175,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
           )}
         </section>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<PitcherProfileBodyFallback />}>
           <PitcherProfileBody
             pitcherPromise={pitcherPromise}
             series={series}
@@ -191,6 +191,40 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
         </Suspense>
       </div>
     </main>
+  );
+}
+
+function PitcherProfileBodyFallback() {
+  return (
+    <section
+      className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]"
+      data-responsive-check="pitcher-profile-body-loading"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <div className="min-w-0 space-y-5">
+        <PitcherProfileLoadingCard title="Loading pitcher details" rows={4} />
+        <PitcherProfileLoadingCard title="Loading recent pitch shape" rows={3} />
+        <PitcherProfileLoadingCard title="Loading game log" rows={5} />
+      </div>
+      <aside className="min-w-0 space-y-5">
+        <PitcherProfileLoadingCard title="Loading next start context" rows={3} />
+        <PitcherProfileLoadingCard title="Loading The Wire" rows={3} />
+      </aside>
+    </section>
+  );
+}
+
+function PitcherProfileLoadingCard({ title, rows }: { title: string; rows: number }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{title}</p>
+      <div className="mt-4 grid gap-3">
+        {Array.from({ length: rows }, (_, index) => (
+          <div key={index} className="h-3 rounded bg-white/[0.06]" style={{ width: `${88 - index * 12}%` }} />
+        ))}
+      </div>
+    </div>
   );
 }
 

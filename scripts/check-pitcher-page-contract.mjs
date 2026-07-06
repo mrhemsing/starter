@@ -288,11 +288,13 @@ assert(
     pitcherFormPage.includes("<ProfileNextStartPill nextStartPromise={nextStartPromise}") &&
     pitcherFormPage.includes("<PitcherProfileBody") &&
     pitcherFormPage.includes("pitcherPromise={pitcherPromise}") &&
-    pitcherFormPage.includes("<Suspense fallback={null}>") &&
-    !pitcherFormPage.includes("NextStartPillSkeleton") &&
-    !pitcherFormPage.includes("PitcherScoutingSkeleton") &&
-    !pitcherFormPage.includes("PitcherGameLogSkeleton"),
-  "pitcher profile must stream slower below-the-fold sections without non-live skeleton loading states",
+    pitcherFormPage.includes("<Suspense fallback={<PitcherProfileBodyFallback />}>") &&
+    pitcherFormPage.includes("function PitcherProfileBodyFallback") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-profile-body-loading"') &&
+    pitcherFormPage.includes('aria-busy="true"') &&
+    pitcherFormPage.includes("Loading pitcher details") &&
+    !pitcherFormPage.includes("Profile shell and controls are ready while pitcher modules stream in"),
+  "pitcher profile must show an in-page loading state while slower below-the-fold sections stream",
 );
 
 assert(
@@ -330,8 +332,10 @@ assert(
     pitcherFormWindowPanel.includes("aria-pressed={activeWindow === value}") &&
     pitcherFormWindowPanel.includes("recalculateRollingSeries(series, activeWindow)") &&
     pitcherFormWindowPanel.includes("FORM_CONFIG.windows.map") &&
+    pitcherFormWindowPanel.includes('className="mt-2 flex flex-wrap gap-2" data-responsive-check="pitcher-form-local-window-controls"') &&
+    pitcherFormWindowPanel.includes('className="mt-4 max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart"') &&
     !pitcherFormWindowPanel.includes("<Link"),
-  "pitcher form window panel must recalculate rolling GS+ in the browser without navigating",
+  "pitcher form window panel must recalculate rolling GS+ in the browser without navigating and keep breathing room around controls/chart",
 );
 
 assert(
@@ -433,7 +437,7 @@ assert(
     pitcherFormPage.includes('data-responsive-check="pitcher-profile-game-log"') &&
     pitcherFormPage.includes('<div className="lg:hidden">') &&
     pitcherFormPage.includes('<div className="hidden lg:block">') &&
-    pitcherFormWindowPanel.includes('className="max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart"') &&
+    pitcherFormWindowPanel.includes('className="mt-4 max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart"') &&
     pitcherFormWindowPanel.includes('className="block w-full" viewBox={`0 0 ${width} ${height}`}'),
   "pitcher form profile modules must pack in independent column stacks while wide chart/table content scrolls inside its own panel",
 );

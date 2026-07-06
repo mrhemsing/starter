@@ -20,7 +20,7 @@ export function PitcherFormWindowPanel({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2" data-responsive-check="pitcher-form-local-window-controls">
+      <div className="mt-2 flex flex-wrap gap-2" data-responsive-check="pitcher-form-local-window-controls">
         {FORM_CONFIG.windows.map((value) => (
           <button
             key={value}
@@ -71,7 +71,7 @@ function FormTrendChart({ series, leagueMeanGS }: { series: FormStartPoint[]; le
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
 
   return (
-    <div className="max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart">
+    <div className="mt-4 max-w-full overflow-x-auto rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="form-trend-chart">
       <svg className="block w-full" viewBox={`0 0 ${width} ${height}`} height={height} role="img" aria-label={`Season form chart with ${series.length} starts and league mean ${leagueMeanGS.toFixed(1)} GS+`}>
         {[20, 40, 60, 80].map((tick) => (
           <g key={tick}>
