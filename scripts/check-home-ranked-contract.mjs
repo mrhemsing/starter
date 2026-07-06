@@ -185,13 +185,13 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;") &&
-    homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number)") &&
-    homeDeferredSections.includes('if (game.status !== "live") return true;') &&
-    homeDeferredSections.includes("return nowMs - firstPitchMs <= HOME_MUST_WATCH_LIVE_MAX_AGE_MS;") &&
-    homeDeferredSections.includes("const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);") &&
+  homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null)") &&
+    homeDeferredSections.includes('const games = watch.games.filter((game) => game.status === "pregame");') &&
+    homeDeferredSections.includes("function hasPregameMustWatchGames(watch: TonightResponse | null)") &&
+    homeDeferredSections.includes('hasPregameMustWatchGames(watch) ? today : tomorrow') &&
+    homeDeferredSections.includes("const activeTodayWatch = filterHomeMustWatchGames(todayWatch);") &&
     homeDeferredSections.includes("const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;"),
-  "home must-watch should remove live games once first pitch is more than one hour old before choosing today vs tomorrow",
+  "home must-watch should switch to tomorrow once today has no true pregame cards left",
 );
 
 assert(

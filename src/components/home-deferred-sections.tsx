@@ -22,7 +22,6 @@ import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
-const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 
 export type HomeDeferredInitialData = {
@@ -53,7 +52,6 @@ export function HomeDeferredSections({
   const [formHome, setFormHome] = useState<FormHomeResponse | null>(initialData?.formHome ?? null);
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
-  const [nowMs, setNowMs] = useState(() => Date.now());
   const bestStartsRefreshAttemptedRef = useRef(false);
   const slatePhaseVariant: HomeSlatePhaseVariant = slatePhaseExperiment ? "phase-aware" : "control";
   const scrollDepthsTrackedRef = useRef<Set<number>>(new Set());
@@ -77,7 +75,7 @@ export function HomeDeferredSections({
 
     if (!duels) {
       todayWatchPromise
-        .then((watch) => fetchJson<PitchingDuelsResponse>(`/api/duels?date=${watch.games.length > 0 ? today : tomorrow}&mode=upcoming`))
+        .then((watch) => fetchJson<PitchingDuelsResponse>(`/api/duels?date=${hasPregameMustWatchGames(watch) ? today : tomorrow}&mode=upcoming`))
         .then(setIfLive(setDuels))
         .catch(() => undefined);
     }
@@ -93,18 +91,13 @@ export function HomeDeferredSections({
       fetchJson<BestStartsHomeResponse>("/api/home/best-starts").then(setIfLive(setBestStarts)).catch(() => undefined);
     }
 
-    const homeClockRefresh = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 60 * 1000);
-
     return () => {
       cancelled = true;
-      window.clearInterval(homeClockRefresh);
     };
   }, [bestStarts, duels, formHome, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
-  const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);
-  const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch, nowMs);
+  const activeTodayWatch = filterHomeMustWatchGames(todayWatch);
+  const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch);
   const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;
   const watchDate = resolveHomeMustWatchDate(watch, activeTodayWatch?.games.length ? today : tomorrow);
   const watchWord = watch ? slateTimeWord({ date: watchDate }, { today }) : "today";
@@ -402,15 +395,14 @@ function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {
   return weeklyMissing || monthlyMissing;
 }
 
-function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number) {
+function filterHomeMustWatchGames(watch: TonightResponse | null) {
   if (!watch) return null;
-  const games = watch.games.filter((game) => {
-    if (game.status !== "live") return true;
-    const firstPitchMs = new Date(game.firstPitch).getTime();
-    if (Number.isNaN(firstPitchMs)) return true;
-    return nowMs - firstPitchMs <= HOME_MUST_WATCH_LIVE_MAX_AGE_MS;
-  });
+  const games = watch.games.filter((game) => game.status === "pregame");
   return { ...watch, games };
+}
+
+function hasPregameMustWatchGames(watch: TonightResponse | null) {
+  return watch?.games.some((game) => game.status === "pregame") ?? false;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
