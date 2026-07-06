@@ -82,7 +82,7 @@ assert(
     heatFilterLink.includes('import { useRouteControlPending } from "@/components/route-control-pending";') &&
     heatFilterLink.includes("const { pending, beginPending } = useRouteControlPending") &&
     heatFilterLink.includes("region: \"heat-check-board\"") &&
-    heatFilterLink.includes("beginPending(() => {") &&
+    heatFilterLink.includes("beginPending();") &&
     heatFilterLink.includes("scroll={false}") &&
     !heatFilterLink.includes('data-responsive-check="heat-filter-pending"') &&
     !heatFilterLink.includes("absolute inset-0 z-[120]") &&
@@ -106,9 +106,11 @@ assert(
     formPage.includes("function compareRollingFormLevelRank") &&
     formPage.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
     formPage.includes("return a.pitcherId.localeCompare(b.pitcherId);") &&
-    formPage.includes('if (sort === "risers") return Number(aLimited) - Number(bLimited) || compareMovementRise(a, b);') &&
-    formPage.includes('if (sort === "fallers") return Number(aLimited) - Number(bLimited) || compareMovementFall(a, b);') &&
-    formPage.includes("return Number(aLimited) - Number(bLimited) || compareRollingFormLevelRank(a, b);") &&
+    formPage.includes("const trendQualifiedBoardPitchers = trendBasePitchers") &&
+    formPage.includes(".filter((pitcher) => isFormQualifiedPitcher(pitcher))") &&
+    formPage.includes('if (sort === "risers") return compareMovementRise(a, b);') &&
+    formPage.includes('if (sort === "fallers") return compareMovementFall(a, b);') &&
+    formPage.includes("return compareRollingFormLevelRank(a, b);") &&
     formPage.includes("function compareMovementRisers") &&
     formPage.includes("function compareMovementFallers") &&
     !formPage.includes("rank={pitchers.indexOf(pitcher) + 1}") &&
@@ -130,22 +132,41 @@ assert(
 );
 
 assert(
+  formPage.includes('import { WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED } from "@/lib/watch-score-confidence";') &&
+    formPage.includes("function isFormQualifiedPitcher(pitcher: FormSummary)") &&
+    formPage.includes("pitcher.windowCount >= WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED") &&
+    formPage.includes("const trendQualifiedBoardPitchers = trendBasePitchers") &&
+    formPage.includes("const trendLimitedPitchers = trendBasePitchers") &&
+    formPage.includes(".sort(compareLimitedSampleRows)") &&
+    formPage.includes('data-heat-limited-rank-chip') &&
+    formPage.includes('data-heat-limited-sample-row={limitedSampleRow ? "true" : undefined}') &&
+    formPage.includes("LTD") &&
+    formPage.includes("Limited sample: fewer than {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED} qualified starts") &&
+    formPage.includes('data-heat-limited-sample-section') &&
+    formPage.includes('<ControlLink active={limitedFilter} href={heatCheckHref({ ...params, band: "", motion: "", limited: limitedFilter ? "" : "true" })}>Limited</ControlLink>') &&
+    formPage.includes('href={heatCheckHref({ ...params, band: band === candidate.key ? "" : candidate.key, limited: "" })}') &&
+    formPage.includes('href={heatCheckHref({ ...params, motion: "rising", limited: "" })}') &&
+    !formPage.includes("fewer than 3 qualified starts"),
+  "Heat Check limited-sample arms must be unranked, grouped under the shared threshold, and filtered separately from band/momentum views",
+);
+
+assert(
   formPage.includes('data-responsive-check="heat-band-distribution"') &&
     formPage.includes('data-temperature-job="filter"') &&
-    formPage.includes('className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">League temperature</p>') &&
+    formPage.includes('className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{scopeLabel}</p>') &&
     formPage.includes('<p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>') &&
     formPage.includes('<details className="mt-4">') &&
     !formPage.includes("{onFire} on fire · {ice} ice cold · {total} qualified") &&
     formPage.includes("Click a segment to filter") &&
     formPage.includes('>All</span>') &&
     formPage.includes('ariaCurrent={!activeBand ? "page" : undefined}') &&
-    formPage.includes("href={heatCheckHref({ ...params, band: active ? \"\" : band.key })}") &&
+    formPage.includes("href={heatCheckHref({ ...params, band: active ? \"\" : band.key, limited: \"\" })}") &&
     formPage.includes("activeBand"),
   "horizontal temperature bar must be the filter surface with visible All state and highlighted active filter",
 );
 
 assert(
-  formPage.includes("{trendView && leagueView ? (") &&
+  formPage.includes("{trendPulseView && biggestRiser && biggestFaller ? (") &&
     formPage.includes('{trendView ? <>How starting pitchers are trending over their last {window} starts.</> : <>Starting pitchers ranked by season GS+.</>}') &&
     formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     pageContextStrip.includes("export function PageContextStrip") &&
@@ -154,7 +175,7 @@ assert(
     pageContextStrip.includes("data-context-primary") &&
     pageContextStrip.includes("data-context-meta") &&
     formPage.includes('const throughPrefix = seasonView ? "Season through" : "Form through";') &&
-    formPage.includes('const formThroughLabel = `${throughPrefix} ${leaderboard.formThroughDate ?? "pending"}') &&
+    formPage.includes("const formThroughLabel = leaderboard.formThroughDate") &&
     formPage.includes('className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400"') &&
     formPage.includes('view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale}') &&
     formPage.includes('data-responsive-check="heat-controls-context"') &&
@@ -286,8 +307,8 @@ assert(
 );
 
 assert(
-  formPage.includes("href={heatCheckHref({ ...params, band: band === candidate.key ? \"\" : candidate.key })}") &&
-    formPage.includes("href={heatCheckHref({ ...params, band: activeBand === band.key ? \"\" : band.key })}"),
+  formPage.includes("href={heatCheckHref({ ...params, band: band === candidate.key ? \"\" : candidate.key, limited: \"\" })}") &&
+    formPage.includes("href={heatCheckHref({ ...params, band: activeBand === band.key ? \"\" : band.key, limited: \"\" })}"),
   "Heat Check active band controls must toggle back to All",
 );
 
@@ -319,7 +340,7 @@ assert(
     formPage.includes('const team = params.team ?? "";') &&
     formPage.includes('import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";') &&
     !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
-    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
+    formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team })") &&
     formPage.includes('getSlateSchedule({ window: "today", date: today })') &&
     formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboardRow[], date: string)") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
@@ -327,15 +348,15 @@ assert(
     formPage.includes("const allTeamsView = !team;") &&
     formPage.includes("const leagueView = allTeamsView && trendView;") &&
     formPage.includes('const showBandHeaders = leagueView && sort === "form";') &&
-    formPage.includes("const heroCandidates = qualifiedPitchers;") &&
+    formPage.includes("const heroCandidates = pulsePitchers;") &&
     !formPage.includes("const heroCandidates = qualifiedPitchers.filter((pitcher) => pitcher.windowCount >= window);") &&
     formPage.includes('data-responsive-check="heat-primary-controls"') &&
     formPage.indexOf('data-responsive-check="heat-primary-controls"') < formPage.indexOf('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
-    formPage.includes("{trendView && leagueView ? (") &&
-    formPage.includes("<BandDistribution bands={leagueBandCounts} total={qualifiedPitchers.length} activeBand={band} params={params} />") &&
-    formPage.includes("{trendView && leagueView && biggestRiser && biggestFaller ? (") &&
+    formPage.includes("{trendView && (leagueView || Boolean(team)) ? (") &&
+    formPage.includes('<BandDistribution bands={pulseBandCounts} total={pulsePitchers.length} activeBand={band} params={params} scopeLabel={team ? `${team} temperature` : "League temperature"} />') &&
+    formPage.includes("{trendPulseView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
     !formPage.includes("<HeatCheckBandNav") &&
@@ -347,7 +368,7 @@ assert(
     !formPage.includes('${team ? "my-3" : "my-5"}') &&
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
-    formPage.includes("{trendView && leagueView ? (") &&
+    formPage.includes("{trendView && (leagueView || Boolean(team)) ? (") &&
     formPage.includes('<details className="mt-4">') &&
     formPage.includes("</details>") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
@@ -413,7 +434,7 @@ assert(
     formPage.includes("const visiblePitchers = showAll ? sortedPitchers : sortedPitchers.slice(0, SEASON_UNRANKED_INITIAL_LIMIT);") &&
     formPage.includes('unranked: expanded ? "" : "show"') &&
     formPage.includes('unranked: "all"') &&
-    formPage.includes('data-season-unranked={unranked ? "true" : undefined}') &&
+    formPage.includes('data-season-unranked={unranked && seasonView ? "true" : undefined}') &&
     formPage.includes('{unranked ? "-" : `#${rank}`}') &&
     formPage.includes('data-responsive-check="heat-view-controls"') &&
     formPage.includes('data-heat-view-link={heatViewLink ? "true" : undefined}') &&
@@ -421,7 +442,7 @@ assert(
     formPage.includes('view === "trend" ? (') &&
     formPage.includes('const throughPrefix = seasonView ? "Season through" : "Form through";') &&
     formPage.includes("const qualityTier = qualityTierOf(pitcher.bgs);") &&
-    formPage.includes("const bandColor = seasonView ? qualityTier.color") &&
+    formPage.includes('const bandColor = limitedSampleRow ? "#71717a" : seasonView ? qualityTier.color') &&
     formPage.includes('seasonView ? "Season GS+" : "Form"') &&
     formPage.includes("pitcher.seasonStartCount} GS") &&
     formPage.includes('unranked ? "rounded border border-white/10 px-1.5 py-1 text-zinc-400" : "text-zinc-500"') &&
@@ -642,7 +663,7 @@ assert(
 );
 
 assert(
-  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v4";') &&
+  formService.includes('const FORM_CACHE_VERSION = "form-level-bands-v5";') &&
     formService.includes("const [availabilityStatuses, nextStarts] = await Promise.all([") &&
     formService.includes("getNextStartMap(summaries.map((summary) => summary.pitcherId)),") &&
     formService.includes("const pitchersWithNextStarts = attachNextStarts(pitchers, nextStarts);") &&

@@ -29,7 +29,7 @@ assert(
 );
 
 assert(
-  formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView || team ? false : qualifiedOnly, team })") &&
+  formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team })") &&
     leaderboardApi.includes("team: searchParams.get(\"team\") ?? undefined,"),
   "Heat Check page and API must pass team filters into the form leaderboard builder",
 );
