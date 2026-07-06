@@ -8,6 +8,8 @@ import { Headshot } from "@/components/headshot";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
+import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
+import { formatStartLine } from "@/lib/format";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
@@ -137,7 +139,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
           <p>{scoreboardSummaryLabel(board)}</p>
           <p suppressHydrationWarning>{updatedLabel}</p>
         </div>
-        <SlateCompleteHandoff board={board} rows={scoredRows.slice(0, 3)} />
+        <SlateCompleteHandoff board={board} rows={scoredRows} />
       </section>
     );
   }
@@ -224,53 +226,213 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
   const nextSlateLine = formatNextSlateLine(board);
   const verdictLine = formatSlateCompleteVerdict(board, rows);
+  const topRows = rows.slice(0, 5);
+  const slateAverage = average(rows.map((row) => row.gsPlus).filter((score): score is number => score !== null));
+  const signals = buildSlateSignals(rows, board.date);
 
   return (
-    <div className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#FF9A62]">Slate complete</p>
-          <h2 className="mt-2 font-serif text-3xl font-black tracking-normal text-zinc-50 sm:text-4xl">This slate is final.</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{verdictLine}</p>
-          {nextSlateLine ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
+    <div className="space-y-6" data-live-final-recap="true">
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-header="true">
+        <p className="max-w-3xl text-sm leading-6 text-zinc-300">{verdictLine}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+          <span>{board.finalStarts} final</span>
+          <span suppressHydrationWarning>Updated {formatUpdatedLabel(board.generatedAt)}</span>
+          {nextSlateLine ? <span data-live-next-slate>{nextSlateLine}</span> : null}
+        </div>
+      </section>
+
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-day="true">
+        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#FF9A62]">The day</p>
+            <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Recap at a glance</h2>
+          </div>
           <CtaArrow
             href={rankedStartsPath(board.date)}
             hideTailOnMobile
-            className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
+            className="bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
           >
             View all<br className="sm:hidden" /> ranked starts for {formatBoardDate(board.date)}
           </CtaArrow>
-          <SlabImage />
         </div>
-        <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
-          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-            <p>Top final GS+</p>
-            <p>{rows.length} starters</p>
-          </div>
-          {rows.map((row, index) => (
-            <article key={row.id} className="grid grid-cols-[2ch_29px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 md:grid-cols-[2ch_59px_minmax(0,1fr)_auto]">
-              <p className="font-mono text-xs text-zinc-500">{index + 1}</p>
-              <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
-                <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="sm" decorative className="ml-0 md:h-[88px] md:w-[59px]" />
-              </Link>
-              <div className="min-w-0">
-                <Link href={row.pitcherHref} className="block truncate font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-                  {row.pitcherName}
-                </Link>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-                  {row.team} vs {row.opponent}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-2xl font-black tabular-nums leading-none text-zinc-100">{formatScore(row.gsPlus)}</p>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
-              </div>
-            </article>
-          ))}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-stretch">
+          <TopFinalList rows={topRows} total={rows.length} />
+          <LiveSlateScatter rows={rows} slateAverage={slateAverage} />
         </div>
-      </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-live-final-signals="true">
+        {signals.map((signal) => (
+          <Link key={signal.label} href={signal.href} className="min-h-[112px] rounded border border-white/10 bg-[#101014] p-4 transition hover:border-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{signal.label}</p>
+            <p className="mt-2 font-serif text-2xl font-bold leading-tight text-zinc-50">{signal.value}</p>
+            <p className="mt-2 text-xs leading-5 text-zinc-500">{signal.detail}</p>
+          </Link>
+        ))}
+      </section>
+
+      <TomorrowBridge board={board} />
     </div>
   );
+}
+
+function TopFinalList({ rows, total }: { rows: LiveScoreboardRow[]; total: number }) {
+  return (
+    <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]" data-live-final-top-five="true">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+        <p>Top final GS+</p>
+        <p>{total} starters</p>
+      </div>
+      {rows.map((row, index) => {
+        const tier = row.gsPlus === null ? null : qualityTierOf(row.gsPlus);
+        return (
+          <article key={row.id} className="grid grid-cols-[2ch_29px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 md:grid-cols-[2ch_54px_minmax(0,1fr)_auto]">
+            <p className="font-mono text-xs text-zinc-500">{index + 1}</p>
+            <Link href={row.startHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} start detail`}>
+              <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="sm" decorative className="ml-0 md:h-[72px] md:w-[54px]" />
+            </Link>
+            <div className="min-w-0">
+              <Link href={row.startHref} className="block truncate font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+                {row.pitcherName}
+              </Link>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                {row.team} {row.side === "home" ? "vs" : "@"} {row.opponent} · {lineText(row)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-2xl font-black tabular-nums leading-none" style={{ color: tier?.color ?? "#f4f4f5" }}>{formatScore(row.gsPlus)}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{tier?.label ?? row.scoreLabel}</p>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function LiveSlateScatter({ rows, slateAverage }: { rows: LiveScoreboardRow[]; slateAverage: number }) {
+  const width = 760;
+  const height = 390;
+  const pad = { left: 44, right: 26, top: 30, bottom: 36 };
+  const points = rows
+    .filter((row): row is LiveScoreboardRow & { gsPlus: number } => row.gsPlus !== null)
+    .map((row, index) => {
+      const score = clamp(row.gsPlus, 20, 80);
+      const x = pad.left + ((index + 0.5) / Math.max(1, rows.length)) * (width - pad.left - pad.right);
+      const y = pad.top + ((80 - score) / 60) * (height - pad.top - pad.bottom);
+      return { row, x, y };
+    });
+  const yFor = (score: number) => pad.top + ((80 - score) / 60) * (height - pad.top - pad.bottom);
+  const ticks = [20, 35, 50, 65, 80];
+  const averageY = yFor(clamp(slateAverage, 20, 80));
+
+  return (
+    <div className="min-h-[320px] rounded border border-white/10 bg-[#0B0C0F] p-3" data-live-final-scatter="true" data-scatter-points={points.length}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Slate shape</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">SLATE AVG {slateAverage.toFixed(1)}</p>
+      </div>
+      <svg className="h-[300px] w-full sm:h-[360px]" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${points.length} final ranked starts plotted by start sequence and GS+`}>
+        <rect x={pad.left} y={pad.top} width={width - pad.left - pad.right} height={height - pad.top - pad.bottom} fill="#08080a" opacity="0.7" />
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line x1={pad.left} x2={width - pad.right} y1={yFor(tick)} y2={yFor(tick)} stroke="#27272a" />
+            <text x={pad.left - 10} y={yFor(tick) + 4} textAnchor="end" fill="#71717a" fontSize="11">{tick}</text>
+          </g>
+        ))}
+        <line x1={pad.left} x2={width - pad.right} y1={averageY} y2={averageY} stroke="#a1a1aa" strokeDasharray="5 5" />
+        <text x={width - pad.right - 104} y={averageY - 8} fill="#a1a1aa" fontSize="12">SLATE AVG {slateAverage.toFixed(1)}</text>
+        <text x={pad.left + 10} y={yFor(50) - 8} fill="#a1a1aa" fontSize="12">LEAGUE AVG 50.0</text>
+        <text x={(pad.left + width - pad.right) / 2} y={height - 5} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace">START SEQUENCE</text>
+        <text x="14" y={(pad.top + height - pad.bottom) / 2} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" transform={`rotate(-90 14 ${(pad.top + height - pad.bottom) / 2})`}>GS+</text>
+        {points.map(({ row, x, y }, index) => {
+          const tier = qualityTierOf(row.gsPlus);
+          return (
+            <a key={row.id} href={row.startHref} aria-label={`${row.pitcherName}, GS+ ${row.gsPlus}, ${lineText(row)}`}>
+              <circle cx={x} cy={y} r="15" fill="transparent" />
+              <circle cx={x} cy={y} r={index === 0 ? 8.8 : 7.4} fill={index === 0 ? "#facc15" : tier.color} stroke="#08080a" strokeWidth="2">
+                <title>{`${row.pitcherName} / ${lineText(row)} / GS+ ${row.gsPlus}`}</title>
+              </circle>
+            </a>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function TomorrowBridge({ board }: { board: LiveScoreboardData }) {
+  const game = board.nextSlateTopGame;
+  if (!game || !board.nextSlateDate) return null;
+  const tier = watchTierOf(game.gameWatchScore);
+  const firstPitch = formatFirstPitch(game.firstPitch);
+  const starters = game.starters.filter((starter) => starter.name).map((starter) => starter.name).join(" vs ") || "Probables updating";
+
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-tomorrow="true" data-first-pitch={game.firstPitch}>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445]">Tomorrow</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Top watch-score matchup</h2>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">{game.label} · {starters}</p>
+        </div>
+        <Link href={upcomingDateHref(board.nextSlateDate)} className="grid gap-3 rounded border border-white/10 bg-black/20 p-4 transition hover:border-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:min-w-[320px]">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Watch score</span>
+            <span className="rounded border border-[#F6C445]/30 bg-[#F6C445]/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#F6C445]">{firstPitch}</span>
+          </div>
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="truncate font-serif text-2xl font-bold text-zinc-50">{game.label}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">View tomorrow&apos;s matchups</p>
+            </div>
+            <p className="font-mono text-5xl font-black leading-none" style={{ color: tier.color }}>{game.gameWatchScore.toFixed(1)}</p>
+          </div>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function buildSlateSignals(rows: LiveScoreboardRow[], date: string) {
+  const scored = rows.filter((row): row is LiveScoreboardRow & { gsPlus: number } => row.gsPlus !== null);
+  const gems = scored.filter((row) => row.gsPlus >= 70);
+  const rough = scored.filter((row) => row.gsPlus <= 25);
+  const projected = scored
+    .filter((row) => typeof row.projectedGsPlus === "number")
+    .map((row) => ({ row, delta: row.gsPlus - (row.projectedGsPlus ?? row.gsPlus) }))
+    .sort((a, b) => b.delta - a.delta);
+  const beat = projected[0] ?? null;
+  const miss = projected.at(-1) ?? null;
+  const fallbackGem = scored[1] ?? scored[0] ?? null;
+  const fallbackRough = [...scored].reverse()[1] ?? scored.at(-1) ?? null;
+
+  return [
+    {
+      label: "Gems",
+      value: String(gems.length),
+      detail: "Starts at GS+ 70 plus",
+      href: rankedStartsPath(date),
+    },
+    {
+      label: "Rough days",
+      value: String(rough.length),
+      detail: "Starts at GS+ 25 or lower",
+      href: rankedStartsPath(date),
+    },
+    {
+      label: "Beat of the day",
+      value: beat ? `${lastName(beat.row.pitcherName)} +${beat.delta.toFixed(1)} over proj` : fallbackGem ? `${lastName(fallbackGem.pitcherName)} ${formatScore(fallbackGem.gsPlus)}` : "No scored starts",
+      detail: beat ? "Largest settled edge over projection" : "Fallback: second-best gem",
+      href: beat?.row.startHref ?? fallbackGem?.startHref ?? rankedStartsPath(date),
+    },
+    {
+      label: "Miss of the day",
+      value: miss ? `${lastName(miss.row.pitcherName)} ${miss.delta.toFixed(1)} under proj` : fallbackRough ? `${lastName(fallbackRough.pitcherName)} ${formatScore(fallbackRough.gsPlus)}` : "No scored starts",
+      detail: miss ? "Largest settled miss against projection" : "Fallback: second-roughest start",
+      href: miss?.row.startHref ?? fallbackRough?.startHref ?? rankedStartsPath(date),
+    },
+  ];
 }
 
 function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScoreboardRow[]) {
@@ -344,21 +506,6 @@ function ClockUnit({ value, label, toneClass }: { value: string; label: string; 
     <div className="min-w-0 rounded border border-white/10 bg-black/35 px-2 py-3 text-center shadow-[inset_0_0_30px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
       <p className={`font-mono text-5xl font-black leading-none tracking-normal tabular-nums motion-safe:transition-colors motion-safe:duration-200 sm:text-7xl lg:text-8xl ${toneClass}`}>{value}</p>
       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 sm:text-xs">{label}</p>
-    </div>
-  );
-}
-
-function SlabImage() {
-  return (
-    <div className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30 sm:min-h-[500px]">
-      <Image
-        src="/images/slab-2.png"
-        alt=""
-        width={1280}
-        height={853}
-        className="live-slab-image h-auto w-full object-cover"
-        priority={false}
-      />
     </div>
   );
 }
@@ -523,6 +670,10 @@ function formatLine(row: LiveScoreboardRow) {
   );
 }
 
+function lineText(row: LiveScoreboardRow) {
+  return formatStartLine(row.line);
+}
+
 function formatScore(score: number | null) {
   return formatGameScorePlus(score);
 }
@@ -553,7 +704,7 @@ function formatNextSlateLine(board: LiveScoreboardData) {
   }).format(parsed).replace(/\bPST\b|\bPDT\b/, "PT");
   const relative = formatRelativePacificDate(parsed);
 
-  return `Next first pitch: ${relative} at ${timeLabel}.`;
+  return `First pitch ${relative}: ${timeLabel}`;
 }
 
 function toPacificDate(date: Date) {
@@ -713,6 +864,11 @@ function padClockUnit(value: number) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function average(values: number[]) {
+  if (values.length === 0) return 50;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function isScoredRow(row: LiveScoreboardRow) {

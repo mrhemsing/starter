@@ -27,9 +27,9 @@ export default async function LivePage({ params }: LivePageProps) {
   const board = await getLiveScoreboard({ date });
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
   const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;
-  const boardTitle = "Live GS+ Scoreboard";
+  const boardTitle = slateComplete ? "Slate final" : "Live GS+ Scoreboard";
   const boardDescription = slateComplete
-    ? "This slate is final."
+    ? ""
     : pregame
       ? ""
       : "Once a starter throws, the number goes live and provisional. Final lines settle when he exits.";
