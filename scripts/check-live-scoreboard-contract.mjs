@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, primaryNavLink, homeRanked, homeStatus, globals, slabImage] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, primaryNavLink, homeRanked, homeStatus, globals, tonightsMustWatch, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
@@ -22,6 +22,7 @@ const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, ml
   readFile("src/lib/data/home-ranked-service.ts", "utf8"),
   readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/app/globals.css", "utf8"),
+  readFile("src/components/tonights-must-watch.tsx", "utf8"),
   stat("public/images/slab-2.png"),
 ]);
 const deletedFinalPanelCopy = "Live returns" + " with the next slate.";
@@ -59,7 +60,7 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v9"]') &&
+    liveService.includes('["live-scoreboard", "v10"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
@@ -85,14 +86,22 @@ assert(
     liveService.includes("export type LiveScoreboard = SlateStartBucketCounts & {") &&
     liveService.includes("let startCounts = summarizeSlateStartBuckets(rows);") &&
     liveService.includes("const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);") &&
-    liveService.includes("const nextSlate = slateComplete ? await resolveNextSlate(date) : null;") &&
+    liveService.includes("const currentPregameWatch = pregame ? await getTonightMustWatch({ date, window: 5 }).catch(() => null) : null;") &&
+    liveService.includes("const nextSlate = slateComplete || rows.length === 0 ? await resolveNextSlate(date) : null;") &&
+    liveService.includes("const pregameSlate = currentPregameWatch") &&
     liveService.includes("slateProgress: SlateProgressState;") &&
+    liveService.includes("pregameSlate: LivePregameSlate | null;") &&
+    liveService.includes('headerLabel: "FIRST UP" | "NEXT SLATE";') &&
+    liveService.includes('marqueeGame: TonightResponse["games"][number] | null;') &&
+    liveService.includes('nextUpGames: TonightResponse["games"][number][];') &&
+    liveService.includes("starterCount: number;") &&
     liveService.includes("nextSlateDate: string | null;") &&
     liveService.includes("nextSlateFirstPitchAt: string | null;") &&
     liveService.includes('nextSlateTopGame: TonightResponse["games"][number] | null;') &&
     liveService.includes("nextSlateDate: nextSlate?.date ?? null,") &&
     liveService.includes("nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,") &&
     liveService.includes("nextSlateTopGame: nextSlate?.topGame ?? null,") &&
+    liveService.includes("pregameSlate,") &&
     liveService.includes("slateProgress,") &&
     liveService.includes("async function resolveNextSlate(date: string)") &&
     liveService.includes("for (let offset = 1; offset <= 7; offset += 1)") &&
@@ -102,10 +111,16 @@ assert(
     liveService.includes('normalizeScheduleStatus(game) !== "ppd"') &&
     liveService.includes("Number.isFinite(game.ms)") &&
     !liveService.includes("game.ms > afterMs") &&
-    liveService.includes("if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null };") &&
+    liveService.includes("if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch };") &&
+    liveService.includes("function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate[\"headerLabel\"])") &&
+    liveService.includes('.sort((a, b) => a.firstPitchMs - b.firstPitchMs)[0]?.game ?? null') &&
+    liveService.includes(".filter((game) => game.status === \"pregame\" && game.gamePk !== marqueeGame?.gamePk)") &&
+    liveService.includes(".sort((a, b) => b.gameWatchScore - a.gameWatchScore || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime())") &&
+    liveService.includes("starterCount: watch.scheduledGames * 2,") &&
     liveService.includes("normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date)") &&
     liveService.includes("function fallbackSlateProgress") &&
     liveService.includes("nextSlateDate: cachedBoard.nextSlateDate ?? null") &&
+    liveService.includes("pregameSlate: cachedBoard.pregameSlate ?? null") &&
     liveService.includes("nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null") &&
     liveService.includes("nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null") &&
     liveService.includes("formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now())") &&
@@ -157,7 +172,7 @@ assert(
     !livePage.includes("Daily GS+ Scoreboard") &&
     !livePage.includes("Daily board") &&
     livePage.includes("const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;") &&
-    livePage.includes("const pregame = board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
+    livePage.includes("const pregame = Boolean(board.pregameSlate?.marqueeGame) && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
     livePage.includes('const boardDescription = slateComplete\n    ? ""') &&
     !livePage.includes('const boardDescription = slateComplete\n    ? "This slate is final."') &&
     !livePage.includes(deletedFinalSubtitleCopy) &&
@@ -173,12 +188,15 @@ assert(
     !globals.includes('url("/images/slab-2.png")') &&
     liveComponent.includes('import Image from "next/image";') &&
     !liveComponent.includes("function SlabImage()") &&
-    liveComponent.includes('className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}') &&
+    liveComponent.includes('data-live-pregame-countdown="true"') &&
+    liveComponent.includes('data-live-pregame-marquee="true"') &&
+    liveComponent.includes('data-live-pregame-next-up-count={slate.nextUpGames.length}') &&
+    !liveComponent.includes('style={{ minHeight: "500px" }}') &&
     !liveComponent.includes('className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30 sm:min-h-[500px]"') &&
     !liveComponent.includes('className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30"') &&
     !liveComponent.includes('className="mt-6 overflow-hidden rounded border border-white/10 bg-black/30"') &&
     liveComponent.includes('src="/images/slab-2.png"') &&
-    liveComponent.includes('className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"') &&
+    liveComponent.includes('className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-35"') &&
     globals.includes(".live-slab-background-image.object-cover") &&
     globals.includes("object-fit: initial;") &&
     !liveComponent.includes('className="live-slab-image h-auto w-full object-cover"') &&
@@ -197,7 +215,7 @@ assert(
     liveComponent.includes("if (!board.hasActiveStarts && !pregame) return;") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
-    liveComponent.includes('import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";') &&
+    liveComponent.includes('import { pitcherHref, rankedStartsPath, sourceParams, upcomingDateHref } from "@/lib/routes";') &&
     liveComponent.includes('import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";') &&
     liveComponent.includes('grid-cols-[35px_minmax(0,1fr)_auto]') &&
     liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
@@ -226,10 +244,10 @@ assert(
     liveComponent.includes('if (document.visibilityState === "hidden") return;') &&
     liveComponent.includes('document.addEventListener("visibilitychange", handleVisibilityChange);') &&
     liveComponent.includes('document.removeEventListener("visibilitychange", handleVisibilityChange);') &&
-    liveComponent.includes("getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
+    liveComponent.includes("getPregameCountdownView(firstPitchAt, slateProgress.countdownLabel, nowMs)") &&
     liveComponent.includes('data-scheduled-starts={board.scheduledStarts}') &&
     liveComponent.includes('className="relative isolate overflow-hidden"') &&
-    liveComponent.includes('className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5"') &&
+    liveComponent.includes('className="relative flex flex-col items-start justify-start px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-8"') &&
     !liveComponent.includes("min-h-[470px]") &&
     !liveComponent.includes("sm:min-h-[540px]") &&
     !liveComponent.includes("lg:min-h-[620px]") &&
@@ -252,17 +270,26 @@ assert(
     liveComponent.includes("function padClockUnit") &&
     liveComponent.includes("function clamp") &&
     liveComponent.includes('className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs"') &&
-    liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters") &&
+    liveComponent.includes("{formatPregameFirstPitchLine(board.date, slateDate, firstPitchAt)} · {board.totalStarts || pregameSlate?.starterCount || 0} starters") &&
     !liveComponent.includes("First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : \"TBD\"} · {board.totalStarts} starters.") &&
-    liveComponent.includes("upcomingDateHref(board.date)") &&
-    liveComponent.includes('<CtaArrow\n              href={upcomingDateHref(board.date)}') &&
-    liveComponent.includes("Preview matchups") &&
+    liveComponent.includes("const previewHref = pregameSlate?.upcomingHref ?? upcomingDateHref(board.date);") &&
+    liveComponent.includes('<CtaArrow\n        href={previewHref}') &&
+    liveComponent.includes("Preview all matchups") &&
+    liveComponent.includes("function PregameMarquee") &&
+    liveComponent.includes('data-live-pregame-header={slate.headerLabel}') &&
+    liveComponent.includes("function PregameStarterBlock") &&
+    liveComponent.includes('size="marquee"') &&
+    liveComponent.includes("function PregameNextUpRows") &&
+    liveComponent.includes("function PregameConfidenceChip") &&
+    liveComponent.includes("watchScoreConfidenceLabel(game.watchScoreConfidence)") &&
+    liveComponent.includes("`${slate.upcomingHref}#upcoming-game-${game.gamePk}`") &&
+    countOccurrences(tonightsMustWatch, 'id={`upcoming-game-${game.gamePk}`}') >= 2 &&
     !liveComponent.includes("Preview matchups -&gt;") &&
     !liveComponent.includes("Preview tonight&apos;s matchups on Upcoming -&gt;") &&
-    liveComponent.includes("formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs)") &&
+    liveComponent.includes("formatFirstPitchCountdown(firstPitchMs - nowMs)") &&
     liveComponent.includes("function formatPregameCountdown") &&
     liveComponent.includes("function isPregame(board: LiveScoreboardData)") &&
-    liveComponent.includes("return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
+    liveComponent.includes("return Boolean(board.pregameSlate?.marqueeGame) && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;") &&
     liveComponent.includes('<SlateCompleteHandoff board={board} rows={scoredRows} />') &&
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&

@@ -267,6 +267,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus }: {
 
   return (
     <article
+      id={`upcoming-game-${game.gamePk}`}
       className="heat-glow-card relative overflow-hidden rounded border border-amber-300/25 bg-[#101014] p-5 lg:p-6"
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayAccent.color, homeAccent.color) }}
       data-responsive-check="must-watch-headliner"
@@ -499,6 +500,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
 
   return (
     <article
+      id={`upcoming-game-${game.gamePk}`}
       className={`heat-glow-card relative overflow-hidden rounded border bg-[#101014] p-4 ${isStarted ? "border-sky-300/20 opacity-75" : "border-white/10"}`}
       style={{ ...glowStyle(game.gameWatchScore, 100), ...duelStyle(awayAccent.color, homeAccent.color) }}
       data-responsive-check="must-watch-row"

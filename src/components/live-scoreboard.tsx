@@ -6,13 +6,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CtaArrow } from "@/components/cta-arrow";
 import { Headshot } from "@/components/headshot";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
-import type { LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
+import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
-import { formatGameScorePlus } from "@/lib/score-display";
+import { pitcherHref, rankedStartsPath, sourceParams, upcomingDateHref } from "@/lib/routes";
+import { formatGameScorePlus, formatWatchScore } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
+import type { TonightGame, TonightStarter } from "@/lib/types";
+import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 
 type LiveScoreboardProps = {
   initialBoard: LiveScoreboardData;
@@ -33,6 +35,7 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   const latestRowsRef = useRef(initialBoard.rows);
   const seenLiveGemAlertKeysRef = useRef<Set<string>>(new Set());
   const pregame = isPregame(board);
+  const pregameFirstPitchAt = board.pregameSlate?.firstPitchAt ?? slateProgress.firstPitchAt;
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(LIVE_NAV_STATE_EVENT, { detail: { liveStarts: board.liveStarts, warmingStarts: board.warmingStarts } }));
@@ -73,8 +76,8 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   }, [board.hasActiveStarts, initialBoard.date, pregame]);
 
   useEffect(() => {
-    if (!pregame || !slateProgress.firstPitchAt) return;
-    const firstPitchMs = new Date(slateProgress.firstPitchAt).getTime();
+    if (!pregame || !pregameFirstPitchAt) return;
+    const firstPitchMs = new Date(pregameFirstPitchAt).getTime();
     if (!Number.isFinite(firstPitchMs)) return;
 
     let interval: number | null = null;
@@ -83,9 +86,10 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
       const nowMs = Date.now();
       setPregameNowMs(nowMs);
       setSlateProgress((current) => {
-        if (!current.firstPitchAt) return current;
-        const countdownLabel = formatFirstPitchCountdown(new Date(current.firstPitchAt).getTime() - nowMs);
-        return countdownLabel === current.countdownLabel ? current : { ...current, countdownLabel };
+        const countdownLabel = formatFirstPitchCountdown(firstPitchMs - nowMs);
+        return countdownLabel === current.countdownLabel && current.firstPitchAt === pregameFirstPitchAt
+          ? current
+          : { ...current, firstPitchAt: pregameFirstPitchAt, countdownLabel };
       });
     };
 
@@ -116,11 +120,11 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
       clearCountdownInterval();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [pregame, slateProgress.firstPitchAt]);
+  }, [pregame, pregameFirstPitchAt]);
 
   const updatedLabel = useMemo(() => formatUpdatedLabel(board.generatedAt), [board.generatedAt]);
 
-  if (!board.hasGames) {
+  if (!board.hasGames && !board.pregameSlate) {
     return (
       <section className="rounded border border-white/10 bg-[#101014] p-6 text-zinc-300">
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">No games today.</p>
@@ -584,21 +588,28 @@ function formatSlateCompleteVerdict(board: LiveScoreboardData, rows: LiveScorebo
 }
 
 function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboardData; slateProgress: SlateProgressState; nowMs: number | null }) {
-  const countdown = getPregameCountdownView(slateProgress.firstPitchAt, slateProgress.countdownLabel, nowMs);
+  const pregameSlate = board.pregameSlate;
+  const firstPitchAt = pregameSlate?.firstPitchAt ?? slateProgress.firstPitchAt;
+  const countdown = getPregameCountdownView(firstPitchAt, slateProgress.countdownLabel, nowMs);
+  const marqueeGame = pregameSlate?.marqueeGame ?? null;
+  const slateDate = pregameSlate?.date ?? board.date;
+  const previewHref = pregameSlate?.upcomingHref ?? upcomingDateHref(board.date);
 
   return (
-    <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={slateProgress.firstPitchAt ?? ""}>
-      <div className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}>
+    <div className="space-y-4" data-live-pregame-first-pitch={firstPitchAt ?? ""} data-live-pregame-slate-date={slateDate}>
+      <section className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-countdown="true">
+        <div className="relative isolate overflow-hidden">
         <Image
           src="/images/slab-2.png"
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
           priority={false}
         />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
 
-        <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5">
+          <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-8">
           <div className="w-full max-w-4xl text-left">
             <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
@@ -619,36 +630,46 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
               <div className="h-full rounded-full bg-[#FF5A1F] shadow-[0_0_24px_rgba(255,90,31,0.45)] motion-safe:transition-[width,background-color] motion-safe:duration-500" style={{ width: `${countdown.progressPct}%` }} />
             </div>
             <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs">
-              First pitch {slateProgress.firstPitchAt ? formatFirstPitch(slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters
+              {formatPregameFirstPitchLine(board.date, slateDate, firstPitchAt)} · {board.totalStarts || pregameSlate?.starterCount || 0} starters
             </p>
-            <CtaArrow
-              href={upcomingDateHref(board.date)}
-              tone="amber"
-              className="mt-5 bg-black/35 hover:bg-[#F6C445]/15"
-            >
-              Preview matchups
-            </CtaArrow>
           </div>
         </div>
       </div>
+      </section>
+
+      {marqueeGame && pregameSlate ? (
+        <PregameMarquee slate={pregameSlate} game={marqueeGame} />
+      ) : null}
+
+      {pregameSlate?.nextUpGames.length ? <PregameNextUpRows slate={pregameSlate} /> : null}
+
+      <CtaArrow
+        href={previewHref}
+        tone="amber"
+        className="bg-[#F6C445]/10 hover:bg-[#F6C445]/20"
+      >
+        Preview all matchups
+      </CtaArrow>
     </div>
   );
 }
 
 function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
   return (
-    <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={board.slateProgress.firstPitchAt ?? ""} data-loading-mode="true">
-      <div className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}>
+    <div className="space-y-4" data-live-pregame-first-pitch={board.pregameSlate?.firstPitchAt ?? board.slateProgress.firstPitchAt ?? ""} data-loading-mode="true">
+      <section className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-countdown="true">
+      <div className="relative isolate overflow-hidden">
         <Image
           src="/images/slab-2.png"
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
           priority={false}
         />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
 
-        <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5">
+        <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-8">
           <div className="w-full max-w-4xl text-left">
             <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
@@ -668,11 +689,148 @@ function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
             <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs">
               First pitch {board.slateProgress.firstPitchAt ? formatFirstPitch(board.slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters
             </p>
-            <span className="route-shell-shimmer mt-5 block h-11 w-44 rounded" />
+          </div>
+        </div>
+      </div>
+      </section>
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-5" data-live-pregame-marquee="loading">
+        <span className="route-shell-shimmer block h-3 w-24 rounded" />
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.72fr)_minmax(0,1fr)]">
+          <span className="route-shell-shimmer h-40 rounded" />
+          <span className="route-shell-shimmer h-40 rounded" />
+          <span className="route-shell-shimmer h-40 rounded" />
+        </div>
+      </section>
+      <span className="route-shell-shimmer block h-11 w-56 rounded" />
+    </div>
+  );
+}
+
+function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: TonightGame }) {
+  const [awayStarter, homeStarter] = game.starters;
+  const tier = watchTierOf(game.gameWatchScore);
+  const gameHref = `${slate.upcomingHref}#upcoming-game-${game.gamePk}`;
+
+  return (
+    <section
+      className="rounded border border-amber-300/25 bg-[#101014] p-4 sm:p-5"
+      data-live-pregame-marquee="true"
+      data-live-pregame-header={slate.headerLabel}
+      data-game-pk={game.gamePk}
+      data-first-pitch={game.firstPitch}
+      data-watch-score={formatWatchScore(game.gameWatchScore)}
+      data-watch-score-confidence={game.watchScoreConfidence}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445]">{slate.headerLabel}</p>
+          <h2 className="mt-1 font-serif text-2xl font-black text-zinc-50 sm:text-3xl">{game.label}</h2>
+        </div>
+        <Link href={gameHref} className="rounded border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300 transition hover:border-amber-300/40 hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+          Upcoming card
+        </Link>
+      </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.72fr)_minmax(0,1fr)] lg:items-stretch">
+        <PregameStarterBlock starter={awayStarter} align="away" />
+        <div className="flex min-h-full flex-col justify-center rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]" data-responsive-check="live-pregame-hook">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">{formatFirstPitch(game.firstPitch)}</p>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">{game.park}</p>
+          <div className="mt-3 flex flex-wrap items-end justify-center gap-2">
+            <p className="font-serif text-5xl font-black leading-none" style={{ color: tier.color }}>{formatWatchScore(game.gameWatchScore)}</p>
+            <PregameConfidenceChip game={game} />
+          </div>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>
+        </div>
+        <PregameStarterBlock starter={homeStarter} align="home" />
+      </div>
+    </section>
+  );
+}
+
+function PregameStarterBlock({ starter, align }: { starter: TonightStarter; align: "away" | "home" }) {
+  const name = starter.name ?? "TBD";
+  const href = starter.pitcherId ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("live")) : null;
+  const projection = starter.projection?.projectedGsPlus;
+  const baselineProjection = starter.formStatus === "cold_start";
+
+  return (
+    <div className={`rounded border border-white/10 bg-black/25 p-4 ${align === "home" ? "lg:text-right" : ""}`} data-live-pregame-starter={starter.side} data-starter-pitcher-id={starter.pitcherId ?? "tbd"}>
+      <div className={`flex items-center gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
+        <Headshot playerId={starter.pitcherId} name={name} team={starter.team} size="marquee" band={starter.tier ?? null} sampleSufficient={starter.formStatus === "ok"} decorative={!href} />
+        <div className="min-w-0">
+          {href ? (
+            <Link href={href} className="pitcher-name block font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+              {name}
+            </Link>
+          ) : (
+            <p className="pitcher-name font-serif text-2xl font-bold leading-tight text-zinc-50">{name}</p>
+          )}
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+            {starter.team} · {starter.side === "away" ? "Away starter" : "Home starter"}
+          </p>
+          <div className={`mt-3 flex flex-wrap gap-1.5 ${align === "home" ? "lg:justify-end" : ""}`}>
+            <PregameFormChip starter={starter} />
+            <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+              Proj GS+ {projection === null || projection === undefined ? "pending" : projection.toFixed(1)}
+            </span>
+            {baselineProjection ? (
+              <span className="inline-flex min-h-6 items-center rounded border border-amber-300/25 bg-amber-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
+                BASELINE
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function PregameFormChip({ starter }: { starter: TonightStarter }) {
+  if (starter.formStatus === "ok" && typeof starter.rgs === "number") {
+    const tier = starter.tier ? qualityTierOf(starter.rgs) : null;
+    return (
+      <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: tier?.color ?? "#d4d4d8" }}>
+        Form {starter.rgs.toFixed(1)}{starter.tier ? ` · ${starter.tier}` : ""}
+      </span>
+    );
+  }
+
+  const label = starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited";
+  return (
+    <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+      {label}
+    </span>
+  );
+}
+
+function PregameNextUpRows({ slate }: { slate: LivePregameSlate }) {
+  return (
+    <section className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-next-up-count={slate.nextUpGames.length}>
+      <div className="border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Next up</div>
+      {slate.nextUpGames.map((game) => (
+        <Link key={game.gamePk} href={`${slate.upcomingHref}#upcoming-game-${game.gamePk}`} className="grid gap-2 border-b border-white/10 px-4 py-3 text-sm transition last:border-b-0 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{formatFirstPitch(game.firstPitch)}</p>
+          <div className="min-w-0">
+            <p className="font-serif text-lg font-bold leading-tight text-zinc-50">{game.label}</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+              {nextUpStarterLabel(game.starters[0])} vs {nextUpStarterLabel(game.starters[1])}
+            </p>
+          </div>
+          <p className="font-mono text-2xl font-black leading-none text-amber-100">{formatWatchScore(game.gameWatchScore)}</p>
+        </Link>
+      ))}
+    </section>
+  );
+}
+
+function PregameConfidenceChip({ game }: { game: TonightGame }) {
+  const label = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  if (!label) return null;
+
+  return (
+    <span className="inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-100">
+      {label}
+    </span>
   );
 }
 
@@ -894,6 +1052,18 @@ function formatFirstPitch(iso: string) {
   }).format(parsed)} PT`;
 }
 
+function formatPregameFirstPitchLine(currentDate: string, slateDate: string, firstPitchAt: string | null) {
+  if (!firstPitchAt) return "First pitch TBD";
+  const datePrefix = currentDate === slateDate ? "" : `${formatBoardDate(slateDate)} · `;
+  return `First pitch ${datePrefix}${formatFirstPitch(firstPitchAt)}`;
+}
+
+function nextUpStarterLabel(starter: TonightStarter) {
+  const name = starter.name ? lastName(starter.name) : "TBD";
+  const form = starter.formStatus === "ok" && typeof starter.rgs === "number" ? ` ${starter.rgs.toFixed(1)}` : "";
+  return `${name}${form}`;
+}
+
 function formatNextSlateLine(board: LiveScoreboardData) {
   if (!board.nextSlateFirstPitchAt) return null;
   const parsed = new Date(board.nextSlateFirstPitchAt);
@@ -1102,7 +1272,7 @@ function isSlateComplete(board: LiveScoreboardData) {
 }
 
 function isPregame(board: LiveScoreboardData) {
-  return board.hasGames && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;
+  return Boolean(board.pregameSlate?.marqueeGame) && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;
 }
 
 function formatBoardDate(date: string) {

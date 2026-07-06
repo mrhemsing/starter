@@ -45,6 +45,7 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   hasGames: boolean;
   hasActiveStarts: boolean;
   slateProgress: SlateProgressState;
+  pregameSlate: LivePregameSlate | null;
   nextSlateDate: string | null;
   nextSlateFirstPitchAt: string | null;
   nextSlateTopGame: TonightResponse["games"][number] | null;
@@ -52,9 +53,20 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   leader: LiveScoreboardRow | null;
 };
 
+export type LivePregameSlate = {
+  date: string;
+  headerLabel: "FIRST UP" | "NEXT SLATE";
+  firstPitchAt: string | null;
+  marqueeGame: TonightResponse["games"][number] | null;
+  nextUpGames: TonightResponse["games"][number][];
+  leagueMeanGS: number;
+  starterCount: number;
+  upcomingHref: string;
+};
+
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v9"],
+  ["live-scoreboard", "v10"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS, tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -99,7 +111,13 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   }
 
   const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
-  const nextSlate = slateComplete ? await resolveNextSlate(date) : null;
+  const currentPregameWatch = pregame ? await getTonightMustWatch({ date, window: 5 }).catch(() => null) : null;
+  const nextSlate = slateComplete || rows.length === 0 ? await resolveNextSlate(date) : null;
+  const pregameSlate = currentPregameWatch
+    ? buildLivePregameSlate(date, currentPregameWatch, "FIRST UP")
+    : rows.length === 0 && nextSlate?.watch
+      ? buildLivePregameSlate(nextSlate.date, nextSlate.watch, "NEXT SLATE")
+      : null;
 
   return {
     date,
@@ -107,6 +125,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     hasGames: rows.length > 0,
     hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0,
     slateProgress,
+    pregameSlate,
     nextSlateDate: nextSlate?.date ?? null,
     nextSlateFirstPitchAt: nextSlate?.firstPitchAt ?? null,
     nextSlateTopGame: nextSlate?.topGame ?? null,
@@ -129,10 +148,33 @@ async function resolveNextSlate(date: string) {
       .filter((game) => Number.isFinite(game.ms))
       .sort((a, b) => a.ms - b.ms)[0]?.iso ?? null;
 
-    if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null };
+    if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch };
   }
 
   return null;
+}
+
+function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate["headerLabel"]): LivePregameSlate {
+  const marqueeGame = watch.games
+    .filter((game) => game.status === "pregame")
+    .map((game) => ({ game, firstPitchMs: new Date(game.firstPitch).getTime() }))
+    .filter((entry) => Number.isFinite(entry.firstPitchMs))
+    .sort((a, b) => a.firstPitchMs - b.firstPitchMs)[0]?.game ?? null;
+  const nextUpGames = watch.games
+    .filter((game) => game.status === "pregame" && game.gamePk !== marqueeGame?.gamePk)
+    .sort((a, b) => b.gameWatchScore - a.gameWatchScore || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime())
+    .slice(0, 2);
+
+  return {
+    date,
+    headerLabel,
+    firstPitchAt: marqueeGame?.firstPitch ?? null,
+    marqueeGame,
+    nextUpGames,
+    leagueMeanGS: watch.leagueMeanGS,
+    starterCount: watch.scheduledGames * 2,
+    upcomingHref: `/upcoming/${date}`,
+  };
 }
 
 async function getLiveLinesByStart(games: MlbScheduleGame[]) {
@@ -283,6 +325,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
     const cachedBoard = board as LiveScoreboard;
     return {
       ...cachedBoard,
+      pregameSlate: cachedBoard.pregameSlate ?? null,
       nextSlateDate: cachedBoard.nextSlateDate ?? null,
       nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
       nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null,
@@ -292,6 +335,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
   return {
     ...board,
     slateProgress: fallbackSlateProgress(board, date),
+    pregameSlate: null,
     nextSlateDate: null,
     nextSlateFirstPitchAt: null,
     nextSlateTopGame: null,
