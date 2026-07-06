@@ -229,6 +229,7 @@ assert(
     homeDeferredSections.includes("startMatchupLabel(start), formatShortDate(start.date)") &&
     !homeDeferredSections.includes("start.pitcher.team, startMatchupLabel(start)") &&
     homeDeferredSections.includes("<RawGsPlusLine") &&
+    homeDeferredSections.includes('className="mt-1 text-zinc-300"') &&
     homeDeferredSections.includes('alt={`${start.pitcher.name} pitching`}') &&
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
