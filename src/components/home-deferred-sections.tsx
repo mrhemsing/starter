@@ -16,9 +16,10 @@ import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/ro
 import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
-import type { BestStartsHomeResponse } from "@/lib/data/home-best-starts-service";
+import type { BestStartsHomeResponse, HomeSeasonTopStart } from "@/lib/data/home-best-starts-service";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
+import { formatStartLine } from "@/lib/format";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
 
@@ -157,6 +158,7 @@ export function HomeDeferredSections({
           monthly={bestStarts.monthly}
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
+          seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null,
     };
@@ -203,6 +205,7 @@ export function HomeDeferredSections({
           monthly={bestStarts.monthly}
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
+          seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null}
     </>
@@ -416,23 +419,23 @@ function BestStartsLite({
   monthly,
   weeklyHighlight,
   monthlyHighlight,
+  seasonTopStarts,
 }: {
   weekly: StartSummary | null;
   monthly: StartSummary | null;
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
+  seasonTopStarts?: HomeSeasonTopStart[];
 }) {
   const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
-  const sameStart = weekly && monthly && weekly.id === monthly.id;
-  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameStart
-    ? [{ badge: "7-DAY + 30-DAY BEST", start: monthly, highlight: monthlyHighlight ?? weeklyHighlight }]
-    : [
-        { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
-        { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight },
-      ];
+  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = [
+    { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
+    { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight ?? (monthly?.id === weekly?.id ? weeklyHighlight : null) },
+  ];
   const visibleCards = cards.flatMap((card) => (card.start ? [{ badge: card.badge, start: card.start, highlight: card.highlight }] : []));
+  const topStarts = seasonTopStarts?.slice(0, 5) ?? [];
 
-  if (visibleCards.length === 0) return null;
+  if (visibleCards.length === 0 && topStarts.length === 0) return null;
 
   return (
     <section className="border-t border-white/10 bg-[#08080a] px-4 py-10 sm:px-6 lg:px-8">
@@ -444,22 +447,25 @@ function BestStartsLite({
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">The best starts of the last 7 and 30 days, worth revisiting.</p>
           </div>
           <a href={`/best-starts/${monthKey}`} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
-            Best starts archive
+            Season archive
           </a>
         </div>
-        <div className={`grid gap-3 ${visibleCards.length === 1 ? "" : "md:grid-cols-2"}`}>
-          {visibleCards.map((card) => (
-            <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} />
-          ))}
+        <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]" data-responsive-check="home-best-starts-2026-layout">
+          <div className="grid gap-3 lg:grid-rows-2">
+            {visibleCards.map((card) => (
+              <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} compact />
+            ))}
+          </div>
+          {topStarts.length > 0 ? <SeasonTopStartsPanel starts={topStarts} monthKey={monthKey} /> : null}
         </div>
       </div>
     </section>
   );
 }
 
-function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge: string; highlight?: FeaturedStartHighlight | null }) {
+function BestStartCard({ start, badge, highlight, compact = false }: { start: StartSummary; badge: string; highlight?: FeaturedStartHighlight | null; compact?: boolean }) {
   return (
-    <article className="group relative overflow-hidden rounded border border-white/10 bg-[#101014] p-5 transition hover:border-amber-300/40">
+    <article className={`group relative min-h-0 overflow-hidden rounded border border-white/10 bg-[#101014] transition hover:border-amber-300/40 ${compact ? "p-4" : "p-5"}`}>
       <a href={startHref(start, sourceParams("home"))} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div className="relative z-10 grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-start gap-3 pointer-events-none">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" band={scoreBand(start.gameScorePlus)} decorative className="ml-1" />
@@ -486,10 +492,80 @@ function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge
       </div>
       <p className="relative z-10 mt-4 text-sm leading-6 text-zinc-400 pointer-events-none"><StartLineText line={start.line} /></p>
       {highlight ? (
-        <div className="relative z-10 mt-4 pointer-events-auto">
+        <div className={`relative z-10 pointer-events-auto ${compact ? "mt-3" : "mt-4"}`}>
           <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
         </div>
       ) : null}
+    </article>
+  );
+}
+
+function SeasonTopStartsPanel({ starts, monthKey }: { starts: HomeSeasonTopStart[]; monthKey: string }) {
+  return (
+    <article className="min-h-full rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="home-top-starts-2026">
+      <div className="mb-3 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Top starts of 2026</p>
+          <h3 className="mt-1 font-serif text-2xl font-bold text-zinc-50">Season leaderboard</h3>
+        </div>
+        <a href={`/best-starts/${monthKey}`} className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300 underline-offset-4 hover:underline">
+          Season archive
+        </a>
+      </div>
+      <div className="grid min-h-0 gap-2 lg:h-[calc(100%-4.25rem)] lg:grid-rows-5">
+        {starts.map((entry, index) => (
+          <SeasonTopStartRow key={entry.start.id} entry={entry} rank={index + 1} />
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: number }) {
+  const { start } = entry;
+  const color = scoreBandColor(start.gameScorePlus);
+  const actionImage = entry.image?.source === "action" ? entry.image : null;
+  const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
+  const imagePosition = actionImage?.objectPosition ?? "50% 50%";
+  const rowHref = startHref(start, sourceParams("home"));
+
+  return (
+    <article
+      className={`group relative grid min-h-[124px] overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto] ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
+      data-home-top-start-row={rank}
+    >
+      <a href={rowHref} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
+      <div className="relative z-10 flex items-center justify-center border-b border-white/10 px-3 py-3 sm:border-b-0 sm:border-r">
+        <span className="font-serif text-4xl font-black leading-none" style={{ color }}>{rank}</span>
+      </div>
+      <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="h-full w-full object-cover" style={{ objectPosition: imagePosition }} />
+        <span className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-[#101014]/70" aria-hidden="true" />
+      </div>
+      <div className="relative z-10 min-w-0 px-3 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+            {start.pitcher.name}
+          </a>
+          {entry.isNew ? <span className="rounded border border-amber-300/35 bg-amber-300/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">New</span> : null}
+        </div>
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+          <MetaLine segments={[start.pitcher.team, startMatchupLabel(start), formatShortDate(start.date)]} />
+        </p>
+        <p className="mt-2 text-sm leading-5 text-zinc-300">{formatStartLine(start.line)}</p>
+        {entry.highlightUrl ? (
+          <a href={entry.highlightUrl} target="_blank" rel="noopener" className="pointer-events-auto mt-2 inline-flex min-h-7 items-center rounded border border-amber-300/25 bg-amber-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200 hover:border-amber-300/50">
+            Highlights
+          </a>
+        ) : null}
+      </div>
+      <div className="relative z-10 flex items-center justify-start px-3 pb-3 sm:justify-end sm:py-3">
+        <div className="min-w-[70px] rounded border border-white/10 bg-white/5 px-3 py-2 text-center">
+          <p className="font-serif text-4xl font-black leading-none" style={{ color }}>{start.gameScorePlus}</p>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
+        </div>
+      </div>
     </article>
   );
 }
@@ -504,6 +580,14 @@ function scoreBand(score: number): FormTier {
   if (score >= 46) return "even";
   if (score >= 30) return "cooling";
   return "ice";
+}
+
+function scoreBandColor(score: number) {
+  if (score >= 69) return "var(--level-onfire)";
+  if (score >= 58) return "var(--level-hot)";
+  if (score >= 46) return "var(--level-even-text)";
+  if (score >= 30) return "var(--level-cooling)";
+  return "var(--level-ice)";
 }
 
 function formatDecisionLabel(result: StartSummary["result"]) {

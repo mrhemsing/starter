@@ -1,7 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
-import { getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
+import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
@@ -14,6 +15,14 @@ export type BestStartsHomeResponse = {
   monthly: StartSummary | null;
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
+  seasonTopStarts: HomeSeasonTopStart[];
+};
+
+export type HomeSeasonTopStart = {
+  start: StartSummary;
+  image: TopPerformerImage | null;
+  highlightUrl: string | null;
+  isNew: boolean;
 };
 
 export async function getBestStartsHome(): Promise<BestStartsHomeResponse> {
@@ -22,10 +31,11 @@ export async function getBestStartsHome(): Promise<BestStartsHomeResponse> {
 
 const getCachedBestStartsHome = unstable_cache(
   async (anchorDate: string): Promise<BestStartsHomeResponse> => {
-    const { weekly, monthly } = await getBestStarts(anchorDate);
-    const [weeklyHighlight, monthlyHighlight] = await Promise.all([
+    const { weekly, monthly, seasonTopStarts } = await getBestStarts(anchorDate);
+    const [weeklyHighlight, monthlyHighlight, seasonTopStartViews] = await Promise.all([
       resolveFeaturedStartHighlight(weekly),
       monthly?.id === weekly?.id ? Promise.resolve(null) : resolveFeaturedStartHighlight(monthly),
+      hydrateSeasonTopStarts(seasonTopStarts, anchorDate),
     ]);
 
     return {
@@ -33,15 +43,20 @@ const getCachedBestStartsHome = unstable_cache(
       monthly,
       weeklyHighlight,
       monthlyHighlight: monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight,
+      seasonTopStarts: seasonTopStartViews,
     };
   },
-  ["home-best-starts-v4"],
+  ["home-best-starts-v5"],
   { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 async function getBestStarts(anchorDate: string) {
-  const [weekly, monthly] = await Promise.all([getBestStartWindow(anchorDate, 7), getBestStartWindow(anchorDate, 30)]);
-  return { weekly, monthly };
+  const [weekly, monthly, seasonTopStarts] = await Promise.all([
+    getBestStartWindow(anchorDate, 7),
+    getBestStartWindow(anchorDate, 30),
+    getSeasonTopStarts(anchorDate),
+  ]);
+  return { weekly, monthly, seasonTopStarts };
 }
 
 async function getBestStartWindow(anchorDate: string, days: number) {
@@ -60,6 +75,49 @@ function compareBestStarts(a: StartSummary, b: StartSummary) {
     compareRankedStarts(a, b) ||
     b.date.localeCompare(a.date)
   );
+}
+
+async function getSeasonTopStarts(anchorDate: string) {
+  const seasonStarts = await getArchivedSeasonStartSummaries(anchorDate.slice(0, 4));
+  return seasonStarts
+    .filter(isEligibleBestStart)
+    .sort(compareSeasonTopStarts)
+    .slice(0, 5);
+}
+
+function compareSeasonTopStarts(a: StartSummary, b: StartSummary) {
+  return (
+    b.gameScorePlus - a.gameScorePlus ||
+    b.line.strikeouts - a.line.strikeouts ||
+    a.date.localeCompare(b.date) ||
+    (a.gamePk ?? 0) - (b.gamePk ?? 0) ||
+    a.pitcher.name.localeCompare(b.pitcher.name)
+  );
+}
+
+async function hydrateSeasonTopStarts(starts: StartSummary[], anchorDate: string): Promise<HomeSeasonTopStart[]> {
+  return Promise.all(
+    starts.map(async (start) => {
+      const [image, highlight] = await Promise.all([
+        resolveTopPerformerImage(start, null),
+        resolveFeaturedStartHighlight(start),
+      ]);
+
+      return {
+        start,
+        image,
+        highlightUrl: image?.playUrl ?? highlight?.watchUrl ?? null,
+        isNew: daysBetween(start.date, anchorDate) <= 2,
+      };
+    }),
+  );
+}
+
+function daysBetween(startDate: string, endDate: string) {
+  const start = Date.parse(`${startDate}T00:00:00.000Z`);
+  const end = Date.parse(`${endDate}T00:00:00.000Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return Number.POSITIVE_INFINITY;
+  return Math.max(0, Math.round((end - start) / 86_400_000));
 }
 
 function addDays(date: string, days: number) {
