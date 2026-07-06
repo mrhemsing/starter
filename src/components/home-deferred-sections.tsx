@@ -219,6 +219,7 @@ type HomeTopPerformer = NonNullable<RankedHomeResponse["topPerformer"]>;
 type HomeTopPerformerView = {
   startId: string;
   href: string;
+  pitcherHref: string;
   pitcherName: string;
   team: string;
   opponent: string;
@@ -271,6 +272,7 @@ function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerform
       <div className="mx-auto max-w-7xl">
         <TopPerformerCard
           href={view.href}
+          pitcherHref={view.pitcherHref}
           pitcherName={view.pitcherName}
           team={view.team}
           opponent={view.opponent}
@@ -302,6 +304,7 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
   return {
     startId: topPerformer.start.id,
     href: topPerformer.href ?? startHref(topPerformer.start, sourceParams("home")),
+    pitcherHref: pitcherHref(topPerformer.start.pitcher, sourceParams("home")),
     pitcherName: topPerformer.start.pitcher.name,
     team: topPerformer.start.pitcher.team,
     opponent: topPerformer.start.opponent,
@@ -328,6 +331,7 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
   return {
     startId: row.startId,
     href: row.liveHref,
+    pitcherHref: row.pitcherHref,
     pitcherName: row.pitcherName,
     team: row.team,
     opponent: row.opponent,

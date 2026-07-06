@@ -11,6 +11,7 @@ import type { FeaturedStartHighlight, StartLine } from "@/lib/types";
 
 type TopPerformerCardProps = {
   href: string;
+  pitcherHref?: string;
   pitcherName: string;
   team: string;
   opponent: string;
@@ -31,6 +32,7 @@ type TopPerformerCardProps = {
 
 export function TopPerformerCard({
   href,
+  pitcherHref,
   pitcherName,
   team,
   opponent,
@@ -144,9 +146,13 @@ export function TopPerformerCard({
             </p>
             <div className={noPhoto ? "mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end" : ""}>
               <div>
-                <h2 className={`pitcher-name font-serif font-black leading-[0.92] text-[#F5F2EA] ${noPhoto ? "text-5xl sm:text-6xl" : "mt-3 max-w-[12ch] text-4xl sm:text-5xl lg:text-6xl"}`}>
+                <Link
+                  href={pitcherHref ?? href}
+                  className={`pitcher-name block font-serif font-black leading-[0.92] text-[#F5F2EA] transition hover:text-[#F6C445] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] ${noPhoto ? "text-5xl sm:text-6xl" : "mt-3 max-w-[12ch] text-4xl sm:text-5xl lg:text-6xl"}`}
+                  data-top-performer-pitcher-link
+                >
                   {pitcherName}
-                </h2>
+                </Link>
                 <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#878D97]">
                   {matchupLabel}
                 </p>
@@ -242,9 +248,13 @@ export function TopPerformerCard({
             </div>
           ) : null}
           <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 lg:hidden">
-            <h3 className="pitcher-name max-w-[9ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] drop-shadow-[0_4px_18px_rgba(0,0,0,0.95)] sm:text-5xl">
+            <Link
+              href={pitcherHref ?? href}
+              className="pitcher-name block max-w-[9ch] font-serif text-4xl font-black leading-[0.92] text-[#F5F2EA] drop-shadow-[0_4px_18px_rgba(0,0,0,0.95)] transition hover:text-[#F6C445] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F6C445] sm:text-5xl"
+              data-top-performer-pitcher-link
+            >
               {pitcherName}
-            </h3>
+            </Link>
             <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#F5F2EA] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
               {matchupLabel}
             </p>

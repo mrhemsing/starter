@@ -354,8 +354,11 @@ assert(
     rankedService.includes("const liveLeader = resolveLiveLeaderStart(liveBoard, todaySlateStarts);") &&
     rankedService.includes("href: liveDateHref(today),") &&
     homeDeferredSections.includes("href: topPerformer.href ?? startHref(topPerformer.start, sourceParams(\"home\")),") &&
+    homeDeferredSections.includes("pitcherHref: pitcherHref(topPerformer.start.pitcher, sourceParams(\"home\")),") &&
     homeDeferredSections.includes("function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: LiveScoreboardRow, board: LiveScoreboard, dateLabel: string, rankedSnapshot: HomeTopPerformer | null = null)") &&
     homeDeferredSections.includes("href: row.liveHref,") &&
+    homeDeferredSections.includes("pitcherHref: row.pitcherHref,") &&
+    topPerformerCard.includes("data-top-performer-pitcher-link") &&
     homeDeferredSections.includes('status: board.slateProgress.state === "all-starts-complete" ? "final" : "live",') &&
     homeDeferredSections.includes('scoreStatusLabel: row.scoreLabel === "PROV" ? "PROV" : null,') &&
     homeDeferredSections.includes("const needsPhotoRefresh = leader.startId === viewRef.current.startId && isPlaceholderTopPerformerImage(viewRef.current.image);") &&
