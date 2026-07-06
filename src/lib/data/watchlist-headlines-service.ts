@@ -74,7 +74,7 @@ export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise
 
   for (const state of states) {
     if (!state) continue;
-    const items = state.headlines
+    const items = collapseHeadlineClusters(state.headlines)
       .filter((headline) => now - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS)
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
       .map(headlineToWireEvent);
@@ -426,7 +426,7 @@ function isDuplicateHeadline(existing: StoredHeadline, candidate: HeadlineCandid
   const withinWindow = Math.abs(Date.parse(existing.publishedAt) - Date.parse(candidate.publishedAt)) <= HEADLINE_DEDUPE_WINDOW_MS;
   if (!withinWindow) return false;
   if (existing.url === candidate.url) return true;
-  return titleSimilarity(existing.headline, candidate.headline) >= 0.85;
+  return titleSimilarity(existing.headline, candidate.headline) >= 0.85 || sameHeadlineCluster(existing.headline, candidate.headline);
 }
 
 function titleSimilarity(a: string, b: string) {
@@ -437,6 +437,67 @@ function titleSimilarity(a: string, b: string) {
   const union = new Set([...aTokens, ...bTokens]).size;
   return intersection / union;
 }
+
+function collapseHeadlineClusters(headlines: StoredHeadline[]) {
+  const kept: StoredHeadline[] = [];
+  for (const headline of [...headlines].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))) {
+    if (!kept.some((existing) => isDuplicateHeadline(existing, headline))) kept.push(headline);
+  }
+  return kept;
+}
+
+function sameHeadlineCluster(a: string, b: string) {
+  const aKey = eventTopicKey(a);
+  const bKey = eventTopicKey(b);
+  if (aKey && aKey === bKey) return true;
+
+  const aTokens = headlineTopicTokens(a);
+  const bTokens = headlineTopicTokens(b);
+  if (aTokens.length < 3 || bTokens.length < 3) return false;
+  const shared = aTokens.filter((token) => bTokens.includes(token));
+  const smaller = Math.min(aTokens.length, bTokens.length);
+  return shared.length >= 3 && shared.length / smaller >= 0.6;
+}
+
+function eventTopicKey(value: string) {
+  const text = normalizeText(stripSourceSuffix(value));
+  if (/\ball\s+star(s)?\b/.test(text) || text.includes("allstar")) return "all-star";
+  if ((text.includes("shut out") || text.includes("shutout")) && text.includes("mariners")) return "shutout-mariners";
+  if (text.includes("fans") && /\b\d+\b/.test(text)) return `strikeouts-${text.match(/\b\d+\b/)?.[0] ?? ""}`;
+  return "";
+}
+
+function headlineTopicTokens(value: string) {
+  return Array.from(new Set(normalizeText(stripSourceSuffix(value)).split(" ").filter((token) => token.length > 2 && !HEADLINE_TOPIC_STOP_WORDS.has(token))));
+}
+
+function stripSourceSuffix(value: string) {
+  return value.replace(/\s+-\s+[^-]+$/, "");
+}
+
+const HEADLINE_TOPIC_STOP_WORDS = new Set([
+  "and",
+  "are",
+  "but",
+  "com",
+  "for",
+  "from",
+  "game",
+  "heading",
+  "into",
+  "jays",
+  "journal",
+  "mlb",
+  "msn",
+  "news",
+  "sport",
+  "sports",
+  "sportsnet",
+  "star",
+  "the",
+  "toronto",
+  "with",
+]);
 
 function canonicalUrl(raw: string) {
   try {

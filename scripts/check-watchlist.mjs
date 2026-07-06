@@ -101,6 +101,12 @@ assert(
   "watchlist Wire events must sort newest-first, using headline published time for NEWS items",
 );
 assert(
+  headlineServiceSource.includes("collapseHeadlineClusters(state.headlines)") &&
+    headlineServiceSource.includes("sameHeadlineCluster(existing.headline, candidate.headline)") &&
+    headlineServiceSource.includes("HEADLINE_TOPIC_STOP_WORDS"),
+  "watchlist headline events must collapse same-topic story clusters before storage and render",
+);
+assert(
   headlineServiceSource.includes('source: "google-news"') &&
     headlineServiceSource.includes('source: "mlb-trade-rumors"') &&
     headlineServiceSource.includes('source: "espn"') &&
