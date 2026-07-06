@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
-import { RawGsPlusLine } from "@/components/gs-plus-score";
+import { RawGsPlusValueLine } from "@/components/gs-plus-score";
 import { Headshot } from "@/components/headshot";
 import { SiteHeader } from "@/components/site-header";
 import { rankBestStarts } from "@/lib/best-starts-ranking";
@@ -79,11 +79,11 @@ function RollingHeroCard({ label, start, highlight }: { label: string; start: St
 
   return (
     <article className="rounded border border-white/10 bg-[#101014] p-5">
-      <Link href={startHref(start, sourceParams("starts"))} className="grid gap-4 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center">
+      <Link href={startHref(start, sourceParams("starts"))} className="grid grid-cols-[59px_minmax(0,1fr)_auto] items-start gap-3 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" decorative />
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">{label}</p>
-          <h3 className="mt-1 truncate font-serif text-3xl font-bold text-zinc-50">{start.pitcher.name}</h3>
+          <h3 className="mt-1 truncate font-serif text-2xl font-bold text-zinc-50 sm:text-3xl">{start.pitcher.name}</h3>
           <p className="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">{startMatchupLabel(start)} · {formatShortDate(start.date)}</p>
           <p className="mt-2 text-sm text-zinc-400">{formatStartLine(start.line)}</p>
         </div>
@@ -118,9 +118,9 @@ function ScorePanel({ start, compact = false }: { start: StartSummary; compact?:
   const color = scoreBandColor(start.gameScorePlus);
   return (
     <div className="text-right">
-      <p className={`${compact ? "text-3xl" : "text-5xl"} font-serif font-black leading-none`} style={{ color }}>{start.gameScorePlus}</p>
+      <p className={`${compact ? "text-3xl" : "text-4xl sm:text-5xl"} font-serif font-black leading-none`} style={{ color }}>{start.gameScorePlus}</p>
       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">GS+</p>
-      <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right text-zinc-300" />
+      <RawGsPlusValueLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right text-zinc-300" />
     </div>
   );
 }

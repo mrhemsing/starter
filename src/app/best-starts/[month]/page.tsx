@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
-import { RawGsPlusLine } from "@/components/gs-plus-score";
+import { RawGsPlusValueLine } from "@/components/gs-plus-score";
 import { Headshot } from "@/components/headshot";
 import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
@@ -189,7 +189,7 @@ function ScorePanel({ start, compact = false }: { start: StartSummary; compact?:
     <div className={`text-right ${compact ? "" : "min-w-[76px] rounded border border-white/35 bg-[rgba(10,10,10,0.6)] px-3 py-2 text-center backdrop-blur-[6px]"}`}>
       <p className={`${compact ? "text-3xl" : "text-4xl"} font-serif font-black leading-none`} style={{ color }}>{start.gameScorePlus}</p>
       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-300">GS+</p>
-      <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right text-zinc-300" />
+      <RawGsPlusValueLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right text-zinc-300" />
     </div>
   );
 }

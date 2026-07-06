@@ -234,7 +234,10 @@ assert(
     rawScoreHelper.includes("component.key !== \"calibration\"") &&
     rawScoreComponent.includes("cappedRawGameScorePlus(score, breakdown)") &&
     rawScoreComponent.includes("RAW {raw.toFixed(1)}") &&
-    monthlyBestStartsPage.includes("<RawGsPlusLine") &&
+    bestStartsHubPage.includes("<RawGsPlusValueLine") &&
+    monthlyBestStartsPage.includes("<RawGsPlusValueLine") &&
+    rawScoreComponent.includes("export function RawGsPlusValueLine") &&
+    rawScoreComponent.includes("rawGameScorePlus(breakdown) ?? score") &&
     homeDeferredSections.includes("function SeasonTopStartsPanel") &&
     homeDeferredSections.includes("function SeasonTopStartRow") &&
     homeDeferredSections.includes("data-home-top-start-row={rank}") &&
@@ -263,7 +266,7 @@ assert(
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
     homeDeferredSections.includes("entry.isNew"),
-  "best starts surfaces must share raw GS+ ranking, render full-bleed action rows, framed fallbacks, raw cap labels, highlights, NEW chips, and deduped 7/30 heroes",
+  "best starts surfaces must share raw GS+ ranking, render full-bleed action rows, framed fallbacks, all-row raw labels, highlights, NEW chips, and deduped 7/30 heroes",
 );
 
 assert(
