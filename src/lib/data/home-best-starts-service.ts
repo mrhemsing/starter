@@ -1,11 +1,10 @@
 import { unstable_cache } from "next/cache";
+import { rankBestStarts } from "@/lib/best-starts-ranking";
 import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 import { rawGameScorePlus } from "@/lib/gs-plus-raw";
-import { isRankedRegularStart } from "@/lib/start-classification";
-import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;
@@ -14,8 +13,10 @@ export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";
 export type BestStartsHomeResponse = {
   weekly: StartSummary | null;
   monthly: StartSummary | null;
+  monthlyRunnerUp: StartSummary | null;
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
+  monthlyRunnerUpHighlight: FeaturedStartHighlight | null;
   seasonTopStarts: HomeSeasonTopStart[];
 };
 
@@ -33,70 +34,49 @@ export async function getBestStartsHome(): Promise<BestStartsHomeResponse> {
 
 const getCachedBestStartsHome = unstable_cache(
   async (anchorDate: string): Promise<BestStartsHomeResponse> => {
-    const { weekly, monthly, seasonTopStarts } = await getBestStarts(anchorDate);
-    const [weeklyHighlight, monthlyHighlight, seasonTopStartViews] = await Promise.all([
+    const { weekly, monthly, monthlyRunnerUp, seasonTopStarts } = await getBestStarts(anchorDate);
+    const [weeklyHighlight, monthlyHighlight, monthlyRunnerUpHighlight, seasonTopStartViews] = await Promise.all([
       resolveFeaturedStartHighlight(weekly),
       monthly?.id === weekly?.id ? Promise.resolve(null) : resolveFeaturedStartHighlight(monthly),
+      resolveFeaturedStartHighlight(monthlyRunnerUp),
       hydrateSeasonTopStarts(seasonTopStarts, anchorDate),
     ]);
 
     return {
       weekly,
       monthly,
+      monthlyRunnerUp,
       weeklyHighlight,
       monthlyHighlight: monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight,
+      monthlyRunnerUpHighlight,
       seasonTopStarts: seasonTopStartViews,
     };
   },
-  ["home-best-starts-v5"],
+  ["home-best-starts-v6"],
   { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 async function getBestStarts(anchorDate: string) {
-  const [weekly, monthly, seasonTopStarts] = await Promise.all([
-    getBestStartWindow(anchorDate, 7),
-    getBestStartWindow(anchorDate, 30),
+  const [weeklyStarts, monthlyStarts, seasonTopStarts] = await Promise.all([
+    getBestStartsWindow(anchorDate, 7),
+    getBestStartsWindow(anchorDate, 30),
     getSeasonTopStarts(anchorDate),
   ]);
-  return { weekly, monthly, seasonTopStarts };
+  const weekly = weeklyStarts[0] ?? null;
+  const monthly = monthlyStarts[0] ?? null;
+  const monthlyRunnerUp = monthly && weekly?.id === monthly.id ? monthlyStarts.find((start) => start.id !== monthly.id) ?? null : null;
+  return { weekly, monthly, monthlyRunnerUp, seasonTopStarts };
 }
 
-async function getBestStartWindow(anchorDate: string, days: number) {
+async function getBestStartsWindow(anchorDate: string, days: number) {
   const dates = Array.from({ length: days }, (_, index) => addDays(anchorDate, -index));
   const slates = await Promise.all(dates.map((date) => getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })));
-  const starts = slates.flat().filter(isEligibleBestStart);
-  return starts.sort(compareBestStarts)[0] ?? null;
-}
-
-function isEligibleBestStart(start: StartSummary) {
-  return start.source?.line !== "fixture" && isRankedRegularStart(start);
-}
-
-function compareBestStarts(a: StartSummary, b: StartSummary) {
-  return (
-    compareRankedStarts(a, b) ||
-    b.date.localeCompare(a.date)
-  );
+  return rankBestStarts(slates.flat());
 }
 
 async function getSeasonTopStarts(anchorDate: string) {
   const seasonStarts = await getArchivedSeasonStartSummaries(anchorDate.slice(0, 4));
-  return seasonStarts
-    .filter(isEligibleBestStart)
-    .sort(compareSeasonTopStarts)
-    .slice(0, 5);
-}
-
-function compareSeasonTopStarts(a: StartSummary, b: StartSummary) {
-  const rawA = rawGameScorePlus(a.gameScorePlusBreakdown) ?? a.gameScorePlus;
-  const rawB = rawGameScorePlus(b.gameScorePlusBreakdown) ?? b.gameScorePlus;
-  return (
-    rawB - rawA ||
-    b.line.strikeouts - a.line.strikeouts ||
-    a.date.localeCompare(b.date) ||
-    (a.gamePk ?? 0) - (b.gamePk ?? 0) ||
-    a.pitcher.name.localeCompare(b.pitcher.name)
-  );
+  return rankBestStarts(seasonStarts).slice(0, 5);
 }
 
 async function hydrateSeasonTopStarts(starts: StartSummary[], anchorDate: string): Promise<HomeSeasonTopStart[]> {

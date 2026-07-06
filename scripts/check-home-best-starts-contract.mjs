@@ -19,6 +19,8 @@ const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const rawScoreHelper = await readFile("src/lib/gs-plus-raw.ts", "utf8");
 const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "utf8");
+const bestStartsRanking = await readFile("src/lib/best-starts-ranking.ts", "utf8");
+const monthlyBestStartsPage = await readFile("src/app/best-starts/[month]/page.tsx", "utf8");
 
 assert(
   bestStartsRoute.includes('import { getBestStartsHome, HOME_BEST_STARTS_REVALIDATE_SECONDS } from "@/lib/data/home-best-starts-service";') &&
@@ -32,7 +34,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v5"]') &&
+    bestStartsService.includes('["home-best-starts-v6"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -48,8 +50,8 @@ assert(
 assert(
   bestStartsService.includes("return getCachedBestStartsHome(getHomeSlateDate());") &&
     bestStartsService.includes('getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })') &&
-  bestStartsService.includes("getBestStartWindow(anchorDate, 7)") &&
-    bestStartsService.includes("getBestStartWindow(anchorDate, 30)") &&
+  bestStartsService.includes("getBestStartsWindow(anchorDate, 7)") &&
+    bestStartsService.includes("getBestStartsWindow(anchorDate, 30)") &&
     bestStartsService.includes("getSeasonTopStarts(anchorDate)"),
   "home best-starts service must include the active day's completed live slate before the archive cycle lands",
 );
@@ -99,20 +101,21 @@ assert(
 );
 
 assert(
-  bestStartsService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
-    bestStartsService.includes('import { compareRankedStarts } from "@/lib/start-ranking";') &&
-    bestStartsService.includes("function isEligibleBestStart") &&
-    bestStartsService.includes("start.source?.line !== \"fixture\" && isRankedRegularStart(start)") &&
+  bestStartsRanking.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    bestStartsService.includes('import { rankBestStarts } from "@/lib/best-starts-ranking";') &&
+    bestStartsRanking.includes("export function isEligibleBestStart") &&
+    bestStartsRanking.includes("start.source?.line !== \"fixture\" && isRankedRegularStart(start)") &&
     startClassification.includes("export function isRankedRegularStart") &&
-    bestStartsService.includes("function compareBestStarts") &&
-    bestStartsService.includes("compareRankedStarts(a, b)") &&
-    bestStartsService.includes("b.date.localeCompare(a.date)"),
-  "home best-starts service must enforce planned-starter-aware qualified starts and reuse ranked-start tie-breaks before recency",
+    bestStartsRanking.includes("export function compareBestStarts") &&
+    bestStartsRanking.includes("bestStartRawScore(b) - bestStartRawScore(a)") &&
+    bestStartsRanking.includes("b.line.strikeouts - a.line.strikeouts") &&
+    bestStartsRanking.includes("a.date.localeCompare(b.date)"),
+  "home best-starts service must enforce planned-starter-aware qualified starts and use the shared raw-score best-starts ranking service",
 );
 
 assert(
   !bestStartsService.includes("rankedWindowStarts") &&
-    bestStartsService.includes("getBestStartWindow(anchorDate, 30)") &&
+    bestStartsService.includes("getBestStartsWindow(anchorDate, 30)") &&
     bestStartsService.includes("getArchivedSeasonStartSummaries(anchorDate.slice(0, 4))") &&
     bestStartsService.includes('getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })'),
   "home best-starts service must use rolling daily-slate comparison for 7-day/30-day winners and archived starts for the season top five",
@@ -143,18 +146,20 @@ assert(
 );
 
 assert(
-  !homeDeferredSections.includes('badge: "7-DAY + 30-DAY BEST"') &&
+  homeDeferredSections.includes('badge: "7 AND 30-DAY BEST"') &&
+    homeDeferredSections.includes('badge: "30-DAY NEXT BEST"') &&
     homeDeferredSections.includes('badge: "7-DAY BEST"') &&
     homeDeferredSections.includes('badge: "30-DAY BEST"') &&
+    homeDeferredSections.includes("sameWindowWinner") &&
     homeDeferredSections.includes("visibleCards.length === 0") &&
     homeDeferredSections.includes("lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]"),
-  "home best-starts cards must stack 7-day and 30-day cards beside the season top-five panel",
+  "home best-starts cards must stack 7-day and 30-day cards beside the season top-five panel and dedupe matching window winners",
 );
 
 assert(
-  homeDeferredSections.includes("monthlyHighlight ?? (monthly?.id === weekly?.id ? weeklyHighlight : null)") &&
+  homeDeferredSections.includes("monthlyRunnerUpHighlight") &&
     homeDeferredSections.includes("highlight: weeklyHighlight") &&
-    homeDeferredSections.includes("highlight: monthlyHighlight ??") &&
+    homeDeferredSections.includes("highlight: monthlyHighlight") &&
     homeDeferredSections.includes("entry.highlightUrl"),
   "home best-starts cards must pass API highlights into the adaptive card renderer and season rows",
 );
@@ -186,15 +191,20 @@ assert(
 );
 
 assert(
-  bestStartsService.includes("function compareSeasonTopStarts") &&
-    bestStartsService.includes('import { rawGameScorePlus } from "@/lib/gs-plus-raw";') &&
-    bestStartsService.includes("rawB - rawA") &&
-    bestStartsService.includes("b.line.strikeouts - a.line.strikeouts") &&
-    bestStartsService.includes("a.date.localeCompare(b.date)") &&
+  bestStartsService.includes('import { rankBestStarts } from "@/lib/best-starts-ranking";') &&
+    monthlyBestStartsPage.includes('import { bestStartWindow, rankBestStarts } from "@/lib/best-starts-ranking";') &&
+    bestStartsRanking.includes('import { rawGameScorePlus } from "@/lib/gs-plus-raw";') &&
+    bestStartsRanking.includes("bestStartRawScore(b) - bestStartRawScore(a)") &&
+    bestStartsRanking.includes("b.line.strikeouts - a.line.strikeouts") &&
+    bestStartsRanking.includes("a.date.localeCompare(b.date)") &&
     bestStartsService.includes("rawScore: rawGameScorePlus(start.gameScorePlusBreakdown)") &&
     bestStartsService.includes("resolveTopPerformerImage(start, null)") &&
     rawScoreHelper.includes("component.key !== \"calibration\"") &&
     rawScoreComponent.includes("cappedRawGameScorePlus(score, breakdown)") &&
+    rawScoreComponent.includes("RAW {raw.toFixed(1)}") &&
+    monthlyBestStartsPage.includes("<RawGsPlusLine") &&
+    monthlyBestStartsPage.includes('label: "7 AND 30-DAY BEST"') &&
+    monthlyBestStartsPage.includes('label: "30-DAY NEXT BEST"') &&
     homeDeferredSections.includes("function SeasonTopStartsPanel") &&
     homeDeferredSections.includes("function SeasonTopStartRow") &&
     homeDeferredSections.includes("data-home-top-start-row={rank}") &&
@@ -207,7 +217,7 @@ assert(
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
     homeDeferredSections.includes("entry.isNew"),
-  "home top starts of 2026 must rank by raw GS+, strikeouts, and date, render full-bleed action rows, framed fallbacks, raw cap labels, highlights, and NEW chips",
+  "best starts surfaces must share raw GS+ ranking, render full-bleed action rows, framed fallbacks, raw cap labels, highlights, NEW chips, and deduped 7/30 heroes",
 );
 
 assert(

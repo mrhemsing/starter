@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { Headshot } from "@/components/headshot";
 import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
+import { bestStartWindow, rankBestStarts } from "@/lib/best-starts-ranking";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getDailySlate, getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
@@ -35,12 +37,35 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
   const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
   const starts = await getMonthStarts(month, today);
-  const weekly = bestWindow(starts, 7);
+  const latestDate = starts.map((start) => start.date).sort().at(-1);
+  const weeklyStarts = latestDate ? bestStartWindow(starts, latestDate, 7) : [];
+  const weekly = weeklyStarts[0] ?? null;
   const monthly = starts[0] ?? null;
-  const [weeklyHighlight, monthlyHighlight] = await Promise.all([
+  const sameWindowWinner = Boolean(weekly && monthly && weekly.id === monthly.id);
+  const monthlyRunnerUp = sameWindowWinner ? starts.find((start) => start.id !== monthly?.id) ?? null : null;
+  const featureCards: Array<{ label: string; start: StartSummary | null; highlight?: FeaturedStartHighlight | null }> = sameWindowWinner
+    ? [
+        { label: "7 AND 30-DAY BEST", start: weekly, highlight: null },
+        { label: "30-DAY NEXT BEST", start: monthlyRunnerUp, highlight: null },
+      ]
+    : [
+        { label: "7-DAY BEST", start: weekly, highlight: null },
+        { label: "30-DAY BEST", start: monthly, highlight: null },
+      ];
+  const [weeklyHighlight, monthlyHighlight, monthlyRunnerUpHighlight] = await Promise.all([
     resolveSummaryHighlight(weekly),
-    resolveSummaryHighlight(monthly),
+    sameWindowWinner ? Promise.resolve(null) : resolveSummaryHighlight(monthly),
+    resolveSummaryHighlight(monthlyRunnerUp),
   ]);
+  const cardsWithHighlights = featureCards.map((card) => ({
+    ...card,
+    highlight:
+      card.label === "7 AND 30-DAY BEST" || card.label === "7-DAY BEST"
+        ? weeklyHighlight
+        : card.label === "30-DAY NEXT BEST"
+          ? monthlyRunnerUpHighlight
+          : monthlyHighlight,
+  }));
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -55,8 +80,9 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
         </header>
 
         <section className="grid gap-3 border-b border-white/10 py-6 md:grid-cols-2">
-          <FeatureCard label="7-day best" start={weekly} highlight={weeklyHighlight} />
-          <FeatureCard label="30-day best" start={monthly} highlight={monthlyHighlight} />
+          {cardsWithHighlights.map((card) => (
+            <FeatureCard key={card.label} label={card.label} start={card.start} highlight={card.highlight} />
+          ))}
         </section>
 
         <section className="py-6">
@@ -69,7 +95,10 @@ export default async function BestStartsPage({ params }: BestStartsPageProps) {
                   <p className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</p>
                   <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{startMatchupLabel(start)} / {formatStartLine(start.line)}</p>
                 </div>
-                <p className="font-serif text-3xl font-bold text-amber-300">{start.gameScorePlus}</p>
+                <div className="text-right">
+                  <p className="font-serif text-3xl font-bold text-amber-300">{start.gameScorePlus}</p>
+                  <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
+                </div>
               </Link>
             ))}
           </div>
@@ -98,7 +127,10 @@ function FeatureCard({ label, start, highlight }: { label: string; start: StartS
           <h3 className="mt-1 truncate font-serif text-3xl font-bold text-zinc-50">{start.pitcher.name}</h3>
           <p className="mt-2 font-mono text-xs text-zinc-400">{startMatchupLabel(start)} / {formatShortDate(start.date)}</p>
         </div>
-        <p className="font-serif text-5xl font-bold text-amber-300">{start.gameScorePlus}</p>
+        <div className="text-right">
+          <p className="font-serif text-5xl font-bold text-amber-300">{start.gameScorePlus}</p>
+          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
+        </div>
       </Link>
       <div className="sm:col-span-3">
         <ShareStartButton
@@ -126,17 +158,7 @@ async function getMonthStarts(month: string, today: string) {
   const safeMonth = /^\d{4}-\d{2}$/.test(month) ? month : today.slice(0, 7);
   const dates = datesInMonth(safeMonth, today);
   const slates = await Promise.all(dates.map((date) => getDailySlate({ window: "yesterday", date })));
-  return slates
-    .flat()
-    .filter((start) => start.source?.line !== "fixture")
-    .sort((a, b) => b.gameScorePlus - a.gameScorePlus);
-}
-
-function bestWindow(starts: StartSummary[], days: number) {
-  const latestDate = starts.map((start) => start.date).sort().at(-1);
-  if (!latestDate) return null;
-  const minDate = addDays(latestDate, -(days - 1));
-  return starts.filter((start) => start.date >= minDate && start.date <= latestDate).sort((a, b) => b.gameScorePlus - a.gameScorePlus)[0] ?? null;
+  return rankBestStarts(slates.flat());
 }
 
 function datesInMonth(month: string, today: string) {

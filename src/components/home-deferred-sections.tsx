@@ -157,8 +157,10 @@ export function HomeDeferredSections({
         <BestStartsLite
           weekly={bestStarts.weekly}
           monthly={bestStarts.monthly}
+          monthlyRunnerUp={bestStarts.monthlyRunnerUp}
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
+          monthlyRunnerUpHighlight={bestStarts.monthlyRunnerUpHighlight}
           seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null,
@@ -204,8 +206,10 @@ export function HomeDeferredSections({
         <BestStartsLite
           weekly={bestStarts.weekly}
           monthly={bestStarts.monthly}
+          monthlyRunnerUp={bestStarts.monthlyRunnerUp}
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
+          monthlyRunnerUpHighlight={bestStarts.monthlyRunnerUpHighlight}
           seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null}
@@ -396,7 +400,8 @@ function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {
   const weeklyMissing = Boolean(bestStarts.weekly && !bestStarts.weeklyHighlight);
   const monthlyIsWeekly = bestStarts.monthly?.id === bestStarts.weekly?.id;
   const monthlyMissing = Boolean(bestStarts.monthly && !monthlyIsWeekly && !bestStarts.monthlyHighlight);
-  return weeklyMissing || monthlyMissing;
+  const runnerUpMissing = Boolean(monthlyIsWeekly && bestStarts.monthlyRunnerUp && !bestStarts.monthlyRunnerUpHighlight);
+  return weeklyMissing || monthlyMissing || runnerUpMissing;
 }
 
 function filterHomeMustWatchGames(watch: TonightResponse | null) {
@@ -418,21 +423,31 @@ async function fetchJson<T>(url: string): Promise<T> {
 function BestStartsLite({
   weekly,
   monthly,
+  monthlyRunnerUp,
   weeklyHighlight,
   monthlyHighlight,
+  monthlyRunnerUpHighlight,
   seasonTopStarts,
 }: {
   weekly: StartSummary | null;
   monthly: StartSummary | null;
+  monthlyRunnerUp?: StartSummary | null;
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
+  monthlyRunnerUpHighlight?: FeaturedStartHighlight | null;
   seasonTopStarts?: HomeSeasonTopStart[];
 }) {
   const monthKey = monthly?.date.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
-  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = [
-    { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
-    { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight ?? (monthly?.id === weekly?.id ? weeklyHighlight : null) },
-  ];
+  const sameWindowWinner = Boolean(weekly && monthly && weekly.id === monthly.id);
+  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameWindowWinner
+    ? [
+        { badge: "7 AND 30-DAY BEST", start: weekly, highlight: weeklyHighlight ?? monthlyHighlight },
+        { badge: "30-DAY NEXT BEST", start: monthlyRunnerUp ?? null, highlight: monthlyRunnerUpHighlight ?? null },
+      ]
+    : [
+        { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
+        { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight },
+      ];
   const visibleCards = cards.flatMap((card) => (card.start ? [{ badge: card.badge, start: card.start, highlight: card.highlight }] : []));
   const topStarts = seasonTopStarts?.slice(0, 5) ?? [];
 
@@ -528,13 +543,13 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
   const color = scoreBandColor(start.gameScorePlus);
   const actionImage = entry.image?.source === "action" ? entry.image : null;
   const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
-  const imagePosition = actionImage?.objectPosition ?? "50% 33%";
+  const imagePosition = actionImage?.objectPosition ?? "center 25%";
   const rowHref = startHref(start, sourceParams("home"));
   const fullBleed = Boolean(actionImage);
 
   return (
     <article
-      className={`group relative grid min-h-24 overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:min-h-28 ${fullBleed ? "grid-cols-[58px_minmax(0,1fr)_auto] sm:grid-cols-[76px_minmax(0,1fr)_auto]" : "sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto]"} ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
+      className={`group relative grid min-h-[104px] overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:min-h-[128px] ${fullBleed ? "grid-cols-[58px_minmax(0,1fr)_auto] sm:grid-cols-[76px_minmax(0,1fr)_auto]" : "sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto]"} ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
       data-home-top-start-row={rank}
       data-full-bleed-action={fullBleed ? "true" : "false"}
     >
@@ -542,12 +557,12 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
-          <span className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-black/90 via-black/62 to-black/18" aria-hidden="true" data-home-top-start-scrim="true" />
+          <span className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 100%)" }} aria-hidden="true" data-home-top-start-scrim="true" />
         </>
       ) : null}
-      <a href={rowHref} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
+      <a href={rowHref} className="absolute inset-0 z-[2]" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div className="relative z-10 flex items-center justify-center border-b border-white/10 px-3 py-3 sm:border-b-0 sm:border-r">
-        <span className="font-serif text-4xl font-black leading-none" style={{ color }}>{rank}</span>
+        <span className="font-serif text-[40px] font-black leading-none" style={{ color }}>{rank}</span>
       </div>
       {!fullBleed ? (
         <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r" data-home-top-start-framed-photo="true">
