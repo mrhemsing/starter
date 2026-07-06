@@ -95,6 +95,12 @@ assert(
   "watchlist Wire v1 should emit capped rest, two-start, streak, gem, blowup, and headline events from existing stores",
 );
 assert(
+  watchlistServiceSource.includes("export function sortWatchlistWireEvents") &&
+    watchlistServiceSource.includes("watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a)") &&
+    watchlistServiceSource.includes("event.headline?.publishedAt ?? event.detectedAt"),
+  "watchlist Wire events must sort newest-first, using headline published time for NEWS items",
+);
+assert(
   headlineServiceSource.includes('source: "google-news"') &&
     headlineServiceSource.includes('source: "mlb-trade-rumors"') &&
     headlineServiceSource.includes('source: "espn"') &&

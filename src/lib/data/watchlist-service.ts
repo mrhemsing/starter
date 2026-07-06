@@ -202,7 +202,7 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   const bench = entries.filter((entry) => !isPitchingSoon(entry));
   const wireEvents = entries
     .flatMap((entry) => entry.wireEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name })))
-    .sort((a, b) => b.priority - a.priority || Date.parse(b.detectedAt) - Date.parse(a.detectedAt) || a.pitcherName.localeCompare(b.pitcherName));
+    .sort((a, b) => watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || a.pitcherName.localeCompare(b.pitcherName));
 
   return {
     accountId: accountId ?? null,
@@ -215,6 +215,15 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
     wireEvents,
     digestEvents: wireEvents,
   };
+}
+
+export function sortWatchlistWireEvents<T extends WatchlistWireEvent>(events: T[]): T[] {
+  return [...events].sort((a, b) => watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || a.label.localeCompare(b.label));
+}
+
+function watchlistWireEventSortTime(event: WatchlistWireEvent) {
+  const value = Date.parse(event.headline?.publishedAt ?? event.detectedAt);
+  return Number.isFinite(value) ? value : 0;
 }
 
 function isWatchlistLiveRow(row: LiveScoreboardRow): row is LiveScoreboardRow & { scoreLabel: "PROV" | "FINAL" } {

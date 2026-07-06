@@ -15,7 +15,8 @@ import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
-import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
+import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
+import { WATCHLIST_COOKIE, getWatchlistPitcherIds, sortWatchlistWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
@@ -93,6 +94,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   const pitcherPromise = getPitcherApiResponse(id);
   const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);
   const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);
+  const wireEventsPromise = readWatchlistHeadlineEvents([summary.pitcherId]);
   const followedIds = await followedIdsPromise;
   const jsonLd = jsonLdForPitcherForm(form);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
@@ -179,6 +181,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
             series={series}
             recentDepthBundlePromise={recentDepthBundlePromise}
             nextStartPromise={nextStartPromise}
+            wireEventsPromise={wireEventsPromise}
             summary={summary}
             source={source}
             best={best}
@@ -224,6 +227,7 @@ async function PitcherProfileBody({
   series,
   recentDepthBundlePromise,
   nextStartPromise,
+  wireEventsPromise,
   summary,
   source,
   best,
@@ -234,15 +238,17 @@ async function PitcherProfileBody({
   series: FormStartPoint[];
   recentDepthBundlePromise: Promise<Awaited<ReturnType<typeof getRecentStartDepthWithHighlights>>>;
   nextStartPromise: Promise<ProfileNextStart | null>;
+  wireEventsPromise: Promise<Map<string, WatchlistWireEvent[]>>;
   summary: FormSummary;
   source: EntitySource;
   best: FormStartPoint;
   worst: FormStartPoint;
   streak: number;
 }) {
-  const [pitcher, recentDepthBundle, nextStart] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise]);
+  const [pitcher, recentDepthBundle, nextStart, wireEventsByPitcher] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise, wireEventsPromise]);
   const { recentDepth, recentHighlights } = recentDepthBundle;
   const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
+  const wireEvents = sortWatchlistWireEvents(wireEventsByPitcher.get(summary.pitcherId) ?? []);
 
   return (
     <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-stacks">
@@ -269,6 +275,7 @@ async function PitcherProfileBody({
             <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} />
           </div>
         ) : null}
+        <PitcherWirePanel events={wireEvents} pitcherName={summary.name} />
         {pitcher ? <AdvancedPercentilePanel pitcher={pitcher} /> : null}
         <SplitsPanel splits={pitcher?.splits.groups ?? []} venueSplit={summary.venueSplit ?? null} />
         <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} ${formStartMatchupLabel(best)}`} href={startHref(best.id, sourceParams(source))} />
@@ -281,6 +288,59 @@ async function PitcherProfileBody({
       </aside>
     </section>
   );
+}
+
+function PitcherWirePanel({ events, pitcherName }: { events: WatchlistWireEvent[]; pitcherName: string }) {
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-profile-wire">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Pitcher Wire</p>
+      <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
+      {events.length === 0 ? (
+        <p className="mt-3 text-sm leading-6 text-zinc-500">No recent Wire items for {pitcherName}.</p>
+      ) : (
+        <div className="mt-4 grid gap-2">
+          {events.slice(0, 6).map((event) => (
+            <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
+  const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
+  if (event.headline) {
+    return (
+      <a href={event.headline.url} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
+          <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
+        </div>
+        <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline.text}</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
+      </a>
+    );
+  }
+
+  return (
+    <div className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">{event.sentence}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
+    </div>
+  );
+}
+
+function relativeEventTime(detectedAt: string) {
+  const elapsedMs = Date.now() - Date.parse(detectedAt);
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 60_000) return "Just now";
+  const minutes = Math.round(elapsedMs / 60_000);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} hr ago`;
+  const days = Math.round(hours / 24);
+  return `${days} days ago`;
 }
 
 function GameLogPanel({

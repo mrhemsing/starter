@@ -278,8 +278,9 @@ assert(
     pitcherFormPage.includes("const pitcherPromise = getPitcherApiResponse(id);") &&
     pitcherFormPage.includes("const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);") &&
     pitcherFormPage.includes("const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);") &&
+    pitcherFormPage.includes("const wireEventsPromise = readWatchlistHeadlineEvents([summary.pitcherId]);") &&
     pitcherFormPage.includes("const followedIdsPromise = getWatchlistPitcherIds(accountId);"),
-  "pitcher profile must start slower profile, recent-start, next-start, and watchlist reads without serializing them",
+  "pitcher profile must start slower profile, recent-start, next-start, Wire, and watchlist reads without serializing them",
 );
 
 assert(
@@ -292,6 +293,19 @@ assert(
     !pitcherFormPage.includes("PitcherScoutingSkeleton") &&
     !pitcherFormPage.includes("PitcherGameLogSkeleton"),
   "pitcher profile must stream slower below-the-fold sections without non-live skeleton loading states",
+);
+
+assert(
+  pitcherFormPage.includes('import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";') &&
+    pitcherFormPage.includes("sortWatchlistWireEvents") &&
+    pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} pitcherName={summary.name} />") &&
+    pitcherFormPage.includes('data-responsive-check="pitcher-profile-wire"') &&
+    pitcherFormPage.includes("No recent Wire items for {pitcherName}.") &&
+    pitcherFormPage.includes('target="_blank"') &&
+    pitcherFormPage.includes('rel="noopener"') &&
+    pitcherFormPage.includes("event.headline.source") &&
+    pitcherFormPage.includes("relativeEventTime(event.headline.publishedAt)"),
+  "pitcher profile must render a pitcher-specific Wire section from stored headline events, newest first, with external source attribution",
 );
 
 assert(
