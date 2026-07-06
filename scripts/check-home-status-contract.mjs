@@ -313,9 +313,13 @@ assert(
 );
 
 assert(
-  homePage.includes('className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm"') &&
+  homePage.includes('className="block text-[11px] sm:hidden"') &&
+    homePage.includes("GS+ grades a single start on the 20-80 scouting scale,") &&
+    homePage.includes("<br />") &&
+    homePage.includes("league average near 50.") &&
+    homePage.includes('className="hidden text-[11px] sm:inline sm:text-sm"') &&
     homePage.includes('className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline"'),
-  "homepage mobile GS+ value prop must stay on one line and force a break before methodology",
+  "homepage mobile GS+ value prop must force a break after the comma and before methodology",
 );
 
 assert(

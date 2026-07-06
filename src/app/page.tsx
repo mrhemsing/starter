@@ -108,7 +108,12 @@ export default async function Home() {
                   <span className="block">ranked.</span>
                 </h1>
                 <p className="blurb mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
-                  <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">{GS_PLUS_SCALE_SENTENCE}</span>
+                  <span className="block text-[11px] sm:hidden">
+                    GS+ grades a single start on the 20-80 scouting scale,
+                    <br />
+                    league average near 50.
+                  </span>
+                  <span className="hidden text-[11px] sm:inline sm:text-sm">{GS_PLUS_SCALE_SENTENCE}</span>
                   <a href="/methodology" className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline">
                     Methodology
                   </a>
