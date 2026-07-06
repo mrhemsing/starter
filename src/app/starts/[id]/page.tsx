@@ -559,7 +559,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
             <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
-            <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
           </div>
         )}
         chips={(
@@ -579,6 +578,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
                 Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
               </span>
             ) : null}
+            <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
           </>
         )}
       />
@@ -608,6 +608,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
               Paired with {pairedStart.pitcher.name} / GS+ {pairedStart.gameScorePlus}
             </span>
           ) : null}
+          <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
         </div>
         <div className={profile.scoreStackClass} data-ranked-desktop-score-stack>
           {highlight ? (
@@ -623,7 +624,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
             <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
-            <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
             <DecisionChip result={start.result} className="mt-2 justify-end" compact />
           </div>
         </div>
@@ -676,12 +676,12 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
           <h3 className="truncate font-serif text-xl font-bold text-zinc-50">{start.pitcher.name}</h3>
         </Link>
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel(start)} / not ranked</p>
+        <p className="mt-1 font-mono text-xs text-zinc-400">{formatStartLine(start.line)}</p>
+        <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
         <PitcherAvailabilityNote availability={formSummary?.availability} compact className="mt-1" />
       </div>
       <div className="font-mono text-xs text-zinc-400 sm:text-right">
-        <p>{formatStartLine(start.line)}</p>
         <p className="mt-1 text-zinc-500">GS+ {start.gameScorePlus}</p>
-        <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
         <DecisionChip result={start.result} className="mt-2 justify-start sm:justify-end" compact />
       </div>
     </article>

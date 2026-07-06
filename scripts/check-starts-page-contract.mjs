@@ -50,6 +50,29 @@ const rankedStartSummaryRule = globals.match(/\.ranked-start-details > summary \
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const startRanking = await readFile("src/lib/start-ranking.ts", "utf8");
 const primaryNavLink = await readFile("src/components/primary-nav-link.tsx", "utf8");
+const rankedStartCardStart = startsPage.indexOf("function RankedStartCard");
+const rankedStartCardEnd = startsPage.indexOf("function ShortStartCard", rankedStartCardStart);
+const rankedStartCardSource =
+  rankedStartCardStart >= 0 && rankedStartCardEnd > rankedStartCardStart
+    ? startsPage.slice(rankedStartCardStart, rankedStartCardEnd)
+    : "";
+const compactScoreBridgeMarkup = "<ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />";
+const desktopDetailBlockIndex = rankedStartCardSource.indexOf("data-ranked-desktop-detail-block");
+const desktopScoreStackIndex = rankedStartCardSource.indexOf("data-ranked-desktop-score-stack");
+const desktopCompactBridgeIndex = rankedStartCardSource.indexOf(compactScoreBridgeMarkup, desktopDetailBlockIndex);
+const desktopScoreStackEnd = rankedStartCardSource.indexOf("<details", desktopScoreStackIndex);
+const desktopScoreStackSource =
+  desktopScoreStackIndex >= 0 && desktopScoreStackEnd > desktopScoreStackIndex
+    ? rankedStartCardSource.slice(desktopScoreStackIndex, desktopScoreStackEnd)
+    : "";
+const mobileDetailsIndex = rankedStartCardSource.indexOf("details={(");
+const mobileScoreIndex = rankedStartCardSource.indexOf("score={(");
+const mobileChipsIndex = rankedStartCardSource.indexOf("chips={(");
+const mobileCompactBridgeIndex = rankedStartCardSource.indexOf(compactScoreBridgeMarkup, mobileDetailsIndex);
+const mobileScoreSource =
+  mobileScoreIndex >= 0 && mobileChipsIndex > mobileScoreIndex
+    ? rankedStartCardSource.slice(mobileScoreIndex, mobileChipsIndex)
+    : "";
 const archivedStartOfDayActionFixtures = [
   {
     date: "2026-07-03",
@@ -513,6 +536,18 @@ assert(
     startsPage.includes("<ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />") &&
     startsPage.includes("<ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} gameScoreV2={start.gameScoreV2} />"),
   "ranked starts and start detail surfaces must show GSv2 only as context beside GS+ without changing rank logic",
+);
+
+assert(
+  rankedStartCardSource &&
+    mobileCompactBridgeIndex > mobileDetailsIndex &&
+    !mobileScoreSource.includes("<ScoreBridge") &&
+    desktopDetailBlockIndex >= 0 &&
+    desktopScoreStackIndex > desktopDetailBlockIndex &&
+    desktopCompactBridgeIndex > desktopDetailBlockIndex &&
+    desktopCompactBridgeIndex < desktopScoreStackIndex &&
+    !desktopScoreStackSource.includes("<ScoreBridge"),
+  "ranked start rows must move compact GSv2/ADJ context into the stat stack and keep score columns clean",
 );
 
 assert(
