@@ -83,6 +83,9 @@ const archivedStartOfDayActionFixtures = [
     date: "2026-07-02",
     pitcher: "Bryce Miller",
     metadataPath: "public/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-action-v4.json",
+    expectedImageUrl:
+      "/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-api-action-v2.jpg",
+    expectedSourceFragment: "w_2608,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
   },
   {
     date: "2026-07-01",
@@ -826,6 +829,15 @@ for (const fixture of archivedStartOfDayActionFixtures) {
       hasStoredActionUrl,
     `archived Start of the Day action photo fixture must stay stored locally, curator-clean, and focal-pointed: ${fixture.date} ${fixture.pitcher}`,
   );
+
+  if (fixture.expectedImageUrl) {
+    assert(
+      metadata.imageUrl === fixture.expectedImageUrl &&
+        typeof metadata.sourceImageUrl === "string" &&
+        metadata.sourceImageUrl.includes(fixture.expectedSourceFragment),
+      `archived Start of the Day action photo fixture must keep the curated cache-busted MLB API asset: ${fixture.date} ${fixture.pitcher}`,
+    );
+  }
 }
 
 for (const leader of await readArchivedStartOfDayLeaders()) {

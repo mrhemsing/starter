@@ -1,8 +1,8 @@
 {
   "startId": "2026-07-02-sea-laa-682243",
-  "imageUrl": "/images/top-performer-action-shots/2026-07-02-sea-laa-682243-action.jpg",
-  "alt": "Bryce Miller pitching action photo for 2026-07-02",
-  "attribution": "Bryce Miller strikes out eight in superb start - thumbnail",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-api-action-v2.jpg",
+  "alt": "Bryce Miller pitching action photo for his Start of the Day outing against the Angels on July 2, 2026",
+  "attribution": "MLB Stats API",
   "clean": true,
   "focalPoint": {
     "x": 50,
@@ -10,10 +10,10 @@
   },
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/gameday/823119",
+  "playUrl": "https://www.mlb.com/video/bryce-miller-strikes-out-eight-in-superb-start",
   "reviewedAt": "2026-07-04T18:29:09.603Z",
-  "reviewNote": "Curated Start of the Day action image: Bryce Miller strikes out eight in superb start",
+  "reviewNote": "MLB Stats API Start of the Day action image: higher-resolution Bryce Miller pitching frame",
   "expiresAt": 1814725749571,
-  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
   "storage": "local-static"
 }
