@@ -604,10 +604,10 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-55"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-90"
           priority={false}
         />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/55 via-black/35 to-black/10" aria-hidden="true" />
 
           <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-8">
           <div className="w-full max-w-4xl text-left">
@@ -664,10 +664,10 @@ function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-55"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-90"
           priority={false}
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/55 via-black/35 to-black/10" aria-hidden="true" />
 
         <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-8">
           <div className="w-full max-w-4xl text-left">
