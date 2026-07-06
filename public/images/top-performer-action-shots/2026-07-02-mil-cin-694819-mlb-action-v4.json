@@ -1,18 +1,18 @@
 {
   "startId": "2026-07-02-mil-cin-694819",
-  "imageUrl": "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v4.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v5.jpg",
   "alt": "Jacob Misiorowski delivers during his 10-strikeout start against Cincinnati on July 2, 2026",
   "attribution": "MLB Stats API / Getty Images",
   "clean": true,
   "focalPoint": {
-    "x": 50,
-    "y": 43
+    "x": 44,
+    "y": 48
   },
-  "objectPosition": "50% 50%",
-  "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings",
+  "objectPosition": "45% 50%",
+  "mobileObjectPosition": "43% 50%",
+  "playUrl": "https://www.mlb.com/video/jj-bleday-strikes-out-swinging-azc6rq",
   "expiresAt": 1785612366971,
-  "reviewNote": "MLB Stats API Top Starts action image: Jacob Misiorowski 10-strikeout outing frame",
-  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/u16t3wc5ve0yvqpkgb17.jpg",
+  "reviewNote": "MLB Stats API Top Starts action image: Jacob Misiorowski 10th-strikeout live mound frame",
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/yg6pvlidztrtt29nun9j.jpg",
   "storage": "local-static"
 }

@@ -43,7 +43,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v11"]') &&
+    bestStartsService.includes('["home-best-starts-v12"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -300,9 +300,9 @@ assert(
 );
 
 assert(
-  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v4.jpg" &&
-    misiorowskiTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/u16t3wc5ve0yvqpkgb17.jpg" &&
-    misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings" &&
+  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v5.jpg" &&
+    misiorowskiTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/yg6pvlidztrtt29nun9j.jpg" &&
+    misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jj-bleday-strikes-out-swinging-azc6rq" &&
     misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.png" &&
     misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
     cavalliTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-api-action-v2.jpg" &&
