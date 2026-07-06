@@ -543,15 +543,16 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
   const color = scoreBandColor(start.gameScorePlus);
   const actionImage = entry.image?.source === "action" ? entry.image : null;
   const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
-  const imagePosition = actionImage?.objectPosition ?? "center 25%";
+  const imagePosition = actionImage?.objectPosition ?? "center 30%";
   const rowHref = startHref(start, sourceParams("home"));
   const fullBleed = Boolean(actionImage);
 
   return (
     <article
-      className={`group relative grid min-h-[104px] overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:min-h-[128px] ${fullBleed ? "grid-cols-[58px_minmax(0,1fr)_auto] sm:grid-cols-[76px_minmax(0,1fr)_auto]" : "sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto]"} ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
+      className={`group relative grid min-h-[120px] overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:min-h-[160px] ${fullBleed ? "grid-cols-[56px_minmax(0,1fr)_auto] sm:grid-cols-[72px_minmax(0,1fr)_auto]" : "sm:grid-cols-[72px_minmax(0,120px)_minmax(0,1fr)_auto]"} ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
       data-home-top-start-row={rank}
       data-full-bleed-action={fullBleed ? "true" : "false"}
+      aria-label={`Gem number ${rank}: ${start.pitcher.name}, GS+ ${start.gameScorePlus}`}
     >
       {fullBleed ? (
         <>
@@ -561,8 +562,15 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         </>
       ) : null}
       <a href={rowHref} className="absolute inset-0 z-[2]" aria-label={`Open ${start.pitcher.name} start deep dive`} />
-      <div className="relative z-10 flex items-center justify-center border-b border-white/10 px-3 py-3 sm:border-b-0 sm:border-r">
-        <span className="font-serif text-[40px] font-black leading-none" style={{ color }}>{rank}</span>
+      <div
+        className="relative z-10 flex min-h-full w-[56px] flex-col items-center justify-center border-r border-white/15 px-2 py-3 sm:w-[72px]"
+        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.64) 60%, rgba(0,0,0,0.22) 100%)" }}
+        data-home-top-start-gem-lockup="true"
+      >
+        <span className={`font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--level-onfire)] ${rank === 1 ? "drop-shadow-[0_0_8px_rgba(251,146,60,0.85)]" : ""}`} data-home-top-start-gem-kicker={rank === 1 ? "elite" : "standard"}>
+          Gem
+        </span>
+        <span className="mt-1 font-serif text-[32px] font-black leading-none sm:text-[44px]" style={{ color }}>#{rank}</span>
       </div>
       {!fullBleed ? (
         <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r" data-home-top-start-framed-photo="true">
@@ -578,8 +586,8 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
           </a>
           {entry.isNew ? <span className="rounded border border-amber-300/35 bg-amber-300/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">New</span> : null}
         </div>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-          <MetaLine segments={[start.pitcher.team, startMatchupLabel(start), formatShortDate(start.date)]} />
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+          <MetaLine segments={[startMatchupLabel(start), formatShortDate(start.date)]} />
         </p>
         <p className="mt-2 text-sm leading-5 text-zinc-300">{formatStartLine(start.line)}</p>
         {entry.highlightUrl ? (
@@ -589,10 +597,10 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         ) : null}
       </div>
       <div className="relative z-10 flex items-center justify-start px-3 pb-3 sm:justify-end sm:py-3">
-        <div className="min-w-[70px] rounded border border-white/10 bg-white/5 px-3 py-2 text-center">
+        <div className="min-w-[76px] rounded border border-white/35 bg-[rgba(10,10,10,0.6)] px-3 py-2 text-center backdrop-blur-[6px]" data-home-top-start-score-panel="true">
           <p className="font-serif text-4xl font-black leading-none" style={{ color }}>{start.gameScorePlus}</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
-          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1" />
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-white">GS+</p>
+          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-white" />
         </div>
       </div>
     </article>

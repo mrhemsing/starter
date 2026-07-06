@@ -21,6 +21,8 @@ const rawScoreHelper = await readFile("src/lib/gs-plus-raw.ts", "utf8");
 const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "utf8");
 const bestStartsRanking = await readFile("src/lib/best-starts-ranking.ts", "utf8");
 const monthlyBestStartsPage = await readFile("src/app/best-starts/[month]/page.tsx", "utf8");
+const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
+const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
   bestStartsRoute.includes('import { getBestStartsHome, HOME_BEST_STARTS_REVALIDATE_SECONDS } from "@/lib/data/home-best-starts-service";') &&
@@ -212,6 +214,20 @@ assert(
     homeDeferredSections.includes('data-home-top-start-bg="true"') &&
     homeDeferredSections.includes('data-home-top-start-scrim="true"') &&
     homeDeferredSections.includes('data-home-top-start-framed-photo="true"') &&
+    homeDeferredSections.includes('data-home-top-start-score-panel="true"') &&
+    homeDeferredSections.includes('data-home-top-start-gem-lockup="true"') &&
+    homeDeferredSections.includes("Gem number ${rank}") &&
+    homeDeferredSections.includes("sm:min-h-[160px]") &&
+    homeDeferredSections.includes("min-h-[120px]") &&
+    homeDeferredSections.includes('bg-[rgba(10,10,10,0.6)]') &&
+    homeDeferredSections.includes("backdrop-blur-[6px]") &&
+    homeDeferredSections.includes("border-white/35") &&
+    homeDeferredSections.includes("sm:w-[72px]") &&
+    homeDeferredSections.includes("w-[56px]") &&
+    homeDeferredSections.includes("sm:text-[44px]") &&
+    homeDeferredSections.includes("text-[32px]") &&
+    homeDeferredSections.includes("startMatchupLabel(start), formatShortDate(start.date)") &&
+    !homeDeferredSections.includes("start.pitcher.team, startMatchupLabel(start)") &&
     homeDeferredSections.includes("<RawGsPlusLine") &&
     homeDeferredSections.includes('alt={`${start.pitcher.name} pitching`}') &&
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
@@ -219,6 +235,35 @@ assert(
     homeDeferredSections.includes("entry.isNew"),
   "best starts surfaces must share raw GS+ ranking, render full-bleed action rows, framed fallbacks, raw cap labels, highlights, NEW chips, and deduped 7/30 heroes",
 );
+
+assert(
+  focalHelper.includes("export function clampActionPhotoObjectPosition") &&
+    focalHelper.includes("SAFE_REGION_MARGIN = 0.15") &&
+    focalHelper.includes("containerAspect = 3.7") &&
+    focalHelper.includes('return "center 30%"') &&
+    topPerformerImageService.includes("focalXOverride") &&
+    topPerformerImageService.includes("focalYOverride") &&
+    topPerformerImageService.includes("cachedActionFocalPoint") &&
+    topPerformerImageService.includes("clampActionPhotoObjectPosition({ focal: focalPoint })") &&
+    topPerformerImageService.includes("clampActionPhotoObjectPosition({ focal: autoPromoted?.focalPoint })"),
+  "top-start action rows must use persisted focal data, manual overrides, a safe-zone clamp, and center 30 percent fallback without request-time detection",
+);
+
+const topStartClampCases = [
+  { focal: { x: 0.05, y: 0.05 }, imageAspect: 3 / 2, containerAspect: 3.7 },
+  { focal: { x: 0.95, y: 0.95 }, imageAspect: 3 / 2, containerAspect: 3.7 },
+  { focal: { x: 0.05, y: 0.05 }, imageAspect: 16 / 9, containerAspect: 3.7 },
+  { focal: { x: 0.95, y: 0.95 }, imageAspect: 16 / 9, containerAspect: 3.7 },
+  { focal: { x: 0.05, y: 0.05 }, imageAspect: 1, containerAspect: 3.7 },
+  { focal: { x: 0.95, y: 0.95 }, imageAspect: 1, containerAspect: 3.7 },
+];
+for (const testCase of topStartClampCases) {
+  const position = clampActionPhotoObjectPositionLocal(testCase);
+  assert(
+    focalWithinSafeRegion(testCase, position),
+    `top-start focal clamp should keep focal point inside safe region: ${JSON.stringify(testCase)} -> ${position}`,
+  );
+}
 
 assert(
   homeDeferredSections.includes("<FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />"),
@@ -231,5 +276,40 @@ assert(
     !homeDeferredSections.includes('aria-busy="true"'),
   "home best-starts must not use an initial loading skeleton for idle cached page content",
 );
+
+function clampActionPhotoObjectPositionLocal({ focal, imageAspect = 16 / 9, containerAspect = 3.7, margin = 0.15 }) {
+  const focalX = normalizeFocalLocal(focal.x);
+  const focalY = normalizeFocalLocal(focal.y);
+  if (imageAspect >= containerAspect) {
+    return `${cssPositionForAxisLocal(focalX, imageAspect, containerAspect, margin)}% ${Math.round(focalY * 100)}%`;
+  }
+  return `${Math.round(focalX * 100)}% ${cssPositionForAxisLocal(focalY, containerAspect / imageAspect, 1, margin)}%`;
+}
+
+function focalWithinSafeRegion({ focal, imageAspect, containerAspect }, position, margin = 0.15) {
+  const [, yPosition] = position.split(" ").map((value) => Number.parseFloat(value) / 100);
+  if (imageAspect >= containerAspect) return true;
+  const renderedHeight = containerAspect / imageAspect;
+  const visibleRatio = 1 / renderedHeight;
+  const start = yPosition * (1 - visibleRatio);
+  const focalY = normalizeFocalLocal(focal.y);
+  const lowerMargin = Math.min(margin * visibleRatio, focalY);
+  const upperMargin = Math.min(margin * visibleRatio, 1 - focalY);
+  return focalY >= start + lowerMargin - 0.001 && focalY <= start + visibleRatio - upperMargin + 0.001;
+}
+
+function cssPositionForAxisLocal(focal, renderedSize, containerSize, margin) {
+  if (renderedSize <= containerSize) return Math.round(focal * 100);
+  const visibleRatio = containerSize / renderedSize;
+  const overflowRatio = 1 - visibleRatio;
+  const lower = (focal - (1 - margin) * visibleRatio) / overflowRatio;
+  const upper = (focal - margin * visibleRatio) / overflowRatio;
+  const centered = (focal - 0.5 * visibleRatio) / overflowRatio;
+  return Math.round(Math.min(1, Math.max(0, Math.min(upper, Math.max(lower, centered)))) * 100);
+}
+
+function normalizeFocalLocal(value) {
+  return Math.min(1, Math.max(0, value > 1 ? value / 100 : value));
+}
 
 console.log("home best-starts contract ok: highlight payloads are resolved in the API and rendered by the homepage cards");

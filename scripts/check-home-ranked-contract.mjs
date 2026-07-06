@@ -490,7 +490,8 @@ assert(
 assert(
   imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
     imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
-    imageService.includes("const objectPosition = objectPositionFromFocalPoint(cachedMlbGameContentAction.focalPoint) ?? cachedMlbGameContentAction.objectPosition;") &&
+    imageService.includes("const focalPoint = cachedActionFocalPoint(cachedMlbGameContentAction);") &&
+    imageService.includes("const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });") &&
     imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition)") &&
     !imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     !imageService.includes("if (actionShot) return actionShot;") &&
@@ -512,8 +513,9 @@ assert(
     imageService.includes('text.includes(fullName)') &&
     imageService.includes("if (value.clean !== true) return null;") &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
-    imageService.includes("if (!isValidFocalPoint(value)) return null;") &&
-    imageService.includes('return `${value.x}% ${value.y}%`;') &&
+    imageService.includes("function cachedActionFocalPoint(value: CachedMlbGameContentActionImage)") &&
+    imageService.includes("focalXOverride") &&
+    imageService.includes("focalYOverride") &&
     imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition)") &&
     imageService.includes('if (startId === CADE_CAVALLI_JUNE_30_START_ID) return "68% 50%";') &&
     imageService.includes("function mlbGameContentActionImageCachePath(startId: string)") &&

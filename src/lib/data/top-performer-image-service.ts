@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { clampActionPhotoObjectPosition, type ActionPhotoFocalPoint } from "@/lib/action-photo-focal";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 
 const CACHE_DIR = path.join(process.cwd(), "public", "images", "top-performer-action-shots");
@@ -17,6 +18,7 @@ export type TopPerformerImage = {
   attribution?: string;
   objectPosition?: string;
   mobileObjectPosition?: string;
+  focalPoint?: ActionPhotoFocalPoint | null;
   playUrl?: string;
 };
 
@@ -31,6 +33,10 @@ type CachedMlbGameContentActionImage = {
     x: number;
     y: number;
   };
+  focalX?: number | null;
+  focalY?: number | null;
+  focalXOverride?: number | null;
+  focalYOverride?: number | null;
   objectPosition: string;
   mobileObjectPosition?: string;
   playUrl?: string;
@@ -80,7 +86,8 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
 
   const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);
   if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now()) {
-    const objectPosition = objectPositionFromFocalPoint(cachedMlbGameContentAction.focalPoint) ?? cachedMlbGameContentAction.objectPosition;
+    const focalPoint = cachedActionFocalPoint(cachedMlbGameContentAction);
+    const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });
     return {
       source: "action",
       imageUrl: cachedMlbGameContentAction.imageUrl,
@@ -88,6 +95,7 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
       attribution: cachedMlbGameContentAction.attribution,
       objectPosition,
       mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
+      focalPoint,
       playUrl: cachedMlbGameContentAction.playUrl,
     };
   }
@@ -117,7 +125,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
   const cut = selectMlbImageCut(item);
   if (!candidate || !item || !cut?.src) return null;
   const autoPromoted = isAutoPromotableMlbGameContentAction(candidate, start);
-  const objectPosition = autoPromoted ? objectPositionFromFocalPoint(autoPromoted.focalPoint) ?? "50% 50%" : "50% 50%";
+  const objectPosition = clampActionPhotoObjectPosition({ focal: autoPromoted?.focalPoint });
 
   const image = {
     source: "action",
@@ -125,6 +133,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
     objectPosition,
     mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
+    focalPoint: autoPromoted?.focalPoint ?? null,
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
   } satisfies TopPerformerImage;
 
@@ -268,6 +277,10 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     autoPromoted: Boolean(autoPromotion),
     clean: Boolean(autoPromotion),
     focalPoint: autoPromotion?.focalPoint,
+    focalX: autoPromotion?.focalPoint.x ?? null,
+    focalY: autoPromotion?.focalPoint.y ?? null,
+    focalXOverride: null,
+    focalYOverride: null,
     objectPosition: image.objectPosition ?? "50% 50%",
     mobileObjectPosition: image.mobileObjectPosition,
     playUrl: image.playUrl,
@@ -283,6 +296,10 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
   if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;
+  if (value.focalX !== undefined && value.focalX !== null && !isValidFocalCoordinate(value.focalX)) return null;
+  if (value.focalY !== undefined && value.focalY !== null && !isValidFocalCoordinate(value.focalY)) return null;
+  if (value.focalXOverride !== undefined && value.focalXOverride !== null && !isValidFocalCoordinate(value.focalXOverride)) return null;
+  if (value.focalYOverride !== undefined && value.focalYOverride !== null && !isValidFocalCoordinate(value.focalYOverride)) return null;
   return value.imageUrl && value.alt && value.objectPosition ? value : null;
 }
 
@@ -299,9 +316,15 @@ function isValidFocalPoint(value: CachedMlbGameContentActionImage["focalPoint"])
   return !!value && Number.isFinite(value.x) && Number.isFinite(value.y) && value.x >= 0 && value.x <= 100 && value.y >= 0 && value.y <= 100;
 }
 
-function objectPositionFromFocalPoint(value: CachedMlbGameContentActionImage["focalPoint"]) {
-  if (!isValidFocalPoint(value)) return null;
-  return `${value.x}% ${value.y}%`;
+function isValidFocalCoordinate(value: number) {
+  return Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function cachedActionFocalPoint(value: CachedMlbGameContentActionImage): ActionPhotoFocalPoint | null {
+  const x = value.focalXOverride ?? value.focalX ?? value.focalPoint?.x ?? null;
+  const y = value.focalYOverride ?? value.focalY ?? value.focalPoint?.y ?? null;
+  if (x === null || y === null || !isValidFocalCoordinate(x) || !isValidFocalCoordinate(y)) return null;
+  return { x, y };
 }
 
 function mlbGameContentActionImageCachePath(startId: string) {
