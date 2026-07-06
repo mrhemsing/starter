@@ -88,7 +88,7 @@ function TeamLogo({ team, active = false }: { team: string; active?: boolean }) 
 
   return (
     <span className={`grid size-7 shrink-0 place-items-center rounded-full border p-1 ${active ? "border-zinc-950/20 bg-white" : "border-white/10 bg-white"}`}>
-      <span className="block size-6 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
+      <span className="block size-6 -translate-x-px -translate-y-px bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
     </span>
   );
 }

@@ -105,7 +105,7 @@ function TeamLogo({ team }: { team: string }) {
 
   return (
     <span className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white p-1">
-      <span className="block size-6 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
+      <span className="block size-6 -translate-x-px -translate-y-px bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)` }} aria-hidden="true" />
     </span>
   );
 }

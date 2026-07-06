@@ -559,7 +559,7 @@ assert(
     teamJumpMenu.includes('href={heatCheckHref({ ...params, team })}') &&
     teamJumpMenu.includes("teamDisplayName(team)") &&
     teamJumpMenu.includes("function TeamLogo") &&
-    teamJumpMenu.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&
+    teamJumpMenu.includes('className="block size-6 -translate-x-px -translate-y-px bg-contain bg-center bg-no-repeat"') &&
     teamJumpMenu.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&
     teamJumpMenu.includes("if (!meta) return null;") &&
     !teamJumpMenu.includes(">All</span>") &&
@@ -587,7 +587,7 @@ assert(
     teamDrawer.includes("onSelect={onSelect}") &&
     teamDrawer.includes("onSelect={closeDrawer}") &&
     teamDrawer.includes("data-team-drawer-link") &&
-    teamDrawer.includes('className="block size-6 bg-contain bg-center bg-no-repeat"') &&
+    teamDrawer.includes('className="block size-6 -translate-x-px -translate-y-px bg-contain bg-center bg-no-repeat"') &&
     teamDrawer.includes("backgroundImage: `url(https://www.mlbstatic.com/team-logos/${meta.id}.svg)`") &&
     teamDrawer.includes("if (!meta) return null;") &&
     teamDrawer.includes("const MLB_TEAMS: Record<string, { id: number; name: string }>"),
