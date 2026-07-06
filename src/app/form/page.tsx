@@ -145,11 +145,14 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
     ? seasonSortOptions.some((option) => option.key === params.sort) ? params.sort ?? "season-gs" : "season-gs"
     : sortOptions.some((option) => option.key === params.sort) ? params.sort ?? "form" : "form";
   const team = params.team ?? "";
+  const teamView = trendView && Boolean(team);
   const query = (params.q ?? "").trim().toLowerCase();
   const qualifiedOnly = seasonView ? true : params.qualified !== "false";
-  const band = HEAT_BANDS.some((candidate) => candidate.key === params.band) ? params.band ?? "" : "";
-  const motion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
-  const limitedFilter = trendView && params?.limited === "true";
+  const rawBand = HEAT_BANDS.some((candidate) => candidate.key === params.band) ? params.band ?? "" : "";
+  const rawMotion = params?.motion === "rising" || params?.motion === "falling" ? params.motion : "";
+  const band = teamView ? "" : rawBand;
+  const motion = teamView ? "" : rawMotion;
+  const limitedFilter = trendView && !teamView && params?.limited === "true";
   const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
   const fireExpanded = Boolean(team) || params?.fire === "show" || band === "onfire" || sort !== "form";
   const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
@@ -157,16 +160,20 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
-  const [leaderboard, followedIds, todaySchedule, liveBoard] = await Promise.all([
+  const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));
+  const [leaderboard, rotationLeaderboard, followedIds, rotationSchedules, liveBoard] = await Promise.all([
     getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team }),
+    teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null),
     getWatchlistPitcherIds(accountId),
-    getSlateSchedule({ window: "today", date: today }),
+    Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date }))),
     getLiveScoreboard({ date: today }),
   ]);
+  const rotationPitcherPool = rotationLeaderboard?.pitchers ?? leaderboard.pitchers;
+  const todaySchedule = rotationSchedules[0] ?? { date: today, source: "live" as const, games: [] };
   const jsonLd = jsonLdForFormPage(leaderboard);
   const rankedDate = addDays(today, -1);
   const startContext = buildTodayStartContext(todaySchedule.games, liveBoard.rows, today);
-  const teams = [...new Set(leaderboard.pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
+  const teams = [...new Set(rotationPitcherPool.map((pitcher) => pitcher.team).filter(Boolean))].sort();
   const trendBasePitchers = leaderboard.pitchers
     .filter((pitcher) => !team || pitcher.team === team)
     .filter((pitcher) => !query || pitcher.name.toLowerCase().includes(query));
@@ -176,6 +183,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
     .filter((pitcher) => !band || pitcher.tier === band)
     .filter((pitcher) => !motion || (motion === "rising" ? pitcher.trend === "heating" : pitcher.trend === "cooling"))
     .sort((a, b) => {
+      if (teamView) return compareRollingFormLevelRank(a, b);
       if (sort === "risers") return compareMovementRise(a, b);
       if (sort === "fallers") return compareMovementFall(a, b);
       return compareRollingFormLevelRank(a, b);
@@ -192,12 +200,12 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const seasonQualifiedPitchers = seasonPitchers.filter(isSeasonQualifiedPitcher);
   const seasonUnrankedPitchers = seasonPitchers.filter((pitcher) => !isSeasonQualifiedPitcher(pitcher));
   const pitchers = trendView ? trendPitchers : seasonPitchers;
-  const qualifiedPitchers = leaderboard.pitchers.filter((pitcher) => isFormQualifiedPitcher(pitcher));
+  const qualifiedPitchers = rotationPitcherPool.filter((pitcher) => isFormQualifiedPitcher(pitcher));
   const trendQualifiedPitchers = trendQualifiedBoardPitchers.filter((pitcher) => pitcher.status === "ok");
   const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);
   const seasonRankByPitcherId = buildGlobalSeasonRankMap(leaderboard.pitchers.filter(isSeasonQualifiedPitcher));
   const allTeamsView = !team;
-  const trendPulseView = trendView && !query && !band && !motion;
+  const trendPulseView = trendView && !teamView && !query && !band && !motion;
   const pulsePitchers = team ? trendQualifiedPitchers : qualifiedPitchers;
   const leagueBandCounts = HEAT_BANDS.map((candidate) => ({
     ...candidate,
@@ -207,6 +215,15 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
     ...candidate,
     count: trendQualifiedPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
   }));
+  const teamRotationPitchers = team
+    ? rotationPitcherPool.filter((pitcher) => pitcher.team === team).filter(isFormQualifiedPitcher).sort(compareRollingFormLevelRank)
+    : [];
+  const teamRotationBandCounts = HEAT_BANDS.map((candidate) => ({
+    ...candidate,
+    count: teamRotationPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
+  }));
+  const rotationRankByTeam = buildTeamRotationRankMap(qualifiedPitchers);
+  const teamRotationSlots = team ? buildTeamRotationSlots(team, rotationDates, rotationSchedules, rotationPitcherPool, window) : [];
   const pulseBandCounts = team ? teamBandCounts : leagueBandCounts;
   const pulseHeatingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "heating").length;
   const pulseCoolingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "cooling").length;
@@ -255,6 +272,16 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           <TeamFilterControl teams={teams} activeTeam={team} params={params} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
         </section>
 
+        {teamView ? (
+          <TeamRotationSnapshot
+            team={team}
+            qualifiedPitchers={teamRotationPitchers}
+            bandCounts={teamRotationBandCounts}
+            rotationRank={rotationRankByTeam.get(team) ?? null}
+            slots={teamRotationSlots}
+          />
+        ) : null}
+
         {trendPulseView && biggestRiser && biggestFaller ? (
           <section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">
             <MomentumHero
@@ -279,7 +306,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           </section>
         ) : null}
 
-        {trendView && (leagueView || Boolean(team)) ? (
+        {trendView && leagueView ? (
           <section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">
             {!team && activeFilterLabel !== "All arms" ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em]" data-responsive-check="heat-filter-status">
@@ -485,6 +512,93 @@ type TodayStartContext = {
   liveHref: string;
 };
 
+type TeamRotationSlot = {
+  date: string;
+  opponent: string | null;
+  side: "home" | "away" | null;
+  pitcherName: string | null;
+  pitcherHref: string | null;
+  form: number | null;
+  confidence: "CONFIRMED" | "REPORTED" | "PROJECTED" | "TBD";
+};
+
+function TeamRotationSnapshot({
+  team,
+  qualifiedPitchers,
+  bandCounts,
+  rotationRank,
+  slots,
+}: {
+  team: string;
+  qualifiedPitchers: FormSummary[];
+  bandCounts: Array<HeatBand & { count: number }>;
+  rotationRank: number | null;
+  slots: TeamRotationSlot[];
+}) {
+  const staffMean = meanGsPlus(qualifiedPitchers);
+  const populatedBands = bandCounts.filter((band) => band.count > 0);
+
+  return (
+    <section className="my-5 grid gap-3" data-responsive-check="heat-team-rotation-snapshot">
+      <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-team-rotation-summary">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
+          <span>{qualifiedPitchers.length} qualified</span>
+          <span>staff mean Form {staffMean === null ? "--" : staffMean.toFixed(1)}</span>
+          <span>{rotationRank === null ? "--" : rotationRank} of 30 rotations</span>
+          {qualifiedPitchers.length > 0 && qualifiedPitchers.length < WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED ? <span className="text-zinc-500">small staff sample</span> : null}
+        </div>
+        {populatedBands.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2" data-responsive-check="heat-team-band-dots">
+            {populatedBands.map((band) => (
+              <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+                <span className="size-2 rounded-full" style={{ backgroundColor: band.color }} aria-hidden="true" />
+                {band.count} {band.label.toLowerCase()}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-team-next-five">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">Next five days</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{team} probable rotation</p>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-5">
+          {slots.map((slot) => (
+            <div key={slot.date} className="rounded border border-white/10 bg-black/20 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                <span>{formatMonthDay(slot.date)}</span>
+                <ProbableConfidenceChip confidence={slot.confidence} />
+              </div>
+              <p className="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
+                {slot.side && slot.opponent ? `${slot.side === "away" ? "@" : "vs"} ${slot.opponent}` : "Opponent TBD"}
+              </p>
+              {slot.pitcherHref && slot.pitcherName ? (
+                <Link href={slot.pitcherHref} className="mt-1 block font-serif text-lg font-black leading-tight text-zinc-50 hover:text-amber-200">
+                  {slot.pitcherName}
+                </Link>
+              ) : (
+                <p className="mt-1 font-serif text-lg font-black leading-tight text-zinc-500">TBD</p>
+              )}
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">Form {slot.form === null ? "--" : slot.form.toFixed(1)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProbableConfidenceChip({ confidence }: { confidence: TeamRotationSlot["confidence"] }) {
+  const confirmed = confidence === "CONFIRMED" || confidence === "REPORTED";
+  return (
+    <span className={`rounded border px-1.5 py-0.5 ${confirmed ? "border-teal-300/30 text-teal-300" : "border-white/10 text-zinc-500"}`}>
+      {confirmed ? "CONFIRMED" : confidence === "PROJECTED" ? "PROJECTED" : "TBD"}
+    </span>
+  );
+}
+
 function MomentumHero({
   riser,
   faller,
@@ -669,6 +783,53 @@ function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboa
   }
 
   return context;
+}
+
+function buildTeamRotationSlots(
+  team: string,
+  dates: string[],
+  schedules: Array<{ games: MlbScheduleGame[] }>,
+  pitchers: FormSummary[],
+  window: number,
+): TeamRotationSlot[] {
+  const formByPitcherId = new Map(pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
+
+  return dates.map((date, index) => {
+    const game = schedules[index]?.games.find((candidate) => candidate.homeTeam.abbreviation === team || candidate.awayTeam.abbreviation === team);
+    if (!game) return emptyRotationSlot(date);
+
+    const side = game.homeTeam.abbreviation === team ? "home" : "away";
+    const probable = side === "home" ? game.probableHomePitcher : game.probableAwayPitcher;
+    const opponent = side === "home" ? game.awayTeam.abbreviation : game.homeTeam.abbreviation;
+    if (!probable) return { ...emptyRotationSlot(date), opponent, side };
+
+    const pitcher = formByPitcherId.get(String(probable.id));
+    const confidence = probable.confidence === "CONFIRMED" || probable.confidence === "REPORTED"
+      ? probable.confidence
+      : probable.source === "mlb-stats-api" ? "CONFIRMED" : "PROJECTED";
+
+    return {
+      date,
+      opponent,
+      side,
+      pitcherName: probable.fullName,
+      pitcherHref: pitcherHref({ pitcherId: probable.id, name: probable.fullName }, sourceParams("heat", { window })),
+      form: pitcher?.rgs ?? null,
+      confidence,
+    };
+  });
+}
+
+function emptyRotationSlot(date: string): TeamRotationSlot {
+  return {
+    date,
+    opponent: null,
+    side: null,
+    pitcherName: null,
+    pitcherHref: null,
+    form: null,
+    confidence: "TBD",
+  };
 }
 
 function todayStartStatusFromSchedule(game: MlbScheduleGame): TodayStartContext["status"] {
@@ -1448,6 +1609,30 @@ function buildGlobalFormRankMap(pitchers: FormSummary[]) {
 
 function buildGlobalSeasonRankMap(pitchers: FormSummary[]) {
   return new Map([...pitchers].sort(compareSeasonGsRank).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
+}
+
+function buildTeamRotationRankMap(pitchers: FormSummary[]) {
+  const byTeam = new Map<string, FormSummary[]>();
+  for (const pitcher of pitchers) {
+    const group = byTeam.get(pitcher.team) ?? [];
+    group.push(pitcher);
+    byTeam.set(pitcher.team, group);
+  }
+
+  const rows = [...byTeam.entries()]
+    .map(([team, teamPitchers]) => ({ team, mean: meanGsPlus(teamPitchers) ?? 0 }))
+    .sort((a, b) => b.mean - a.mean || a.team.localeCompare(b.team));
+  const ranks = new Map<string, number>();
+  let rank = 0;
+  let previousMean: number | null = null;
+  for (const row of rows) {
+    if (previousMean === null || row.mean !== previousMean) {
+      rank += 1;
+      previousMean = row.mean;
+    }
+    ranks.set(row.team, rank);
+  }
+  return ranks;
 }
 
 function sortPitchersByGlobalFormRank(pitchers: FormSummary[]) {

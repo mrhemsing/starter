@@ -338,11 +338,19 @@ assert(
 assert(
   formPage.includes("team?: string;") &&
     formPage.includes('const team = params.team ?? "";') &&
+    formPage.includes("const teamView = trendView && Boolean(team);") &&
+    formPage.includes('const band = teamView ? "" : rawBand;') &&
+    formPage.includes('const motion = teamView ? "" : rawMotion;') &&
+    formPage.includes('const limitedFilter = trendView && !teamView && params?.limited === "true";') &&
     formPage.includes('import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";') &&
     !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team })") &&
-    formPage.includes('getSlateSchedule({ window: "today", date: today })') &&
+    formPage.includes('teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null)') &&
+    formPage.includes('const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));') &&
+    formPage.includes('Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date })))') &&
     formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboardRow[], date: string)") &&
+    formPage.includes("function buildTeamRotationSlots(") &&
+    formPage.includes("function buildTeamRotationRankMap(pitchers: FormSummary[])") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const allTeamsView = !team;") &&
@@ -354,8 +362,14 @@ assert(
     formPage.indexOf('data-responsive-check="heat-primary-controls"') < formPage.indexOf('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-pulse"') &&
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
-    formPage.includes("{trendView && (leagueView || Boolean(team)) ? (") &&
+    formPage.includes('data-responsive-check="heat-team-rotation-snapshot"') &&
+    formPage.includes('data-responsive-check="heat-team-rotation-summary"') &&
+    formPage.includes('data-responsive-check="heat-team-next-five"') &&
+    formPage.includes("{teamView ? (") &&
+    formPage.includes("<TeamRotationSnapshot") &&
+    formPage.includes("{trendView && leagueView ? (") &&
     formPage.includes('<BandDistribution bands={pulseBandCounts} total={pulsePitchers.length} activeBand={band} params={params} scopeLabel={team ? `${team} temperature` : "League temperature"} />') &&
+    formPage.includes("const trendPulseView = trendView && !teamView && !query && !band && !motion;") &&
     formPage.includes("{trendPulseView && biggestRiser && biggestFaller ? (") &&
     formPage.includes("<MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />") &&
     formPage.includes('className="grid gap-4 scroll-mt-8"') &&
@@ -368,7 +382,7 @@ assert(
     !formPage.includes('${team ? "my-3" : "my-5"}') &&
     formPage.includes('<section className="relative z-0 grid gap-4" data-responsive-check="heat-league-pulse">') &&
     formPage.includes('<section className="z-20 my-5 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur sm:sticky sm:top-0" data-responsive-check="form-controls">') &&
-    formPage.includes("{trendView && (leagueView || Boolean(team)) ? (") &&
+    !formPage.includes("{trendView && (leagueView || Boolean(team)) ? (") &&
     formPage.includes('<details className="mt-4">') &&
     formPage.includes("</details>") &&
     formPage.includes('team ? <input type="hidden" name="team" value={team} /> : null') &&
