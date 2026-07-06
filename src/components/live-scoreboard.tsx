@@ -235,6 +235,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
           {nextSlateLine ? <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300" data-live-next-slate>{nextSlateLine}</p> : null}
           <CtaArrow
             href={rankedStartsPath(board.date)}
+            hideTailOnMobile
             className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
           >
             View all<br className="sm:hidden" /> ranked starts for {formatBoardDate(board.date)}
@@ -349,7 +350,7 @@ function ClockUnit({ value, label, toneClass }: { value: string; label: string; 
 
 function SlabImage() {
   return (
-    <div className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30">
+    <div className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30 sm:min-h-[500px]">
       <Image
         src="/images/slab-2.png"
         alt=""

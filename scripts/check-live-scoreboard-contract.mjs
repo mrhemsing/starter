@@ -168,7 +168,8 @@ assert(
     liveComponent.includes('import Image from "next/image";') &&
     liveComponent.includes("function SlabImage()") &&
     liveComponent.includes('className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}') &&
-    liveComponent.includes('className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30"') &&
+    liveComponent.includes('className="mt-8 max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30 sm:min-h-[500px]"') &&
+    !liveComponent.includes('className="mt-8 min-h-[500px] max-w-[900px] overflow-hidden rounded border border-white/10 bg-black/30"') &&
     !liveComponent.includes('className="mt-6 overflow-hidden rounded border border-white/10 bg-black/30"') &&
     liveComponent.includes('src="/images/slab-2.png"') &&
     liveComponent.includes('className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"') &&
@@ -290,6 +291,7 @@ assert(
     liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes('import { CtaArrow } from "@/components/cta-arrow";') &&
+    liveComponent.includes("hideTailOnMobile") &&
     liveComponent.includes('View all<br className="sm:hidden" /> ranked starts for {formatBoardDate(board.date)}') &&
     !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)}") &&
     !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
@@ -350,6 +352,8 @@ assert(
   ctaArrow.includes('export function CtaArrow') &&
     ctaArrow.includes('data-cta-arrow') &&
     ctaArrow.includes('direction?: "back" | "forward";') &&
+    ctaArrow.includes("hideTailOnMobile?: boolean;") &&
+    ctaArrow.includes('const mobileTailClassName = hideTailOnMobile ? "max-sm:hidden" : "";') &&
     ctaArrow.includes('data-cta-arrow-direction={direction}') &&
     ctaArrow.includes('data-cta-arrow-tail') &&
     ctaArrow.includes('data-cta-arrow-tail-direction={direction}') &&

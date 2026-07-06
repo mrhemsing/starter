@@ -4,6 +4,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 type CtaArrowProps = Omit<ComponentPropsWithoutRef<typeof Link>, "children"> & {
   children: ReactNode;
   direction?: "back" | "forward";
+  hideTailOnMobile?: boolean;
   tone?: "amber" | "orange";
 };
 
@@ -12,8 +13,9 @@ const toneClasses = {
   orange: "border-[#FF9A62]/50 text-[#FF9A62] hover:border-[#FF9A62]",
 };
 
-export function CtaArrow({ children, className = "", direction = "forward", tone = "orange", ...props }: CtaArrowProps) {
+export function CtaArrow({ children, className = "", direction = "forward", hideTailOnMobile = false, tone = "orange", ...props }: CtaArrowProps) {
   const isBack = direction === "back";
+  const mobileTailClassName = hideTailOnMobile ? "max-sm:hidden" : "";
 
   return (
     <Link
@@ -22,9 +24,9 @@ export function CtaArrow({ children, className = "", direction = "forward", tone
       data-cta-arrow-direction={direction}
       className={`group/cta inline-flex max-w-full items-center rounded border px-[18px] py-[13px] font-mono text-[13px] uppercase tracking-[0.08em] transition-colors duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${toneClasses[tone]} ${className}`}
     >
-      {isBack ? <CtaArrowTail direction="back" className="mr-3.5" /> : null}
+      {isBack ? <CtaArrowTail direction="back" className={`mr-3.5 ${mobileTailClassName}`} /> : null}
       <span className="min-w-0 whitespace-nowrap">{children}</span>
-      {isBack ? null : <CtaArrowTail className="ml-3.5" />}
+      {isBack ? null : <CtaArrowTail className={`ml-3.5 ${mobileTailClassName}`} />}
     </Link>
   );
 }
