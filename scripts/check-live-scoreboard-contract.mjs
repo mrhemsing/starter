@@ -288,8 +288,11 @@ assert(
     liveComponent.includes("data-live-next-slate") &&
     liveComponent.includes("function formatNextSlateLine(board: LiveScoreboardData)") &&
     liveComponent.includes("if (!board.nextSlateFirstPitchAt) return null;") &&
-    liveComponent.includes("const relative = formatRelativePacificDate(parsed);") &&
+    liveComponent.includes("const relative = board.nextSlateDate ? formatRelativeSlateDate(board.date, board.nextSlateDate, parsed) : formatRelativePacificDate(parsed);") &&
     liveComponent.includes("return `First pitch ${relative}: ${timeLabel}`;") &&
+    liveComponent.includes("function formatRelativeSlateDate(currentSlateDate: string, nextSlateDate: string, firstPitch: Date)") &&
+    liveComponent.includes("if (nextSlateDate === tomorrow) return \"tomorrow\";") &&
+    !liveComponent.includes("Updated {formatUpdatedLabel(board.generatedAt)}") &&
     liveComponent.includes('if (targetDate === today) return "today";') &&
     liveComponent.includes('if (targetDate === tomorrow) return "tomorrow";') &&
     liveComponent.includes("deltaDays > 1 && deltaDays <= 6") &&

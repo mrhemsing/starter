@@ -298,7 +298,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
         <p className="max-w-3xl text-sm leading-6 text-zinc-300">{verdictLine}</p>
         <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
           <span>{board.finalStarts} final</span>
-          <span suppressHydrationWarning>Updated {formatUpdatedLabel(board.generatedAt)}</span>
+          <span suppressHydrationWarning>{formatUpdatedLabel(board.generatedAt)}</span>
           {nextSlateLine ? <span data-live-next-slate>{nextSlateLine}</span> : null}
         </div>
       </section>
@@ -904,9 +904,29 @@ function formatNextSlateLine(board: LiveScoreboardData) {
     timeZone: "America/Los_Angeles",
     timeZoneName: "short",
   }).format(parsed).replace(/\bPST\b|\bPDT\b/, "PT");
-  const relative = formatRelativePacificDate(parsed);
+  const relative = board.nextSlateDate ? formatRelativeSlateDate(board.date, board.nextSlateDate, parsed) : formatRelativePacificDate(parsed);
 
   return `First pitch ${relative}: ${timeLabel}`;
+}
+
+function formatRelativeSlateDate(currentSlateDate: string, nextSlateDate: string, firstPitch: Date) {
+  const tomorrow = addPacificDays(currentSlateDate, 1);
+  if (nextSlateDate === currentSlateDate) return "today";
+  if (nextSlateDate === tomorrow) return "tomorrow";
+
+  const deltaDays = daysBetweenPacificDates(currentSlateDate, nextSlateDate);
+  if (deltaDays > 1 && deltaDays <= 6) {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      timeZone: "America/Los_Angeles",
+    }).format(firstPitch);
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${nextSlateDate}T00:00:00.000Z`));
 }
 
 function toPacificDate(date: Date) {
