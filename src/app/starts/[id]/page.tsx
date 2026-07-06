@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CtaArrow } from "@/components/cta-arrow";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { Headshot, type HeadshotSize } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { EntityOrientation } from "@/components/entity-orientation";
@@ -164,6 +165,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
             <div className="lg:text-right">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Game Score+</p>
               <p className="font-serif text-7xl font-black leading-none text-amber-300">{start.gameScorePlus}</p>
+              <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-2" />
               <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} />
               <DecisionChip result={start.result} className="mt-3 justify-start lg:justify-end" />
               <StartEventFlagChips flags={start.eventFlags} className="mt-3 justify-start lg:justify-end" />
@@ -556,6 +558,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="min-w-0 text-right">
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
+            <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
           </div>
         )}
@@ -619,6 +622,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="min-w-0 text-right">
             <p className={`${profile.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: tierTextColor }}>{start.gameScorePlus}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
+            <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-right" />
             <ScoreBridge gameScorePlus={start.gameScorePlus} gameScoreV2={start.gameScoreV2} compact />
             <DecisionChip result={start.result} className="mt-2 justify-end" compact />
           </div>

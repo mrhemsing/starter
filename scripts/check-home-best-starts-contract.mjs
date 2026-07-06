@@ -17,6 +17,8 @@ const readme = await readFile("README.md", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
 const homePage = await readFile("src/app/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
+const rawScoreHelper = await readFile("src/lib/gs-plus-raw.ts", "utf8");
+const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "utf8");
 
 assert(
   bestStartsRoute.includes('import { getBestStartsHome, HOME_BEST_STARTS_REVALIDATE_SECONDS } from "@/lib/data/home-best-starts-service";') &&
@@ -185,18 +187,27 @@ assert(
 
 assert(
   bestStartsService.includes("function compareSeasonTopStarts") &&
-    bestStartsService.includes("b.gameScorePlus - a.gameScorePlus") &&
+    bestStartsService.includes('import { rawGameScorePlus } from "@/lib/gs-plus-raw";') &&
+    bestStartsService.includes("rawB - rawA") &&
     bestStartsService.includes("b.line.strikeouts - a.line.strikeouts") &&
     bestStartsService.includes("a.date.localeCompare(b.date)") &&
+    bestStartsService.includes("rawScore: rawGameScorePlus(start.gameScorePlusBreakdown)") &&
     bestStartsService.includes("resolveTopPerformerImage(start, null)") &&
+    rawScoreHelper.includes("component.key !== \"calibration\"") &&
+    rawScoreComponent.includes("cappedRawGameScorePlus(score, breakdown)") &&
     homeDeferredSections.includes("function SeasonTopStartsPanel") &&
     homeDeferredSections.includes("function SeasonTopStartRow") &&
     homeDeferredSections.includes("data-home-top-start-row={rank}") &&
+    homeDeferredSections.includes('data-full-bleed-action={fullBleed ? "true" : "false"}') &&
+    homeDeferredSections.includes('data-home-top-start-bg="true"') &&
+    homeDeferredSections.includes('data-home-top-start-scrim="true"') &&
+    homeDeferredSections.includes('data-home-top-start-framed-photo="true"') &&
+    homeDeferredSections.includes("<RawGsPlusLine") &&
     homeDeferredSections.includes('alt={`${start.pitcher.name} pitching`}') &&
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
     homeDeferredSections.includes("entry.isNew"),
-  "home top starts of 2026 must rank by GS+, strikeouts, and date, render action/headshot images, lines, highlights, and NEW chips",
+  "home top starts of 2026 must rank by raw GS+, strikeouts, and date, render full-bleed action rows, framed fallbacks, raw cap labels, highlights, and NEW chips",
 );
 
 assert(

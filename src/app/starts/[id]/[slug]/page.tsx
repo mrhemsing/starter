@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { SiteHeader } from "@/components/site-header";
 import { formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
@@ -89,6 +90,7 @@ export default async function StartRecapPage({ params }: StartRecapPageProps) {
             <div className="md:text-right">
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">Game Score+</p>
               <p className="font-serif text-7xl font-black leading-none text-amber-300">{start.gameScorePlus}</p>
+              <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-2" />
               <p className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">GSv2 {start.gameScoreV2 ?? "pending"}</p>
             </div>
           </div>

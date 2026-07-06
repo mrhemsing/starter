@@ -62,6 +62,9 @@ export default async function MethodologyPage() {
             <FormulaItem label="Opponent quality" value="team quality run value" />
             <FormulaItem label="Opponent offense" value="offense run value" />
             <FormulaItem label="Display transform" value="50 + (raw - 54.3) x 0.72, capped 20-80" />
+            <p className="text-sm leading-6 text-zinc-400">
+              The display cap keeps GS+ on the familiar 20-80 scouting scale. When a start reaches the cap, large score surfaces show the frozen raw value beside the displayed 80 so capped starts can still be compared.
+            </p>
           </dl>
           <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Hitter-friendly parks add context credit for equivalent lines, and pitcher-friendly parks trim it. When a start settles, GS+ freezes with the context available at settle; later league-context updates do not move that final score. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
         </section>

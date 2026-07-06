@@ -4,6 +4,7 @@ import { track } from "@vercel/analytics";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
 import { useHomeLiveBoard } from "@/components/home-live-board-provider";
@@ -488,6 +489,7 @@ function BestStartCard({ start, badge, highlight, compact = false }: { start: St
         <div className="score-bug rounded border border-amber-300/30 bg-amber-300 px-3 py-2 text-center text-zinc-950">
           <p className="font-serif text-4xl font-bold leading-none">{start.gameScorePlus}</p>
           <p className="mt-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em]">GS+</p>
+          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-zinc-800" />
         </div>
       </div>
       <p className="relative z-10 mt-4 text-sm leading-6 text-zinc-400 pointer-events-none"><StartLineText line={start.line} /></p>
@@ -526,23 +528,34 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
   const color = scoreBandColor(start.gameScorePlus);
   const actionImage = entry.image?.source === "action" ? entry.image : null;
   const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
-  const imagePosition = actionImage?.objectPosition ?? "50% 50%";
+  const imagePosition = actionImage?.objectPosition ?? "50% 33%";
   const rowHref = startHref(start, sourceParams("home"));
+  const fullBleed = Boolean(actionImage);
 
   return (
     <article
-      className={`group relative grid min-h-[124px] overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto] ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
+      className={`group relative grid min-h-24 overflow-hidden rounded border bg-black/20 transition hover:border-amber-300/40 sm:min-h-28 ${fullBleed ? "grid-cols-[58px_minmax(0,1fr)_auto] sm:grid-cols-[76px_minmax(0,1fr)_auto]" : "sm:grid-cols-[76px_minmax(0,120px)_minmax(0,1fr)_auto]"} ${rank === 1 ? "border-amber-300/35 shadow-[inset_3px_0_0_var(--level-onfire)]" : "border-white/10"}`}
       data-home-top-start-row={rank}
+      data-full-bleed-action={fullBleed ? "true" : "false"}
     >
+      {fullBleed ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
+          <span className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-black/90 via-black/62 to-black/18" aria-hidden="true" data-home-top-start-scrim="true" />
+        </>
+      ) : null}
       <a href={rowHref} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div className="relative z-10 flex items-center justify-center border-b border-white/10 px-3 py-3 sm:border-b-0 sm:border-r">
         <span className="font-serif text-4xl font-black leading-none" style={{ color }}>{rank}</span>
       </div>
-      <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="h-full w-full object-cover" style={{ objectPosition: imagePosition }} />
-        <span className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-[#101014]/70" aria-hidden="true" />
-      </div>
+      {!fullBleed ? (
+        <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r" data-home-top-start-framed-photo="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="h-full w-full object-cover" style={{ objectPosition: imagePosition }} />
+          <span className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-[#101014]/70" aria-hidden="true" />
+        </div>
+      ) : null}
       <div className="relative z-10 min-w-0 px-3 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
@@ -564,6 +577,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         <div className="min-w-[70px] rounded border border-white/10 bg-white/5 px-3 py-2 text-center">
           <p className="font-serif text-4xl font-black leading-none" style={{ color }}>{start.gameScorePlus}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">GS+</p>
+          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1" />
         </div>
       </div>
     </article>

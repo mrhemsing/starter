@@ -3,6 +3,7 @@ import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags"
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
+import { rawGameScorePlus } from "@/lib/gs-plus-raw";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import { compareRankedStarts } from "@/lib/start-ranking";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
@@ -20,6 +21,7 @@ export type BestStartsHomeResponse = {
 
 export type HomeSeasonTopStart = {
   start: StartSummary;
+  rawScore: number | null;
   image: TopPerformerImage | null;
   highlightUrl: string | null;
   isNew: boolean;
@@ -86,8 +88,10 @@ async function getSeasonTopStarts(anchorDate: string) {
 }
 
 function compareSeasonTopStarts(a: StartSummary, b: StartSummary) {
+  const rawA = rawGameScorePlus(a.gameScorePlusBreakdown) ?? a.gameScorePlus;
+  const rawB = rawGameScorePlus(b.gameScorePlusBreakdown) ?? b.gameScorePlus;
   return (
-    b.gameScorePlus - a.gameScorePlus ||
+    rawB - rawA ||
     b.line.strikeouts - a.line.strikeouts ||
     a.date.localeCompare(b.date) ||
     (a.gamePk ?? 0) - (b.gamePk ?? 0) ||
@@ -105,6 +109,7 @@ async function hydrateSeasonTopStarts(starts: StartSummary[], anchorDate: string
 
       return {
         start,
+        rawScore: rawGameScorePlus(start.gameScorePlusBreakdown),
         image,
         highlightUrl: image?.playUrl ?? highlight?.watchUrl ?? null,
         isNew: daysBetween(start.date, anchorDate) <= 2,
