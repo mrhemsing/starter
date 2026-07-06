@@ -264,8 +264,8 @@ assert(
     methodologyPage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
     !homePage.includes("0-100") &&
     !methodologyPage.includes("0-100") &&
-    !methodologyPage.includes("0 to 100"),
-  "GS+ scale copy must live in one shared fragment and avoid 0-100 language",
+    !homePage.includes("0 to 100"),
+  "GS+ scale copy must live in one shared fragment and avoid legacy 0-100 language outside the methodology FAQ explainer",
 );
 
 assert(
@@ -284,6 +284,32 @@ assert(
     methodologyContent.includes("P3-10") &&
     methodologyContent.includes("P3-12.1"),
   "methodology must correct GSv2 runs wording, include the pre-v8 park carve-out, and track pending metric specs",
+);
+
+assert(
+  methodologyContent.includes('export const GS_PLUS_20_80_FAQ_QUESTION = "Why is GS+ capped at 20 and 80?";') &&
+    methodologyContent.includes("Branch Rickey") &&
+    methodologyContent.includes("standard deviation") &&
+    methodologyContent.includes("99.7 percent") &&
+    methodologyContent.includes("raw pre-calibration") &&
+    methodologyContent.includes("GS_PLUS_20_80_FAQ_ANSWER = GS_PLUS_20_80_FAQ_PARAGRAPHS.join(\" \")") &&
+    methodologyPage.includes('id="why-20-80"') &&
+    methodologyPage.includes('scroll-mt-24') &&
+    methodologyPage.includes("{GS_PLUS_20_80_FAQ_QUESTION}") &&
+    methodologyPage.includes("GS_PLUS_20_80_FAQ_PARAGRAPHS.map") &&
+    methodologyPage.includes('<FaqStat value="50" label="MLB AVERAGE" />') &&
+    methodologyPage.includes('<FaqStat value="10 PTS" label="ONE STD DEV" />') &&
+    methodologyPage.includes('<FaqStat value="99.7%" label="WITHIN 3 STD DEV" />') &&
+    methodologyPage.includes('<FaqStat value="80" label="THE EXTREME" />') &&
+    methodologyPage.includes("FanGraphs: Scouting Explained, the 20-80 scale") &&
+    methodologyPage.includes('target="_blank"') &&
+    methodologyPage.includes('rel="noopener noreferrer"') &&
+    methodologyPage.includes("GS_PLUS_20_80_FAQ_ANSWER") &&
+    !methodologyContent.includes("whether he intended it or not") &&
+    !methodologyContent.includes("mirrors various scientific scales") &&
+    !methodologyPage.includes("whether he intended it or not") &&
+    !methodologyPage.includes("mirrors various scientific scales"),
+  "methodology must render the 20-80 FAQ box, stat strip, external reading link, and FAQPage JSON-LD from allowlisted copy",
 );
 
 assert(

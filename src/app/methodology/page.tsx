@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { GAME_SCORE_PLUS_CONTEXT_BASELINES, GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT, GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT, getHomeSlateDate, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";
+import { GS_PLUS_20_80_FAQ_ANSWER, GS_PLUS_20_80_FAQ_PARAGRAPHS, GS_PLUS_20_80_FAQ_QUESTION } from "@/lib/methodology-content";
 import { rankedStartsPath } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import { WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED, WATCH_SCORE_FALLBACK_FORM_HAIRCUT } from "@/lib/watch-score-confidence";
@@ -70,6 +71,35 @@ export default async function MethodologyPage() {
             </p>
           </dl>
           <p className="mt-3 text-xs leading-5 text-zinc-500">Completed starts use line, park, opponent, and verified pitch-event context when available. Hitter-friendly parks add context credit for equivalent lines, and pitcher-friendly parks trim it. When a start settles, GS+ freezes with the context available at settle; later league-context updates do not move that final score. Upcoming cards use MLB team hitting splits vs the starter&apos;s handedness for OPS, K%, BB%, and ISO matchup context.</p>
+        </section>
+
+        <section id="why-20-80" className="scroll-mt-24 mt-6 rounded border border-white/10 bg-[#101014] p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">FAQ</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{GS_PLUS_20_80_FAQ_QUESTION}</h2>
+          <div className="mt-4 rounded border border-white/10 bg-black/25 p-4">
+            <div className="space-y-3 text-sm leading-6 text-zinc-400">
+              {GS_PLUS_20_80_FAQ_PARAGRAPHS.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <dl className="mt-5 grid gap-2 font-mono text-xs sm:grid-cols-4">
+              <FaqStat value="50" label="MLB AVERAGE" />
+              <FaqStat value="10 PTS" label="ONE STD DEV" />
+              <FaqStat value="99.7%" label="WITHIN 3 STD DEV" />
+              <FaqStat value="80" label="THE EXTREME" />
+            </dl>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+              Further reading:{" "}
+              <a
+                href="https://blogs.fangraphs.com/scouting-explained-the-20-80-scouting-scale/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-300 underline-offset-4 hover:underline"
+              >
+                FanGraphs: Scouting Explained, the 20-80 scale
+              </a>
+            </p>
+          </div>
         </section>
 
         <section className="mt-6 rounded border border-white/10 bg-[#101014] p-5">
@@ -201,6 +231,15 @@ function FormulaItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+function FaqStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded border border-white/10 bg-[#101014] px-3 py-3">
+      <dt className="text-base font-bold text-zinc-50">{value}</dt>
+      <dd className="mt-1 text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</dd>
+    </div>
+  );
+}
+
 function MethodCard({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
   return (
     <section id={id} className="rounded border border-white/10 bg-[#101014] p-5">
@@ -223,6 +262,10 @@ function faqJsonLd() {
     {
       name: "How are probable matchups ranked?",
       acceptedAnswer: "Upcoming games are ranked by watch score, which combines the top arm, starter pairing quality, and matchup context.",
+    },
+    {
+      name: GS_PLUS_20_80_FAQ_QUESTION,
+      acceptedAnswer: GS_PLUS_20_80_FAQ_ANSWER,
     },
   ];
 
