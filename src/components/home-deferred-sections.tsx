@@ -106,8 +106,9 @@ export function HomeDeferredSections({
   const activeTodayWatch = filterHomeMustWatchGames(todayWatch, nowMs);
   const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch, nowMs);
   const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;
-  const watchDate = activeTodayWatch?.games.length ? today : tomorrow;
-  const watchWord = watch ? slateTimeWord(watch, { today }) : "today";
+  const watchDate = resolveHomeMustWatchDate(watch, activeTodayWatch?.games.length ? today : tomorrow);
+  const watchWord = watch ? slateTimeWord({ date: watchDate }, { today }) : "today";
+  const watchEyebrow = watch ? slateTimeWordTitle({ date: watchDate }, { today }) : "Today";
 
   useEffect(() => {
     if (!slatePhaseExperiment) return;
@@ -148,7 +149,7 @@ export function HomeDeferredSections({
           tonight={watch}
           fullSlateHref={upcomingDateHref(watchDate)}
           fullSlateLabel={`See ${watchWord}'s full slate`}
-          eyebrow={slateTimeWordTitle(watch, { today })}
+          eyebrow={watchEyebrow}
           title="Must-Watch Games"
           rankLabel={watchWord}
           previewLimit={3}
@@ -193,7 +194,7 @@ export function HomeDeferredSections({
           tonight={watch}
           fullSlateHref={upcomingDateHref(watchDate)}
           fullSlateLabel={`See ${watchWord}'s full slate`}
-          eyebrow={slateTimeWordTitle(watch, { today })}
+          eyebrow={watchEyebrow}
           title="Must-Watch Games"
           rankLabel={watchWord}
           previewLimit={3}
@@ -499,6 +500,10 @@ function BestStartCard({ start, badge, highlight }: { start: StartSummary; badge
       ) : null}
     </article>
   );
+}
+
+function resolveHomeMustWatchDate(watch: TonightResponse | null | undefined, fallbackDate: string) {
+  return watch?.games.find((game) => game.date)?.date ?? watch?.date ?? fallbackDate;
 }
 
 function scoreBand(score: number): FormTier {

@@ -178,6 +178,13 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("function resolveHomeMustWatchDate") &&
+    homeDeferredSections.includes("watch?.games.find((game) => game.date)?.date") &&
+    homeDeferredSections.includes("const watchEyebrow = watch ? slateTimeWordTitle({ date: watchDate }, { today }) : \"Today\";"),
+  "home must-watch eyebrow must follow the rendered matchup date, not a stale response date",
+);
+
+assert(
   homeDeferredSections.includes("const HOME_MUST_WATCH_LIVE_MAX_AGE_MS = 60 * 60 * 1000;") &&
     homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null, nowMs: number)") &&
     homeDeferredSections.includes('if (game.status !== "live") return true;') &&
