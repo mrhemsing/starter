@@ -26,7 +26,8 @@ const featuredStartHighlight = await readFile("src/components/featured-start-hig
 const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
 const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const misiorowskiTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-action-v4.json", "utf8"));
-const cavalliTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-action-v4.json", "utf8"));
+const misiorowskiVisibleTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-06-12-mil-phi-694819-mlb-action-v4.json", "utf8"));
+const detmersTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-05-24-laa-tex-672282-mlb-action-v4.json", "utf8"));
 
 assert(
   bestStartsRoute.includes('import { getBestStartsHome, HOME_BEST_STARTS_REVALIDATE_SECONDS } from "@/lib/data/home-best-starts-service";') &&
@@ -257,7 +258,7 @@ assert(
     homeDeferredSections.includes("startMatchupLabel(start), formatShortDate(start.date)") &&
     !homeDeferredSections.includes("start.pitcher.team, startMatchupLabel(start)") &&
     homeDeferredSections.includes("<RawGsPlusLine") &&
-    homeDeferredSections.includes('className="mt-1 text-white"') &&
+    homeDeferredSections.includes('className="mt-1 !text-white"') &&
     homeDeferredSections.includes('alt={`${start.pitcher.name} pitching`}') &&
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
@@ -279,13 +280,14 @@ assert(
 );
 
 assert(
-  misiorowskiTopStartAction.imageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/u16t3wc5ve0yvqpkgb17.jpg" &&
+  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-generated-action.png" &&
     misiorowskiTopStartAction.sourceImageUrl === misiorowskiTopStartAction.imageUrl &&
     misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings" &&
-    cavalliTopStartAction.imageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/hxumcwupshjzpnnnxdrh.jpg" &&
-    cavalliTopStartAction.sourceImageUrl === cavalliTopStartAction.imageUrl &&
-    cavalliTopStartAction.playUrl === "https://www.mlb.com/video/cade-cavalli-foul-tip-to-wilyer-abreu",
-  "home Top Starts #1 and #3 must use the curated replacement action photos",
+    misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action.png" &&
+    misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
+    detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action.png" &&
+    detmersTopStartAction.sourceImageUrl === detmersTopStartAction.imageUrl,
+  "home Top Starts #1 and screenshot-visible #3 must use generated replacement action photos",
 );
 
 const topStartClampCases = [
