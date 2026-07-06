@@ -1,8 +1,8 @@
 {
   "startId": "2026-06-30-wsh-bos-676917",
-  "imageUrl": "/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-action.jpg",
-  "alt": "Cade Cavalli pitching action photo for 2026-06-30",
-  "attribution": "GettyImages-2284087112",
+  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/hxumcwupshjzpnnnxdrh.jpg",
+  "alt": "Cade Cavalli strikes out Wilyer Abreu for first of start",
+  "attribution": "GettyImages-2284087105",
   "clean": true,
   "focalPoint": {
     "x": 50,
@@ -10,10 +10,10 @@
   },
   "objectPosition": "50% 50%",
   "mobileObjectPosition": "50% 50%",
-  "playUrl": "https://www.mlb.com/gameday/824742",
+  "playUrl": "https://www.mlb.com/video/cade-cavalli-foul-tip-to-wilyer-abreu",
   "reviewedAt": "2026-07-04T18:29:09.602Z",
-  "reviewNote": "Curated Start of the Day action image: Cade Cavalli fans 13 over seven scoreless",
+  "reviewNote": "Curated alternate Top Starts action image: Cade Cavalli strikes out Wilyer Abreu",
   "expiresAt": 1814725749571,
-  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/rhkvtlkawsigrek3ke1u.jpg",
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/hxumcwupshjzpnnnxdrh.jpg",
   "storage": "local-static"
 }
