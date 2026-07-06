@@ -732,6 +732,7 @@ assert(
     startsPage.includes('import { resolveTopPerformerMetrics } from "@/lib/data/top-performer-metrics";') &&
     startsPage.includes("const qualifiedStarts = rankStarts(starts.filter(isQualifiedRankedStart));") &&
     startsPage.includes("validateRankedStartOrder(qualifiedStarts);") &&
+    startsPage.includes('const startOfDayHero = date < today && (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]') &&
     startsPage.includes('slateProgress.state === "all-starts-complete"') &&
     startsPage.includes('data-responsive-check="ranked-starts-archived-hero"') &&
     startsPage.includes("resolveArchivedStartOfDayHero") &&

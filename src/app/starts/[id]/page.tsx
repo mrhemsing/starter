@@ -230,7 +230,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
   const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;
   const statusLabel = completionStatusLabel(completionState, slateProgress);
-  const startOfDayHero = (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]
+  const startOfDayHero = date < today && (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]
     ? await resolveArchivedStartOfDayHero(qualifiedStarts[0], qualifiedStarts.length)
     : null;
 
