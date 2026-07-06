@@ -1561,6 +1561,12 @@ const GAME_SCORE_PLUS_DISPLAY_MAX = 80;
 const GAME_SCORE_PLUS_DISPLAY_MIDPOINT = 50;
 const GAME_SCORE_PLUS_RAW_MIDPOINT = 54.3;
 const GAME_SCORE_PLUS_RAW_TO_DISPLAY_MULTIPLIER = 0.72;
+export const GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT = 0.35;
+export const GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT = 1.75;
+export const GAME_SCORE_PLUS_CONTEXT_BASELINES = {
+  whiffDeltaPct: 0,
+  velocityDeltaMph: 0,
+} as const;
 const GAME_SCORE_PLUS_GRADE_LABELS: StartApiGameScorePlusGradeLabel[] = ["Elite", "Plus", "Average", "Below average", "Poor"];
 const GAME_SCORE_PLUS_EXPLANATION: SlateApiScoreScale["explanation"] = [
   {
@@ -1595,14 +1601,14 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
         {
           key: "whiffDelta" as const,
           label: "Whiff context",
-          value: context.whiffDeltaPct * 0.35,
-          description: `${formatSignedNumber(context.whiffDeltaPct)} pct points vs expected whiff rate.`,
+          value: context.whiffDeltaPct * GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT,
+          description: `${formatSignedNumber(context.whiffDeltaPct)} pct points above league baseline.`,
         },
         {
           key: "velocityDelta" as const,
           label: "Velocity context",
-          value: context.velocityDeltaMph * 1.75,
-          description: `${formatSignedNumber(context.velocityDeltaMph)} mph vs recent baseline.`,
+          value: context.velocityDeltaMph * GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT,
+          description: `${formatSignedNumber(context.velocityDeltaMph)} mph above league baseline.`,
         },
         {
           key: "parkContext" as const,

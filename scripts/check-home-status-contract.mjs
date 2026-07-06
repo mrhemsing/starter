@@ -20,6 +20,9 @@ const [
   slateSyncCron,
   packageJson,
   vercelConfig,
+  methodologyPage,
+  gsPlusCopy,
+  methodologyContent,
 ] = await Promise.all([
   readFile("src/app/page.tsx", "utf8"),
   readFile("src/app/starts/[id]/page.tsx", "utf8"),
@@ -34,6 +37,9 @@ const [
   readFile("src/app/api/cron/slate-sync/route.ts", "utf8"),
   readFile("package.json", "utf8"),
   readFile("vercel.json", "utf8"),
+  readFile("src/app/methodology/page.tsx", "utf8"),
+  readFile("src/lib/gs-plus-copy.ts", "utf8"),
+  readFile("src/lib/methodology-content.ts", "utf8"),
 ]);
 
 assert(
@@ -248,8 +254,36 @@ assert(
 );
 
 assert(
-  homePage.includes("GS+ scores a single start 0-100, league average ~50.") && !homePage.includes("Probable starters, form, matchup context"),
-  "homepage masthead value prop must be trimmed to the tagline plus GS+ line",
+  homePage.includes("GS_PLUS_SCALE_SENTENCE") && !homePage.includes("Probable starters, form, matchup context"),
+  "homepage masthead value prop must use the shared GS+ scale sentence",
+);
+
+assert(
+  gsPlusCopy.includes("GS+ grades a single start on the 20-80 scouting scale, league average near 50.") &&
+    homePage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
+    methodologyPage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
+    !homePage.includes("0-100") &&
+    !methodologyPage.includes("0-100") &&
+    !methodologyPage.includes("0 to 100"),
+  "GS+ scale copy must live in one shared fragment and avoid 0-100 language",
+);
+
+assert(
+  methodologyPage.includes("above league baseline") &&
+    methodologyPage.includes("GAME_SCORE_PLUS_CONTEXT_BASELINES") &&
+    startService.includes("GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT") &&
+    startService.includes("GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT") &&
+    startService.includes("pct points above league baseline") &&
+    startService.includes("mph above league baseline"),
+  "methodology must disclose whiff and velocity context as deltas above imported baselines",
+);
+
+assert(
+  methodologyPage.includes("The standard formula uses runs; Toe the Slab substitutes earned runs from the pitcher line") &&
+    methodologyPage.includes("Starts settled before v8 retain their frozen pre-v8 park context until the P0-3 sweep") &&
+    methodologyContent.includes("P3-10") &&
+    methodologyContent.includes("P3-12.1"),
+  "methodology must correct GSv2 runs wording, include the pre-v8 park carve-out, and track pending metric specs",
 );
 
 assert(

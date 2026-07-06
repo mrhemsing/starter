@@ -331,7 +331,7 @@ function HeatMeter({ heatIndex, band, deltaForm }: { heatIndex: number; band: He
   const tone = heatTone(band);
 
   return (
-    <div role="img" aria-label={`Heat Index ${heatIndex} on the 0 to 100 scale, ${band.label}, movement ${formatSigned(deltaForm)}`}>
+    <div role="img" aria-label={`Heat Index ${heatIndex} on the zero to 100 scale, ${band.label}, movement ${formatSigned(deltaForm)}`}>
       <div className="mb-1.5 flex items-baseline justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-[#7d7d86]">
         <span>Heat</span>
         <span className="font-semibold text-[#f3f3f5]">

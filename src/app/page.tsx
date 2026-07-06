@@ -12,6 +12,7 @@ import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
+import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { TonightResponse } from "@/lib/types";
 
@@ -110,7 +111,7 @@ export default async function Home() {
                   <span className="block">ranked.</span>
                 </h1>
                 <p className="blurb mt-3 max-w-2xl leading-5 text-zinc-400 sm:text-sm sm:leading-6 lg:mb-[10px]">
-                  <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">GS+ scores a single start 0-100, league average ~50.</span>
+                  <span className="block whitespace-nowrap text-[11px] sm:inline sm:whitespace-normal sm:text-sm">{GS_PLUS_SCALE_SENTENCE}</span>
                   <a href="/methodology" className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline">
                     Methodology
                   </a>

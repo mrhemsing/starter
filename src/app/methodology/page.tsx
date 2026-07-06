@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import type React from "react";
 import { ScoreExplainer } from "@/components/score-explainer";
 import { SiteHeader } from "@/components/site-header";
-import { getDailySlate, getHomeSlateDate, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
+import { GAME_SCORE_PLUS_CONTEXT_BASELINES, GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT, GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT, getHomeSlateDate, summarizeSlateScoreScale } from "@/lib/data/start-service";
+import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";
 import { rankedStartsPath } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import { WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED, WATCH_SCORE_FALLBACK_FORM_HAIRCUT } from "@/lib/watch-score-confidence";
@@ -21,8 +23,7 @@ export const metadata: Metadata = {
 
 export default async function MethodologyPage() {
   const today = getHomeSlateDate();
-  const rankedDate = addDays(today, -1);
-  const starts = (await getDailySlate({ window: "yesterday", date: rankedDate })).filter((start) => start.source?.line !== "fixture");
+  const { rankedDate, starts } = await getLatestMethodologySlate(today);
   const scoreScale = summarizeSlateScoreScale(starts);
   const jsonLd = faqJsonLd();
 
@@ -56,8 +57,10 @@ export default async function MethodologyPage() {
             <FormulaItem label="Earned runs" value="-5.0 per ER" />
             <FormulaItem label="Hits" value="-1.2 per H" />
             <FormulaItem label="Walks" value="-1.5 per BB" />
-            <FormulaItem label="Whiff context" value="+0.35 per pct point" />
-            <FormulaItem label="Velocity context" value="+1.75 per mph" />
+            <FormulaItem label="Whiff context" value={`+${GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT.toFixed(2)} per pct point above league baseline`} />
+            <FormulaItem label="Velocity context" value={`+${GAME_SCORE_PLUS_VELOCITY_CONTEXT_WEIGHT.toFixed(2)} per mph above league baseline`} />
+            <FormulaItem label="Whiff baseline" value={`${GAME_SCORE_PLUS_CONTEXT_BASELINES.whiffDeltaPct.toFixed(1)} pct points`} />
+            <FormulaItem label="Velocity baseline" value={`${GAME_SCORE_PLUS_CONTEXT_BASELINES.velocityDeltaMph.toFixed(1)} mph`} />
             <FormulaItem label="Park context" value="(run factor - 1.00) x 12" />
             <FormulaItem label="Opponent quality" value="team quality run value" />
             <FormulaItem label="Opponent offense" value="offense run value" />
@@ -79,7 +82,7 @@ export default async function MethodologyPage() {
             Jul 2: settled starts now freeze GS+ and adjustment context at post-game reconciliation. A one-time season sweep applies that rule to completed starts so final scores stay fixed between polls.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Jul 4: completed-start GS+ moved to context-v8. Park adjustment now credits equivalent lines in higher run environments and trims equivalent lines in lower run environments. The x12 weight is unchanged; broader calibration remains a separate season-store review.
+            Jul 4: completed-start GS+ moved to context-v8. Park adjustment now credits equivalent lines in higher run environments and trims equivalent lines in lower run environments. Starts settled before v8 retain their frozen pre-v8 park context until the P0-3 sweep. The x12 weight is unchanged; broader calibration remains a separate season-store review.
           </p>
         </section>
 
@@ -87,7 +90,7 @@ export default async function MethodologyPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Calibration bridge</p>
           <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">GSv2 beside GS+</h2>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Game Score v2 is the familiar box-score benchmark. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, and earned runs from the pitcher line. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
+            Game Score v2 is the familiar box-score benchmark. The standard formula uses runs; Toe the Slab substitutes earned runs from the pitcher line so unearned runs do not penalize the pitcher. It starts at 40, rewards outs and strikeouts, and subtracts hits, walks, and earned runs from the pitcher line. Toe the Slab stores GSv2 on the same canonical start record as GS+ so every page can show the same comparison.
           </p>
           <p className="mt-3 text-sm leading-6 text-zinc-400">
             The adjustment label is shown as GS+ minus GSv2. Positive adjustment means GS+ liked the start more than the box-score baseline after context; negative adjustment means the context and GS+ components pulled it down. GSv2 uses earned runs from the pitcher line so unearned runs do not corrupt the box-score benchmark.
@@ -145,7 +148,7 @@ export default async function MethodologyPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           <MethodCard title="GS+" id="gs-plus">
-            GS+ scores a single completed start on a 0-100 style scale, with league-average work around 50. It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.
+            {GS_PLUS_SCALE_SENTENCE} It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.
           </MethodCard>
           <MethodCard title="Form" id="form">
             Form is a rolling view of recent GS+ across a pitcher&apos;s qualified starts. Heat Check bands highlight starters who are running above, near, or below their recent baseline.
@@ -174,6 +177,19 @@ export default async function MethodologyPage() {
       </div>
     </main>
   );
+}
+
+async function getLatestMethodologySlate(today: string) {
+  const todayData = await getRankedStartsPageData(today, today);
+  const todayStarts = todayData.slateStarts.filter((start) => start.source?.line !== "fixture");
+  if (todayData.completionState.isFinal && todayStarts.length > 0) return { rankedDate: today, starts: todayStarts };
+
+  const rankedDate = addDays(today, -1);
+  const yesterdayData = await getRankedStartsPageData(rankedDate, today);
+  return {
+    rankedDate,
+    starts: yesterdayData.slateStarts.filter((start) => start.source?.line !== "fixture"),
+  };
 }
 
 function FormulaItem({ label, value }: { label: string; value: string }) {
