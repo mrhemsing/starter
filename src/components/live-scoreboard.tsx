@@ -176,6 +176,68 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   );
 }
 
+export function LiveScoreboardLoading({ board }: { board: LiveScoreboardData }) {
+  const pregame = isPregame(board);
+  const slateComplete = isSlateComplete(board);
+
+  if (!board.hasGames) {
+    return (
+      <section className="rounded border border-white/10 bg-[#101014] p-6 text-zinc-300" data-live-loading-mode="empty">
+        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">No games today.</p>
+      </section>
+    );
+  }
+
+  if (slateComplete) {
+    return (
+      <section className="space-y-4" data-live-loading-mode="final" data-live-loading-count={board.totalStarts}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+          <p>{board.liveStarts} live · {board.finalStarts} final</p>
+          <span className="route-shell-shimmer h-3 w-24 rounded" />
+        </div>
+        <SlateCompleteHandoffLoading board={board} />
+      </section>
+    );
+  }
+
+  if (pregame) {
+    return (
+      <section className="space-y-4" data-live-loading-mode="pregame" data-live-loading-count={board.totalStarts}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+          <p>{scoreboardSummaryLabel(board)}</p>
+        </div>
+        <PregameHandoffLoading board={board} />
+      </section>
+    );
+  }
+
+  const scoredRows = board.rows.filter(isScoredRow);
+  const warmingRows = board.rows.filter((row) => !isScoredRow(row));
+
+  return (
+    <section className="space-y-3" data-live-loading-mode="scoreboard" data-live-loading-count={board.totalStarts}>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+        <p>{scoreboardSummaryLabel(board)}</p>
+        <span className="route-shell-shimmer h-3 w-24 rounded" />
+      </div>
+      <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
+        {scoredRows.length > 0 ? (
+          <div>
+            <LiveSectionHeader title="In progress" count={scoredRows.length} />
+            {scoredRows.map((row, index) => <LiveScoreboardRowLoading key={row.id} row={row} scored index={index} />)}
+          </div>
+        ) : null}
+        {warmingRows.length > 0 ? (
+          <div className={scoredRows.length > 0 ? "border-t border-white/10 bg-white/[0.025]" : ""}>
+            <LiveSectionHeader title="Warming up" count={warmingRows.length} />
+            {warmingRows.map((row, index) => <LiveScoreboardRowLoading key={row.id} row={row} muted={scoredRows.length > 0} index={index} />)}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function LiveGemAlertStack({ alerts, onDismiss }: { alerts: LiveGemAlertEvent[]; onDismiss: (id: string) => void }) {
   if (alerts.length === 0) return null;
 
@@ -272,6 +334,78 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
       </section>
 
       <TomorrowBridge board={board} />
+    </div>
+  );
+}
+
+function SlateCompleteHandoffLoading({ board }: { board: LiveScoreboardData }) {
+  const topRowCount = Math.min(5, Math.max(1, board.rows.length));
+
+  return (
+    <div className="space-y-6" data-live-final-recap="true" data-loading-mode="true">
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-header="true">
+        <span className="route-shell-shimmer block h-5 max-w-xl rounded" />
+        <span className="route-shell-shimmer mt-3 block h-4 max-w-2xl rounded" />
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span className="route-shell-shimmer h-3 w-16 rounded" />
+          <span className="route-shell-shimmer h-3 w-28 rounded" />
+          <span className="route-shell-shimmer h-3 w-48 rounded" />
+        </div>
+      </section>
+
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-day="true">
+        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#FF9A62]">The day</p>
+            <span className="route-shell-shimmer mt-2 block h-9 w-64 rounded" />
+          </div>
+          <span className="route-shell-shimmer h-11 w-56 rounded" />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-stretch">
+          <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]" data-live-final-top-five="true">
+            <LiveSectionHeader title="Top final GS+" count={board.totalStarts} />
+            {Array.from({ length: topRowCount }).map((_, index) => (
+              <article key={index} className="grid grid-cols-[2ch_29px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 md:grid-cols-[2ch_54px_minmax(0,1fr)_auto]">
+                <span className="route-shell-shimmer h-4 w-4 rounded" />
+                <span className="route-shell-shimmer h-[36px] w-[29px] rounded md:h-[72px] md:w-[54px]" />
+                <div className="min-w-0 space-y-2">
+                  <span className="route-shell-shimmer block h-6 w-3/4 rounded" />
+                  <span className="route-shell-shimmer block h-3 w-full rounded" />
+                </div>
+                <span className="route-shell-shimmer h-12 w-14 rounded" />
+              </article>
+            ))}
+          </div>
+          <div className="min-h-[320px] rounded border border-white/10 bg-[#0B0C0F] p-3" data-live-final-scatter="true">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="route-shell-shimmer h-3 w-24 rounded" />
+              <span className="route-shell-shimmer h-3 w-24 rounded" />
+            </div>
+            <span className="route-shell-shimmer block h-[300px] w-full rounded sm:h-[360px]" />
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-live-final-signals="true">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="min-h-[112px] rounded border border-white/10 bg-[#101014] p-4">
+            <span className="route-shell-shimmer block h-3 w-24 rounded" />
+            <span className="route-shell-shimmer mt-3 block h-8 w-2/3 rounded" />
+            <span className="route-shell-shimmer mt-3 block h-3 w-full rounded" />
+          </div>
+        ))}
+      </section>
+
+      <section className="rounded border border-white/10 bg-[#101014] p-4 sm:p-6" data-live-final-tomorrow="true">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445]">Tomorrow</p>
+            <span className="route-shell-shimmer mt-2 block h-9 w-72 max-w-full rounded" />
+            <span className="route-shell-shimmer mt-3 block h-4 w-96 max-w-full rounded" />
+          </div>
+          <span className="route-shell-shimmer h-[118px] rounded md:min-w-[320px]" />
+        </div>
+      </section>
     </div>
   );
 }
@@ -501,6 +635,47 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
   );
 }
 
+function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
+  return (
+    <div className="overflow-hidden rounded border border-white/10 bg-[#101014]" data-live-pregame-first-pitch={board.slateProgress.firstPitchAt ?? ""} data-loading-mode="true">
+      <div className="relative isolate overflow-hidden" style={{ minHeight: "500px" }}>
+        <Image
+          src="/images/slab-2.png"
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 1120px, 100vw"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover"
+          priority={false}
+        />
+
+        <div className="relative flex flex-col items-start justify-start px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pt-5">
+          <div className="w-full max-w-4xl text-left">
+            <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445] sm:text-xs">
+              <span className="h-2 w-2 rounded-full bg-[#FF5A1F] shadow-[0_0_18px_rgba(255,90,31,0.8)] motion-safe:animate-pulse" />
+              Scoreboard opens at first pitch
+            </p>
+            <div className="mt-5 grid max-w-[720px] grid-cols-3 gap-2 sm:gap-3" style={{ marginTop: "2rem" }} data-live-pregame-countdown-mode="loading">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="min-w-0 rounded border border-white/10 bg-black/35 px-2 py-3 text-center shadow-[inset_0_0_30px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
+                  <span className="route-shell-shimmer mx-auto block h-[3.75rem] w-20 rounded sm:h-[5.25rem] lg:h-[6rem]" />
+                  <span className="route-shell-shimmer mx-auto mt-2 block h-3 w-10 rounded" />
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 h-1.5 max-w-[720px] overflow-hidden rounded-full bg-white/15" aria-hidden="true">
+              <span className="route-shell-shimmer block h-full w-1/3 rounded-full" />
+            </div>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-white sm:text-xs">
+              First pitch {board.slateProgress.firstPitchAt ? formatFirstPitch(board.slateProgress.firstPitchAt) : "TBD"} · {board.totalStarts} starters
+            </p>
+            <span className="route-shell-shimmer mt-5 block h-11 w-44 rounded" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ClockUnit({ value, label, toneClass }: { value: string; label: string; toneClass: string }) {
   return (
     <div className="min-w-0 rounded border border-white/10 bg-black/35 px-2 py-3 text-center shadow-[inset_0_0_30px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
@@ -521,13 +696,19 @@ function LiveScoreboardSection({
 }) {
   return (
     <div className={muted ? "border-t border-white/10 bg-white/[0.025]" : ""}>
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500 sm:px-4">
-        <p>{title}</p>
-        <p>{rows.length} starters</p>
-      </div>
+      <LiveSectionHeader title={title} count={rows.length} />
       {rows.map((row) => (
         <LiveScoreboardRow key={row.id} row={row} muted={muted} />
       ))}
+    </div>
+  );
+}
+
+function LiveSectionHeader({ title, count }: { title: string; count: number }) {
+  return (
+    <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500 sm:px-4">
+      <p>{title}</p>
+      <p>{count} starters</p>
     </div>
   );
 }
@@ -542,6 +723,27 @@ export function LiveScoreboardRowSkeleton({ muted = false, scored = true }: { mu
           <span className="route-shell-shimmer h-3 w-24 rounded" />
         </div>
         <span className="route-shell-shimmer mt-2 block h-7 w-2/3 rounded" />
+        <span className="route-shell-shimmer mt-2 block h-4 w-5/6 rounded" />
+      </div>
+      <div className="text-right">
+        <span className={`route-shell-shimmer ml-auto block rounded ${scored ? "h-10 w-16" : "h-8 w-20"}`} />
+        <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-12 rounded" />
+        {scored ? <span className="route-shell-shimmer mt-2 ml-auto block h-3 w-10 rounded" /> : null}
+      </div>
+    </article>
+  );
+}
+
+function LiveScoreboardRowLoading({ row, muted = false, scored = false, index = 0 }: { row: LiveScoreboardRow; muted?: boolean; scored?: boolean; index?: number }) {
+  return (
+    <article className={`scroll-mt-24 grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`} data-skeleton-row="live-board" data-live-loading-row={row.id}>
+      <span className="route-shell-shimmer ml-0 block h-[65px] w-[52px] rounded" />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusChip status={row.status} />
+          <span className="route-shell-shimmer h-3 w-24 rounded" />
+        </div>
+        <span className={`route-shell-shimmer mt-2 block h-7 rounded ${index % 2 === 0 ? "w-2/3" : "w-1/2"}`} />
         <span className="route-shell-shimmer mt-2 block h-4 w-5/6 rounded" />
       </div>
       <div className="text-right">

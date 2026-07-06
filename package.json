@@ -36,6 +36,7 @@
     "check:watch-confidence": "node scripts/check-watch-score-confidence-contract.mjs",
     "check:slate-sync": "node scripts/check-slate-sync.mjs",
     "check:live-scoreboard": "node scripts/check-live-scoreboard-contract.mjs",
+    "check:skeleton-parity": "node scripts/check-skeleton-parity-contract.mjs",
     "check:home-best-starts": "node scripts/check-home-best-starts-contract.mjs",
     "check:home-typography": "node scripts/check-home-typography-contract.mjs",
     "check:gs-plus-context-v8": "node scripts/check-gs-plus-context-v8.mjs",
