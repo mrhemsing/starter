@@ -237,7 +237,7 @@ function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows
             href={rankedStartsPath(board.date)}
             className="mt-5 bg-[#FF5A1F]/10 hover:bg-[#FF5A1F]/20"
           >
-            View all ranked starts for {formatBoardDate(board.date)}
+            View all<br className="sm:hidden" /> ranked starts for {formatBoardDate(board.date)}
           </CtaArrow>
           <SlabImage />
         </div>

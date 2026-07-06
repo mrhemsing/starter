@@ -290,7 +290,8 @@ assert(
     liveComponent.includes("function toPacificDate(date: Date)") &&
     liveComponent.includes("rankedStartsPath(board.date)") &&
     liveComponent.includes('import { CtaArrow } from "@/components/cta-arrow";') &&
-    liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)}") &&
+    liveComponent.includes('View all<br className="sm:hidden" /> ranked starts for {formatBoardDate(board.date)}') &&
+    !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)}") &&
     !liveComponent.includes("View all ranked starts for {formatBoardDate(board.date)} -&gt;") &&
     liveComponent.includes('className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
     !liveComponent.includes('className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start"') &&
