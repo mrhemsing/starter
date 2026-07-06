@@ -211,7 +211,7 @@ function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
     <section className="mb-4 rounded border border-amber-300/25 bg-amber-300/[0.06] p-4" data-responsive-check="watchlist-pitching-soon">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">{entries.length > 0 ? "On deck" : "Watchlist status"}</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">{entries.length > 0 ? "Lined up" : "Watchlist status"}</p>
           <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{title}</h2>
           <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
         </div>
