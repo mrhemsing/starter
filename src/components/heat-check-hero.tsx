@@ -17,7 +17,7 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Rolling form trend</p>
             <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Moving</h2>
-            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Last {home.window} qualified starts, direction, and next probable start context.</p>
+            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Up to last {home.window} qualified starts, direction, and next probable start context.</p>
             <p className={`mt-2 font-mono text-[10px] uppercase tracking-[0.16em] ${home.stale ? "text-amber-300" : "text-zinc-500"}`} title={home.latestScoredStartDate ? `Latest scored start date: ${home.latestScoredStartDate}` : undefined}>
               {home.formThroughDate ? `Form through ${home.formThroughDate}` : "Form data loading"}{home.stale ? " / updating" : ""}
             </p>

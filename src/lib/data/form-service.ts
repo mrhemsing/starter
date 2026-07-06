@@ -4,7 +4,7 @@ import { readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { formHeatBandOf, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
+import { formHeatBandOf, formTrendFromDelta, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
@@ -704,7 +704,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const formSpark = buildRollingFormSpark(starts, window);
   const deltaForm = rgs - (formSpark[0] ?? rgs);
   const trendDelta = calculateTrendDelta(windowStarts);
-  const trend = classifyTrend(deltaForm, window);
+  const trend = classifyTrend(deltaForm);
   const status = windowCount >= FORM_CONFIG.minStartsInWindow ? "ok" : "insufficient";
   const lastStart = latest ? buildStartPoint(starts, starts.length - 1, window) : null;
   const rust = starts.length >= 2 ? daysBetween(starts.at(-2)?.date ?? "", starts.at(-1)?.date ?? "") > 20 : false;
@@ -1047,11 +1047,8 @@ function calculateTrendDelta(starts: StartSummary[]) {
   return mean(recent.map((start) => start.gameScorePlus)) - mean(prior.map((start) => start.gameScorePlus));
 }
 
-function classifyTrend(deltaForm: number, window: FormWindow): FormTrend {
-  const thresholds = FORM_CONFIG.directionBandThresholds[window];
-  if (deltaForm >= thresholds.heatingDelta) return "heating";
-  if (deltaForm <= thresholds.coolingDelta) return "cooling";
-  return "steady";
+function classifyTrend(deltaForm: number): FormTrend {
+  return formTrendFromDelta(deltaForm);
 }
 
 function calculateHeatIndex(rgs: number, leagueMeanGS: number, trendDelta: number) {

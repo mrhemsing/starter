@@ -1,4 +1,4 @@
-import { FORM_CHART_COLORS, GS_TIERS, TREND_STYLES, formDeltaBand } from "@/lib/form-tokens";
+import { FORM_CHART_COLORS, GS_TIERS, formDeltaBand } from "@/lib/form-tokens";
 import type { CSSProperties } from "react";
 import type { FormStartPoint, FormSummary, FormTier } from "@/lib/types";
 
@@ -13,11 +13,11 @@ export function tierTextClass(tier: FormTier) {
 }
 
 export function TrendChip({ summary }: { summary: Pick<FormSummary, "trend" | "deltaForm">; compact?: boolean }) {
-  const trend = TREND_STYLES[summary.trend];
+  const trend = formDeltaBand(summary.deltaForm);
   const value = `${summary.deltaForm >= 0 ? "+" : ""}${summary.deltaForm.toFixed(1)}`;
 
   return (
-    <span className={`inline-flex min-h-8 items-center gap-2 rounded border px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em] ${trend.className}`} aria-label={`${trend.label} ${value}`}>
+    <span className="inline-flex min-h-8 items-center gap-2 rounded border px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em]" style={{ borderColor: `color-mix(in srgb, ${trend.color} 35%, transparent)`, color: trend.color }} aria-label={`${trend.label} ${value}`}>
       <span>{trend.marker}</span>
       <span>{`${trend.label} ${value}`}</span>
     </span>

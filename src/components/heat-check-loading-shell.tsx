@@ -31,7 +31,7 @@ export function HeatCheckLoadingDescription({ view }: HeatCheckLoadingShellProps
   const window = readWindow(searchParams);
 
   if (view === "season") return <>Starting pitchers ranked by season GS+.</>;
-  return <>How starting pitchers are trending over their last {window} starts.</>;
+  return <>How starting pitchers are trending over up to last {window} qualified starts.</>;
 }
 
 export function HeatCheckLoadingControls({ view }: HeatCheckLoadingShellProps) {

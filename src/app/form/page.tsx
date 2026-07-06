@@ -26,7 +26,7 @@ import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import type { LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
-import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, qualityTierOf } from "@/lib/form-tokens";
+import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { liveDateHref, pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -225,12 +225,13 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const rotationRankByTeam = buildTeamRotationRankMap(qualifiedPitchers);
   const teamRotationSlots = team ? buildTeamRotationSlots(team, rotationDates, rotationSchedules, rotationPitcherPool, window) : [];
   const pulseBandCounts = team ? teamBandCounts : leagueBandCounts;
-  const pulseHeatingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "heating").length;
-  const pulseCoolingCount = pulsePitchers.filter((pitcher) => pitcher.trend === "cooling").length;
+  const pulseDirectionCounts = directionCountsForPitchers(pulsePitchers);
+  const pulseHeatingCount = pulseDirectionCounts.rising;
+  const pulseCoolingCount = pulseDirectionCounts.falling;
   const pulseMeanGS = meanGsPlus(pulsePitchers) ?? leaderboard.leagueMeanGS;
   const heroCandidates = pulsePitchers;
-  const riserCandidates = [...heroCandidates].sort((a, b) => compareMovementRisers(a, b, startContext));
-  const fallerCandidates = [...heroCandidates].sort((a, b) => compareMovementFallers(a, b, startContext));
+  const riserCandidates = heroCandidates.filter(isRisingDelta).sort((a, b) => compareMovementRisers(a, b, startContext));
+  const fallerCandidates = heroCandidates.filter(isFallingDelta).sort((a, b) => compareMovementFallers(a, b, startContext));
   const biggestRiser = riserCandidates[0] ?? null;
   const biggestFaller = fallerCandidates[0] ?? null;
   const heroIds = new Set([biggestRiser?.pitcherId, biggestFaller?.pitcherId].filter((id): id is string => Boolean(id)));
@@ -264,7 +265,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            {trendView ? <>How starting pitchers are trending over their last {window} starts.</> : <>Starting pitchers ranked by season GS+.</>}
+            {trendView ? <>How starting pitchers are trending over up to last {window} qualified starts.</> : <>Starting pitchers ranked by season GS+.</>}
           </p>
         </header>
 
@@ -299,7 +300,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
             <div className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4" data-responsive-check="heat-league-stat-strip">
               <SummaryStat label="Rising" value={String(pulseHeatingCount)} />
               <SummaryStat label="Falling" value={String(pulseCoolingCount)} />
-              <SummaryStat label="Even" value={String(pulseBandCounts.find((candidate) => candidate.key === "even")?.count ?? 0)} />
+              <SummaryStat label="Steady" value={String(pulseDirectionCounts.steady)} />
               <SummaryStat label={team ? `${team} mean GS+` : "League mean GS+"} value={pulseMeanGS.toFixed(1)} />
             </div>
             <MoversStrip risers={risers} fallers={fallers} params={params ?? {}} />
@@ -480,22 +481,25 @@ function BandDistribution({ bands, total, activeBand, params, scopeLabel }: { ba
 }
 
 function MoversStrip({ risers, fallers, params }: { risers: FormSummary[]; fallers: FormSummary[]; params: Record<string, string | undefined> }) {
-  const movers = [
-    ...risers.map((pitcher) => ({ pitcher, direction: "up" as const })),
-    ...fallers.map((pitcher) => ({ pitcher, direction: "down" as const })),
-  ];
+  const movers = uniquePitchers([...risers.slice(0, 3), ...fallers.slice(0, 3)]);
+  if (movers.length === 0) return null;
+  const surnameCounts = new Map<string, number>();
+  for (const pitcher of movers) {
+    const surname = lastName(pitcher.name).toLowerCase();
+    surnameCounts.set(surname, (surnameCounts.get(surname) ?? 0) + 1);
+  }
 
   return (
     <section className="my-5 max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3" data-responsive-check="heat-movers-strip">
       <div className="flex max-w-full min-w-0 items-center gap-3 overflow-x-auto pb-1">
         <p className="shrink-0 font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Movers</p>
-        {movers.map(({ pitcher, direction }) => {
-          const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";
-          const marker = direction === "up" ? "↑" : "↓";
+        {movers.map((pitcher) => {
+          const band = formDeltaBand(pitcher.deltaForm);
+          const motion = band.direction === "rising" ? "rising" : "falling";
           return (
-            <FastFilterLink key={`${direction}-${pitcher.pitcherId}`} href={heatCheckHref({ ...params, motion: direction === "up" ? "rising" : "falling" })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30" scroll={false}>
-              <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{lastName(pitcher.name)}</span>
-              <span style={{ color }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</span>
+            <FastFilterLink key={pitcher.pitcherId} href={heatCheckHref({ ...params, motion })} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] hover:border-amber-300/30" scroll={false}>
+              <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{moverDisplayName(pitcher.name, surnameCounts)}</span>
+              <span style={{ color: band.color }}>{band.marker} {formatSignedDelta(pitcher.deltaForm)}</span>
             </FastFilterLink>
           );
         })}
@@ -590,6 +594,22 @@ function TeamRotationSnapshot({
   );
 }
 
+function uniquePitchers(pitchers: FormSummary[]) {
+  const seen = new Set<string>();
+  return pitchers.filter((pitcher) => {
+    if (seen.has(pitcher.pitcherId)) return false;
+    seen.add(pitcher.pitcherId);
+    return true;
+  });
+}
+
+function moverDisplayName(name: string, surnameCounts: Map<string, number>) {
+  const surname = lastName(name);
+  if ((surnameCounts.get(surname.toLowerCase()) ?? 0) <= 1) return surname;
+  const first = name.trim().split(/\s+/)[0]?.[0];
+  return first ? `${first}. ${surname}` : surname;
+}
+
 function ProbableConfidenceChip({ confidence }: { confidence: TeamRotationSlot["confidence"] }) {
   const confirmed = confidence === "CONFIRMED" || confidence === "REPORTED";
   return (
@@ -641,8 +661,9 @@ function MomentumHero({
 function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }: { role: "riser" | "faller"; pitcher: FormSummary; window: number; leagueMeanGS: number; followed: boolean; start: TodayStartContext | null }) {
   const bandColor = HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#D85A30";
   const isRiser = role === "riser";
-  const accent = isRiser ? "#FF7A3D" : "#8FCBFF";
-  const marker = isRiser ? "↑" : "↓";
+  const deltaBand = formDeltaBand(pitcher.deltaForm);
+  const accent = deltaBand.color;
+  const marker = deltaBand.marker;
   const thermalBand = pitcher.windowCount >= window ? pitcher.tier : null;
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window }));
 
@@ -854,6 +875,22 @@ function compareMovementRise(a: FormSummary, b: FormSummary) {
 
 function compareMovementFall(a: FormSummary, b: FormSummary) {
   return a.deltaForm - b.deltaForm || compareRollingFormLevelRank(a, b);
+}
+
+function isRisingDelta(pitcher: Pick<FormSummary, "deltaForm">) {
+  return formDeltaDirection(pitcher.deltaForm) === "rising";
+}
+
+function isFallingDelta(pitcher: Pick<FormSummary, "deltaForm">) {
+  return formDeltaDirection(pitcher.deltaForm) === "falling";
+}
+
+function directionCountsForPitchers(pitchers: Array<Pick<FormSummary, "deltaForm">>) {
+  return pitchers.reduce((counts, pitcher) => {
+    const direction = formDeltaDirection(pitcher.deltaForm);
+    counts[direction] += 1;
+    return counts;
+  }, { rising: 0, steady: 0, falling: 0 });
 }
 
 function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
@@ -1750,7 +1787,7 @@ function isPoleTier(pitcher: FormSummary) {
 
 function FormDeltaLabel({ summary, compact = false }: { summary: Pick<FormSummary, "deltaForm">; compact?: boolean }) {
   const band = formDeltaBand(summary.deltaForm);
-  const label = band.key === "steady" ? "steady" : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;
+  const label = band.key === "steady" ? `${band.marker} steady` : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;
 
   return (
     <span className={`${compact ? "text-[9px]" : "text-[10px]"} mt-1 block whitespace-nowrap font-mono font-semibold uppercase tracking-[0.08em]`} style={{ color: band.color }}>

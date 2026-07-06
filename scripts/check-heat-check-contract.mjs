@@ -167,7 +167,7 @@ assert(
 
 assert(
   formPage.includes("{trendPulseView && biggestRiser && biggestFaller ? (") &&
-    formPage.includes('{trendView ? <>How starting pitchers are trending over their last {window} starts.</> : <>Starting pitchers ranked by season GS+.</>}') &&
+    formPage.includes('{trendView ? <>How starting pitchers are trending over up to last {window} qualified starts.</> : <>Starting pitchers ranked by season GS+.</>}') &&
     formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     pageContextStrip.includes("export function PageContextStrip") &&
     pageContextStrip.includes("const hasContext = Boolean(leading || primary);") &&
@@ -325,7 +325,7 @@ assert(
     formPage.includes('params?.motion === "rising"') &&
     formPage.includes("Rising ({leaderboard.heatingCount})") &&
     formPage.includes("Falling ({leaderboard.coolingCount})") &&
-    formPage.includes("motion: direction === \"up\" ? \"rising\" : \"falling\""),
+    formPage.includes("const motion = band.direction === \"rising\" ? \"rising\" : \"falling\";"),
   "rising/falling counts and mover chips must be filter doorways",
 );
 
@@ -688,7 +688,7 @@ assert(
 assert(
   formPage.includes("function FormDeltaLabel") &&
     formPage.includes("const band = formDeltaBand(summary.deltaForm);") &&
-    formPage.includes('const label = band.key === "steady" ? "steady" : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;') &&
+    formPage.includes('const label = band.key === "steady" ? `${band.marker} steady` : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;') &&
     formPage.includes("style={{ color: band.color }}") &&
     formPage.includes("function formSparklineLabel(pitcher: FormSummary, window: number)") &&
     formPage.includes("Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}") &&
@@ -705,8 +705,11 @@ assert(
     formTokens.includes('steady: { key: "steady"') &&
     formTokens.includes('cooling: { key: "cooling"') &&
     formTokens.includes("export function formDeltaBand(deltaForm: number)") &&
-    formTokens.includes("if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.warming;") &&
-    formTokens.includes("if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.cooling;") &&
+    formTokens.includes("if (deltaForm > 0) return FORM_DELTA_BANDS.warming;") &&
+    formTokens.includes("if (deltaForm < 0) return FORM_DELTA_BANDS.cooling;") &&
+    formTokens.includes("export function formDeltaDirection(deltaForm: number): FormDeltaDirection") &&
+    formTokens.includes("if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return \"rising\";") &&
+    formTokens.includes("if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return \"falling\";") &&
     globals.includes("--form-steady: #a1a1aa;"),
   "Heat Check form delta banding must have one inclusive 1.0 threshold and a neutral --form-steady token",
 );
@@ -754,7 +757,7 @@ assert(
     heatSeasonLoading.includes('childrenMode="content"') &&
     !heatSeasonLoading.includes('controls="heat"') &&
     heatLoadingShell.includes("useSearchParams") &&
-    heatLoadingShell.includes("How starting pitchers are trending over their last {window} starts.") &&
+    heatLoadingShell.includes("How starting pitchers are trending over up to last {window} qualified starts.") &&
     heatLoadingShell.includes('data-navigation-shell-controls="heat-real"') &&
     formPage.includes("export function MomentumHeroSkeleton()") &&
     formPage.includes('data-skeleton-row="heat-momentum-hero"'),

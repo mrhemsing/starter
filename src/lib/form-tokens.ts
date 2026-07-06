@@ -42,25 +42,41 @@ export const FORM_DELTA_STEADY_THRESHOLD = 1.0;
 
 export type FormDeltaBandKey = "warming" | "steady" | "cooling";
 
+export type FormDeltaDirection = "rising" | "steady" | "falling";
+
 export type FormDeltaBand = {
   key: FormDeltaBandKey;
   label: string;
-  marker: "" | "↑" | "↓";
+  marker: "↑" | "→" | "↓";
   color: string;
   cssVar: string;
   directionLabel: "up" | "steady" | "down";
+  direction: FormDeltaDirection;
 };
 
 export const FORM_DELTA_BANDS: Record<FormDeltaBandKey, FormDeltaBand> = {
-  warming: { key: "warming", label: "Warming", marker: "↑", color: "var(--level-hot)", cssVar: "--level-hot", directionLabel: "up" },
-  steady: { key: "steady", label: "Steady", marker: "", color: "var(--form-steady, #a1a1aa)", cssVar: "--form-steady", directionLabel: "steady" },
-  cooling: { key: "cooling", label: "Cooling", marker: "↓", color: "var(--level-cooling)", cssVar: "--level-cooling", directionLabel: "down" },
+  warming: { key: "warming", label: "Rising", marker: "↑", color: "var(--level-hot)", cssVar: "--level-hot", directionLabel: "up", direction: "rising" },
+  steady: { key: "steady", label: "Steady", marker: "→", color: "var(--form-steady, #a1a1aa)", cssVar: "--form-steady", directionLabel: "steady", direction: "steady" },
+  cooling: { key: "cooling", label: "Falling", marker: "↓", color: "var(--level-cooling)", cssVar: "--level-cooling", directionLabel: "down", direction: "falling" },
 };
 
 export function formDeltaBand(deltaForm: number) {
-  if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.warming;
-  if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return FORM_DELTA_BANDS.cooling;
+  if (deltaForm > 0) return FORM_DELTA_BANDS.warming;
+  if (deltaForm < 0) return FORM_DELTA_BANDS.cooling;
   return FORM_DELTA_BANDS.steady;
+}
+
+export function formDeltaDirection(deltaForm: number): FormDeltaDirection {
+  if (deltaForm >= FORM_DELTA_STEADY_THRESHOLD) return "rising";
+  if (deltaForm <= -FORM_DELTA_STEADY_THRESHOLD) return "falling";
+  return "steady";
+}
+
+export function formTrendFromDelta(deltaForm: number): FormTrend {
+  const direction = formDeltaDirection(deltaForm);
+  if (direction === "rising") return "heating";
+  if (direction === "falling") return "cooling";
+  return "steady";
 }
 
 export const LEVEL_BANDS: LevelBandToken[] = [
@@ -90,9 +106,9 @@ export const GS_TIERS: Array<HeatBand & { key: FormTier; fillClass: string }> = 
 export const FORM_BANDS = LEVEL_BANDS;
 
 export const TREND_STYLES: Record<FormTrend, { label: string; marker: string; className: string }> = {
-  heating: { label: "Rising", marker: "↑", className: "border-teal-300/30 text-teal-300" },
+  heating: { label: "Rising", marker: "↑", className: "border-orange-300/30 text-orange-300" },
   steady: { label: "Steady", marker: "→", className: "border-zinc-300/20 text-zinc-300" },
-  cooling: { label: "Falling", marker: "↓", className: "border-rose-300/30 text-rose-300" },
+  cooling: { label: "Falling", marker: "↓", className: "border-sky-300/30 text-sky-300" },
 };
 
 export const FORM_CHART_COLORS = {
