@@ -600,7 +600,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         <div className="min-w-[76px] rounded border border-white/35 bg-[rgba(10,10,10,0.6)] px-3 py-2 text-center backdrop-blur-[6px]" data-home-top-start-score-panel="true">
           <p className="font-serif text-4xl font-black leading-none" style={{ color }}>{start.gameScorePlus}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-white">GS+</p>
-          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 !text-white" />
+          <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 !text-white" style={{ color: "#fff" }} />
         </div>
       </div>
     </article>

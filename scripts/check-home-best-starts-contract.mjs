@@ -41,7 +41,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v6"]') &&
+    bestStartsService.includes('["home-best-starts-v7"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -261,7 +261,7 @@ assert(
     homeDeferredSections.includes("startMatchupLabel(start), formatShortDate(start.date)") &&
     !homeDeferredSections.includes("start.pitcher.team, startMatchupLabel(start)") &&
     homeDeferredSections.includes("<RawGsPlusLine") &&
-    homeDeferredSections.includes('className="mt-1 !text-white"') &&
+    homeDeferredSections.includes('className="mt-1 !text-white" style={{ color: "#fff" }}') &&
     homeDeferredSections.includes('alt={`${start.pitcher.name} pitching`}') &&
     homeDeferredSections.includes('target="_blank" rel="noopener"') &&
     homeDeferredSections.includes("formatStartLine(start.line)") &&
@@ -283,12 +283,12 @@ assert(
 );
 
 assert(
-  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-generated-action.png" &&
+  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-generated-action-v2.png" &&
     misiorowskiTopStartAction.sourceImageUrl === misiorowskiTopStartAction.imageUrl &&
     misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings" &&
-    misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action.png" &&
+    misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v2.png" &&
     misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
-    detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action.png" &&
+    detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.png" &&
     detmersTopStartAction.sourceImageUrl === detmersTopStartAction.imageUrl,
   "home Top Starts #1 and screenshot-visible #3 must use generated replacement action photos",
 );
