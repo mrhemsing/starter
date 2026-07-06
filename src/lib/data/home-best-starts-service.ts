@@ -52,7 +52,7 @@ const getCachedBestStartsHome = unstable_cache(
       seasonTopStarts: seasonTopStartViews,
     };
   },
-  ["home-best-starts-v8"],
+  ["home-best-starts-v9"],
   { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 

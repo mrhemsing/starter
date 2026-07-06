@@ -546,6 +546,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
   const imagePosition = "50% 4%";
   const rowHref = startHref(start, sourceParams("home"));
   const fullBleed = Boolean(actionImage);
+  const mobileName = splitPitcherNameForMobile(start.pitcher.name);
 
   return (
     <article
@@ -593,8 +594,12 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
       ) : null}
       <div className="relative z-10 min-w-0 px-3 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-            {start.pitcher.name}
+          <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto inline-block font-serif text-xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={start.pitcher.name}>
+            <span className="sm:hidden" data-home-top-start-mobile-name="two-line">
+              <span className="block">{mobileName.firstLine}</span>
+              <span className="block">{mobileName.secondLine}</span>
+            </span>
+            <span className="hidden sm:inline">{start.pitcher.name}</span>
           </a>
           {entry.isNew ? <span className="rounded border border-amber-300/35 bg-amber-300/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-200">New</span> : null}
         </div>
@@ -617,6 +622,16 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
       </div>
     </article>
   );
+}
+
+function splitPitcherNameForMobile(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return { firstLine: name, secondLine: "" };
+
+  return {
+    firstLine: parts.slice(0, -1).join(" "),
+    secondLine: parts[parts.length - 1],
+  };
 }
 
 function resolveHomeMustWatchDate(watch: TonightResponse | null | undefined, fallbackDate: string) {
