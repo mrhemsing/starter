@@ -65,6 +65,41 @@ assert(
     watchlistPageSource.includes("text-[8px] uppercase leading-4 tracking-[0.12em] text-zinc-500 sm:text-[10px]"),
   "watchlist summary stats must render as three equal mobile columns with compact labels",
 );
+assert(
+  watchlistServiceSource.includes("export const WATCHLIST_SOON_DAYS = 3;") &&
+    watchlistPageSource.includes("WATCHLIST_SOON_DAYS") &&
+    !watchlistPageSource.includes("next two days"),
+  "watchlist soon copy must use the shared 3-day constant instead of hardcoded next two days copy",
+);
+assert(
+  watchlistPageSource.includes('data-responsive-check="watchlist-wire"') &&
+    watchlistPageSource.includes("The Wire") &&
+    watchlistPageSource.includes("Quiet stretch for your arms.") &&
+    watchlistPageSource.includes("data-wire-event") &&
+    watchlistServiceSource.includes("wireEventsForPitcher") &&
+    !watchlistPageSource.includes("Today&apos;s hooks") &&
+    !watchlistPageSource.includes("Digest preview"),
+  "watchlist should replace Today's Hooks with deterministic Wire event cards and a quiet empty state",
+);
+assert(
+  watchlistServiceSource.includes('"rest-anomaly"') &&
+    watchlistServiceSource.includes('"two-start-week"') &&
+    watchlistServiceSource.includes('"streak"') &&
+    watchlistServiceSource.includes('"gem"') &&
+    watchlistServiceSource.includes('"blowup"') &&
+    watchlistServiceSource.includes(".slice(0, 2)"),
+  "watchlist Wire v1 should emit capped rest, two-start, streak, gem, and blowup events from existing stores",
+);
+assert(
+  watchlistPageSource.includes('entry.nextStart?.projectionSource === "baseline" ? " BASELINE" : ""') &&
+    watchlistServiceSource.includes('projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured"'),
+  "watchlist cards should tag baseline-looking projected GS+ values instead of rendering naked 50s",
+);
+assert(
+  followButtonSource.includes("useState(() => initialFollowing || (followState.get(pitcherId) ?? false))") &&
+    followButtonSource.includes("if (initialFollowing || !followState.has(pitcherId))"),
+  "followed watchlist rows must force the shared star state filled when server state says followed",
+);
 
 async function reservePort() {
   const server = net.createServer();
@@ -153,13 +188,17 @@ try {
   assert(page.ok, `/watchlist returned ${page.status}`);
   const html = await page.text();
   assert(html.includes("Watchlist"), "watchlist page should render");
-  assert(html.includes("Digest preview"), "watchlist should render digest preview");
+  assert(html.includes("The Wire"), "watchlist should render the Wire");
+  assert(!html.includes("Today&apos;s hooks") && !html.includes("Today's hooks"), "watchlist should not render old hooks copy");
+  assert(!html.includes("next two days"), "watchlist should not render stale soon-window copy");
+  assert(!/K LINE PENDING|pending/i.test(html.match(/data-responsive-check="watchlist-wire"[\s\S]*?<\/section>/)?.[0] ?? ""), "Wire should not render pending placeholders");
   assert(html.includes("Pitching now"), "watchlist should expose the live pitching summary label");
   assert(html.includes("Sort"), "watchlist should render sort controls");
   assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
   assert(html.includes("Pitching today / soon"), "watchlist should render actionable pitching-soon group");
   assert(html.includes("Everyone else") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list");
   assert(html.includes("Following"), "watchlist should render following control");
+  assert(html.includes('aria-pressed="true"'), "followed watchlist rows should render filled/following star state");
   assert(html.includes(pitcherId) || html.includes("Misiorowski"), "watchlist should render followed pitcher");
 
   const formSorted = await fetch(`${baseUrl}/watchlist?sort=form`, { headers: { cookie } });
@@ -176,7 +215,7 @@ try {
   const unfollowedJson = await unfollowed.json();
   assert(!unfollowedJson.pitcherIds.includes(pitcherId), "unfollow API should remove pitcher id");
 
-  console.log(`watchlist ok: followed/unfollowed pitcher ${pitcherId}, rendered page and digest preview`);
+  console.log(`watchlist ok: followed/unfollowed pitcher ${pitcherId}, rendered page and Wire`);
 } finally {
   stopProcessTree(server);
   if (output && process.env.DEBUG_WATCHLIST_CHECK) process.stderr.write(output);

@@ -8,7 +8,7 @@ import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { WatchlistSearchForm } from "@/components/watchlist-search-form";
 import { getFormLeaderboard } from "@/lib/data/form-service";
-import { WATCHLIST_COOKIE, getWatchlistView, type WatchlistEntry, type WatchlistLiveEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
+import { WATCHLIST_COOKIE, WATCHLIST_SOON_DAYS, getWatchlistView, type WatchlistEntry, type WatchlistLiveEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Watchlist",
-  description: "Follow MLB starting pitchers and see their current form, next starts, and daily digest events.",
+  description: "Follow MLB starting pitchers and see their current form, next starts, and Watchlist Wire events.",
   alternates: { canonical: "/watchlist" },
   robots: {
     index: false,
@@ -68,11 +68,11 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Watchlist</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             <span className="block">Follow starters from Heat Check or pitcher pages.</span>
-            <span className="block lg:whitespace-nowrap">This view joins your followed arms to current Form, next scheduled start, and digest-worthy events.</span>
+            <span className="block lg:whitespace-nowrap">This view joins your followed arms to current Form, next scheduled start, and event-driven Wire notes.</span>
           </p>
           <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-xs sm:gap-3" data-responsive-check="watchlist-summary-stats">
             <SummaryStat label="Followed" value={String(watchlist.entries.length)} />
-            <SummaryStat label="Digest events" value={String(watchlist.digestEvents.length)} />
+            <SummaryStat label="Digest events" value={String(watchlist.wireEvents.length)} />
             <SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)} />
           </div>
         </header>
@@ -117,7 +117,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
                 {watchlist.sort === "default" ? (
                   <>
-                    <WatchlistGroup title="Pitching today / soon" detail="Pinned by start date, then Form" entries={watchlist.pitchingSoon} empty="No followed arms are scheduled in the next two days." />
+                    <WatchlistGroup title="Pitching today / soon" detail={`Pinned within ${WATCHLIST_SOON_DAYS} days, then Form`} entries={watchlist.pitchingSoon} empty={`No followed arms are scheduled in the next ${WATCHLIST_SOON_DAYS} days.`} collapsibleWhenEmpty />
                     <WatchlistGroup title="Everyone else" detail="Sorted by Form descending" entries={watchlist.bench} />
                   </>
                 ) : (
@@ -128,18 +128,25 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           </div>
 
           <aside className="space-y-4">
-            <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="digest-preview">
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Digest preview</p>
-              <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">Today&apos;s hooks</h2>
-              {watchlist.digestEvents.length === 0 ? (
-                <p className="mt-3 text-sm leading-6 text-zinc-400">No starting-soon, gem, rough-start, band, rising, or cooling hooks for your followed pitchers yet.</p>
+            <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-wire">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Watchlist Wire</p>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
+              {watchlist.wireEvents.length === 0 ? (
+                <div className="mt-3 text-sm leading-6 text-zinc-400">
+                  <p>Quiet stretch for your arms.</p>
+                  <p className="mt-2 text-xs text-zinc-500">The Wire only shows event changes, not card fields repeated in another format.</p>
+                </div>
               ) : (
                 <div className="mt-4 grid gap-2">
-                  {watchlist.digestEvents.slice(0, 10).map((event) => (
-                    <Link key={`${event.pitcherId}-${event.key}-${event.detail}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
-                      <p className="mt-1 text-xs text-zinc-500">{event.detail}</p>
+                  {watchlist.wireEvents.slice(0, 10).map((event) => (
+                    <Link key={`${event.pitcherId}-${event.key}-${event.sentence}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40" data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
+                        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
+                      <p className="mt-1 text-xs leading-5 text-zinc-500">{event.sentence}</p>
+                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
                     </Link>
                   ))}
                 </div>
@@ -206,7 +213,7 @@ function PitchingSoonStrip({ entries }: { entries: WatchlistEntry[] }) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.12em] sm:justify-end">
-              <span className="inline-flex min-h-7 items-center rounded border border-amber-300/30 px-2 text-amber-200">Proj GS+ {entry.nextStart?.projectedGsPlus ?? "--"}</span>
+              <span className="inline-flex min-h-7 items-center rounded border border-amber-300/30 px-2 text-amber-200">Proj GS+ {entry.nextStart?.projectedGsPlus ?? "--"}{entry.nextStart?.projectionSource === "baseline" ? " BASELINE" : ""}</span>
               <span className="inline-flex min-h-7 items-center rounded border border-white/10 px-2 text-zinc-400">Form {Math.round(entry.rgs)}</span>
             </div>
           </Link>
@@ -216,7 +223,16 @@ function PitchingSoonStrip({ entries }: { entries: WatchlistEntry[] }) {
   );
 }
 
-function WatchlistGroup({ title, detail, entries, empty }: { title: string; detail: string; entries: WatchlistEntry[]; empty?: string }) {
+function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = false }: { title: string; detail: string; entries: WatchlistEntry[]; empty?: string; collapsibleWhenEmpty?: boolean }) {
+  if (entries.length === 0 && collapsibleWhenEmpty) {
+    return (
+      <section className="rounded border border-white/10 bg-[#101014] p-3">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{title}</p>
+        <p className="mt-1 text-sm text-zinc-500">{empty ?? "No followed pitchers in this group."}</p>
+      </section>
+    );
+  }
+
   return (
     <section>
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-white/10 pb-2">
@@ -285,7 +301,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
           </Link>
           <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
           <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
-          <p className="mt-2 font-mono text-xs text-zinc-300">{entry.nextStart ? `NEXT: ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent} · ${formatShortDate(entry.nextStart.date)} · Proj GS+ ${entry.nextStart.projectedGsPlus}` : "NEXT: TBD"}</p>
+          <p className="mt-2 font-mono text-xs text-zinc-300">{formatNextStartBlock(entry)}</p>
         </div>
       </div>
       <div className="min-w-0">
@@ -358,6 +374,30 @@ function nextStartLabel(entry: WatchlistEntry) {
       ? "Tomorrow"
       : formatShortDate(entry.nextStart.date);
   return `${prefix} · ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent}`;
+}
+
+function formatNextStartBlock(entry: WatchlistEntry) {
+  if (!entry.nextStart) return "NEXT: TBD";
+  const status = entry.nextStart.probableStatus === "confirmed" ? "CONFIRMED" : "PROJECTED";
+  const park = entry.nextStart.parkAdjustment === null ? "Park TBD" : `Park ${formatSigned(entry.nextStart.parkAdjustment)}`;
+  const rest = entry.nextStart.daysRest === null ? "Rest TBD" : `${entry.nextStart.daysRest} days rest`;
+  const baseline = entry.nextStart.projectionSource === "baseline" ? " · BASELINE" : "";
+  return `NEXT: ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent} · ${formatShortDate(entry.nextStart.date)} · ${status} · ${park} · ${rest} · Proj GS+ ${entry.nextStart.projectedGsPlus}${baseline}`;
+}
+
+function relativeEventTime(detectedAt: string) {
+  const elapsedMs = Date.now() - Date.parse(detectedAt);
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 60_000) return "Just now";
+  const minutes = Math.round(elapsedMs / 60_000);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} hr ago`;
+  const days = Math.round(hours / 24);
+  return `${days} days ago`;
+}
+
+function formatSigned(value: number) {
+  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
 }
 
 function watchlistHref(values: { sort?: WatchlistSort; q?: string }) {

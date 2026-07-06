@@ -20,7 +20,7 @@ type FollowStateEvent = CustomEvent<{ pitcherId: string; following: boolean }>;
 
 export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing = false, compact = false, labeled = false, refreshOnChange = false }: FollowPitcherButtonProps) {
   const router = useRouter();
-  const [following, setFollowing] = useState(() => followState.get(pitcherId) ?? initialFollowing);
+  const [following, setFollowing] = useState(() => initialFollowing || (followState.get(pitcherId) ?? false));
   const [error, setError] = useState<string | null>(null);
   const [pulse, setPulse] = useState(false);
   const [pending, setPending] = useState(false);
@@ -29,11 +29,11 @@ export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing =
   const requestInFlight = useRef(false);
 
   useEffect(() => {
-    if (!followState.has(pitcherId)) {
-      followState.set(pitcherId, initialFollowing);
+    if (initialFollowing || !followState.has(pitcherId)) {
+      followState.set(pitcherId, initialFollowing || (followState.get(pitcherId) ?? false));
     }
 
-    const current = followState.get(pitcherId) ?? initialFollowing;
+    const current = initialFollowing || (followState.get(pitcherId) ?? false);
     latestIntent.current = current;
     persisted.current = current;
 

@@ -7,6 +7,7 @@ import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import type { FormNextStart, FormSummary, ProbableStart, StartLine } from "@/lib/types";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
+export const WATCHLIST_SOON_DAYS = 3;
 const WATCHLIST_IDS_PREFIX = "wlids_";
 
 type WatchlistStore = {
@@ -22,11 +23,15 @@ export type WatchlistNextStart = FormNextStart & {
   venue: string | null;
   status: string;
   projectedGsPlus: number;
+  projectionSource: "baseline" | "measured";
+  parkAdjustment: number | null;
+  daysRest: number | null;
+  probableStatus: "confirmed" | "projected";
 };
 
 export type WatchlistEntry = FormSummary & {
   nextStart: WatchlistNextStart | null;
-  digestEvents: WatchlistDigestEvent[];
+  wireEvents: WatchlistWireEvent[];
 };
 
 export type WatchlistLiveStart = {
@@ -43,10 +48,13 @@ export type WatchlistLiveEntry = WatchlistEntry & {
   liveStart: WatchlistLiveStart;
 };
 
-export type WatchlistDigestEvent = {
-  key: "starting" | "rising" | "cooling" | "gem" | "rough" | "band";
+export type WatchlistWireEvent = {
+  key: "rest-anomaly" | "two-start-week" | "streak" | "gem" | "blowup";
   label: string;
-  detail: string;
+  sentence: string;
+  detectedAt: string;
+  priority: number;
+  payloadValues: string[];
 };
 
 export type WatchlistView = {
@@ -57,7 +65,8 @@ export type WatchlistView = {
   livePitchingNow: WatchlistLiveEntry[];
   pitchingSoon: WatchlistEntry[];
   bench: WatchlistEntry[];
-  digestEvents: Array<WatchlistDigestEvent & { pitcherId: string; pitcherName: string }>;
+  wireEvents: Array<WatchlistWireEvent & { pitcherId: string; pitcherName: string }>;
+  digestEvents: Array<WatchlistWireEvent & { pitcherId: string; pitcherName: string }>;
 };
 
 const STORE_PATH = path.join(process.cwd(), ".data", "watchlists.json");
@@ -117,26 +126,29 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   const pitcherIds = await getWatchlistPitcherIds(accountId);
   const sort = parseWatchlistSort(options.sort);
   if (pitcherIds.length === 0) {
-    return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], livePitchingNow: [], pitchingSoon: [], bench: [], digestEvents: [] };
+    return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], livePitchingNow: [], pitchingSoon: [], bench: [], wireEvents: [], digestEvents: [] };
   }
 
   const today = getHomeSlateDate();
-  const [leaderboard, nextStarts, liveBoard] = await Promise.all([
+  const [leaderboard, nextStarts, upcomingStarts, liveBoard] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
     getNextStartMap(pitcherIds),
+    getUpcomingStartMap(pitcherIds),
     getLiveScoreboard({ date: today }).catch(() => null),
   ]);
+  const lastStartPercentiles = buildLastStartPercentiles(leaderboard.pitchers);
   const liveRowsByPitcherId = new Map((liveBoard?.rows ?? []).filter(isWatchlistLiveRow).map((row) => [row.pitcherId, row]));
   const byId = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
   const hydratedEntries = pitcherIds
     .map((pitcherId) => byId.get(pitcherId))
     .filter((pitcher): pitcher is FormSummary => Boolean(pitcher))
     .map((pitcher) => {
-      const nextStart = nextStarts.get(pitcher.pitcherId) ?? null;
+      const rawNextStart = nextStarts.get(pitcher.pitcherId) ?? null;
+      const nextStart = rawNextStart ? { ...rawNextStart, daysRest: daysBetween(pitcher.lastStart?.gameDate ?? today, rawNextStart.date) } : null;
       return {
         ...pitcher,
         nextStart,
-        digestEvents: digestEventsForPitcher(pitcher, nextStart),
+        wireEvents: wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles),
       };
     });
   const entries = sortWatchlistEntries(hydratedEntries, sort);
@@ -158,6 +170,9 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   });
   const pitchingSoon = entries.filter(isPitchingSoon);
   const bench = entries.filter((entry) => !isPitchingSoon(entry));
+  const wireEvents = entries
+    .flatMap((entry) => entry.wireEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name })))
+    .sort((a, b) => b.priority - a.priority || Date.parse(b.detectedAt) - Date.parse(a.detectedAt) || a.pitcherName.localeCompare(b.pitcherName));
 
   return {
     accountId: accountId ?? null,
@@ -167,7 +182,8 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
     livePitchingNow,
     pitchingSoon,
     bench,
-    digestEvents: entries.flatMap((entry) => entry.digestEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name }))),
+    wireEvents,
+    digestEvents: wireEvents,
   };
 }
 
@@ -175,58 +191,75 @@ function isWatchlistLiveRow(row: LiveScoreboardRow): row is LiveScoreboardRow & 
   return row.status === "live" && row.scoreLabel !== "PROJ";
 }
 
-function digestEventsForPitcher(pitcher: FormSummary, nextStart: WatchlistNextStart | null): WatchlistDigestEvent[] {
-  const events: WatchlistDigestEvent[] = [];
+function wireEventsForPitcher(
+  pitcher: FormSummary,
+  nextStart: WatchlistNextStart | null,
+  upcomingStarts: WatchlistNextStart[],
+  lastStartPercentiles: Map<string, number>,
+): WatchlistWireEvent[] {
+  const events: WatchlistWireEvent[] = [];
+  const detectedAt = new Date().toISOString();
 
-  if (nextStart) {
+  if (nextStart && nextStart.daysRest !== null && (nextStart.daysRest <= 4 || nextStart.daysRest >= 7)) {
     events.push({
-      key: "starting",
-      label: nextStart.daysAway === 0 ? "Starting today" : "Starting soon",
-      detail: `${nextStart.side === "away" ? "@" : "vs"} ${nextStart.opponent} on ${formatShortDate(nextStart.date)} · Proj GS+ ${nextStart.projectedGsPlus}`,
+      key: "rest-anomaly",
+      label: "REST ANOMALY",
+      sentence: `${pitcher.name} lines up on ${nextStart.daysRest} days of rest ${nextStart.side === "away" ? "at" : "vs"} ${nextStart.opponent}.`,
+      detectedAt,
+      priority: 70,
+      payloadValues: [String(nextStart.daysRest), nextStart.opponent],
     });
   }
 
-  if (pitcher.status === "ok" && pitcher.trend === "heating" && pitcher.deltaForm >= 4) {
+  const twoStartWeek = startsInSameFantasyWeek(upcomingStarts);
+  if (twoStartWeek) {
     events.push({
-      key: "rising",
-      label: "Rising",
-      detail: `Form up ${formatSigned(pitcher.deltaForm)} over baseline`,
+      key: "two-start-week",
+      label: "TWO-START WEEK",
+      sentence: `${pitcher.name} has two probable starts this week: ${formatShortDate(twoStartWeek[0].date)} ${twoStartWeek[0].side === "away" ? "at" : "vs"} ${twoStartWeek[0].opponent} and ${formatShortDate(twoStartWeek[1].date)} ${twoStartWeek[1].side === "away" ? "at" : "vs"} ${twoStartWeek[1].opponent}.`,
+      detectedAt,
+      priority: 60,
+      payloadValues: [formatShortDate(twoStartWeek[0].date), twoStartWeek[0].opponent, formatShortDate(twoStartWeek[1].date), twoStartWeek[1].opponent],
     });
   }
 
-  if (pitcher.status === "ok" && pitcher.trend === "cooling" && pitcher.deltaForm <= -4) {
+  const streak = currentGsPlusStreak(pitcher);
+  if (streak) {
     events.push({
-      key: "cooling",
-      label: "Cooling",
-      detail: `Form down ${formatSigned(pitcher.deltaForm)} over baseline`,
+      key: "streak",
+      label: "STREAK",
+      sentence: `${pitcher.name} extended a ${streak.count}-start ${streak.kind === "hot" ? "55 plus" : "sub-40"} GS+ streak.`,
+      detectedAt,
+      priority: 30,
+      payloadValues: [String(streak.count), streak.kind === "hot" ? "55 plus" : "sub-40"],
     });
   }
 
-  if ((pitcher.lastStart?.gsPlus ?? 0) >= 65) {
+  if ((pitcher.lastStart?.gsPlus ?? 0) >= 70) {
+    const percentile = lastStartPercentiles.get(pitcher.pitcherId) ?? null;
     events.push({
       key: "gem",
-      label: "Gem last start",
-      detail: `Last GS+ ${pitcher.lastStart?.gsPlus ?? "--"} vs ${pitcher.lastStart?.opp ?? "opponent"}`,
+      label: "GEM",
+      sentence: `${pitcher.name}'s ${pitcher.lastStart?.gsPlus ?? "--"} GS+ ranked in the top ${percentile ?? 10} percent of recent followed-board starts.`,
+      detectedAt,
+      priority: 20,
+      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), `top ${percentile ?? 10} percent`],
     });
   }
 
-  if ((pitcher.lastStart?.gsPlus ?? 100) <= 35) {
+  if ((pitcher.lastStart?.gsPlus ?? 100) <= 25) {
+    const percentile = lastStartPercentiles.get(pitcher.pitcherId) ?? null;
     events.push({
-      key: "rough",
-      label: "Rough last start",
-      detail: `Last GS+ ${pitcher.lastStart?.gsPlus ?? "--"} vs ${pitcher.lastStart?.opp ?? "opponent"}`,
+      key: "blowup",
+      label: "BLOWUP",
+      sentence: `${pitcher.name}'s ${pitcher.lastStart?.gsPlus ?? "--"} GS+ landed in the bottom ${100 - (percentile ?? 90)} percent of recent followed-board starts.`,
+      detectedAt,
+      priority: 10,
+      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), `bottom ${100 - (percentile ?? 90)} percent`],
     });
   }
 
-  if (pitcher.status === "ok" && (pitcher.tier === "onfire" || pitcher.tier === "ice")) {
-    events.push({
-      key: "band",
-      label: pitcher.tier === "onfire" ? "On Fire band" : "Ice Cold band",
-      detail: `Current Form ${Math.round(pitcher.rgs)} across ${pitcher.windowCount} starts`,
-    });
-  }
-
-  return events;
+  return events.sort((a, b) => b.priority - a.priority).slice(0, 2);
 }
 
 async function getNextStartMap(pitcherIds: string[]): Promise<Map<string, WatchlistNextStart>> {
@@ -246,6 +279,26 @@ async function getNextStartMap(pitcherIds: string[]): Promise<Map<string, Watchl
   return nextStarts;
 }
 
+async function getUpcomingStartMap(pitcherIds: string[]): Promise<Map<string, WatchlistNextStart[]>> {
+  const wanted = new Set(pitcherIds);
+  const today = getHomeSlateDate();
+  const dates = Array.from({ length: 10 }, (_, index) => addDays(today, index));
+  const slates = await Promise.all(dates.map((date) => getTodayProbables(date)));
+  const starts = new Map<string, WatchlistNextStart[]>();
+
+  for (const probables of slates) {
+    for (const probable of probables) {
+      if (!wanted.has(probable.pitcherId)) continue;
+      const next = probableToWatchlistNextStart(probable, today);
+      const list = starts.get(probable.pitcherId) ?? [];
+      list.push(next);
+      starts.set(probable.pitcherId, list);
+    }
+  }
+
+  return starts;
+}
+
 function probableToWatchlistNextStart(probable: ProbableStart, today: string): WatchlistNextStart {
   return {
     date: probable.date,
@@ -257,6 +310,10 @@ function probableToWatchlistNextStart(probable: ProbableStart, today: string): W
     venue: probable.venue ?? null,
     status: probable.status,
     projectedGsPlus: Math.round(probable.matchupScore),
+    projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured",
+    parkAdjustment: Number.isFinite(probable.parkAdjustment) ? probable.parkAdjustment : null,
+    daysRest: null,
+    probableStatus: probable.status.toLowerCase().includes("probable") || probable.status.toLowerCase().includes("scheduled") ? "confirmed" : "projected",
   };
 }
 
@@ -289,7 +346,55 @@ function compareForm(a: WatchlistEntry, b: WatchlistEntry) {
 }
 
 function isPitchingSoon(entry: WatchlistEntry) {
-  return typeof entry.nextStart?.daysAway === "number" && entry.nextStart.daysAway <= 2;
+  return typeof entry.nextStart?.daysAway === "number" && entry.nextStart.daysAway <= WATCHLIST_SOON_DAYS;
+}
+
+function startsInSameFantasyWeek(starts: WatchlistNextStart[]) {
+  for (let index = 0; index < starts.length; index += 1) {
+    for (let compareIndex = index + 1; compareIndex < starts.length; compareIndex += 1) {
+      if (fantasyWeekKey(starts[index].date) === fantasyWeekKey(starts[compareIndex].date)) return [starts[index], starts[compareIndex]] as const;
+    }
+  }
+  return null;
+}
+
+function fantasyWeekKey(date: string) {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  const day = value.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  value.setUTCDate(value.getUTCDate() + mondayOffset);
+  return value.toISOString().slice(0, 10);
+}
+
+function currentGsPlusStreak(pitcher: FormSummary) {
+  const starts = [...(pitcher.spark ?? [])].reverse();
+  const hotCount = countWhile(starts, (score) => score >= 55);
+  if (hotCount >= 3) return { kind: "hot" as const, count: hotCount };
+  const coldCount = countWhile(starts, (score) => score < 40);
+  if (coldCount >= 3) return { kind: "cold" as const, count: coldCount };
+  return null;
+}
+
+function countWhile(values: number[], predicate: (value: number) => boolean) {
+  let count = 0;
+  for (const value of values) {
+    if (!predicate(value)) break;
+    count += 1;
+  }
+  return count;
+}
+
+function buildLastStartPercentiles(pitchers: FormSummary[]) {
+  const scores = pitchers.flatMap((pitcher) => typeof pitcher.lastStart?.gsPlus === "number" ? [pitcher.lastStart.gsPlus] : []).sort((a, b) => a - b);
+  const percentiles = new Map<string, number>();
+  if (scores.length === 0) return percentiles;
+  for (const pitcher of pitchers) {
+    const score = pitcher.lastStart?.gsPlus;
+    if (typeof score !== "number") continue;
+    const belowOrEqual = scores.filter((value) => value <= score).length;
+    percentiles.set(pitcher.pitcherId, Math.max(1, Math.min(99, Math.round((belowOrEqual / scores.length) * 100))));
+  }
+  return percentiles;
 }
 
 function daysBetween(olderDate: string, newerDate: string) {
@@ -334,9 +439,4 @@ function formatShortDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
-}
-
-function formatSigned(value: number) {
-  const rounded = value.toFixed(1);
-  return value > 0 ? `+${rounded}` : rounded;
 }
