@@ -28,6 +28,7 @@ const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
 const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const misiorowskiTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-action-v4.json", "utf8"));
 const misiorowskiVisibleTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-06-12-mil-phi-694819-mlb-action-v4.json", "utf8"));
+const cavalliTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-action-v4.json", "utf8"));
 const detmersTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-05-24-laa-tex-672282-mlb-action-v4.json", "utf8"));
 
 assert(
@@ -42,7 +43,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v10"]') &&
+    bestStartsService.includes('["home-best-starts-v11"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -304,6 +305,9 @@ assert(
     misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings" &&
     misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.png" &&
     misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
+    cavalliTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-api-action-v2.jpg" &&
+    cavalliTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/rhkvtlkawsigrek3ke1u.jpg" &&
+    cavalliTopStartAction.playUrl === "https://www.mlb.com/video/cade-cavalli-fans-13-over-seven-scoreless" &&
     detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.png" &&
     detmersTopStartAction.sourceImageUrl === detmersTopStartAction.imageUrl,
   "home Top Starts #1 and screenshot-visible #3 must use generated replacement action photos",
