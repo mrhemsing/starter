@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getLiveScoreboard, type LiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
-import { getArchivedSlateStarts, getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
+import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { resolveTopPerformerMetrics, type TopPerformerMetrics } from "@/lib/data/top-performer-metrics";
 import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
@@ -46,7 +46,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v13"],
+  ["home-ranked", "v14"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -55,7 +55,6 @@ export async function getRankedHome(): Promise<RankedHomeResponse> {
 }
 
 async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
-  const yesterday = addDays(today, -1);
   const [todayCompletion, slateProgress] = await Promise.all([
     getRankedSlateCompletionState(today, today),
     getSlateStartProgress({ window: "today", date: today }),
@@ -63,30 +62,22 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const isTodaySlateStarted = slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games";
   const todaySlateStarts = todayCompletion.completedStarts > 0 || isTodaySlateStarted ? await getDailySlate({ window: "today", date: today }) : [];
   const liveBoard = slateProgress.state === "starts-in-progress" ? await getLiveScoreboard({ date: today }) : null;
-  const yesterdayArchivedSlateStarts = await getArchivedSlateStarts(yesterday);
-  const yesterdaySlateStarts = yesterdayArchivedSlateStarts.length > 0 ? yesterdayArchivedSlateStarts : await getDailySlate({ window: "yesterday", date: yesterday });
   const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);
-  const useTodaySlate = todayCompletedSlateStarts.length > 0;
-  const slateStarts = useTodaySlate ? todaySlateStarts : yesterdaySlateStarts;
-  const rankedDate = useTodaySlate ? today : yesterday;
-  const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);
   const topPerformerState = resolveTopPerformerState({
     today,
-    yesterday,
     isTodaySlateStarted,
     areTodayStartsComplete: slateProgress.state === "all-starts-complete",
     liveBoard,
     todaySlateStarts,
     todayCompletedSlateStarts,
-    yesterdaySlateStarts,
   });
   const topPerformer = await resolveTopPerformerPayload(topPerformerState);
   const liveLeaderboard = topPerformer?.status === "live" ? null : resolveLiveLeaderboard(liveBoard);
 
   return {
-    date: rankedDate,
-    label: rankedLabel,
-    starts: slateStarts,
+    date: today,
+    label: "Today",
+    starts: todaySlateStarts,
     topPerformer,
     liveLeaderboard,
   };
@@ -106,22 +97,18 @@ async function resolveTopPerformerPayload(state: TopPerformerState | null): Prom
 
 function resolveTopPerformerState({
   today,
-  yesterday,
   isTodaySlateStarted,
   areTodayStartsComplete,
   liveBoard,
   todaySlateStarts,
   todayCompletedSlateStarts,
-  yesterdaySlateStarts,
 }: {
   today: string;
-  yesterday: string;
   isTodaySlateStarted: boolean;
   areTodayStartsComplete: boolean;
   liveBoard: LiveScoreboard | null;
   todaySlateStarts: StartSummary[];
   todayCompletedSlateStarts: StartSummary[];
-  yesterdaySlateStarts: StartSummary[];
 }) {
   const todayLeader = todayCompletedSlateStarts[0] ?? null;
 
@@ -158,17 +145,7 @@ function resolveTopPerformerState({
       scoreStatusLabel: null,
     };
   }
-
-  const yesterdayRankedStarts = yesterdaySlateStarts.filter(isCompletedRankedStart);
-  const yesterdayLeader = yesterdayRankedStarts[0] ?? null;
-  if (!yesterdayLeader) return null;
-  return {
-    status: "previous" as const,
-    start: yesterdayLeader,
-    slateCount: yesterdayRankedStarts.length,
-    dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,
-    scoreStatusLabel: null,
-  };
+  return null;
 }
 
 function resolveLiveLeaderStart(liveBoard: LiveScoreboard | null, todaySlateStarts: StartSummary[]) {
@@ -225,21 +202,6 @@ function formatLongDate(date: string) {
     day: "numeric",
     timeZone: "UTC",
   }).format(parsed);
-}
-
-function formatWeekday(date: string) {
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    timeZone: "UTC",
-  }).format(parsed);
-}
-
-function addDays(date: string, days: number) {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
 }
 
 function lastName(name: string) {

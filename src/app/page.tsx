@@ -9,7 +9,7 @@ import { getFormHome } from "@/lib/data/form-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
-import { getHomeSlateDate, getHomeSlateNavigation, getRankedSlateCompletionState, getSlateStartProgress } from "@/lib/data/start-service";
+import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
 import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";
@@ -31,8 +31,6 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const today = getHomeSlateDate();
-  const slateNavigation = getHomeSlateNavigation(today);
-  const yesterday = slateNavigation[0].date;
   const tomorrow = addDays(today, 1);
   const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);
   const tomorrowWatchPromise = getTonightMustWatch({ date: tomorrow, window: 5 }).catch(() => null);
@@ -42,9 +40,8 @@ export default async function Home() {
   const bestStartsPromise = getBestStartsHome().catch(() => null);
   const formHomePromise = getFormHome({ window: 5 }).catch(() => null);
   const homeTickerBoardPromise = getLiveScoreboard({ date: today }).catch(() => null);
-  const [slateStatus, todayCompletion, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome, homeTickerBoard] = await Promise.all([
+  const [slateStatus, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome, homeTickerBoard] = await Promise.all([
     getSlateStartProgress({ window: "today", date: today }),
-    getRankedSlateCompletionState(today, today),
     getRankedHome().catch(() => null),
     todayWatchPromise,
     tomorrowWatchPromise,
@@ -53,7 +50,7 @@ export default async function Home() {
     formHomePromise,
     homeTickerBoardPromise,
   ]);
-  const rankedDate = todayCompletion.completedStarts > 0 ? today : yesterday;
+  const rankedDate = today;
   const homeSlatePhaseExperiment = isHomeSlatePhaseExperimentEnabled();
   const homeSlatePhase = getHomeSlatePhase({ slateProgress: slateStatus, ranked });
   const jsonLd = [

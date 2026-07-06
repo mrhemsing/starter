@@ -53,13 +53,13 @@ assert(
     featuredHighlightService.includes('source,') &&
     featuredHighlightService.includes('embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`') &&
     featuredHighlightService.includes('watchUrl: `https://www.youtube.com/watch?v=${videoId}`'),
-  "home top performer must resolve MLB YouTube highlights from manual seeds, stored ingest, or official-channel search and pass them into the Start of the Night card",
+  "home top performer must resolve MLB YouTube highlights from manual seeds, stored ingest, or official-channel search and pass them into the Start of the Day card",
 );
 
 assert(
   rankedService.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
     rankedService.includes("const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);") &&
-    rankedService.includes("const yesterdayRankedStarts = yesterdaySlateStarts.filter(isCompletedRankedStart);") &&
+    !rankedService.includes("const yesterdayRankedStarts = yesterdaySlateStarts.filter(isCompletedRankedStart);") &&
     rankedService.includes("function isCompletedRankedStart(start: StartSummary)") &&
     rankedService.includes('return start.source?.line !== "fixture" && isRankedRegularStart(start);'),
   "home Start of the Day must use the shared ranked-start 2.0 IP floor instead of raw completed-start ordering",
@@ -350,7 +350,7 @@ assert(
     rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(start.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v13"]'),
+    rankedService.includes('["home-ranked", "v14"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
 );
 
@@ -444,14 +444,14 @@ assert(
 );
 
 assert(
-  rankedService.includes('dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,') &&
-    !rankedService.includes('dateLabel: `${formatWeekday(yesterday)} · ${formatLongDate(yesterday)}`,'),
-  "home top performer previous-slate label must read Yesterday after midnight",
-);
-
-assert(
-  rankedService.includes('const rankedLabel = useTodaySlate ? "Today" : formatWeekday(yesterday);'),
-  "home ranked recap previous-slate label must read the weekday",
+  rankedService.includes("date: today,") &&
+    rankedService.includes('label: "Today",') &&
+    rankedService.includes("starts: todaySlateStarts,") &&
+    homePage.includes("const rankedDate = today;") &&
+    !rankedService.includes('dateLabel: `Yesterday · ${formatLongDate(yesterday)}`,') &&
+    !rankedService.includes("formatWeekday(yesterday)") &&
+    !rankedService.includes("yesterdaySlateStarts"),
+  "home ranked and top performer payloads must stay anchored to today and must not show yesterday as the new-day fallback",
 );
 
 assert(
@@ -465,11 +465,6 @@ assert(
     rankedRecap.includes('return label === "Below" || label === "Poor";') &&
     !rankedRecap.includes("const duds = rankedStarts.slice(-3);"),
   "home ranked recap Rough ones must only show below-solid starts and must not repeat solid top starts on small slates",
-);
-
-assert(
-  rankedService.includes("function formatWeekday(date: string)"),
-  "home ranked service must format previous-slate weekday labels",
 );
 
 assert(
