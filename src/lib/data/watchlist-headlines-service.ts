@@ -61,7 +61,7 @@ export type WatchlistHeadlineIngestResult = {
 
 const HEADLINE_STATE_VERSION = 1;
 const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
-const HEADLINE_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
+const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
 const HEADLINE_PRIORITY = 35;
 const NEWS_RSS_TIMEOUT_MS = 8000;
@@ -242,22 +242,27 @@ async function appendHeadline(candidate: HeadlineCandidate) {
   };
   const now = new Date().toISOString();
   const recent = state.headlines.filter((headline) => Date.parse(now) - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS);
-  if (recent.some((headline) => isDuplicateHeadline(headline, candidate))) return false;
+  const duplicate = recent.find((headline) => isDuplicateHeadline(headline, candidate));
+  if (duplicate) {
+    const preferred = preferredHeadline(duplicate, candidate);
+    if (preferred === duplicate) return false;
+    const withoutDuplicate = recent.filter((headline) => headline.id !== duplicate.id);
+    await writeRuntimeState(headlineStateKey(candidate.pitcherId), {
+      ...state,
+      updatedAt: now,
+      headlines: [
+        ...withoutDuplicate,
+        storedHeadlineFromCandidate(candidate, now),
+      ].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 20),
+    });
+    return true;
+  }
   const next: PitcherHeadlineState = {
     ...state,
     updatedAt: now,
     headlines: [
       ...recent,
-      {
-        id: stableHeadlineId(candidate),
-        pitcherId: candidate.pitcherId,
-        headline: candidate.headline,
-        source: candidate.source,
-        url: candidate.url,
-        publishedAt: candidate.publishedAt,
-        detectedAt: now,
-        sourceType: candidate.sourceType,
-      },
+      storedHeadlineFromCandidate(candidate, now),
     ].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 20),
   };
   await writeRuntimeState(headlineStateKey(candidate.pitcherId), next);
@@ -426,12 +431,12 @@ function isDuplicateHeadline(existing: StoredHeadline, candidate: HeadlineCandid
   const withinWindow = Math.abs(Date.parse(existing.publishedAt) - Date.parse(candidate.publishedAt)) <= HEADLINE_DEDUPE_WINDOW_MS;
   if (!withinWindow) return false;
   if (existing.url === candidate.url) return true;
-  return titleSimilarity(existing.headline, candidate.headline) >= 0.85 || sameHeadlineCluster(existing.headline, candidate.headline);
+  return normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline) || titleSimilarity(existing.headline, candidate.headline) >= 0.85 || sameHeadlineCluster(existing.headline, candidate.headline);
 }
 
 function titleSimilarity(a: string, b: string) {
-  const aTokens = new Set(normalizeText(a).split(" ").filter(Boolean));
-  const bTokens = new Set(normalizeText(b).split(" ").filter(Boolean));
+  const aTokens = new Set(normalizeHeadlineTitle(a).split(" ").filter(Boolean));
+  const bTokens = new Set(normalizeHeadlineTitle(b).split(" ").filter(Boolean));
   if (aTokens.size === 0 || bTokens.size === 0) return 0;
   const intersection = [...aTokens].filter((token) => bTokens.has(token)).length;
   const union = new Set([...aTokens, ...bTokens]).size;
@@ -441,10 +446,47 @@ function titleSimilarity(a: string, b: string) {
 function collapseHeadlineClusters(headlines: StoredHeadline[]) {
   const kept: StoredHeadline[] = [];
   for (const headline of [...headlines].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))) {
-    if (!kept.some((existing) => isDuplicateHeadline(existing, headline))) kept.push(headline);
+    const duplicateIndex = kept.findIndex((existing) => isDuplicateHeadline(existing, headline));
+    if (duplicateIndex === -1) {
+      kept.push(headline);
+      continue;
+    }
+    const preferred = preferredHeadline(kept[duplicateIndex], headline);
+    if (preferred !== kept[duplicateIndex]) kept[duplicateIndex] = preferred;
   }
-  return kept;
+  return kept.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
+
+function storedHeadlineFromCandidate(candidate: HeadlineCandidate, detectedAt: string): StoredHeadline {
+  return {
+    id: stableHeadlineId(candidate),
+    pitcherId: candidate.pitcherId,
+    headline: candidate.headline,
+    source: candidate.source,
+    url: candidate.url,
+    publishedAt: candidate.publishedAt,
+    detectedAt,
+    sourceType: candidate.sourceType,
+  };
+}
+
+function preferredHeadline<T extends Pick<StoredHeadline, "url" | "publishedAt">>(a: T, b: T) {
+  const aSyndicator = isSyndicatorUrl(a.url);
+  const bSyndicator = isSyndicatorUrl(b.url);
+  if (aSyndicator !== bSyndicator) return aSyndicator ? b : a;
+  return Date.parse(a.publishedAt) <= Date.parse(b.publishedAt) ? a : b;
+}
+
+function isSyndicatorUrl(raw: string) {
+  try {
+    const hostname = new URL(raw).hostname.toLowerCase();
+    return SYNDICATOR_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
+const SYNDICATOR_HOSTS = ["msn.com"];
 
 function sameHeadlineCluster(a: string, b: string) {
   const aKey = eventTopicKey(a);
@@ -472,7 +514,11 @@ function headlineTopicTokens(value: string) {
 }
 
 function stripSourceSuffix(value: string) {
-  return value.replace(/\s+-\s+[^-]+$/, "");
+  return value.replace(/\s+-\s+(msn|yahoo sports|espn|mlb trade rumors|google news)\s*$/i, "");
+}
+
+export function normalizeHeadlineTitle(value: string) {
+  return normalizeText(stripSourceSuffix(decodeHtml(stripTags(value)))).replace(/\s+/g, " ").trim();
 }
 
 const HEADLINE_TOPIC_STOP_WORDS = new Set([

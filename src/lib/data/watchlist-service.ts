@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { getParkContext } from "@/lib/data/run-environment";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import type { FormNextStart, FormSummary, ProbableStart, StartLine } from "@/lib/types";
@@ -28,6 +29,7 @@ export type WatchlistNextStart = FormNextStart & {
   projectedGsPlus: number;
   projectionSource: "baseline" | "measured";
   parkAdjustment: number | null;
+  parkRunFactor: number | null;
   daysRest: number | null;
   probableStatus: "confirmed" | "projected";
 };
@@ -35,6 +37,8 @@ export type WatchlistNextStart = FormNextStart & {
 export type WatchlistEntry = FormSummary & {
   nextStart: WatchlistNextStart | null;
   wireEvents: WatchlistWireEvent[];
+  headlineEvents: WatchlistWireEvent[];
+  signalEvents: WatchlistWireEvent[];
 };
 
 export type WatchlistLiveStart = {
@@ -172,13 +176,14 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
     .map((pitcher) => {
       const rawNextStart = nextStarts.get(pitcher.pitcherId) ?? null;
       const nextStart = rawNextStart ? { ...rawNextStart, daysRest: daysBetween(pitcher.lastStart?.gameDate ?? today, rawNextStart.date) } : null;
+      const signalEvents = wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles);
+      const headlineEvents = capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? []);
       return {
         ...pitcher,
         nextStart,
-        wireEvents: [
-          ...wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles),
-          ...(headlineEventsByPitcher.get(pitcher.pitcherId) ?? []),
-        ],
+        signalEvents,
+        headlineEvents,
+        wireEvents: [...signalEvents, ...headlineEvents],
       };
     });
   const entries = sortWatchlistEntries(hydratedEntries, sort);
@@ -201,7 +206,7 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   const pitchingSoon = entries.filter(isPitchingSoon);
   const bench = entries.filter((entry) => !isPitchingSoon(entry));
   const wireEvents = entries
-    .flatMap((entry) => entry.wireEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name })))
+    .flatMap((entry) => entry.headlineEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name })))
     .sort((a, b) => watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || a.pitcherName.localeCompare(b.pitcherName));
 
   return {
@@ -267,7 +272,7 @@ function wireEventsForPitcher(
     events.push({
       key: "streak",
       label: "STREAK",
-      sentence: `${pitcher.name} extended a ${streak.count}-start ${streak.kind === "hot" ? "55 plus" : "sub-40"} GS+ streak.`,
+      sentence: `${streak.count} straight starts of ${streak.kind === "hot" ? "GS+ 55 plus" : "GS+ below 40"}.`,
       detectedAt,
       priority: 30,
       payloadValues: [String(streak.count), streak.kind === "hot" ? "55 plus" : "sub-40"],
@@ -279,10 +284,10 @@ function wireEventsForPitcher(
     events.push({
       key: "gem",
       label: "GEM",
-      sentence: `${pitcher.name}'s ${pitcher.lastStart?.gsPlus ?? "--"} GS+ ranked in the top ${percentile ?? 10} percent of recent followed-board starts.`,
+      sentence: `${pitcher.lastStart?.gsPlus ?? "--"} GS+ was ${formatSeasonStartPercentile(percentile ?? 90)}.`,
       detectedAt,
       priority: 20,
-      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), `top ${percentile ?? 10} percent`],
+      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), formatSeasonStartPercentile(percentile ?? 90)],
     });
   }
 
@@ -291,10 +296,10 @@ function wireEventsForPitcher(
     events.push({
       key: "blowup",
       label: "BLOWUP",
-      sentence: `${pitcher.name}'s ${pitcher.lastStart?.gsPlus ?? "--"} GS+ landed in the bottom ${100 - (percentile ?? 90)} percent of recent followed-board starts.`,
+      sentence: `${pitcher.lastStart?.gsPlus ?? "--"} GS+ landed in ${formatSeasonStartPercentile(percentile ?? 10)}.`,
       detectedAt,
       priority: 10,
-      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), `bottom ${100 - (percentile ?? 90)} percent`],
+      payloadValues: [String(pitcher.lastStart?.gsPlus ?? ""), formatSeasonStartPercentile(percentile ?? 10)],
     });
   }
 
@@ -339,6 +344,7 @@ async function getUpcomingStartMap(pitcherIds: string[]): Promise<Map<string, Wa
 }
 
 function probableToWatchlistNextStart(probable: ProbableStart, today: string): WatchlistNextStart {
+  const parkRunFactor = probable.venue ? getParkContext(probable.venue).runFactor : null;
   return {
     date: probable.date,
     opponent: probable.opponent,
@@ -350,10 +356,33 @@ function probableToWatchlistNextStart(probable: ProbableStart, today: string): W
     status: probable.status,
     projectedGsPlus: Math.round(probable.matchupScore),
     projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured",
-    parkAdjustment: Number.isFinite(probable.parkAdjustment) ? probable.parkAdjustment : null,
+    parkAdjustment: Number.isFinite(probable.parkAdjustment) && probable.parkAdjustment !== 0 ? probable.parkAdjustment : null,
+    parkRunFactor: typeof parkRunFactor === "number" && parkRunFactor > 0 ? parkRunFactor : null,
     daysRest: null,
     probableStatus: probable.status.toLowerCase().includes("probable") || probable.status.toLowerCase().includes("scheduled") ? "confirmed" : "projected",
   };
+}
+
+function capWireEventsPerPitcherDay<T extends WatchlistWireEvent>(events: T[]) {
+  const counts = new Map<string, number>();
+  return sortWatchlistWireEvents(events).filter((event) => {
+    const day = new Date(watchlistWireEventSortTime(event)).toISOString().slice(0, 10);
+    const count = counts.get(day) ?? 0;
+    if (count >= 2) return false;
+    counts.set(day, count + 1);
+    return true;
+  });
+}
+
+export function formatSeasonStartPercentile(percentile: number) {
+  const safePercentile = Math.max(0, Math.min(100, Math.round(percentile)));
+  if (safePercentile >= 90) return `a top ${100 - safePercentile} percent start this season`;
+  return `the ${ordinal(safePercentile)} percentile this season`;
+}
+
+function ordinal(value: number) {
+  const suffix = value % 100 >= 11 && value % 100 <= 13 ? "th" : value % 10 === 1 ? "st" : value % 10 === 2 ? "nd" : value % 10 === 3 ? "rd" : "th";
+  return `${value}${suffix}`;
 }
 
 function parseWatchlistSort(value: string | null | undefined): WatchlistSort {

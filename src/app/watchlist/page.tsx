@@ -6,7 +6,9 @@ import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components
 import { Headshot } from "@/components/headshot";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
+import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";
 import { WatchlistSearchForm } from "@/components/watchlist-search-form";
+import { WatchlistSuggestedFollows } from "@/components/watchlist-suggested-follows";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { WATCHLIST_COOKIE, WATCHLIST_SOON_DAYS, getWatchlistView, type WatchlistEntry, type WatchlistLiveEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -80,7 +82,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
         <section className="grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
-            <PitchingSoonStrip entries={watchlist.pitchingSoon} />
+            <NextOnTheSlabModule entries={watchlist.pitchingSoon} />
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
@@ -99,7 +101,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
                 </div>
                 <WatchlistSearchForm query={query} sort={watchlist.sort} />
               </div>
-              <FollowSearchResults results={searchResults} followedIds={followedIds} query={query} />
+              <WatchlistSuggestedFollows results={searchResults} followedIds={[...followedIds]} query={query} />
             </section>
 
             {watchlist.entries.length === 0 ? (
@@ -117,8 +119,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
                 {watchlist.sort === "default" ? (
                   <>
-                    <WatchlistGroup title="Pitching today / soon" detail={`Pinned within ${WATCHLIST_SOON_DAYS} days, then Form`} entries={watchlist.pitchingSoon} empty={`No followed arms are scheduled in the next ${WATCHLIST_SOON_DAYS} days.`} collapsibleWhenEmpty />
-                    <WatchlistGroup title="Everyone else" detail="Sorted by Form descending" entries={watchlist.bench} />
+                    <WatchlistGroup title={watchlist.pitchingSoon.length === 0 ? "Followed arms" : "Everyone else"} detail="Sorted by Form descending" entries={watchlist.bench} />
                   </>
                 ) : (
                   <WatchlistGroup title={sortOptions.find((option) => option.key === watchlist.sort)?.label ?? "Watchlist"} detail={`${watchlist.entries.length} followed pitchers`} entries={watchlist.entries} />
@@ -131,6 +132,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
             <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-wire">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Watchlist Wire</p>
               <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
+              <p className="mt-1 text-sm text-zinc-500">News for your arms</p>
               {watchlist.wireEvents.length === 0 ? (
                 <div className="mt-3 text-sm leading-6 text-zinc-400">
                   <p>Quiet stretch for your arms.</p>
@@ -186,59 +188,48 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
 
 function WireEventCard({ event }: { event: WatchlistEntry["wireEvents"][number] & { pitcherId: string; pitcherName: string } }) {
   const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
-  if (event.headline) {
-    return (
-      <a href={event.headline.url} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
-          <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
-        </div>
-        <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline.text}</p>
-        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
-      </a>
-    );
-  }
-
   return (
-    <Link href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+    <a href={event.headline?.url ?? "#"} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
       <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
         <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
       </div>
-      <p className="mt-2 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
-      <p className="mt-1 text-xs leading-5 text-zinc-500">{event.sentence}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
-    </Link>
+      <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.pitcherName}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
+    </a>
   );
 }
 
-function PitchingSoonStrip({ entries }: { entries: WatchlistEntry[] }) {
-  if (entries.length === 0) return null;
+function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
+  const title = entries.some((entry) => entry.nextStart?.daysAway === 0) ? "Today on the slab" : entries.length > 0 ? "Next on the slab" : "No followed arms scheduled";
+  const subtitle = entries.length > 0
+    ? entries[0]?.nextStart?.daysAway === 0
+      ? "Followed starters scheduled today."
+      : `Nearest followed start: ${formatShortDate(entries[0]?.nextStart?.date ?? "")}.`
+    : `No followed arms scheduled in the next ${WATCHLIST_SOON_DAYS} days.`;
   return (
     <section className="mb-4 rounded border border-amber-300/25 bg-amber-300/[0.06] p-4" data-responsive-check="watchlist-pitching-soon">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">Pitching today / soon</p>
-          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">Daily decision strip</h2>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">{entries.length > 0 ? "On deck" : "Watchlist status"}</p>
+          <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{title}</h2>
+          <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
         </div>
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{entries.length} followed arms</p>
+        {entries.length > 0 ? <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{entries.length} followed arms</p> : null}
       </div>
+      {entries.length === 0 ? null : (
       <div className="mt-4 grid gap-2">
         {entries.map((entry) => (
-          <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-3 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:items-center">
             <div className="min-w-0">
               <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
-              <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
-                {nextStartLabel(entry)} · {entry.nextStart?.venue ?? "Venue TBD"}
-              </p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team} · Form {Math.round(entry.rgs)}</p>
             </div>
-            <div className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.12em] sm:justify-end">
-              <span className="inline-flex min-h-7 items-center rounded border border-amber-300/30 px-2 text-amber-200">Proj GS+ {entry.nextStart?.projectedGsPlus ?? "--"}{entry.nextStart?.projectionSource === "baseline" ? " BASELINE" : ""}</span>
-              <span className="inline-flex min-h-7 items-center rounded border border-white/10 px-2 text-zinc-400">Form {Math.round(entry.rgs)}</span>
-            </div>
+            <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
           </Link>
         ))}
       </div>
+      )}
     </section>
   );
 }
@@ -321,7 +312,10 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
           </Link>
           <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
           <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
-          <p className="mt-2 font-mono text-xs text-zinc-300">{formatNextStartBlock(entry)}</p>
+          <div className="mt-3">
+            <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
+          </div>
+          <SignalsRow events={entry.signalEvents} />
         </div>
       </div>
       <div className="min-w-0">
@@ -337,31 +331,6 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
         <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
       </div>
     </article>
-  );
-}
-
-function FollowSearchResults({ results, followedIds, query }: { results: FormSummary[]; followedIds: Set<string>; query: string }) {
-  if (results.length === 0) {
-    if (!query) return null;
-    return <p className="mt-3 text-sm text-zinc-500">No pitcher matches for &quot;{query}&quot;.</p>;
-  }
-
-  return (
-    <div className="mt-4 border-t border-white/10 pt-4" data-responsive-check="watchlist-follow-search-results">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{query ? "Search results" : "Suggested follows"}</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {results.map((pitcher) => (
-          <div key={pitcher.pitcherId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-black/20 p-3">
-            <Link href={pitcherHref(pitcher, sourceParams("watchlist"))} className="min-w-0">
-              <p className="truncate font-serif text-lg font-bold text-zinc-50">{pitcher.name}</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} · Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}</p>
-              <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
-            </Link>
-            <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followedIds.has(pitcher.pitcherId)} compact refreshOnChange />
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -386,25 +355,6 @@ function formatShortDate(date: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
-function nextStartLabel(entry: WatchlistEntry) {
-  if (!entry.nextStart) return "Next start TBD";
-  const prefix = entry.nextStart.daysAway === 0
-    ? "Today"
-    : entry.nextStart.daysAway === 1
-      ? "Tomorrow"
-      : formatShortDate(entry.nextStart.date);
-  return `${prefix} · ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent}`;
-}
-
-function formatNextStartBlock(entry: WatchlistEntry) {
-  if (!entry.nextStart) return "NEXT: TBD";
-  const status = entry.nextStart.probableStatus === "confirmed" ? "CONFIRMED" : "PROJECTED";
-  const park = entry.nextStart.parkAdjustment === null ? "Park TBD" : `Park ${formatSigned(entry.nextStart.parkAdjustment)}`;
-  const rest = entry.nextStart.daysRest === null ? "Rest TBD" : `${entry.nextStart.daysRest} days rest`;
-  const baseline = entry.nextStart.projectionSource === "baseline" ? " · BASELINE" : "";
-  return `NEXT: ${entry.nextStart.side === "away" ? "@" : "vs"} ${entry.nextStart.opponent} · ${formatShortDate(entry.nextStart.date)} · ${status} · ${park} · ${rest} · Proj GS+ ${entry.nextStart.projectedGsPlus}${baseline}`;
-}
-
 function relativeEventTime(detectedAt: string) {
   const elapsedMs = Date.now() - Date.parse(detectedAt);
   if (!Number.isFinite(elapsedMs) || elapsedMs < 60_000) return "Just now";
@@ -416,16 +366,29 @@ function relativeEventTime(detectedAt: string) {
   return `${days} days ago`;
 }
 
-function formatSigned(value: number) {
-  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
-}
-
 function watchlistHref(values: { sort?: WatchlistSort; q?: string }) {
   const params = new URLSearchParams();
   if (values.sort && values.sort !== "default") params.set("sort", values.sort);
   if (values.q) params.set("q", values.q);
   const query = params.toString();
   return `/watchlist${query ? `?${query}` : ""}`;
+}
+
+function SignalsRow({ events }: { events: WatchlistEntry["signalEvents"] }) {
+  if (events.length === 0) return null;
+  return (
+    <div className="mt-3 grid gap-1.5" data-responsive-check="watchlist-card-signals">
+      {events.slice(0, 2).map((event) => (
+        <div key={`${event.key}-${event.detectedAt}`} className="rounded border border-amber-300/15 bg-amber-300/[0.04] px-2 py-1.5">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200">{event.label}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-300" aria-label="Unread signal" />
+          </div>
+          {event.sentence ? <p className="mt-1 text-[11px] leading-4 text-zinc-500">{event.sentence}</p> : null}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function buildSearchResults(pitchers: FormSummary[], followedIds: Set<string>, query: string) {

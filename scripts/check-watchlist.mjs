@@ -6,7 +6,7 @@ import net from "node:net";
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
 
-const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource] = await Promise.all([
+const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
   readFile("src/lib/data/watchlist-service.ts", "utf8"),
   readFile("src/lib/data/watchlist-headlines-service.ts", "utf8"),
@@ -14,6 +14,8 @@ const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headl
   readFile("vercel.json", "utf8"),
   readFile("src/components/watchlist-search-form.tsx", "utf8"),
   readFile("src/components/follow-pitcher-button.tsx", "utf8"),
+  readFile("src/components/watchlist-next-start-block.tsx", "utf8"),
+  readFile("src/components/watchlist-suggested-follows.tsx", "utf8"),
 ]);
 
 function assert(condition, message) {
@@ -38,7 +40,8 @@ assert(
 assert(
   watchlistPageSource.includes("PitcherAvailabilityNote") &&
     watchlistPageSource.includes("availability={entry.availability}") &&
-    watchlistPageSource.includes("availability={pitcher.availability}"),
+    suggestedFollowsSource.includes("PitcherAvailabilityNote") &&
+    suggestedFollowsSource.includes("availability={pitcher.availability}"),
   "watchlist rows and search results should surface current MLB IL availability when present",
 );
 assert(
@@ -71,18 +74,21 @@ assert(
 assert(
   watchlistServiceSource.includes("export const WATCHLIST_SOON_DAYS = 3;") &&
     watchlistPageSource.includes("WATCHLIST_SOON_DAYS") &&
-    !watchlistPageSource.includes("next two days"),
-  "watchlist soon copy must use the shared 3-day constant instead of hardcoded next two days copy",
+    !watchlistPageSource.includes(`next ${"two"} days`),
+  "watchlist soon copy must use the shared 3-day constant instead of stale two-day copy",
 );
 assert(
   watchlistPageSource.includes('data-responsive-check="watchlist-wire"') &&
     watchlistPageSource.includes("The Wire") &&
+    watchlistPageSource.includes("News for your arms") &&
     watchlistPageSource.includes("Quiet stretch for your arms.") &&
     watchlistPageSource.includes("data-wire-event") &&
     watchlistServiceSource.includes("wireEventsForPitcher") &&
+    watchlistServiceSource.includes("headlineEvents: WatchlistWireEvent[];") &&
+    watchlistServiceSource.includes("signalEvents: WatchlistWireEvent[];") &&
     !watchlistPageSource.includes("Today&apos;s hooks") &&
-    !watchlistPageSource.includes("Digest preview"),
-  "watchlist should replace Today's Hooks with deterministic Wire event cards and a quiet empty state",
+    !watchlistPageSource.includes(`Digest ${"preview"}`),
+  "watchlist should replace Today's Hooks with news-only Wire cards and a quiet empty state",
 );
 assert(
   watchlistServiceSource.includes('"rest-anomaly"') &&
@@ -91,8 +97,8 @@ assert(
     watchlistServiceSource.includes('"gem"') &&
     watchlistServiceSource.includes('"blowup"') &&
     watchlistServiceSource.includes('"headlines"') &&
-    watchlistServiceSource.includes(".slice(0, 2)"),
-  "watchlist Wire v1 should emit capped rest, two-start, streak, gem, blowup, and headline events from existing stores",
+    watchlistPageSource.includes("<SignalsRow events={entry.signalEvents} />"),
+  "watchlist Wire v1 should keep derived rest, two-start, streak, gem, and blowup events as capped card signals",
 );
 assert(
   watchlistServiceSource.includes("export function sortWatchlistWireEvents") &&
@@ -103,8 +109,11 @@ assert(
 assert(
   headlineServiceSource.includes("collapseHeadlineClusters(state.headlines)") &&
     headlineServiceSource.includes("sameHeadlineCluster(existing.headline, candidate.headline)") &&
+    headlineServiceSource.includes("normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline)") &&
+    headlineServiceSource.includes('const SYNDICATOR_HOSTS = ["msn.com"];') &&
+    headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
     headlineServiceSource.includes("HEADLINE_TOPIC_STOP_WORDS"),
-  "watchlist headline events must collapse same-topic story clusters before storage and render",
+  "watchlist headline events must collapse same-topic and syndicated story clusters before storage and render",
 );
 assert(
   headlineServiceSource.includes('source: "google-news"') &&
@@ -135,11 +144,11 @@ assert(
   "headline ingest must allowlist headline/source/url/published fields and never store snippets, summaries, excerpts, or rotowire text",
 );
 assert(
-  watchlistPageSource.includes("event.headline") &&
+  watchlistPageSource.includes("event.headline?.url") &&
     watchlistPageSource.includes('target="_blank"') &&
     watchlistPageSource.includes('rel="noopener"') &&
     watchlistPageSource.includes(">NEWS<") &&
-    watchlistPageSource.includes("event.headline.source"),
+    watchlistPageSource.includes("event.headline?.source"),
   "watchlist Wire NEWS items must render as external headline links with visible source attribution",
 );
 assert(
@@ -152,9 +161,35 @@ assert(
   "watchlist headline ingest must run from cron with PT-aware half-hour/daytime and hourly/off-hours cadence",
 );
 assert(
-  watchlistPageSource.includes('entry.nextStart?.projectionSource === "baseline" ? " BASELINE" : ""') &&
-    watchlistServiceSource.includes('projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured"'),
-  "watchlist cards should tag baseline-looking projected GS+ values instead of rendering naked 50s",
+  watchlistPageSource.includes('import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";') &&
+    watchlistPageSource.includes("<WatchlistNextStartBlock nextStart={entry.nextStart} compact />") &&
+    nextStartBlockSource.includes('data-watchlist-next-start-row="matchup"') &&
+    nextStartBlockSource.includes('data-watchlist-next-start-row="context"') &&
+    nextStartBlockSource.includes("nextStart.parkRunFactor && nextStart.parkRunFactor > 0") &&
+    nextStartBlockSource.includes("nextStart.parkRunFactor.toFixed(2)") &&
+    nextStartBlockSource.includes('badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined}') &&
+    watchlistServiceSource.includes('projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured"') &&
+    watchlistServiceSource.includes("parkRunFactor: typeof parkRunFactor === \"number\" && parkRunFactor > 0 ? parkRunFactor : null") &&
+    !watchlistPageSource.includes("formatNextStartBlock") &&
+    !watchlistPageSource.includes(`Park ${"0.0"}`),
+  "watchlist next-start cards should use the shared two-row block, omit missing parks, and tag baseline-looking projected GS+ values",
+);
+assert(
+  watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} />") &&
+    watchlistPageSource.includes("Today on the slab") &&
+    watchlistPageSource.includes("Next on the slab") &&
+    !watchlistPageSource.includes(`Daily ${"decision"} strip`) &&
+    !watchlistPageSource.includes("<WatchlistGroup title=\"Pitching today / soon\""),
+  "watchlist must merge the daily decision strip and pitching-soon list into one next-on-the-slab module",
+);
+assert(
+  watchlistPageSource.includes("WatchlistSuggestedFollows") &&
+    suggestedFollowsSource.includes("Dismiss suggested follows") &&
+    suggestedFollowsSource.includes("toe-the-slab-watchlist-suggestions-dismissed") &&
+    suggestedFollowsSource.includes("Suggestions") &&
+    suggestedFollowsSource.includes("visibleResults.length === 0") &&
+    suggestedFollowsSource.includes("FollowPitcherButton"),
+  "watchlist suggested follows must be dismissible, recoverable, and self-hide when suggestions are already followed",
 );
 assert(
   followButtonSource.includes("useState(() => initialFollowing || (followState.get(pitcherId) ?? false))") &&
@@ -250,13 +285,13 @@ try {
   const html = await page.text();
   assert(html.includes("Watchlist"), "watchlist page should render");
   assert(html.includes("The Wire"), "watchlist should render the Wire");
-  assert(!html.includes("Today&apos;s hooks") && !html.includes("Today's hooks"), "watchlist should not render old hooks copy");
-  assert(!html.includes("next two days"), "watchlist should not render stale soon-window copy");
+  assert(!html.includes(`Today&apos;s ${"hooks"}`) && !html.includes(`Today's ${"hooks"}`), "watchlist should not render old hooks copy");
+  assert(!html.includes(`next ${"two"} days`), "watchlist should not render stale soon-window copy");
   assert(!/K LINE PENDING|pending/i.test(html.match(/data-responsive-check="watchlist-wire"[\s\S]*?<\/section>/)?.[0] ?? ""), "Wire should not render pending placeholders");
   assert(html.includes("Pitching now"), "watchlist should expose the live pitching summary label");
   assert(html.includes("Sort"), "watchlist should render sort controls");
   assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
-  assert(html.includes("Pitching today / soon"), "watchlist should render actionable pitching-soon group");
+  assert(html.includes('data-responsive-check="watchlist-pitching-soon"'), "watchlist should render the merged next-on-the-slab module");
   assert(html.includes("Everyone else") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list");
   assert(html.includes("Following"), "watchlist should render following control");
   assert(html.includes('aria-pressed="true"'), "followed watchlist rows should render filled/following star state");
