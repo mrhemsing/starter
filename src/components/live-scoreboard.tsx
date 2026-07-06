@@ -604,7 +604,7 @@ function PregameHandoff({ board, slateProgress, nowMs }: { board: LiveScoreboard
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-55"
           priority={false}
         />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
@@ -664,7 +664,7 @@ function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
           alt=""
           fill
           sizes="(min-width: 1024px) 1120px, 100vw"
-          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
+          className="live-slab-background-image absolute inset-0 -z-20 h-full w-full object-cover opacity-55"
           priority={false}
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/55" aria-hidden="true" />
