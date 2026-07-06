@@ -1172,7 +1172,7 @@ function getPregameCountdownView(firstPitchAt: string | null, countdownLabel: st
       minutes: "00",
       seconds: "00",
       progressPct: 0,
-      toneClass: "text-[#F6C445]",
+      toneClass: "text-[#C96A2B]",
     };
   }
 
@@ -1199,7 +1199,7 @@ function getPregameCountdownView(firstPitchAt: string | null, countdownLabel: st
       minutes: "00",
       seconds: "00",
       progressPct: 0,
-      toneClass: "text-[#F6C445]",
+      toneClass: "text-[#C96A2B]",
     };
   }
 
@@ -1227,7 +1227,7 @@ function getPregameCountdownView(firstPitchAt: string | null, countdownLabel: st
       minutes: "00",
       seconds: "00",
       progressPct: 0,
-      toneClass: "text-[#F6C445]",
+      toneClass: "text-[#C96A2B]",
     };
   }
 
@@ -1236,7 +1236,7 @@ function getPregameCountdownView(firstPitchAt: string | null, countdownLabel: st
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   const progressPct = clamp(((PREGAME_CLOCK_THRESHOLD_MS - remainingMs) / PREGAME_CLOCK_WINDOW_MS) * 100, 0, 100);
-  const toneClass = progressPct > 72 ? "text-[#FF9A62]" : "text-[#F6C445]";
+  const toneClass = progressPct > 72 ? "text-[#FF9A62]" : "text-[#C96A2B]";
 
   return {
     mode: "clock" as const,

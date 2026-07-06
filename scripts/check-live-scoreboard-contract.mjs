@@ -259,6 +259,7 @@ assert(
     liveComponent.includes('<ClockUnit value={countdown.hours} label="HRS" toneClass={countdown.toneClass} />') &&
     liveComponent.includes('<ClockUnit value={countdown.minutes} label="MIN" toneClass={countdown.toneClass} />') &&
     liveComponent.includes('<ClockUnit value={countdown.seconds} label="SEC" toneClass={countdown.toneClass} />') &&
+    liveComponent.includes('const toneClass = progressPct > 72 ? "text-[#FF9A62]" : "text-[#C96A2B]";') &&
     liveComponent.includes("function ClockUnit") &&
     liveComponent.includes('style={{ width: `${countdown.progressPct}%` }}') &&
     liveComponent.includes('motion-safe:animate-pulse') &&
