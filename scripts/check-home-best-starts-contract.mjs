@@ -42,7 +42,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v9"]') &&
+    bestStartsService.includes('["home-best-starts-v10"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -299,9 +299,9 @@ assert(
 );
 
 assert(
-  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v3.jpg" &&
-    misiorowskiTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/s9zxzxwqesegiks29nfa.jpg" &&
-    misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/elly-de-la-cruz-called-out-on-strikes-omip1j" &&
+  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v4.jpg" &&
+    misiorowskiTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/u16t3wc5ve0yvqpkgb17.jpg" &&
+    misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jacob-misiorowski-strikes-out-10-over-five-innings" &&
     misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.png" &&
     misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
     detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.png" &&
