@@ -1,5 +1,5 @@
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
-import { fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
+import { configuredOddsProviderSource, fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import type { MlbScheduleGame } from "@/lib/types";
 
@@ -98,7 +98,8 @@ export async function syncOddsSnapshotForDate(date: string): Promise<OddsSnapsho
   const previous = await readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date));
   const previousSnapshot = isOddsSnapshotState(previous) ? previous : null;
   const previousGames = new Map(previousSnapshot ? previousSnapshot.games.map((game) => [game.gamePk, game]) : []);
-  if (previousSnapshot && isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)) {
+  const configuredProvider = configuredOddsProviderSource();
+  if (previousSnapshot && previousSnapshot.source === configuredProvider && isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)) {
     const frozenGames = schedule.games.filter((game) => hasGameStarted(game) && previousGames.has(String(game.gamePk))).length;
     return skippedWithPreviousSnapshot(date, capturedAt, "fresh-snapshot", schedule.games.length, previousSnapshot.games.length, frozenGames);
   }

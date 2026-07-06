@@ -151,6 +151,10 @@ export function isOddsProviderConfigured() {
   return oddsProviderConfig() !== null;
 }
 
+export function configuredOddsProviderSource(): OddsProviderSource | null {
+  return oddsProviderConfig()?.source ?? null;
+}
+
 async function fetchOddsEvents(provider: OddsProviderConfig): Promise<{ events: OddsEvent[]; credits: MlbOddsFetchDiagnostics["credits"] }> {
   const response = await fetch(oddsEventsUrl(provider), {
     next: { revalidate: ODDS_REVALIDATE_SECONDS },

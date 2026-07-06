@@ -29,6 +29,7 @@ assert(
     oddsClient.includes('export type OddsProviderSource = "the-odds-api" | "prop-line";') &&
     oddsClient.includes("THE_BUMP_PROPLINE_API_KEY") &&
     oddsClient.includes("THE_BUMP_ODDS_PROVIDER") &&
+    oddsClient.includes("export function configuredOddsProviderSource()") &&
     oddsClient.includes("PROPLINE_API_BASE") &&
     oddsClient.includes("oddsEventsUrl(provider)") &&
     oddsClient.includes("normalizedTeamKeys"),
@@ -42,6 +43,8 @@ assert(
     oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier"') &&
     oddsSnapshot.includes('const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60)') &&
     oddsSnapshot.includes('process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1"') &&
+    oddsSnapshot.includes("const configuredProvider = configuredOddsProviderSource();") &&
+    oddsSnapshot.includes("previousSnapshot.source === configuredProvider") &&
     oddsSnapshot.includes('isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)') &&
     oddsSnapshot.includes("eventsSeen: diagnostics.eventsSeen") &&
     oddsSnapshot.includes("provider: diagnostics.provider") &&
