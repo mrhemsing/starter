@@ -211,7 +211,7 @@ export function UpcomingControls({
   const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;
   const controlsEmpty = visibleGameCount === 0;
   const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);
-  const activeControlCount = (showStatusFilter && controls.pregameOnly ? 1 : 0) + (controls.sort !== "watch" ? 1 : 0);
+  const activeControlCount = (showStatusFilter ? 1 : 0) + 1;
 
   return (
     <details

@@ -31,7 +31,8 @@ for (const [label, source] of [
 ]) {
   assert.doesNotMatch(source, /getDefaultSlateDates/, `${label} must not load ranked defaults for upcoming-only routing.`);
 }
-assert.match(siteNav, /getDefaultSlateDates\(today\)[\s\S]*href: upcomingDateHref\(defaultDates\.upcomingDate\)/, "Primary nav Upcoming link must use the shared default upcoming date.");
+assert.match(siteNav, /const upcomingItem = \[\{ key: "upcoming" as const, label: "Upcoming", href: "\/upcoming" \}\];/, "Primary nav Upcoming link must stay on the stable /upcoming index so stale shells can resolve the shared default at request time.");
+assert.doesNotMatch(siteNav, /upcomingDateHref\(defaultDates\.upcomingDate\)/, "Primary nav Upcoming link must not bake a dated default into shared chrome.");
 assert.match(tonightService, /export async function getTonightMustWatch[\s\S]*normalizeDateKey\(options\.date\) \?\? await getDefaultUpcomingDate\(\)/, "Tonight service must use the shared default upcoming date when no date is supplied.");
 assert.match(tonightService, /export async function getUpcomingMustWatch[\s\S]*normalizeDateKey\(options\.start \?\? options\.date\) \?\? await getDefaultUpcomingDate\(\)/, "Upcoming service must use the shared default upcoming date when no date/start is supplied.");
 assert.match(tonightService, /function normalizeUpcomingDays\(days: number \| undefined\)[\s\S]*Math\.max\(1, Math\.min\(7, Math\.floor\(days\)\)\)/, "Upcoming service must clamp API day ranges to the public one-week surface.");

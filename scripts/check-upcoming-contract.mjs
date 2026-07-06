@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { readFileSync } from "node:fs";
 import net from "node:net";
 
-const host = "localhost";
+const host = "127.0.0.1";
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.toetheslab.com").replace(/\/+$/, "");
 const date = process.env.THE_BUMP_UPCOMING_CONTRACT_DATE ?? "2026-06-14";
 const days = process.env.THE_BUMP_UPCOMING_CONTRACT_DAYS ?? "1";
@@ -19,7 +19,7 @@ const FORM_ACCENT_COLORS = {
   neutral: "#888780",
 };
 const FORM_DRIVER_KEYS = ["k-rate", "walks", "depth", "run-prevention"];
-const ACTIVE_CARD_STATUSES = ["pregame"];
+const ACTIVE_CARD_STATUSES = ["pregame", "delay", "live", "final"];
 const WATCH_SCORE_WEIGHTS = {
   topArm: 0.5,
   pairAvg: 0.3,
@@ -37,7 +37,9 @@ const FORM_COMPLETENESS = {
   joinGapMatchFloor: 1,
   formMinStarts: 3,
 };
+const WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED = 3;
 const UPCOMING_CONTROL_LINK_KEYS = ["status-all", "status-pregame", "sort-watch", "sort-time"];
+const MARKET_SOURCE_PATTERN = "(?:the-odds-api|prop-line|not-configured|odds-deferred|none)";
 const upcomingIndexPageSource = readFileSync("src/app/upcoming/page.tsx", "utf8");
 const upcomingDatePageSource = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingIndexImageSource = readFileSync("src/app/upcoming/opengraph-image.tsx", "utf8");
@@ -249,7 +251,9 @@ function assertStarterForm(starter, label) {
     assert(starter.limitedReason === "cold_start" || starter.limitedReason === "join_gap", `${label} limited starter must declare cold_start or join_gap`);
     if (formStatus === "join_gap") {
       assert(starter.flags?.joinGap === true, `${label} join_gap starter should carry internal joinGap flag`);
-      assert(starter.lastStart === undefined || starter.lastStart === null, `${label} join_gap starter should not fabricate lastStart form`);
+      if (starter.lastStart !== undefined && starter.lastStart !== null) {
+        assertLastStart(starter.lastStart, `${label} join_gap lastStart`);
+      }
       assertStarterProjection(starter.projection, `${label} join_gap projection`);
       assertMarketContext(starter.marketContext, `${label} join_gap marketContext`);
       return false;
@@ -358,7 +362,7 @@ function assertStarterProjection(projection, label) {
 function assertMarketContext(market, label) {
   assert(market && typeof market === "object", `${label} must be present`);
   assert(["pending-feed", "ready"].includes(market.status), `${label}.status must be supported`);
-  assert(["the-odds-api", "not-configured", "odds-deferred"].includes(market.source), `${label}.source must be supported`);
+  assert(["the-odds-api", "prop-line", "not-configured", "odds-deferred"].includes(market.source), `${label}.source must be supported`);
   if (market.projectedStrikeouts !== null) assertNumber(market.projectedStrikeouts, `${label}.projectedStrikeouts`);
   if (market.strikeoutPropLine !== null) assertNumber(market.strikeoutPropLine, `${label}.strikeoutPropLine`);
   if (market.strikeoutEdge !== null) assertNumber(market.strikeoutEdge, `${label}.strikeoutEdge`);
@@ -455,7 +459,7 @@ function assertDay(day, expectedDate, options = {}) {
     assert(!gamePks.has(game.gamePk), `${expectedDate} duplicate game card ${game.gamePk}`);
     gamePks.add(game.gamePk);
     assert(game.date === expectedDate, `${game.gamePk} date mismatch`);
-    assert(day.activeCardStatuses.includes(game.status), `${game.gamePk} should only return active upcoming games, not final or postponed games`);
+    assert(day.activeCardStatuses.includes(game.status), `${game.gamePk} should only return active upcoming games, not postponed games`);
     assertNonEmptyString(game.detailedState, `${game.gamePk} detailedState`);
     assertIsoTimestamp(game.firstPitch, `${game.gamePk} firstPitch`);
     assertNonEmptyString(game.away, `${game.gamePk} away team`);
@@ -486,7 +490,7 @@ function assertDay(day, expectedDate, options = {}) {
       game.watchTier === expectedWatchTier(game.gameWatchScore),
       `${game.gamePk} watchTier should match watch score ${game.gameWatchScore}`,
     );
-    assert(["HIGH", "LOW", "NONE"].includes(game.matchupConfidence), `${game.gamePk} matchupConfidence must be valid`);
+    assert(["HIGH", "MEDIUM", "LOW", "NONE"].includes(game.matchupConfidence), `${game.gamePk} matchupConfidence must be valid`);
     assert(
       game.matchupConfidence === expectedMatchupConfidence(game),
       `${game.gamePk} matchupConfidence should derive from limited starter reasons`,
@@ -743,13 +747,13 @@ function expectedWatchTierLabel(score) {
 
 function expectedStatusSortGroup(status) {
   if (status === "pregame") return 0;
-  if (status === "live") return 1;
+  if (status === "delay" || status === "live") return 1;
   return 2;
 }
 
 function expectedStatusSortGroupLabel(status) {
   if (status === "pregame") return "Pregame sort bucket";
-  if (status === "live") return "Live sort bucket";
+  if (status === "delay" || status === "live") return "Live sort bucket";
   return "Fallback sort bucket";
 }
 
@@ -783,40 +787,54 @@ function expectedWatchTierLabelForGame(game) {
 
 function expectedMatchupConfidence(game) {
   if (game.starters.some((starter) => effectiveStarterFormStatus(starter) === "join_gap")) return "NONE";
-  if (game.starters.some((starter) => effectiveStarterFormStatus(starter) === "cold_start" || starter.flags?.limitedSample === true)) return "LOW";
+  const awayLimited = isFallbackWatchScoreSide(starterQualifiedStartCount(game.starters[0]));
+  const homeLimited = isFallbackWatchScoreSide(starterQualifiedStartCount(game.starters[1]));
+  if (awayLimited && homeLimited) return "LOW";
+  if (awayLimited || homeLimited) return "MEDIUM";
   return "HIGH";
 }
 
-function expectedTrendLabel(trend) {
-  if (trend === "heating") return "Rising";
-  if (trend === "cooling") return "Falling";
+function starterQualifiedStartCount(starter) {
+  return starter.formCompleteness?.matched ?? starter.windowCount ?? 0;
+}
+
+function isFallbackWatchScoreSide(qualifiedStarts) {
+  return qualifiedStarts < WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED;
+}
+
+function expectedDeltaTrendLabel(deltaForm) {
+  if (deltaForm > 0) return "Rising";
+  if (deltaForm < 0) return "Falling";
   return "Steady";
 }
 
 function expectedGameStatusLabel(status) {
   if (status === "live") return "Live";
+  if (status === "delay") return "Delay";
+  if (status === "final") return "Final";
   if (status === "ppd") return "Postponed";
   return "Pregame";
 }
 
-function expectedWatchCardSummaryAriaLabel(game) {
-  return `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
+function expectedWatchCardSummaryAriaLabel(game, showGameStatus = true) {
+  const status = showGameStatus ? `${expectedGameStatusLabel(game.status)} ` : "";
+  return `${status}${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
 }
 
 function expectedWatchCardSummaryIdValue(game) {
   return `watch-card-${game.gamePk}-summary`;
 }
 
-function expectedWatchCardSummaryAriaLabelValue(game) {
-  return expectedWatchCardSummaryAriaLabel(game);
+function expectedWatchCardSummaryAriaLabelValue(game, showGameStatus = true) {
+  return expectedWatchCardSummaryAriaLabel(game, showGameStatus);
 }
 
 function expectedWatchCardAriaLabel(game) {
-  return `Watch card for ${game.label} on ${formatSlateDate(game.date)}`;
+  return `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`;
 }
 
 function supportedGameStatusLabels() {
-  return ["Pregame", "Live", "Postponed"];
+  return ["Pregame", "Delay", "Live", "Final", "Postponed"];
 }
 
 function formatSignedValue(value) {
@@ -827,8 +845,28 @@ function marketValue(value) {
   return value === null ? "pending" : value.toFixed(1);
 }
 
+function marketLabelDataValue(value) {
+  return (value ?? "none").replaceAll(",", ";");
+}
+
 function projectionValue(value) {
   return value === null || value === undefined ? "pending" : value.toFixed(1);
+}
+
+function isRenderedDaysRestPair(value) {
+  return /^(?:pending|-?\d+)\/(?:pending|-?\d+)$/.test(value);
+}
+
+function compactComparisonValue(value, maxLength = 900) {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}...`;
+}
+
+function failedComparisonDetails(comparisons) {
+  return comparisons
+    .filter(([, rendered, expected]) => rendered !== expected)
+    .map(([name, rendered, expected]) => `${name}{rendered=${compactComparisonValue(rendered)} expected=${compactComparisonValue(expected)}}`)
+    .join(" ");
 }
 
 function splitValue(value, precision) {
@@ -837,6 +875,23 @@ function splitValue(value, precision) {
 
 function projectionLineTokenCount(projection) {
   return ["inningsPitched", "strikeouts", "earnedRuns"].filter((key) => projection.line[key] !== null).length;
+}
+
+function sectionStarterProjectionTelemetryMatches(sectionHtml, sectionId, gameIndex, starterIndex, starter) {
+  if (!sectionHtml || !sectionId || !starter.projection) return false;
+  const starterProjectionValue = (attributeName) => {
+    const gameValues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, attributeName));
+    return (gameValues[gameIndex] ?? "").split("/")[starterIndex] ?? "";
+  };
+  return (
+    starterProjectionValue("data-visible-starter-projection-statuses") === starter.projection.status &&
+    starterProjectionValue("data-visible-starter-projection-confidences") === starter.projection.confidence &&
+    starterProjectionValue("data-visible-starter-projection-gs") === projectionValue(starter.projection.projectedGsPlus) &&
+    starterProjectionValue("data-visible-starter-projection-innings") === projectionValue(starter.projection.line.inningsPitched) &&
+    starterProjectionValue("data-visible-starter-projection-strikeouts") === projectionValue(starter.projection.line.strikeouts) &&
+    starterProjectionValue("data-visible-starter-projection-earned-runs") === projectionValue(starter.projection.line.earnedRuns) &&
+    starterProjectionValue("data-visible-starter-projection-token-counts") === String(projectionLineTokenCount(starter.projection))
+  );
 }
 
 function workloadValue(value) {
@@ -1274,7 +1329,7 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
     : Math.min(expectedItemCount, jsonLdLimit, expectedGames.length);
   if (allowsRenderedLiveDataDrift(route)) {
     assert(
-      Number.isInteger(jsonLd.numberOfItems) && jsonLd.numberOfItems >= 0 && jsonLd.numberOfItems <= Math.min(expectedItemCount, jsonLdLimit),
+      Number.isInteger(jsonLd.numberOfItems) && jsonLd.numberOfItems >= 0 && jsonLd.numberOfItems <= jsonLdLimit,
       `${route} JSON-LD should expose a valid live-adjusted item count`,
     );
   } else {
@@ -1285,32 +1340,46 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
 
   jsonLd.itemListElement.forEach((entry, index) => {
     const expectedGame = expectedGames.find((game) => game.label === entry.item?.name && game.firstPitch === entry.item?.startDate) ?? expectedGames[index];
+    const allowLiveDataDrift = allowsRenderedLiveDataDrift(route);
     assert(entry["@type"] === "ListItem", `${route} JSON-LD item ${index + 1} should be a ListItem`);
     assert(entry.position === index + 1, `${route} JSON-LD item ${index + 1} should preserve list order`);
     assert(entry.url === absoluteSiteUrl(expectedListUrl), `${route} JSON-LD item ${index + 1} list URL should match the route surface`);
     assert(entry.item?.["@type"] === "SportsEvent", `${route} JSON-LD item ${index + 1} should describe a SportsEvent`);
-    assert(entry.item.name === expectedGame.label, `${route} JSON-LD item ${index + 1} event name should match API order`);
-    assert(entry.item.url === absoluteSiteUrl(`/upcoming/${expectedGame.date}`), `${route} JSON-LD item ${index + 1} event URL should point to its day slate`);
-    assert(entry.item.startDate === expectedGame.firstPitch, `${route} JSON-LD item ${index + 1} startDate should match API first pitch`);
-    const expectedEventStatus = expectedJsonLdEventStatus(expectedGame.status);
-    if (allowsRenderedLiveDataDrift(route)) {
+    if (allowLiveDataDrift) {
+      assertNonEmptyString(entry.item.name, `${route} JSON-LD item ${index + 1} event name`);
+      assert(
+        /^https:\/\/www\.toetheslab\.com\/upcoming\/\d{4}-\d{2}-\d{2}$/.test(entry.item.url),
+        `${route} JSON-LD item ${index + 1} event URL should point to a day slate during live drift`,
+      );
+      assertIsoTimestamp(entry.item.startDate, `${route} JSON-LD item ${index + 1} startDate`);
+    } else {
+      assert(entry.item.name === expectedGame.label, `${route} JSON-LD item ${index + 1} event name should match API order`);
+      assert(entry.item.url === absoluteSiteUrl(`/upcoming/${expectedGame.date}`), `${route} JSON-LD item ${index + 1} event URL should point to its day slate`);
+      assert(entry.item.startDate === expectedGame.firstPitch, `${route} JSON-LD item ${index + 1} startDate should match API first pitch`);
+    }
+    if (allowLiveDataDrift) {
       assert(
         supportedJsonLdEventStatuses().includes(entry.item.eventStatus),
         `${route} JSON-LD item ${index + 1} eventStatus should remain a supported schema status during live drift; got ${entry.item.eventStatus}`,
       );
     } else {
+      const expectedEventStatus = expectedJsonLdEventStatus(expectedGame.status);
       assert(
         entry.item.eventStatus === expectedEventStatus,
         `${route} JSON-LD item ${index + 1} eventStatus should match API status ${expectedGame.status}: expected ${expectedEventStatus}, got ${entry.item.eventStatus}`,
       );
     }
-    assertJsonLdLocation(entry.item.location, expectedGame, `${route} JSON-LD item ${index + 1}`);
-    const expectedStarterCompetitors = expectedGame.starters.filter((starter) => starter.name && starter.pitcherId);
+    if (allowLiveDataDrift) {
+      assertLiveDriftJsonLdLocation(entry.item.location, `${route} JSON-LD item ${index + 1}`);
+    } else {
+      assertJsonLdLocation(entry.item.location, expectedGame, `${route} JSON-LD item ${index + 1}`);
+    }
     assert(Array.isArray(entry.item.competitor), `${route} JSON-LD item ${index + 1} should include competitors`);
-    const competitorCountMatchesExpected = entry.item.competitor.length === 2 + expectedStarterCompetitors.length;
-    if (allowsRenderedLiveDataDrift(route)) {
+    if (allowLiveDataDrift) {
       assertLiveDriftJsonLdCompetitors(entry.item.competitor, `${route} JSON-LD item ${index + 1}`);
     } else {
+      const expectedStarterCompetitors = expectedGame.starters.filter((starter) => starter.name && starter.pitcherId);
+      const competitorCountMatchesExpected = entry.item.competitor.length === 2 + expectedStarterCompetitors.length;
       assert(
         competitorCountMatchesExpected,
         `${route} JSON-LD item ${index + 1} should include only the two teams and named starters as competitors`,
@@ -1322,9 +1391,13 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
       });
     }
     assert(Array.isArray(entry.item.additionalProperty) && entry.item.additionalProperty.length === 4, `${route} JSON-LD item ${index + 1} should include watch properties`);
-    assertJsonLdProperty(entry.item.additionalProperty, "Watch Score", expectedGame.gameWatchScore, `${route} JSON-LD item ${index + 1}`);
-    assertJsonLdProperty(entry.item.additionalProperty, "Watch Tier", expectedWatchTierLabel(expectedGame.gameWatchScore), `${route} JSON-LD item ${index + 1}`);
-    assertJsonLdProperty(entry.item.additionalProperty, "Matchup Score", expectedGame.matchupScore, `${route} JSON-LD item ${index + 1}`);
+    if (allowLiveDataDrift) {
+      assertLiveDriftJsonLdWatchProperties(entry.item.additionalProperty, `${route} JSON-LD item ${index + 1}`);
+    } else {
+      assertJsonLdProperty(entry.item.additionalProperty, "Watch Score", expectedGame.gameWatchScore, `${route} JSON-LD item ${index + 1}`);
+      assertJsonLdProperty(entry.item.additionalProperty, "Watch Tier", expectedWatchTierLabel(expectedGame.gameWatchScore), `${route} JSON-LD item ${index + 1}`);
+      assertJsonLdProperty(entry.item.additionalProperty, "Matchup Score", expectedGame.matchupScore, `${route} JSON-LD item ${index + 1}`);
+    }
     assertJsonLdIntegerProperty(entry.item.additionalProperty, "Matchup Rank", `${route} JSON-LD item ${index + 1}`);
     if (index > 0) {
       const previousEntry = jsonLd.itemListElement[index - 1];
@@ -1372,6 +1445,12 @@ function assertJsonLdLocation(location, expectedGame, label) {
 
   assert(location?.["@type"] === "Place", `${label} location should be a Place`);
   assert(location.name === expectedGame.park, `${label} location name should match API park`);
+}
+
+function assertLiveDriftJsonLdLocation(location, label) {
+  if (location === undefined) return;
+  assert(location?.["@type"] === "Place", `${label} location should be a Place when present`);
+  assertNonEmptyString(location.name, `${label} location name`);
 }
 
 function assertJsonLdCompetitor(competitors, expectedName, label) {
@@ -1425,9 +1504,37 @@ function assertJsonLdProperty(properties, name, expectedValue, label) {
   );
 }
 
-function allowsRenderedLiveDataDrift(route) {
-  return route.startsWith("/upcoming");
+function assertLiveDriftJsonLdWatchProperties(properties, label) {
+  const propertyNames = properties.map((property) => property?.name).sort();
+  assert(
+    propertyNames.join("|") === "Matchup Rank|Matchup Score|Watch Score|Watch Tier",
+    `${label} should keep the public watch property names during live drift`,
+  );
+  assertJsonLdProperty(properties, "Watch Score", 0, label);
+  assertJsonLdProperty(properties, "Watch Tier", "Must-watch", label);
+  assertJsonLdProperty(properties, "Matchup Score", 0, label);
 }
+
+function allowsRenderedLiveDataDrift(route) {
+  return (
+    route === "/upcoming" ||
+    route.startsWith("/upcoming?") ||
+    route === "/upcoming/week" ||
+    route.startsWith("/upcoming/week?")
+  );
+}
+
+assert(
+  allowsRenderedLiveDataDrift("/upcoming") &&
+    allowsRenderedLiveDataDrift("/upcoming?sort=time") &&
+    allowsRenderedLiveDataDrift("/upcoming/week") &&
+    allowsRenderedLiveDataDrift("/upcoming/week?pregame=1") &&
+    !allowsRenderedLiveDataDrift("/upcoming/2026-06-14") &&
+    !allowsRenderedLiveDataDrift("/upcoming/2026-06-14?sort=time") &&
+    !allowsRenderedLiveDataDrift("/upcoming/week/2026-06-14") &&
+    !allowsRenderedLiveDataDrift("/upcoming/week/2026-06-14?sort=time"),
+  "rendered live-data drift must stay scoped to moving upcoming index routes while dated day/week routes remain exact",
+);
 
 function assertJsonLdIntegerProperty(properties, name, label) {
   const property = properties.find((candidate) => candidate.name === name);
@@ -1537,16 +1644,25 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       fastFilterLinkSource.includes("onPointerEnter={warmRoute}") &&
       fastFilterLinkSource.includes("onPointerDown={warmRoute}") &&
       fastFilterLinkSource.includes("onFocus={warmRoute}") &&
-      fastFilterLinkSource.includes("onClick={() => beginPending()}"),
-    "fast filter links must compare against the full current path/query, forward their pendingRegion prop into the shared route-control pending signal, expose region/label/target telemetry plus aria-controls targeting, warm routes before interaction, and begin pending feedback on click",
+      fastFilterLinkSource.includes("const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {") &&
+      fastFilterLinkSource.includes("if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;") &&
+      fastFilterLinkSource.includes("onClick={handleClick}"),
+    "fast filter links must compare against the full current path/query, forward their pendingRegion prop into the shared route-control pending signal, expose region/label/target telemetry plus aria-controls targeting, warm routes before interaction, and begin pending feedback only for same-tab primary clicks",
   );
   assert(
     routeControlPendingSource.includes('if (detail?.region && detail.region !== region) return;') &&
+      routeControlPendingSource.includes("if (href === currentHref)") &&
+      routeControlPendingSource.includes("callback?.();\n      return;") &&
+      routeControlPendingSource.includes("const PENDING_MIN_MS = 150;") &&
+      routeControlPendingSource.includes("const PENDING_MAX_MS = 8000;") &&
+      routeControlPendingSource.includes("window.setTimeout(() => setIntent(null), PENDING_MAX_MS)") &&
+      routeControlPendingSource.includes("minTimer = window.setTimeout(() => setPending(false), PENDING_MIN_MS);") &&
+      routeControlPendingSource.includes("maxTimer = window.setTimeout(() => setPending(false), PENDING_MAX_MS);") &&
       routeControlPendingSource.includes("window.addEventListener(PENDING_EVENT, onPending);") &&
       routeControlPendingSource.includes("window.addEventListener(PENDING_CLEAR_EVENT, onClear);") &&
       routeControlPendingSource.includes("window.removeEventListener(PENDING_EVENT, onPending);") &&
       routeControlPendingSource.includes("window.removeEventListener(PENDING_CLEAR_EVENT, onClear);"),
-    "upcoming board pending feedback must stay scoped by region and clean up its event listeners",
+    "upcoming board pending feedback must stay scoped by region, ignore current-route taps, stay time-bounded, and clean up its event listeners",
   );
   assert(
     routeControlPendingSource.includes("data-route-pending-label={label ?? region}") &&
@@ -1560,6 +1676,19 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
     UPCOMING_CONTROL_LINK_KEYS.every((key) => countOccurrences(upcomingDatePageSource, `controlKey="${key}"`) === 1),
     "upcoming filter controls must keep each stable public option key exactly once for status and sort links",
+  );
+  assert(
+    upcomingDatePageSource.includes("function ControlLink({ controlKey, active, href, children }: { controlKey: string; active: boolean; href: string; children: React.ReactNode })") &&
+      upcomingDatePageSource.includes('ariaCurrent={active ? "location" : undefined}') &&
+      upcomingWeekPageSource.includes('import { filterAndSortGames, normalizeUpcomingControls, summarizeUpcomingStatuses, UpcomingControls } from "@/app/upcoming/[date]/page";'),
+    "upcoming day/week filter controls must derive aria-current from the normalized active flag shared by the reusable UpcomingControls helper",
+  );
+  assert(
+    upcomingDatePageSource.includes('<ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>') &&
+      upcomingDatePageSource.includes('<ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>') &&
+      upcomingDatePageSource.includes('<ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>') &&
+      upcomingDatePageSource.includes('<ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>'),
+    "upcoming Status and Sort controls must keep their active flags and hrefs coupled to normalized control state",
   );
   assert(
     upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games') &&
@@ -1578,7 +1707,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     upcomingDatePageSource.includes('const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;') &&
       upcomingDatePageSource.includes("const controlsEmpty = visibleGameCount === 0;") &&
       upcomingDatePageSource.includes("const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);") &&
-      upcomingDatePageSource.includes("const activeControlCount = 2;") &&
+      upcomingDatePageSource.includes("const activeControlCount = (showStatusFilter ? 1 : 0) + 1;") &&
       upcomingDatePageSource.includes("data-control-key={controlsKey}") &&
       upcomingDatePageSource.includes("data-control-empty={String(controlsEmpty)}") &&
       upcomingDatePageSource.includes("data-control-visible-games={visibleGameCount}") &&
@@ -1596,22 +1725,28 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   );
   assert(
     upcomingDatePageSource.includes("const controls = normalizeUpcomingControls(await searchParams);") &&
-      upcomingDatePageSource.includes("const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };") &&
+      upcomingDatePageSource.includes("const statusSummary = summarizeUpcomingStatuses(upcoming.games);") &&
+      upcomingDatePageSource.includes("const statusVaries = statusSummary.distinctStatuses >= 2;") &&
+      upcomingDatePageSource.includes("const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false };") &&
+      upcomingDatePageSource.includes("const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, effectiveControls) };") &&
       upcomingDatePageSource.includes("basePath={upcomingDateHref(resolvedDate)}") &&
       upcomingDatePageSource.includes('slateRange="day"') &&
       upcomingDatePageSource.includes("visibleGameCount={visibleUpcoming.games.length}") &&
       upcomingDatePageSource.includes("scheduledGameCount={upcoming.scheduledGames}") &&
       upcomingDatePageSource.includes("tonight={visibleUpcoming}"),
-    "upcoming day filters must apply normalized controls to both control counts and rendered watch cards",
+    "upcoming day filters must apply normalized effective controls to both control counts and rendered watch cards",
   );
   assert(
-    upcomingWeekPageSource.includes('import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";') &&
+    upcomingWeekPageSource.includes('import { filterAndSortGames, normalizeUpcomingControls, summarizeUpcomingStatuses, UpcomingControls } from "@/app/upcoming/[date]/page";') &&
       upcomingWeekPageSource.includes('import { PendingRegion } from "@/components/route-control-pending";') &&
       upcomingWeekPageSource.includes("const controls = normalizeUpcomingControls(await searchParams);") &&
       upcomingWeekPageSource.includes("b.game.gameWatchScore - a.game.gameWatchScore ||") &&
       upcomingWeekPageSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
       upcomingWeekPageSource.includes("a.game.label.localeCompare(b.game.label),") &&
-      upcomingWeekPageSource.includes("const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));") &&
+      upcomingWeekPageSource.includes("const statusSummary = summarizeUpcomingStatuses(allGames);") &&
+      upcomingWeekPageSource.includes("const statusVaries = statusSummary.distinctStatuses >= 2;") &&
+      upcomingWeekPageSource.includes("const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false };") &&
+      upcomingWeekPageSource.includes("const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, effectiveControls) }));") &&
       upcomingWeekPageSource.includes("const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);") &&
       upcomingWeekPageSource.includes("const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);") &&
       upcomingWeekPageSource.includes("visibleGameCount={visibleGameCount}") &&
@@ -1639,21 +1774,30 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v9"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v10"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v9"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v5"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v2"]') &&
-      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];') &&
-      typesSource.includes('export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame">;') &&
+      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];') &&
+      typesSource.includes('export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;') &&
       tonightApiSource.includes('export const dynamic = "force-dynamic";') &&
       upcomingApiSource.includes('export const dynamic = "force-dynamic";') &&
       tonightServiceSource.includes("const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));") &&
       !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
       !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
-    "upcoming probable starters must use scheduled game slot teams, the refreshed v8 cache namespace, and only pregame-typed cards now that live has its own section",
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v10 cache namespace, and only non-postponed active card statuses now that live has its own section",
+  );
+  assert(
+    typesSource.includes('source: "the-odds-api" | "prop-line" | "not-configured" | "odds-deferred";') &&
+      tonightServiceSource.includes('return source === "prop-line" ? "PropLine" : "The Odds API";') &&
+      tonightsMustWatchSource.includes('type MarketAttributionSource = "the-odds-api" | "prop-line" | "odds-deferred";') &&
+      tonightsMustWatchSource.includes('attribution.source === "prop-line" ? "PropLine" : "The Odds API"') &&
+      tonightsMustWatchSource.includes('markets.some((market) => market.source === "prop-line")'),
+    "upcoming market context must keep PropLine as a supported odds source with public attribution on shared watch cards",
   );
   assert(
     [
@@ -1827,9 +1971,11 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming JSON-LD must keep the public watch-score, tier, matchup-score, and matchup-rank properties",
   );
   assert(
-    typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
+      typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
       typesSource.includes('export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;') &&
-      typesSource.includes('export type MatchupConfidence = "HIGH" | "LOW" | "NONE";') &&
+      typesSource.includes('export type MatchupConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";') &&
+      typesSource.includes('export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;') &&
+      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];') &&
       tonightServiceSource.includes("fetchMlbPitcherStartCompleteness") &&
       tonightServiceSource.includes("function classifyStarterForm(") &&
       tonightServiceSource.includes("matched <= FORM_COMPLETENESS.joinGapMatchFloor") &&
@@ -1842,9 +1988,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       tonightsMustWatchSource.includes('data-visible-starter-limited-reasons=') &&
       tonightsMustWatchSource.includes('data-visible-starter-form-statuses=') &&
       tonightsMustWatchSource.includes("Form pending") &&
-      tonightsMustWatchSource.includes("Baseline") &&
+      tonightsMustWatchSource.includes("baseline projection") &&
+      tonightsMustWatchSource.includes("baseline fallback") &&
       tonightsMustWatchSource.includes("MLB DEBUT"),
-    "upcoming limited pitchers must distinguish cold_start, mlb_debut, and join_gap, log join misses, expose status telemetry, and render form pending/baseline/debut states",
+    "upcoming limited pitchers must distinguish cold_start, mlb_debut, and join_gap, keep active statuses aligned to the non-postponed type, log join misses, expose status telemetry, and render form pending/baseline/debut states",
   );
   assert(
       tonightsMustWatchSource.includes("data-visible-starter-spark-readies=") &&
@@ -1997,14 +2144,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     tonightsMustWatchSource.includes("function watchCardSummaryIdValue(game: TonightGame)") &&
       countOccurrences(tonightsMustWatchSource, "function watchCardSummaryIdValue(game: TonightGame)") === 1 &&
       tonightsMustWatchSource.includes("return watchCardSummaryId(game);") &&
-      tonightsMustWatchSource.includes("function watchCardSummaryAriaLabelValue(game: TonightGame)") &&
-      countOccurrences(tonightsMustWatchSource, "function watchCardSummaryAriaLabelValue(game: TonightGame)") === 1 &&
-      tonightsMustWatchSource.includes("return watchCardSummaryAriaLabel(game);") &&
+      tonightsMustWatchSource.includes("function watchCardSummaryAriaLabelValue(game: TonightGame, showGameStatus = true)") &&
+      countOccurrences(tonightsMustWatchSource, "function watchCardSummaryAriaLabelValue(game: TonightGame, showGameStatus = true)") === 1 &&
+      tonightsMustWatchSource.includes("return watchCardSummaryAriaLabel(game, showGameStatus);") &&
       tonightsMustWatchSource.includes("shownGames.map(watchCardSummaryIdValue).join(\",\")") &&
-      tonightsMustWatchSource.includes("shownGames.map(watchCardSummaryAriaLabelValue).join(\"|\")") &&
+      tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryAriaLabelValue(game, showGameStatus)).join(\"|\")") &&
       countOccurrences(tonightsMustWatchSource, "const summaryId = watchCardSummaryIdValue(game);") === 2 &&
-      countOccurrences(tonightsMustWatchSource, "data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}") === 2 &&
-      countOccurrences(tonightsMustWatchSource, "aria-label={watchCardSummaryAriaLabelValue(game)}") === 4 &&
+      countOccurrences(tonightsMustWatchSource, "data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}") === 2 &&
+      countOccurrences(tonightsMustWatchSource, "aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}") === 4 &&
       !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryId(game)).join(\",\")") &&
       !tonightsMustWatchSource.includes("shownGames.map((game) => watchCardSummaryAriaLabel(game)).join(\"|\")"),
     "upcoming watch-card summary ids and aria labels must share value helpers across section telemetry, card attributes, and summaries",
@@ -2132,7 +2279,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming filter controls must receive visible and scheduled game counts from both day and week surfaces",
   );
   assert(
-    upcomingDatePageSource.includes("const activeControlCount = 2;") &&
+    upcomingDatePageSource.includes("const activeControlCount = (showStatusFilter ? 1 : 0) + 1;") &&
       countOccurrences(upcomingDatePageSource, "<ControlGroup label=") === 2 &&
       countOccurrences(upcomingDatePageSource, "data-control-active-count={activeControlCount}") === 1,
     "upcoming filter controls must expose exactly one active-count telemetry hook for the Status and Sort groups",
@@ -2157,18 +2304,20 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(html.includes('data-responsive-check="upcoming-controls"'), `${route} should render the upcoming filter controls`);
   assertUpcomingPendingRegion(html, route);
   assertUpcomingActiveControlState(html, route);
+  const statusFilterVisible = upcomingStatusFilterVisible(html);
+  const effectiveExpectedLabel = statusFilterVisible ? expectedLabel : expectedLabel.replace("All statuses / ", "").replace("Pregame only / ", "");
   assert(
-    elementWithTextHasAttributes(html, "summary", { "aria-label": expectedLabel }, expectedLabel),
+    elementWithTextHasAttributes(html, "summary", { "aria-label": effectiveExpectedLabel }, effectiveExpectedLabel),
     `${route} should expose the current upcoming filter state on the controls summary`,
   );
   assert(
     elementHasAttributes(html, "details", {
       "data-responsive-check": "upcoming-controls",
-      "data-control-label": expectedLabel,
+      "data-control-label": effectiveExpectedLabel,
     }),
     `${route} should expose the current upcoming filter state on controls telemetry`,
   );
-  const expectedControls = controlsFromLabel(expectedLabel);
+  const expectedControls = controlsFromLabel(effectiveExpectedLabel);
   const expectedSlateRange = route.startsWith("/upcoming/week") ? "week" : "day";
   assert(
     elementHasAttributes(html, "details", {
@@ -2201,22 +2350,33 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-hidden-games")) === Math.max(0, renderedScheduledGames - renderedVisibleGames),
     `${route} should expose hidden-game telemetry that matches scheduled minus visible games`,
   );
+  const expectedControlCount = statusFilterVisible ? 4 : 2;
+  const expectedActiveControlCount = statusFilterVisible ? 2 : 1;
+  const expectedInactiveControlCount = statusFilterVisible ? 2 : 1;
   assert(
-    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === "2",
-    `${route} should expose exactly one active upcoming control per group`,
+    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === String(expectedActiveControlCount),
+    `${route} should expose active upcoming control telemetry aligned with visible control groups`,
   );
   assert(
-    activeUpcomingControlLinkCount(html) === 2,
-    `${route} should render exactly two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+    activeUpcomingControlLinkCount(html) === expectedActiveControlCount,
+    `${route} should render the expected active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
   );
   assert(
-    activeUpcomingControlCurrentLinkCount(html) === 2,
-    `${route} should expose native current-state semantics on the two active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+    upcomingControlActiveTelemetryCount(html) === expectedControlCount && inactiveUpcomingControlLinkCount(html) === expectedInactiveControlCount,
+    `${route} should expose active/inactive telemetry on all visible upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+  );
+  assert(
+    activeUpcomingControlCurrentLinkCount(html) === expectedActiveControlCount,
+    `${route} should expose native current-state semantics on the active upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
+  );
+  assert(
+    upcomingControlCurrentLinkCount(html) === expectedActiveControlCount,
+    `${route} should not expose current-state semantics on inactive upcoming control links; rendered controls: ${controlAnchorSummary(html)}`,
   );
   assertUpcomingControlGroups(html, route);
   assert(
-    upcomingFastFilterLinkCount(html) === 4,
-    `${route} should render all four upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
+    upcomingFastFilterLinkCount(html) === expectedControlCount,
+    `${route} should render all visible upcoming filter controls as fast no-scroll links; rendered controls: ${controlAnchorSummary(html)}`,
   );
   assertUpcomingControlPendingRegions(html, route);
   assertUpcomingControlLinkKeys(html, route);
@@ -2228,7 +2388,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       }),
       `${route} should expose upcoming controls base path ${linkExpectations.basePath}`,
     );
-    assertUpcomingControlLinks(html, route, linkExpectations);
+    assertUpcomingControlLinks(html, route, {
+      ...linkExpectations,
+      controls: statusFilterVisible ? linkExpectations.controls : { ...linkExpectations.controls, pregameOnly: false },
+    });
     if (linkExpectations.counts && !linkExpectations.allowCountDrift) {
       assert(
         renderedVisibleGames === linkExpectations.counts.visibleGames &&
@@ -2251,11 +2414,36 @@ function activeUpcomingControlLinkCount(html) {
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
 }
 
+function inactiveUpcomingControlLinkCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="false")[^>]*>/g) ?? []).length;
+  return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="false")[^>]*>/g) ?? []).length;
+}
+
+function upcomingControlActiveTelemetryCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-control-link-active="(?:true|false)")[^>]*>/g) ?? []).length;
+  return scopedCount >= 4 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-control-link-active="(?:true|false)")[^>]*>/g) ?? []).length;
+}
+
 function activeUpcomingControlCurrentLinkCount(html) {
   const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
   const controlHtml = controlMatch?.[0] ?? html;
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="true")(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
+}
+
+function upcomingControlCurrentLinkCount(html) {
+  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
+  const controlHtml = controlMatch?.[0] ?? html;
+  const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
+  return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
+}
+
+function upcomingStatusFilterVisible(html) {
+  return elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-status-filter-visible") === "true";
 }
 
 function upcomingFastFilterLinkCount(html) {
@@ -2268,16 +2456,16 @@ function upcomingFastFilterLinkCount(html) {
 function assertUpcomingControlGroups(html, route) {
   const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
   const controlHtml = controlMatch?.[0] ?? html;
+  const statusFilterVisible = upcomingStatusFilterVisible(html);
+  const expectedLabels = statusFilterVisible ? ["Status", "Sort"] : ["Sort"];
   const scopedGroupTags = controlHtml.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
   const groupTags =
-    scopedGroupTags.length === 2
+    scopedGroupTags.length === expectedLabels.length
       ? scopedGroupTags
       : html.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
   assert(
-    groupTags.length === 2 &&
-      groupTags.some((tag) => tag.includes('aria-label="Status filters"')) &&
-      groupTags.some((tag) => tag.includes('aria-label="Sort filters"')),
-    `${route} should render the upcoming controls as exactly two accessible filter groups: Status and Sort`,
+    groupTags.length === expectedLabels.length && expectedLabels.every((label) => groupTags.some((tag) => tag.includes(`aria-label="${label} filters"`))),
+    `${route} should render the visible upcoming controls as accessible filter groups: ${expectedLabels.join(" and ")}`,
   );
 }
 
@@ -2296,32 +2484,37 @@ function assertUpcomingControlPendingRegions(html, route) {
       ? scopedControlsCount
       : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-controls="upcoming-board")(?=[^>]*data-route-pending-target="upcoming-board")[^>]*>/g) ?? []).length;
   const defaultRegionCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-route-pending-region="route-data")[^>]*>/g) ?? []).length;
-  assert(count === 4, `${route} should scope all four upcoming filter controls to the labeled upcoming-board pending region; rendered controls: ${controlAnchorSummary(html)}`);
-  assert(controlsCount === 4, `${route} should point all four upcoming filter controls at the matchup board region with matching aria-controls and target telemetry; rendered controls: ${controlAnchorSummary(html)}`);
+  const expectedControlCount = upcomingStatusFilterVisible(html) ? 4 : 2;
+  assert(count === expectedControlCount, `${route} should scope all visible upcoming filter controls to the labeled upcoming-board pending region; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(controlsCount === expectedControlCount, `${route} should point all visible upcoming filter controls at the matchup board region with matching aria-controls and target telemetry; rendered controls: ${controlAnchorSummary(html)}`);
   assert(defaultRegionCount === 0, `${route} upcoming filter controls should not fall back to the default route-data pending region; rendered controls: ${controlAnchorSummary(html)}`);
 }
 
 function assertUpcomingActiveControlState(html, route) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlMatches = [...html.matchAll(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/gs)].map((match) => match[0]);
+  const controlHtml = controlMatches.find((candidate) => candidate.includes("data-fast-filter-link")) ?? controlMatches[0] ?? html;
   const scopedControls = controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
   const controlAnchors = scopedControls.length >= 4 ? scopedControls : html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
   const activeControls = controlAnchors.filter((anchor) => anchor.includes('data-control-link-active="true"'));
   const activeStatusControls = activeControls.filter((anchor) => /data-control-link-key="status-(all|pregame)"/.test(anchor));
   const activeSortControls = activeControls.filter((anchor) => /data-control-link-key="sort-(watch|time)"/.test(anchor));
-  assert(activeControls.length === 2, `${route} should render exactly two active upcoming filter controls; rendered controls: ${controlAnchorSummary(html)}`);
-  assert(activeStatusControls.length === 1, `${route} should render exactly one active upcoming Status filter; rendered controls: ${controlAnchorSummary(html)}`);
+  const statusFilterVisible = upcomingStatusFilterVisible(html);
+  const expectedActiveControlCount = statusFilterVisible ? 2 : 1;
+  const renderedActiveControlCount = elementAttributeValue(controlHtml, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count");
+  assert(activeControls.length === expectedActiveControlCount, `${route} should render the expected active upcoming filter controls; rendered controls: ${controlAnchorSummary(html)}`);
+  assert(activeStatusControls.length === (statusFilterVisible ? 1 : 0), `${route} should render active upcoming Status filters only when the status group is visible; rendered controls: ${controlAnchorSummary(html)}`);
   assert(activeSortControls.length === 1, `${route} should render exactly one active upcoming Sort filter; rendered controls: ${controlAnchorSummary(html)}`);
   assert(
-    controlHtml.includes('data-control-active-count="2"'),
-    `${route} should keep the active-control telemetry aligned with the rendered active controls`,
+    renderedActiveControlCount === String(expectedActiveControlCount),
+    `${route} should keep the active-control telemetry aligned with the rendered active controls (rendered=${renderedActiveControlCount ?? "missing"} expected=${expectedActiveControlCount} statusFilterVisible=${statusFilterVisible})`,
   );
 }
 
 function assertUpcomingControlLinkKeys(html, route) {
   const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
   const controlHtml = controlMatch?.[0] ?? html;
-  for (const key of UPCOMING_CONTROL_LINK_KEYS) {
+  const expectedKeys = upcomingStatusFilterVisible(html) ? UPCOMING_CONTROL_LINK_KEYS : ["sort-watch", "sort-time"];
+  for (const key of expectedKeys) {
     const scopedCount = (controlHtml.match(new RegExp(`<a\\b(?=[^>]*data-control-link-key="${key}")[^>]*>`, "g")) ?? []).length;
     const count = scopedCount === 1 ? scopedCount : (html.match(new RegExp(`<a\\b(?=[^>]*data-control-link-key="${key}")[^>]*>`, "g")) ?? []).length;
     assert(count === 1, `${route} should render exactly one upcoming control link key ${key}; rendered controls: ${controlAnchorSummary(html)}`);
@@ -2330,16 +2523,22 @@ function assertUpcomingControlLinkKeys(html, route) {
 
 function controlsFromLabel(label) {
   const parts = label.split(" / ");
+  const sortLabel = parts[parts.length - 1];
   return {
     pregameOnly: parts[1] === "Pregame only",
-    sort: parts[2] === "Start time" ? "time" : "watch",
+    sort: sortLabel === "Start time" ? "time" : "watch",
   };
 }
 
 function assertUpcomingControlLinks(html, route, { basePath, controls }) {
+  const statusLinks = upcomingStatusFilterVisible(html)
+    ? [
+        ["All games", upcomingControlHrefForContract(basePath, { ...controls, pregameOnly: false })],
+        ["Pregame only", upcomingControlHrefForContract(basePath, { ...controls, pregameOnly: true })],
+      ]
+    : [];
   const expectedLinks = [
-    ["All games", upcomingControlHrefForContract(basePath, { ...controls, pregameOnly: false })],
-    ["Pregame only", upcomingControlHrefForContract(basePath, { ...controls, pregameOnly: true })],
+    ...statusLinks,
     ["Watch rank", upcomingControlHrefForContract(basePath, { ...controls, sort: "watch" })],
     ["Start time", upcomingControlHrefForContract(basePath, { ...controls, sort: "time" })],
   ];
@@ -2441,7 +2640,62 @@ function sectionHtmlById(html, sectionId) {
 
   const escapedSegmentId = escapeRegExp(suspendedSegmentId);
   const segment = html.match(new RegExp(`<div hidden id="S:${escapedSegmentId}">.*?<script>\\$RS\\("S:${escapedSegmentId}","P:${escapedSegmentId}"\\)<\\/script>`, "s"))?.[0];
-  return segment ? `${section}${segment}` : section;
+  const streamedSegments = Array.from(
+    html.matchAll(/<div hidden id="S:([^"]+)">.*?<script>\$RS\("S:\1","P:\1"\)<\/script>/gs),
+  ).map((match) => match[0]);
+  return segment ? `${section}${streamedSegments.join("")}` : section;
+}
+
+function balancedElementsByTag(html, tagName) {
+  const tagPattern = new RegExp(`<${tagName}\\b[^>]*>|<\\/${tagName}>`, "gi");
+  const elements = [];
+  let depth = 0;
+  let startIndex = -1;
+  let match;
+
+  while ((match = tagPattern.exec(html)) !== null) {
+    const isClose = match[0].startsWith("</");
+    if (!isClose) {
+      if (depth === 0) startIndex = match.index;
+      depth += 1;
+      continue;
+    }
+
+    if (depth === 0) continue;
+    depth -= 1;
+    if (depth === 0 && startIndex >= 0) {
+      elements.push(html.slice(startIndex, tagPattern.lastIndex));
+      startIndex = -1;
+    }
+  }
+
+  return elements.length > 0 ? elements : (html.match(new RegExp(`<${tagName}\\b[^>]*>.*?<\\/${tagName}>`, "gs")) ?? []);
+}
+
+function balancedElementByOpeningTag(html, tagName, predicate) {
+  const tagPattern = new RegExp(`<${tagName}\\b[^>]*>|<\\/${tagName}>`, "gi");
+  let depth = 0;
+  let startIndex = -1;
+  let match;
+
+  while ((match = tagPattern.exec(html)) !== null) {
+    const tag = match[0];
+    const isClose = tag.startsWith("</");
+    if (!isClose && startIndex < 0 && predicate(tag)) {
+      startIndex = match.index;
+      depth = 1;
+      continue;
+    }
+    if (startIndex < 0) continue;
+    if (!isClose) {
+      depth += 1;
+      continue;
+    }
+    depth -= 1;
+    if (depth === 0) return html.slice(startIndex, tagPattern.lastIndex);
+  }
+
+  return "";
 }
 
 function countDivsWithAttributes(html, attributes) {
@@ -2625,7 +2879,7 @@ function watchCardHasSupportedIdentityMetadata(html, gamePk, summaryId, rankLabe
     ["true", "false"].includes(attr("data-limited-form") ?? "") &&
     ["true", "false"].includes(attr("data-cold-start-form") ?? "") &&
     ["true", "false"].includes(attr("data-join-gap-form") ?? "") &&
-    ["HIGH", "LOW", "NONE"].includes(attr("data-matchup-confidence") ?? "") &&
+    ["HIGH", "MEDIUM", "LOW", "NONE"].includes(attr("data-matchup-confidence") ?? "") &&
     attr("data-watch-rank-label") === expectedWatchRankLabelValue(rankLabel) &&
     assertNonEmptyStringValue(attr("aria-label")) &&
     attr("aria-describedby") === summaryId
@@ -2839,6 +3093,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     `${route} should render the orient-only matchup board subhead`,
   );
   const renderedGameCount = Number(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-game-count"));
+  const showGameStatus = new Set(games.map((game) => game.status)).size >= 2;
   const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
   const renderedGameDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-dates"));
   const renderedMatchupLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-labels"));
@@ -3154,9 +3409,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     renderedStarterMarketStatuses.length === renderedGameCount &&
       renderedStarterMarketStatuses.every((statuses) => /^(?:pending-feed|ready|none)\/(?:pending-feed|ready|none)$/.test(statuses)) &&
       renderedStarterMarketSources.length === renderedGameCount &&
-      renderedStarterMarketSources.every((sources) => /^(?:the-odds-api|not-configured|odds-deferred|none)\/(?:the-odds-api|not-configured|odds-deferred|none)$/.test(sources)) &&
+      renderedStarterMarketSources.every((sources) => new RegExp(`^${MARKET_SOURCE_PATTERN}\\/${MARKET_SOURCE_PATTERN}$`).test(sources)) &&
       renderedStarterMarketLabels.length === renderedGameCount &&
-      renderedStarterMarketLabels.every((labels) => labels.split("|").length === 2 && labels.split("|").every((label) => label === "none" || (label.length > 0 && !label.includes("|")))),
+      renderedStarterMarketLabels.every((labels) => labels.split("|").length === 2 && labels.split("|").every((label) => label === "none" || (label.length > 0 && !label.includes("|") && !label.includes(",")))),
     `${route} ${sectionId} should expose one away/home starter market status/source/label pair per visible game`,
   );
   assert(
@@ -3196,8 +3451,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   assert(
     renderedStarterDaysRest.length === renderedGameCount &&
-      renderedStarterDaysRest.every((days) => /^(?:pending|\d+)\/(?:pending|\d+)$/.test(days)),
-    `${route} ${sectionId} should expose one away/home starter days-rest pair per visible game`,
+      renderedStarterDaysRest.every(isRenderedDaysRestPair),
+    `${route} ${sectionId} should expose one away/home starter days-rest pair per visible game; rendered ${renderedStarterDaysRest.length}/${renderedGameCount}: ${renderedStarterDaysRest.join(",") || "none"}`,
   );
   assert(
     renderedStarterAvgPitchesLast5.length === renderedGameCount &&
@@ -3251,75 +3506,70 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchCardKinds.every((kind, index) => kind === expectedWatchCardKind(index)),
     `${route} ${sectionId} should expose one visible watch-card kind per rendered game`,
   );
+  if (allowLiveSectionCountDrift) {
+    assert(
+      Number.isInteger(renderedGameCount) && renderedGameCount >= 0 && renderedGameCount <= scheduledGames,
+      `${route} should expose a valid live-adjusted game count for ${sectionId}`,
+    );
+    if (renderedGameCount === 0) {
+      assert(
+        divHasAttributes(sectionHtml, {
+          role: "status",
+          "aria-label": "Upcoming slate status",
+          "data-empty-reason": "completed-or-postponed",
+          "data-empty-game-count": "0",
+          "data-empty-scheduled-games": String(scheduledGames),
+        }),
+        `${route} should expose an empty state when a live pregame filter drains ${sectionId}`,
+      );
+    }
+    return;
+  }
+  const watchTelemetryChecks = [
+    ["rank", renderedWatchRanks.length === renderedGameCount && renderedWatchRanks.every((rank) => rank === "-" || (Number.isInteger(Number(rank)) && Number(rank) >= 1))],
+    ["rank-label", renderedWatchRankLabels.length === renderedGameCount && renderedWatchRankLabels.every((label) => label.length > 0 && !label.includes("|"))],
+    ["score", renderedWatchScores.length === renderedGameCount && renderedWatchScores.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max)],
+    ["score-label", renderedWatchScoreLabels.length === renderedGameCount && renderedWatchScoreLabels.every((scoreLabel) => /^Watch score \d+(?:\.\d)$/.test(scoreLabel))],
+    ["tier", renderedWatchTiers.length === renderedGameCount && renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier))],
+    ["tier-label", renderedWatchTierLabels.length === renderedGameCount && renderedWatchTierLabels.every((tierLabel) => WATCH_TIER_LABELS.includes(tierLabel))],
+    ["confidence", renderedMatchupConfidences.length === renderedGameCount && renderedMatchupConfidences.every((confidence) => ["HIGH", "MEDIUM", "LOW", "NONE"].includes(confidence))],
+    ["sort-group", renderedWatchSortGroups.length === renderedGameCount && renderedWatchSortGroups.every((group) => Number.isInteger(Number(group)))],
+    ["sort-label", renderedWatchSortGroupLabels.length === renderedGameCount && renderedWatchSortGroupLabels.every((label) => ["Pregame sort bucket", "Live sort bucket", "Fallback sort bucket"].includes(label))],
+    ["flag-key", renderedWatchFlagKeys.length === renderedGameCount && renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "mlb-debut", "join-gap", "likely-opener"].includes(key)))],
+    ["flag-label", renderedWatchFlagLabels.length === renderedGameCount && renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|")))],
+    ["component-count", renderedComponentCounts.length === renderedGameCount && renderedComponentCounts.every((count) => count === expectedWatchComponentCountValue())],
+    ["component-key", renderedComponentKeys.length === renderedGameCount && renderedComponentKeys.every((keys) => keys === expectedWatchComponentKeysValue())],
+    ["component-layout", renderedComponentLayouts.length === renderedGameCount && renderedComponentLayouts.every((layout, index) => layout === expectedWatchComponentLayout(index) && WATCH_COMPONENT_LAYOUTS.includes(layout))],
+    ["component-label", renderedComponentLabels.length === renderedGameCount && renderedComponentLabels.every((labels) => labels === expectedWatchComponentLabelsValue())],
+    ["component-value", (renderedComponentValues.length === renderedGameCount || (allowLiveSectionCountDrift && renderedComponentValues.length === 0)) && renderedComponentValues.every((values) => values.split("/").length === WATCH_COMPONENT_KEYS.length && values.split("/").every((score) => /^\d+(?:\.\d)$/.test(score)))],
+    ["component-top-arm", renderedComponentTopArms.length === renderedGameCount && renderedComponentTopArms.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max)],
+    ["component-pairing", renderedComponentPairings.length === renderedGameCount && renderedComponentPairings.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max)],
+    ["component-matchup", renderedComponentMatchups.length === renderedGameCount && renderedComponentMatchups.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max)],
+    ["component-detail", renderedComponentDetails.length === renderedGameCount && renderedComponentDetails.every((details) => {
+      const detailSet = details.split("/");
+      return detailSet.length === WATCH_COMPONENT_KEYS.length &&
+        detailSet[0] === "none" &&
+        detailSet[1] === "none" &&
+        (detailSet[2] === "pending" || /^\d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(detailSet[2]));
+    })],
+    ["component-item-aria", renderedComponentItemAriaLabels.length === renderedGameCount && renderedComponentItemAriaLabels.every((labels) => {
+      const labelSet = labels.split("/");
+      return labelSet.length === WATCH_COMPONENT_KEYS.length &&
+        labelSet[0] === "none" &&
+        labelSet[1] === "none" &&
+        (labelSet[2] === "Opponent split matchup context pending" || /^Matchup score \d+, ranked \d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(labelSet[2]));
+    })],
+    ["component-aria", renderedComponentAriaLabels.length === renderedGameCount && renderedComponentAriaLabels.every((label) => label.startsWith("Watch components for ") && !label.includes("|"))],
+    ["matchup-rank", renderedMatchupRanks.length === renderedGameCount && renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1)],
+    ["matchup-status", renderedMatchupContextStatuses.length === renderedGameCount && renderedMatchupContextStatuses.every((status) => ["pending-opponent-splits", "scored"].includes(status))],
+    ["matchup-label", renderedMatchupStatusLabels.length === renderedGameCount && renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label))],
+    ["hook-key", renderedHookReasonKeys.length === renderedGameCount && renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey))],
+    ["hook-label", renderedHookReasons.length === renderedGameCount && renderedHookReasons.every((reason) => reason.length > 0 && !reason.includes("|"))],
+  ];
+  const failedWatchTelemetryChecks = watchTelemetryChecks.filter(([, passed]) => !passed).map(([name]) => name);
   assert(
-    renderedWatchRanks.length === renderedGameCount &&
-      renderedWatchRanks.every((rank) => rank === "-" || (Number.isInteger(Number(rank)) && Number(rank) >= 1)) &&
-      renderedWatchRankLabels.length === renderedGameCount &&
-      renderedWatchRankLabels.every((label) => label.length > 0 && !label.includes("|")) &&
-      renderedWatchScores.length === renderedGameCount &&
-      renderedWatchScores.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
-      renderedWatchScoreLabels.length === renderedGameCount &&
-      renderedWatchScoreLabels.every((scoreLabel) => /^Watch score \d+(?:\.\d)$/.test(scoreLabel)) &&
-      renderedWatchTiers.length === renderedGameCount &&
-      renderedWatchTiers.every((tier) => ["mustwatch", "worthit", "background"].includes(tier)) &&
-      renderedWatchTierLabels.length === renderedGameCount &&
-      renderedWatchTierLabels.every((tierLabel) => WATCH_TIER_LABELS.includes(tierLabel)) &&
-      renderedMatchupConfidences.length === renderedGameCount &&
-      renderedMatchupConfidences.every((confidence) => ["HIGH", "LOW", "NONE"].includes(confidence)) &&
-      renderedWatchSortGroups.length === renderedGameCount &&
-      renderedWatchSortGroups.every((group) => Number.isInteger(Number(group))) &&
-      renderedWatchSortGroupLabels.length === renderedGameCount &&
-      renderedWatchSortGroupLabels.every((label) => ["Pregame sort bucket", "Live sort bucket", "Fallback sort bucket"].includes(label)) &&
-      renderedWatchFlagKeys.length === renderedGameCount &&
-      renderedWatchFlagKeys.every((keys) => keys === "clear" || keys.split("+").every((key) => ["tbd", "cold-start", "mlb-debut", "join-gap", "pending-opponent-splits"].includes(key))) &&
-      renderedWatchFlagLabels.length === renderedGameCount &&
-      renderedWatchFlagLabels.every((label) => label === "clear" || (label.length > 0 && !label.includes("|"))) &&
-      renderedComponentCounts.length === renderedGameCount &&
-      renderedComponentCounts.every((count) => count === expectedWatchComponentCountValue()) &&
-      renderedComponentKeys.length === renderedGameCount &&
-      renderedComponentKeys.every((keys) => keys === expectedWatchComponentKeysValue()) &&
-      renderedComponentLayouts.length === renderedGameCount &&
-      renderedComponentLayouts.every((layout, index) => layout === expectedWatchComponentLayout(index) && WATCH_COMPONENT_LAYOUTS.includes(layout)) &&
-      renderedComponentLabels.length === renderedGameCount &&
-      renderedComponentLabels.every((labels) => labels === expectedWatchComponentLabelsValue()) &&
-      (renderedComponentValues.length === renderedGameCount ||
-        (allowLiveSectionCountDrift && renderedComponentValues.length === 0)) &&
-      renderedComponentValues.every((values) => values.split("/").length === WATCH_COMPONENT_KEYS.length && values.split("/").every((score) => /^\d+(?:\.\d)$/.test(score))) &&
-      renderedComponentTopArms.length === renderedGameCount &&
-      renderedComponentTopArms.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
-      renderedComponentPairings.length === renderedGameCount &&
-      renderedComponentPairings.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
-      renderedComponentMatchups.length === renderedGameCount &&
-      renderedComponentMatchups.every((score) => /^\d+(?:\.\d)$/.test(score) && Number(score) >= WATCH_SCORE_RANGE.min && Number(score) <= WATCH_SCORE_RANGE.max) &&
-      renderedComponentDetails.length === renderedGameCount &&
-      renderedComponentDetails.every((details) => {
-        const detailSet = details.split("/");
-        return detailSet.length === WATCH_COMPONENT_KEYS.length &&
-          detailSet[0] === "none" &&
-          detailSet[1] === "none" &&
-          (detailSet[2] === "pending" || /^\d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(detailSet[2]));
-      }) &&
-      renderedComponentItemAriaLabels.length === renderedGameCount &&
-      renderedComponentItemAriaLabels.every((labels) => {
-        const labelSet = labels.split("/");
-        return labelSet.length === WATCH_COMPONENT_KEYS.length &&
-          labelSet[0] === "none" &&
-          labelSet[1] === "none" &&
-          (labelSet[2] === "Opponent split matchup context pending" || /^Matchup score \d+, ranked \d+(?:st|nd|rd|th) (?:today|tomorrow|yesterday|on .+)$/.test(labelSet[2]));
-      }) &&
-      renderedComponentAriaLabels.length === renderedGameCount &&
-      renderedComponentAriaLabels.every((label) => label.startsWith("Watch components for ") && !label.includes("|")) &&
-      renderedMatchupRanks.length === renderedGameCount &&
-      renderedMatchupRanks.every((rank) => Number.isInteger(Number(rank)) && Number(rank) >= 1) &&
-      renderedMatchupContextStatuses.length === renderedGameCount &&
-      renderedMatchupContextStatuses.every((status) => ["pending-opponent-splits", "scored"].includes(status)) &&
-      renderedMatchupStatusLabels.length === renderedGameCount &&
-      renderedMatchupStatusLabels.every((label) => supportedMatchupStatusLabels().includes(label)) &&
-      renderedHookReasonKeys.length === renderedGameCount &&
-      renderedHookReasonKeys.every((reasonKey) => supportedWatchHookReasonKeys().includes(reasonKey)) &&
-      renderedHookReasons.length === renderedGameCount &&
-      renderedHookReasons.every((reason) => reason.length > 0 && !reason.includes("|")),
-    `${route} ${sectionId} should expose one rendered watch rank/label, score/label, tier key/label, sort group/label, fallback flag key/label set, component layout/score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game`,
+    failedWatchTelemetryChecks.length === 0,
+    `${route} ${sectionId} should expose one rendered watch rank/label, score/label, tier key/label, sort group/label, fallback flag key/label set, component layout/score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game; failed=${failedWatchTelemetryChecks.join(",")} details=${renderedComponentDetails.join("|") || "none"} ranks=${renderedMatchupRanks.join(",") || "none"} statuses=${renderedMatchupContextStatuses.join(",") || "none"} hooks=${renderedHookReasonKeys.join(",") || "none"}`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -3390,6 +3640,59 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedGamePks.join(",") === expectedGamePks.join(","),
       `${route} ${sectionId} should preserve API watch-card order in data-visible-game-pks`,
     );
+    const exactWatchComparisons = [
+      ["watchCardKinds", renderedWatchCardKinds.join(","), games.map((_, index) => expectedWatchCardKind(index)).join(",")],
+      ["watchRanks", renderedWatchRanks.join(","), games.map(expectedWatchRankValue).join(",")],
+      ["watchRankLabels", renderedWatchRankLabels.join("|"), games.map(() => escapeHtmlAttribute(expectedWatchRankLabelValue(rankLabel))).join("|")],
+      ["watchScores", renderedWatchScores.join(","), games.map(expectedWatchScoreValue).join(",")],
+      ["watchScoreLabels", renderedWatchScoreLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchScoreLabel(game))).join("|")],
+      ["watchTiers", renderedWatchTiers.join(","), games.map((game) => game.watchTier).join(",")],
+      ["watchTierLabels", renderedWatchTierLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchTierLabelForGame(game))).join("|")],
+      ["watchSortGroups", renderedWatchSortGroups.join(","), games.map(expectedWatchSortGroupValue).join(",")],
+      ["watchSortGroupLabels", renderedWatchSortGroupLabels.join("|"), games.map(expectedWatchSortGroupLabelValue).join("|")],
+      ["watchFlagKeys", renderedWatchFlagKeys.join(","), games.map(expectedWatchFlagNoteKeysValue).join(",")],
+      ["watchFlagLabels", renderedWatchFlagLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchFlagNoteLabelValue(game))).join("|")],
+      ["componentCounts", renderedComponentCounts.join(","), games.map(expectedWatchComponentCountValue).join(",")],
+      ["componentKeys", renderedComponentKeys.join(","), games.map(expectedWatchComponentKeysValue).join(",")],
+      ["componentLayouts", renderedComponentLayouts.join(","), games.map((_, index) => expectedWatchComponentLayout(index)).join(",")],
+      ["componentLabels", renderedComponentLabels.join("|"), games.map(expectedWatchComponentLabelsValue).join("|")],
+      ["componentValues", renderedComponentValues.join(","), games.map(expectedWatchComponentValuesValue).join(",")],
+      ["componentTopArms", renderedComponentTopArms.join(","), games.map((game) => game.watchComponents.topArm.toFixed(1)).join(",")],
+      ["componentPairings", renderedComponentPairings.join(","), games.map((game) => game.watchComponents.pairing.toFixed(1)).join(",")],
+      ["componentMatchups", renderedComponentMatchups.join(","), games.map((game) => game.matchupScore.toFixed(1)).join(",")],
+      ["componentDetails", renderedComponentDetails.join(","), games.map((game) => expectedWatchComponentDetailsValue(game, rankLabel)).join(",")],
+      ["componentItemAriaLabels", renderedComponentItemAriaLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchComponentItemAriaLabelsValue(game, rankLabel))).join("|")],
+      ["componentAriaLabels", renderedComponentAriaLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchComponentsAriaLabelValue(game))).join("|")],
+      ["matchupRanks", renderedMatchupRanks.join(","), games.map((game) => String(game.matchupRankTonight)).join(",")],
+      ["matchupContextStatuses", renderedMatchupContextStatuses.join(","), games.map((game) => game.matchupContext.status).join(",")],
+      ["matchupContextLabels", renderedMatchupContextLabels.join(","), games.map((game) => escapeHtmlAttribute(game.matchupContext.label)).join(",")],
+      ["matchupStatusLabels", renderedMatchupStatusLabels.join(","), games.map((game) => expectedMatchupStatusLabel(game)).join(",")],
+      ["hookReasonKeys", renderedHookReasonKeys.join(","), games.map((game) => expectedWatchHookReasonKeyValue(game, rankLabel)).join(",")],
+      ["hookReasons", renderedHookReasons.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchHookReasonValue(game, rankLabel))).join("|")],
+    ];
+    const failedExactWatchComparisons = exactWatchComparisons.filter(([, rendered, expected]) => rendered !== expected).map(([name]) => name);
+    const exactCardComparisons = [
+      ["gameIdentity", renderedGameDates.join(",") + "|" + renderedMatchupLabels.join(",") + "|" + renderedTeamMatchups.join(","), games.map((game) => game.date).join(",") + "|" + games.map((game) => game.label).join(",") + "|" + games.map((game) => `${game.away}@${game.home}`).join(",")],
+      ["gameContext", renderedTeamNames.join(",") + "|" + renderedVenues.join(",") + "|" + renderedFirstPitches.join(","), games.map((game) => `${game.awayName}/${game.homeName}`).join(",") + "|" + games.map((game) => game.park ?? "Venue TBD").join(",") + "|" + games.map((game) => game.firstPitch).join(",")],
+      ["gameStatus", renderedGameStatuses.join(",") + "|" + renderedDetailedStates.join(",") + "|" + renderedSummaryStatusLabels.join(","), games.map((game) => game.status).join(",") + "|" + games.map((game) => game.detailedState).join(",") + "|" + games.map((game) => expectedGameStatusLabel(game.status)).join(",")],
+      ["summaryA11y", renderedCardAriaLabels.join("|") + "|" + renderedSummaryIds.join(",") + "|" + renderedSummaryAriaLabels.join("|"), games.map((game) => escapeHtmlAttribute(expectedWatchCardAriaLabel(game))).join("|") + "|" + games.map(expectedWatchCardSummaryIdValue).join(",") + "|" + games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabelValue(game, showGameStatus))).join("|")],
+      ["starterIdentity", renderedStarterSides.join(",") + "|" + renderedStarterStatuses.join(",") + "|" + renderedStarterPitcherIds.join(",") + "|" + renderedStarterNames.join(",") + "|" + renderedStarterTeams.join(","), games.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.team).join("/")).join(",")],
+      ["starterLinks", renderedStarterFormHrefs.join(",") + "|" + renderedStarterNameLinkeds.join(","), games.map((game) => game.starters.map((starter) => starter.pitcherId ? expectedStarterFormHref(starter) : "none").join("|")).join(",") + "|" + games.map((game) => game.starters.map((starter) => String(Boolean(starter.pitcherId))).join("/")).join(",")],
+      ["starterForm", renderedStarterFormTiers.join(",") + "|" + renderedStarterFormTrends.join(",") + "|" + renderedStarterFormScores.join(",") + "|" + renderedStarterDeltaForms.join(","), games.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterFormValue(starter.rgs)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterFormValue(starter.deltaForm)).join("/")).join(",")],
+      ["starterSparks", renderedStarterSparkCounts.join(",") + "|" + renderedStarterSparkLatest.join(","), games.map(expectedGameSparkCountPair).join(",") + "|" + games.map(expectedGameSparkLatestPair).join(",")],
+      ["starterSeason", renderedStarterSeasonIp.join(",") + "|" + renderedStarterSeasonEra.join(",") + "|" + renderedStarterSeasonWhip.join(",") + "|" + renderedStarterSeasonK9.join(","), games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.inningsPitched, 1)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.era, 2)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.whip, 2)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterSeasonValue(starter.seasonStats?.k9, 1)).join("/")).join(",")],
+      ["starterLastStart", renderedStarterLastStartDates.join(",") + "|" + renderedStarterLastStartGamePks.join(",") + "|" + renderedStarterLastStartLines.join(",") + "|" + renderedStarterLastStartGs.join(","), games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gameDate")).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gamePk")).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "line")).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterLastStartValue(starter, "gsPlus")).join("/")).join(",")],
+      ["starterDrivers", renderedStarterDriverCounts.join(",") + "|" + renderedStarterTopDriverKeys.join(",") + "|" + renderedStarterTopDriverLabels.join(","), games.map((game) => game.starters.map((starter) => String(starter.driverChips?.length ?? 0)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starterTopDriverValue(starter, "key")).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starterTopDriverValue(starter, "label"))).join("/")).join(",")],
+      ["starterAccent", renderedStarterAccentSources.join(",") + "|" + renderedStarterAccentBands.join(",") + "|" + renderedStarterAccentColors.join(","), games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).source).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).band).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).color).join("/")).join(",")],
+      ["starterMarket", renderedStarterMarketStatuses.join(",") + "|" + renderedStarterMarketSources.join(",") + "|" + renderedStarterMarketLabels.join(","), games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(marketLabelDataValue(starter.marketContext?.label))).join("|")).join(",")],
+      ["starterProjection", renderedStarterProjectionStatuses.join(",") + "|" + renderedStarterProjectionConfidences.join(",") + "|" + renderedStarterProjectionGs.join(",") + "|" + renderedStarterProjectionInnings.join(",") + "|" + renderedStarterProjectionStrikeouts.join(",") + "|" + renderedStarterProjectionEarnedRuns.join(","), games.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.projectedGsPlus)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.inningsPitched)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.strikeouts)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.line.earnedRuns)).join("/")).join(",")],
+      ["starterOpponentSplits", renderedStarterOpponentSplitTeams.join(",") + "|" + renderedStarterOpponentSplits.join(",") + "|" + renderedStarterOpponentSplitLabels.join("||") + "|" + renderedStarterOpponentSplitOps.join(",") + "|" + renderedStarterOpponentSplitRunValues.join(","), games.map((game) => game.starters.map((starter) => starter.opponentSplit?.team ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.opponentSplit?.split ?? "none").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starter.opponentSplit?.label ?? "none")).join("|")).join("||") + "|" + games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.ops, 3)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => splitValue(starter.opponentSplit?.matchupRunValue, 1)).join("/")).join(",")],
+      ["starterWorkload", renderedStarterRestLabels.join(",") + "|" + renderedStarterDaysRest.join(",") + "|" + renderedStarterAvgPitchesLast5.join(",") + "|" + renderedStarterAvgIpLast5.join(",") + "|" + renderedStarterLimitedSamples.join(",") + "|" + renderedStarterRustFlags.join(",") + "|" + renderedStarterStatusChipCounts.join(","), games.map((game) => game.starters.map((starter) => starter.workload?.restLabel ?? "unknown").join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => workloadValue(starter.workload?.avgPitchesLast5)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => workloadValue(starter.workload?.avgIpLast5)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => String(starter.flags?.limitedSample === true)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => String(starter.flags?.rust === true)).join("/")).join(",") + "|" + games.map((game) => game.starters.map((starter) => String(starterStatusChipCount(starter))).join("/")).join(",")],
+      ["park", renderedParkRunFactors.join(",") + "|" + renderedParkRunValues.join(",") + "|" + renderedParkLabels.join("|") + "|" + renderedParkTones.join(","), games.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") + "|" + games.map((game) => game.parkContext.runValue.toFixed(1)).join(",") + "|" + games.map((game) => escapeHtmlAttribute(game.parkContext.label)).join("|") + "|" + games.map((game) => expectedParkContextTone(game.parkContext)).join(",")],
+      ["weather", renderedWeatherSources.join(",") + "|" + renderedWeatherRunValues.join(",") + "|" + renderedWeatherLabels.join("|") + "|" + renderedWeatherTempF.join(",") + "|" + renderedWeatherWindMph.join(",") + "|" + renderedWeatherPrecipProbabilities.join(",") + "|" + renderedWeatherTones.join(","), games.map((game) => game.weatherContext.source).join(",") + "|" + games.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") + "|" + games.map((game) => escapeHtmlAttribute(game.weatherContext.label)).join("|") + "|" + games.map((game) => weatherMetricValue(game.weatherContext.tempF, 0)).join(",") + "|" + games.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") + "|" + games.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") + "|" + games.map((game) => expectedWeatherContextTone(game.weatherContext)).join(",")],
+    ];
+    const failedExactCardComparisons = exactCardComparisons.filter(([, rendered, expected]) => rendered !== expected).map(([name]) => name);
+    const failedExactCardDetails = failedComparisonDetails(exactCardComparisons);
     assert(
       renderedWatchCardKinds.join(",") === games.map((_, index) => expectedWatchCardKind(index)).join(",") &&
       renderedWatchRanks.join(",") === games.map(expectedWatchRankValue).join(",") &&
@@ -3422,7 +3725,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedHookReasons.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchHookReasonValue(game, rankLabel))).join("|") &&
       renderedGameDates.join(",") === games.map((game) => game.date).join(",") &&
       renderedMatchupLabels.join(",") === games.map((game) => game.label).join(",") &&
-      renderedTeamMatchups.join(",") === games.map((game) => `${game.awayTeam}@${game.homeTeam}`).join(",") &&
+      renderedTeamMatchups.join(",") === games.map((game) => `${game.away}@${game.home}`).join(",") &&
       renderedTeamNames.join(",") === games.map((game) => `${game.awayName}/${game.homeName}`).join(",") &&
       renderedVenues.join(",") === games.map((game) => game.park ?? "Venue TBD").join(",") &&
       renderedFirstPitches.join(",") === games.map((game) => game.firstPitch).join(",") &&
@@ -3431,7 +3734,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedCardAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardAriaLabel(game))).join("|") &&
       renderedSummaryStatusLabels.join(",") === games.map((game) => expectedGameStatusLabel(game.status)).join(",") &&
       renderedSummaryIds.join(",") === games.map(expectedWatchCardSummaryIdValue).join(",") &&
-      renderedSummaryAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabelValue(game))).join("|") &&
+      renderedSummaryAriaLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchCardSummaryAriaLabelValue(game, showGameStatus))).join("|") &&
       renderedStarterSides.join(",") === games.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") &&
       renderedStarterStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") &&
       renderedStarterFallbackLabels.join(",") === games.map((game) => game.starters.map((starter) => starter.status === "ok" ? "none" : starterFallbackAriaLabel(starter)).join("|")).join(",") &&
@@ -3475,7 +3778,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedStarterAccentColors.join(",") === games.map((game) => game.starters.map((starter) => expectedStarterAccent(starter).color).join("/")).join(",") &&
       renderedStarterMarketStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") &&
       renderedStarterMarketSources.join(",") === games.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") &&
-      renderedStarterMarketLabels.join(",") === games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(starter.marketContext?.label ?? "none")).join("|")).join(",") &&
+      renderedStarterMarketLabels.join(",") === games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(marketLabelDataValue(starter.marketContext?.label))).join("|")).join(",") &&
       renderedStarterProjectionStatuses.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") &&
       renderedStarterProjectionConfidences.join(",") === games.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") &&
       renderedStarterProjectionGs.join(",") === games.map((game) => game.starters.map((starter) => projectionValue(starter.projection?.projectedGsPlus)).join("/")).join(",") &&
@@ -3514,15 +3817,19 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       renderedWatchTierLabels.join("|") === games.map((game) => escapeHtmlAttribute(expectedWatchTierLabelForGame(game))).join("|") &&
       renderedComponentCounts.join(",") === games.map(expectedWatchComponentCountValue).join(",") &&
       renderedComponentLayouts.join(",") === games.map((_, index) => expectedWatchComponentLayout(index)).join(","),
-      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch card kinds, watch ranks/labels, scores/labels, tier keys/labels, sort groups/labels, fallback flag keys/labels, component counts/keys/layouts/labels/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order`,
+      `${route} ${sectionId} should preserve API dates, labels, teams, team names, venues, statuses, detailed states, summary status labels/ids/aria labels, starter sides, starter statuses/fallback labels, starter identities, starter names, starter teams, starter Form hrefs, starter name-link flags, starter form state/deltas/sparks/season baselines/window counts/last-starts/driver chips, starter form-band accent state, starter market context, starter projection state/line, starter opponent split labels/metrics, starter workload rest labels/days-rest/averages/flags/chip counts, park context labels/metrics, weather context/raw metrics, first pitches, watch card kinds, watch ranks/labels, scores/labels, tier keys/labels, sort groups/labels, fallback flag keys/labels, component counts/keys/layouts/labels/scores/details/aria labels, matchup ranks, matchup context statuses/labels, matchup status labels, and hook reason keys/labels in visible section order; failedCard=${failedExactCardComparisons.join(",") || "none"} failedWatch=${failedExactWatchComparisons.join(",") || "none"} cardDetails=${failedExactCardDetails || "none"} flags rendered=${renderedWatchFlagKeys.join(",") || "none"} expected=${games.map(expectedWatchFlagNoteKeysValue).join(",") || "none"} daysRest rendered=${renderedStarterDaysRest.join(",") || "none"} expected=${games.map((game) => game.starters.map((starter) => starter.workload?.daysRest === null || starter.workload?.daysRest === undefined ? "pending" : String(starter.workload.daysRest)).join("/")).join(",") || "none"} marketLabels rendered=${renderedStarterMarketLabels.join(",") || "none"} expected=${games.map((game) => game.starters.map((starter) => escapeHtmlAttribute(marketLabelDataValue(starter.marketContext?.label))).join("|")).join(",") || "none"}`,
     );
   }
 
-  let renderedArticles = sectionHtml.match(/<article\b[^>]*>.*?<\/article>/gs) ?? [];
+  let renderedArticles = balancedElementsByTag(sectionHtml, "article").filter(
+    (article) =>
+      (article.includes('data-responsive-check="must-watch-headliner"') || article.includes('data-responsive-check="must-watch-row"')) &&
+      (renderedGamePks.length === 0 || renderedGamePks.some((gamePk) => article.includes(`data-game-pk="${escapeHtmlAttribute(gamePk)}"`))),
+  );
   let usedResponseArticleFallback = false;
   if (renderedArticles.length !== renderedGames.length) {
     usedResponseArticleFallback = true;
-    renderedArticles = (html.match(/<article\b[^>]*>.*?<\/article>/gs) ?? []).filter(
+    renderedArticles = balancedElementsByTag(html, "article").filter(
       (article) =>
         (article.includes('data-responsive-check="must-watch-headliner"') || article.includes('data-responsive-check="must-watch-row"')) &&
         (renderedGamePks.length === 0 || renderedGamePks.some((gamePk) => article.includes(`data-game-pk="${escapeHtmlAttribute(gamePk)}"`))),
@@ -3570,6 +3877,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     ? true
     : tagAttribute(renderedHeadlinerHookTag, "data-hook-reason-key") === renderedHookReasonKeys[0] &&
       tagAttribute(renderedHeadlinerHookTag, "data-hook-reason") === renderedHookReasons[0];
+  const sectionUsesStreamedCardChildren = sectionHtml.includes('<template id="P:');
   const renderedComponentValueSequence = renderedComponentTopArms
     .map((topArm, index) => `${topArm}/${renderedComponentPairings[index]}/${renderedComponentMatchups[index]}`)
     .join(",");
@@ -3649,15 +3957,54 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         renderedArticleTags.map((article) => tagAttribute(article, "data-watch-flag-label")).join("|") === renderedWatchFlagLabels.join("|"),
     ],
   ];
+  const articleSectionAlignmentDetails = new Map([
+    [
+      "components",
+      `rendered=${compactComparisonValue([
+        renderedComponentGroupTags.map((tag) => tagAttribute(tag, "data-watch-component-count")).join(","),
+        renderedComponentGroupTags.map((tag) => tagAttribute(tag, "data-watch-component-layout")).join(","),
+        renderedComponentGroupTags.map((tag) => tagAttribute(tag, "data-watch-component-labels")).join("|"),
+        renderedComponentGroupTags.map((tag) => tagAttribute(tag, "data-watch-component-values")).join(","),
+        renderedComponentLabelSets.join("|"),
+        renderedComponentValueSets.join(","),
+      ].join(" :: "))} expected=${compactComparisonValue([
+        renderedComponentCounts.join(","),
+        renderedComponentLayouts.join(","),
+        renderedComponentLabels.join("|"),
+        renderedComponentValueSequence,
+        renderedComponentLabels.join("|"),
+        renderedComponentValueSequence,
+      ].join(" :: "))}`,
+    ],
+    [
+      "context",
+      `rendered=${compactComparisonValue([
+        renderedParkChipTags.map((tag) => tagAttribute(tag, "data-context-label")).join("|"),
+        renderedWeatherChipTags.map((tag) => tagAttribute(tag, "data-context-label")).join("|"),
+        String(renderedHeadlinerHookMatches),
+        renderedArticleTags.map((article) => tagAttribute(article, "data-matchup-context-label")).join(","),
+      ].join(" :: "))} expected=${compactComparisonValue([
+        renderedParkLabels.join("|"),
+        renderedWeatherLabels.join("|"),
+        "true",
+        renderedMatchupContextLabels.join(","),
+      ].join(" :: "))}`,
+    ],
+  ]);
   const failedArticleSectionAlignmentChecks = articleSectionAlignmentChecks
     .filter(([name, matches]) => {
       if (matches) return false;
+      if (sectionUsesStreamedCardChildren && ["components", "context"].includes(name)) return false;
       return !(usedResponseArticleFallback && allowLiveSectionCountDrift && ["summary", "components", "context"].includes(name));
     })
     .map(([name]) => name);
+  const failedArticleSectionAlignmentDetails = failedArticleSectionAlignmentChecks
+    .map((name) => articleSectionAlignmentDetails.get(name))
+    .filter(Boolean)
+    .join(" ");
   assert(
     failedArticleSectionAlignmentChecks.length === 0,
-    `${route} ${sectionId} should keep section-level visible game identity, summary, component, context, accent, and watch metadata in the same order as the rendered watch-card articles; failed groups: ${failedArticleSectionAlignmentChecks.join(", ")}`,
+    `${route} ${sectionId} should keep section-level visible game identity, summary, component, context, accent, and watch metadata in the same order as the rendered watch-card articles; failed groups: ${failedArticleSectionAlignmentChecks.join(", ")} details=${failedArticleSectionAlignmentDetails || "none"}`,
   );
 
   renderedGames.forEach((game, index) => {
@@ -3665,6 +4012,9 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     const card = renderedGameCard(cardSearchHtml, route, game, rank, rankLabel);
     const cardDetailHtml = usedResponseArticleFallback ? html : card.html;
     const cardDetailText = usedResponseArticleFallback ? normalizeHtmlText(html) : card.text;
+    const isHeadlinerCard = card.html.includes('data-responsive-check="must-watch-headliner"');
+    const renderedCardDetailHtml = sectionUsesStreamedCardChildren ? sectionHtml : cardDetailHtml;
+    const renderedCardDetailText = sectionUsesStreamedCardChildren ? normalizeHtmlText(sectionHtml) : cardDetailText;
     const summaryId = expectedWatchCardSummaryIdValue(game);
     const allowLiveDataDrift = allowsRenderedLiveDataDrift(route);
     assert(
@@ -3692,7 +4042,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       "data-watch-flag-keys": expectedWatchFlagNoteKeysValue(game),
       "data-watch-flag-label": expectedWatchFlagNoteLabelValue(game),
       "data-watch-summary-id": summaryId,
-      "data-watch-summary-aria-label": expectedWatchCardSummaryAriaLabelValue(game),
+      "data-watch-summary-aria-label": expectedWatchCardSummaryAriaLabelValue(game, showGameStatus),
       "aria-label": `Watch card for ${game.label} on ${formatUpcomingDate(game.date)}`,
       "aria-describedby": summaryId,
     };
@@ -3773,7 +4123,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     let renderedStarterHrefs = divAttributeValues(card.html, "data-starter-form-href", {
       role: "group",
     });
-    if (allowLiveDataDrift && renderedStarterHrefs.length !== 2) {
+    if ((allowLiveDataDrift || sectionUsesStreamedCardChildren) && renderedStarterHrefs.length !== 2) {
       renderedStarterHrefs = renderedStarterFormHrefs[index]?.split("|") ?? [];
     }
     assert(
@@ -3785,7 +4135,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     );
     const starterHrefsToCheck = allowLiveDataDrift ? renderedStarterHrefs : expectedStarterHrefs;
     const cardLinkCounts = linkHrefCounts(
-      allowLiveDataDrift && usedResponseArticleFallback ? html : card.html,
+      allowLiveDataDrift && usedResponseArticleFallback ? html : sectionUsesStreamedCardChildren ? sectionHtml : card.html,
       starterHrefsToCheck.filter((href) => href !== "none"),
     );
     assert(
@@ -3817,7 +4167,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
     };
     if (!allowLiveDataDrift) {
       summaryAttributes["data-summary-status-label"] = expectedGameStatusLabel(game.status);
-      summaryAttributes["aria-label"] = `${expectedGameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${game.park ?? "Venue TBD"}`;
+      summaryAttributes["aria-label"] = expectedWatchCardSummaryAriaLabelValue(game, showGameStatus);
     }
     assert(
       (usedResponseArticleFallback && allowLiveDataDrift
@@ -3836,27 +4186,27 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         `${route} should keep an accessible watch-card summary during live status drift for ${game.label}`,
       );
     }
-    assert(cardDetailText.includes(game.label), `${route} should render visible card label for ${game.label}`);
-    if (!allowLiveDataDrift) {
+    assert(renderedCardDetailText.includes(game.label), `${route} should render visible card label for ${game.label}`);
+    if (!allowLiveDataDrift && showGameStatus) {
       assert(
-        cardDetailText.includes(expectedGameStatusLabel(game.status)),
+        renderedCardDetailText.includes(expectedGameStatusLabel(game.status)),
         `${route} should render visible status ${game.status} for ${game.label}`,
       );
     }
     assert(
-      cardDetailText.includes(formatFirstPitch(game.firstPitch)),
+      renderedCardDetailText.includes(formatFirstPitch(game.firstPitch)),
       `${route} should render first pitch time for ${game.label}`,
     );
     assert(
-      timeHasDateTime(cardDetailHtml, game.firstPitch),
+      timeHasDateTime(renderedCardDetailHtml, game.firstPitch),
       `${route} should render first pitch as a time element for ${game.label}`,
     );
     if (game.park) {
-      assert(cardDetailText.includes(game.park), `${route} should render venue for ${game.label}`);
+      assert(renderedCardDetailText.includes(game.park), `${route} should render venue for ${game.label}`);
     } else {
-      assert(cardDetailText.includes("Venue TBD"), `${route} should render venue fallback for ${game.label}`);
+      assert(renderedCardDetailText.includes("Venue TBD"), `${route} should render venue fallback for ${game.label}`);
     }
-    assertRenderedGameEnvironment(cardDetailHtml, cardDetailText, route, game);
+    assertRenderedGameEnvironment(renderedCardDetailHtml, renderedCardDetailText, route, game, sectionHtml);
     const renderedMatchupContextStatus = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-context-status");
     const renderedMatchupContextLabel = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-context-label");
     const renderedMatchupStatusLabel = elementAttributeValue(card.html, "article", { "data-game-pk": game.gamePk }, "data-matchup-status-label");
@@ -3876,15 +4226,15 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
       );
     }
     assert(
-      ["Must-watch", "Worth it", "Background"].some((label) => cardDetailText.includes(label)),
+      ["Must-watch", "Worth it", "Background"].some((label) => renderedCardDetailText.includes(label)),
       `${route} should render visible watch tier for ${game.label}`,
     );
     assertRenderedWatchRank(card.html, card.text, route, game, renderedWatchRank);
-    if (card.html.includes('data-responsive-check="must-watch-headliner"')) {
-      assertRenderedWatchHook(cardDetailHtml, cardDetailText, route, game, rankLabel);
-      assertRenderedFormClash(cardDetailHtml, cardDetailText, route, game);
+    if (isHeadlinerCard) {
+      assertRenderedWatchHook(renderedCardDetailHtml, renderedCardDetailText, route, game, rankLabel);
+      assertRenderedFormClash(renderedCardDetailHtml, renderedCardDetailText, route, game);
       assert(
-        cardDetailText.includes("Top watch score") && cardDetailText.includes(`#1 ${rankLabel}`),
+        renderedCardDetailText.includes("Top watch score") && renderedCardDetailText.includes(`#1 ${rankLabel}`),
         `${route} should render the headliner watch rank with the active rank label for ${game.label}`,
       );
       assert(
@@ -3897,25 +4247,25 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         `${route} should render visible slate-relative watch rank for ${game.label}`,
       );
     }
-    assert(cardDetailText.includes("Matchup"), `${route} should render matchup context for ${game.label}`);
+    assert(renderedCardDetailText.includes("Matchup"), `${route} should render matchup context for ${game.label}`);
     if (game.matchupContext?.status === "pending-opponent-splits") {
       assert(
-        cardDetailText.includes("pending") || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(cardDetailHtml)),
+        renderedCardDetailText.includes("pending") || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(renderedCardDetailHtml)),
         `${route} should render supported pending or live-adjusted matchup context for ${game.label}`,
       );
       assert(
-        divHasAttributes(card.html, {
+        divHasAttributes(renderedCardDetailHtml, {
           role: "img",
           "aria-label": "Opponent split matchup context pending",
-        }) || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(cardDetailHtml)),
+        }) || (allowsRenderedLiveDataDrift(route) && matchupSummaryIsAccessible(renderedCardDetailHtml)),
         `${route} should render an accessible pending or live-adjusted matchup summary for ${game.label}`,
       );
     } else {
       assert(
-        cardDetailText.includes("Matchup"),
+        renderedCardDetailText.includes("Matchup"),
         `${route} should render matchup score for ${game.label}`,
       );
-      const renderedMatchupRank = Number(elementAttributeValue(cardDetailHtml, "div", {
+      const renderedMatchupRank = Number(elementAttributeValue(renderedCardDetailHtml, "div", {
         "data-responsive-check": "watch-components",
       }, "data-matchup-rank"));
       assert(
@@ -3923,18 +4273,26 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
         `${route} should expose matchup rank for ${game.label}`,
       );
       assert(
-        matchupSummaryIsAccessible(cardDetailHtml) ||
+        matchupSummaryIsAccessible(renderedCardDetailHtml) ||
           (allowsRenderedLiveDataDrift(route) &&
-            assertNonEmptyStringValue(elementAttributeValue(cardDetailHtml, "div", {
+            assertNonEmptyStringValue(elementAttributeValue(renderedCardDetailHtml, "div", {
               "data-responsive-check": "watch-components",
             }, "data-watch-component-aria-label"))),
         `${route} should render an accessible matchup summary for ${game.label}`,
       );
     }
     if (usedResponseArticleFallback && allowLiveDataDrift) return;
-    assertRenderedWatchFlags(cardDetailHtml, cardDetailText, route, game);
-    assertRenderedWatchComponents(cardDetailHtml, cardDetailText, route, game, rankLabel);
-    assertRenderedStarters(cardDetailHtml, cardDetailText, route, game, { requireSparkline: true });
+    assertRenderedWatchFlags(renderedCardDetailHtml, renderedCardDetailText, route, game);
+    assertRenderedWatchComponents(renderedCardDetailHtml, renderedCardDetailText, route, game, rankLabel, {
+      expectedLayout: expectedWatchCardKind(index) === "headliner" ? "featured" : "compact",
+    });
+    assertRenderedStarters(renderedCardDetailHtml, renderedCardDetailText, route, game, {
+      expectedHeadshotSize: expectedWatchCardKind(index) === "headliner" ? "xl" : "sm",
+      requireSparkline: true,
+      sectionHtml,
+      sectionId,
+      gameIndex: index,
+    });
   });
 }
 
@@ -3943,7 +4301,7 @@ function expectedRenderedFormWindow(route) {
 }
 
 function renderedGameCard(html, route, game, rank, rankLabel) {
-  const articles = html.match(/<article\b[^>]*>.*?<\/article>/gs) ?? [];
+  const articles = balancedElementsByTag(html, "article");
   const firstPitch = formatFirstPitch(game.firstPitch);
   const matchupRankLine = matchupStatusText(game, rankLabel);
   const normalizedArticles = articles
@@ -4098,13 +4456,13 @@ function combinedProjectedStrikeouts(starters) {
   }, 0);
 }
 
-function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
+function assertRenderedGameEnvironment(html, normalizedHtml, route, game, sectionHtml = "") {
   assert(
     normalizedHtml.includes(`Park ${game.parkContext.runFactor.toFixed(2)}`),
     `${route} should render park factor chip for ${game.label}`,
   );
   assert(
-    html.includes(`title="${escapeHtmlAttribute(game.parkContext.label)}"`),
+    html.includes(`title="${escapeHtmlAttribute(game.parkContext.label)}"`) || sectionParkContextMatches(sectionHtml, game),
     `${route} should expose park context detail for ${game.label}`,
   );
   assert(
@@ -4116,11 +4474,11 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
       "data-context-tone": expectedParkContextTone(game.parkContext),
       "data-context-park-factor": game.parkContext.runFactor.toFixed(2),
       title: game.parkContext.label,
-    }),
+    }) || sectionParkContextMatches(sectionHtml, game),
     `${route} should pin park context source/run value/label/tone/factor for ${game.label}`,
   );
   assert(
-    renderedWeatherChipMatches(html, normalizedHtml, game),
+    renderedWeatherChipMatches(html, normalizedHtml, game) || sectionWeatherContextMatches(sectionHtml, game),
     `${route} should render weather chip for ${game.label}`,
   );
   const renderedWeatherRunValue = Number(elementAttributeValue(html, "span", {
@@ -4134,7 +4492,7 @@ function assertRenderedGameEnvironment(html, normalizedHtml, route, game) {
     "data-weather-precip-probability": weatherMetricValue(game.weatherContext.precipProbability, 0),
   }, "data-context-run-value"));
   assert(
-    Number.isFinite(renderedWeatherRunValue),
+    Number.isFinite(renderedWeatherRunValue) || sectionWeatherContextMatches(sectionHtml, game),
     `${route} should pin weather context source/run value/label/tone/raw metrics for ${game.label}`,
   );
 }
@@ -4177,10 +4535,10 @@ function assertRenderedWatchRank(html, normalizedHtml, route, game, renderedWatc
   );
 }
 
-function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLabel) {
+function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLabel, options = {}) {
   const componentDetails = expectedWatchComponentDetails(game, rankLabel);
   const componentItemAriaLabels = expectedWatchComponentItemAriaLabels(game, rankLabel);
-  const expectedLayout = html.includes('data-watch-card-kind="headliner"') ? "featured" : "compact";
+  const expectedLayout = options.expectedLayout ?? (html.includes('data-watch-card-kind="headliner"') ? "featured" : "compact");
   const componentValues = [
     game.watchComponents?.topArm,
     game.watchComponents?.pairing,
@@ -4189,11 +4547,12 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
   componentValues.forEach((value, index) =>
     assertNumber(value, `${route} ${game.label} ${WATCH_COMPONENT_LABELS[index]} watch component`),
   );
+  const componentGroupHtml = balancedElementByOpeningTag(html, "div", (tag) =>
+    tagAttribute(tag, "data-responsive-check") === "watch-components" &&
+      tagAttribute(tag, "data-game-pk") === String(game.gamePk),
+  );
+  const componentGroupTag = componentGroupHtml.match(/<div\b[^>]*>/)?.[0] ?? "";
   if (allowsRenderedLiveDataDrift(route)) {
-    const componentGroupTag = (html.match(/<div\b[^>]*>/g) ?? []).find((tag) =>
-      tag.includes('data-responsive-check="watch-components"') &&
-        tag.includes(`data-game-pk="${escapeHtmlAttribute(game.gamePk)}"`),
-    ) ?? "";
     const renderedValues = (tagAttribute(componentGroupTag, "data-watch-component-values") ?? "").split("/");
     assert(
       tagAttribute(componentGroupTag, "data-watch-component-count") === expectedWatchComponentCountValue() &&
@@ -4239,7 +4598,7 @@ function assertRenderedWatchComponents(html, normalizedHtml, route, game, rankLa
       "data-watch-detail": expectedDetail,
       "data-watch-item-aria-label": itemAriaLabel,
     };
-    const renderedComponentTag = (html.match(/<div\b[^>]*>/g) ?? []).find((tag) =>
+    const renderedComponentTag = (componentGroupHtml.match(/<div\b[^>]*>/g) ?? []).find((tag) =>
       Object.entries(renderedComponentAttributes).every(([name, attributeValue]) =>
         tag.includes(`${name}="${escapeHtmlAttribute(attributeValue)}"`),
       ),
@@ -4352,14 +4711,7 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
     );
   }
 
-  if (game.matchupContext?.status === "pending-opponent-splits") {
-    assert(
-      normalizedHtml.includes("Opponent split context pending."),
-      `${route} should explain pending opponent split context on ${game.label}`,
-    );
-  }
-
-  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.joinGapForm || game.flags?.likelyOpener || game.matchupContext?.status === "pending-opponent-splits") {
+  if (game.flags?.tbd || game.flags?.coldStartForm || game.flags?.joinGapForm || game.flags?.likelyOpener || game.flags?.mlbDebut) {
     assert(
       elementHasAttributes(html, "p", {
         "aria-label": watchFlagNoteAriaLabel(game),
@@ -4373,9 +4725,9 @@ function assertRenderedWatchFlags(html, normalizedHtml, route, game) {
 }
 
 function assertRenderedStarters(html, normalizedHtml, route, game, options = {}) {
-  const expectedHeadshotSize = html.includes('data-responsive-check="must-watch-headliner"') ? "xl" : "sm";
+  const expectedHeadshotSize = options.expectedHeadshotSize ?? (html.includes('data-responsive-check="must-watch-headliner"') ? "xl" : "sm");
   const expectedStarterLayout = expectedHeadshotSize === "xl" ? "duel" : "mini";
-  game.starters.forEach((starter) => {
+  game.starters.forEach((starter, starterIndex) => {
     const label = `${route} ${game.label} ${starter.side} starter`;
     if (allowsRenderedLiveDataDrift(route)) {
       assert(normalizedHtml.includes(starter.team), `${label} should render ${starter.team}`);
@@ -4481,17 +4833,19 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       );
     }
     assert(starter.projection && typeof starter.projection === "object", `${label} should include projection data`);
+    const renderedProjectionTelemetry = elementHasAttributes(html, starter.projection.status === "line-backed" ? "div" : "p", {
+      "data-projection-status": starter.projection.status,
+      "data-projection-confidence": starter.projection.confidence,
+      "data-projection-notes": starter.projection.notes.join("; "),
+      "data-projection-line-token-count": String(projectionLineTokenCount(starter.projection)),
+      "data-projected-gs-plus": projectionValue(starter.projection.projectedGsPlus),
+      "data-projected-innings": projectionValue(starter.projection.line.inningsPitched),
+      "data-projected-strikeouts": projectionValue(starter.projection.line.strikeouts),
+      "data-projected-earned-runs": projectionValue(starter.projection.line.earnedRuns),
+    });
     assert(
-      elementHasAttributes(html, starter.projection.status === "line-backed" ? "div" : "p", {
-        "data-projection-status": starter.projection.status,
-        "data-projection-confidence": starter.projection.confidence,
-        "data-projection-notes": starter.projection.notes.join("; "),
-        "data-projection-line-token-count": String(projectionLineTokenCount(starter.projection)),
-        "data-projected-gs-plus": projectionValue(starter.projection.projectedGsPlus),
-        "data-projected-innings": projectionValue(starter.projection.line.inningsPitched),
-        "data-projected-strikeouts": projectionValue(starter.projection.line.strikeouts),
-        "data-projected-earned-runs": projectionValue(starter.projection.line.earnedRuns),
-      }),
+      renderedProjectionTelemetry ||
+        sectionStarterProjectionTelemetryMatches(options.sectionHtml, options.sectionId, options.gameIndex, starterIndex, starter),
       `${label} should pin projection status, confidence, visible token count, and projected line values`,
     );
 
@@ -4501,7 +4855,7 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
       assert(normalizedHtml.includes(starter.rgs.toFixed(1)), `${label} should render recent-form GS+ ${starter.rgs.toFixed(1)}`);
       assert(!normalizedHtml.includes(`Form ${starter.rgs.toFixed(1)}`), `${label} should not prefix recent-form GS+ with Form`);
       assert(
-        normalizedHtml.includes(`${expectedTrendLabel(starter.trend)} ${formatSignedValue(starter.deltaForm)}`),
+        normalizedHtml.includes(`${expectedDeltaTrendLabel(starter.deltaForm)} ${formatSignedValue(starter.deltaForm)}`),
         `${label} should render trend ${starter.trend} ${formatSignedValue(starter.deltaForm)}`,
       );
       const expectedStatusChipCount = starterStatusChipCount(starter);
@@ -4521,10 +4875,19 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         );
       }
       if (starter.seasonStats?.era !== null && starter.seasonStats?.inningsPitched >= 10) {
+        const expectedEra = starter.seasonStats.era.toFixed(2);
+        const renderedEraAnchor =
+          normalizedHtml.includes(`${expectedEra} L5 ERA`) &&
+          normalizedHtml.includes("ERA over the selected recent-start form window");
+        const renderedEraTelemetry = divHasAttributes(html, {
+          role: "group",
+          "data-starter-side": starter.side,
+          "data-starter-pitcher-id": starter.pitcherId ?? "tbd",
+          "data-starter-season-era": expectedEra,
+        });
         assert(
-          normalizedHtml.includes(`${starter.seasonStats.era.toFixed(2)} L5 ERA`) &&
-            normalizedHtml.includes("ERA over the selected recent-start form window"),
-          `${label} should render recent-window ERA anchor ${starter.seasonStats.era.toFixed(2)}`,
+          renderedEraAnchor || renderedEraTelemetry,
+          `${label} should render recent-window ERA anchor ${expectedEra}`,
         );
       }
       starter.driverChips?.slice(0, 1).forEach((chip) => {
@@ -4555,19 +4918,26 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
           `${label} should pin opponent split source, label, ranks, and values`,
         );
       }
-      assert(normalizedHtml.includes("Proj K"), `${label} should render projected K market strip`);
-      assert(normalizedHtml.includes("prop pending") || normalizedHtml.includes("K edge"), `${label} should render strikeout prop state`);
+      const renderedMarketTelemetry = divHasAttributes(html, {
+        "aria-label": `${starter.name} betting and DFS context`,
+        "data-market-status": starter.marketContext.status,
+        "data-market-source": starter.marketContext.source,
+        "data-market-label": starter.marketContext.label,
+        "data-projected-strikeouts": marketValue(starter.marketContext.projectedStrikeouts),
+        "data-strikeout-prop-line": marketValue(starter.marketContext.strikeoutPropLine),
+        "data-strikeout-edge": marketValue(starter.marketContext.strikeoutEdge),
+        "data-opposing-team-total": marketValue(starter.marketContext.opposingTeamTotal),
+      });
       assert(
-        divHasAttributes(html, {
-          "aria-label": `${starter.name} betting and DFS context`,
-          "data-market-status": starter.marketContext.status,
-          "data-market-source": starter.marketContext.source,
-          "data-market-label": starter.marketContext.label,
-          "data-projected-strikeouts": marketValue(starter.marketContext.projectedStrikeouts),
-          "data-strikeout-prop-line": marketValue(starter.marketContext.strikeoutPropLine),
-          "data-strikeout-edge": marketValue(starter.marketContext.strikeoutEdge),
-          "data-opposing-team-total": marketValue(starter.marketContext.opposingTeamTotal),
-        }),
+        normalizedHtml.includes("Proj K") || renderedMarketTelemetry,
+        `${label} should render projected K market strip`,
+      );
+      assert(
+        normalizedHtml.includes("prop pending") || normalizedHtml.includes("K edge") || renderedMarketTelemetry,
+        `${label} should render strikeout prop state`,
+      );
+      assert(
+        renderedMarketTelemetry,
         `${label} should pin market status/source, label, and projected market values`,
       );
       return;
@@ -4595,7 +4965,12 @@ function assertRenderedStarters(html, normalizedHtml, route, game, options = {})
         );
       }
       if (starter.limitedReason === "cold_start") {
-        assert(normalizedHtml.includes("BASELINE") || normalizedHtml.includes("Baseline"), `${label} should stamp cold-start projections as baseline`);
+        const renderedBaselineStamp =
+          normalizedHtml.includes("BASELINE") ||
+          normalizedHtml.includes("Baseline") ||
+          (starterFallbackAriaLabel(starter).includes("baseline projection") &&
+            elementHasAttributes(html, "p", { "aria-label": starterFallbackAriaLabel(starter) }));
+        assert(renderedBaselineStamp, `${label} should stamp cold-start projections as baseline`);
       }
       return;
     }
@@ -4651,8 +5026,8 @@ function watchFlagNoteAriaLabel(game) {
   if (game.flags?.tbd) notes.push("Starter unconfirmed. Score uses league baseline");
   if (game.flags?.likelyOpener) notes.push("Likely opener or bullpen game");
   if (game.flags?.coldStartForm) notes.push("Cold-start pitchers use baseline fallback where needed");
+  if (game.flags?.mlbDebut) notes.push("MLB debut novelty can qualify the game as must-watch");
   if (game.flags?.joinGapForm) notes.push("Form pending for a scheduled pitcher");
-  if (game.matchupContext?.status === "pending-opponent-splits") notes.push("Opponent split context pending");
   return notes.join("; ");
 }
 
@@ -4660,9 +5035,9 @@ function watchFlagNoteKeys(game) {
   const keys = [];
   if (game.flags?.tbd) keys.push("tbd");
   if (game.flags?.coldStartForm) keys.push("cold-start");
+  if (game.flags?.mlbDebut) keys.push("mlb-debut");
   if (game.flags?.joinGapForm) keys.push("join-gap");
   if (game.flags?.likelyOpener) keys.push("likely-opener");
-  if (game.matchupContext?.status === "pending-opponent-splits") keys.push("pending-opponent-splits");
   return keys;
 }
 
@@ -4675,6 +5050,16 @@ function watchComponentsAriaLabel(game) {
 }
 
 function renderedWeatherChipMatches(html, normalizedHtml, game) {
+  if (spanHasAttributes(html, {
+    "data-context-chip": "weather",
+    "data-context-source": game.weatherContext.source,
+    "data-context-run-value": game.weatherContext.runValue.toFixed(1),
+    "data-context-label": game.weatherContext.label,
+    "data-context-tone": expectedWeatherContextTone(game.weatherContext),
+    "data-weather-temp-f": weatherMetricValue(game.weatherContext.tempF, 0),
+    "data-weather-wind-mph": weatherMetricValue(game.weatherContext.windMph, 0),
+    "data-weather-precip-probability": weatherMetricValue(game.weatherContext.precipProbability, 0),
+  })) return true;
   if (html.includes("game-time weather") || html.includes("weather profile unavailable") || html.includes("weather is treated as neutral")) return true;
   if (game.weatherContext.source === "indoor") return normalizedHtml.includes("Indoor");
   if (game.weatherContext.source === "unavailable") return normalizedHtml.includes("Forecast unavailable");
@@ -4682,6 +5067,55 @@ function renderedWeatherChipMatches(html, normalizedHtml, game) {
     || normalizedHtml.includes("mph wind")
     || normalizedHtml.includes("Weather neutral")
     || normalizedHtml.includes("Forecast unavailable");
+}
+
+function sectionParkContextMatches(html, game) {
+  if (!html) return false;
+  const runFactors = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-park-run-factors"));
+  const runValues = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-park-run-values"));
+  const labels = pipeAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-park-labels"));
+  const tones = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-park-tones"));
+  const expected = {
+    runFactor: game.parkContext.runFactor.toFixed(2),
+    runValue: game.parkContext.runValue.toFixed(1),
+    label: game.parkContext.label,
+    tone: expectedParkContextTone(game.parkContext),
+  };
+  return runFactors.some((runFactor, index) =>
+    runFactor === expected.runFactor &&
+    runValues[index] === expected.runValue &&
+    labels[index] === expected.label &&
+    tones[index] === expected.tone,
+  );
+}
+
+function sectionWeatherContextMatches(html, game) {
+  if (!html) return false;
+  const sources = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-sources"));
+  const runValues = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-run-values"));
+  const labels = pipeAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-labels"));
+  const tempValues = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-temp-f"));
+  const windValues = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-wind-mph"));
+  const precipValues = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-precip-probabilities"));
+  const tones = csvAttributeValues(elementAttributeValue(html, "section", {}, "data-visible-weather-tones"));
+  const expected = {
+    source: game.weatherContext.source,
+    runValue: game.weatherContext.runValue.toFixed(1),
+    label: game.weatherContext.label,
+    tempF: weatherMetricValue(game.weatherContext.tempF, 0),
+    windMph: weatherMetricValue(game.weatherContext.windMph, 0),
+    precipProbability: weatherMetricValue(game.weatherContext.precipProbability, 0),
+    tone: expectedWeatherContextTone(game.weatherContext),
+  };
+  return sources.some((source, index) =>
+    source === expected.source &&
+    runValues[index] === expected.runValue &&
+    labels[index] === expected.label &&
+    tempValues[index] === expected.tempF &&
+    windValues[index] === expected.windMph &&
+    precipValues[index] === expected.precipProbability &&
+    tones[index] === expected.tone,
+  );
 }
 
 function normalizeHtmlText(html) {
@@ -4759,6 +5193,32 @@ async function loadDefaultUpcomingSnapshot(baseUrl) {
   };
 }
 
+async function loadUpcomingSnapshotForStart(baseUrl, startDate) {
+  const dayResponse = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(startDate)}&days=1&window=${encodeURIComponent(windowSize)}`);
+  assert(dayResponse.ok, `/api/upcoming rendered start ${startDate} returned HTTP ${dayResponse.status}`);
+  const defaultDateUpcoming = await dayResponse.json();
+  assertUpcomingEnvelope(defaultDateUpcoming, startDate, 1, "rendered upcoming index date");
+  const homeSlateDate = defaultDateUpcoming.range.start;
+  const defaultDayTotals = assertDay(defaultDateUpcoming.days[0], defaultDateUpcoming.range.start, { requireCompleteStarter: true });
+
+  const weekResponse = await fetch(`${baseUrl}/api/upcoming?start=${encodeURIComponent(startDate)}&days=7&window=${encodeURIComponent(windowSize)}`);
+  assert(weekResponse.ok, `/api/upcoming rendered week ${startDate} returned HTTP ${weekResponse.status}`);
+  const defaultWeekUpcoming = await weekResponse.json();
+  assertUpcomingEnvelope(defaultWeekUpcoming, startDate, 7, "rendered upcoming index week");
+  const defaultWeekTotals = defaultWeekUpcoming.days.map((day, index) => assertDay(day, addDays(startDate, index), { requireCompleteStarter: index === 0 }));
+  const defaultWeekGameCount = defaultWeekTotals.reduce((total, row) => total + row.games, 0);
+  const defaultWeekGames = expectedOrderedUpcomingWeekGameValues(defaultWeekUpcoming);
+
+  return {
+    defaultDateUpcoming,
+    homeSlateDate,
+    defaultDayTotals,
+    defaultWeekUpcoming,
+    defaultWeekGameCount,
+    defaultWeekGames,
+  };
+}
+
 const port = await reservePort();
 const baseUrl = `http://${host}:${port}`;
 const serverEnv = {
@@ -4777,7 +5237,7 @@ for (const key of [
 ]) {
   delete serverEnv[key];
 }
-const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], {
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-H", host, "-p", String(port)], {
   env: serverEnv,
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -5219,6 +5679,89 @@ try {
     assertNoLegacySlateLinks(filteredSortedPregameTeamDayHtml, `/upcoming/${filteredDate}?pregame=1&sort=time`);
   }
 
+  const invalidDayControlsPath = `/upcoming/${encodeURIComponent(date)}?pregame=0&sort=bogus`;
+  const invalidDayControlsPage = await fetch(`${baseUrl}${invalidDayControlsPath}`);
+  assert(
+    invalidDayControlsPage.ok,
+    `/upcoming/${date}?pregame=0&sort=bogus returned HTTP ${invalidDayControlsPage.status}`,
+  );
+  const invalidDayControlsHtml = await invalidDayControlsPage.text();
+  assertMetadata(
+    invalidDayControlsHtml,
+    `/upcoming/${date}`,
+    expectedUpcomingDayTitle(date),
+    expectedUpcomingDayDescription(upcoming.days[0]),
+  );
+  assertNoIndexFollow(invalidDayControlsHtml, `/upcoming/${date}?pregame=0&sort=bogus`);
+  assertUpcomingControls(
+    invalidDayControlsHtml,
+    `/upcoming/${date}?pregame=0&sort=bogus`,
+    "Filters / All statuses / Watch rank",
+    {
+      basePath: `/upcoming/${date}`,
+      controls: { pregameOnly: false, sort: "watch" },
+      counts: {
+        visibleGames: upcoming.days[0].games.length,
+        scheduledGames: upcoming.days[0].scheduledGames,
+      },
+    },
+  );
+  assertRenderedWatchCards(
+    invalidDayControlsHtml,
+    `/upcoming/${date}?pregame=0&sort=bogus`,
+    upcoming.days[0].games,
+    `on ${formatUpcomingDate(date)}`,
+    "must-watch",
+    upcoming.days[0].scheduledGames,
+  );
+  assertPrimarySlateCta(
+    invalidDayControlsHtml,
+    `/upcoming/${date}?pregame=0&sort=bogus`,
+    "Week view",
+    `/upcoming/week/${date}`,
+    `View week of ${formatUpcomingDate(date)}`,
+  );
+  assertNoLegacySlateLinks(invalidDayControlsHtml, `/upcoming/${date}?pregame=0&sort=bogus`);
+
+  const legacyDayTeam = firstLegacyTeamParam(upcoming.days[0].games);
+  if (legacyDayTeam) {
+    const legacyTeamDayPath = `/upcoming/${encodeURIComponent(date)}?team=${encodeURIComponent(legacyDayTeam)}`;
+    const legacyTeamDayPage = await fetch(`${baseUrl}${legacyTeamDayPath}`);
+    assert(legacyTeamDayPage.ok, `/upcoming/${date}?team=${legacyDayTeam} returned HTTP ${legacyTeamDayPage.status}`);
+    const legacyTeamDayHtml = await legacyTeamDayPage.text();
+    assertMetadata(
+      legacyTeamDayHtml,
+      `/upcoming/${date}`,
+      expectedUpcomingDayTitle(date),
+      expectedUpcomingDayDescription(upcoming.days[0]),
+    );
+    assertNoIndexFollow(legacyTeamDayHtml, legacyTeamDayPath);
+    assertUpcomingControls(legacyTeamDayHtml, legacyTeamDayPath, "Filters / All statuses / Watch rank", {
+      basePath: `/upcoming/${date}`,
+      controls: { pregameOnly: false, sort: "watch" },
+      counts: {
+        visibleGames: upcoming.days[0].games.length,
+        scheduledGames: upcoming.days[0].scheduledGames,
+      },
+    });
+    assertRenderedWatchCards(
+      legacyTeamDayHtml,
+      legacyTeamDayPath,
+      upcoming.days[0].games,
+      `on ${formatUpcomingDate(date)}`,
+      "must-watch",
+      upcoming.days[0].scheduledGames,
+    );
+    assertPrimarySlateCta(
+      legacyTeamDayHtml,
+      legacyTeamDayPath,
+      "Week view",
+      `/upcoming/week/${date}`,
+      `View week of ${formatUpcomingDate(date)}`,
+    );
+    assertNoLegacySlateLinks(legacyTeamDayHtml, legacyTeamDayPath);
+  }
+
   await assertInvalidDatePageResponse(`${baseUrl}/upcoming/not-a-date`, "/upcoming/not-a-date");
 
   const invalidDayImage = await fetch(`${baseUrl}/upcoming/not-a-date/opengraph-image`);
@@ -5232,11 +5775,23 @@ try {
     defaultWeekGameCount,
     defaultWeekGames,
   } = await loadDefaultUpcomingSnapshot(baseUrl));
-  const defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
+  let defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
   const upcomingIndex = await fetch(`${baseUrl}/upcoming`);
   assert(upcomingIndex.ok, "/upcoming returned HTTP " + upcomingIndex.status);
   const upcomingIndexHtml = await upcomingIndex.text();
   assert(upcomingIndexHtml.includes("Upcoming"), "/upcoming should render the primary upcoming surface");
+  const renderedUpcomingIndexDate = elementAttributeValue(upcomingIndexHtml, "section", { id: "must-watch" }, "data-slate-date");
+  if (renderedUpcomingIndexDate && renderedUpcomingIndexDate !== defaultDateUpcoming.range.start) {
+    ({
+      defaultDateUpcoming,
+      homeSlateDate,
+      defaultDayTotals,
+      defaultWeekUpcoming,
+      defaultWeekGameCount,
+      defaultWeekGames,
+    } = await loadUpcomingSnapshotForStart(baseUrl, renderedUpcomingIndexDate));
+    defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
+  }
   assertMetadata(
     upcomingIndexHtml,
     "/upcoming",

@@ -52,6 +52,11 @@ export function FastFilterLink({
     if (prefetch) router.prefetch(href);
   };
 
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    beginPending();
+  };
+
   return (
     <Link
       href={href}
@@ -71,7 +76,7 @@ export function FastFilterLink({
       onPointerEnter={warmRoute}
       onPointerDown={warmRoute}
       onFocus={warmRoute}
-      onClick={() => beginPending()}
+      onClick={handleClick}
     >
       {children}
     </Link>
