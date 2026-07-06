@@ -319,6 +319,11 @@ p,
   transform: translateY(2px) rotate(225deg);
 }
 
+[data-slate-shape-highlight="true"] {
+  outline: 2px solid rgba(245, 158, 11, 0.95);
+  outline-offset: 3px;
+}
+
 .ranked-live-dot {
   box-shadow: 0 0 0 0 rgb(255 90 31 / 0.32);
 }
@@ -374,6 +379,10 @@ p,
     animation: ranked-live-dot-pulse 2s ease-in-out infinite;
   }
 
+  [data-slate-shape-highlight="true"] {
+    animation: slate-shape-row-flash 2s ease-out;
+  }
+
   .home-live-ticker-track {
     animation: home-live-ticker-scroll 42s linear infinite;
   }
@@ -384,6 +393,18 @@ p,
     animation-play-state: paused;
   }
 
+}
+
+@keyframes slate-shape-row-flash {
+  0%,
+  100% {
+    outline-color: rgba(245, 158, 11, 0);
+  }
+
+  15%,
+  75% {
+    outline-color: rgba(245, 158, 11, 0.95);
+  }
 }
 
 @keyframes ranked-live-dot-pulse {

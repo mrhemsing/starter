@@ -12,6 +12,7 @@ import { MobileCardShell } from "@/components/mobile-card-shell";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitchChart } from "@/components/pitch-chart";
 import { RankedStartsDisclosure } from "@/components/ranked-starts-disclosure";
+import { RankedStartsSlateShape } from "@/components/ranked-starts-slate-shape";
 import { ScoreComponentList } from "@/components/score-component-list";
 import { ScoreReasonList } from "@/components/score-reason-list";
 import { ShareStartButton } from "@/components/share-start-button";
@@ -289,9 +290,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                     <FastFilterLink className="inline-flex min-h-11 items-center rounded border border-white/10 bg-[#101014] px-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-300" href={rankedStartsHref(date, { showOpeners })}>Reset</FastFilterLink>
                   ) : null}
                 </div>
-                <RankedStartsDisclosure storageKey="ranked-starts-shape-open" label="Slate shape" meta="Scatter">
-                  <StartsDistributionStrip starts={qualifiedStarts} />
-                </RankedStartsDisclosure>
+                <RankedStartsSlateShape starts={qualifiedStarts} slateAverage={scoreScale.average} />
                 <RankedStartsDisclosure storageKey="ranked-starts-method-open" label="How rankings work" meta="Scale, rules, source">
                   <div className="grid gap-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" data-responsive-check="ranked-starts-methodology-notes">
                     <p><ScaleLegend scoreScale={scoreScale} /></p>
@@ -692,80 +691,6 @@ function rankedStartVenueLine(start: StartSummary) {
 function ScaleLegend({ scoreScale }: { scoreScale: ReturnType<typeof summarizeSlateScoreScale> }) {
   return (
     <span>Slate range {scoreScale.low}-{scoreScale.high} / Avg {scoreScale.average} / Scale {scoreScale.displayRange}</span>
-  );
-}
-
-function StartsDistributionStrip({ starts }: { starts: StartSummary[] }) {
-  const width = 760;
-  const height = 260;
-  const pad = { left: 42, right: 24, top: 24, bottom: 38 };
-  const xFor = (score: number) => pad.left + (clamp(score, 0, 100) / 100) * (width - pad.left - pad.right);
-  const maxInnings = Math.max(9, ...starts.map((start) => inningsFromIP(start.line.inningsPitched)));
-  const yFor = (innings: number) => pad.top + ((maxInnings - innings) / maxInnings) * (height - pad.top - pad.bottom);
-  const mean = starts.reduce((sum, start) => sum + start.gameScorePlus, 0) / Math.max(1, starts.length);
-  const points = [...starts]
-    .sort((a, b) => a.gameScorePlus - b.gameScorePlus || inningsFromIP(a.line.inningsPitched) - inningsFromIP(b.line.inningsPitched) || a.pitcher.name.localeCompare(b.pitcher.name))
-    .map((start) => {
-      const seed = stableHash(start.pitcher.id || start.id);
-      const xDodge = ((seed % 5) - 2) * 3.2;
-      const yDodge = ((Math.floor(seed / 5) % 5) - 2) * 3.2;
-      return {
-        start,
-        innings: inningsFromIP(start.line.inningsPitched),
-        x: clamp(xFor(start.gameScorePlus) + xDodge, pad.left + 8, width - pad.right - 8),
-        y: clamp(yFor(inningsFromIP(start.line.inningsPitched)) + yDodge, pad.top + 8, height - pad.bottom - 8),
-      };
-    });
-  const labelIds = new Set(starts.slice(0, 2).map((start) => start.id));
-  const worst = starts.at(-1);
-  if (worst) labelIds.add(worst.id);
-
-  return (
-    <div data-responsive-check="ranked-start-distribution">
-      <p className="mb-2 font-mono text-xs text-zinc-500">Click a point to jump to the row</p>
-      <svg className="h-[220px] w-full sm:h-[240px]" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${starts.length} starts distributed by GS+ and innings pitched`}>
-        <rect x={pad.left} y={pad.top} width={width - pad.left - pad.right} height={height - pad.top - pad.bottom} fill="#0b0b0e" opacity="0.58" style={{ pointerEvents: "none" }} />
-        {[20, 40, 60, 80].map((tick) => (
-          <g key={`x-${tick}`}>
-            <line x1={xFor(tick)} x2={xFor(tick)} y1={pad.top} y2={height - pad.bottom} stroke="#27272a" style={{ pointerEvents: "none" }} />
-            <text x={xFor(tick)} y={height - 15} textAnchor="middle" fill="#71717a" fontSize="11" style={{ pointerEvents: "none" }}>{tick}</text>
-          </g>
-        ))}
-        {[0, 3, 6, 9].map((tick) => (
-          <g key={`y-${tick}`}>
-            <line x1={pad.left} x2={width - pad.right} y1={yFor(tick)} y2={yFor(tick)} stroke="#27272a" style={{ pointerEvents: "none" }} />
-            <text x={pad.left - 12} y={yFor(tick) + 4} textAnchor="end" fill="#71717a" fontSize="11" style={{ pointerEvents: "none" }}>{tick}</text>
-          </g>
-        ))}
-        <line x1={pad.left} x2={width - pad.right} y1={height - pad.bottom} y2={height - pad.bottom} stroke="#3f3f46" style={{ pointerEvents: "none" }} />
-        <line x1={pad.left} x2={pad.left} y1={pad.top} y2={height - pad.bottom} stroke="#3f3f46" style={{ pointerEvents: "none" }} />
-        <line x1={xFor(mean)} x2={xFor(mean)} y1={pad.top} y2={height - pad.bottom} stroke="#a1a1aa" strokeDasharray="4 5" style={{ pointerEvents: "none" }} />
-        <line x1={pad.left} x2={width - pad.right} y1={yFor(5)} y2={yFor(5)} stroke="#a1a1aa" strokeDasharray="4 5" opacity="0.85" style={{ pointerEvents: "none" }} />
-        <text x={Math.min(width - 122, xFor(mean) + 8)} y={pad.top + 16} fill="#a1a1aa" fontSize="12" style={{ pointerEvents: "none" }}>avg {mean.toFixed(1)} GS+</text>
-        <text x={width - pad.right - 88} y={yFor(5) - 8} fill="#a1a1aa" fontSize="12" style={{ pointerEvents: "none" }}>5.0 IP</text>
-        <text x={(pad.left + width - pad.right) / 2} y={height - 4} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" style={{ pointerEvents: "none" }}>GS+</text>
-        <text x="14" y={(pad.top + height - pad.bottom) / 2} textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="monospace" transform={`rotate(-90 14 ${(pad.top + height - pad.bottom) / 2})`} style={{ pointerEvents: "none" }}>IP</text>
-        {points.map(({ start, x, y }) => {
-          const band = qualityTierOf(start.gameScorePlus);
-          const shouldLabel = labelIds.has(start.id);
-          const labelX = Math.min(width - 82, Math.max(pad.left + 8, x + (start.rank <= 2 ? 13 : -58)));
-          const labelY = Math.min(height - pad.bottom - 10, Math.max(pad.top + 16, y + (start.rank <= 2 ? -14 : 22)));
-          return (
-            <a key={start.id} href={`#${start.id}`} aria-label={`Jump to ${start.pitcher.name}, GS+ ${start.gameScorePlus}`}>
-              <circle cx={x} cy={y} r={start.rank <= 3 ? 8.8 : 7.2} fill={band.color} stroke="#08080a" strokeWidth="2">
-                <title>{`${start.pitcher.name} / ${formatStartLine(start.line)} / GS+ ${start.gameScorePlus} / ${band.label}`}</title>
-              </circle>
-              {shouldLabel ? (
-                <>
-                  <line x1={x} y1={y} x2={labelX} y2={labelY + 4} stroke={band.color} strokeOpacity="0.65" />
-                  <text x={labelX} y={labelY} fill={band.color} fontSize="11" fontWeight="700">{lastName(start.pitcher.name)}</text>
-                </>
-              ) : null}
-            </a>
-          );
-        })}
-      </svg>
-    </div>
   );
 }
 
@@ -1264,20 +1189,4 @@ function formatRankedFirstPitch(value: string | null) {
     timeZone: "America/Los_Angeles",
   }).format(parsed);
   return `${time} PT`;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function lastName(name: string) {
-  return name.trim().split(/\s+/).at(-1) ?? name;
-}
-
-function stableHash(value: string) {
-  let hash = 0;
-  for (const char of value) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  }
-  return hash;
 }

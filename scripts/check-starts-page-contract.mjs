@@ -35,6 +35,7 @@ const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8")
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
 const routeLoadingShell = await readFile("src/components/route-loading-shell.tsx", "utf8");
 const startsDisclosure = await readFile("src/components/ranked-starts-disclosure.tsx", "utf8");
+const startsSlateShape = await readFile("src/components/ranked-starts-slate-shape.tsx", "utf8");
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
@@ -362,6 +363,8 @@ assert(
     startsDisclosure.includes('"use client";') &&
     startsDisclosure.includes("window.sessionStorage.getItem(storageKey)") &&
     startsDisclosure.includes("window.sessionStorage.setItem(storageKey, nextOpen ? \"open\" : \"closed\")") &&
+    startsDisclosure.includes('const PANEL_EVENT = "ranked-starts-panel-open";') &&
+    startsDisclosure.includes("window.addEventListener(PANEL_EVENT, handlePanelEvent)") &&
     startsDisclosure.includes("grid h-6 w-6 shrink-0 place-items-center rounded border border-white/15") &&
     startsDisclosure.includes("group-hover:border-amber-300/60 group-hover:text-amber-300") &&
     startsDisclosure.includes("group-open:border-amber-300/60 group-open:text-amber-300") &&
@@ -377,11 +380,24 @@ assert(
     startsPage.includes('data-responsive-check="ranked-start-controls"') &&
     startsPage.includes('data-active-filter-summary={filterSummary}') &&
     startsPage.includes('storageKey="ranked-starts-filters-open"') &&
-    startsPage.includes('storageKey="ranked-starts-shape-open"') &&
+    startsPage.includes("<RankedStartsSlateShape starts={qualifiedStarts} slateAverage={scoreScale.average} />") &&
+    startsSlateShape.includes('const STORAGE_KEY = "ranked-starts-shape-open";') &&
+    startsSlateShape.includes("const DESKTOP_OVERLAY_HEIGHT = 390;") &&
+    startsSlateShape.includes('data-responsive-check="ranked-starts-shape-overlay"') &&
+    startsSlateShape.includes('height: "70vh"') &&
+    startsSlateShape.includes('if (event.key === "Escape") close();') &&
+    startsSlateShape.includes('document.addEventListener("pointerdown", handlePointerDown)') &&
+    startsSlateShape.includes("event.clientY - pointerStartY.current > 80") &&
+    startsSlateShape.includes("LEAGUE AVG") &&
+    startsSlateShape.includes("SLATE AVG") &&
+    startsSlateShape.includes("[20, 35, 50, 65, 80]") &&
+    startsSlateShape.includes('r="22" fill="transparent"') &&
+    startsSlateShape.includes('data-ranked-starts-shape-legend') &&
+    startsSlateShape.includes('target.setAttribute("data-slate-shape-highlight", "true")') &&
     startsPage.includes('storageKey="ranked-starts-method-open"') &&
     startsPage.includes("const visibleQualityBands = QUALITY_BANDS.filter((qualityBand) => (qualityBandCounts.get(qualityBand.label) ?? 0) > 0);") &&
     startsPage.includes("function rankedStartsFilterSummary") &&
-    startsPage.includes('style={{ pointerEvents: "none" }}') &&
+    startsSlateShape.includes('style={{ pointerEvents: "none" }}') &&
     startsPage.includes('data-responsive-check="ranked-starts-methodology-notes"') &&
     startsPage.includes("<ScaleLegend scoreScale={scoreScale} />") &&
     !startsPage.includes('data-responsive-check="ranked-starts-slate-stamp"') &&

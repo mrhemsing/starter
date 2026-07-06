@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import type React from "react";
 
+const PANEL_EVENT = "ranked-starts-panel-open";
+
 export function RankedStartsDisclosure({
   storageKey,
   label,
@@ -26,6 +28,20 @@ export function RankedStartsDisclosure({
     details.open = window.sessionStorage.getItem(storageKey) === "open";
   }, [storageKey]);
 
+  useEffect(() => {
+    const detailsElement = detailsRef.current;
+    if (!detailsElement) return;
+
+    function handlePanelEvent(event: Event) {
+      if (!(event instanceof CustomEvent) || event.detail === storageKey) return;
+      const currentDetails = detailsRef.current;
+      if (currentDetails) currentDetails.open = false;
+    }
+
+    window.addEventListener(PANEL_EVENT, handlePanelEvent);
+    return () => window.removeEventListener(PANEL_EVENT, handlePanelEvent);
+  }, [storageKey]);
+
   return (
     <details
       ref={detailsRef}
@@ -33,6 +49,7 @@ export function RankedStartsDisclosure({
       onToggle={(event) => {
         const nextOpen = event.currentTarget.open;
         window.sessionStorage.setItem(storageKey, nextOpen ? "open" : "closed");
+        if (nextOpen) window.dispatchEvent(new CustomEvent(PANEL_EVENT, { detail: storageKey }));
       }}
     >
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 outline-none transition hover:border-amber-300 hover:text-amber-300 focus-visible:ring-2 focus-visible:ring-amber-300 [&::-webkit-details-marker]:hidden">
