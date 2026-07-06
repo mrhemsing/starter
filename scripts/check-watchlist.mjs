@@ -6,9 +6,12 @@ import net from "node:net";
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
 
-const [watchlistPageSource, watchlistServiceSource, searchFormSource, followButtonSource] = await Promise.all([
+const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
   readFile("src/lib/data/watchlist-service.ts", "utf8"),
+  readFile("src/lib/data/watchlist-headlines-service.ts", "utf8"),
+  readFile("src/app/api/cron/watchlist-headlines/route.ts", "utf8"),
+  readFile("vercel.json", "utf8"),
   readFile("src/components/watchlist-search-form.tsx", "utf8"),
   readFile("src/components/follow-pitcher-button.tsx", "utf8"),
 ]);
@@ -87,8 +90,47 @@ assert(
     watchlistServiceSource.includes('"streak"') &&
     watchlistServiceSource.includes('"gem"') &&
     watchlistServiceSource.includes('"blowup"') &&
+    watchlistServiceSource.includes('"headlines"') &&
     watchlistServiceSource.includes(".slice(0, 2)"),
-  "watchlist Wire v1 should emit capped rest, two-start, streak, gem, and blowup events from existing stores",
+  "watchlist Wire v1 should emit capped rest, two-start, streak, gem, blowup, and headline events from existing stores",
+);
+assert(
+  headlineServiceSource.includes('source: "google-news"') &&
+    headlineServiceSource.includes('source: "mlb-trade-rumors"') &&
+    headlineServiceSource.includes('source: "espn"') &&
+    headlineServiceSource.includes("THE_BUMP_WIRE_GOOGLE_NEWS_ENABLED") &&
+    headlineServiceSource.includes("THE_BUMP_WIRE_MLBTR_ENABLED") &&
+    headlineServiceSource.includes("THE_BUMP_WIRE_ESPN_ENABLED") &&
+    headlineServiceSource.includes("openSourceBreaker") &&
+    headlineServiceSource.includes("readWatchlistHeadlineEvents") &&
+    headlineServiceSource.includes("ingestWatchlistHeadlines"),
+  "watchlist headline ingest must expose best-effort Google News, MLBTR, and ESPN adapters with per-source kill switches and breakers",
+);
+assert(
+  headlineServiceSource.includes("headline: item.title") &&
+    headlineServiceSource.includes("source: item.source || \"Google News\"") &&
+    headlineServiceSource.includes("url: item.link") &&
+    headlineServiceSource.includes("publishedAt: item.pubDate") &&
+    headlineServiceSource.includes("truncateHeadline") &&
+    !/\bdescription\b|\bsummary\b|\bexcerpt\b|\brotowire\b/i.test(headlineServiceSource),
+  "headline ingest must allowlist headline/source/url/published fields and never store snippets, summaries, excerpts, or rotowire text",
+);
+assert(
+  watchlistPageSource.includes("event.headline") &&
+    watchlistPageSource.includes('target="_blank"') &&
+    watchlistPageSource.includes('rel="noopener"') &&
+    watchlistPageSource.includes(">NEWS<") &&
+    watchlistPageSource.includes("event.headline.source"),
+  "watchlist Wire NEWS items must render as external headline links with visible source attribution",
+);
+assert(
+  headlineCronSource.includes('import { ingestWatchlistHeadlines } from "@/lib/data/watchlist-headlines-service";') &&
+    vercelConfigSource.includes('"/api/cron/watchlist-headlines"') &&
+    vercelConfigSource.includes('"*/30 * * * *"') &&
+    headlineServiceSource.includes("isHeadlinePollingWindow") &&
+    headlineServiceSource.includes('reason: "outside-hourly-cadence"') &&
+    headlineServiceSource.includes('"America/Los_Angeles"'),
+  "watchlist headline ingest must run from cron with PT-aware half-hour/daytime and hourly/off-hours cadence",
 );
 assert(
   watchlistPageSource.includes('entry.nextStart?.projectionSource === "baseline" ? " BASELINE" : ""') &&

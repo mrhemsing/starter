@@ -3,12 +3,15 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
+import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
+import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import type { FormNextStart, FormSummary, ProbableStart, StartLine } from "@/lib/types";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
 export const WATCHLIST_SOON_DAYS = 3;
 const WATCHLIST_IDS_PREFIX = "wlids_";
+const WATCHLIST_FOLLOWED_STATE_KEY = "watchlist:followed-pitchers";
 
 type WatchlistStore = {
   users: Record<string, { pitcherIds: string[]; updatedAt: string }>;
@@ -49,12 +52,18 @@ export type WatchlistLiveEntry = WatchlistEntry & {
 };
 
 export type WatchlistWireEvent = {
-  key: "rest-anomaly" | "two-start-week" | "streak" | "gem" | "blowup";
+  key: "rest-anomaly" | "two-start-week" | "streak" | "gem" | "blowup" | "headlines";
   label: string;
-  sentence: string;
+  sentence: string | null;
   detectedAt: string;
   priority: number;
   payloadValues: string[];
+  headline?: {
+    text: string;
+    source: string;
+    url: string;
+    publishedAt: string;
+  };
 };
 
 export type WatchlistView = {
@@ -108,6 +117,7 @@ export async function followPitcher(accountId: string, pitcherId: string) {
   user.updatedAt = new Date().toISOString();
   store.users[accountId] = user;
   await writeStore(store);
+  await rememberWatchlistPitcherIds(user.pitcherIds);
   return user.pitcherIds;
 }
 
@@ -119,7 +129,22 @@ export async function unfollowPitcher(accountId: string, pitcherId: string) {
   user.updatedAt = new Date().toISOString();
   store.users[accountId] = user;
   await writeStore(store);
+  await rememberWatchlistPitcherIds(user.pitcherIds);
   return user.pitcherIds;
+}
+
+export async function rememberWatchlistPitcherIds(pitcherIds: string[]) {
+  const safePitcherIds = Array.from(new Set(pitcherIds.map(normalizePitcherId)));
+  const previous = await readRuntimeState<{ pitcherIds: string[]; updatedAt: string }>(WATCHLIST_FOLLOWED_STATE_KEY);
+  const merged = Array.from(new Set([...(previous?.pitcherIds ?? []), ...safePitcherIds])).sort((a, b) => Number(a) - Number(b));
+  await writeRuntimeState(WATCHLIST_FOLLOWED_STATE_KEY, { pitcherIds: merged, updatedAt: new Date().toISOString() });
+}
+
+export async function getKnownWatchlistPitcherIds() {
+  const store = await readStore();
+  const storedIds = Object.values(store.users).flatMap((user) => user.pitcherIds);
+  const runtimeIds = await readRuntimeState<{ pitcherIds: string[] }>(WATCHLIST_FOLLOWED_STATE_KEY);
+  return Array.from(new Set([...storedIds, ...(runtimeIds?.pitcherIds ?? [])].map(normalizePitcherId))).sort((a, b) => Number(a) - Number(b));
 }
 
 export async function getWatchlistView(accountId: string | null | undefined, options: { sort?: string | null } = {}): Promise<WatchlistView> {
@@ -128,12 +153,14 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   if (pitcherIds.length === 0) {
     return { accountId: accountId ?? null, pitcherIds: [], sort, entries: [], livePitchingNow: [], pitchingSoon: [], bench: [], wireEvents: [], digestEvents: [] };
   }
+  await rememberWatchlistPitcherIds(pitcherIds);
 
   const today = getHomeSlateDate();
-  const [leaderboard, nextStarts, upcomingStarts, liveBoard] = await Promise.all([
+  const [leaderboard, nextStarts, upcomingStarts, headlineEventsByPitcher, liveBoard] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
     getNextStartMap(pitcherIds),
     getUpcomingStartMap(pitcherIds),
+    readWatchlistHeadlineEvents(pitcherIds),
     getLiveScoreboard({ date: today }).catch(() => null),
   ]);
   const lastStartPercentiles = buildLastStartPercentiles(leaderboard.pitchers);
@@ -148,7 +175,10 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
       return {
         ...pitcher,
         nextStart,
-        wireEvents: wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles),
+        wireEvents: [
+          ...wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles),
+          ...(headlineEventsByPitcher.get(pitcher.pitcherId) ?? []),
+        ],
       };
     });
   const entries = sortWatchlistEntries(hydratedEntries, sort);

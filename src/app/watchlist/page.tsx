@@ -139,15 +139,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               ) : (
                 <div className="mt-4 grid gap-2">
                   {watchlist.wireEvents.slice(0, 10).map((event) => (
-                    <Link key={`${event.pitcherId}-${event.key}-${event.sentence}`} href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className="rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40" data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
-                        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
-                      </div>
-                      <p className="mt-2 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
-                      <p className="mt-1 text-xs leading-5 text-zinc-500">{event.sentence}</p>
-                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
-                    </Link>
+                    <WireEventCard key={`${event.pitcherId}-${event.key}-${event.sentence ?? event.headline?.url}`} event={event} />
                   ))}
                 </div>
               )}
@@ -189,6 +181,34 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function WireEventCard({ event }: { event: WatchlistEntry["wireEvents"][number] & { pitcherId: string; pitcherName: string } }) {
+  const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
+  if (event.headline) {
+    return (
+      <a href={event.headline.url} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
+          <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
+        </div>
+        <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline.text}</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
+      </a>
+    );
+  }
+
+  return (
+    <Link href={pitcherHref({ pitcherId: event.pitcherId, name: event.pitcherName }, sourceParams("watchlist"))} className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
+        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
+      </div>
+      <p className="mt-2 text-sm font-semibold text-zinc-100">{event.pitcherName}</p>
+      <p className="mt-1 text-xs leading-5 text-zinc-500">{event.sentence}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{relativeEventTime(event.detectedAt)}</p>
+    </Link>
   );
 }
 

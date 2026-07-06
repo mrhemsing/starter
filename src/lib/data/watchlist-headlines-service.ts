@@ -1,0 +1,504 @@
+import { getFormLeaderboard } from "@/lib/data/form-service";
+import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { getKnownWatchlistPitcherIds, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
+import type { FormSummary } from "@/lib/types";
+
+export type WatchlistHeadlineSource = "google-news" | "mlb-trade-rumors" | "espn";
+
+type HeadlineCandidate = {
+  pitcherId: string;
+  headline: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  sourceType: WatchlistHeadlineSource;
+};
+
+type StoredHeadline = {
+  id: string;
+  pitcherId: string;
+  headline: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  detectedAt: string;
+  sourceType: WatchlistHeadlineSource;
+};
+
+type PitcherHeadlineState = {
+  version: 1;
+  pitcherId: string;
+  updatedAt: string;
+  headlines: StoredHeadline[];
+};
+
+type HeadlineBreakerState = {
+  source: WatchlistHeadlineSource;
+  disabledUntil: string;
+  reason: string;
+  updatedAt: string;
+};
+
+type EspnIdMapState = {
+  ids: Record<string, string>;
+  updatedAt: string;
+};
+
+type HeadlineAdapter = {
+  source: WatchlistHeadlineSource;
+  fetch: (pitcher: FormSummary) => Promise<HeadlineCandidate[]>;
+};
+
+export type WatchlistHeadlineIngestResult = {
+  attempted: boolean;
+  reason?: string;
+  followedPitchers: number;
+  fetched: number;
+  written: number;
+  skipped: Record<string, number>;
+  sources: Array<{ source: WatchlistHeadlineSource; enabled: boolean; skippedByBreaker: boolean }>;
+};
+
+const HEADLINE_STATE_VERSION = 1;
+const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
+const HEADLINE_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
+const HEADLINE_MAX_LENGTH = 120;
+const HEADLINE_PRIORITY = 35;
+const NEWS_RSS_TIMEOUT_MS = 8000;
+const DEFAULT_USER_AGENT = "ToeTheSlab/1.0 watchlist-headlines";
+
+export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise<Map<string, WatchlistWireEvent[]>> {
+  const events = new Map<string, WatchlistWireEvent[]>();
+  const states = await Promise.all(pitcherIds.map((pitcherId) => readPitcherHeadlineState(pitcherId)));
+  const now = Date.now();
+
+  for (const state of states) {
+    if (!state) continue;
+    const items = state.headlines
+      .filter((headline) => now - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS)
+      .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+      .map(headlineToWireEvent);
+    if (items.length > 0) events.set(state.pitcherId, items);
+  }
+
+  return events;
+}
+
+export async function ingestWatchlistHeadlines(): Promise<WatchlistHeadlineIngestResult> {
+  if (!isHeadlinePollingWindow(new Date())) {
+    return { attempted: false, reason: "outside-hourly-cadence", followedPitchers: 0, fetched: 0, written: 0, skipped: {}, sources: [] };
+  }
+
+  const pitcherIds = await getKnownWatchlistPitcherIds();
+  if (pitcherIds.length === 0) {
+    return { attempted: false, followedPitchers: 0, fetched: 0, written: 0, skipped: {}, sources: [] };
+  }
+
+  const leaderboard = await getFormLeaderboard({ qualifiedOnly: false });
+  const pitchers = pitcherIds
+    .map((pitcherId) => leaderboard.pitchers.find((pitcher) => pitcher.pitcherId === pitcherId))
+    .filter((pitcher): pitcher is FormSummary => Boolean(pitcher));
+  const allPitchers = leaderboard.pitchers;
+  const adapters = await activeAdapters();
+  const result: WatchlistHeadlineIngestResult = {
+    attempted: true,
+    followedPitchers: pitchers.length,
+    fetched: 0,
+    written: 0,
+    skipped: {},
+    sources: adapters.map((adapter) => ({ source: adapter.source, enabled: true, skippedByBreaker: false })),
+  };
+
+  for (const adapter of adapters) {
+    if (await isSourceBreakerOpen(adapter.source)) {
+      result.sources = result.sources.map((source) => source.source === adapter.source ? { ...source, skippedByBreaker: true } : source);
+      continue;
+    }
+
+    for (const pitcher of pitchers) {
+      try {
+        const candidates = await adapter.fetch(pitcher);
+        result.fetched += candidates.length;
+        for (const candidate of candidates) {
+          const filtered = filterHeadlineCandidate(candidate, pitcher, allPitchers);
+          if (!filtered) {
+            increment(result.skipped, "irrelevant");
+            continue;
+          }
+          const wrote = await appendHeadline(filtered);
+          if (wrote) result.written += 1;
+          else increment(result.skipped, "duplicate");
+        }
+      } catch (error) {
+        await openSourceBreaker(adapter.source, error instanceof Error ? error.message : "schema drift");
+        console.warn("[watchlist-headlines] source breaker opened", { source: adapter.source, reason: error instanceof Error ? error.message : "unknown" });
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
+async function activeAdapters(): Promise<HeadlineAdapter[]> {
+  const adapters: HeadlineAdapter[] = [];
+  if (sourceEnabled("THE_BUMP_WIRE_GOOGLE_NEWS_ENABLED", true)) adapters.push({ source: "google-news", fetch: fetchGoogleNewsHeadlines });
+  if (sourceEnabled("THE_BUMP_WIRE_MLBTR_ENABLED", true)) adapters.push({ source: "mlb-trade-rumors", fetch: fetchMlbTradeRumorsHeadlines });
+  if (sourceEnabled("THE_BUMP_WIRE_ESPN_ENABLED", true)) adapters.push({ source: "espn", fetch: fetchEspnHeadlines });
+  return adapters;
+}
+
+async function fetchGoogleNewsHeadlines(pitcher: FormSummary): Promise<HeadlineCandidate[]> {
+  const query = `${pitcher.name} ${teamNickname(pitcher.team)}`.trim();
+  const url = new URL("https://news.google.com/rss/search");
+  url.searchParams.set("q", query);
+  url.searchParams.set("hl", "en-US");
+  url.searchParams.set("gl", "US");
+  url.searchParams.set("ceid", "US:en");
+  const xml = await fetchText(url.toString());
+  return parseRssItems(xml).map((item) => ({
+    pitcherId: pitcher.pitcherId,
+    headline: item.title,
+    source: item.source || "Google News",
+    url: item.link,
+    publishedAt: item.pubDate,
+    sourceType: "google-news",
+  }));
+}
+
+async function fetchMlbTradeRumorsHeadlines(pitcher: FormSummary): Promise<HeadlineCandidate[]> {
+  const slug = await mlbTradeRumorsSlug(pitcher);
+  const response = await fetch(`https://www.mlbtraderumors.com/players/${slug}/feed`, {
+    headers: { "user-agent": DEFAULT_USER_AGENT },
+    next: { revalidate: 30 * 60 },
+  });
+  if (response.status === 404) return [];
+  if (!response.ok) throw new Error(`mlbtr ${response.status}`);
+  const xml = await response.text();
+  return parseRssItems(xml).map((item) => ({
+    pitcherId: pitcher.pitcherId,
+    headline: item.title,
+    source: "MLB Trade Rumors",
+    url: item.link,
+    publishedAt: item.pubDate,
+    sourceType: "mlb-trade-rumors",
+  }));
+}
+
+async function fetchEspnHeadlines(pitcher: FormSummary): Promise<HeadlineCandidate[]> {
+  const espnId = await espnAthleteIdFor(pitcher.pitcherId);
+  if (!espnId) return [];
+  const payload = await fetchJson(`https://site.web.api.espn.com/apis/common/v3/sports/baseball/mlb/athletes/${espnId}/news`);
+  const rawItems = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload?.articles) ? payload.articles : [];
+  return rawItems.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as Record<string, unknown>;
+    const headline = typeof record.headline === "string" ? record.headline : typeof record.title === "string" ? record.title : "";
+    const url = typeof record.link === "string" ? record.link : typeof record.webUrl === "string" ? record.webUrl : "";
+    const publishedAt = typeof record.published === "string" ? record.published : typeof record.publishedAt === "string" ? record.publishedAt : "";
+    if (!headline || !url || !publishedAt) return [];
+    return [{
+      pitcherId: pitcher.pitcherId,
+      headline,
+      source: "ESPN",
+      url,
+      publishedAt,
+      sourceType: "espn" as const,
+    }];
+  });
+}
+
+function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSummary, allPitchers: FormSummary[]) {
+  const headline = truncateHeadline(decodeHtml(stripTags(candidate.headline)).trim());
+  const url = canonicalUrl(candidate.url);
+  const publishedAt = normalizePublishedAt(candidate.publishedAt);
+  if (!headline || !url || !publishedAt) return null;
+
+  const normalizedHeadline = normalizeText(headline);
+  const surname = lastName(pitcher.name);
+  if (!normalizedHeadline.includes(normalizeText(surname))) return null;
+  if (candidate.sourceType === "google-news" && !normalizedHeadline.includes(normalizeText(pitcher.name)) && !normalizedHeadline.includes(normalizeText(teamNickname(pitcher.team)))) return null;
+
+  for (const other of allPitchers) {
+    if (other.pitcherId === pitcher.pitcherId) continue;
+    if (normalizedHeadline.includes(normalizeText(other.name)) && !normalizedHeadline.includes(normalizeText(pitcher.name))) return null;
+  }
+
+  return {
+    ...candidate,
+    headline,
+    url,
+    publishedAt,
+    source: truncateHeadline(decodeHtml(stripTags(candidate.source)).trim()),
+  };
+}
+
+async function appendHeadline(candidate: HeadlineCandidate) {
+  const state = await readPitcherHeadlineState(candidate.pitcherId) ?? {
+    version: HEADLINE_STATE_VERSION,
+    pitcherId: candidate.pitcherId,
+    updatedAt: new Date().toISOString(),
+    headlines: [],
+  };
+  const now = new Date().toISOString();
+  const recent = state.headlines.filter((headline) => Date.parse(now) - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS);
+  if (recent.some((headline) => isDuplicateHeadline(headline, candidate))) return false;
+  const next: PitcherHeadlineState = {
+    ...state,
+    updatedAt: now,
+    headlines: [
+      ...recent,
+      {
+        id: stableHeadlineId(candidate),
+        pitcherId: candidate.pitcherId,
+        headline: candidate.headline,
+        source: candidate.source,
+        url: candidate.url,
+        publishedAt: candidate.publishedAt,
+        detectedAt: now,
+        sourceType: candidate.sourceType,
+      },
+    ].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 20),
+  };
+  await writeRuntimeState(headlineStateKey(candidate.pitcherId), next);
+  return true;
+}
+
+function headlineToWireEvent(headline: StoredHeadline): WatchlistWireEvent {
+  return {
+    key: "headlines",
+    label: "NEWS",
+    sentence: null,
+    detectedAt: headline.detectedAt,
+    priority: HEADLINE_PRIORITY,
+    payloadValues: [headline.headline, headline.source, headline.url, headline.publishedAt],
+    headline: {
+      text: headline.headline,
+      source: headline.source,
+      url: headline.url,
+      publishedAt: headline.publishedAt,
+    },
+  };
+}
+
+async function readPitcherHeadlineState(pitcherId: string) {
+  const state = await readRuntimeState<PitcherHeadlineState>(headlineStateKey(pitcherId));
+  return state?.version === HEADLINE_STATE_VERSION && Array.isArray(state.headlines) ? state : null;
+}
+
+function parseRssItems(xml: string) {
+  const matches = [...xml.matchAll(/<item\b[\s\S]*?<\/item>/gi)];
+  return matches.map((match) => {
+    const item = match[0];
+    return {
+      title: tagText(item, "title"),
+      link: tagText(item, "link"),
+      pubDate: tagText(item, "pubDate"),
+      source: tagText(item, "source"),
+    };
+  }).filter((item) => item.title && item.link && item.pubDate);
+}
+
+function tagText(xml: string, tag: string) {
+  const match = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i").exec(xml);
+  return decodeCdata(match?.[1] ?? "").trim();
+}
+
+async function fetchText(url: string) {
+  const response = await fetch(url, {
+    headers: { "user-agent": DEFAULT_USER_AGENT },
+    next: { revalidate: 30 * 60 },
+    signal: AbortSignal.timeout(NEWS_RSS_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`headline source ${response.status}`);
+  return response.text();
+}
+
+async function fetchJson(url: string) {
+  const response = await fetch(url, {
+    headers: { "user-agent": DEFAULT_USER_AGENT },
+    next: { revalidate: 30 * 60 },
+    signal: AbortSignal.timeout(NEWS_RSS_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`espn ${response.status}`);
+  return response.json() as Promise<{ items?: unknown[]; articles?: unknown[] } | null>;
+}
+
+async function mlbTradeRumorsSlug(pitcher: FormSummary) {
+  const key = `watchlist-headline-slug:${pitcher.pitcherId}`;
+  const cached = await readRuntimeState<{ slug: string }>(key);
+  if (cached?.slug) return cached.slug;
+  const slug = slugify(pitcher.name);
+  await writeRuntimeState(key, { slug, updatedAt: new Date().toISOString() });
+  return slug;
+}
+
+async function espnAthleteIdFor(pitcherId: string) {
+  const configured = parseEspnIdMap(process.env.THE_BUMP_ESPN_ATHLETE_IDS);
+  if (configured[pitcherId]) return configured[pitcherId];
+  const state = await readRuntimeState<EspnIdMapState>("watchlist-headline-espn-ids");
+  return state?.ids?.[pitcherId] ?? null;
+}
+
+function parseEspnIdMap(raw: string | undefined) {
+  if (!raw) return {} as Record<string, string>;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => /^\d+$/.test(entry[0]) && typeof entry[1] === "string" && /^\d+$/.test(entry[1])));
+  } catch {
+    return {};
+  }
+}
+
+async function isSourceBreakerOpen(source: WatchlistHeadlineSource) {
+  const state = await readRuntimeState<HeadlineBreakerState>(breakerStateKey(source));
+  return state ? Date.parse(state.disabledUntil) > Date.now() : false;
+}
+
+async function openSourceBreaker(source: WatchlistHeadlineSource, reason: string) {
+  await writeRuntimeState(breakerStateKey(source), {
+    source,
+    reason,
+    disabledUntil: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+function isDuplicateHeadline(existing: StoredHeadline, candidate: HeadlineCandidate) {
+  const withinWindow = Math.abs(Date.parse(existing.publishedAt) - Date.parse(candidate.publishedAt)) <= HEADLINE_DEDUPE_WINDOW_MS;
+  if (!withinWindow) return false;
+  if (existing.url === candidate.url) return true;
+  return titleSimilarity(existing.headline, candidate.headline) >= 0.85;
+}
+
+function titleSimilarity(a: string, b: string) {
+  const aTokens = new Set(normalizeText(a).split(" ").filter(Boolean));
+  const bTokens = new Set(normalizeText(b).split(" ").filter(Boolean));
+  if (aTokens.size === 0 || bTokens.size === 0) return 0;
+  const intersection = [...aTokens].filter((token) => bTokens.has(token)).length;
+  const union = new Set([...aTokens, ...bTokens]).size;
+  return intersection / union;
+}
+
+function canonicalUrl(raw: string) {
+  try {
+    const url = new URL(decodeHtml(raw));
+    for (const key of [...url.searchParams.keys()]) {
+      if (key.startsWith("utm_") || key === "ved" || key === "usg" || key === "fbclid" || key === "gclid") url.searchParams.delete(key);
+    }
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function normalizePublishedAt(raw: string) {
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "";
+}
+
+function truncateHeadline(value: string) {
+  return value.length > HEADLINE_MAX_LENGTH ? `${value.slice(0, HEADLINE_MAX_LENGTH - 1).trimEnd()}…` : value;
+}
+
+function sourceEnabled(name: string, fallback: boolean) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  return raw !== "0" && raw.toLowerCase() !== "false";
+}
+
+function isHeadlinePollingWindow(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    minute: "numeric",
+    timeZone: "America/Los_Angeles",
+  }).formatToParts(now);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
+  if (hour >= 6 && hour < 23) return true;
+  return minute === 0;
+}
+
+function stableHeadlineId(candidate: HeadlineCandidate) {
+  return `${candidate.pitcherId}:${normalizeText(candidate.headline).slice(0, 48)}:${Date.parse(candidate.publishedAt) || 0}`;
+}
+
+function headlineStateKey(pitcherId: string) {
+  return `watchlist-headlines:${pitcherId}`;
+}
+
+function breakerStateKey(source: WatchlistHeadlineSource) {
+  return `watchlist-headline-breaker:${source}`;
+}
+
+function increment(target: Record<string, number>, key: string) {
+  target[key] = (target[key] ?? 0) + 1;
+}
+
+function teamNickname(team: string) {
+  return TEAM_NICKNAMES[team.toUpperCase()] ?? team;
+}
+
+const TEAM_NICKNAMES: Record<string, string> = {
+  AZ: "Diamondbacks",
+  ATL: "Braves",
+  BAL: "Orioles",
+  BOS: "Red Sox",
+  CHC: "Cubs",
+  CWS: "White Sox",
+  CIN: "Reds",
+  CLE: "Guardians",
+  COL: "Rockies",
+  DET: "Tigers",
+  HOU: "Astros",
+  KC: "Royals",
+  LAA: "Angels",
+  LAD: "Dodgers",
+  MIA: "Marlins",
+  MIL: "Brewers",
+  MIN: "Twins",
+  NYM: "Mets",
+  NYY: "Yankees",
+  ATH: "Athletics",
+  PHI: "Phillies",
+  PIT: "Pirates",
+  SD: "Padres",
+  SEA: "Mariners",
+  SF: "Giants",
+  STL: "Cardinals",
+  TB: "Rays",
+  TEX: "Rangers",
+  TOR: "Blue Jays",
+  WSH: "Nationals",
+};
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
+}
+
+function slugify(value: string) {
+  return normalizeText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function normalizeText(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function stripTags(value: string) {
+  return value.replace(/<[^>]+>/g, "");
+}
+
+function decodeCdata(value: string) {
+  return value.replace(/^<!\[CDATA\[/, "").replace(/\]\]>$/, "");
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
