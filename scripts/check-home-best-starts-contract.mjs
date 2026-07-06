@@ -263,7 +263,8 @@ assert(
     homeDeferredSections.includes('data-home-top-start-gem-lockup="true"') &&
     homeDeferredSections.includes('data-home-top-start-gem-watermark="true"') &&
     homeDeferredSections.includes("backgroundImage") &&
-    homeDeferredSections.includes("opacity-[0.09]") &&
+    homeDeferredSections.includes("opacity-[0.16]") &&
+    homeDeferredSections.includes("sm:opacity-[0.12]") &&
     homeDeferredSections.includes('const imagePosition = "50% 4%";') &&
     homeDeferredSections.includes("Gem number ${rank}") &&
     homeDeferredSections.includes("sm:min-h-[160px]") &&

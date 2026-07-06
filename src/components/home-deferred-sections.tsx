@@ -569,7 +569,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
         data-home-top-start-gem-lockup="true"
       >
         <span
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[92px] w-[92px] -translate-x-1/2 -translate-y-1/2 opacity-[0.09] sm:h-[118px] sm:w-[118px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[92px] w-[92px] -translate-x-1/2 -translate-y-1/2 opacity-[0.16] sm:h-[118px] sm:w-[118px] sm:opacity-[0.12]"
           style={{
             backgroundImage:
               'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 120 120\'%3E%3Cpath fill=\'%23fb5938\' d=\'M33 14h54l25 30-52 62L8 44 33 14Z\'/%3E%3Cpath fill=\'%23ffcc66\' fill-opacity=\'.7\' d=\'M33 14h54L72 44H48L33 14Z\'/%3E%3Cpath fill=\'%23000\' fill-opacity=\'.22\' d=\'M48 44h24l-12 62L48 44Z\'/%3E%3Cpath fill=\'none\' stroke=\'%23fff\' stroke-opacity=\'.55\' stroke-width=\'5\' d=\'M33 14h54l25 30-52 62L8 44 33 14Z\'/%3E%3C/svg%3E")',
