@@ -1,3 +1,4 @@
+import { isValidParkRunFactor } from "@/lib/data/run-environment";
 import type { WatchlistNextStart } from "@/lib/data/watchlist-service";
 
 export function WatchlistNextStartBlock({ nextStart, compact = false }: { nextStart: WatchlistNextStart | null; compact?: boolean }) {
@@ -21,7 +22,7 @@ export function WatchlistNextStartBlock({ nextStart, compact = false }: { nextSt
         </span>
       </div>
       <div className="grid max-w-full grid-cols-2 gap-2 text-[10px] sm:grid-cols-3" data-watchlist-next-start-row="context">
-        {nextStart.parkRunFactor && nextStart.parkRunFactor > 0 ? <MicroColumn label="Park" value={nextStart.parkRunFactor.toFixed(2)} /> : null}
+        {isValidParkRunFactor(nextStart.parkRunFactor) ? <MicroColumn label="Park" value={nextStart.parkRunFactor.toFixed(2)} /> : null}
         <MicroColumn label="Rest" value={nextStart.daysRest === null ? "TBD" : `${nextStart.daysRest} days`} />
         <MicroColumn label="Proj GS+" value={String(nextStart.projectedGsPlus)} badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined} />
       </div>

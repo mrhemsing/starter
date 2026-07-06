@@ -31,6 +31,8 @@
     "check:home-live-ticker": "node scripts/check-home-live-ticker-contract.mjs",
     "check:home-status": "node scripts/check-home-status-contract.mjs",
     "check:odds-surface": "node scripts/check-odds-surface-contract.mjs",
+    "check:park-factor": "node scripts/check-park-factor-integrity.mjs",
+    "check:upcoming-status": "node scripts/check-upcoming-status-visibility.mjs",
     "check:watch-confidence": "node scripts/check-watch-score-confidence-contract.mjs",
     "check:slate-sync": "node scripts/check-slate-sync.mjs",
     "check:live-scoreboard": "node scripts/check-live-scoreboard-contract.mjs",

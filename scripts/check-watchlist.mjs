@@ -168,11 +168,12 @@ assert(
     watchlistPageSource.includes("<WatchlistNextStartBlock nextStart={entry.nextStart} compact />") &&
     nextStartBlockSource.includes('data-watchlist-next-start-row="matchup"') &&
     nextStartBlockSource.includes('data-watchlist-next-start-row="context"') &&
-    nextStartBlockSource.includes("nextStart.parkRunFactor && nextStart.parkRunFactor > 0") &&
+    nextStartBlockSource.includes('import { isValidParkRunFactor } from "@/lib/data/run-environment";') &&
+    nextStartBlockSource.includes("isValidParkRunFactor(nextStart.parkRunFactor)") &&
     nextStartBlockSource.includes("nextStart.parkRunFactor.toFixed(2)") &&
     nextStartBlockSource.includes('badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined}') &&
     watchlistServiceSource.includes('projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured"') &&
-    watchlistServiceSource.includes("parkRunFactor: typeof parkRunFactor === \"number\" && parkRunFactor > 0 ? parkRunFactor : null") &&
+    watchlistServiceSource.includes("const parkRunFactor = parkContext?.available ? parkContext.runFactor : null") &&
     !watchlistPageSource.includes("formatNextStartBlock") &&
     !watchlistPageSource.includes(`Park ${"0.0"}`),
   "watchlist next-start cards should use the shared two-row block, omit missing parks, and tag baseline-looking projected GS+ values",

@@ -1,6 +1,9 @@
 import type { DecisionParkContext, DecisionWeatherContext } from "@/lib/types";
 
 const NEUTRAL_PARK_RUN_FACTOR = 1;
+export const PARK_RUN_FACTOR_MIN = 0.85;
+export const PARK_RUN_FACTOR_MAX = 1.2;
+export const PARK_FACTOR_SOURCE = "FanGraphs 3-year park factors, normalized to 1.00 run environment";
 const WEATHER_REVALIDATE_SECONDS = 15 * 60;
 
 export const VENUE_RUN_FACTORS: Record<string, number> = {
@@ -37,6 +40,8 @@ export const VENUE_RUN_FACTORS: Record<string, number> = {
   "Wrigley Field": 1.04,
   "Yankee Stadium": 1.03,
 };
+
+validateVenueRunFactorTable(VENUE_RUN_FACTORS);
 
 type VenueWeatherProfile = {
   latitude: number;
@@ -81,16 +86,18 @@ const VENUE_WEATHER_PROFILES: Record<string, VenueWeatherProfile> = {
 };
 
 export function getParkFactorRows() {
-  return Object.entries(VENUE_RUN_FACTORS)
-    .map(([venue, runFactor]) => {
+  return Object.keys(VENUE_RUN_FACTORS)
+    .map((venue) => {
       const weatherProfile = VENUE_WEATHER_PROFILES[venue];
+      const parkContext = getParkContext(venue);
       return {
         venue,
-        runFactor,
-        runValue: Number(((NEUTRAL_PARK_RUN_FACTOR - runFactor) * 12).toFixed(1)),
+        runFactor: parkContext.runFactor,
+        runValue: parkContext.runValue,
         environment: weatherProfile?.outdoor === false ? "Roofed / climate controlled" : weatherProfile?.outdoor === true ? "Outdoor" : "Weather profile pending",
         location: weatherProfile?.label ?? "Location pending",
-        label: parkLabel(venue, runFactor),
+        label: parkContext.label,
+        source: PARK_FACTOR_SOURCE,
       };
     })
     .sort((a, b) => b.runFactor - a.runFactor || a.venue.localeCompare(b.venue));
@@ -111,13 +118,35 @@ type OpenMeteoResponse = {
 const weatherCache = new Map<string, Promise<DecisionWeatherContext>>();
 
 export function getParkContext(venue: string): DecisionParkContext {
-  const runFactor = VENUE_RUN_FACTORS[venue] ?? NEUTRAL_PARK_RUN_FACTOR;
+  const storedRunFactor = VENUE_RUN_FACTORS[venue];
+  const hasStoredRunFactor = typeof storedRunFactor === "number";
+  if (hasStoredRunFactor && !isValidParkRunFactor(storedRunFactor)) {
+    logInvalidParkRunFactor(venue, storedRunFactor);
+  }
+  const available = hasStoredRunFactor && isValidParkRunFactor(storedRunFactor);
+  const runFactor = available ? storedRunFactor : NEUTRAL_PARK_RUN_FACTOR;
   return {
     venue,
     runFactor,
-    runValue: Number(((NEUTRAL_PARK_RUN_FACTOR - runFactor) * 12).toFixed(1)),
-    label: parkLabel(venue, runFactor),
+    runValue: available ? Number(((NEUTRAL_PARK_RUN_FACTOR - runFactor) * 12).toFixed(1)) : 0,
+    label: available ? parkLabel(venue, runFactor) : `${venue} park factor unavailable; using neutral run environment.`,
+    available,
   };
+}
+
+export function getVenueRunFactor(venue: string) {
+  return getParkContext(venue).runFactor;
+}
+
+export function validateVenueRunFactorForWrite(venue: string, runFactor: number) {
+  if (!isValidParkRunFactor(runFactor)) {
+    throw new Error(`${venue} park run factor ${runFactor} is outside the supported ${PARK_RUN_FACTOR_MIN.toFixed(2)}-${PARK_RUN_FACTOR_MAX.toFixed(2)} range`);
+  }
+  return runFactor;
+}
+
+export function isValidParkRunFactor(runFactor: number | undefined | null): runFactor is number {
+  return typeof runFactor === "number" && Number.isFinite(runFactor) && runFactor >= PARK_RUN_FACTOR_MIN && runFactor <= PARK_RUN_FACTOR_MAX;
 }
 
 export async function getGameTimeWeather(venue: string, gameDate: string): Promise<DecisionWeatherContext> {
@@ -255,6 +284,26 @@ function parkLabel(venue: string, runFactor: number) {
   if (runFactor >= 1.06) return `${venue} is hitter-friendly (${runFactor.toFixed(2)} run factor).`;
   if (runFactor <= 0.96) return `${venue} suppresses run scoring (${runFactor.toFixed(2)} run factor).`;
   return `${venue} plays near neutral (${runFactor.toFixed(2)} run factor).`;
+}
+
+function validateVenueRunFactorTable(factors: Record<string, number>) {
+  for (const [venue, runFactor] of Object.entries(factors)) {
+    validateVenueRunFactorForWrite(venue, runFactor);
+  }
+}
+
+const loggedInvalidParkFactors = new Set<string>();
+
+function logInvalidParkRunFactor(venue: string, runFactor: number) {
+  const key = `${venue}:${runFactor}`;
+  if (loggedInvalidParkFactors.has(key)) return;
+  loggedInvalidParkFactors.add(key);
+  console.warn("[park-factor:invalid]", {
+    venue,
+    runFactor,
+    min: PARK_RUN_FACTOR_MIN,
+    max: PARK_RUN_FACTOR_MAX,
+  });
 }
 
 function weatherLabel(location: string, tempF: number | undefined, precipProbability: number | undefined, windMph: number | undefined) {

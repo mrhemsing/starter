@@ -26,7 +26,7 @@ type CachedTonight = {
 const TONIGHT_CACHE_TTL_MS = 60 * 1000;
 export const TONIGHT_REVALIDATE_SECONDS = 60;
 export const UPCOMING_REVALIDATE_SECONDS = 60;
-const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame"];
+const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
 const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
@@ -246,7 +246,7 @@ function compareUpcomingWatchGames(a: TonightGame, b: TonightGame) {
 
 function watchSortGroup(status: TonightGameStatus) {
   if (status === "pregame") return 0;
-  if (status === "live") return 1;
+  if (status === "delay" || status === "live") return 1;
   return 2;
 }
 
@@ -717,6 +717,7 @@ function normalizeGameStatus(game: MlbScheduleGame): TonightGameStatus {
   const raw = `${game.status} ${game.detailedState}`.trim().toLowerCase();
   if (raw.includes("postponed") || raw.includes("ppd")) return "ppd";
   if (raw.includes("final") || raw.includes("game over")) return "final";
+  if (raw.includes("delayed") || raw.includes("suspended")) return "delay";
   if (raw.includes("live") || raw.includes("in progress")) return "live";
   return "pregame";
 }

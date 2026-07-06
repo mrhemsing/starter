@@ -4,7 +4,7 @@ import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
+import { filterAndSortGames, normalizeUpcomingControls, summarizeUpcomingStatuses, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
@@ -75,8 +75,13 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
         a.game.firstPitch.localeCompare(b.game.firstPitch) ||
         a.game.label.localeCompare(b.game.label),
     )[0];
-  const jsonLd = jsonLdForUpcomingWeek(upcoming);
-  const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));
+  const allGames = upcoming.days.flatMap((day) => day.games);
+  const statusSummary = summarizeUpcomingStatuses(allGames);
+  const statusVaries = statusSummary.distinctStatuses >= 2;
+  const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false };
+  const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, effectiveControls) }));
+  const visibleUpcoming = { ...upcoming, days: filteredDays };
+  const jsonLd = jsonLdForUpcomingWeek(visibleUpcoming);
   const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);
   const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);
 
@@ -109,11 +114,13 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             </Link>
           ) : null}
           <UpcomingControls
-            controls={controls}
+            controls={effectiveControls}
             basePath={upcomingWeekHref(resolvedStartDate)}
             slateRange="week"
             visibleGameCount={visibleGameCount}
             scheduledGameCount={scheduledGameCount}
+            showStatusFilter={statusVaries}
+            statusSummary={statusSummary}
           />
         </header>
       </div>

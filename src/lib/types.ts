@@ -436,8 +436,8 @@ export type TonightStarter = {
   likelyOpener?: boolean;
 };
 
-export type TonightGameStatus = "pregame" | "live" | "final" | "ppd";
-export type UpcomingCardStatus = Extract<TonightGameStatus, "pregame">;
+export type TonightGameStatus = "pregame" | "delay" | "live" | "final" | "ppd";
+export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;
 
 export type TonightGame = {
   gamePk: string;
@@ -515,6 +515,7 @@ export type DecisionParkContext = {
   runFactor: number;
   runValue: number;
   label: string;
+  available: boolean;
 };
 
 export type DecisionOpponentContext = {

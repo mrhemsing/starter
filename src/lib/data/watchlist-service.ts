@@ -344,7 +344,8 @@ async function getUpcomingStartMap(pitcherIds: string[]): Promise<Map<string, Wa
 }
 
 function probableToWatchlistNextStart(probable: ProbableStart, today: string): WatchlistNextStart {
-  const parkRunFactor = probable.venue ? getParkContext(probable.venue).runFactor : null;
+  const parkContext = probable.venue ? getParkContext(probable.venue) : null;
+  const parkRunFactor = parkContext?.available ? parkContext.runFactor : null;
   return {
     date: probable.date,
     opponent: probable.opponent,

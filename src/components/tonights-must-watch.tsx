@@ -8,6 +8,7 @@ import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, MUSTWATCH_CONFIG } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
+import { formatFirstPitchCountdown } from "@/lib/slate-state";
 import { slateTimeWordTitle } from "@/lib/time-words";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
@@ -46,6 +47,7 @@ export function TonightsMustWatch({
   const headingId = `${sectionId}-heading`;
   const eyebrowLabel = eyebrow ?? slateTimeWordTitle(tonight);
   const marketAttribution = marketAttributionForGames(shownGames);
+  const showGameStatus = new Set(shownGames.map((game) => game.status)).size >= 2;
 
   return (
     <section
@@ -64,11 +66,12 @@ export function TonightsMustWatch({
       data-visible-venues={shownGames.length ? shownGames.map((game) => game.park ?? "Venue TBD").join(",") : "none"}
       data-visible-first-pitches={shownGames.length ? shownGames.map((game) => game.firstPitch).join(",") : "none"}
       data-visible-game-statuses={shownGames.length ? shownGames.map((game) => game.status).join(",") : "none"}
+      data-visible-status-varies={String(showGameStatus)}
       data-visible-detailed-states={shownGames.length ? shownGames.map((game) => game.detailedState).join(",") : "none"}
       data-visible-card-aria-labels={shownGames.length ? shownGames.map((game) => watchCardAriaLabel(game)).join("|") : "none"}
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
       data-visible-summary-ids={shownGames.length ? shownGames.map(watchCardSummaryIdValue).join(",") : "none"}
-      data-visible-summary-aria-labels={shownGames.length ? shownGames.map(watchCardSummaryAriaLabelValue).join("|") : "none"}
+      data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabelValue(game, showGameStatus)).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-limited-reasons={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.limitedReason ?? "none").join("/")).join(",") : "none"}
@@ -242,9 +245,9 @@ export function TonightsMustWatch({
           </div>
         ) : (
           <div className="space-y-4">
-            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} />
+            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} />
             <div className="grid gap-3">
-              {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} />)}
+              {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} />)}
             </div>
           </div>
         )}
@@ -254,7 +257,7 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const awayStarter = game.starters[0];
@@ -305,7 +308,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
-      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}
+      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
       data-away-accent-source={awayAccent.source}
       data-away-accent-band={awayAccent.band}
       data-away-accent-color={awayAccent.color}
@@ -327,9 +330,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel }: { game: TonightGa
               data-summary-status-label={gameStatusLabel(game.status)}
               data-first-pitch={game.firstPitch}
               data-venue={gameVenueLabel(game)}
-              aria-label={watchCardSummaryAriaLabelValue(game)}
+              aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
             >
-              <MetaLine segments={[gameStatusLabel(game.status), <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />, gameVenueLabel(game)]} />
+              <MetaLine segments={gameSummarySegments(game, showGameStatus)} />
             </p>
             <GameEnvironmentChips game={game} />
           </div>
@@ -487,7 +490,7 @@ function watchSortGroupLabelValue(game: TonightGame) {
   return watchSortGroupLabel(game);
 }
 
-function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string }) {
+function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGameStatus }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const isStarted = game.status === "live";
@@ -537,7 +540,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
       data-watch-summary-id={summaryId}
-      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game)}
+      data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
       data-away-accent-source={awayAccent.source}
       data-away-accent-band={awayAccent.band}
       data-away-accent-color={awayAccent.color}
@@ -566,16 +569,9 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel }: { game
                 data-summary-status-label={gameStatusLabel(game.status)}
                 data-first-pitch={game.firstPitch}
                 data-venue={gameVenueLabel(game)}
-                aria-label={watchCardSummaryAriaLabelValue(game)}
+                aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
               >
-                <MetaLine
-                  segments={[
-                    gameStatusLabel(game.status),
-                    <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />,
-                    gameVenueLabel(game),
-                    `#${rank} of ${slateSize} watch rank`,
-                  ]}
-                />
+                <MetaLine segments={[...gameSummarySegments(game, showGameStatus), `#${rank} of ${slateSize} watch rank`]} />
               </p>
               <GameEnvironmentChips game={game} compact />
             </div>
@@ -1072,7 +1068,7 @@ function unresolvedOptionalInputKeys(game: TonightGame) {
 
 function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
   const chips = [
-    {
+    game.parkContext.available ? {
       key: "park",
       label: `Park ${game.parkContext.runFactor.toFixed(2)}`,
       detail: game.parkContext.label,
@@ -1082,7 +1078,7 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
       metadata: {
         "data-context-park-factor": game.parkContext.runFactor.toFixed(2),
       },
-    },
+    } : null,
     {
       key: "weather",
       label: weatherChipLabel(game),
@@ -1096,7 +1092,7 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
         "data-weather-precip-probability": weatherMetricValue(game.weatherContext.precipProbability, 0),
       },
     },
-  ] as const;
+  ].filter((chip): chip is NonNullable<typeof chip> => Boolean(chip));
 
   return (
     <div className={`${compact ? "mt-2" : "mt-3"} flex flex-wrap gap-1.5`} aria-label={`${game.label} park and weather context`}>
@@ -1718,8 +1714,38 @@ function pitcherFormHref(pitcherId: string, name?: string | null) {
 
 function gameStatusLabel(status: TonightGame["status"]) {
   if (status === "live") return "Live";
+  if (status === "delay") return "Delay";
+  if (status === "final") return "Final";
   if (status === "ppd") return "Postponed";
   return "Pregame";
+}
+
+function gameSummarySegments(game: TonightGame, showGameStatus: boolean): ReactNode[] {
+  const firstPitch = firstPitchSummarySegment(game, showGameStatus);
+  if (!showGameStatus) return [firstPitch, gameVenueLabel(game)];
+  if (game.status === "pregame") return [firstPitch, gameVenueLabel(game)];
+  return [gameStatusLabel(game.status), firstPitch, gameVenueLabel(game)];
+}
+
+function firstPitchSummarySegment(game: TonightGame, showGameStatus: boolean): ReactNode {
+  if (showGameStatus && game.status === "pregame") {
+    const remainingMs = new Date(game.firstPitch).getTime() - Date.now();
+    if (remainingMs > 0 && remainingMs <= 3 * 60 * 60 * 1000) {
+      return `First pitch in ${compactFirstPitchCountdown(remainingMs)}`;
+    }
+  }
+  return <LocalTime key="first-pitch" value={game.firstPitch} fallback={formatFirstPitch(game.firstPitch)} />;
+}
+
+function compactFirstPitchCountdown(durationMs: number) {
+  const label = formatFirstPitchCountdown(durationMs);
+  if (label === "STARTING SOON") return "1m";
+  if (label === "DELAYED") return "delayed";
+  return label
+    .replace(/\bHours?\b/g, "h")
+    .replace(/\bminutes?\b/g, "m")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function gameVenueLabel(game: TonightGame) {
@@ -1755,12 +1781,13 @@ function watchCardSummaryIdValue(game: TonightGame) {
   return watchCardSummaryId(game);
 }
 
-function watchCardSummaryAriaLabel(game: TonightGame) {
-  return `${gameStatusLabel(game.status)} ${game.label}, ${formatFirstPitch(game.firstPitch)}, ${gameVenueLabel(game)}`;
+function watchCardSummaryAriaLabel(game: TonightGame, showGameStatus = true) {
+  const status = showGameStatus ? `${gameStatusLabel(game.status)} ` : "";
+  return `${status}${game.label}, ${formatFirstPitch(game.firstPitch)}, ${gameVenueLabel(game)}`;
 }
 
-function watchCardSummaryAriaLabelValue(game: TonightGame) {
-  return watchCardSummaryAriaLabel(game);
+function watchCardSummaryAriaLabelValue(game: TonightGame, showGameStatus = true) {
+  return watchCardSummaryAriaLabel(game, showGameStatus);
 }
 
 function watchComponentsAriaLabel(game: TonightGame) {

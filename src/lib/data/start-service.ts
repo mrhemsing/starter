@@ -7,6 +7,7 @@ import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
+import { getVenueRunFactor as sharedVenueRunFactor } from "@/lib/data/run-environment";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedPitcherRecentArsenal, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
@@ -69,39 +70,6 @@ const teamColors: Record<string, { color: string; accent: string }> = {
   TEX: { color: "#003278", accent: "#c0111f" },
   TOR: { color: "#134a8e", accent: "#e8291c" },
   WSH: { color: "#ab0003", accent: "#14225a" },
-};
-
-const venueRunFactors: Record<string, number> = {
-  "Angel Stadium": 0.98,
-  "Busch Stadium": 0.97,
-  "Chase Field": 1.03,
-  "Citi Field": 0.97,
-  "Citizens Bank Park": 1.01,
-  "Comerica Park": 0.98,
-  "Coors Field": 1.16,
-  "Daikin Park": 0.99,
-  "Dodger Stadium": 0.98,
-  "Fenway Park": 1.05,
-  "George M. Steinbrenner Field": 1.02,
-  "Globe Life Field": 1,
-  "Great American Ball Park": 1.08,
-  "Guaranteed Rate Field": 1.01,
-  "Kauffman Stadium": 1,
-  "loanDepot park": 0.96,
-  "Minute Maid Park": 0.99,
-  "Nationals Park": 1,
-  "Oracle Park": 0.94,
-  "Oriole Park at Camden Yards": 1.01,
-  "Petco Park": 0.95,
-  "PNC Park": 0.98,
-  "Progressive Field": 0.99,
-  "Rate Field": 1.01,
-  "Rogers Centre": 1.02,
-  "T-Mobile Park": 0.95,
-  "Target Field": 0.99,
-  "Truist Park": 1.01,
-  "Wrigley Field": 1.04,
-  "Yankee Stadium": 1.03,
 };
 
 const opponentQualityRunValues: Record<string, number> = {
@@ -2048,7 +2016,7 @@ function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): 
 }
 
 function getVenueRunFactor(venue: string) {
-  return venueRunFactors[venue] ?? NEUTRAL_PARK_RUN_FACTOR;
+  return sharedVenueRunFactor(venue);
 }
 
 function getOpponentQualityRunValue(opponent: string) {
