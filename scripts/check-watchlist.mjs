@@ -107,6 +107,13 @@ assert(
   "watchlist headline ingest must expose best-effort Google News, MLBTR, and ESPN adapters with per-source kill switches and breakers",
 );
 assert(
+  headlineServiceSource.includes("resolveEspnAthleteId") &&
+    headlineServiceSource.includes("https://site.web.api.espn.com/apis/search/v2") &&
+    headlineServiceSource.includes("watchlist-headline-espn-ids") &&
+    headlineServiceSource.includes("https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?athlete="),
+  "watchlist ESPN headline ingest should auto-resolve and cache ESPN athlete ids before using the working athlete news endpoint",
+);
+assert(
   headlineServiceSource.includes("headline: item.title") &&
     headlineServiceSource.includes("source: item.source || \"Google News\"") &&
     headlineServiceSource.includes("url: item.link") &&

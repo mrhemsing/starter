@@ -186,15 +186,15 @@ async function fetchMlbTradeRumorsHeadlines(pitcher: FormSummary): Promise<Headl
 }
 
 async function fetchEspnHeadlines(pitcher: FormSummary): Promise<HeadlineCandidate[]> {
-  const espnId = await espnAthleteIdFor(pitcher.pitcherId);
+  const espnId = await espnAthleteIdFor(pitcher);
   if (!espnId) return [];
-  const payload = await fetchJson(`https://site.web.api.espn.com/apis/common/v3/sports/baseball/mlb/athletes/${espnId}/news`);
+  const payload = await fetchJson(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?athlete=${espnId}`);
   const rawItems = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload?.articles) ? payload.articles : [];
   return rawItems.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
     const record = item as Record<string, unknown>;
     const headline = typeof record.headline === "string" ? record.headline : typeof record.title === "string" ? record.title : "";
-    const url = typeof record.link === "string" ? record.link : typeof record.webUrl === "string" ? record.webUrl : "";
+    const url = typeof record.link === "string" ? record.link : articleLink(record.link) ?? articleLink(record.links) ?? (typeof record.webUrl === "string" ? record.webUrl : "");
     const publishedAt = typeof record.published === "string" ? record.published : typeof record.publishedAt === "string" ? record.publishedAt : "";
     if (!headline || !url || !publishedAt) return [];
     return [{
@@ -333,11 +333,18 @@ async function mlbTradeRumorsSlug(pitcher: FormSummary) {
   return slug;
 }
 
-async function espnAthleteIdFor(pitcherId: string) {
+async function espnAthleteIdFor(pitcher: FormSummary) {
   const configured = parseEspnIdMap(process.env.THE_BUMP_ESPN_ATHLETE_IDS);
-  if (configured[pitcherId]) return configured[pitcherId];
+  if (configured[pitcher.pitcherId]) return configured[pitcher.pitcherId];
   const state = await readRuntimeState<EspnIdMapState>("watchlist-headline-espn-ids");
-  return state?.ids?.[pitcherId] ?? null;
+  if (state?.ids?.[pitcher.pitcherId]) return state.ids[pitcher.pitcherId];
+  const resolved = await resolveEspnAthleteId(pitcher);
+  if (!resolved) return null;
+  await writeRuntimeState("watchlist-headline-espn-ids", {
+    ids: { ...(state?.ids ?? {}), [pitcher.pitcherId]: resolved },
+    updatedAt: new Date().toISOString(),
+  });
+  return resolved;
 }
 
 function parseEspnIdMap(raw: string | undefined) {
@@ -348,6 +355,57 @@ function parseEspnIdMap(raw: string | undefined) {
   } catch {
     return {};
   }
+}
+
+async function resolveEspnAthleteId(pitcher: FormSummary) {
+  const url = new URL("https://site.web.api.espn.com/apis/search/v2");
+  url.searchParams.set("query", pitcher.name);
+  url.searchParams.set("type", "player");
+  url.searchParams.set("limit", "10");
+  const payload = await fetchJson(url.toString());
+  const results = Array.isArray((payload as { results?: unknown[] } | null)?.results) ? (payload as { results: unknown[] }).results : [];
+  const candidates = results.flatMap((group) => {
+    if (!group || typeof group !== "object") return [];
+    const contents = (group as { type?: unknown; contents?: unknown }).contents;
+    if ((group as { type?: unknown }).type !== "player" || !Array.isArray(contents)) return [];
+    return contents;
+  });
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== "object") continue;
+    const item = candidate as Record<string, unknown>;
+    const displayName = typeof item.displayName === "string" ? item.displayName : "";
+    const league = typeof item.defaultLeagueSlug === "string" ? item.defaultLeagueSlug : "";
+    const sport = typeof item.sport === "string" ? item.sport : "";
+    const subtitle = typeof item.subtitle === "string" ? item.subtitle : "";
+    const uid = typeof item.uid === "string" ? item.uid : "";
+    if (normalizeText(displayName) !== normalizeText(pitcher.name)) continue;
+    if (league !== "mlb" || sport !== "baseball") continue;
+    if (subtitle && !normalizeText(subtitle).includes(normalizeText(teamNickname(pitcher.team)))) continue;
+    const id = /~a:(\d+)/.exec(uid)?.[1] ?? athleteIdFromLink(item.link);
+    if (id) return id;
+  }
+
+  return null;
+}
+
+function athleteIdFromLink(value: unknown) {
+  if (!value || typeof value !== "object") return null;
+  const web = (value as { web?: unknown }).web;
+  if (typeof web !== "string") return null;
+  return /\/id\/(\d+)/.exec(web)?.[1] ?? null;
+}
+
+function articleLink(value: unknown) {
+  if (!value || typeof value !== "object") return null;
+  const href = (value as { href?: unknown }).href;
+  if (typeof href === "string") return href;
+  const web = (value as { web?: unknown }).web;
+  if (web && typeof web === "object") {
+    const webHref = (web as { href?: unknown }).href;
+    if (typeof webHref === "string") return webHref;
+  }
+  return null;
 }
 
 async function isSourceBreakerOpen(source: WatchlistHeadlineSource) {
