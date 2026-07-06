@@ -22,6 +22,7 @@ const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "ut
 const bestStartsRanking = await readFile("src/lib/best-starts-ranking.ts", "utf8");
 const bestStartsHubPage = await readFile("src/app/best-starts/page.tsx", "utf8");
 const monthlyBestStartsPage = await readFile("src/app/best-starts/[month]/page.tsx", "utf8");
+const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
 const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
 const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
@@ -126,6 +127,15 @@ assert(
     bestStartsService.includes("getArchivedSeasonStartSummaries(anchorDate.slice(0, 4))") &&
     bestStartsService.includes('getDailySlate({ window: date === anchorDate ? "today" : "yesterday", date })'),
   "home best-starts service must use rolling daily-slate comparison for 7-day/30-day winners and archived starts for the season top five",
+);
+
+assert(
+  startService.includes("if (!archived) return getArchivedCompletedStartDetailByRouteId(date, startId);") &&
+    startService.includes("async function getArchivedCompletedStartDetailByRouteId(date: string, startId: string)") &&
+    startService.includes("const archivedStarts = await readCompletedStarts(date);") &&
+    startService.includes("archivedCompletedStartRouteId(candidate) === startId") &&
+    startService.includes("function archivedCompletedStartRouteId(start: Pick<ArchivedCompletedStartSummary"),
+  "start detail routes must resolve Best Starts archive row ids even when only completed-line archive data is available",
 );
 
 assert(

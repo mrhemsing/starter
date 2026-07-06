@@ -719,7 +719,7 @@ export async function getStartDetail(startId: string) {
 
 async function getArchivedStartDetailByRouteId(date: string, startId: string) {
   const archived = await readArchivedStartByRouteId(date, startId);
-  if (!archived) return null;
+  if (!archived) return getArchivedCompletedStartDetailByRouteId(date, startId);
 
   const { archive, game, start } = archived;
   const rankedSlateStart = (await getArchivedSlateStarts(date)).find((candidate) => candidate.id === startId);
@@ -806,6 +806,88 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
       date: archive.date,
       archivedAt: archive.archivedAt,
       source: archive.source,
+    },
+    teamColor: colors.color,
+    accentColor: colors.accent,
+    context: frozenContext,
+    source: canonicalRecord?.source ?? {
+      schedule: "live",
+      line: "archive-gamefeed",
+      ranking: "schedule-derived-archive-line",
+    },
+  });
+}
+
+async function getArchivedCompletedStartDetailByRouteId(date: string, startId: string) {
+  const archivedStarts = await readCompletedStarts(date);
+  const start = archivedStarts.find((candidate) => archivedCompletedStartRouteId(candidate) === startId);
+  if (!start) return null;
+
+  const rankedSlateStart = (await getArchivedSlateStarts(date)).find((candidate) => candidate.id === startId);
+  const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
+  const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
+  const context = {
+    label: `${start.awayTeam.abbreviation} @ ${start.homeTeam.abbreviation}, ${start.venue}`,
+    whiffDeltaPct: fallback.context.whiffDeltaPct,
+    velocityDeltaMph: fallback.context.velocityDeltaMph,
+    parkRunFactor: getVenueRunFactor(start.venue),
+    parkLabel: start.venue,
+    opponentQualityRunValue: getOpponentQualityRunValue(start.opponent),
+    opponentQualityLabel: `${start.opponent} archived opponent quality from the stored MLB archive matchup.`,
+    opponentOffenseRunValue: getOpponentOffenseRunValue(start.opponent),
+    opponentOffenseLabel: `${start.opponent} archived offense quality from fixture lineup context.`,
+  };
+  const canonicalRecord = (await readCanonicalStartRecords(date)).find((record) => record.id === startId);
+  const frozenContext = canonicalRecord?.contextSnapshot
+    ? {
+        ...canonicalRecord.contextSnapshot,
+        parkLabel: canonicalRecord.venue ?? canonicalRecord.contextSnapshot.parkLabel,
+      }
+    : context;
+  const line = canonicalRecord?.line ?? start.line;
+  const gameScorePlus = canonicalRecord?.gameScorePlus ?? scoreCompletedLine(line, frozenContext);
+
+  return withStartSummaries({
+    ...demoStartDetail,
+    id: startId,
+    gamePk: start.gamePk,
+    date,
+    rank: rankedSlateStart?.rank ?? 1,
+    pitcher: {
+      id: String(start.pitcherMlbId),
+      mlbId: start.pitcherMlbId,
+      name: start.pitcherName,
+      team: start.team,
+      throws: fallback.pitcher.throws,
+      headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${start.pitcherMlbId}/headshot/67/current`,
+    },
+    opponent: start.opponent,
+    side: start.side,
+    result: canonicalRecord?.result ?? start.result,
+    line,
+    gameScorePlus,
+    gameScoreV2: canonicalRecord?.gameScoreV2 ?? calculateGameScoreV2(line),
+    eventFlags: canonicalRecord?.eventFlags,
+    gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown ?? summarizeGameScorePlus(line, gameScorePlus, frozenContext),
+    game: {
+      gamePk: start.gamePk,
+      date,
+      awayTeam: teamSummaryFromArchiveTeam(start.awayTeam),
+      homeTeam: teamSummaryFromArchiveTeam(start.homeTeam),
+      venue: start.venue,
+      status: "final",
+    },
+    arsenal: [],
+    pitchEvents: [],
+    pitchDetailSource: "fixture",
+    archivePitchDetail: {
+      status: "not-archived",
+      pitchEvents: 0,
+      date,
+    },
+    archiveCompletedLine: {
+      status: "stored",
+      date,
     },
     teamColor: colors.color,
     accentColor: colors.accent,
@@ -2019,6 +2101,10 @@ function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): 
       ranking: "schedule-derived-archive-line",
     },
   };
+}
+
+function archivedCompletedStartRouteId(start: Pick<ArchivedCompletedStartSummary, "date" | "team" | "opponent" | "pitcherMlbId">) {
+  return `${start.date}-${start.team.toLowerCase()}-${start.opponent.toLowerCase()}-${start.pitcherMlbId}`;
 }
 
 function getVenueRunFactor(venue: string) {
