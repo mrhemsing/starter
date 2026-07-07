@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const upcomingPage = readFileSync("src/app/upcoming/[date]/page.tsx", "utf8");
 const upcomingWeekPage = readFileSync("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
+const slateDateNav = readFileSync("src/components/slate-date-nav.tsx", "utf8");
 const tonightService = readFileSync("src/lib/data/tonight-service.ts", "utf8");
 const tonightCards = readFileSync("src/components/tonights-must-watch.tsx", "utf8");
 const types = readFileSync("src/lib/types.ts", "utf8");
@@ -32,7 +33,9 @@ assert(upcomingPage.includes("data-control-status-filter-visible"), "Upcoming co
 assert(upcomingPage.includes("data-control-status-summary"), "Upcoming controls must expose status summary for DOM checks");
 assert(!upcomingPage.includes("<details\n      className=\"mt-5"), "Upcoming controls must not collapse filters and sort behind an expandable details row");
 assert(!upcomingPage.includes("<summary className=\"cursor-pointer font-mono text-xs uppercase"), "Upcoming controls must not render the old Filters / Start time summary row");
-assert(upcomingPage.includes('className="mt-3 flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1"'), "Upcoming controls must render surfaced compact toggles directly below the range tabs on one line");
+assert(upcomingPage.includes('data-upcoming-toolbar-row') && upcomingPage.includes('lg:flex-row lg:items-center') && upcomingPage.includes('className="mt-0"'), "Upcoming day toolbar must place range tabs and compact toggles on one desktop row.");
+assert(upcomingPage.includes('className={`${className} flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1`}'), "Upcoming controls must render surfaced compact toggles with caller-controlled spacing.");
+assert(slateDateNav.includes('mobileLabel: "Week"') && slateDateNav.includes('className="sm:hidden"') && slateDateNav.includes('className="hidden sm:inline"'), "Upcoming range tabs must show WEEK on mobile and THIS WEEK on larger screens.");
 
 assert(upcomingWeekPage.includes("summarizeUpcomingStatuses"), "week Upcoming page must use the same status summary");
 assert(upcomingWeekPage.includes("showStatusFilter={statusVaries}"), "week Upcoming controls must hide status filter when status does not vary");

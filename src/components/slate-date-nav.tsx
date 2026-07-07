@@ -5,14 +5,15 @@ import { formatUpcomingDate, rankedStartsPath, upcomingDateHref, upcomingStreame
 type SlateRangeOption = {
   key: string;
   label: string;
+  mobileLabel?: string;
   href: string;
   active: boolean;
   ariaLabel: string;
 };
 
-export function SlateRangeToggle({ label, options }: { label: string; options: SlateRangeOption[] }) {
+export function SlateRangeToggle({ label, options, className = "mt-5" }: { label: string; options: SlateRangeOption[]; className?: string }) {
   return (
-    <nav className="mt-5 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]" aria-label={label}>
+    <nav className={`${className} flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]`} aria-label={label}>
       {options.map((option) => (
         <Link
           key={option.key}
@@ -22,14 +23,19 @@ export function SlateRangeToggle({ label, options }: { label: string; options: S
           aria-label={option.ariaLabel}
           data-range-option={option.key}
         >
-          {option.label}
+          {option.mobileLabel ? (
+            <>
+              <span className="sm:hidden">{option.mobileLabel}</span>
+              <span className="hidden sm:inline">{option.label}</span>
+            </>
+          ) : option.label}
         </Link>
       ))}
     </nav>
   );
 }
 
-export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActive = false, streamersActive = false }: { activeDate: string; today: string; tomorrow: string; weekActive?: boolean; streamersActive?: boolean }) {
+export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActive = false, streamersActive = false, className }: { activeDate: string; today: string; tomorrow: string; weekActive?: boolean; streamersActive?: boolean; className?: string }) {
   const todayActive = !weekActive && !streamersActive && activeDate === today;
   const tomorrowActive = !weekActive && !streamersActive && activeDate === tomorrow;
 
@@ -54,6 +60,7 @@ export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActi
         {
           key: "week",
           label: "This week",
+          mobileLabel: "Week",
           href: upcomingWeekHref(activeDate),
           active: weekActive && !streamersActive,
           ariaLabel: `View week of ${formatUpcomingDate(activeDate)}`,
@@ -66,6 +73,7 @@ export function UpcomingSlateRangeToggle({ activeDate, today, tomorrow, weekActi
           ariaLabel: "View fantasy week pickups and two-start pitchers",
         },
       ]}
+      className={className}
     />
   );
 }

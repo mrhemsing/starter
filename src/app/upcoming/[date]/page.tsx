@@ -100,17 +100,20 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             >
               {formatUpcomingSlateStamp(slateState, today)}
             </p>
-            <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
-            <UpcomingControls
-              controls={effectiveControls}
-              basePath={upcomingDateHref(resolvedDate)}
-              slateRange="day"
-              visibleGameCount={visibleUpcoming.games.length}
-              scheduledGameCount={upcoming.scheduledGames}
-              showStatusFilter={statusVaries}
-              statusSummary={statusSummary}
-              viewModeToggle={<UpcomingViewModeToggle />}
-            />
+            <div className="mt-5 flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-3" data-upcoming-toolbar-row>
+              <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} className="mt-0" />
+              <UpcomingControls
+                controls={effectiveControls}
+                basePath={upcomingDateHref(resolvedDate)}
+                slateRange="day"
+                visibleGameCount={visibleUpcoming.games.length}
+                scheduledGameCount={upcoming.scheduledGames}
+                showStatusFilter={statusVaries}
+                statusSummary={statusSummary}
+                viewModeToggle={<UpcomingViewModeToggle />}
+                className="mt-0"
+              />
+            </div>
           </header>
         </div>
         <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
@@ -210,6 +213,7 @@ export function UpcomingControls({
   showStatusFilter = true,
   statusSummary,
   viewModeToggle,
+  className = "mt-3",
 }: {
   controls: UpcomingControlsState;
   basePath: string;
@@ -219,6 +223,7 @@ export function UpcomingControls({
   showStatusFilter?: boolean;
   statusSummary?: UpcomingStatusSummary;
   viewModeToggle?: React.ReactNode;
+  className?: string;
 }) {
   const controlsLabel = upcomingControlsLabel(controls, showStatusFilter);
   const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;
