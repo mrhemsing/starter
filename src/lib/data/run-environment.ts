@@ -5,6 +5,7 @@ export const PARK_RUN_FACTOR_MIN = 0.85;
 export const PARK_RUN_FACTOR_MAX = 1.2;
 export const PARK_FACTOR_SOURCE = "FanGraphs 3-year park factors, normalized to 1.00 run environment";
 const WEATHER_REVALIDATE_SECONDS = 15 * 60;
+const WEATHER_FETCH_TIMEOUT_MS = 5000;
 
 export const VENUE_RUN_FACTORS: Record<string, number> = {
   "Angel Stadium": 0.98,
@@ -172,11 +173,19 @@ export async function getGameTimeWeather(venue: string, gameDate: string): Promi
   const cached = weatherCache.get(cacheKey);
   if (cached) return cached;
 
-  const request = fetchOpenMeteoWeather(profile, gameDate).catch(() => ({
-    source: "unavailable" as const,
-    label: `${profile.label} game-time weather unavailable; using neutral run environment.`,
-    runValue: 0,
-  }));
+  const request = fetchOpenMeteoWeather(profile, gameDate)
+    .then((weather) => {
+      if (weather.source === "unavailable") weatherCache.delete(cacheKey);
+      return weather;
+    })
+    .catch(() => {
+      weatherCache.delete(cacheKey);
+      return {
+        source: "unavailable" as const,
+        label: `${profile.label} game-time weather unavailable; using neutral run environment.`,
+        runValue: 0,
+      };
+    });
   weatherCache.set(cacheKey, request);
   return request;
 }
@@ -212,6 +221,7 @@ async function fetchOpenMeteoWeather(profile: VenueWeatherProfile, gameDate: str
   });
   const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
     next: { revalidate: WEATHER_REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(WEATHER_FETCH_TIMEOUT_MS),
   });
   if (!response.ok) {
     return {

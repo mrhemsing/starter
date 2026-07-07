@@ -1764,7 +1764,7 @@ function gameVenueLabel(game: TonightGame) {
 
 function weatherChipLabel(game: TonightGame) {
   if (game.weatherContext.source === "indoor") return "Indoor";
-  if (game.weatherContext.source === "unavailable") return "Forecast unavailable";
+  if (game.weatherContext.source === "unavailable") return "Weather neutral";
   const parts = [];
   if (typeof game.weatherContext.tempF === "number") parts.push(`${Math.round(game.weatherContext.tempF)}F`);
   if (typeof game.weatherContext.windMph === "number") parts.push(`${Math.round(game.weatherContext.windMph)} mph wind`);
