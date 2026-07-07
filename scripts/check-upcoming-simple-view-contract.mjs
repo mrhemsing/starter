@@ -29,6 +29,9 @@ assert(countOccurrences(viewMode, 'data-upcoming-view-mode-control') === 1, "Onl
 
 assert(simpleBoard.includes('data-responsive-check="upcoming-simple-board"'), "Simple board must expose a stable test hook.");
 assert(viewMode.includes('data-responsive-check="upcoming-simple-card"'), "Simple cards must expose stable test hooks.");
+assert(viewMode.includes("import Link from \"next/link\";") && viewMode.includes('data-simple-card-link="whole-card"'), "Simple cards must be whole-card links to the detailed card.");
+assert(viewMode.includes("ariaLabel") && viewMode.includes("data-simple-details-target={href}"), "Simple card link must keep an accessible detail target.");
+assert(!viewMode.includes("data-upcoming-simple-details") && !viewMode.includes(">Details<"), "Simple cards must not render standalone DETAILS buttons.");
 assert(simpleBoard.includes("data-simple-visible-game-pks"), "Simple board must expose game order for parity checks.");
 assert(simpleBoard.includes("data-simple-watch-ranks"), "Simple board must expose rank order for parity checks.");
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
@@ -38,15 +41,17 @@ assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(s
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
 assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis one\\b/i.test(sentence))}'), "Simple context sentences must guard against this-one copy.");
 assert(simpleBoard.includes('className="grid gap-4"'), "Simple cards must have visible gaps between discrete card surfaces.");
-assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simpleBoard.includes("style={{ color: accentColor }}"), "Simple cards must tint the edge and score by watch band.");
+assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simpleBoard.includes("simpleCardTint(game.gameWatchScore, accentColor)") && viewMode.includes("data-simple-card-background={background}") && viewMode.includes("data-simple-card-edge-color={accentColor}") && simpleBoard.includes("style={{ color: accentColor }}"), "Simple cards must tint the background, edge, and score by watch band.");
 assert(simpleBoard.includes('size="simple"'), "Simple starter headshots must use the enlarged simple size.");
+assert(simpleBoard.includes("data-simple-starter-frame") && simpleBoard.includes("data-simple-starter-team-color={teamColor}") && simpleBoard.includes("data-simple-starter-nameplate"), "Simple starters must render baseball-card style portrait frames with team-colored borders and nameplates.");
+assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("miniStatLine(starter)") && simpleBoard.includes("Starter TBD"), "Simple starter frames must render compact card-back stats and honest TBD placeholders.");
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
 assert(countOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
 assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render pitch-mix or driver chip rows.");
 assert(!simpleBoard.includes("projectedStrikeouts") && !simpleBoard.includes("K line"), "Simple cards must not render K-line elements.");
-assert(!simpleBoard.includes("projectedGsPlus") && !simpleBoard.includes("Proj GS+"), "Simple cards must not render projected GS+ lines.");
+assert(simpleBoard.includes("starter.projection?.projectedGsPlus") && simpleBoard.includes("Proj GS+"), "Simple baseball-card backs may surface a compact projected GS+ stat.");
 
 const retiredSlop = [
   "'s form carries this one",

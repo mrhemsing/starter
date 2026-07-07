@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
-import { pitcherHref, sourceParams } from "@/lib/routes";
 import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
@@ -57,19 +55,26 @@ function UpcomingSimpleCard({
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
+  const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
 
   return (
-    <UpcomingSimpleCardFrame gamePk={game.gamePk}>
+    <UpcomingSimpleCardFrame
+      gamePk={game.gamePk}
+      ariaLabel={`${starterDisplayName(game.starters[0])} versus ${starterDisplayName(game.starters[1])}, watch score ${game.gameWatchScore.toFixed(1)}, ${game.label}`}
+      bandKey={cardTint.key}
+      background={cardTint.background}
+      accentColor={accentColor}
+    >
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-1"
+        className="pointer-events-none absolute inset-x-0 top-0 h-1"
         style={{ backgroundColor: accentColor }}
         data-simple-card-accent={watchTier.key}
       />
-      <div className="grid grid-cols-[minmax(0,1fr)_86px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-5">
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
-        <div className="text-center" data-upcoming-simple-score>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">#{rank}</p>
-          <p className="font-serif text-[2.6rem] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
+        <div className="pt-2 text-center sm:pt-4" data-upcoming-simple-score>
+          <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">#{rank}</p>
+          <p className="font-serif text-[2.35rem] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
           {confidenceLabel ? (
             <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
               {confidenceLabel}
@@ -106,27 +111,37 @@ function SimpleStarter({
 }) {
   const formBand = starter.formStatus === "ok" ? starter.tier ?? null : null;
   const name = starter.name ?? `TBD ${starter.team}`;
+  const teamColor = starter.status === "tbd" ? "#888780" : teamAccentColor(starter.team);
 
   return (
-    <div className={`min-w-0 ${align === "home" ? "text-right" : ""}`} data-upcoming-simple-starter={starter.side}>
-      <div className={`flex flex-col gap-2 sm:flex-row sm:items-center ${align === "home" ? "items-end sm:flex-row-reverse" : "items-start"}`}>
+    <div
+      className={`min-w-0 overflow-hidden rounded-lg border bg-black/20 ${align === "home" ? "text-right" : ""}`}
+      style={{ borderColor: `${teamColor}CC` }}
+      data-upcoming-simple-starter={starter.side}
+      data-simple-starter-frame
+      data-simple-starter-team-color={teamColor}
+    >
+      <div className="flex justify-center bg-black/15 px-2 pt-2">
         <StarterHeadshot starter={starter} formBand={formBand} />
-        <div className="min-w-0">
-          {starter.pitcherId ? (
-            <Link href={pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming"))} className={`block max-w-[6.75rem] whitespace-normal break-words text-sm font-semibold leading-[1.08] text-zinc-50 sm:max-w-none sm:text-base ${align === "home" ? "ml-auto" : ""}`} data-simple-starter-name>
-              <PitcherNameLines name={name} />
-            </Link>
-          ) : (
-            <p className={`max-w-[6.75rem] whitespace-normal break-words text-sm font-semibold leading-[1.08] text-zinc-50 sm:max-w-none sm:text-base ${align === "home" ? "ml-auto" : ""}`} data-simple-starter-name>
-              <PitcherNameLines name={name} />
-            </p>
-          )}
-          <p className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500" data-simple-orientation>{orientation}</p>
-        </div>
       </div>
-      <p className={`mt-2 inline-flex rounded border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] ${formChipClass(formBand)}`} data-simple-form-chip data-form-band={formBand ?? "neutral"}>
-        {formBand ? heatBandLabel(formBand) : "Form"} {formatFormValue(starter, formBand)}
-      </p>
+      <div
+        className="px-2 py-2"
+        style={{ background: `linear-gradient(135deg, ${teamColor}F0, rgba(12,12,16,0.92))` }}
+        data-simple-starter-nameplate
+      >
+        <p className="whitespace-normal break-words text-sm font-semibold leading-[1.04] text-white sm:text-base" data-simple-starter-name>
+          <PitcherNameLines name={name} />
+        </p>
+        <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
+      </div>
+      <div className="px-2 pb-2 pt-2" data-simple-starter-card-back>
+        <p className={`inline-flex rounded border px-1.5 py-1 font-mono text-[8px] uppercase tracking-[0.1em] ${formChipClass(formBand)}`} data-simple-form-chip data-form-band={formBand ?? "neutral"}>
+          {formBand ? heatBandLabel(formBand) : "Form"} {formatFormValue(starter, formBand)}
+        </p>
+        <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400" data-simple-mini-stat-line>
+          {miniStatLine(starter)}
+        </p>
+      </div>
     </div>
   );
 }
@@ -158,6 +173,83 @@ function StarterHeadshot({ starter, formBand }: { starter: TonightStarter; formB
       className="rounded-lg"
     />
   );
+}
+
+function starterDisplayName(starter: TonightStarter) {
+  return starter.name ?? `TBD ${starter.team}`;
+}
+
+function miniStatLine(starter: TonightStarter) {
+  if (starter.status === "tbd") return "Starter TBD";
+  const projected = starter.projection?.projectedGsPlus;
+  if (typeof projected === "number") return `Proj GS+ ${projected.toFixed(1)}`;
+  if (starter.lastStart?.gsPlus) return `Last GS+ ${starter.lastStart.gsPlus.toFixed(1)}`;
+  if (typeof starter.workload?.daysRest === "number") return `${starter.workload.daysRest}d rest`;
+  return starter.probableConfidence === "REPORTED" ? "Reported probable" : "Probable starter";
+}
+
+function simpleCardTint(score: number, accentColor: string) {
+  if (score >= 58) {
+    return {
+      key: "warm",
+      background: `linear-gradient(135deg, ${hexToRgba(accentColor, 0.22)}, rgba(16,16,20,0.96) 38%, rgba(16,16,20,0.98))`,
+    };
+  }
+  if (score >= 48) {
+    return {
+      key: "even",
+      background: "linear-gradient(135deg, rgba(136,135,128,0.10), rgba(16,16,20,0.98) 44%, rgba(16,16,20,0.98))",
+    };
+  }
+  return {
+    key: "cool",
+    background: `linear-gradient(135deg, rgba(55,138,221,0.20), rgba(16,16,20,0.97) 42%, ${hexToRgba(accentColor, 0.10)})`,
+  };
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "");
+  const value = Number.parseInt(normalized.length === 3 ? normalized.split("").map((char) => `${char}${char}`).join("") : normalized, 16);
+  const red = (value >> 16) & 255;
+  const green = (value >> 8) & 255;
+  const blue = value & 255;
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function teamAccentColor(team: string) {
+  const colors: Record<string, string> = {
+    ARI: "#A71930",
+    ATL: "#CE1141",
+    BAL: "#DF4601",
+    BOS: "#BD3039",
+    CHC: "#0E3386",
+    CWS: "#C4CED4",
+    CIN: "#C6011F",
+    CLE: "#E31937",
+    COL: "#C4CED4",
+    DET: "#FA4616",
+    HOU: "#EB6E1F",
+    KC: "#7AB2DD",
+    LAA: "#BA0021",
+    LAD: "#005A9C",
+    MIA: "#00A3E0",
+    MIL: "#FFC52F",
+    MIN: "#D31145",
+    NYM: "#FF5910",
+    NYY: "#C4CED4",
+    OAK: "#EFB21E",
+    PHI: "#E81828",
+    PIT: "#FDB827",
+    SD: "#FFC425",
+    SEA: "#6CACE4",
+    SF: "#FD5A1E",
+    STL: "#C41E3A",
+    TB: "#8FBCE6",
+    TEX: "#C0111F",
+    TOR: "#134A8E",
+    WSH: "#AB0003",
+  };
+  return colors[team] ?? "#888780";
 }
 
 function formatFormValue(starter: TonightStarter, formBand: FormTier | null) {

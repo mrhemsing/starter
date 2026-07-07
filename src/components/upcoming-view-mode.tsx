@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { SegmentedControl } from "@/components/segmented-control";
 
 type UpcomingViewMode = "detailed" | "simple";
@@ -73,9 +74,17 @@ export function UpcomingViewModePanels({ detailed, simple }: { detailed: ReactNo
 
 export function UpcomingSimpleCardFrame({
   gamePk,
+  ariaLabel,
+  bandKey,
+  background,
+  accentColor,
   children,
 }: {
   gamePk: string;
+  ariaLabel: string;
+  bandKey: string;
+  background: string;
+  accentColor: string;
   children: ReactNode;
 }) {
   const context = useUpcomingViewMode();
@@ -90,34 +99,33 @@ export function UpcomingSimpleCardFrame({
   }
 
   return (
-    <article
-      className="heat-glow-card relative cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-[#101014] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] transition hover:border-amber-300/35 sm:p-5"
+    <Link
+      href={href}
+      aria-label={ariaLabel}
+      className="heat-glow-card group relative block overflow-hidden rounded-xl border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] outline-none transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-300/70 sm:p-5"
+      style={{ background, borderColor: `${accentColor}44` }}
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
       data-simple-details-target={href}
-      tabIndex={0}
-      role="link"
+      data-simple-card-link="whole-card"
+      data-simple-card-tint={bandKey}
+      data-simple-card-background={background}
+      data-simple-card-edge-color={accentColor}
       onClick={(event) => {
-        if ((event.target as HTMLElement).closest("a,button")) return;
+        if ((event.target as HTMLElement).closest("button")) return;
+        event.preventDefault();
         openDetails();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openDetails();
-        }
       }}
     >
       {children}
-      <button
-        type="button"
-        className="mt-4 inline-flex min-h-9 items-center rounded border border-amber-300/35 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200"
-        data-upcoming-simple-details
-        onClick={openDetails}
+      <span
+        className="pointer-events-none absolute bottom-3 right-3 translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+        aria-hidden="true"
+        data-upcoming-simple-hover-hint
       >
-        Details
-      </button>
-    </article>
+        &rsaquo;
+      </span>
+    </Link>
   );
 }
 

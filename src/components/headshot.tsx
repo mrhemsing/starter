@@ -22,7 +22,7 @@ type HeadshotProps = {
 const sizeClasses: Record<HeadshotSize, string> = {
   hero: "h-[112px] w-[75px] sm:h-[132px] sm:w-[88px] lg:h-[148px] lg:w-[99px]",
   marquee: "h-24 w-16",
-  simple: "h-14 w-14 sm:h-[72px] sm:w-[72px]",
+  simple: "h-[88px] w-[66px] sm:h-[120px] sm:w-[90px]",
   xl: "h-[88px] w-[59px]",
   lg: "h-16 w-[43px]",
   md: "h-[52px] w-[35px]",
