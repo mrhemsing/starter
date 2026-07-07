@@ -85,7 +85,7 @@ function UpcomingSimpleCard({
         data-simple-card-accent={watchTier.key}
       />
       <div
-        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-3"
+        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg pt-4 sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-3 lg:pt-0"
         data-simple-vs-composition
       >
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
