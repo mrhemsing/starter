@@ -133,6 +133,7 @@ assert(
     writeupsService.includes("writeRuntimeState") &&
     writeupsService.includes("getTonightMustWatch({ date, window: 5, forceOpponentSplits: true })") &&
     writeupsService.includes("inputHash") &&
+    writeupsService.includes("UPCOMING_WRITEUPS_PROMPT_VERSION") &&
     writeupsService.includes("hasWriteupsForGames") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
     writeupsService.includes("Do not use numeric digits.") &&

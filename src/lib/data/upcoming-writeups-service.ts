@@ -12,6 +12,7 @@ type UpcomingWriteupsState = {
   version: 1;
   date: string;
   inputHash: string;
+  promptVersion: number;
   generatedAt: string;
   model: string;
   writeups: Record<string, string>;
@@ -58,6 +59,7 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 1;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 2;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -70,7 +72,7 @@ export async function readUpcomingWriteups(date: string) {
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
   const slate = await getTonightMustWatch({ date, window: 5, forceOpponentSplits: true });
   const inputs = slate.games.map((game) => upcomingWriteupInput(game, slate.leagueMeanGS));
-  const inputHash = hashStableJson(inputs);
+  const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
   if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasWriteupsForGames(previous.writeups, slate.games)) {
     return { date: slate.date, generated: 0, reused: slate.games.length, fallbackCount: previous.fallbackCount, model: previous.model, stored: true };
@@ -92,6 +94,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     version: UPCOMING_WRITEUPS_VERSION,
     date: slate.date,
     inputHash,
+    promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION,
     generatedAt: new Date().toISOString(),
     model: UPCOMING_WRITEUPS_MODEL,
     writeups,
