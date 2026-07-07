@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { SegmentedControl } from "@/components/segmented-control";
 
 type UpcomingViewMode = "detailed" | "simple";
 
@@ -39,30 +40,18 @@ export function UpcomingViewModeToggle() {
   const context = useUpcomingViewMode();
 
   return (
-    <div role="group" aria-label="View mode" data-upcoming-view-mode-control data-storage-key={STORAGE_KEY}>
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">View</p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className={viewButtonClass(context.mode === "detailed")}
-          aria-pressed={context.mode === "detailed"}
-          data-view-mode-option="detailed"
-          data-control-link-active={String(context.mode === "detailed")}
-          onClick={() => context.setMode("detailed")}
-        >
-          Detailed
-        </button>
-        <button
-          type="button"
-          className={viewButtonClass(context.mode === "simple")}
-          aria-pressed={context.mode === "simple"}
-          data-view-mode-option="simple"
-          data-control-link-active={String(context.mode === "simple")}
-          onClick={() => context.setMode("simple")}
-        >
-          Simple
-        </button>
-      </div>
+    <div data-upcoming-view-mode-control data-storage-key={STORAGE_KEY}>
+      <SegmentedControl
+        label="View"
+        ariaLabel="View mode"
+        activeValue={context.mode}
+        storageKey={STORAGE_KEY}
+        segments={[
+          { value: "detailed", label: "Detailed", controlKey: "view-detailed" },
+          { value: "simple", label: "Simple", controlKey: "view-simple" },
+        ]}
+        onValueChange={(value) => context.setMode(value === "simple" ? "simple" : "detailed")}
+      />
     </div>
   );
 }
@@ -145,8 +134,4 @@ function readStoredViewMode(): UpcomingViewMode {
   } catch {
     return "detailed";
   }
-}
-
-function viewButtonClass(active: boolean) {
-  return `inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`;
 }

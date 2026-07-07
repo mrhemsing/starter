@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { PendingRegion } from "@/components/route-control-pending";
+import { SegmentedControl } from "@/components/segmented-control";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
@@ -227,7 +228,7 @@ export function UpcomingControls({
 
   return (
     <div
-      className="mt-3 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 md:grid-cols-3"
+      className="mt-3 flex flex-wrap items-end gap-3 rounded border border-white/10 bg-[#101014] p-3"
       data-responsive-check="upcoming-controls"
       data-slate-range={slateRange}
       data-control-key={controlsKey}
@@ -250,10 +251,18 @@ export function UpcomingControls({
           <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
         </ControlGroup>
       ) : null}
-      <ControlGroup label="Sort">
-        <ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
-        <ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
-      </ControlGroup>
+      <SegmentedControl
+        label="Sort"
+        ariaLabel="Sort options"
+        activeValue={controls.sort}
+        segments={[
+          { value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" },
+          { value: "time", label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" }), controlKey: "sort-time" },
+        ]}
+        pendingRegion="upcoming-board"
+        pendingLabel="Upcoming matchup board"
+        ariaControls="upcoming-board"
+      />
       {viewModeToggle}
     </div>
   );

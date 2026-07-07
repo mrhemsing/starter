@@ -60,6 +60,12 @@ p,
   overflow-wrap: normal;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .segmented-control-indicator {
+    transition: none;
+  }
+}
+
 .site-logo-wordmark {
   color: #fcd34d;
   display: block;

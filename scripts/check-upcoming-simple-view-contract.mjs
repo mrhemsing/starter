@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 
 const page = await readFile("src/app/upcoming/[date]/page.tsx", "utf8");
 const viewMode = await readFile("src/components/upcoming-view-mode.tsx", "utf8");
+const segmentedControl = await readFile("src/components/segmented-control.tsx", "utf8");
+const globals = await readFile("src/app/globals.css", "utf8");
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
 const context = await readFile("src/lib/upcoming-simple-context.ts", "utf8");
 
@@ -12,6 +14,14 @@ assert(page.includes("<UpcomingViewModePanels") && page.includes("<TonightsMustW
 assert(!page.includes("viewMode="), "Upcoming simple mode must not be URL-backed.");
 
 assert(viewMode.includes('const STORAGE_KEY = "tts.upcoming.view";'), "Upcoming view preference must use the namespaced storage key.");
+assert(page.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming SORT must use the shared segmented-control primitive.");
+assert(viewMode.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming VIEW must use the shared segmented-control primitive.");
+assert(page.includes('label="Sort"') && page.includes('{ value: "watch", label: "Watch rank"') && page.includes('{ value: "time", label: "Start time"'), "Upcoming SORT must render as WATCH RANK / START TIME segmented options.");
+assert(viewMode.includes('label="View"') && viewMode.includes('{ value: "detailed", label: "Detailed"') && viewMode.includes('{ value: "simple", label: "Simple"'), "Upcoming VIEW must render as DETAILED / SIMPLE segmented options.");
+assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("transition-transform duration-[175ms]"), "Segmented controls must render a sliding indicator.");
+assert(globals.includes("@media (prefers-reduced-motion: reduce)") && globals.includes(".segmented-control-indicator") && globals.includes("transition: none;"), "Segmented indicator animation must disable under reduced motion.");
+assert(segmentedControl.includes('role="group"') && segmentedControl.includes("handleKeyDown") && segmentedControl.includes("ArrowLeft") && segmentedControl.includes("ArrowRight"), "Segmented controls must expose labeled group semantics and arrow-key movement.");
+assert(segmentedControl.includes("min-h-11"), "Segmented controls must keep touch targets at least 44px tall.");
 assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "SIMPLE"'), "Stored SIMPLE preference must restore simple view.");
 assert(viewMode.includes('window.localStorage.setItem(STORAGE_KEY, nextMode === "simple" ? "SIMPLE" : "DETAILED")'), "Toggle must persist SIMPLE/DETAILED values.");
 assert(viewMode.includes("try {") && countOccurrences(viewMode, "catch") >= 2, "localStorage reads and writes must be wrapped for blocked storage.");
