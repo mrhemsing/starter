@@ -26,7 +26,7 @@ type StoredHeadline = {
 };
 
 type PitcherHeadlineState = {
-  version: 4;
+  version: 5;
   pitcherId: string;
   updatedAt: string;
   headlines: StoredHeadline[];
@@ -59,7 +59,7 @@ export type WatchlistHeadlineIngestResult = {
   sources: Array<{ source: WatchlistHeadlineSource; enabled: boolean; skippedByBreaker: boolean }>;
 };
 
-const HEADLINE_STATE_VERSION = 4;
+const HEADLINE_STATE_VERSION = 5;
 const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
 const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
@@ -190,7 +190,9 @@ async function fetchGoogleNewsHeadlines(pitcher: FormSummary): Promise<HeadlineC
   url.searchParams.set("gl", "US");
   url.searchParams.set("ceid", "US:en");
   const xml = await fetchText(url.toString());
-  const items = parseRssItems(xml).slice(0, GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT);
+  const items = parseRssItems(xml)
+    .filter((item) => isLikelyPitcherHeadline(item.title, pitcher))
+    .slice(0, GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT);
   return Promise.all(items.map(async (item) => {
     const resolved = await resolveGoogleNewsArticleMetadata(item.link);
     return {
@@ -271,6 +273,14 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
     publishedAt,
     source,
   };
+}
+
+function isLikelyPitcherHeadline(headline: string, pitcher: FormSummary) {
+  const headlineTokens = new Set(normalizedTokens(decodeHtml(stripTags(headline))));
+  const pitcherTokens = normalizedTokens(pitcher.name);
+  const surname = normalizeText(lastName(pitcher.name));
+  if (!headlineTokens.has(surname)) return false;
+  return containsTokenPhrase(headlineTokens, pitcherTokens) || containsTokenPhrase(headlineTokens, normalizedTokens(teamNickname(pitcher.team)));
 }
 
 async function appendHeadline(candidate: HeadlineCandidate) {
@@ -789,7 +799,7 @@ function headlineStateKey(pitcherId: string) {
 }
 
 function headlineFetchAttemptKey(pitcherId: string) {
-  return `watchlist-headline-fetch:${pitcherId}`;
+  return `watchlist-headline-fetch:v${HEADLINE_STATE_VERSION}:${pitcherId}`;
 }
 
 function breakerStateKey(source: WatchlistHeadlineSource) {

@@ -1,4 +1,5 @@
 const RUNTIME_STATE_TABLE = "toetheslab_runtime_state";
+const RUNTIME_STATE_TIMEOUT_MS = 2500;
 const runtimeStateFallback = new Map<string, RuntimeStateValue>();
 const reportedRuntimeStateFailures = new Set<string>();
 
@@ -24,13 +25,14 @@ export async function readRuntimeState<T extends RuntimeStateValue>(key: string)
     const response = await fetch(url, {
       headers: runtimeStateSupabaseHeaders(serviceKey),
       cache: "no-store",
+      signal: AbortSignal.timeout(RUNTIME_STATE_TIMEOUT_MS),
     });
     if (!response.ok) {
       reportRuntimeStateFailure("read", response.status);
       return runtimeStateFallback.get(key) as T | undefined ?? null;
     }
     const rows = await response.json() as Array<Pick<RuntimeStateRow, "value">>;
-    return rows[0]?.value as T | undefined ?? null;
+    return (rows[0]?.value as T | undefined) ?? (runtimeStateFallback.get(key) as T | undefined) ?? null;
   } catch (error) {
     reportRuntimeStateFailure("read", error instanceof Error ? error.message : "unknown");
     return runtimeStateFallback.get(key) as T | undefined ?? null;
@@ -60,6 +62,7 @@ export async function writeRuntimeState(key: string, value: RuntimeStateValue) {
         value,
         updated_at: new Date().toISOString(),
       }),
+      signal: AbortSignal.timeout(RUNTIME_STATE_TIMEOUT_MS),
     });
     if (!response.ok) reportRuntimeStateFailure("write", response.status);
     return response.ok;

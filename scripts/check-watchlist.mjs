@@ -148,7 +148,8 @@ assert(
     headlineServiceSource.includes("fetchMsnArticleMetadata(url)") &&
     headlineServiceSource.includes("publishedDateTime") &&
     headlineServiceSource.includes("sourceHref") &&
-    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 4;") &&
+    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 5;") &&
+    headlineServiceSource.includes(".filter((item) => isLikelyPitcherHeadline(item.title, pitcher))") &&
     headlineServiceSource.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
     headlineServiceSource.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
     headlineServiceSource.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&
