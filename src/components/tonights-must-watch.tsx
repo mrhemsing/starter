@@ -732,12 +732,14 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
     >
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">The hook</p>
-        <div className="mt-1 flex flex-wrap items-end justify-center gap-2">
+        <div className="mt-1 flex items-end justify-center">
           <p className="font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
-          <WatchScoreConfidenceChip game={game} />
         </div>
         <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
         <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
+        <div className="mt-3 flex justify-center" data-hook-confidence-chip-placement="below-reason">
+          <WatchScoreConfidenceChip game={game} />
+        </div>
       </div>
       <div className="mt-4">
         <FormClash away={awayStarter} home={homeStarter} leagueMeanGS={leagueMeanGS} />

@@ -240,6 +240,14 @@ assert(
 );
 
 assert(
+  mustWatch.includes('data-hook-confidence-chip-placement="below-reason"') &&
+    mustWatch.includes('<p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>') &&
+    mustWatch.includes('<div className="mt-3 flex justify-center" data-hook-confidence-chip-placement="below-reason">') &&
+    !mustWatch.includes('<div className="mt-1 flex flex-wrap items-end justify-center gap-2">'),
+  "home and upcoming hook confidence chip must sit centered below the hook reason, not beside the score",
+);
+
+assert(
   homeDeferredSections.includes("topVelo={view.topVelo}") &&
     homeDeferredSections.includes("veloSparkline={view.veloSparkline}") &&
     homeDeferredSections.includes("whiffRate={view.whiffRate}") &&
