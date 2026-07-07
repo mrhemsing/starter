@@ -139,6 +139,7 @@ assert(
     writeupsService.includes("hasLlmWriteupsForGames") &&
     writeupsService.includes('sources: Record<string, "llm" | "fallback">') &&
     writeupsService.includes('sources[game.gamePk] = generated ? "llm" : "fallback"') &&
+    writeupsService.includes('state.sources?.[gamePk] === "llm"') &&
     writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
     writeupsService.includes("Do not use numeric digits.") &&

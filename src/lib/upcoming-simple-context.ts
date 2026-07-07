@@ -35,10 +35,10 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "Both starters are rolling, with {leader} a tick ahead at {leadForm}.",
   ],
   CLEAR_EDGE: [
-    "{leader} has clear separation, {leadForm} to {trailForm}.",
-    "{leader} owns the form gap by {gap} points over {trailer}.",
-    "{leader} towers by {gap} form points over {trailer}.",
-    "{leader}'s {leadForm} form creates a clear edge on {trailer}.",
+    "{leader}'s sharper form sets the tone against {trailer}.",
+    "{leader} brings the stronger recent shape against {trailer}.",
+    "{leader}'s form is the matchup's loudest signal against {trailer}.",
+    "{leader} has the trusted side of the form read over {trailer}.",
   ],
   MISMATCH_DOWN: [
     "{trailer} is cold, while {leader}'s {leadForm} keeps the trust edge.",

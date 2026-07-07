@@ -68,7 +68,8 @@ const MAX_GENERATION_ATTEMPTS = 3;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date));
-  return state?.version === UPCOMING_WRITEUPS_VERSION ? state.writeups : {};
+  if (state?.version !== UPCOMING_WRITEUPS_VERSION) return {};
+  return Object.fromEntries(Object.entries(state.writeups).filter(([gamePk, text]) => state.sources?.[gamePk] === "llm" && text.trim().length > 0));
 }
 
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
