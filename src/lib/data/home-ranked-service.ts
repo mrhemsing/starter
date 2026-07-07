@@ -47,7 +47,7 @@ type TopPerformerPayload = TopPerformerState & {
 
 const getCachedRankedHome = unstable_cache(
   async (today: string) => buildRankedHome(today),
-  ["home-ranked", "v14"],
+  ["home-ranked", "v15"],
   { revalidate: HOME_RANKED_REVALIDATE_SECONDS, tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -186,7 +186,7 @@ function resolveLiveLeaderboard(liveBoard: LiveScoreboard | null): LiveLeaderboa
 }
 
 function isLiveLeaderboardRow(row: LiveScoreboardRow) {
-  return row.scoreLabel !== "PROJ" && row.gsPlus !== null;
+  return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.outingStatus !== "short";
 }
 
 function isCompletedRankedStart(start: StartSummary) {

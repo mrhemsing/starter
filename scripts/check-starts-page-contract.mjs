@@ -774,7 +774,7 @@ assert(
     startService.includes("const plannedStarter = probablePitcherIds.has(pitcher.id) || establishedStarterIds.has(pitcher.id);") &&
     startService.includes("plannedStarter,") &&
     startClassification.includes("export function isRankedRegularStart") &&
-    startClassification.includes("const RANKED_START_IP_FLOOR = 2;") &&
+    startClassification.includes("export const RANKED_START_IP_FLOOR = 2;") &&
     startClassification.includes("return inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR;") &&
     !startClassification.includes("isPlannedStarter(start) || inningsFromIP(start.line.inningsPitched) >= RANKED_START_IP_FLOOR") &&
     startsPage.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&

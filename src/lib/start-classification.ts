@@ -1,7 +1,7 @@
 import { inningsFromIP } from "@/lib/innings";
 import type { StartSummary } from "@/lib/types";
 
-const RANKED_START_IP_FLOOR = 2;
+export const RANKED_START_IP_FLOOR = 2;
 
 export function isPlannedStarter(start: Pick<StartSummary, "plannedStarter">) {
   return start.plannedStarter === true;

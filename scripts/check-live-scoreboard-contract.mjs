@@ -60,7 +60,7 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v10"]') &&
+    liveService.includes('["live-scoreboard", "v11"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
@@ -138,15 +138,23 @@ assert(
     !liveService.includes("inningLabel: liveLine?.inningLabel ?? null") &&
     liveService.includes("let scoredRows = rows.filter(isScoredRow);") &&
     liveService.includes("function isScoredRow(row: LiveScoreboardRow)") &&
-    liveService.includes("const LIVE_LEADER_MIN_INNINGS = 3;") &&
+    liveService.includes('import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";') &&
+    liveService.includes('outingStatus: "qualifying" | "provisional" | "short";') &&
+    liveService.includes("const outingStatus = liveOutingStatus(status, scoreLabel, line);") &&
+    liveService.includes('scoreLabel === "FINAL" && status === "final" && inningsFromIP(line.inningsPitched) < RANKED_START_IP_FLOOR') &&
+    liveService.includes('scoreLabel === "PROV" && inningsFromIP(line.inningsPitched) < RANKED_START_IP_FLOOR') &&
     liveService.includes("function isLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
-    liveService.includes("inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS") &&
+    liveService.includes("return isScoredRow(row) && row.gsPlus !== null && !isShortOutingRow(row);") &&
+    liveService.includes('if (aShort && !bShort) return 1;') &&
+    liveComponent.includes("data-live-outing-status={row.outingStatus}") &&
+    liveComponent.includes("data-live-short-outing-chip") &&
+    liveComponent.includes('shortOuting ? "text-zinc-500" : statusTone') &&
     liveService.includes("if (aScored && !bScored) return -1;") &&
     liveService.includes("return new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime();") &&
     liveService.includes("hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0") &&
     liveService.includes(".sort(compareLiveRows)") &&
     liveService.includes("leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null"),
-  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, recompute final rows from the displayed gamefeed line when it differs from the slate snapshot, hide inning/outs once a starter is out, keep warming out of scored sorting, and expose only 3.0+ IP live leaders",
+  "live scoreboard service must poll/cached live gamefeeds, source pregame projections from Upcoming, separate scheduled from warming, recompute final rows from the displayed gamefeed line when it differs from the slate snapshot, hide inning/outs once a starter is out, keep warming out of scored sorting, exclude completed short outings from live leaders, and keep under-floor live rows provisional",
 );
 
 assert(

@@ -398,8 +398,8 @@ assert(
     rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(start.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v14"]'),
-  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least 3.0 IP posts",
+    rankedService.includes('["home-ranked", "v15"]'),
+  "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least the shared Ranked Starts IP floor posts",
 );
 
 assert(
@@ -426,13 +426,15 @@ assert(
 
 assert(
   homeLiveLeader.includes("export const HOME_LIVE_LEADER_FLOOR = 50;") &&
-    homeLiveLeader.includes("export const HOME_LIVE_LEADER_MIN_INNINGS = 3;") &&
+    homeLiveLeader.includes('import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";') &&
+    homeLiveLeader.includes("export const HOME_LIVE_LEADER_MIN_INNINGS = RANKED_START_IP_FLOOR;") &&
     homeLiveLeader.includes("export function resolveHomeLiveLeaderRow(board: LiveScoreboard | null): LiveScoreboardRow | null") &&
     homeLiveLeader.includes(".filter(isHomeLiveLeaderEligibleRow)") &&
     homeLiveLeader.includes("function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow)") &&
     homeLiveLeader.includes('return row.scoreLabel !== "PROJ"') &&
     homeLiveLeader.includes("&& row.gsPlus >= HOME_LIVE_LEADER_FLOOR") &&
-    homeLiveLeader.includes("&& inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;") &&
+    homeLiveLeader.includes('&& row.outingStatus !== "short";') &&
+    rankedService.includes('row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.outingStatus !== "short"') &&
     rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     homeDeferredSections.includes('import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     homeDeferredSections.includes('data-home-live-leader-island={shouldPollLiveLeader ? "polling" : "static"}') &&
@@ -470,7 +472,7 @@ assert(
     rankedService.includes("const leaders = liveBoard.rows.filter(isLiveLeaderboardRow).slice(0, 5).map((row) => ({") &&
     rankedService.includes("pitcherLastName: lastName(row.pitcherName),") &&
     rankedService.includes("href: row.liveHref,") &&
-    rankedService.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null;') &&
+    rankedService.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null && row.outingStatus !== "short";') &&
     rankedService.includes("function lastName(name: string)") &&
     homePage.includes("function HomeHeroStateBanner") &&
     homePage.includes("liveLeaderboard={ranked?.liveLeaderboard ?? null}") &&

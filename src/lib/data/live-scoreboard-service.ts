@@ -6,10 +6,10 @@ import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
+import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";
 import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
-const LIVE_LEADER_MIN_INNINGS = 3;
 const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;
 
 export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";
@@ -30,6 +30,7 @@ export type LiveScoreboardRow = {
   gsPlus: number | null;
   projectedGsPlus: number | null;
   scoreLabel: "PROJ" | "PROV" | "FINAL";
+  outingStatus: "qualifying" | "provisional" | "short";
   qualityLabel: "Elite" | "Plus" | "Solid" | "Below" | "Poor" | null;
   provisional: boolean;
   inningLabel: string | null;
@@ -66,7 +67,7 @@ export type LivePregameSlate = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v10"],
+  ["live-scoreboard", "v11"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS, tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -210,6 +211,7 @@ function buildLiveRow(
   const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;
   const hasRealLine = Boolean(liveLine && status !== "warming" && hasNonEmptyLine(line));
   const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";
+  const outingStatus = liveOutingStatus(status, scoreLabel, line);
   const gsPlus = hasRealLine ? resolveLiveRowGsPlus(status, start, line) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
   const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;
@@ -230,6 +232,7 @@ function buildLiveRow(
     gsPlus,
     projectedGsPlus,
     scoreLabel,
+    outingStatus,
     qualityLabel: gsPlus === null ? null : qualityLabel(gsPlus),
     provisional: scoreLabel === "PROV",
     inningLabel,
@@ -296,6 +299,10 @@ function compareLiveRows(a: LiveScoreboardRow, b: LiveScoreboardRow) {
   if (!aScored && bScored) return 1;
 
   if (aScored && bScored) {
+    const aShort = isShortOutingRow(a);
+    const bShort = isShortOutingRow(b);
+    if (aShort && !bShort) return 1;
+    if (!aShort && bShort) return -1;
     if (a.gsPlus !== null && b.gsPlus !== null && b.gsPlus !== a.gsPlus) return b.gsPlus - a.gsPlus;
     if (a.gsPlus !== null && b.gsPlus === null) return -1;
     if (a.gsPlus === null && b.gsPlus !== null) return 1;
@@ -309,7 +316,17 @@ function isScoredRow(row: LiveScoreboardRow) {
 }
 
 function isLiveLeaderEligibleRow(row: LiveScoreboardRow) {
-  return isScoredRow(row) && row.gsPlus !== null && inningsFromIP(row.line.inningsPitched) >= LIVE_LEADER_MIN_INNINGS;
+  return isScoredRow(row) && row.gsPlus !== null && !isShortOutingRow(row);
+}
+
+function isShortOutingRow(row: LiveScoreboardRow) {
+  return row.outingStatus === "short";
+}
+
+function liveOutingStatus(status: LiveScoreboardStatus, scoreLabel: LiveScoreboardRow["scoreLabel"], line: StartLine): LiveScoreboardRow["outingStatus"] {
+  if (scoreLabel === "FINAL" && status === "final" && inningsFromIP(line.inningsPitched) < RANKED_START_IP_FLOOR) return "short";
+  if (scoreLabel === "PROV" && inningsFromIP(line.inningsPitched) < RANKED_START_IP_FLOOR) return "provisional";
+  return "qualifying";
 }
 
 function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
@@ -323,22 +340,36 @@ function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
 function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScoreboard, "slateProgress"> & { slateProgress?: SlateProgressState }), date: string): LiveScoreboard {
   if (board.slateProgress) {
     const cachedBoard = board as LiveScoreboard;
+    const rows = cachedBoard.rows.map(normalizeCachedLiveRow);
     return {
       ...cachedBoard,
+      rows,
+      leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
       pregameSlate: cachedBoard.pregameSlate ?? null,
       nextSlateDate: cachedBoard.nextSlateDate ?? null,
       nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
       nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null,
     };
   }
+  const rows = board.rows.map(normalizeCachedLiveRow);
 
   return {
     ...board,
+    rows,
+    leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
     slateProgress: fallbackSlateProgress(board, date),
     pregameSlate: null,
     nextSlateDate: null,
     nextSlateFirstPitchAt: null,
     nextSlateTopGame: null,
+  };
+}
+
+function normalizeCachedLiveRow(row: LiveScoreboardRow | (Omit<LiveScoreboardRow, "outingStatus"> & { outingStatus?: LiveScoreboardRow["outingStatus"] })): LiveScoreboardRow {
+  if (row.outingStatus) return row as LiveScoreboardRow;
+  return {
+    ...row,
+    outingStatus: liveOutingStatus(row.status, row.scoreLabel, row.line),
   };
 }
 

@@ -1,8 +1,8 @@
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
-import { inningsFromIP } from "@/lib/innings";
+import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";
 
 export const HOME_LIVE_LEADER_FLOOR = 50;
-export const HOME_LIVE_LEADER_MIN_INNINGS = 3;
+export const HOME_LIVE_LEADER_MIN_INNINGS = RANKED_START_IP_FLOOR;
 
 export type HomeLiveLeaderSignature = {
   startId: string;
@@ -37,5 +37,5 @@ function isHomeLiveLeaderEligibleRow(row: LiveScoreboardRow) {
   return row.scoreLabel !== "PROJ"
     && row.gsPlus !== null
     && row.gsPlus >= HOME_LIVE_LEADER_FLOOR
-    && inningsFromIP(row.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS;
+    && row.outingStatus !== "short";
 }

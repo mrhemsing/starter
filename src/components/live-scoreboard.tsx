@@ -916,15 +916,17 @@ function LiveScoreboardRowLoading({ row, muted = false, scored = false, index = 
 function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; muted?: boolean }) {
   const statusTone = statusClass(row.status);
   const liveOrFinalScore = isScoredRow(row);
+  const shortOuting = row.outingStatus === "short";
 
   return (
-    <article id={`live-start-${row.pitcherId}`} data-live-start-row={row.pitcherId} className={`scroll-mt-24 grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted ? "opacity-75" : ""}`}>
+    <article id={`live-start-${row.pitcherId}`} data-live-start-row={row.pitcherId} data-live-outing-status={row.outingStatus} className={`scroll-mt-24 grid min-h-[88px] grid-cols-[35px_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 px-3 py-3 last:border-b-0 sm:grid-cols-[43px_minmax(0,1fr)_120px] sm:px-4 ${muted || shortOuting ? "opacity-75" : ""}`}>
       <Link href={row.pitcherHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label={`Open ${row.pitcherName} pitcher page`}>
         <Headshot playerId={row.pitcherMlbId} name={row.pitcherName} team={row.team} size="md" decorative className="ml-0" />
       </Link>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <StatusChip status={row.status} />
+          {shortOuting ? <ShortOutingChip /> : null}
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
             {row.team} vs {row.opponent}
           </p>
@@ -939,7 +941,7 @@ function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; mut
       </div>
       {liveOrFinalScore ? (
         <div className="text-right">
-          <p className={`font-mono text-4xl font-black tabular-nums leading-none ${statusTone}`}>{formatScore(row.gsPlus)}</p>
+          <p className={`font-mono text-4xl font-black tabular-nums leading-none ${shortOuting ? "text-zinc-500" : statusTone}`}>{formatScore(row.gsPlus)}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{row.scoreLabel}</p>
           {row.provisional ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">Prov.</p> : null}
         </div>
@@ -950,6 +952,14 @@ function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; mut
         </div>
       )}
     </article>
+  );
+}
+
+function ShortOutingChip() {
+  return (
+    <span className="rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400" data-live-short-outing-chip="true">
+      Short
+    </span>
   );
 }
 
