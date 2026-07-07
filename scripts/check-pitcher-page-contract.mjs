@@ -338,6 +338,10 @@ assert(
     headlineService.includes("publishedDateTime") &&
     headlineService.includes("sourceHref") &&
     headlineService.includes("const HEADLINE_STATE_VERSION = 5;") &&
+    headlineService.includes("const HEADLINE_FRESHNESS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;") &&
+    headlineService.includes("isPublishedWithinHeadlineWindow(headline.publishedAt") &&
+    headlineService.includes("isPublishedWithinHeadlineWindow(publishedAt)") &&
+    headlineService.includes("when:7d") &&
     headlineService.includes(".filter((item) => isLikelyPitcherHeadline(item.title, pitcher))") &&
     headlineService.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
     headlineService.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&

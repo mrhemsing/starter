@@ -111,6 +111,10 @@ assert(
     headlineServiceSource.includes("sameHeadlineCluster(existing.headline, candidate.headline)") &&
     headlineServiceSource.includes("normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline)") &&
     headlineServiceSource.includes('const SYNDICATOR_HOSTS = ["msn.com"];') &&
+    headlineServiceSource.includes("const HEADLINE_FRESHNESS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;") &&
+    headlineServiceSource.includes("isPublishedWithinHeadlineWindow(headline.publishedAt") &&
+    headlineServiceSource.includes("isPublishedWithinHeadlineWindow(publishedAt)") &&
+    headlineServiceSource.includes("when:7d") &&
     headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
     headlineServiceSource.includes("HEADLINE_SOURCE_SUFFIX_PATTERN") &&
     headlineServiceSource.includes("stripSourceSuffix(headline.headline, headline.source)") &&

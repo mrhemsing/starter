@@ -60,7 +60,7 @@ export type WatchlistHeadlineIngestResult = {
 };
 
 const HEADLINE_STATE_VERSION = 5;
-const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
+const HEADLINE_FRESHNESS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
 const HEADLINE_PRIORITY = 35;
@@ -77,7 +77,7 @@ export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise
   for (const state of states) {
     if (!state) continue;
     const items = collapseHeadlineClusters(state.headlines)
-      .filter((headline) => now - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS)
+      .filter((headline) => isPublishedWithinHeadlineWindow(headline.publishedAt, now))
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
       .map(headlineToWireEvent);
     if (items.length > 0) events.set(state.pitcherId, items);
@@ -183,7 +183,7 @@ async function activeAdapters(): Promise<HeadlineAdapter[]> {
 }
 
 async function fetchGoogleNewsHeadlines(pitcher: FormSummary): Promise<HeadlineCandidate[]> {
-  const query = `${pitcher.name} ${teamNickname(pitcher.team)}`.trim();
+  const query = `${pitcher.name} ${teamNickname(pitcher.team)} when:7d`.trim();
   const url = new URL("https://news.google.com/rss/search");
   url.searchParams.set("q", query);
   url.searchParams.set("hl", "en-US");
@@ -192,6 +192,7 @@ async function fetchGoogleNewsHeadlines(pitcher: FormSummary): Promise<HeadlineC
   const xml = await fetchText(url.toString());
   const items = parseRssItems(xml)
     .filter((item) => isLikelyPitcherHeadline(item.title, pitcher))
+    .filter((item) => isPublishedWithinHeadlineWindow(item.pubDate))
     .slice(0, GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT);
   return Promise.all(items.map(async (item) => {
     const resolved = await resolveGoogleNewsArticleMetadata(item.link);
@@ -254,6 +255,7 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
   const url = canonicalUrl(candidate.url);
   const publishedAt = normalizePublishedAt(candidate.publishedAt);
   if (!headline || !url || !publishedAt) return null;
+  if (!isPublishedWithinHeadlineWindow(publishedAt)) return null;
 
   const headlineTokens = new Set(normalizedTokens(headline));
   const pitcherTokens = normalizedTokens(pitcher.name);
@@ -291,7 +293,7 @@ async function appendHeadline(candidate: HeadlineCandidate) {
     headlines: [],
   };
   const now = new Date().toISOString();
-  const recent = state.headlines.filter((headline) => Date.parse(now) - Date.parse(headline.publishedAt) <= HEADLINE_EXPIRY_MS);
+  const recent = state.headlines.filter((headline) => isPublishedWithinHeadlineWindow(headline.publishedAt, Date.parse(now)));
   const duplicate = recent.find((headline) => isDuplicateHeadline(headline, candidate));
   if (duplicate) {
     const preferred = preferredHeadline(duplicate, candidate);
@@ -765,6 +767,12 @@ function canonicalUrl(raw: string) {
 function normalizePublishedAt(raw: string) {
   const parsed = Date.parse(raw);
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "";
+}
+
+function isPublishedWithinHeadlineWindow(raw: string, now = Date.now()) {
+  const publishedAt = Date.parse(raw);
+  if (!Number.isFinite(publishedAt) || !Number.isFinite(now)) return false;
+  return publishedAt <= now && now - publishedAt <= HEADLINE_FRESHNESS_WINDOW_MS;
 }
 
 function truncateHeadline(value: string) {
