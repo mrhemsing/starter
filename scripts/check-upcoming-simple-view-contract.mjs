@@ -26,7 +26,7 @@ assert(simpleBoard.includes("data-simple-watch-ranks"), "Simple board must expos
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
-assert(simpleBoard.includes("data-simple-context-word-count={wordCount(sentence)}"), "Simple context sentences must expose word counts.");
+assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
 assert(countOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
@@ -34,22 +34,34 @@ assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render p
 assert(!simpleBoard.includes("projectedStrikeouts") && !simpleBoard.includes("K line"), "Simple cards must not render K-line elements.");
 assert(!simpleBoard.includes("projectedGsPlus") && !simpleBoard.includes("Proj GS+"), "Simple cards must not render projected GS+ lines.");
 
-const templates = [
-  "Low sample on ${surname(limitedStarter)}, rate with caution.",
-  "Elite matchup: both starters grading plus.",
-  "${surname(carrier)}'s form carries this one; ${surname(cooled)} has cooled.",
+const retiredSlop = [
+  "'s form carries this one",
+  "has cooled",
   "Two rising arms in a hitter-friendly park.",
   "Ranked #${rank} on today's board.",
+  "Elite matchup: both starters grading plus.",
 ];
 
-for (const template of templates) {
-  assert(context.includes(template), `Missing simple context template: ${template}`);
-  const staticWords = template.replace(/\$\{[^}]+\}/g, "Name").split(/\s+/).filter(Boolean);
-  assert(staticWords.length < 12, `Template must stay under 12 words: ${template}`);
-  assert(!template.includes("—"), `Template must not contain an em dash: ${template}`);
+for (const phrase of retiredSlop) {
+  assert(!context.includes(phrase), `Simple context must not reuse canned template: ${phrase}`);
 }
 
-assert(context.includes('game.watchScoreConfidence === "LOW"'), "Low-confidence fixture path must drive the limited-sample caution template.");
+const dataInputs = [
+  "opponentSplit",
+  "projectedStrikeouts",
+  "strikeoutPropLine",
+  "opposingTeamTotal",
+  "weatherContext",
+  "parkContext",
+  "watchScoreConfidence",
+];
+
+for (const input of dataInputs) {
+  assert(context.includes(input), `Simple context must be composed from data input: ${input}`);
+}
+
+assert(context.includes("namedStarters.length < 2"), "Simple context must explain TBD starter slots.");
+assert(context.includes("Limited samples keep the grade cautious."), "Simple context must call out low or medium-confidence samples.");
 
 console.log("upcoming simple view contract ok");
 

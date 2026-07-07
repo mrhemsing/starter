@@ -74,7 +74,13 @@ function UpcomingSimpleCard({
         </div>
         <SimpleStarter starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
       </div>
-      <p className="mt-3 border-t border-white/10 pt-3 text-center text-sm leading-5 text-zinc-300" data-upcoming-simple-context data-simple-context-word-count={wordCount(sentence)} data-simple-context-has-em-dash={String(sentence.includes("—"))}>
+      <p
+        className="mt-3 border-t border-white/10 pt-3 text-center text-sm leading-5 text-zinc-300"
+        data-upcoming-simple-context
+        data-simple-context-sentence-count={sentenceCount(sentence)}
+        data-simple-context-word-count={wordCount(sentence)}
+        data-simple-context-has-em-dash={String(sentence.includes("—"))}
+      >
         {sentence}
       </p>
     </UpcomingSimpleCardFrame>
@@ -152,4 +158,8 @@ function simpleRankValue(game: TonightGame, index: number) {
 
 function wordCount(sentence: string) {
   return sentence.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function sentenceCount(sentence: string) {
+  return sentence.match(/[.!?](?:\s|$)/g)?.length ?? 0;
 }
