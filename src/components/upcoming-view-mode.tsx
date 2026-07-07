@@ -116,7 +116,7 @@ export function UpcomingSimpleCardFrame({
     <Link
       href={href}
       aria-label={ariaLabel}
-      className="heat-glow-card group relative block overflow-hidden rounded-xl border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] outline-none transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-300/70 sm:p-5"
+      className="heat-glow-card group relative block overflow-hidden rounded-lg border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] outline-none transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-300/70 sm:p-5"
       style={{ background, borderColor: `${accentColor}44` }}
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
