@@ -258,6 +258,52 @@ assert(
   "homepage masthead value prop must use the shared GS+ scale sentence",
 );
 
+const heroWhyCopy = "It's Game Score with the context added back in: park, opponent, and swing-and-miss, so the games worth watching rise to the top.";
+const differentiatorCards = [
+  {
+    title: "Context, not just the line.",
+    body: "Seven scoreless against the Yankees in the Bronx is not seven against the A's in Sacramento. GS+ knows the difference.",
+  },
+  {
+    title: "Stuff counts.",
+    body: "Velocity and swing-and-miss factor in, so the electric starts you would actually want to watch grade like it.",
+  },
+  {
+    title: "Show your work.",
+    body: "Every score's full breakdown is public, and settled scores never change.",
+  },
+];
+
+assert(
+  homePage.includes(`const GS_PLUS_HERO_WHY_LINE = "${heroWhyCopy}";`) &&
+    homePage.indexOf("GS_PLUS_SCALE_SENTENCE") < homePage.indexOf("GS_PLUS_HERO_WHY_LINE") &&
+    homePage.includes("data-home-hero-why-line") &&
+    !heroWhyCopy.includes("—"),
+  "homepage hero must render the shared scale sentence followed by the exact why-GS+ subline without em dash copy",
+);
+
+for (const card of differentiatorCards) {
+  assert(
+    homePage.includes(`title: "${card.title}"`) &&
+      homePage.includes(`body: "${card.body}"`) &&
+      !card.title.includes("—") &&
+      !card.body.includes("—"),
+    `homepage GS+ differentiator card must keep exact copy for ${card.title}`,
+  );
+}
+
+assert(
+  homePage.includes('data-responsive-check="home-gs-plus-differentiator-band"') &&
+    homePage.includes("WHY GS+") &&
+    homePage.includes('data-home-gs-plus-differentiator-cards') &&
+    homePage.includes('md:grid-cols-3') &&
+    homePage.includes('data-home-gs-plus-methodology-link') &&
+    homePage.includes('href="/methodology"') &&
+    !homePage.includes('href="/calibration"') &&
+    homePage.indexOf("<WhyGsPlusBand />") < homePage.indexOf("<HomeDeferredSections"),
+  "homepage must insert the WHY GS+ differentiator band above Must-Watch, stack on mobile, and link the public breakdown phrase to methodology",
+);
+
 assert(
   gsPlusCopy.includes("GS+ grades a single start on the 20-80 scouting scale, league average near 50.") &&
     homePage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&

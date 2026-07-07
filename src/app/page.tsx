@@ -20,6 +20,21 @@ export const dynamic = "force-dynamic";
 
 const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
+const GS_PLUS_HERO_WHY_LINE = "It's Game Score with the context added back in: park, opponent, and swing-and-miss, so the games worth watching rise to the top.";
+const GS_PLUS_DIFFERENTIATORS = [
+  {
+    title: "Context, not just the line.",
+    body: "Seven scoreless against the Yankees in the Bronx is not seven against the A's in Sacramento. GS+ knows the difference.",
+  },
+  {
+    title: "Stuff counts.",
+    body: "Velocity and swing-and-miss factor in, so the electric starts you would actually want to watch grade like it.",
+  },
+  {
+    title: "Show your work.",
+    body: "Every score's full breakdown is public, and settled scores never change.",
+  },
+] as const;
 
 export const metadata: Metadata = {
   title: { absolute: homeTitle },
@@ -118,10 +133,15 @@ export default async function Home() {
                     Methodology
                   </a>
                 </p>
+                <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-400 sm:text-[13px] sm:leading-6" data-home-hero-why-line>
+                  {GS_PLUS_HERO_WHY_LINE}
+                </p>
               </div>
             </div>
           </div>
         </section>
+
+        <WhyGsPlusBand />
 
         <HomeDeferredSections
           today={today}
@@ -139,6 +159,32 @@ export default async function Home() {
         />
       </HomeLiveBoardProvider>
     </main>
+  );
+}
+
+function WhyGsPlusBand() {
+  return (
+    <section className="border-y border-white/10 bg-[#0c0c10] px-4 py-5 sm:px-6 lg:px-8" data-responsive-check="home-gs-plus-differentiator-band" aria-labelledby="home-gs-plus-differentiator-kicker">
+      <div className="mx-auto max-w-7xl">
+        <p id="home-gs-plus-differentiator-kicker" className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+          WHY GS+
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-3" data-home-gs-plus-differentiator-cards>
+          {GS_PLUS_DIFFERENTIATORS.map((card, index) => (
+            <article key={card.title} className="rounded-lg border border-white/10 bg-[#101014] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]" data-home-gs-plus-differentiator-card={String(index + 1)}>
+              <h2 className="font-serif text-lg font-bold leading-tight text-zinc-50" data-home-gs-plus-differentiator-title>{card.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-400" data-home-gs-plus-differentiator-body={card.body}>
+                {index === 2 ? (
+                  <>
+                    Every score&apos;s <a href="/methodology" className="text-amber-300 underline-offset-4 hover:underline" data-home-gs-plus-methodology-link>full breakdown is public</a>, and settled scores never change.
+                  </>
+                ) : card.body}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
