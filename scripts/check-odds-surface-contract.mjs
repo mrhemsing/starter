@@ -43,6 +43,8 @@ assert(
     oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier"') &&
     oddsSnapshot.includes('const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60)') &&
     oddsSnapshot.includes('process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1"') &&
+    oddsSnapshot.includes('const defaultUpcomingDate = await getDefaultUpcomingDate(today);') &&
+    oddsSnapshot.includes("const dates = includeNextDate ? [today, defaultUpcomingDate, addDays(today, 1)] : [today, defaultUpcomingDate];") &&
     oddsSnapshot.includes("const configuredProvider = configuredOddsProviderSource();") &&
     oddsSnapshot.includes("previousSnapshot.source === configuredProvider") &&
     oddsSnapshot.includes('isFreshEnoughSnapshot(previousSnapshot, schedule.games, capturedAt)') &&

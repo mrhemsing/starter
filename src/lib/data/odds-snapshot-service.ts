@@ -1,6 +1,6 @@
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { configuredOddsProviderSource, fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
-import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
+import { getDefaultUpcomingDate, getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import type { MlbScheduleGame } from "@/lib/types";
 
 export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier";
@@ -75,8 +75,9 @@ export async function readOddsSnapshotMarketContexts(date: string): Promise<Map<
 
 export async function syncOddsSnapshotsForDefaultDates() {
   const today = getHomeSlateDate();
+  const defaultUpcomingDate = await getDefaultUpcomingDate(today);
   const includeNextDate = process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1";
-  const dates = includeNextDate ? [today, addDays(today, 1)] : [today];
+  const dates = includeNextDate ? [today, defaultUpcomingDate, addDays(today, 1)] : [today, defaultUpcomingDate];
   const uniqueDates = [...new Set(dates)].filter(isOddsEligibleDate);
   return Promise.all(uniqueDates.map((date) => syncOddsSnapshotForDate(date)));
 }
