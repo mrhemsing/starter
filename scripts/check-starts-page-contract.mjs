@@ -533,6 +533,12 @@ assert(
 );
 
 assert(
+  startService.includes('`${line.earnedRuns} ${line.earnedRuns === 1 ? "earned run" : "earned runs"} allowed.`') &&
+    !startService.includes('`${line.earnedRuns} earned runs allowed.`'),
+  "GS+ earned-run reason copy must use singular earned run when the value is 1",
+);
+
+assert(
   startsPage.includes("function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }") &&
     startsPage.includes("const delta = gameScorePlus - gameScoreV2;") &&
     startsPage.includes("GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj") &&

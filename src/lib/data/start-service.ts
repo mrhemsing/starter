@@ -1674,7 +1674,7 @@ function summarizeGameScorePlus(line: StartLine, total?: number, context?: Start
     { key: "baseline" as const, label: "Baseline", value: 45, description: "Neutral starting point for every outing." },
     { key: "innings" as const, label: "Length", value: computedInnings * 3, description: `${line.inningsPitched.toFixed(1)} innings pitched.` },
     { key: "strikeouts" as const, label: "Misses", value: line.strikeouts * 2.2, description: `${line.strikeouts} strikeouts.` },
-    { key: "earnedRuns" as const, label: "Runs", value: line.earnedRuns * -5, description: `${line.earnedRuns} earned runs allowed.` },
+    { key: "earnedRuns" as const, label: "Runs", value: line.earnedRuns * -5, description: `${line.earnedRuns} ${line.earnedRuns === 1 ? "earned run" : "earned runs"} allowed.` },
     { key: "hits" as const, label: "Traffic", value: line.hits * -1.2, description: `${line.hits} hits allowed.` },
     { key: "walks" as const, label: "Free passes", value: line.walks * -1.5, description: `${line.walks} walks allowed.` },
   ];
