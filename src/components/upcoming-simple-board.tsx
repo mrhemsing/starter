@@ -7,6 +7,8 @@ import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/l
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 import type { CSSProperties } from "react";
 
+const SIMPLE_EVEN_PANEL_COLOR = "#A79B83";
+
 export function UpcomingSimpleBoard({
   tonight,
   rankLabel = "today",
@@ -62,8 +64,8 @@ function UpcomingSimpleCard({
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
   const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
-  const awayTeamColor = starterTeamColor(game.starters[0]);
-  const homeTeamColor = starterTeamColor(game.starters[1]);
+  const awayPanelColor = starterHeatPanelColor(game.starters[0]);
+  const homePanelColor = starterHeatPanelColor(game.starters[1]);
   const showRank = sortMode === "watch";
 
   return (
@@ -81,9 +83,10 @@ function UpcomingSimpleCard({
       />
       <div
         className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-0 lg:[background:var(--simple-vs-gradient)]"
-        style={{ "--simple-vs-gradient": simpleVsGradient(awayTeamColor, homeTeamColor) } as CSSProperties}
+        style={{ "--simple-vs-gradient": simpleVsGradient(awayPanelColor, homePanelColor) } as CSSProperties}
         data-simple-vs-composition
-        data-simple-vs-gradient={`${awayTeamColor}|${homeTeamColor}`}
+        data-simple-vs-gradient={`${awayPanelColor}|${homePanelColor}`}
+        data-simple-vs-gradient-source="heat-band"
       >
         <span className="pointer-events-none absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-white/20 lg:block" aria-hidden="true" data-simple-vs-seam />
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
@@ -136,23 +139,25 @@ function SimpleStarter({
   const name = starter.name ?? `TBD ${starter.team}`;
   const teamColor = starterTeamColor(starter);
   const heatColor = starterHeatColor(starter, formBand);
+  const panelColor = starterHeatPanelColor(starter, formBand);
 
   return (
     <div
       className={`relative z-10 min-w-0 overflow-hidden rounded-lg border bg-black/20 lg:rounded-none lg:border-0 lg:[background:var(--simple-starter-panel-gradient)] ${align === "home" ? "text-right" : ""}`}
-      style={{ borderColor: `${teamColor}CC`, "--simple-starter-panel-gradient": simpleStarterPanelGradient(teamColor, align) } as CSSProperties}
+      style={{ borderColor: `${panelColor}CC`, "--simple-starter-panel-gradient": simpleStarterPanelGradient(panelColor, align) } as CSSProperties}
       data-upcoming-simple-starter={starter.side}
       data-simple-starter-frame
       data-simple-starter-team-color={teamColor}
       data-simple-starter-heat-color={heatColor}
+      data-simple-starter-panel-color={panelColor}
+      data-simple-starter-panel-source="heat-band"
     >
-      <span className={`absolute top-0 z-20 h-1 w-full ${align === "home" ? "right-0" : "left-0"}`} style={{ backgroundColor: heatColor }} aria-hidden="true" data-simple-heat-accent={formBand ?? starter.formStatus} />
       <div className={`flex justify-center bg-black/15 px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100%-18px)] lg:overflow-hidden lg:bg-transparent lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`} data-simple-portrait-bleed>
         <StarterHeadshot starter={starter} formBand={formBand} />
       </div>
       <div
         className="px-2 py-2 lg:relative lg:z-10 lg:mt-[112px] lg:min-h-[72px] lg:px-3 lg:py-2.5"
-        style={{ background: `linear-gradient(135deg, ${teamColor}F0, rgba(12,12,16,0.92))` }}
+        style={{ background: simpleNameplateGradient(panelColor, align) }}
         data-simple-starter-nameplate
       >
         <p className="whitespace-normal break-words text-sm font-semibold leading-[1.04] text-white sm:text-base" data-simple-starter-name>
@@ -240,13 +245,19 @@ function simpleCardTint(score: number, accentColor: string) {
   };
 }
 
-function simpleVsGradient(awayTeamColor: string, homeTeamColor: string) {
-  return `linear-gradient(90deg, ${hexToRgba(awayTeamColor, 0.42)} 0%, ${hexToRgba(awayTeamColor, 0.30)} 43%, rgba(12,12,16,0.74) 49%, rgba(12,12,16,0.74) 51%, ${hexToRgba(homeTeamColor, 0.30)} 57%, ${hexToRgba(homeTeamColor, 0.42)} 100%)`;
+function simpleVsGradient(awayPanelColor: string, homePanelColor: string) {
+  return `linear-gradient(90deg, ${hexToRgba(awayPanelColor, 0.52)} 0%, ${hexToRgba(awayPanelColor, 0.36)} 43%, rgba(12,12,16,0.72) 49%, rgba(12,12,16,0.72) 51%, ${hexToRgba(homePanelColor, 0.36)} 57%, ${hexToRgba(homePanelColor, 0.52)} 100%)`;
 }
 
-function simpleStarterPanelGradient(teamColor: string, align: "away" | "home") {
+function simpleStarterPanelGradient(panelColor: string, align: "away" | "home") {
   const direction = align === "home" ? "225deg" : "135deg";
-  return `linear-gradient(${direction}, ${hexToRgba(teamColor, 0.36)}, rgba(8,8,12,0.34) 48%, ${hexToRgba(teamColor, 0.22)})`;
+  const centerStop = align === "home" ? 52 : 48;
+  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.52)}, rgba(8,8,12,0.30) ${centerStop}%, ${hexToRgba(panelColor, 0.26)})`;
+}
+
+function simpleNameplateGradient(panelColor: string, align: "away" | "home") {
+  const direction = align === "home" ? "225deg" : "135deg";
+  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.92)}, rgba(12,12,16,0.92))`;
 }
 
 function hexToRgba(hex: string, alpha: number) {
@@ -318,6 +329,13 @@ function starterHeatColor(starter: TonightStarter, band: FormTier | null) {
   if (starter.formStatus === "mlb_debut") return "#FBBF24";
   if (!band) return "#888780";
   return HEAT_BANDS.find((candidate) => candidate.key === band)?.color ?? "#888780";
+}
+
+function starterHeatPanelColor(starter: TonightStarter, band: FormTier | null = starter.formStatus === "ok" ? starter.tier ?? null : null) {
+  if (starter.formStatus === "mlb_debut") return "#FBBF24";
+  if (band === "even") return SIMPLE_EVEN_PANEL_COLOR;
+  if (!band) return SIMPLE_EVEN_PANEL_COLOR;
+  return HEAT_BANDS.find((candidate) => candidate.key === band)?.color ?? SIMPLE_EVEN_PANEL_COLOR;
 }
 
 function formChipStyle(starter: TonightStarter, band: FormTier | null): CSSProperties {
