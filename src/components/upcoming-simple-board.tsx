@@ -153,7 +153,7 @@ function SimpleStarter({
       data-simple-starter-panel-source="three-band"
     >
       <div
-        className={`flex min-h-[96px] justify-center px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100%-18px)] lg:overflow-hidden lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`}
+        className={`flex min-h-[96px] justify-center px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100)] lg:overflow-hidden lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`}
         style={{ background: simpleStarterHeatZoneGradient(panelColor, align, "top") }}
         data-simple-portrait-bleed
         data-simple-starter-portrait-zone
