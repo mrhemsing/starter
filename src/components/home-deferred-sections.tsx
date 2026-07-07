@@ -16,6 +16,7 @@ import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
 import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
+import { isRankedRegularStart } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse, HomeSeasonTopStart } from "@/lib/data/home-best-starts-service";
@@ -153,7 +154,7 @@ export function HomeDeferredSections({
       ) : null,
       duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null,
       heat: formHome ? <HeatCheckHero home={formHome} /> : null,
-      ranked: ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
+      ranked: shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
       best: bestStarts ? (
         <BestStartsLite
           weekly={bestStarts.weekly}
@@ -202,7 +203,7 @@ export function HomeDeferredSections({
 
       {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null}
       {formHome ? <HeatCheckHero home={formHome} /> : null}
-      {ranked ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : null}
+      {shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : null}
       {bestStarts ? (
         <BestStartsLite
           weekly={bestStarts.weekly}
@@ -403,6 +404,11 @@ function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {
   const monthlyMissing = Boolean(bestStarts.monthly && !monthlyIsWeekly && !bestStarts.monthlyHighlight);
   const runnerUpMissing = Boolean(monthlyIsWeekly && bestStarts.monthlyRunnerUp && !bestStarts.monthlyRunnerUpHighlight);
   return weeklyMissing || monthlyMissing || runnerUpMissing;
+}
+
+function shouldShowHomeRankedRecap(ranked: RankedHomeResponse | null): ranked is RankedHomeResponse {
+  if (!ranked?.areTodayStartsComplete) return false;
+  return ranked.starts.some((start) => start.source?.line !== "fixture" && isRankedRegularStart(start));
 }
 
 function filterHomeMustWatchGames(watch: TonightResponse | null) {

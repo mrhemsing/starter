@@ -68,7 +68,9 @@ assert(
 assert(
   rankedRecap.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
     rankedRecap.includes('start.source?.line !== "fixture" && isRankedRegularStart(start)') &&
-    rankedRecap.includes("Final 2.0+ inning starter lines only: {rankedStarts.length} scored starts from the completed slate, ranked by GS+."),
+    rankedRecap.includes("Final 2.0+ inning starter lines only: {rankedStarts.length} scored starts from the completed slate, ranked by GS+.") &&
+    rankedRecap.includes("if (rankedStarts.length === 0) return null;") &&
+    !rankedRecap.includes("Games in progress"),
   "home ranked recap must apply the same 2.0 IP ranked-start floor",
 );
 
@@ -120,6 +122,16 @@ assert(
 assert(
   homeDeferredSections.includes('import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";'),
   "home ranked client response type must use the shared ranked-home response",
+);
+
+assert(
+  homeDeferredSections.includes('import { isRankedRegularStart } from "@/lib/start-classification";') &&
+    homeDeferredSections.includes("function shouldShowHomeRankedRecap(ranked: RankedHomeResponse | null): ranked is RankedHomeResponse") &&
+    homeDeferredSections.includes("if (!ranked?.areTodayStartsComplete) return false;") &&
+    homeDeferredSections.includes('start.source?.line !== "fixture" && isRankedRegularStart(start)') &&
+    homeDeferredSections.includes("shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap") &&
+    !homeDeferredSections.includes("{ranked ? <RankedStartsRecap"),
+  "homepage must hide the Ranked Starts Recap until today's slate is fully final",
 );
 
 assert(
@@ -351,7 +363,9 @@ assert(
   rankedService.includes('const [todayCompletion, slateProgress] = await Promise.all([') &&
     rankedService.includes('getSlateStartProgress({ window: "today", date: today }),') &&
     rankedService.includes("todayCompletion.completedStarts > 0") &&
-    rankedService.includes('areTodayStartsComplete: slateProgress.state === "all-starts-complete",') &&
+    rankedService.includes("areTodayStartsComplete: boolean;") &&
+    rankedService.includes('const areTodayStartsComplete = slateProgress.state === "all-starts-complete";') &&
+    rankedService.includes("areTodayStartsComplete,") &&
     rankedService.includes("if (areTodayStartsComplete)") &&
     !rankedService.includes("const slateProgress = getSlateProgressState(todaySchedule);"),
   "home top performer gating must use shared starter-outing progress",

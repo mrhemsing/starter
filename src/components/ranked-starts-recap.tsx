@@ -28,6 +28,8 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
   const duds = roughStarts(rankedStarts).slice(-3);
   const slateAverage = average(rankedStarts.map((start) => start.gameScorePlus));
 
+  if (rankedStarts.length === 0) return null;
+
   return (
     <section id="slate" className={`border-y border-white/10 bg-[#0c0b09] px-4 ${compact ? "py-7" : "py-10"} sm:px-6 lg:px-8`} data-home-ranked-recap-compact={compact ? "true" : "false"}>
       <div className="mx-auto max-w-7xl">
@@ -44,15 +46,7 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
           </Link>
         </div>
 
-        {settledStarts.length === 0 ? (
-          <div className="rounded border border-white/10 bg-[#101014] p-6" data-responsive-check="completed-start-empty">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Games in progress</p>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-              The most recent settled slate will appear here after final MLB gamefeed data is available. No old demo or fixture starts are used.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5">
+        <div className="space-y-5">
             {compact ? (
               <div className="grid gap-2" data-responsive-check="home-ranked-recap-compact">
                 {listStarts.slice(0, 3).map((start) => <TopStartRow key={start.id} start={start} highlight={highlights?.get(start.id) ?? null} />)}
@@ -69,7 +63,6 @@ export function RankedStartsRecap({ date, label = "Yesterday", starts, highlight
             </div>
             )}
           </div>
-        )}
       </div>
     </section>
   );

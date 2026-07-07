@@ -17,6 +17,7 @@ export type RankedHomeResponse = {
   date: string;
   label: string;
   starts: StartSummary[];
+  areTodayStartsComplete: boolean;
   topPerformer: TopPerformerPayload | null;
   liveLeaderboard: LiveLeaderboardEntry[] | null;
 };
@@ -62,11 +63,12 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
   const isTodaySlateStarted = slateProgress.state !== "pre-first-pitch" && slateProgress.state !== "no-games";
   const todaySlateStarts = todayCompletion.completedStarts > 0 || isTodaySlateStarted ? await getDailySlate({ window: "today", date: today }) : [];
   const liveBoard = slateProgress.state === "starts-in-progress" ? await getLiveScoreboard({ date: today }) : null;
+  const areTodayStartsComplete = slateProgress.state === "all-starts-complete";
   const todayCompletedSlateStarts = todaySlateStarts.filter(isCompletedRankedStart);
   const topPerformerState = resolveTopPerformerState({
     today,
     isTodaySlateStarted,
-    areTodayStartsComplete: slateProgress.state === "all-starts-complete",
+    areTodayStartsComplete,
     liveBoard,
     todaySlateStarts,
     todayCompletedSlateStarts,
@@ -78,6 +80,7 @@ async function buildRankedHome(today: string): Promise<RankedHomeResponse> {
     date: today,
     label: "Today",
     starts: todaySlateStarts,
+    areTodayStartsComplete,
     topPerformer,
     liveLeaderboard,
   };
