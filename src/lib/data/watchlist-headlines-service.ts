@@ -26,7 +26,7 @@ type StoredHeadline = {
 };
 
 type PitcherHeadlineState = {
-  version: 1;
+  version: 2;
   pitcherId: string;
   updatedAt: string;
   headlines: StoredHeadline[];
@@ -59,12 +59,13 @@ export type WatchlistHeadlineIngestResult = {
   sources: Array<{ source: WatchlistHeadlineSource; enabled: boolean; skippedByBreaker: boolean }>;
 };
 
-const HEADLINE_STATE_VERSION = 1;
+const HEADLINE_STATE_VERSION = 2;
 const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
 const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
 const HEADLINE_PRIORITY = 35;
 const NEWS_RSS_TIMEOUT_MS = 8000;
+const GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT = 20;
 const PROFILE_HEADLINE_FETCH_RETRY_MS = 30 * 60 * 1000;
 const DEFAULT_USER_AGENT = "ToeTheSlab/1.0 watchlist-headlines";
 
@@ -189,13 +190,17 @@ async function fetchGoogleNewsHeadlines(pitcher: FormSummary): Promise<HeadlineC
   url.searchParams.set("gl", "US");
   url.searchParams.set("ceid", "US:en");
   const xml = await fetchText(url.toString());
-  return parseRssItems(xml).map((item) => ({
-    pitcherId: pitcher.pitcherId,
-    headline: item.title,
-    source: item.source || "Google News",
-    url: item.link,
-    publishedAt: item.pubDate,
-    sourceType: "google-news",
+  const items = parseRssItems(xml).slice(0, GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT);
+  return Promise.all(items.map(async (item) => {
+    const resolved = await resolveGoogleNewsArticleMetadata(item.link);
+    return {
+      pitcherId: pitcher.pitcherId,
+      headline: item.title,
+      source: resolved?.source || item.source || "Google News",
+      url: resolved?.url || item.link,
+      publishedAt: resolved?.publishedAt || item.pubDate,
+      sourceType: "google-news" as const,
+    };
   }));
 }
 
@@ -364,6 +369,148 @@ async function fetchJson(url: string) {
   return response.json() as Promise<{ items?: unknown[]; articles?: unknown[] } | null>;
 }
 
+async function resolveGoogleNewsArticleMetadata(url: string) {
+  const publisherUrl = await decodeGoogleNewsArticleUrl(url);
+  if (!publisherUrl) return null;
+  const metadata = await fetchPublisherArticleMetadata(publisherUrl);
+  return {
+    url: metadata?.url || publisherUrl,
+    publishedAt: metadata?.publishedAt ?? "",
+    source: metadata?.source ?? "",
+  };
+}
+
+async function decodeGoogleNewsArticleUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "news.google.com" || !parsed.pathname.includes("/articles/")) return url;
+    const html = await fetchText(url);
+    const articleId = html.match(/data-n-a-id="([^"]+)"/)?.[1];
+    const timestamp = html.match(/data-n-a-ts="([^"]+)"/)?.[1];
+    const signature = html.match(/data-n-a-sg="([^"]+)"/)?.[1];
+    if (!articleId || !timestamp || !signature) return null;
+    const request = JSON.stringify([
+      "garturlreq",
+      googleNewsArticleContext(),
+      articleId,
+      Number(timestamp),
+      signature,
+    ]);
+    const body = new URLSearchParams({
+      "f.req": JSON.stringify([[
+        ["Fbv4je", request, null, "generic"],
+      ]]),
+    });
+    const response = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute?rpcids=Fbv4je", {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "user-agent": DEFAULT_USER_AGENT,
+      },
+      next: { revalidate: 30 * 60 },
+      signal: AbortSignal.timeout(NEWS_RSS_TIMEOUT_MS),
+      body,
+    });
+    if (!response.ok) return null;
+    const payload = await response.text();
+    const jsonStart = payload.indexOf("[[");
+    if (jsonStart === -1) return null;
+    const rows = JSON.parse(payload.slice(jsonStart)) as unknown[];
+    const row = rows.find((entry) => Array.isArray(entry) && entry[0] === "wrb.fr") as unknown[] | undefined;
+    const encoded = typeof row?.[2] === "string" ? row[2] : "";
+    if (!encoded) return null;
+    const decoded = JSON.parse(encoded) as unknown[];
+    const resolvedUrl = typeof decoded[1] === "string" ? decoded[1] : "";
+    return resolvedUrl ? canonicalUrl(resolvedUrl) : null;
+  } catch {
+    return null;
+  }
+}
+
+function googleNewsArticleContext() {
+  return [
+    ["en-US", "US", ["FINANCE_TOP_INDICES", "GENESIS_PUBLISHER_SECTION", "WEB_TEST_1_0_0"], null, null, 1, 1, "US:en", null, null, null, null, null, null, null, false, 5],
+    "en-US",
+    "US",
+    true,
+    [3, 5, 9, 19],
+    1,
+    true,
+    "941921773",
+    null,
+    null,
+    null,
+    false,
+  ];
+}
+
+async function fetchPublisherArticleMetadata(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "msn.com" || parsed.hostname.endsWith(".msn.com")) {
+      const metadata = await fetchMsnArticleMetadata(url);
+      if (metadata) return metadata;
+    }
+    const response = await fetch(url, {
+      headers: { "user-agent": DEFAULT_USER_AGENT },
+      next: { revalidate: 30 * 60 },
+      signal: AbortSignal.timeout(NEWS_RSS_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    const html = await response.text();
+    const publishedAt = extractArticlePublishedAt(html);
+    const source = extractArticleSource(html);
+    return publishedAt || source ? { url, publishedAt, source } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchMsnArticleMetadata(url: string) {
+  const articleId = /\/ar-([A-Za-z0-9]+)/.exec(url)?.[1];
+  if (!articleId) return null;
+  const payload = await fetchJson(`https://assets.msn.com/content/view/v2/Detail/en-us/${articleId}`) as Record<string, unknown> | null;
+  if (!payload) return null;
+  const sourceHref = typeof payload.sourceHref === "string" ? payload.sourceHref : url;
+  const provider = payload.provider && typeof payload.provider === "object" ? payload.provider as Record<string, unknown> : null;
+  const source = typeof provider?.name === "string" ? provider.name : typeof payload.source === "string" ? payload.source : "";
+  const publishedAt = typeof payload.publishedDateTime === "string"
+    ? payload.publishedDateTime
+    : typeof payload.createdDateTime === "string"
+      ? payload.createdDateTime
+      : "";
+  return { url: sourceHref, publishedAt, source };
+}
+
+function extractArticlePublishedAt(html: string) {
+  const patterns = [
+    /<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i,
+    /<meta[^>]+name=["'](?:pubdate|publishdate|date|sailthru\.date)["'][^>]+content=["']([^"']+)/i,
+    /<time[^>]+datetime=["']([^"']+)/i,
+    /"datePublished"\s*:\s*"([^"]+)/i,
+    /"publishedDate"\s*:\s*"([^"]+)/i,
+    /"publishedDateTime"\s*:\s*"([^"]+)/i,
+  ];
+  for (const pattern of patterns) {
+    const value = pattern.exec(html)?.[1];
+    const publishedAt = value ? normalizePublishedAt(decodeHtml(value)) : "";
+    if (publishedAt) return publishedAt;
+  }
+  return "";
+}
+
+function extractArticleSource(html: string) {
+  const patterns = [
+    /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)/i,
+    /<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']+)/i,
+  ];
+  for (const pattern of patterns) {
+    const source = pattern.exec(html)?.[1];
+    if (source) return truncateHeadline(decodeHtml(source).trim());
+  }
+  return "";
+}
+
 async function mlbTradeRumorsSlug(pitcher: FormSummary) {
   const key = `watchlist-headline-slug:${pitcher.pitcherId}`;
   const cached = await readRuntimeState<{ slug: string }>(key);
@@ -463,10 +610,11 @@ async function openSourceBreaker(source: WatchlistHeadlineSource, reason: string
 }
 
 function isDuplicateHeadline(existing: StoredHeadline, candidate: HeadlineCandidate) {
+  if (existing.url === candidate.url) return true;
+  if (normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline)) return true;
   const withinWindow = Math.abs(Date.parse(existing.publishedAt) - Date.parse(candidate.publishedAt)) <= HEADLINE_DEDUPE_WINDOW_MS;
   if (!withinWindow) return false;
-  if (existing.url === candidate.url) return true;
-  return normalizeHeadlineTitle(existing.headline) === normalizeHeadlineTitle(candidate.headline) || titleSimilarity(existing.headline, candidate.headline) >= 0.85 || sameHeadlineCluster(existing.headline, candidate.headline);
+  return titleSimilarity(existing.headline, candidate.headline) >= 0.85 || sameHeadlineCluster(existing.headline, candidate.headline);
 }
 
 function titleSimilarity(a: string, b: string) {

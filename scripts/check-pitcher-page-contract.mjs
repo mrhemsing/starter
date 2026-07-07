@@ -311,11 +311,14 @@ assert(
     pitcherFormPage.includes('rel="noopener"') &&
     pitcherFormPage.includes("event.headline?.source ?? \"News\"") &&
     pitcherFormPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
+    pitcherFormPage.includes("formatArticleDate(detectedAt)") &&
+    pitcherFormPage.includes("month: \"short\", day: \"numeric\"") &&
     pitcherFormPage.includes('aria-label="Unread Wire item"') &&
     watchlistPage.includes("function WireEventCard") &&
     watchlistPage.includes("event.headline?.source ?? \"News\"") &&
-    watchlistPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)"),
-  "pitcher profile must render API-backed Wire headlines with the same NEWS card treatment as Watchlist Wire",
+    watchlistPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
+    watchlistPage.includes("formatArticleDate(detectedAt)"),
+  "pitcher profile must render API-backed Wire headlines with the same NEWS card treatment and older-article date formatting as Watchlist Wire",
 );
 
 assert(
@@ -329,8 +332,13 @@ assert(
     headlineService.includes("return readWatchlistHeadlineEvents(pitchers.map((pitcher) => pitcher.pitcherId));") &&
     headlineService.includes("collapseHeadlineClusters(state.headlines)") &&
     headlineService.includes("sameHeadlineCluster(existing.headline, candidate.headline)") &&
-    headlineService.includes("headlineFetchAttemptKey(pitcher.pitcherId)"),
-  "pitcher profile Wire must fetch related articles on demand from headline APIs, reuse stored events, and dedupe duplicate stories before render",
+    headlineService.includes("headlineFetchAttemptKey(pitcher.pitcherId)") &&
+    headlineService.includes("resolveGoogleNewsArticleMetadata(item.link)") &&
+    headlineService.includes("fetchPublisherArticleMetadata(publisherUrl)") &&
+    headlineService.includes("publishedDateTime") &&
+    headlineService.includes("sourceHref") &&
+    headlineService.includes("const HEADLINE_STATE_VERSION = 2;"),
+  "pitcher profile Wire must fetch related articles on demand from headline APIs, resolve syndicated Google News items to publisher dates, reuse stored events, and dedupe duplicate stories before render",
 );
 
 assert(

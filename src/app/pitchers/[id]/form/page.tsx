@@ -362,8 +362,13 @@ function relativeEventTime(detectedAt: string) {
   if (minutes < 60) return `${minutes} min ago`;
   const hours = Math.round(minutes / 60);
   if (hours < 48) return `${hours} hr ago`;
-  const days = Math.round(hours / 24);
-  return `${days} days ago`;
+  return formatArticleDate(detectedAt);
+}
+
+function formatArticleDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return "Date unavailable";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/Los_Angeles" }).format(date);
 }
 
 function GameLogPanel({

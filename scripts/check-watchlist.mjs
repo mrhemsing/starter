@@ -138,12 +138,18 @@ assert(
 );
 assert(
   headlineServiceSource.includes("headline: item.title") &&
-    headlineServiceSource.includes("source: item.source || \"Google News\"") &&
-    headlineServiceSource.includes("url: item.link") &&
-    headlineServiceSource.includes("publishedAt: item.pubDate") &&
+    headlineServiceSource.includes("resolveGoogleNewsArticleMetadata(item.link)") &&
+    headlineServiceSource.includes("source: resolved?.source || item.source || \"Google News\"") &&
+    headlineServiceSource.includes("url: resolved?.url || item.link") &&
+    headlineServiceSource.includes("publishedAt: resolved?.publishedAt || item.pubDate") &&
+    headlineServiceSource.includes("fetchPublisherArticleMetadata(publisherUrl)") &&
+    headlineServiceSource.includes("fetchMsnArticleMetadata(url)") &&
+    headlineServiceSource.includes("publishedDateTime") &&
+    headlineServiceSource.includes("sourceHref") &&
+    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 2;") &&
     headlineServiceSource.includes("truncateHeadline") &&
     !/\bdescription\b|\bsummary\b|\bexcerpt\b|\brotowire\b/i.test(headlineServiceSource),
-  "headline ingest must allowlist headline/source/url/published fields and never store snippets, summaries, excerpts, or rotowire text",
+  "headline ingest must allowlist headline/source/url/published fields, resolve Google News syndication to publisher metadata dates, and never store snippets, summaries, excerpts, or rotowire text",
 );
 assert(
   watchlistPageSource.includes("event.headline?.url") &&
@@ -151,8 +157,10 @@ assert(
     watchlistPageSource.includes('rel="noopener"') &&
     watchlistPageSource.includes(">NEWS<") &&
     watchlistPageSource.includes("event.headline?.source") &&
+    watchlistPageSource.includes("formatArticleDate(detectedAt)") &&
+    watchlistPageSource.includes("month: \"short\", day: \"numeric\"") &&
     watchlistPageSource.includes("text-zinc-500"),
-  "watchlist Wire NEWS items must render as external headline links with visible, separate source attribution",
+  "watchlist Wire NEWS items must render as external headline links with visible source attribution and absolute dates for older articles",
 );
 assert(
   headlineCronSource.includes('import { ingestWatchlistHeadlines } from "@/lib/data/watchlist-headlines-service";') &&
