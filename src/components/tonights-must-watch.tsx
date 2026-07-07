@@ -735,7 +735,7 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
           <p className="font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
           <WatchScoreConfidenceChip game={game} />
         </div>
-        <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
         <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
       </div>
       <div className="mt-4">

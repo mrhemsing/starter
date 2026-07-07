@@ -739,7 +739,7 @@ function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: Tonigh
             <p className="font-serif text-5xl font-black leading-none" style={{ color: tier.color }}>{formatWatchScore(game.gameWatchScore)}</p>
             <PregameConfidenceChip game={game} />
           </div>
-          <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>
+          <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>
         </div>
         <PregameStarterBlock starter={homeStarter} align="home" />
       </div>

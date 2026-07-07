@@ -279,6 +279,7 @@ assert(
     liveComponent.includes("Preview all matchups") &&
     liveComponent.includes("function PregameMarquee") &&
     liveComponent.includes('data-live-pregame-header={slate.headerLabel}') &&
+    liveComponent.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>') &&
     liveComponent.includes("function PregameStarterBlock") &&
     liveComponent.includes('size="marquee"') &&
     liveComponent.includes("function PregameNextUpRows") &&

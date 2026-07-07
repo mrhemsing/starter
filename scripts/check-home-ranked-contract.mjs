@@ -141,7 +141,8 @@ assert(
     mustWatch.includes("showHookSpine = true,") &&
     mustWatch.includes("showHookSpine?: boolean;") &&
     mustWatch.includes('data-watch-hook-visible={showHookSpine ? "true" : "false"}') &&
-    mustWatch.includes("{showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}"),
+    mustWatch.includes("{showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}") &&
+    mustWatch.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>'),
   "homepage must hide the Must-Watch Hook spine until today's slate is fully final while preserving the default Hook on non-home surfaces",
 );
 
