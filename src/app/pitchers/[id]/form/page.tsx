@@ -331,8 +331,9 @@ function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
     <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-profile-wire">
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Pitcher Wire</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
+      <p className="mt-1 text-sm text-zinc-500">News for this arm</p>
       <div className="mt-4 grid gap-2">
-        {events.slice(0, 6).map((event) => (
+        {events.slice(0, 10).map((event) => (
           <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
         ))}
       </div>
@@ -342,25 +343,15 @@ function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
 
 function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
   const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
-  if (event.headline) {
-    return (
-      <a href={event.headline.url} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
-          <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
-        </div>
-        <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline.text}</p>
-        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline.source} · {relativeEventTime(event.headline.publishedAt)}</p>
-      </a>
-    );
-  }
-
   return (
-    <div className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">{event.label}</p>
-      <p className="mt-2 text-xs leading-5 text-zinc-500">{event.sentence}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{relativeEventTime(event.detectedAt)}</p>
-    </div>
+    <a href={event.headline?.url ?? "#"} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
+        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
+      </div>
+      <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.sentence}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
+    </a>
   );
 }
 

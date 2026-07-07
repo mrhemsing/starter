@@ -304,12 +304,18 @@ assert(
     pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} />") &&
     pitcherFormPage.includes("if (events.length === 0) return null;") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-profile-wire"') &&
+    pitcherFormPage.includes("News for this arm") &&
+    pitcherFormPage.includes("events.slice(0, 10)") &&
     !pitcherFormPage.includes("No recent Wire items for") &&
     pitcherFormPage.includes('target="_blank"') &&
     pitcherFormPage.includes('rel="noopener"') &&
-    pitcherFormPage.includes("event.headline.source") &&
-    pitcherFormPage.includes("relativeEventTime(event.headline.publishedAt)"),
-  "pitcher profile must render a pitcher-specific Wire section only when API-backed headline events exist, newest first, with external source attribution",
+    pitcherFormPage.includes("event.headline?.source ?? \"News\"") &&
+    pitcherFormPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
+    pitcherFormPage.includes('aria-label="Unread Wire item"') &&
+    watchlistPage.includes("function WireEventCard") &&
+    watchlistPage.includes("event.headline?.source ?? \"News\"") &&
+    watchlistPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)"),
+  "pitcher profile must render API-backed Wire headlines with the same NEWS card treatment as Watchlist Wire",
 );
 
 assert(
