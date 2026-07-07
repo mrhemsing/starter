@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { FormTier } from "@/lib/types";
 
-export type HeadshotSize = "hero" | "marquee" | "xl" | "lg" | "md" | "sm" | "xs";
+export type HeadshotSize = "hero" | "marquee" | "simple" | "xl" | "lg" | "md" | "sm" | "xs";
 
 type HeadshotProps = {
   playerId?: number | string | null;
@@ -22,6 +22,7 @@ type HeadshotProps = {
 const sizeClasses: Record<HeadshotSize, string> = {
   hero: "h-[112px] w-[75px] sm:h-[132px] sm:w-[88px] lg:h-[148px] lg:w-[99px]",
   marquee: "h-24 w-16",
+  simple: "h-14 w-14 sm:h-[72px] sm:w-[72px]",
   xl: "h-[88px] w-[59px]",
   lg: "h-16 w-[43px]",
   md: "h-[52px] w-[35px]",
@@ -89,6 +90,7 @@ export function mlbHeadshotUrl(playerId: string, width: number) {
 function headshotImageWidth(size: HeadshotSize) {
   if (size === "hero") return 320;
   if (size === "marquee") return 280;
+  if (size === "simple") return 220;
   if (size === "xl") return 240;
   if (size === "lg") return 180;
   if (size === "md") return 140;

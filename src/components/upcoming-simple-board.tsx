@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
-import { HEAT_BANDS } from "@/lib/form-tokens";
+import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
@@ -32,7 +32,7 @@ export function UpcomingSimpleBoard({
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
           </div>
         ) : (
-          <div className="grid gap-3" data-upcoming-simple-card-list>
+          <div className="grid gap-4" data-upcoming-simple-card-list>
             {tonight.games.map((game, index) => (
               <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} />
             ))}
@@ -55,31 +55,39 @@ function UpcomingSimpleCard({
 }) {
   const sentence = upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  const watchTier = watchTierOf(game.gameWatchScore);
+  const accentColor = watchTier.color;
 
   return (
     <UpcomingSimpleCardFrame gamePk={game.gamePk}>
-      <div className="grid grid-cols-[minmax(0,1fr)_74px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] sm:gap-4">
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: accentColor }}
+        data-simple-card-accent={watchTier.key}
+      />
+      <div className="grid grid-cols-[minmax(0,1fr)_86px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-5">
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
         <div className="text-center" data-upcoming-simple-score>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">#{rank}</p>
-          <p className="font-serif text-3xl font-black leading-none text-amber-100 sm:text-4xl" data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
+          <p className="font-serif text-[2.6rem] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
           {confidenceLabel ? (
             <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
               {confidenceLabel}
             </p>
           ) : null}
-          <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500" data-simple-first-pitch>
+          <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500" data-simple-first-pitch>
             <LocalTime value={game.firstPitch} fallback="First pitch" />
           </p>
         </div>
         <SimpleStarter starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
       </div>
       <p
-        className="mt-3 border-t border-white/10 pt-3 text-center text-sm leading-5 text-zinc-300"
+        className="mt-4 border-t border-white/10 pt-4 text-center text-sm leading-5 text-zinc-300"
         data-upcoming-simple-context
         data-simple-context-sentence-count={sentenceCount(sentence)}
         data-simple-context-word-count={wordCount(sentence)}
         data-simple-context-has-em-dash={String(sentence.includes("—"))}
+        data-simple-context-has-this-one={String(/\bthis one\b/i.test(sentence))}
       >
         {sentence}
       </p>
@@ -101,7 +109,7 @@ function SimpleStarter({
 
   return (
     <div className={`min-w-0 ${align === "home" ? "text-right" : ""}`} data-upcoming-simple-starter={starter.side}>
-      <div className={`flex items-center gap-2 ${align === "home" ? "flex-row-reverse" : ""}`}>
+      <div className={`flex flex-col gap-2 sm:flex-row sm:items-center ${align === "home" ? "items-end sm:flex-row-reverse" : "items-start"}`}>
         <StarterHeadshot starter={starter} formBand={formBand} />
         <div className="min-w-0">
           {starter.pitcherId ? (
@@ -127,7 +135,7 @@ function StarterHeadshot({ starter, formBand }: { starter: TonightStarter; formB
       playerId={starter.pitcherId}
       name={starter.name ?? `TBD ${starter.team} starter`}
       team={starter.team}
-      size="lg"
+      size="simple"
       band={formBand}
       sampleSufficient={starter.formStatus === "ok" && !starter.flags?.limitedSample}
       decorative

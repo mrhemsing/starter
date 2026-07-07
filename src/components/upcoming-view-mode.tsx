@@ -91,7 +91,7 @@ export function UpcomingSimpleCardFrame({
 
   return (
     <article
-      className="heat-glow-card relative cursor-pointer overflow-hidden rounded border border-white/10 bg-[#101014] p-3 transition hover:border-amber-300/35 sm:p-4"
+      className="heat-glow-card relative cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-[#101014] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] transition hover:border-amber-300/35 sm:p-5"
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
       data-simple-details-target={href}
@@ -111,7 +111,7 @@ export function UpcomingSimpleCardFrame({
       {children}
       <button
         type="button"
-        className="mt-3 inline-flex min-h-9 items-center rounded border border-amber-300/35 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200"
+        className="mt-4 inline-flex min-h-9 items-center rounded border border-amber-300/35 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200"
         data-upcoming-simple-details
         onClick={openDetails}
       >

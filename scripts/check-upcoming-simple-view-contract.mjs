@@ -38,6 +38,11 @@ assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must rende
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
 assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
+assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis one\\b/i.test(sentence))}'), "Simple context sentences must guard against this-one copy.");
+assert(simpleBoard.includes('className="grid gap-4"'), "Simple cards must have visible gaps between discrete card surfaces.");
+assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simpleBoard.includes("style={{ color: accentColor }}"), "Simple cards must tint the edge and score by watch band.");
+assert(simpleBoard.includes('size="simple"'), "Simple starter headshots must use the enlarged simple size.");
+assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
 assert(countOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
 assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render pitch-mix or driver chip rows.");
@@ -71,7 +76,15 @@ for (const input of dataInputs) {
 }
 
 assert(context.includes("namedStarters.length < 2"), "Simple context must explain TBD starter slots.");
-assert(context.includes("Limited samples keep the grade cautious."), "Simple context must call out low or medium-confidence samples.");
+assert(context.includes('type SignalType = "confidence"') && context.includes("PHRASE_BANK") && context.includes("score: number"), "Simple context must use a scored signal composer.");
+assert(context.includes("hash(`${seed}:${signal.type}`)") && context.includes("game.gamePk"), "Simple context selection must be deterministic from gamePk.");
+assert(context.includes("wordCount(combined) <= 22"), "Simple context must keep copy within the 22-word cap.");
+assert(context.includes("Small-sample flags") || context.includes("Limited data"), "Simple context must call out low or medium-confidence samples.");
+assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
+
+const phraseBankMatches = context.match(/\[[^\]]+\]/gs) ?? [];
+const signalPhraseGroups = phraseBankMatches.filter((group) => (group.match(/"/g) ?? []).length >= 8);
+assert(signalPhraseGroups.length >= 8, "Simple context phrase bank must provide at least eight varied signal groups.");
 
 console.log("upcoming simple view contract ok");
 
