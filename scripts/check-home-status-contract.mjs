@@ -269,6 +269,17 @@ assert(
 );
 
 assert(
+  methodologyPage.includes('className="mx-auto max-w-7xl"') &&
+    !methodologyPage.includes('className="mx-auto max-w-5xl"') &&
+    methodologyPage.includes('className="mt-3 max-w-3xl text-base leading-7 text-zinc-400"') &&
+    methodologyPage.includes('className="space-y-3 text-base leading-7 text-zinc-400"') &&
+    methodologyPage.includes('className="mt-3 text-base leading-7 text-zinc-400"') &&
+    methodologyPage.includes('className="mt-3 text-sm leading-6 text-zinc-500"') &&
+    !methodologyPage.includes('className="mt-3 text-xs leading-5 text-zinc-500"'),
+  "methodology page must use the shared wide page width and larger reader-facing body copy",
+);
+
+assert(
   methodologyPage.includes("above league baseline") &&
     methodologyPage.includes("GAME_SCORE_PLUS_CONTEXT_BASELINES") &&
     startService.includes("GAME_SCORE_PLUS_WHIFF_CONTEXT_WEIGHT") &&
