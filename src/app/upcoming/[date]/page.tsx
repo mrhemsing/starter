@@ -85,6 +85,12 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   return (
     <UpcomingViewModeProvider>
       <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try { document.documentElement.setAttribute("data-upcoming-view-mode-init", window.localStorage.getItem("tts.upcoming.view") === "SIMPLE" ? "simple" : "detailed"); } catch { document.documentElement.setAttribute("data-upcoming-view-mode-init", "detailed"); } })();`,
+          }}
+        />
         <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
         <div className="mx-auto max-w-7xl">
           <header className="mb-3 pb-3">

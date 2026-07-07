@@ -7,6 +7,7 @@ const segmentedControl = await readFile("src/components/segmented-control.tsx", 
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
 const context = await readFile("src/lib/upcoming-simple-context.ts", "utf8");
 const headshot = await readFile("src/components/headshot.tsx", "utf8");
+const globals = await readFile("src/app/globals.css", "utf8");
 
 assert(page.includes("<UpcomingViewModeProvider>"), "Upcoming page must wrap toolbar and board in one view-mode provider.");
 assert(page.includes('viewModeToggle={<UpcomingViewModeToggle />}'), "Upcoming toolbar must render the simple/detailed toggle inside the existing controls.");
@@ -30,6 +31,9 @@ assert(viewMode.includes('const [mode, setModeState] = useState<UpcomingViewMode
 assert(viewMode.includes('return "detailed";'), "Missing or blocked storage must default to DETAILED.");
 assert(countOccurrences(viewMode, '<div data-upcoming-view-mode-control') === 1, "Only one view-mode control should render.");
 assert(viewMode.includes("__ttsUpcomingViewModeClickBridge") && viewMode.includes("document.addEventListener(\"click\"") && viewMode.includes("[data-upcoming-view-mode-control] [data-view-mode-option]"), "View mode toggle must bridge pre-hydration SIMPLE clicks.");
+assert(page.includes("data-upcoming-view-mode-init") && page.includes('window.localStorage.getItem("tts.upcoming.view") === "SIMPLE"'), "Upcoming page must set the stored view mode before the controls paint.");
+assert(viewMode.includes('document.documentElement.setAttribute("data-upcoming-view-mode-init", mode)') && viewMode.includes('document.documentElement.setAttribute("data-upcoming-view-mode-init", nextMode)'), "View mode updates must keep the pre-paint mode marker in sync.");
+assert(globals.includes('html[data-upcoming-view-mode-init="simple"] [data-upcoming-view-mode-control]') && globals.includes('html[data-upcoming-view-mode-init="simple"] [data-upcoming-view-storage-key="tts.upcoming.view"] [data-upcoming-view-panel="detailed"]'), "Stored SIMPLE preference must receive CSS pre-paint overrides to avoid a DETAILED flash.");
 
 assert(simpleBoard.includes('data-responsive-check="upcoming-simple-board"'), "Simple board must expose a stable test hook.");
 assert(viewMode.includes('data-responsive-check="upcoming-simple-card"'), "Simple cards must expose stable test hooks.");
