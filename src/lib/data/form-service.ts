@@ -10,13 +10,35 @@ import { isScoredStarterSample } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FormDriverChip, FormHomeResponse, FormLeaderboardResponse, FormNextStart, FormPitcherResponse, FormSeasonDepthStats, FormSeasonStats, FormStartPoint, FormSummary, FormTrend, FormVenueSplitLabel, FormWorkload, HeatBandKey, MlbPitcherSeasonProfile, StartSummary } from "@/lib/types";
 
-type FormWindow = typeof FORM_CONFIG.windows[number];
+export type FormWindow = typeof FORM_CONFIG.windows[number];
 
 type FormBuildOptions = {
   window?: number | string;
   season?: string;
   qualifiedOnly?: boolean;
   team?: string;
+};
+
+export type RotationLeaderboardRow = {
+  rank: number;
+  team: string;
+  staffMeanForm: number | null;
+  qualifiedCount: number;
+  smallSample: boolean;
+  bandCounts: Record<HeatBandKey, number>;
+  hottest: FormSummary | null;
+  coldest: FormSummary | null;
+  pitchers: FormSummary[];
+};
+
+export type RotationLeaderboardResponse = {
+  generatedAt: string;
+  formThroughDate: string | null;
+  latestScoredStartDate: string | null;
+  stale: boolean;
+  window: FormWindow;
+  totalTeams: number;
+  rows: RotationLeaderboardRow[];
 };
 
 const MLB_TEAM_CODES = new Set([
@@ -78,6 +100,7 @@ const formLeaderboardCache = new Map<string, CachedValue<FormLeaderboardResponse
 const formHomeCache = new Map<string, CachedValue<FormHomeResponse>>();
 const pitcherFormCache = new Map<string, CachedValue<FormPitcherResponse | null>>();
 const recentLiveFormStartsCache = new Map<string, CachedValue<RecentLiveFormStartsResult>>();
+const rotationLeaderboardCache = new Map<string, CachedValue<RotationLeaderboardResponse>>();
 
 const getCachedFormLeaderboard = unstable_cache(
   async (season: string, window: FormWindow, qualifiedOnly: boolean, team?: string) => buildFormLeaderboard({ season, window, qualifiedOnly, team }),
@@ -89,6 +112,12 @@ const getCachedFormHome = unstable_cache(
   async (season: string, window: FormWindow) => buildFormHome({ season, window }),
   ["form-home", FORM_CACHE_VERSION],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG] },
+);
+
+const getCachedRotationLeaderboard = unstable_cache(
+  async (season: string, window: FormWindow) => buildRotationLeaderboard({ season, window }),
+  ["rotation-leaderboard", FORM_CACHE_VERSION],
+  { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
 const getCachedPitcherForm = unstable_cache(
@@ -143,6 +172,22 @@ export async function getFormLeaderboard(options: FormBuildOptions = {}): Promis
   return promise;
 }
 
+export async function getRotationLeaderboard(options: Pick<FormBuildOptions, "window" | "season"> = {}): Promise<RotationLeaderboardResponse> {
+  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const window = parseFormWindow(options.window);
+  const cacheKey = JSON.stringify({ season, window });
+  const cached = rotationLeaderboardCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = getCachedRotationLeaderboard(season, window);
+  rotationLeaderboardCache.set(cacheKey, {
+    expiresAt: Date.now() + FORM_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
+}
+
 async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
   const season = options.season ?? getHomeSlateDate().slice(0, 4);
   const window = parseFormWindow(options.window);
@@ -182,6 +227,52 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
     heatingCount: qualifiedPitchers.filter((summary) => summary.trend === "heating").length,
     coolingCount: qualifiedPitchers.filter((summary) => summary.trend === "cooling").length,
     pitchers: pitchersWithNextStarts,
+  };
+}
+
+async function buildRotationLeaderboard(options: Pick<FormBuildOptions, "window" | "season"> = {}): Promise<RotationLeaderboardResponse> {
+  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const window = parseFormWindow(options.window);
+  const leaderboard = await getFormLeaderboard({ season, window, qualifiedOnly: false });
+  const qualifiedPitchers = leaderboard.pitchers.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
+  const pitchersByTeam = new Map<string, FormSummary[]>();
+
+  for (const team of MLB_TEAM_CODES) {
+    pitchersByTeam.set(team, []);
+  }
+  for (const pitcher of qualifiedPitchers) {
+    const team = pitcher.team.trim().toUpperCase();
+    if (!MLB_TEAM_CODES.has(team)) continue;
+    const teamPitchers = pitchersByTeam.get(team) ?? [];
+    teamPitchers.push(pitcher);
+    pitchersByTeam.set(team, teamPitchers);
+  }
+
+  const rows = [...MLB_TEAM_CODES].map((team) => {
+    const pitchers = [...(pitchersByTeam.get(team) ?? [])].sort(compareRollingFormLevelDesc);
+    const staffMeanForm = pitchers.length > 0 ? round1(mean(pitchers.map((pitcher) => pitcher.rgs))) : null;
+    const bandCounts = Object.fromEntries(HEAT_BANDS.map((band) => [band.key, pitchers.filter((pitcher) => pitcher.tier === band.key).length])) as Record<HeatBandKey, number>;
+    return {
+      rank: 0,
+      team,
+      staffMeanForm,
+      qualifiedCount: pitchers.length,
+      smallSample: pitchers.length > 0 && pitchers.length < FORM_CONFIG.minStartsToQualify,
+      bandCounts,
+      hottest: pitchers[0] ?? null,
+      coldest: pitchers.length > 0 ? [...pitchers].sort(compareRollingFormLevelAsc)[0] ?? null : null,
+      pitchers,
+    };
+  }).sort((a, b) => (b.staffMeanForm ?? Number.NEGATIVE_INFINITY) - (a.staffMeanForm ?? Number.NEGATIVE_INFINITY) || b.qualifiedCount - a.qualifiedCount || a.team.localeCompare(b.team));
+
+  return {
+    generatedAt: new Date().toISOString(),
+    formThroughDate: leaderboard.formThroughDate,
+    latestScoredStartDate: leaderboard.latestScoredStartDate,
+    stale: leaderboard.stale,
+    window,
+    totalTeams: MLB_TEAM_CODES.size,
+    rows: rows.map((row, index) => ({ ...row, rank: index + 1 })),
   };
 }
 

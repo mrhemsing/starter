@@ -44,6 +44,7 @@
     "check:gs-plus-context-v8": "node scripts/check-gs-plus-context-v8.mjs",
     "check:time-words": "node scripts/check-time-words-contract.mjs",
     "check:heat-team-windows": "node scripts/check-heat-team-window-contract.mjs",
+    "check:rotation-leaderboard": "node scripts/check-rotation-leaderboard-contract.mjs",
     "check:direction-band": "node scripts/check-direction-band-integrity.mjs",
     "check:mobile-card-layout": "node scripts/check-mobile-card-layout.mjs",
     "check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs",

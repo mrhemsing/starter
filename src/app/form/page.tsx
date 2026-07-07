@@ -20,7 +20,8 @@ import { PageContextStrip } from "@/components/page-context-strip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PendingRegion } from "@/components/route-control-pending";
 import { SiteHeader } from "@/components/site-header";
-import { getFormLeaderboard, parseFormWindow } from "@/lib/data/form-service";
+import { getFormLeaderboard, getRotationLeaderboard, parseFormWindow } from "@/lib/data/form-service";
+import type { RotationLeaderboardRow } from "@/lib/data/form-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
@@ -162,9 +163,10 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));
-  const [leaderboard, rotationLeaderboard, followedIds, rotationSchedules, liveBoard] = await Promise.all([
+  const [leaderboard, rotationLeaderboard, teamRotationLeaderboard, followedIds, rotationSchedules, liveBoard] = await Promise.all([
     getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team }),
     teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null),
+    teamView ? getRotationLeaderboard({ window }) : Promise.resolve(null),
     getWatchlistPitcherIds(accountId),
     Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date }))),
     getLiveScoreboard({ date: today }),
@@ -223,7 +225,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
     ...candidate,
     count: teamRotationPitchers.filter((pitcher) => pitcher.tier === candidate.key).length,
   }));
-  const rotationRankByTeam = buildTeamRotationRankMap(qualifiedPitchers);
+  const teamRotationRow = team ? teamRotationLeaderboard?.rows.find((row) => row.team === team) ?? null : null;
   const teamRotationSlots = team ? buildTeamRotationSlots(team, rotationDates, rotationSchedules, rotationPitcherPool, window) : [];
   const pulseBandCounts = team ? teamBandCounts : leagueBandCounts;
   const pulseDirectionCounts = directionCountsForPitchers(pulsePitchers);
@@ -269,9 +271,12 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
             {trendView ? <>How starting pitchers are trending.</> : <>Starting pitchers ranked by season GS+.</>}
           </p>
           {trendView ? (
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-heat-form-window-label data-form-window={window}>
-              {formWindowLabel(window)}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em]" data-heat-form-window-label data-form-window={window}>
+              <span className="text-zinc-500">{formWindowLabel(window)}</span>
+              <Link href="/rotations" className="text-amber-200 hover:text-amber-100" data-rotation-board-nav>
+                Rotation rankings
+              </Link>
+            </div>
           ) : null}
         </header>
 
@@ -284,8 +289,9 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
             team={team}
             qualifiedPitchers={teamRotationPitchers}
             bandCounts={teamRotationBandCounts}
-            rotationRank={rotationRankByTeam.get(team) ?? null}
+            rotationRow={teamRotationRow}
             slots={teamRotationSlots}
+            window={window}
           />
         ) : null}
 
@@ -536,37 +542,59 @@ function TeamRotationSnapshot({
   team,
   qualifiedPitchers,
   bandCounts,
-  rotationRank,
+  rotationRow,
   slots,
+  window,
 }: {
   team: string;
   qualifiedPitchers: FormSummary[];
   bandCounts: Array<HeatBand & { count: number }>;
-  rotationRank: number | null;
+  rotationRow: RotationLeaderboardRow | null;
   slots: TeamRotationSlot[];
+  window: number;
 }) {
-  const staffMean = meanGsPlus(qualifiedPitchers);
+  const staffMean = rotationRow?.staffMeanForm ?? meanGsPlus(qualifiedPitchers);
   const populatedBands = bandCounts.filter((band) => band.count > 0);
+  const rotationRankHref = `/rotations#team-${team.toLowerCase()}`;
+  const smallSample = rotationRow?.smallSample ?? (qualifiedPitchers.length > 0 && qualifiedPitchers.length < WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED);
 
   return (
     <section className="my-5 grid gap-3" data-responsive-check="heat-team-rotation-snapshot">
-      <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-team-rotation-summary">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
-          <span>{qualifiedPitchers.length} qualified</span>
-          <span>staff mean Form {staffMean === null ? "--" : staffMean.toFixed(1)}</span>
-          <span>{rotationRank === null ? "--" : rotationRank} of 30 rotations</span>
-          {qualifiedPitchers.length > 0 && qualifiedPitchers.length < WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED ? <span className="text-zinc-500">small staff sample</span> : null}
+      <div className="grid gap-4 rounded border border-white/10 bg-[#101014] p-4 sm:grid-cols-[minmax(0,1fr)_auto]" data-responsive-check="heat-team-rotation-summary">
+        <div data-responsive-check="heat-team-rotation-rank" data-rotation-rank={rotationRow?.rank ?? "pending"}>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Rotation rank</p>
+          <Link href={rotationRankHref} className="mt-1 inline-flex items-end gap-2 text-zinc-50 hover:text-amber-200" data-rotation-rank-link>
+            <span className="font-serif text-5xl font-black leading-none">{rotationRow ? `#${rotationRow.rank}` : "--"}</span>
+            <span className="pb-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">of 30{smallSample ? "*" : ""}</span>
+          </Link>
+          <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
+            Staff mean Form {staffMean === null ? "--" : staffMean.toFixed(1)}
+          </p>
+          <Link href={rotationRankHref} className="mt-3 inline-flex font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200 hover:text-amber-100">
+            See full rotation board
+          </Link>
+          {smallSample ? (
+            <p className="mt-2 max-w-sm font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+              * Small staff sample, fewer than {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED} qualified arms.
+            </p>
+          ) : null}
         </div>
-        {populatedBands.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2" data-responsive-check="heat-team-band-dots">
-            {populatedBands.map((band) => (
-              <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-                <span className="size-2 rounded-full" style={{ backgroundColor: band.color }} aria-hidden="true" />
-                {band.count} {band.label.toLowerCase()}
-              </span>
-            ))}
+        <div className="grid content-start gap-3 text-left sm:min-w-[280px] sm:text-right">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400 sm:justify-end">
+            <span>{qualifiedPitchers.length} qualified</span>
+            <span>{formWindowLabel(window)}</span>
           </div>
-        ) : null}
+          {populatedBands.length > 0 ? (
+            <div className="flex flex-wrap gap-2 sm:justify-end" data-responsive-check="heat-team-band-dots">
+              {populatedBands.map((band) => (
+                <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+                  <span className="size-2 rounded-full" style={{ backgroundColor: band.color }} aria-hidden="true" />
+                  {band.count} {band.label.toLowerCase()}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="heat-team-next-five">
@@ -1652,30 +1680,6 @@ function buildGlobalFormRankMap(pitchers: FormSummary[]) {
 
 function buildGlobalSeasonRankMap(pitchers: FormSummary[]) {
   return new Map([...pitchers].sort(compareSeasonGsRank).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
-}
-
-function buildTeamRotationRankMap(pitchers: FormSummary[]) {
-  const byTeam = new Map<string, FormSummary[]>();
-  for (const pitcher of pitchers) {
-    const group = byTeam.get(pitcher.team) ?? [];
-    group.push(pitcher);
-    byTeam.set(pitcher.team, group);
-  }
-
-  const rows = [...byTeam.entries()]
-    .map(([team, teamPitchers]) => ({ team, mean: meanGsPlus(teamPitchers) ?? 0 }))
-    .sort((a, b) => b.mean - a.mean || a.team.localeCompare(b.team));
-  const ranks = new Map<string, number>();
-  let rank = 0;
-  let previousMean: number | null = null;
-  for (const row of rows) {
-    if (previousMean === null || row.mean !== previousMean) {
-      rank += 1;
-      previousMean = row.mean;
-    }
-    ranks.set(row.team, rank);
-  }
-  return ranks;
 }
 
 function sortPitchersByGlobalFormRank(pitchers: FormSummary[]) {

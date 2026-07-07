@@ -366,11 +366,13 @@ assert(
     !formPage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     formPage.includes("getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team })") &&
     formPage.includes('teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null)') &&
+    formPage.includes('teamView ? getRotationLeaderboard({ window }) : Promise.resolve(null)') &&
     formPage.includes('const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));') &&
     formPage.includes('Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date })))') &&
     formPage.includes("function buildTodayStartContext(games: MlbScheduleGame[], liveRows: LiveScoreboardRow[], date: string)") &&
     formPage.includes("function buildTeamRotationSlots(") &&
-    formPage.includes("function buildTeamRotationRankMap(pitchers: FormSummary[])") &&
+    formPage.includes("const teamRotationRow = team ? teamRotationLeaderboard?.rows.find((row) => row.team === team) ?? null : null;") &&
+    !formPage.includes("function buildTeamRotationRankMap(pitchers: FormSummary[])") &&
     formPage.includes(".filter((pitcher) => !team || pitcher.team === team)") &&
     formPage.includes("const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;") &&
     formPage.includes("const allTeamsView = !team;") &&
@@ -384,6 +386,9 @@ assert(
     formPage.includes('data-responsive-check="heat-league-stat-strip"') &&
     formPage.includes('data-responsive-check="heat-team-rotation-snapshot"') &&
     formPage.includes('data-responsive-check="heat-team-rotation-summary"') &&
+    formPage.includes('data-responsive-check="heat-team-rotation-rank"') &&
+    formPage.includes('data-rotation-rank-link') &&
+    formPage.includes('data-rotation-board-nav') &&
     formPage.includes('data-responsive-check="heat-team-next-five"') &&
     formPage.includes("{teamView ? (") &&
     formPage.includes("<TeamRotationSnapshot") &&
