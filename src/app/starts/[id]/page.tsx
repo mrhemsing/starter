@@ -645,7 +645,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.16em]">
               <Link href={startHref(start, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-amber-300/30 px-3 text-amber-300">Start Log</Link>
               <Link href={pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("starts"))} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Pitcher Profile</Link>
-              {pairedStart ? <Link href={`#${pairedStart.id}`} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-400">Same game starter</Link> : null}
             </div>
           </div>
           {start.gameScorePlusBreakdown ? <ExpandedScoreBreakdown breakdown={start.gameScorePlusBreakdown} gameScoreV2={start.gameScoreV2} /> : null}

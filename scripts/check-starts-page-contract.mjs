@@ -526,8 +526,10 @@ assert(
 );
 
 assert(
-  startsPage.includes(">Pitcher Profile</Link>") && !startsPage.includes(">Pitcher</Link>"),
-  "ranked starts card CTA must read Pitcher Profile instead of the terse Pitcher label",
+  startsPage.includes(">Pitcher Profile</Link>") &&
+    !startsPage.includes(">Pitcher</Link>") &&
+    !startsPage.includes(">Same game starter</Link>"),
+  "ranked starts card CTA must read Pitcher Profile instead of the terse Pitcher label and must not show the paired-start jump button",
 );
 
 assert(
