@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { SegmentedControl } from "@/components/segmented-control";
 
 type UpcomingViewMode = "detailed" | "simple";
@@ -101,45 +100,20 @@ export function UpcomingSimpleCardFrame({
   accentColor: string;
   children: ReactNode;
 }) {
-  const context = useUpcomingViewMode();
-  const href = `#upcoming-game-${gamePk}`;
-
-  function openDetails() {
-    context.setMode("detailed");
-    window.requestAnimationFrame(() => {
-      document.getElementById(`upcoming-game-${gamePk}`)?.scrollIntoView({ block: "center" });
-      window.history.replaceState(null, "", href);
-    });
-  }
-
   return (
-    <Link
-      href={href}
+    <article
       aria-label={ariaLabel}
-      className="heat-glow-card group relative block overflow-hidden rounded-lg border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] outline-none transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-300/70 sm:p-5"
+      className="heat-glow-card relative block overflow-hidden rounded-lg border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:p-5"
       style={{ background, borderColor: `${accentColor}44` }}
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
-      data-simple-details-target={href}
-      data-simple-card-link="whole-card"
+      data-simple-card-interaction="static-preview"
       data-simple-card-tint={bandKey}
       data-simple-card-background={background}
       data-simple-card-edge-color={accentColor}
-      onClick={(event) => {
-        if ((event.target as HTMLElement).closest("button")) return;
-        event.preventDefault();
-        openDetails();
-      }}
     >
       {children}
-      <span
-        className="pointer-events-none absolute bottom-3 right-3 translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
-        aria-hidden="true"
-        data-upcoming-simple-hover-hint
-      >
-        &rsaquo;
-      </span>
-    </Link>
+    </article>
   );
 }
 

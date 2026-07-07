@@ -32,9 +32,10 @@ assert(viewMode.includes("__ttsUpcomingViewModeClickBridge") && viewMode.include
 
 assert(simpleBoard.includes('data-responsive-check="upcoming-simple-board"'), "Simple board must expose a stable test hook.");
 assert(viewMode.includes('data-responsive-check="upcoming-simple-card"'), "Simple cards must expose stable test hooks.");
-assert(viewMode.includes("import Link from \"next/link\";") && viewMode.includes('data-simple-card-link="whole-card"'), "Simple cards must be whole-card links to the detailed card.");
-assert(viewMode.includes("overflow-hidden rounded-lg border border-white/10"), "Simple whole-card links must use .5rem border radius instead of a pillier card radius.");
-assert(viewMode.includes("ariaLabel") && viewMode.includes("data-simple-details-target={href}"), "Simple card link must keep an accessible detail target.");
+assert(!viewMode.includes("import Link from \"next/link\";") && viewMode.includes("<article") && viewMode.includes('data-simple-card-interaction="static-preview"'), "Simple cards must render as static previews, not whole-card links.");
+assert(viewMode.includes("overflow-hidden rounded-lg border border-white/10"), "Simple card containers must use .5rem border radius instead of a pillier card radius.");
+assert(viewMode.includes("ariaLabel") && !viewMode.includes("data-simple-details-target"), "Simple card preview must keep an accessible label without a detail target.");
+assert(!viewMode.includes("data-upcoming-simple-hover-hint") && !viewMode.includes("&rsaquo;"), "Simple cards must not render the bottom-right arrow hover hint.");
 assert(!viewMode.includes("data-upcoming-simple-details") && !viewMode.includes(">Details<"), "Simple cards must not render standalone DETAILS buttons.");
 assert(simpleBoard.includes("data-simple-visible-game-pks"), "Simple board must expose game order for parity checks.");
 assert(simpleBoard.includes("data-simple-watch-ranks"), "Simple board must expose rank order for parity checks.");
