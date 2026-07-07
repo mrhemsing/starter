@@ -39,7 +39,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v13"],
+  ["tonight-must-watch", "v14"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -151,7 +151,8 @@ async function buildTonightGame(
   const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";
   const splitMatchupScore = scoreOpponentSplitMatchup([awayStarter, homeStarter], parkContext, weatherContext);
-  const matchupScore = clampMatchupScore(splitMatchupScore ?? (probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore()));
+  const baselineMatchupScore = scoreBaselineMatchup([awayStarter, homeStarter], leagueMeanGS, probableMatchupScores);
+  const matchupScore = clampMatchupScore(splitMatchupScore ?? baselineMatchupScore.score);
   const watchScoreQualifiedStartCounts = {
     away: starterQualifiedStartCount(awayStarter),
     home: starterQualifiedStartCount(homeStarter),
@@ -192,8 +193,8 @@ async function buildTonightGame(
     matchupScore,
     matchupRankTonight: 1,
     matchupContext: {
-      status: splitMatchupScore === null ? "pending-opponent-splits" : "scored",
-      label: splitMatchupScore === null ? "Opponent split data pending" : "Opponent split data vs pitcher handedness",
+      status: splitMatchupScore === null && baselineMatchupScore.pending ? "pending-opponent-splits" : "scored",
+      label: splitMatchupScore === null ? baselineMatchupScore.label : "Opponent split data vs pitcher handedness",
     },
     starters: [awayStarter, homeStarter],
     gameWatchScore,
@@ -678,6 +679,38 @@ function scoreOpponentSplitMatchup(starters: TonightStarter[], parkContext: Deci
     });
   if (scored.length === 0) return null;
   return round1(clampMatchupScore(mean(scored)));
+}
+
+function scoreBaselineMatchup(starters: TonightStarter[], leagueMeanGS: number, probableMatchupScores: number[]) {
+  if (starters.every((starter) => starter.status === "tbd")) {
+    return {
+      score: probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore(),
+      pending: true,
+      label: "Probable starters pending",
+    };
+  }
+
+  const scoredStarters = starters
+    .filter((starter) => starter.status !== "tbd")
+    .map((starter) => {
+      const projected = starter.projection?.projectedGsPlus;
+      if (typeof projected === "number") return projected;
+      return adjustedStarterWatchValue(starter, leagueMeanGS);
+    });
+
+  if (scoredStarters.length === 0) {
+    return {
+      score: probableMatchupScores.length > 0 ? round1(mean(probableMatchupScores)) : neutralMatchupScore(),
+      pending: true,
+      label: "Probable starter form pending",
+    };
+  }
+
+  return {
+    score: round1(mean(scoredStarters)),
+    pending: false,
+    label: "Starter form baseline; opponent split data still pending",
+  };
 }
 
 function teamSplitKey(team: string, split: MlbTeamHandednessSplitContext["split"]) {
