@@ -710,6 +710,8 @@ assert(
 
 const rankedPregameNothingThrownFixture = { liveStarts: 0, completedStarts: 0 };
 const rankedFirstPitchThrownFixture = { liveStarts: 2, completedStarts: 0 };
+const rankedLiveNoneSettledFixture = { completedStarts: 1, liveStarts: 1, warmingStarts: 0, totalStarts: 32 };
+const rankedLiveNoneSettledUpcoming = Math.max(0, rankedLiveNoneSettledFixture.totalStarts - rankedLiveNoneSettledFixture.completedStarts - rankedLiveNoneSettledFixture.liveStarts - rankedLiveNoneSettledFixture.warmingStarts);
 assert(
   (rankedPregameNothingThrownFixture.liveStarts > 0 || rankedPregameNothingThrownFixture.completedStarts > 0) === false &&
     (rankedFirstPitchThrownFixture.liveStarts > 0 || rankedFirstPitchThrownFixture.completedStarts > 0) === true &&
@@ -719,19 +721,36 @@ assert(
 
 assert(
   startsPage.includes('data-responsive-check="ranked-starts-empty-state"') &&
-    startsPage.includes("<RankedStartsArchiveNav") &&
-    startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{starts.length > 0 ? (") &&
-    startsPage.includes("<SlateCounts") &&
-    startsPage.indexOf("<SlateCounts") < startsPage.indexOf("{starts.length > 0 ? (") &&
-    startsPage.includes("const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);") &&
-    startsPage.includes("const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;") &&
-    startsPage.includes("function emptyRankedStartsCopy(state: { liveStarts: number })") &&
-    startsPage.includes('return `No starts have gone final yet. ${state.liveStarts} in progress now.`;') &&
-    startsPage.includes('return "No starts have gone final yet today.";') &&
-    startsPage.includes('direction="back"') &&
-    startsPage.includes("Yesterday&apos;s slate") &&
-    startsPage.includes("Follow today live") &&
+    startsPage.includes("type RankedStartsEmptyCause = \"live-none-settled\" | \"filter-zero\" | \"off-day\" | \"settled-zero-rankable\";") &&
+    startsPage.includes("function resolveRankedStartsEmptyCause") &&
+    startsPage.includes("function RankedStartsEmptyState") &&
+    startsPage.includes("function rankedStartsEmptyStateCopy") &&
+    startsPage.includes("data-ranked-empty-cause={cause}") &&
+    startsPage.includes("settledStartsCount={starts.length}") &&
+    startsPage.includes('title: "Rankings post as starts go final.",') &&
+    startsPage.includes("const settled = Math.max(0, state.completedStarts, settledStartsCount);") &&
+    startsPage.includes("`${settled} of ${state.totalStarts} in so far, ${upcoming} still to come.`") &&
+    startsPage.includes("Live scoreboard") &&
     startsPage.includes("liveDateHref(date)") &&
+    startsPage.includes('title: "No starts in this band.",') &&
+    startsPage.includes('detail: "Try another band or clear the filter.",') &&
+    startsPage.includes("Clear filter") &&
+    startsPage.includes("href={clearFilterHref}") &&
+    startsPage.includes('title: "No games scheduled.",') &&
+    startsPage.includes('detail: "Check upcoming matchups.",') &&
+    startsPage.includes("upcomingDateHref(date)") &&
+    startsPage.includes('title: "No qualifying starts on this slate.",') &&
+    startsPage.includes('detail: "Starts under 2.0 innings stay out of ranked positions.",') &&
+    startsPage.includes("<RankedStartsArchiveNav") &&
+    startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{emptyStateCause ? (") &&
+    startsPage.includes("<SlateCounts") &&
+    startsPage.indexOf("<SlateCounts") < startsPage.indexOf("{emptyStateCause ? (") &&
+    startsPage.includes("const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);") &&
+    startsPage.includes("const emptyStateCause = resolveRankedStartsEmptyCause({") &&
+    !startsPage.includes("const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;") &&
+    !startsPage.includes("function emptyRankedStartsCopy") &&
+    !startsPage.includes("Follow today live") &&
+    !startsPage.includes("Show all starts") &&
     ctaArrow.includes('direction?: "back" | "forward";') &&
     ctaArrow.includes('data-cta-arrow-direction={direction}') &&
     ctaArrow.includes('direction="back"') &&
@@ -740,8 +759,9 @@ assert(
     ctaArrow.includes("whitespace-nowrap") &&
     !ctaArrow.includes("truncate") &&
     !startsPage.includes("Final gamefeed data has not settled for this date yet.") &&
-    !startsPage.includes("No completed starts ready"),
-  "ranked starts empty state must keep shell navigation/status visible, use helpful CTAs, and avoid pipeline vocabulary",
+    !startsPage.includes("No completed starts ready") &&
+    rankedLiveNoneSettledUpcoming === 30,
+  "ranked starts empty state must route live-none-settled, filter-zero, off-day, and fully-settled short-only causes through one component with useful actions",
 );
 
 assert(

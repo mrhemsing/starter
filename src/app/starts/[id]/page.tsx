@@ -231,8 +231,13 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
     });
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
-  const showLiveEmptyCta = completionState.liveStarts > 0 || completionState.warmingStarts > 0;
   const statusLabel = completionStatusLabel(completionState, slateProgress);
+  const emptyStateCause = resolveRankedStartsEmptyCause({
+    completionState,
+    slateProgress,
+    qualifiedStartsCount: qualifiedStarts.length,
+    visibleStartsCount: visibleStarts.length,
+  });
   const startOfDayHero = date < today && (completionState.isFinal || slateProgress.state === "all-starts-complete") && qualifiedStarts[0]
     ? await resolveArchivedStartOfDayHero(qualifiedStarts[0], qualifiedStarts.length)
     : null;
@@ -306,25 +311,19 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           </section>
         </header>
 
-        {starts.length === 0 ? (
-          <section className="rounded border border-white/10 bg-[#101014] p-6" role="status" data-responsive-check="ranked-starts-empty-state">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Ranked starts</p>
-            <p className="mt-3 text-sm text-zinc-400">{emptyRankedStartsCopy(completionState)}</p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {previousRankedDate ? (
-                <CtaArrow href={rankedStartsPath(previousRankedDate)} direction="back" tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
-                  Yesterday&apos;s slate
-                </CtaArrow>
-              ) : null}
-              {showLiveEmptyCta ? (
-                <CtaArrow href={liveDateHref(date)} tone="orange" className="bg-orange-300/10 hover:bg-orange-300 hover:text-zinc-950">
-                  Follow today live
-                </CtaArrow>
-              ) : null}
-            </div>
-          </section>
-        ) : (
-          <>
+        <>
+          {emptyStateCause ? (
+            <RankedStartsEmptyState
+              cause={emptyStateCause}
+              completionState={completionState}
+              settledStartsCount={starts.length}
+              date={date}
+              clearFilterHref={rankedStartsHref(date, { sort, showOpeners })}
+              previousRankedDate={previousRankedDate}
+            />
+          ) : null}
+          {starts.length > 0 ? (
+            <>
             {startOfDayHero ? (
               <section className="mb-6" data-responsive-check="ranked-starts-archived-hero">
                 <TopPerformerCard {...startOfDayHero} />
@@ -352,13 +351,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   </div>
                 ))}
               </section>
-            ) : (
-              <section className="mt-4 rounded border border-white/10 bg-[#101014] p-6" role="status" data-responsive-check="ranked-starts-empty-band">
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">No starts in this band</p>
-                <p className="mt-3 text-sm text-zinc-400">Try another GS+ quality band or return to all starts for this slate.</p>
-                <ControlLink active={false} href={rankedStartsHref(date, { sort, showOpeners })}>Show all starts</ControlLink>
-              </section>
-            )}
+            ) : null}
             {shortStarts.length > 0 ? (
               <section className="mt-6 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="ranked-starts-openers" data-openers-visible={showOpeners ? "true" : "false"}>
                 <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center">
@@ -379,11 +372,129 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                 ) : null}
               </section>
             ) : null}
-          </>
-        )}
+            </>
+          ) : null}
+        </>
       </div>
     </main>
   );
+}
+
+type RankedStartsEmptyCause = "live-none-settled" | "filter-zero" | "off-day" | "settled-zero-rankable";
+
+function resolveRankedStartsEmptyCause({
+  completionState,
+  slateProgress,
+  qualifiedStartsCount,
+  visibleStartsCount,
+}: {
+  completionState: {
+    completedStarts: number;
+    totalStarts: number;
+    totalGames: number;
+    liveStarts: number;
+    warmingStarts: number;
+    isFinal: boolean;
+  };
+  slateProgress: SlateProgressState;
+  qualifiedStartsCount: number;
+  visibleStartsCount: number;
+}): RankedStartsEmptyCause | null {
+  if (completionState.totalGames === 0 && completionState.totalStarts === 0) return "off-day";
+  if (qualifiedStartsCount === 0 && (completionState.isFinal || slateProgress.state === "all-starts-complete")) return "settled-zero-rankable";
+  if (qualifiedStartsCount === 0 && completionState.totalStarts > 0) return "live-none-settled";
+  if (qualifiedStartsCount > 0 && visibleStartsCount === 0) return "filter-zero";
+  return null;
+}
+
+function RankedStartsEmptyState({
+  cause,
+  completionState,
+  settledStartsCount,
+  date,
+  clearFilterHref,
+  previousRankedDate,
+}: {
+  cause: RankedStartsEmptyCause;
+  completionState: {
+    completedStarts: number;
+    totalStarts: number;
+    totalGames: number;
+    liveStarts: number;
+    warmingStarts: number;
+  };
+  settledStartsCount: number;
+  date: string;
+  clearFilterHref: string;
+  previousRankedDate: string | null;
+}) {
+  const copy = rankedStartsEmptyStateCopy(cause, completionState, settledStartsCount);
+
+  return (
+    <section
+      className="rounded border border-white/10 bg-[#101014] p-6"
+      role="status"
+      data-responsive-check="ranked-starts-empty-state"
+      data-ranked-empty-cause={cause}
+    >
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">Ranked starts</p>
+      <p className="mt-3 font-serif text-2xl font-bold text-zinc-50">{copy.title}</p>
+      <p className="mt-2 text-sm text-zinc-400">{copy.detail}</p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        {cause === "live-none-settled" ? (
+          <CtaArrow href={liveDateHref(date)} tone="orange" className="bg-orange-300/10 hover:bg-orange-300 hover:text-zinc-950">
+            Live scoreboard
+          </CtaArrow>
+        ) : null}
+        {cause === "filter-zero" ? (
+          <FastFilterLink className="inline-flex min-h-11 items-center rounded border border-white/10 bg-[#101014] px-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300 hover:border-amber-300 hover:text-amber-300" href={clearFilterHref}>
+            Clear filter
+          </FastFilterLink>
+        ) : null}
+        {cause === "off-day" ? (
+          <CtaArrow href={upcomingDateHref(date)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+            Upcoming
+          </CtaArrow>
+        ) : null}
+        {cause === "settled-zero-rankable" && previousRankedDate ? (
+          <CtaArrow href={rankedStartsPath(previousRankedDate)} direction="back" tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+            Previous slate
+          </CtaArrow>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function rankedStartsEmptyStateCopy(cause: RankedStartsEmptyCause, state: { completedStarts: number; totalStarts: number; liveStarts: number; warmingStarts: number }, settledStartsCount: number) {
+  if (cause === "live-none-settled") {
+    const settled = Math.max(0, state.completedStarts, settledStartsCount);
+    const inFlight = Math.max(0, state.liveStarts + state.warmingStarts);
+    const upcoming = Math.max(0, state.totalStarts - settled - inFlight);
+    return {
+      title: "Rankings post as starts go final.",
+      detail: `${settled} of ${state.totalStarts} in so far, ${upcoming} still to come.`,
+    };
+  }
+
+  if (cause === "filter-zero") {
+    return {
+      title: "No starts in this band.",
+      detail: "Try another band or clear the filter.",
+    };
+  }
+
+  if (cause === "off-day") {
+    return {
+      title: "No games scheduled.",
+      detail: "Check upcoming matchups.",
+    };
+  }
+
+  return {
+    title: "No qualifying starts on this slate.",
+    detail: "Starts under 2.0 innings stay out of ranked positions.",
+  };
 }
 
 function BandHeader({ label, count, color }: { label: string; count: number; color: string }) {
@@ -1175,11 +1286,6 @@ function inProgressStartsLabel(state: { completedStarts: number; liveStarts: num
   const upcomingStarts = Math.max(0, state.totalStarts - finalStarts - liveStarts);
   const upcomingSegment = upcomingStarts > 0 ? ` · ${upcomingStarts} UPCOMING` : "";
   return `${finalStarts} FINAL · ${liveStarts} IN PROGRESS${upcomingSegment}`;
-}
-
-function emptyRankedStartsCopy(state: { liveStarts: number }) {
-  if (state.liveStarts > 0) return `No starts have gone final yet. ${state.liveStarts} in progress now.`;
-  return "No starts have gone final yet today.";
 }
 
 function formatRankedFirstPitch(value: string | null) {
