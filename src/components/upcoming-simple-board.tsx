@@ -143,7 +143,7 @@ function SimpleStarter({
 
   return (
     <div
-      className={`relative z-10 min-w-0 overflow-hidden rounded-lg border bg-black/20 lg:rounded-none lg:border-0 lg:[background:var(--simple-starter-panel-gradient)] ${align === "home" ? "text-right" : ""}`}
+      className={`relative z-10 min-w-0 overflow-hidden rounded-lg border [background:var(--simple-starter-panel-gradient)] lg:rounded-none lg:border-0 ${align === "home" ? "text-right" : ""}`}
       style={{ borderColor: `${panelColor}CC`, "--simple-starter-panel-gradient": simpleStarterPanelGradient(panelColor, align) } as CSSProperties}
       data-upcoming-simple-starter={starter.side}
       data-simple-starter-frame
@@ -157,15 +157,21 @@ function SimpleStarter({
       </div>
       <div
         className="px-2 py-2 lg:relative lg:z-10 lg:mt-[112px] lg:min-h-[72px] lg:px-3 lg:py-2.5"
-        style={{ background: simpleNameplateGradient(panelColor, align) }}
+        style={{ background: simpleNameplateGradient(teamColor, align) }}
         data-simple-starter-nameplate
+        data-simple-starter-nameplate-source="team-color"
       >
         <p className="whitespace-normal break-words text-sm font-semibold leading-[1.04] text-white sm:text-base" data-simple-starter-name>
           <PitcherNameLines name={name} />
         </p>
         <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
       </div>
-      <div className="px-2 pb-2 pt-2 lg:relative lg:z-10 lg:px-3" data-simple-starter-card-back>
+      <div
+        className="px-2 pb-2 pt-2 lg:relative lg:z-10 lg:px-3"
+        style={{ background: simpleStarterCardBackGradient(panelColor, align) }}
+        data-simple-starter-card-back
+        data-simple-starter-card-back-source="heat-band"
+      >
         <p
           className="inline-flex rounded border px-1.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
           style={formChipStyle(starter, formBand)}
@@ -257,7 +263,12 @@ function simpleStarterPanelGradient(panelColor: string, align: "away" | "home") 
 
 function simpleNameplateGradient(panelColor: string, align: "away" | "home") {
   const direction = align === "home" ? "225deg" : "135deg";
-  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.92)}, rgba(12,12,16,0.92))`;
+  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.94)}, ${hexToRgba(panelColor, 0.66)} 54%, rgba(10,10,13,0.92))`;
+}
+
+function simpleStarterCardBackGradient(panelColor: string, align: "away" | "home") {
+  const direction = align === "home" ? "225deg" : "135deg";
+  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.62)}, ${hexToRgba(panelColor, 0.32)} 58%, rgba(8,8,12,0.70))`;
 }
 
 function hexToRgba(hex: string, alpha: number) {
