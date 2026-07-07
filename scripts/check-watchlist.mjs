@@ -146,10 +146,14 @@ assert(
     headlineServiceSource.includes("fetchMsnArticleMetadata(url)") &&
     headlineServiceSource.includes("publishedDateTime") &&
     headlineServiceSource.includes("sourceHref") &&
-    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 2;") &&
+    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 3;") &&
+    headlineServiceSource.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
+    headlineServiceSource.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
+    headlineServiceSource.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&
+    headlineServiceSource.includes("containsTokenPhrase(headlineTokens, normalizedTokens(other.name))") &&
     headlineServiceSource.includes("truncateHeadline") &&
     !/\bdescription\b|\bsummary\b|\bexcerpt\b|\brotowire\b/i.test(headlineServiceSource),
-  "headline ingest must allowlist headline/source/url/published fields, resolve Google News syndication to publisher metadata dates, and never store snippets, summaries, excerpts, or rotowire text",
+  "headline ingest must allowlist headline/source/url/published fields, resolve Google News syndication to publisher metadata dates, require token-level pitcher relevance, and never store snippets, summaries, excerpts, or rotowire text",
 );
 assert(
   watchlistPageSource.includes("event.headline?.url") &&

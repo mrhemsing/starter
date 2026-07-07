@@ -337,8 +337,12 @@ assert(
     headlineService.includes("fetchPublisherArticleMetadata(publisherUrl)") &&
     headlineService.includes("publishedDateTime") &&
     headlineService.includes("sourceHref") &&
-    headlineService.includes("const HEADLINE_STATE_VERSION = 2;"),
-  "pitcher profile Wire must fetch related articles on demand from headline APIs, resolve syndicated Google News items to publisher dates, reuse stored events, and dedupe duplicate stories before render",
+    headlineService.includes("const HEADLINE_STATE_VERSION = 3;") &&
+    headlineService.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
+    headlineService.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
+    headlineService.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&
+    headlineService.includes("containsTokenPhrase(headlineTokens, normalizedTokens(other.name))"),
+  "pitcher profile Wire must fetch related articles on demand from headline APIs, resolve syndicated Google News items to publisher dates, require token-level pitcher relevance, reuse stored events, and dedupe duplicate stories before render",
 );
 
 assert(

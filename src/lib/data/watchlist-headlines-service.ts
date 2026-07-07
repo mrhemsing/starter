@@ -26,7 +26,7 @@ type StoredHeadline = {
 };
 
 type PitcherHeadlineState = {
-  version: 2;
+  version: 3;
   pitcherId: string;
   updatedAt: string;
   headlines: StoredHeadline[];
@@ -59,7 +59,7 @@ export type WatchlistHeadlineIngestResult = {
   sources: Array<{ source: WatchlistHeadlineSource; enabled: boolean; skippedByBreaker: boolean }>;
 };
 
-const HEADLINE_STATE_VERSION = 2;
+const HEADLINE_STATE_VERSION = 3;
 const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
 const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
@@ -253,14 +253,15 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
   const publishedAt = normalizePublishedAt(candidate.publishedAt);
   if (!headline || !url || !publishedAt) return null;
 
-  const normalizedHeadline = normalizeText(headline);
+  const headlineTokens = new Set(normalizedTokens(headline));
+  const pitcherTokens = normalizedTokens(pitcher.name);
   const surname = lastName(pitcher.name);
-  if (!normalizedHeadline.includes(normalizeText(surname))) return null;
-  if (candidate.sourceType === "google-news" && !normalizedHeadline.includes(normalizeText(pitcher.name)) && !normalizedHeadline.includes(normalizeText(teamNickname(pitcher.team)))) return null;
+  if (!headlineTokens.has(normalizeText(surname))) return null;
+  if (candidate.sourceType === "google-news" && !containsTokenPhrase(headlineTokens, pitcherTokens) && !containsTokenPhrase(headlineTokens, normalizedTokens(teamNickname(pitcher.team)))) return null;
 
   for (const other of allPitchers) {
     if (other.pitcherId === pitcher.pitcherId) continue;
-    if (normalizedHeadline.includes(normalizeText(other.name)) && !normalizedHeadline.includes(normalizeText(pitcher.name))) return null;
+    if (containsTokenPhrase(headlineTokens, normalizedTokens(other.name)) && !containsTokenPhrase(headlineTokens, pitcherTokens)) return null;
   }
 
   return {
@@ -842,6 +843,14 @@ function lastName(name: string) {
 
 function slugify(value: string) {
   return normalizeText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function containsTokenPhrase(tokens: Set<string>, phraseTokens: string[]) {
+  return phraseTokens.length > 0 && phraseTokens.every((token) => tokens.has(token));
+}
+
+function normalizedTokens(value: string) {
+  return normalizeText(value).split(" ").filter(Boolean);
 }
 
 function normalizeText(value: string) {
