@@ -18,6 +18,7 @@ const pitcherProfileScrollReset = await readFile("src/components/pitcher-profile
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
+const headlineService = await readFile("src/lib/data/watchlist-headlines-service.ts", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
@@ -278,7 +279,7 @@ assert(
     pitcherFormPage.includes("const pitcherPromise = getPitcherApiResponse(id);") &&
     pitcherFormPage.includes("const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);") &&
     pitcherFormPage.includes("const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);") &&
-    pitcherFormPage.includes("const wireEventsPromise = readWatchlistHeadlineEvents([summary.pitcherId]);") &&
+    pitcherFormPage.includes("const wireEventsPromise = readOrFetchPitcherHeadlineEvents([summary]);") &&
     pitcherFormPage.includes("const followedIdsPromise = getWatchlistPitcherIds(accountId);"),
   "pitcher profile must start slower profile, recent-start, next-start, Wire, and watchlist reads without serializing them",
 );
@@ -298,7 +299,7 @@ assert(
 );
 
 assert(
-  pitcherFormPage.includes('import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";') &&
+  pitcherFormPage.includes('import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";') &&
     pitcherFormPage.includes("sortWatchlistWireEvents") &&
     pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} />") &&
     pitcherFormPage.includes("if (events.length === 0) return null;") &&
@@ -308,7 +309,22 @@ assert(
     pitcherFormPage.includes('rel="noopener"') &&
     pitcherFormPage.includes("event.headline.source") &&
     pitcherFormPage.includes("relativeEventTime(event.headline.publishedAt)"),
-  "pitcher profile must render a pitcher-specific Wire section only when stored headline events exist, newest first, with external source attribution",
+  "pitcher profile must render a pitcher-specific Wire section only when API-backed headline events exist, newest first, with external source attribution",
+);
+
+assert(
+  headlineService.includes("export async function readOrFetchPitcherHeadlineEvents(pitchers: FormSummary[])") &&
+    headlineService.includes("const events = await readWatchlistHeadlineEvents(pitchers.map((pitcher) => pitcher.pitcherId));") &&
+    headlineService.includes("const missingPitchers = pitchers.filter((pitcher) => !events.has(pitcher.pitcherId));") &&
+    headlineService.includes("const adapters = await activeAdapters();") &&
+    headlineService.includes("await adapter.fetch(pitcher)") &&
+    headlineService.includes("filterHeadlineCandidate(candidate, pitcher, allPitchers)") &&
+    headlineService.includes("appendHeadline(filtered)") &&
+    headlineService.includes("return readWatchlistHeadlineEvents(pitchers.map((pitcher) => pitcher.pitcherId));") &&
+    headlineService.includes("collapseHeadlineClusters(state.headlines)") &&
+    headlineService.includes("sameHeadlineCluster(existing.headline, candidate.headline)") &&
+    headlineService.includes("headlineFetchAttemptKey(pitcher.pitcherId)"),
+  "pitcher profile Wire must fetch related articles on demand from headline APIs, reuse stored events, and dedupe duplicate stories before render",
 );
 
 assert(

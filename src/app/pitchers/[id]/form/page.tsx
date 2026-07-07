@@ -15,7 +15,7 @@ import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
-import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
+import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds, sortWatchlistWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
@@ -94,7 +94,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   const pitcherPromise = getPitcherApiResponse(id);
   const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);
   const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);
-  const wireEventsPromise = readWatchlistHeadlineEvents([summary.pitcherId]);
+  const wireEventsPromise = readOrFetchPitcherHeadlineEvents([summary]);
   const followedIds = await followedIdsPromise;
   const jsonLd = jsonLdForPitcherForm(form);
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);

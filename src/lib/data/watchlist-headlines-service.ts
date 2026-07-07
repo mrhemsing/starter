@@ -65,6 +65,7 @@ const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
 const HEADLINE_PRIORITY = 35;
 const NEWS_RSS_TIMEOUT_MS = 8000;
+const PROFILE_HEADLINE_FETCH_RETRY_MS = 30 * 60 * 1000;
 const DEFAULT_USER_AGENT = "ToeTheSlab/1.0 watchlist-headlines";
 
 export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise<Map<string, WatchlistWireEvent[]>> {
@@ -82,6 +83,38 @@ export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise
   }
 
   return events;
+}
+
+export async function readOrFetchPitcherHeadlineEvents(pitchers: FormSummary[]): Promise<Map<string, WatchlistWireEvent[]>> {
+  const events = await readWatchlistHeadlineEvents(pitchers.map((pitcher) => pitcher.pitcherId));
+  const missingPitchers = pitchers.filter((pitcher) => !events.has(pitcher.pitcherId));
+  if (missingPitchers.length === 0) return events;
+
+  const leaderboard = await getFormLeaderboard({ qualifiedOnly: false });
+  const allPitchers = leaderboard.pitchers;
+  const adapters = await activeAdapters();
+
+  await Promise.all(missingPitchers.map(async (pitcher) => {
+    const cachedAttempt = await readRuntimeState<{ checkedAt: string }>(headlineFetchAttemptKey(pitcher.pitcherId));
+    if (cachedAttempt && Date.now() - Date.parse(cachedAttempt.checkedAt) < PROFILE_HEADLINE_FETCH_RETRY_MS) return;
+    await writeRuntimeState(headlineFetchAttemptKey(pitcher.pitcherId), { checkedAt: new Date().toISOString() });
+
+    for (const adapter of adapters) {
+      if (await isSourceBreakerOpen(adapter.source)) continue;
+      try {
+        const candidates = await adapter.fetch(pitcher);
+        for (const candidate of candidates) {
+          const filtered = filterHeadlineCandidate(candidate, pitcher, allPitchers);
+          if (filtered) await appendHeadline(filtered);
+        }
+      } catch (error) {
+        await openSourceBreaker(adapter.source, error instanceof Error ? error.message : "schema drift");
+        console.warn("[watchlist-headlines] profile source breaker opened", { source: adapter.source, reason: error instanceof Error ? error.message : "unknown" });
+      }
+    }
+  }));
+
+  return readWatchlistHeadlineEvents(pitchers.map((pitcher) => pitcher.pitcherId));
 }
 
 export async function ingestWatchlistHeadlines(): Promise<WatchlistHeadlineIngestResult> {
@@ -604,6 +637,10 @@ function stableHeadlineId(candidate: HeadlineCandidate) {
 
 function headlineStateKey(pitcherId: string) {
   return `watchlist-headlines:${pitcherId}`;
+}
+
+function headlineFetchAttemptKey(pitcherId: string) {
+  return `watchlist-headline-fetch:${pitcherId}`;
 }
 
 function breakerStateKey(source: WatchlistHeadlineSource) {
