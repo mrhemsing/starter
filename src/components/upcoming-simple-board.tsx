@@ -182,13 +182,13 @@ function SimpleStarter({
         data-simple-starter-card-back-color={panelColor}
       >
         <p
-          className="inline-flex rounded border px-1.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+          className="inline-flex flex-col items-center justify-center rounded border px-1.5 py-1 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)] sm:flex-row sm:gap-1"
           style={formChipStyle(starter, formBand)}
           data-simple-form-chip
           data-form-band={formBand ?? starter.formStatus}
           data-simple-form-chip-color={heatColor}
         >
-          {simpleFormChipLabel(starter, formBand)}
+          <SimpleFormChipLabel starter={starter} formBand={formBand} />
         </p>
         <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400 lg:text-white" data-simple-mini-stat-line>
           {miniStatLine(starter)}
@@ -330,11 +330,17 @@ function heatBandLabel(band: FormTier) {
   return HEAT_BANDS.find((candidate) => candidate.key === band)?.label ?? "Form";
 }
 
-function simpleFormChipLabel(starter: TonightStarter, formBand: FormTier | null) {
-  if (starter.status === "tbd") return "TBD";
-  if (starter.formStatus === "mlb_debut") return "MLB DEBUT";
-  if (formBand) return `${heatBandLabel(formBand)} ${formatFormValue(starter, formBand)}`;
-  return `Form ${formatFormValue(starter, formBand)}`;
+function SimpleFormChipLabel({ starter, formBand }: { starter: TonightStarter; formBand: FormTier | null }) {
+  if (starter.status === "tbd") return <span className="whitespace-nowrap">TBD</span>;
+  if (starter.formStatus === "mlb_debut") return <span className="whitespace-nowrap">MLB DEBUT</span>;
+  const label = formBand ? heatBandLabel(formBand) : "Form";
+  const value = formatFormValue(starter, formBand);
+  return (
+    <>
+      <span className="whitespace-nowrap">{label}</span>
+      <span className="whitespace-nowrap">{value}</span>
+    </>
+  );
 }
 
 function starterHeatColor(starter: TonightStarter, band: FormTier | null) {
