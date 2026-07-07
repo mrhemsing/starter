@@ -228,7 +228,7 @@ export function UpcomingControls({
 
   return (
     <div
-      className="mt-3 flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto rounded-full border border-white/10 bg-[#101014]/75 p-2"
+      className="mt-3 flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1"
       data-responsive-check="upcoming-controls"
       data-slate-range={slateRange}
       data-control-key={controlsKey}

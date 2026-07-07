@@ -17,9 +17,9 @@ assert(page.includes('import { SegmentedControl } from "@/components/segmented-c
 assert(viewMode.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming VIEW must use the shared segmented-control primitive.");
 assert(page.includes('label="Sort"') && page.includes('{ value: "watch", label: "Watch rank"') && page.includes('{ value: "time", label: "Start time"'), "Upcoming SORT must render as WATCH RANK / START TIME segmented options.");
 assert(viewMode.includes('label="View"') && viewMode.includes('{ value: "detailed", label: "Detailed"') && viewMode.includes('{ value: "simple", label: "Simple"'), "Upcoming VIEW must render as DETAILED / SIMPLE segmented options.");
-assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("before:h-2 before:w-2 before:rounded-full"), "Segmented controls must render as modern radio-style buttons.");
+assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("before:h-1.5 before:w-1.5 before:rounded-full"), "Segmented controls must render as compact modern radio-style buttons.");
 assert(segmentedControl.includes('role="group"') && segmentedControl.includes("handleKeyDown") && segmentedControl.includes("ArrowLeft") && segmentedControl.includes("ArrowRight"), "Segmented controls must expose labeled group semantics and arrow-key movement.");
-assert(segmentedControl.includes("min-h-11"), "Segmented controls must keep touch targets at least 44px tall.");
+assert(segmentedControl.includes("h-8") && segmentedControl.includes("h-6"), "Segmented controls must stay compact for the mobile toolbar.");
 assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "SIMPLE"'), "Stored SIMPLE preference must restore simple view.");
 assert(viewMode.includes('window.localStorage.setItem(STORAGE_KEY, nextMode === "simple" ? "SIMPLE" : "DETAILED")'), "Toggle must persist SIMPLE/DETAILED values.");
 assert(viewMode.includes("try {") && countOccurrences(viewMode, "catch") >= 2, "localStorage reads and writes must be wrapped for blocked storage.");

@@ -64,8 +64,8 @@ export function SegmentedControl({
       data-segmented-control-storage-key={storageKey}
       onKeyDown={handleKeyDown}
     >
-      <div className="flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-2 py-1.5 shadow-inner shadow-black/20">
-        <p className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+      <div className="flex h-8 items-center gap-1 rounded-full border border-white/10 bg-black/30 px-1.5 shadow-inner shadow-black/20">
+        <p className="shrink-0 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-500">{label}</p>
         <span
           aria-hidden="true"
           className="segmented-control-indicator sr-only"
@@ -119,7 +119,7 @@ export function SegmentedControl({
 
 function segmentedOptionClass(active: boolean, hasDivider: boolean) {
   return [
-    "relative z-10 inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-2 before:w-2 before:rounded-full before:border before:content-[''] sm:min-h-10 sm:px-3 sm:text-[11px]",
+    "relative z-10 inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-full px-2 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.06em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-1.5 before:w-1.5 before:rounded-full before:border before:content-[''] sm:px-2.5 sm:text-[9px]",
     active ? "bg-amber-300 text-zinc-950 before:border-zinc-950 before:bg-zinc-950" : "text-zinc-300 hover:bg-white/[0.04] hover:text-zinc-50 before:border-white/25 before:bg-transparent",
     hasDivider ? "" : "",
   ].filter(Boolean).join(" ");
