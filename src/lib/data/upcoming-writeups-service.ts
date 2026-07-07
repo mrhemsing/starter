@@ -76,7 +76,7 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 3;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 7;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 8;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -141,7 +141,7 @@ async function generateOneUpcomingWriteupWithRetries(apiKey: string, input: Upco
     const generated = await generateOneUpcomingWriteup(apiKey, input, game, leagueMeanGS, attempt);
     if (generated) return generated;
   }
-  return null;
+  return generateFallbackRewrite(apiKey, input, game, leagueMeanGS);
 }
 
 async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number, attempt: number) {
@@ -163,6 +163,43 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
         {
           role: "user",
           content: JSON.stringify({ ...input, attempt }),
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(MAX_GENERATION_MS),
+  });
+  if (!response.ok) return null;
+  const payload = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> };
+  const text = normalizeGeneratedSentence(extractResponseText(payload));
+  if (!text || !validateGeneratedUpcomingText(text, input, game, leagueMeanGS)) return null;
+  return text;
+}
+
+async function generateFallbackRewrite(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: UPCOMING_WRITEUPS_MODEL,
+      temperature: 0.15,
+      max_output_tokens: 70,
+      input: [
+        {
+          role: "system",
+          content: "Rewrite deterministicFallback as one natural matchup sentence. Under 22 words. No em dash. No new facts or numbers. Keep the same supported claim. If needed, return deterministicFallback exactly.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            gamePk: input.gamePk,
+            matchup: input.matchup,
+            archetype: input.archetype,
+            deterministicFallback: input.deterministicFallback,
+            starters: input.starters.map((starter) => ({ name: starter.name, team: starter.team, band: starter.band, form: starter.form })),
+          }),
         },
       ],
     }),
