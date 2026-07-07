@@ -337,7 +337,7 @@ assert(
     headlineService.includes("fetchPublisherArticleMetadata(publisherUrl)") &&
     headlineService.includes("publishedDateTime") &&
     headlineService.includes("sourceHref") &&
-    headlineService.includes("const HEADLINE_STATE_VERSION = 3;") &&
+    headlineService.includes("const HEADLINE_STATE_VERSION = 4;") &&
     headlineService.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
     headlineService.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
     headlineService.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&

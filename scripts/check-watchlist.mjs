@@ -114,6 +114,8 @@ assert(
     headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
     headlineServiceSource.includes("HEADLINE_SOURCE_SUFFIX_PATTERN") &&
     headlineServiceSource.includes("stripSourceSuffix(headline.headline, headline.source)") &&
+    headlineServiceSource.includes("mlb news") &&
+    headlineServiceSource.includes("rotoballer") &&
     headlineServiceSource.includes("HEADLINE_TOPIC_STOP_WORDS"),
   "watchlist headline events must collapse same-topic clusters and strip duplicated source suffixes before storage and render",
 );
@@ -146,7 +148,7 @@ assert(
     headlineServiceSource.includes("fetchMsnArticleMetadata(url)") &&
     headlineServiceSource.includes("publishedDateTime") &&
     headlineServiceSource.includes("sourceHref") &&
-    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 3;") &&
+    headlineServiceSource.includes("const HEADLINE_STATE_VERSION = 4;") &&
     headlineServiceSource.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
     headlineServiceSource.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
     headlineServiceSource.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&

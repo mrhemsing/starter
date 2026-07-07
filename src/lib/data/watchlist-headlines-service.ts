@@ -26,7 +26,7 @@ type StoredHeadline = {
 };
 
 type PitcherHeadlineState = {
-  version: 3;
+  version: 4;
   pitcherId: string;
   updatedAt: string;
   headlines: StoredHeadline[];
@@ -59,7 +59,7 @@ export type WatchlistHeadlineIngestResult = {
   sources: Array<{ source: WatchlistHeadlineSource; enabled: boolean; skippedByBreaker: boolean }>;
 };
 
-const HEADLINE_STATE_VERSION = 3;
+const HEADLINE_STATE_VERSION = 4;
 const HEADLINE_EXPIRY_MS = 72 * 60 * 60 * 1000;
 const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;
 const HEADLINE_MAX_LENGTH = 120;
@@ -734,7 +734,7 @@ const HEADLINE_TOPIC_STOP_WORDS = new Set([
   "with",
 ]);
 
-const HEADLINE_SOURCE_SUFFIX_PATTERN = /\s+-\s+(?:espn|fantasypros|google news|jays journal|mlb trade rumors|msn|roundtable\.io|sportsnet(?:\.ca)?|toronto star|yahoo sports)\s*$/i;
+const HEADLINE_SOURCE_SUFFIX_PATTERN = /\s+-\s+(?:espn|fantasypros|google news|jays journal|mlb(?:\.com)?|mlb news|mlb trade rumors|msn|newsweek|rotoballer|roundtable\.io|si(?:\.com)?|sports illustrated|sportsnet(?:\.ca)?|the athletic|toronto star|yahoo sports)\s*$/i;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
