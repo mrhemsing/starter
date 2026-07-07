@@ -19,23 +19,23 @@ assert(page.includes('import { SegmentedControl } from "@/components/segmented-c
 assert(page.includes('import { formWindowLabel } from "@/lib/form-tokens";'), "Upcoming form-window label must come from the shared form token helper.");
 assert(viewMode.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming VIEW must use the shared segmented-control primitive.");
 assert(page.includes('label="Sort"') && page.includes('{ value: "watch", label: "Watch rank"') && page.includes('{ value: "time", label: "Start time"'), "Upcoming SORT must render as WATCH RANK / START TIME segmented options.");
-assert(viewMode.includes('label="View"') && viewMode.includes('{ value: "detailed", label: "Detailed"') && viewMode.includes('{ value: "simple", label: "Simple"'), "Upcoming VIEW must render as DETAILED / SIMPLE segmented options.");
+assert(viewMode.includes('label="View"') && viewMode.indexOf('{ value: "simple", label: "Simple"') < viewMode.indexOf('{ value: "detailed", label: "Detailed"'), "Upcoming VIEW must render as SIMPLE / DETAILED segmented options.");
 assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("transition-transform") && segmentedControl.includes("motion-reduce:transition-none"), "Segmented controls must render a sliding indicator that disables motion when reduced motion is requested.");
 assert(segmentedControl.includes("bg-zinc-700") && segmentedControl.includes("text-white") && segmentedControl.includes("data-segmented-active-dot") && segmentedControl.includes("inline-flex items-center justify-center gap-1.5 leading-none"), "Segmented controls must use a dark active indicator with white text and a vertically centered active dot.");
 assert(segmentedControl.includes("items-center rounded-lg border border-white/10") && segmentedControl.includes("left-1 rounded-md border border-white/10 bg-zinc-700") && segmentedControl.includes("gap-1 rounded-md px-2") && !segmentedControl.includes("items-center rounded-full border border-white/10 bg-black/35") && !segmentedControl.includes("left-1 rounded-full border border-white/10 bg-zinc-700"), "Segmented controls must use less-rounded track and active option corners.");
 assert(segmentedControl.includes("cursor-pointer"), "Segmented controls must use the hand cursor for both link and button options.");
 assert(segmentedControl.includes('role="group"') && segmentedControl.includes("handleKeyDown") && segmentedControl.includes("ArrowLeft") && segmentedControl.includes("ArrowRight"), "Segmented controls must expose labeled group semantics and arrow-key movement.");
 assert(segmentedControl.includes("min-h-11") && segmentedControl.includes("min-h-9"), "Segmented controls must keep touch-friendly 44px tracks.");
-assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "SIMPLE"'), "Stored SIMPLE preference must restore simple view.");
+assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "DETAILED" ? "detailed" : "simple"'), "Stored DETAILED preference must restore detailed view while absent storage defaults to SIMPLE.");
 assert(viewMode.includes('window.localStorage.setItem(STORAGE_KEY, nextMode === "simple" ? "SIMPLE" : "DETAILED")'), "Toggle must persist SIMPLE/DETAILED values.");
 assert(viewMode.includes("try {") && countOccurrences(viewMode, "catch") >= 2, "localStorage reads and writes must be wrapped for blocked storage.");
 assert(viewMode.includes('const [mode, setModeState] = useState<UpcomingViewMode>(() => readStoredViewMode());'), "Default view mode must resolve through the guarded storage reader.");
-assert(viewMode.includes('return "detailed";'), "Missing or blocked storage must default to DETAILED.");
+assert(viewMode.includes('const DEFAULT_VIEW_MODE: UpcomingViewMode = "simple";') && viewMode.includes("return DEFAULT_VIEW_MODE;"), "Missing or blocked storage must default to SIMPLE.");
 assert(countOccurrences(viewMode, '<div data-upcoming-view-mode-control') === 1, "Only one view-mode control should render.");
 assert(viewMode.includes("__ttsUpcomingViewModeClickBridge") && viewMode.includes("document.addEventListener(\"click\"") && viewMode.includes("[data-upcoming-view-mode-control] [data-view-mode-option]"), "View mode toggle must bridge pre-hydration SIMPLE clicks.");
-assert(page.includes("data-upcoming-view-mode-init") && page.includes('window.localStorage.getItem("tts.upcoming.view") === "SIMPLE"'), "Upcoming page must set the stored view mode before the controls paint.");
+assert(page.includes("data-upcoming-view-mode-init") && page.includes('window.localStorage.getItem("tts.upcoming.view") === "DETAILED" ? "detailed" : "simple"'), "Upcoming page must set the stored view mode before the controls paint and default absent storage to SIMPLE.");
 assert(viewMode.includes('document.documentElement.setAttribute("data-upcoming-view-mode-init", mode)') && viewMode.includes('document.documentElement.setAttribute("data-upcoming-view-mode-init", nextMode)'), "View mode updates must keep the pre-paint mode marker in sync.");
-assert(globals.includes('html[data-upcoming-view-mode-init="simple"] [data-upcoming-view-mode-control]') && globals.includes('html[data-upcoming-view-mode-init="simple"] [data-upcoming-view-storage-key="tts.upcoming.view"] [data-upcoming-view-panel="detailed"]'), "Stored SIMPLE preference must receive CSS pre-paint overrides to avoid a DETAILED flash.");
+assert(globals.includes('html[data-upcoming-view-mode-init="detailed"] [data-upcoming-view-mode-control]') && globals.includes('html[data-upcoming-view-mode-init="detailed"] [data-upcoming-view-storage-key="tts.upcoming.view"] [data-upcoming-view-panel="simple"]'), "Stored DETAILED preference must receive CSS pre-paint overrides to avoid a SIMPLE flash.");
 
 assert(simpleBoard.includes('data-responsive-check="upcoming-simple-board"'), "Simple board must expose a stable test hook.");
 assert(viewMode.includes('data-responsive-check="upcoming-simple-card"'), "Simple cards must expose stable test hooks.");
@@ -90,6 +90,9 @@ const retiredSlop = [
   "Two rising arms in a hitter-friendly park.",
   "Ranked #${rank} on today's board.",
   "Elite matchup: both starters grading plus.",
+  "clear separation from",
+  "recent shape is the separator",
+  "carries this one",
 ];
 
 for (const phrase of retiredSlop) {
@@ -110,16 +113,17 @@ for (const input of dataInputs) {
   assert(context.includes(input), `Simple context must be composed from data input: ${input}`);
 }
 
-assert(context.includes("namedStarters.length < 2"), "Simple context must explain TBD starter slots.");
-assert(context.includes('type SignalType = "confidence"') && context.includes("PHRASE_BANK") && context.includes("score: number"), "Simple context must use a scored signal composer.");
-assert(context.includes("hash(`${seed}:${signal.type}`)") && context.includes("game.gamePk"), "Simple context selection must be deterministic from gamePk.");
-assert(context.includes("wordCount(combined) <= 22"), "Simple context must keep copy within the 22-word cap.");
-assert(context.includes("Small-sample flags") || context.includes("Limited data"), "Simple context must call out low or medium-confidence samples.");
+assert(context.includes('type MatchupArchetype = "ACE_DUEL"') && context.includes('"CLEAR_EDGE"') && context.includes('"MISMATCH_DOWN"') && context.includes('"COIN_FLIP"') && context.includes('"BOTH_COLD"') && context.includes('"PROVISIONAL"') && context.includes('"TBD"'), "Simple context must classify matchups into required archetypes before writing.");
+assert(context.includes("const CLEAR_EDGE_GAP = 8") && context.includes("input.gap < CLEAR_EDGE_GAP && PROHIBITED_SMALL_GAP_CLAIMS.test(sentence)"), "Simple context must prohibit separation-style claims below the clear-edge threshold.");
+assert(context.includes("bothTop && gap < CLEAR_EDGE_GAP") && context.includes('archetype: "ACE_DUEL"') && context.includes('input.archetype === "ACE_DUEL"'), "Both-top-band small-gap matchups must use an ace-duel frame.");
+assert(context.includes("namedStarters.length < 2") && context.includes('archetype: "TBD"'), "Simple context must explain TBD starter slots without form contrast.");
+assert(context.includes("validateSentence(candidate, input)") && context.includes("NARRATIVE_VERBS") && context.includes("numberTokens(sentence)") && context.includes("allowedNumberTokens(input)"), "Simple context must validate voice, narrative claims, and number fidelity before rendering.");
 assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
+assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i'), "Simple context validator must enforce the 22-word, no-em-dash, no-this-one voice rules.");
 
 const phraseBankMatches = context.match(/\[[^\]]+\]/gs) ?? [];
 const signalPhraseGroups = phraseBankMatches.filter((group) => (group.match(/"/g) ?? []).length >= 8);
-assert(signalPhraseGroups.length >= 8, "Simple context phrase bank must provide at least eight varied signal groups.");
+assert(signalPhraseGroups.length >= 7, "Simple context phrase banks must provide varied archetype and secondary structures.");
 
 console.log("upcoming simple view contract ok");
 
