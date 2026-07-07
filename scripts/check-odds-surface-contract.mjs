@@ -43,7 +43,7 @@ assert(
     oddsSnapshot.includes('readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date))') &&
     oddsSnapshot.includes("writeRuntimeState(oddsSnapshotStateKey(date), snapshot)") &&
     oddsSnapshot.includes('export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier"') &&
-    oddsSnapshot.includes('const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60)') &&
+    oddsSnapshot.includes('const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 6 * 60)') &&
     oddsSnapshot.includes('process.env.THE_BUMP_ODDS_SYNC_NEXT_DATE === "1"') &&
     oddsSnapshot.includes('const defaultUpcomingDate = await getDefaultUpcomingDate(today);') &&
     oddsSnapshot.includes("const dates = includeNextDate ? [today, defaultUpcomingDate, addDays(today, 1)] : [today, defaultUpcomingDate];") &&
@@ -54,8 +54,10 @@ assert(
     oddsSnapshot.includes("provider: diagnostics.provider") &&
     oddsSnapshot.includes("source: context.source") &&
     oddsSnapshot.includes("hasGameStarted(game)") &&
-    oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })"),
-  "odds snapshots must use runtime-state storage, document free-tier cadence, skip fresh snapshots, expose diagnostics, and freeze existing rows after first pitch",
+    oddsSnapshot.includes("nextGames.push({ ...previousGame, frozen: true })") &&
+    oddsSnapshot.includes("scheduledProbableStartersHaveStoredLines(game, previousGame)") &&
+    oddsSnapshot.includes("return requiredStarters.every((starter) => {"),
+  "odds snapshots must use runtime-state storage, document free-tier cadence, refresh partial starter-line snapshots, expose diagnostics, and freeze existing rows after first pitch",
 );
 
 assert(

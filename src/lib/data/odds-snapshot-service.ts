@@ -5,7 +5,7 @@ import type { MlbScheduleGame } from "@/lib/types";
 
 export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier";
 const ODDS_SNAPSHOT_VERSION = 1;
-const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 20 * 60);
+const ODDS_MIN_SYNC_INTERVAL_MINUTES = envPositiveInt("THE_BUMP_ODDS_MIN_SYNC_MINUTES", 6 * 60);
 
 type StoredLine = {
   name: string;
@@ -262,7 +262,21 @@ function isFreshEnoughSnapshot(snapshot: unknown, scheduleGames: MlbScheduleGame
   return pregameGames.length > 0 && pregameGames.every((game) => {
     const previousGame = snapshotGames.get(String(game.gamePk));
     if (!previousGame) return false;
-    return previousGame.starters.some((starter) => starter.strikeoutPropLine !== null);
+    return scheduledProbableStartersHaveStoredLines(game, previousGame);
+  });
+}
+
+function scheduledProbableStartersHaveStoredLines(game: MlbScheduleGame, previousGame: StoredGameSnapshot) {
+  const requiredStarters = [
+    { side: "away" as const, pitcherId: game.probableAwayPitcher?.id ?? null, name: game.probableAwayPitcher?.fullName ?? null },
+    { side: "home" as const, pitcherId: game.probableHomePitcher?.id ?? null, name: game.probableHomePitcher?.fullName ?? null },
+  ].filter((starter) => starter.pitcherId !== null || starter.name !== null);
+
+  if (requiredStarters.length === 0) return true;
+
+  return requiredStarters.every((starter) => {
+    const storedStarter = previousGame.starters.find((candidate) => candidate.side === starter.side);
+    return storedStarter?.strikeoutPropLine !== null && storedStarter?.strikeoutPropLine !== undefined;
   });
 }
 
