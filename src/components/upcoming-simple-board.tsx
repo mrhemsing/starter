@@ -169,8 +169,8 @@ function SimpleStarter({
         <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
       </div>
       <div
-        className="min-h-[68px] px-2 pb-2 pt-2 lg:relative lg:z-10 lg:min-h-[84px] lg:px-3"
-        style={{ background: simpleStarterHeatZoneGradient(panelColor, align, "bottom") }}
+        className="min-h-[68px] px-2 pb-2 pt-2 lg:relative lg:z-10 lg:min-h-[84px] lg:px-3 lg:[background:var(--simple-starter-card-back-bg)]"
+        style={{ "--simple-starter-card-back-bg": simpleStarterHeatZoneGradient(panelColor, align, "bottom") } as CSSProperties}
         data-simple-starter-card-back
         data-simple-starter-card-back-source="heat-band"
         data-simple-starter-card-back-color={panelColor}
