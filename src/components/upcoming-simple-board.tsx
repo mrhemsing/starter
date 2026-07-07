@@ -80,7 +80,7 @@ function UpcomingSimpleCard({
         data-simple-card-accent={watchTier.key}
       />
       <div
-        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-0"
+        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-3"
         data-simple-vs-composition
       >
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
@@ -96,7 +96,7 @@ function UpcomingSimpleCard({
           <p className={`${showRank ? "mt-1" : ""} rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-100 shadow-[0_2px_10px_rgba(0,0,0,0.45)]`} data-simple-vs-mark>VS</p>
           <p className="font-serif text-[2.35rem] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
           {confidenceLabel ? (
-            <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
+            <p className="mx-auto mt-2 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
               {confidenceLabel}
             </p>
           ) : null}
