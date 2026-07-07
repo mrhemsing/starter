@@ -143,23 +143,31 @@ function SimpleStarter({
 
   return (
     <div
-      className={`relative z-10 min-w-0 overflow-hidden rounded-lg border [background:var(--simple-starter-panel-gradient)] lg:rounded-none lg:border-0 ${align === "home" ? "text-right" : ""}`}
-      style={{ borderColor: `${panelColor}CC`, "--simple-starter-panel-gradient": simpleStarterPanelGradient(panelColor, align) } as CSSProperties}
+      className={`relative z-10 min-w-0 overflow-hidden rounded-lg border bg-[#09090d] lg:rounded-none lg:border-0 ${align === "home" ? "text-right" : ""}`}
+      style={{ borderColor: `${panelColor}CC` }}
       data-upcoming-simple-starter={starter.side}
       data-simple-starter-frame
       data-simple-starter-team-color={teamColor}
       data-simple-starter-heat-color={heatColor}
       data-simple-starter-panel-color={panelColor}
-      data-simple-starter-panel-source="heat-band"
+      data-simple-starter-panel-source="three-band"
     >
-      <div className={`flex justify-center bg-black/15 px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100%-18px)] lg:overflow-hidden lg:bg-transparent lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`} data-simple-portrait-bleed>
+      <div
+        className={`flex min-h-[96px] justify-center px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100%-18px)] lg:overflow-hidden lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`}
+        style={{ background: simpleStarterHeatZoneGradient(panelColor, align, "top") }}
+        data-simple-portrait-bleed
+        data-simple-starter-portrait-zone
+        data-simple-starter-portrait-zone-source="heat-band"
+        data-simple-starter-portrait-zone-color={panelColor}
+      >
         <StarterHeadshot starter={starter} formBand={formBand} />
       </div>
       <div
-        className="px-2 py-2 lg:relative lg:z-10 lg:mt-[112px] lg:min-h-[72px] lg:px-3 lg:py-2.5"
+        className="border-y border-white/20 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.38)] lg:relative lg:z-10 lg:mt-[112px] lg:min-h-[72px] lg:px-3 lg:py-2.5"
         style={{ background: simpleNameplateGradient(teamColor, align) }}
         data-simple-starter-nameplate
         data-simple-starter-nameplate-source="team-color"
+        data-simple-starter-nameplate-color={teamColor}
       >
         <p className="whitespace-normal break-words text-sm font-semibold leading-[1.04] text-white sm:text-base" data-simple-starter-name>
           <PitcherNameLines name={name} />
@@ -167,10 +175,11 @@ function SimpleStarter({
         <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
       </div>
       <div
-        className="px-2 pb-2 pt-2 lg:relative lg:z-10 lg:px-3"
-        style={{ background: simpleStarterCardBackGradient(panelColor, align) }}
+        className="min-h-[68px] px-2 pb-2 pt-2 lg:relative lg:z-10 lg:min-h-[84px] lg:px-3"
+        style={{ background: simpleStarterHeatZoneGradient(panelColor, align, "bottom") }}
         data-simple-starter-card-back
         data-simple-starter-card-back-source="heat-band"
+        data-simple-starter-card-back-color={panelColor}
       >
         <p
           className="inline-flex rounded border px-1.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
@@ -255,20 +264,16 @@ function simpleVsGradient(awayPanelColor: string, homePanelColor: string) {
   return `linear-gradient(90deg, ${hexToRgba(awayPanelColor, 0.52)} 0%, ${hexToRgba(awayPanelColor, 0.36)} 43%, rgba(12,12,16,0.72) 49%, rgba(12,12,16,0.72) 51%, ${hexToRgba(homePanelColor, 0.36)} 57%, ${hexToRgba(homePanelColor, 0.52)} 100%)`;
 }
 
-function simpleStarterPanelGradient(panelColor: string, align: "away" | "home") {
-  const direction = align === "home" ? "225deg" : "135deg";
-  const centerStop = align === "home" ? 52 : 48;
-  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.52)}, rgba(8,8,12,0.30) ${centerStop}%, ${hexToRgba(panelColor, 0.26)})`;
-}
-
 function simpleNameplateGradient(panelColor: string, align: "away" | "home") {
   const direction = align === "home" ? "225deg" : "135deg";
   return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.94)}, ${hexToRgba(panelColor, 0.66)} 54%, rgba(10,10,13,0.92))`;
 }
 
-function simpleStarterCardBackGradient(panelColor: string, align: "away" | "home") {
+function simpleStarterHeatZoneGradient(panelColor: string, align: "away" | "home", zone: "top" | "bottom") {
   const direction = align === "home" ? "225deg" : "135deg";
-  return `linear-gradient(${direction}, ${hexToRgba(panelColor, 0.62)}, ${hexToRgba(panelColor, 0.32)} 58%, rgba(8,8,12,0.70))`;
+  const strongAlpha = zone === "top" ? 0.62 : 0.72;
+  const softAlpha = zone === "top" ? 0.28 : 0.38;
+  return `linear-gradient(${direction}, ${hexToRgba(panelColor, strongAlpha)}, ${hexToRgba(panelColor, softAlpha)} 58%, rgba(8,8,12,0.72))`;
 }
 
 function hexToRgba(hex: string, alpha: number) {
