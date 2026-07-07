@@ -5,6 +5,8 @@ import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
+import { UpcomingSimpleBoard } from "@/components/upcoming-simple-board";
+import { UpcomingViewModePanels, UpcomingViewModeProvider, UpcomingViewModeToggle } from "@/components/upcoming-view-mode";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
@@ -79,48 +81,56 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   const jsonLd = jsonLdForUpcomingDay(visibleUpcoming);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-3 pb-3">
-          <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            One card per game, ranked by starter form and matchup context.
-          </p>
-          <p
-            className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500"
-            data-responsive-check="upcoming-slate-stamp"
-            data-slate-state={slateState.state}
-            aria-label={formatUpcomingSlateStampLabel(slateState, today)}
-          >
-            {formatUpcomingSlateStamp(slateState, today)}
-          </p>
-          <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
-          <UpcomingControls
-            controls={effectiveControls}
-            basePath={upcomingDateHref(resolvedDate)}
-            slateRange="day"
-            visibleGameCount={visibleUpcoming.games.length}
-            scheduledGameCount={upcoming.scheduledGames}
-            showStatusFilter={statusVaries}
-            statusSummary={statusSummary}
+    <UpcomingViewModeProvider>
+      <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+        <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-3 pb-3">
+            <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
+            <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+              One card per game, ranked by starter form and matchup context.
+            </p>
+            <p
+              className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500"
+              data-responsive-check="upcoming-slate-stamp"
+              data-slate-state={slateState.state}
+              aria-label={formatUpcomingSlateStampLabel(slateState, today)}
+            >
+              {formatUpcomingSlateStamp(slateState, today)}
+            </p>
+            <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} />
+            <UpcomingControls
+              controls={effectiveControls}
+              basePath={upcomingDateHref(resolvedDate)}
+              slateRange="day"
+              visibleGameCount={visibleUpcoming.games.length}
+              scheduledGameCount={upcoming.scheduledGames}
+              showStatusFilter={statusVaries}
+              statusSummary={statusSummary}
+              viewModeToggle={<UpcomingViewModeToggle />}
+            />
+          </header>
+        </div>
+        <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
+          <UpcomingViewModePanels
+            detailed={(
+              <TonightsMustWatch
+                tonight={visibleUpcoming}
+                fullSlateHref={upcomingWeekHref(resolvedDate)}
+                fullSlateLabel="Week view"
+                fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
+                eyebrow={formatUpcomingSectionDate(resolvedDate)}
+                title="Matchup Board"
+                rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
+                compactTopPadding
+              />
+            )}
+            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} />}
           />
-        </header>
-      </div>
-      <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
-        <TonightsMustWatch
-          tonight={visibleUpcoming}
-          fullSlateHref={upcomingWeekHref(resolvedDate)}
-          fullSlateLabel="Week view"
-          fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
-          eyebrow={formatUpcomingSectionDate(resolvedDate)}
-          title="Matchup Board"
-          rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
-          compactTopPadding
-        />
-      </PendingRegion>
-    </main>
+        </PendingRegion>
+      </main>
+    </UpcomingViewModeProvider>
   );
 }
 
@@ -198,6 +208,7 @@ export function UpcomingControls({
   scheduledGameCount,
   showStatusFilter = true,
   statusSummary,
+  viewModeToggle,
 }: {
   controls: UpcomingControlsState;
   basePath: string;
@@ -206,6 +217,7 @@ export function UpcomingControls({
   scheduledGameCount: number;
   showStatusFilter?: boolean;
   statusSummary?: UpcomingStatusSummary;
+  viewModeToggle?: React.ReactNode;
 }) {
   const controlsLabel = upcomingControlsLabel(controls, showStatusFilter);
   const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;
@@ -234,7 +246,7 @@ export function UpcomingControls({
       <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
         {controlsLabel}
       </summary>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
         {showStatusFilter ? (
           <ControlGroup label="Status">
             <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
@@ -245,6 +257,7 @@ export function UpcomingControls({
           <ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
           <ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
         </ControlGroup>
+        {viewModeToggle}
       </div>
     </details>
   );

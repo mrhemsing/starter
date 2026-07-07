@@ -33,6 +33,7 @@
     "check:odds-surface": "node scripts/check-odds-surface-contract.mjs",
     "check:park-factor": "node scripts/check-park-factor-integrity.mjs",
     "check:upcoming-status": "node scripts/check-upcoming-status-visibility.mjs",
+    "check:upcoming-simple-view": "node scripts/check-upcoming-simple-view-contract.mjs",
     "check:watch-confidence": "node scripts/check-watch-score-confidence-contract.mjs",
     "check:slate-sync": "node scripts/check-slate-sync.mjs",
     "check:live-scoreboard": "node scripts/check-live-scoreboard-contract.mjs",
