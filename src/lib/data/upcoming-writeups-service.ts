@@ -119,7 +119,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not invent history, health, streaks, results, ranks, or numbers. If you use a number, it must be exactly present in the JSON. Respect the archetype frame.",
+          content: "Write one matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame.",
         },
         {
           role: "user",
@@ -131,18 +131,24 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
   });
   if (!response.ok) return null;
   const payload = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> };
-  const text = extractResponseText(payload);
+  const text = normalizeGeneratedSentence(extractResponseText(payload));
   if (!text || !validateGeneratedUpcomingText(text, input, game, leagueMeanGS)) return null;
   return text;
 }
 
 function validateGeneratedUpcomingText(sentence: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
-  const clean = sentence.replace(/\s+/g, " ").trim();
-  if (clean !== sentence.trim()) return false;
+  const clean = normalizeGeneratedSentence(sentence);
+  if (!clean) return false;
   if (!validateUpcomingSimpleContextSentence(clean, game, leagueMeanGS)) return false;
   if (/\b(unhittable|dominant stretch|has been|since|streak|revenge|owns him|owned)\b/i.test(clean)) return false;
   const allowedNumbers = new Set(JSON.stringify(input).match(/\d+(?:\.\d+)?/g) ?? []);
   return (clean.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token));
+}
+
+function normalizeGeneratedSentence(value: string) {
+  const clean = value.replace(/[“”"]/g, "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
 function extractResponseText(payload: { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> }) {

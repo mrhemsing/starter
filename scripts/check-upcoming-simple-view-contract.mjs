@@ -135,6 +135,8 @@ assert(
     writeupsService.includes("inputHash") &&
     writeupsService.includes("hasWriteupsForGames") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
+    writeupsService.includes("Do not use numeric digits.") &&
+    writeupsService.includes("normalizeGeneratedSentence") &&
     writeupsService.includes("validateGeneratedUpcomingText") &&
     writeupsService.includes("validateUpcomingSimpleContextSentence") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
