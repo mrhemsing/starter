@@ -75,11 +75,11 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 3;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 5;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 6;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
-const MAX_GENERATION_ATTEMPTS = 5;
+const MAX_GENERATION_ATTEMPTS = 7;
 const MAX_FACTS_PER_MATCHUP = 2;
 
 export async function readUpcomingWriteups(date: string) {
@@ -157,7 +157,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. You may use at most one or two factPacket facts when useful, adding nothing. Every number must appear in the input. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. For ACE_DUEL, explicitly say both starters are hot. For TBD, do not compare form with the unnamed side. Avoid formulaic phrasing like towers, clear separation, or form points.",
+          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Use at most one factPacket fact only when it fits naturally; otherwise skip facts. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks only when a streak fact is supplied. Respect the archetype frame. For ACE_DUEL, start with Both and acknowledge both starters are hot. For PROVISIONAL, lead with limited sample or thin data. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, and owned.",
         },
         {
           role: "user",

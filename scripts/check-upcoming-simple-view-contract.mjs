@@ -153,7 +153,7 @@ assert(
     writeupsService.includes('state.sources?.[gamePk] === "llm"') &&
     writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
-    writeupsService.includes("Every number must appear in the input.") &&
+    writeupsService.includes("Every number must appear exactly in the input.") &&
     writeupsService.includes("normalizeGeneratedSentence") &&
     writeupsService.includes("validateGeneratedUpcomingText") &&
     writeupsService.includes("validateUpcomingSimpleContextSentence") &&
