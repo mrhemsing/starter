@@ -226,8 +226,8 @@ export function UpcomingControls({
   const activeControlCount = (showStatusFilter ? 1 : 0) + 1;
 
   return (
-    <details
-      className="mt-5 rounded border border-white/10 bg-[#101014] p-3"
+    <div
+      className="mt-3 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 md:grid-cols-3"
       data-responsive-check="upcoming-controls"
       data-slate-range={slateRange}
       data-control-key={controlsKey}
@@ -242,24 +242,20 @@ export function UpcomingControls({
       data-control-scheduled-games={scheduledGameCount}
       data-control-hidden-games={hiddenGameCount}
       data-control-active-count={activeControlCount}
+      aria-label={controlsLabel}
     >
-      <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-amber-300 marker:text-amber-300" aria-label={controlsLabel}>
-        {controlsLabel}
-      </summary>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {showStatusFilter ? (
-          <ControlGroup label="Status">
-            <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
-            <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
-          </ControlGroup>
-        ) : null}
-        <ControlGroup label="Sort">
-          <ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
-          <ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
+      {showStatusFilter ? (
+        <ControlGroup label="Status">
+          <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
+          <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
         </ControlGroup>
-        {viewModeToggle}
-      </div>
-    </details>
+      ) : null}
+      <ControlGroup label="Sort">
+        <ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>
+        <ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>
+      </ControlGroup>
+      {viewModeToggle}
+    </div>
   );
 }
 

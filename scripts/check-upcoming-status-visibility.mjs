@@ -30,6 +30,9 @@ assert(upcomingPage.includes("const effectiveControls = statusVaries ? controls 
 assert(upcomingPage.includes("jsonLdForUpcomingDay(visibleUpcoming)"), "day Upcoming JSON-LD must match the visible filtered slate");
 assert(upcomingPage.includes("data-control-status-filter-visible"), "Upcoming controls must expose status-filter visibility for DOM checks");
 assert(upcomingPage.includes("data-control-status-summary"), "Upcoming controls must expose status summary for DOM checks");
+assert(!upcomingPage.includes("<details\n      className=\"mt-5"), "Upcoming controls must not collapse filters and sort behind an expandable details row");
+assert(!upcomingPage.includes("<summary className=\"cursor-pointer font-mono text-xs uppercase"), "Upcoming controls must not render the old Filters / Start time summary row");
+assert(upcomingPage.includes('className="mt-3 grid gap-3 rounded border border-white/10 bg-[#101014] p-3 md:grid-cols-3"'), "Upcoming controls must render surfaced toggles directly below the range tabs");
 
 assert(upcomingWeekPage.includes("summarizeUpcomingStatuses"), "week Upcoming page must use the same status summary");
 assert(upcomingWeekPage.includes("showStatusFilter={statusVaries}"), "week Upcoming controls must hide status filter when status does not vary");
