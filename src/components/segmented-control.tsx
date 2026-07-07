@@ -118,7 +118,7 @@ export function SegmentedControl({
 
 function segmentedOptionClass(active: boolean, hasDivider: boolean) {
   return [
-    "relative z-10 inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-md px-2 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.06em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-1.5 before:w-1.5 before:rounded-full before:border before:content-[''] sm:px-2.5 sm:text-[9px]",
+    "relative z-10 inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md px-2 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.06em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-1.5 before:w-1.5 before:rounded-full before:border before:content-[''] sm:px-2.5 sm:text-[9px]",
     active ? "bg-amber-300 text-zinc-950 before:border-zinc-950 before:bg-zinc-950" : "text-zinc-300 hover:bg-white/[0.04] hover:text-zinc-50 before:border-white/25 before:bg-transparent",
     hasDivider ? "" : "",
   ].filter(Boolean).join(" ");

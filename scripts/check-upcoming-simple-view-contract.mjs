@@ -18,6 +18,7 @@ assert(viewMode.includes('import { SegmentedControl } from "@/components/segment
 assert(page.includes('label="Sort"') && page.includes('{ value: "watch", label: "Watch rank"') && page.includes('{ value: "time", label: "Start time"'), "Upcoming SORT must render as WATCH RANK / START TIME segmented options.");
 assert(viewMode.includes('label="View"') && viewMode.includes('{ value: "detailed", label: "Detailed"') && viewMode.includes('{ value: "simple", label: "Simple"'), "Upcoming VIEW must render as DETAILED / SIMPLE segmented options.");
 assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("before:h-1.5 before:w-1.5 before:rounded-full"), "Segmented controls must render as compact modern radio-style buttons.");
+assert(segmentedControl.includes("cursor-pointer"), "Segmented controls must use the hand cursor for both link and button options.");
 assert(segmentedControl.includes('role="group"') && segmentedControl.includes("handleKeyDown") && segmentedControl.includes("ArrowLeft") && segmentedControl.includes("ArrowRight"), "Segmented controls must expose labeled group semantics and arrow-key movement.");
 assert(segmentedControl.includes("h-8") && segmentedControl.includes("h-6"), "Segmented controls must stay compact for the mobile toolbar.");
 assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "SIMPLE"'), "Stored SIMPLE preference must restore simple view.");
