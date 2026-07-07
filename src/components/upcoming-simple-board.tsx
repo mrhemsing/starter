@@ -39,7 +39,7 @@ export function UpcomingSimpleBoard({
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[minmax(0,560px)] lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-desktop-layout="two-up-vs">
+          <div className="grid grid-cols-1 justify-center gap-5 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-desktop-layout="two-up-vs">
             {tonight.games.map((game, index) => (
               <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode={sortMode} contextWriteup={contextWriteups[game.gamePk]} />
             ))}
