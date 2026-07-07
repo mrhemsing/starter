@@ -31,6 +31,7 @@ const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const formDriverChips = await readFile("src/components/form-driver-chips.tsx", "utf8");
 const liveScoreboard = await readFile("src/components/live-scoreboard.tsx", "utf8");
 const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
+const rankGutterTokens = await readFile("src/lib/rank-gutter.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
@@ -214,7 +215,21 @@ assert(
     formPage.includes("return { kind: \"scheduled\", label: `STARTS ${formatMonthDay(pitcher.nextStart.date)}` };") &&
     formPage.includes("<StartStatusChip pitcher={pitcher} todayStart={todayStart} />") &&
     formPage.includes("<CrossoverPill pitcher={pitcher} />") &&
-    formPage.includes("grid-cols-[68px_44px_minmax(0,1fr)] items-start gap-x-3") &&
+    formPage.includes('import { HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS, RANK_GUTTER_STYLE, RANK_GUTTER_WIDTH_CLASS } from "@/lib/rank-gutter";') &&
+    rankGutterTokens.includes('export const RANK_GUTTER_WIDTH_CLASS = "w-[76px] sm:w-20";') &&
+    rankGutterTokens.includes('export const HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS = "grid-cols-[var(--rank-gutter-mobile-width)_44px_minmax(0,1fr)]";') &&
+    rankGutterTokens.includes('"--rank-gutter-mobile-width": "76px"') &&
+    rankGutterTokens.includes('"--rank-gutter-width": "80px"') &&
+    formPage.includes("${HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS} items-start gap-x-3") &&
+    formPage.includes("style={{ ...RANK_GUTTER_STYLE") &&
+    formPage.includes("grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto]") &&
+    formPage.includes("grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto]") &&
+    formPage.includes("data-rank-gutter") &&
+    formPage.includes("data-rank-value={unranked ? \"unranked\" : rank}") &&
+    formPage.includes("text-right font-mono leading-none text-zinc-500 tabular-nums") &&
+    !formPage.includes("grid-cols-[68px_44px_minmax(0,1fr)]") &&
+    !formPage.includes("grid-cols-[44px_42px_minmax(0,1fr)_auto]") &&
+    !formPage.includes("grid-cols-[44px_50px_minmax(0,1fr)_auto]") &&
     formPage.includes("data-heat-mobile-rank") &&
     formPage.includes("data-heat-mobile-headshot") &&
     formPage.includes("getLiveScoreboard({ date: today })") &&

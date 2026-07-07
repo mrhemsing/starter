@@ -28,6 +28,7 @@ import type { LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
+import { HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS, RANK_GUTTER_STYLE, RANK_GUTTER_WIDTH_CLASS } from "@/lib/rank-gutter";
 import { liveDateHref, pitcherHref, sourceParams } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { gameTimeWord } from "@/lib/time-words";
@@ -915,7 +916,7 @@ export function FormLeaderboardRowSkeleton({ view = "trend", index = 0 }: { view
   return (
     <article
       className={`heat-check-row scroll-mt-24 grid items-start gap-x-3 gap-y-2 rounded border border-l-4 bg-[#101014] px-4 sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass}`}
-      style={{ borderLeftColor: bandColor }}
+      style={{ ...RANK_GUTTER_STYLE, borderLeftColor: bandColor } as React.CSSProperties}
       data-form-row
       data-skeleton-row={seasonView ? "heat-season" : "heat-trend"}
     >
@@ -997,7 +998,7 @@ function FormLeaderboardRow({
     <article
       id={poleId}
       className={`heat-check-row scroll-mt-24 block rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:grid sm:items-start sm:gap-x-3 sm:gap-y-2 sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${unranked ? "opacity-70" : treatment.opacity} ${isPoleTier(pitcher) && fullWindow && !unranked ? "heat-glow-card" : ""}`}
-      style={{ ...(isPoleTier(pitcher) && fullWindow && !unranked ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor }}
+      style={{ ...RANK_GUTTER_STYLE, ...(isPoleTier(pitcher) && fullWindow && !unranked ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor } as React.CSSProperties}
       data-form-row
       data-heat-team={pitcher.team}
       data-heat-overflow-hidden={overflowHidden ? "true" : undefined}
@@ -1007,7 +1008,7 @@ function FormLeaderboardRow({
     >
       <MobileCardShell
         left={(
-          <div className="grid min-w-0 grid-cols-[68px_44px_minmax(0,1fr)] items-start gap-x-3">
+          <div className={`grid min-w-0 ${HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS} items-start gap-x-3`}>
             <div className="min-w-0" data-heat-mobile-rank>
               <RankSlot rank={rank} unranked={unranked} seasonView={seasonView} className={treatment.rankClass} />
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{rankDetailLabel}</p>
@@ -1160,9 +1161,9 @@ function FormLeaderboardRow({
 
 function rowTreatmentSkeleton(index: number) {
   if (index % 5 === 0 || index % 5 === 4) {
-    return { padding: "py-4 sm:py-[18px]", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg" as const, borderClass: "border-white/10" };
+    return { padding: "py-4 sm:py-[18px]", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg" as const, borderClass: "border-white/10" };
   }
-  return { padding: "py-3 sm:py-3.5", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none" };
+  return { padding: "py-3 sm:py-3.5", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none" };
 }
 
 function headshotSkeletonSize(size: "xl" | "lg" | "md" | "sm" | "xs") {
@@ -1189,13 +1190,13 @@ function SeasonDepthInlineStats({ pitcher }: { pitcher: FormSummary }) {
 function RankSlot({ rank, unranked, seasonView, className }: { rank: number; unranked: boolean; seasonView: boolean; className: string }) {
   if (unranked && !seasonView) {
     return (
-      <span className="inline-flex min-h-8 items-center rounded border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400" data-heat-limited-rank-chip>
+      <span className={`${RANK_GUTTER_WIDTH_CLASS} inline-flex min-h-8 items-center justify-end rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-right font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400`} data-rank-gutter data-heat-limited-rank-chip>
         LTD
       </span>
     );
   }
 
-  return <p className={`${className} font-serif leading-none text-zinc-500`}>{unranked ? "-" : `#${rank}`}</p>;
+  return <p className={`${RANK_GUTTER_WIDTH_CLASS} ${className} text-right font-mono leading-none text-zinc-500 tabular-nums`} data-rank-gutter data-rank-value={unranked ? "unranked" : rank}>{unranked ? "-" : `#${rank}`}</p>;
 }
 
 function SeasonDepthMobileDetails({ pitcher }: { pitcher: FormSummary }) {
@@ -1740,22 +1741,22 @@ function rowTreatment(pitcher: FormSummary): {
   metaClass: string;
 } {
   if (pitcher.tier === "onfire") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
   if (pitcher.tier === "hot") {
-    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "cooling") {
-    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
   }
   if (pitcher.tier === "ice") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "opacity-95", rankClass: "text-3xl", gridClass: "grid-cols-[44px_50px_minmax(0,1fr)_auto] sm:grid-cols-[44px_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
+    return { padding: "py-4 sm:py-[18px]", opacity: "opacity-95", rankClass: "text-3xl", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
   }
-  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
 function seasonRowTreatment() {
-  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[44px_42px_minmax(0,1fr)_auto] sm:grid-cols-[44px_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
+  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
 function seasonLine(pitcher: FormSummary) {
