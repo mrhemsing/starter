@@ -39,7 +39,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v11"],
+  ["tonight-must-watch", "v12"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -230,16 +230,12 @@ function isStartedStatus(status: TonightGameStatus) {
 function hasStarted(game: ScheduleStatusInput) {
   const status = normalizeGameStatus(game);
   if (isStartedStatus(status)) return true;
-  if (status === "delay") return false;
-  const firstPitchAt = new Date(game.gameDate).valueOf();
-  return Number.isFinite(firstPitchAt) && firstPitchAt <= Date.now();
+  return false;
 }
 
 function isUpcomingGame(game: TonightGame) {
   if (!isUpcomingCardStatus(game.status)) return false;
-  if (game.status === "delay") return true;
-  const firstPitchAt = new Date(game.firstPitch).valueOf();
-  return !Number.isFinite(firstPitchAt) || firstPitchAt > Date.now();
+  return true;
 }
 
 function sortUpcomingWatchGames(games: TonightGame[]) {

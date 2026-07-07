@@ -16,8 +16,9 @@ assert(types.includes('"pregame" | "delay" | "live" | "final" | "ppd"'), "Tonigh
 assert(types.includes('export type UpcomingCardStatus = "pregame" | "delay";'), "UpcomingCardStatus must exclude games after first pitch");
 assert(tonightService.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"]'), "Upcoming data should include only not-yet-started and delayed games");
 assert(tonightService.includes("const candidates = builtGames.filter(isUpcomingGame);"), "Upcoming service must filter started games before ranking cards");
-assert(tonightService.includes("function hasStarted("), "Upcoming service must use a time-based started-game guard for stale MLB statuses");
-assert(tonightService.includes("firstPitchAt <= Date.now()"), "Upcoming service must remove pregame cards once scheduled first pitch has passed");
+assert(tonightService.includes("function hasStarted("), "Upcoming service must use a schedule-state started-game guard");
+assert(tonightService.includes('["tonight-must-watch", "v12"]'), "Upcoming service must bump the cache namespace after the Warming eligibility change");
+assert(!tonightService.includes("firstPitchAt <= Date.now()"), "Upcoming service must not remove Warming/Pre-Game cards only because scheduled first pitch has passed");
 assert(tonightService.includes('return "delay";'), "schedule status normalization must preserve delay status");
 
 assert(upcomingPage.includes("export function summarizeUpcomingStatuses"), "day Upcoming page must expose slate status summary");

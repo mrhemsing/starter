@@ -56,7 +56,7 @@ assert(
 
 assert(
   tonightService.includes('import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service";') &&
-    tonightService.includes("const oddsRequestGames = schedule.games.filter((game) => !isStartedStatus(normalizeGameStatus(game)));") &&
+    tonightService.includes("const oddsRequestGames = schedule.games.filter((game) => !hasStarted(game));") &&
     tonightService.includes("readOddsSnapshotMarketContexts(date)") &&
     tonightService.includes("mergeMarketContexts(snapshotMarketContexts, requestMarketContexts)") &&
     tonightService.includes("fetchMlbOddsMarketContexts(oddsRequestGames)") &&
