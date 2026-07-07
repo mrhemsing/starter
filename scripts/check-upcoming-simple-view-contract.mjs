@@ -48,6 +48,7 @@ assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.include
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
 assert(countOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
+assert(simpleBoard.includes('starter.formStatus === "mlb_debut"') && simpleBoard.includes("MLB DEBUT"), "Simple starter form chip must show MLB DEBUT instead of generic form pending for debut starters.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
 assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render pitch-mix or driver chip rows.");
 assert(!simpleBoard.includes("projectedStrikeouts") && !simpleBoard.includes("K line"), "Simple cards must not render K-line elements.");

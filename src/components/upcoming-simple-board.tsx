@@ -135,8 +135,8 @@ function SimpleStarter({
         <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
       </div>
       <div className="px-2 pb-2 pt-2" data-simple-starter-card-back>
-        <p className={`inline-flex rounded border px-1.5 py-1 font-mono text-[8px] uppercase tracking-[0.1em] ${formChipClass(formBand)}`} data-simple-form-chip data-form-band={formBand ?? "neutral"}>
-          {formBand ? heatBandLabel(formBand) : "Form"} {formatFormValue(starter, formBand)}
+        <p className={`inline-flex rounded border px-1.5 py-1 font-mono text-[8px] uppercase tracking-[0.1em] ${formChipClass(starter, formBand)}`} data-simple-form-chip data-form-band={formBand ?? starter.formStatus}>
+          {simpleFormChipLabel(starter, formBand)}
         </p>
         <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400" data-simple-mini-stat-line>
           {miniStatLine(starter)}
@@ -181,6 +181,7 @@ function starterDisplayName(starter: TonightStarter) {
 
 function miniStatLine(starter: TonightStarter) {
   if (starter.status === "tbd") return "Starter TBD";
+  if (starter.formStatus === "mlb_debut") return "MLB debut start";
   const projected = starter.projection?.projectedGsPlus;
   if (typeof projected === "number") return `Proj GS+ ${projected.toFixed(1)}`;
   if (starter.lastStart?.gsPlus) return `Last GS+ ${starter.lastStart.gsPlus.toFixed(1)}`;
@@ -261,7 +262,15 @@ function heatBandLabel(band: FormTier) {
   return HEAT_BANDS.find((candidate) => candidate.key === band)?.label ?? "Form";
 }
 
-function formChipClass(band: FormTier | null) {
+function simpleFormChipLabel(starter: TonightStarter, formBand: FormTier | null) {
+  if (starter.status === "tbd") return "TBD";
+  if (starter.formStatus === "mlb_debut") return "MLB DEBUT";
+  if (formBand) return `${heatBandLabel(formBand)} ${formatFormValue(starter, formBand)}`;
+  return `Form ${formatFormValue(starter, formBand)}`;
+}
+
+function formChipClass(starter: TonightStarter, band: FormTier | null) {
+  if (starter.formStatus === "mlb_debut") return "border-amber-300/40 bg-amber-300/15 text-amber-100";
   if (band === "onfire" || band === "hot") return "border-orange-300/30 bg-orange-300/10 text-orange-100";
   if (band === "cooling" || band === "ice") return "border-sky-300/30 bg-sky-300/10 text-sky-100";
   return "border-white/10 bg-white/[0.04] text-zinc-300";
