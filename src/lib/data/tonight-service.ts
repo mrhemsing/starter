@@ -39,7 +39,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v14"],
+  ["tonight-must-watch", "v15"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -189,7 +189,9 @@ async function buildTonightGame(
     awayName: game.awayTeam.name,
     home: game.homeTeam.abbreviation,
     homeName: game.homeTeam.name,
-    label: `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`,
+    label: matchupLabel(game),
+    gameNumber: game.gameNumber ?? null,
+    doubleHeader: game.doubleHeader ?? null,
     matchupScore,
     matchupRankTonight: 1,
     matchupContext: {
@@ -221,6 +223,16 @@ async function buildTonightGame(
 
 function isRequestTimeEnrichmentEnabled() {
   return process.env[REQUEST_TIME_ENRICHMENT_FLAG] === "1";
+}
+
+function matchupLabel(game: MlbScheduleGame) {
+  const base = `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`;
+  if (!isDoubleheaderGame(game) || !game.gameNumber) return base;
+  return `${base}, Gm ${game.gameNumber}`;
+}
+
+function isDoubleheaderGame(game: MlbScheduleGame) {
+  return Boolean(game.doubleHeader && game.doubleHeader !== "N");
 }
 
 function isStartedStatus(status: TonightGameStatus) {

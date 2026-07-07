@@ -95,6 +95,17 @@ export const QUALITY_BANDS: LevelBandToken[] = [
   { ...LEVEL_BANDS[4], label: "Poor" },
 ];
 
+export const WATCH_MATCHUP_QUALITY_BANDS = [
+  { key: "elite", label: "ELITE MATCHUP", min: 75, color: "#D85A30" },
+  { key: "plus", label: "PLUS MATCHUP", min: 65, color: "#EF9F27" },
+  { key: "solid", label: "SOLID MATCHUP", min: 55, color: "#888780" },
+  { key: "even", label: "EVEN MATCHUP", min: 0, color: "#85B7EB" },
+] as const;
+
+export function watchMatchupQualityBand(score: number) {
+  return WATCH_MATCHUP_QUALITY_BANDS.find((band) => score >= band.min) ?? WATCH_MATCHUP_QUALITY_BANDS[WATCH_MATCHUP_QUALITY_BANDS.length - 1];
+}
+
 export const HEAT_BANDS = LEVEL_BANDS;
 export const GS_TIERS: Array<HeatBand & { key: FormTier; fillClass: string }> = [
   { ...LEVEL_BANDS[0], fillClass: "bg-[var(--level-onfire)] text-zinc-950" },

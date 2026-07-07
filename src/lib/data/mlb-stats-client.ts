@@ -79,6 +79,8 @@ type MlbApiGame = {
   gamePk?: number;
   gameDate?: string;
   gameType?: string;
+  gameNumber?: number;
+  doubleHeader?: string;
   status?: {
     abstractGameState?: string;
     detailedState?: string;
@@ -104,10 +106,12 @@ type EspnScoreboardApiResponse = {
 };
 
 type EspnScoreboardEvent = {
+  date?: string;
   competitions?: EspnScoreboardCompetition[];
 };
 
 type EspnScoreboardCompetition = {
+  date?: string;
   competitors?: EspnScoreboardCompetitor[];
 };
 
@@ -972,8 +976,8 @@ async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule
     const payload = (await response.json()) as EspnScoreboardApiResponse;
     const reported = new Map<string, MlbProbablePitcher>();
     const missingKeys = new Set(schedule.games.flatMap((game) => [
-      game.probableAwayPitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away"),
-      game.probableHomePitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home"),
+      game.probableAwayPitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away", game.gameDate),
+      game.probableHomePitcher ? null : reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home", game.gameDate),
     ]).filter((key): key is string => Boolean(key)));
     if (missingKeys.size === 0) return reported;
 
@@ -986,6 +990,7 @@ async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule
         const awayAbbreviation = away?.team?.abbreviation;
         if (!homeAbbreviation || !awayAbbreviation) continue;
 
+        const competitionDate = competition.date ?? event.date;
         for (const competitor of competitors) {
           const side = competitor.homeAway;
           const teamAbbreviation = competitor.team?.abbreviation;
@@ -993,7 +998,7 @@ async function fetchReportedProbablePitchers(date: string, schedule: MlbSchedule
           const fullName = probable?.athlete?.fullName;
           if ((side !== "home" && side !== "away") || !teamAbbreviation || !fullName) continue;
 
-          const key = reportedProbableKey(awayAbbreviation, homeAbbreviation, side);
+          const key = reportedProbableKey(awayAbbreviation, homeAbbreviation, side, competitionDate);
           if (!missingKeys.has(key)) continue;
 
           const id = await resolveReportedPitcherMlbId(fullName, options);
@@ -1074,8 +1079,8 @@ function mergeReportedProbablePitchers(schedule: MlbSchedule, reported: Map<stri
     ...schedule,
     games: schedule.games.map((game) => ({
       ...game,
-      probableAwayPitcher: game.probableAwayPitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away")),
-      probableHomePitcher: game.probableHomePitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home")),
+      probableAwayPitcher: game.probableAwayPitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "away", game.gameDate)),
+      probableHomePitcher: game.probableHomePitcher ?? reported.get(reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, "home", game.gameDate)),
     })),
   };
 }
@@ -1091,7 +1096,7 @@ async function logProbableConfidenceTransitions(schedule: MlbSchedule) {
     ];
 
     for (const slot of slots) {
-      const key = reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, slot.side);
+      const key = reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, slot.side, game.gameDate);
       const nextConfidence = slot.probable?.confidence ?? "TBD";
       const stateKey = probableConfidenceStateKey(game.gamePk, slot.side);
       const previousConfidence = probableConfidenceBySlot.get(key) ?? (await readProbableConfidenceState(stateKey))?.confidence;
@@ -1116,8 +1121,15 @@ async function logProbableConfidenceTransitions(schedule: MlbSchedule) {
   }
 }
 
-function reportedProbableKey(awayAbbreviation: string, homeAbbreviation: string, side: "home" | "away") {
-  return `${awayAbbreviation}:${homeAbbreviation}:${side}`;
+function reportedProbableKey(awayAbbreviation: string, homeAbbreviation: string, side: "home" | "away", gameDate?: string) {
+  return `${awayAbbreviation}:${homeAbbreviation}:${side}:${gameDateMinuteKey(gameDate)}`;
+}
+
+function gameDateMinuteKey(gameDate?: string) {
+  if (!gameDate) return "unknown";
+  const parsed = new Date(gameDate);
+  if (Number.isNaN(parsed.valueOf())) return gameDate;
+  return parsed.toISOString().slice(0, 16);
 }
 
 function probableConfidenceStateKey(gamePk: number, side: "home" | "away") {
@@ -1709,6 +1721,8 @@ function parseGame(game: MlbApiGame): MlbScheduleGame[] {
     gamePk,
     gameDate,
     gameType,
+    gameNumber: typeof game.gameNumber === "number" ? game.gameNumber : null,
+    doubleHeader: game.doubleHeader ?? null,
     status: game.status?.abstractGameState ?? "scheduled",
     detailedState: game.status?.detailedState ?? "Scheduled",
     venue: game.venue?.name ?? "TBD",

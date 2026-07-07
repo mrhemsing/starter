@@ -17,7 +17,7 @@ assert(types.includes('export type UpcomingCardStatus = "pregame" | "delay";'), 
 assert(tonightService.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"]'), "Upcoming data should include only not-yet-started and delayed games");
 assert(tonightService.includes("const candidates = builtGames.filter(isUpcomingGame);"), "Upcoming service must filter started games before ranking cards");
 assert(tonightService.includes("function hasStarted("), "Upcoming service must use a schedule-state started-game guard");
-assert(tonightService.includes('["tonight-must-watch", "v14"]'), "Upcoming service must bump the cache namespace after the matchup baseline change");
+assert(tonightService.includes('["tonight-must-watch", "v15"]'), "Upcoming service must bump the cache namespace after the matchup baseline change");
 assert(tonightService.includes("function scoreBaselineMatchup("), "Upcoming service must compute a local matchup baseline when live opponent splits are missing");
 assert(tonightService.includes("status: splitMatchupScore === null && baselineMatchupScore.pending ? \"pending-opponent-splits\" : \"scored\""), "Upcoming cards with starter-form baselines must not render as matchup pending");
 assert(!tonightService.includes("firstPitchAt <= Date.now()"), "Upcoming service must not remove Warming/Pre-Game cards only because scheduled first pitch has passed");

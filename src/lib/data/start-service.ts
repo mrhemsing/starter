@@ -441,7 +441,7 @@ export function getProbablesFromSchedule(slateDate: string, probableSchedule: Ml
   );
 
   return probables.filter((probable) => isUnstartedGameStatus(probable.gameStatus)).map((probable) => ({
-    id: `${slateDate}-${probable.teamAbbreviation.toLowerCase()}-${probable.opponentAbbreviation.toLowerCase()}-${probable.id}`,
+    id: `${slateDate}-${probable.gamePk}-${probable.teamAbbreviation.toLowerCase()}-${probable.opponentAbbreviation.toLowerCase()}-${probable.id}`,
     gamePk: probable.gamePk,
     date: slateDate,
     pitcherId: String(probable.id),

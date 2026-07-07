@@ -453,6 +453,8 @@ export type TonightGame = {
   home: string;
   homeName: string;
   label: string;
+  gameNumber?: number | null;
+  doubleHeader?: string | null;
   matchupScore: number;
   matchupRankTonight: number;
   matchupContext: {
@@ -640,6 +642,8 @@ export type MlbScheduleGame = {
   gamePk: number;
   gameDate: string;
   gameType?: string;
+  gameNumber?: number | null;
+  doubleHeader?: string | null;
   status: string;
   detailedState: string;
   venue: string;
