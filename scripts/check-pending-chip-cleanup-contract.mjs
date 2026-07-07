@@ -42,10 +42,12 @@ assert(
 
 assert(
   !mustWatch.includes("prop pending") &&
+    !mustWatch.includes("K line pending") &&
+    mustWatch.includes("Proj K {market.projectedStrikeouts.toFixed(1)}") &&
     !mustWatch.includes("Team total {market.opposingTeamTotal === null") &&
     mustWatch.includes("const strikeoutPropLine = market.strikeoutPropLine;") &&
     mustWatch.includes("const opposingTeamTotal = market.opposingTeamTotal;"),
-  "Market pending chips must not render prop-pending or team-total-pending copy",
+  "Market pending chips must not render prop-pending, K-line-pending, or team-total-pending copy",
 );
 
 assert(

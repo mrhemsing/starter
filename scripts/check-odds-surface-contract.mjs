@@ -74,14 +74,15 @@ assert(
 );
 
 assert(
-  mustWatch.includes("K line pending") &&
+  !mustWatch.includes("K line pending") &&
+    mustWatch.includes("Proj K {market.projectedStrikeouts.toFixed(1)}") &&
     mustWatch.includes("K line {strikeoutPropLine.toFixed(1)}") &&
     mustWatch.includes("Proj {market.projectedStrikeouts.toFixed(1)}") &&
     mustWatch.includes("Edge {formatSigned(market.strikeoutEdge)}") &&
     mustWatch.includes('data-market-attribution={attribution.source}') &&
     mustWatch.includes('attribution.source === "prop-line" ? "PropLine" : "The Odds API"') &&
     mustWatch.includes("1-800-GAMBLER"),
-  "Must-Watch and Upcoming shared cards must render K line, projection, edge, pending state, and one attribution line",
+  "Must-Watch and Upcoming shared cards must render stored K lines when available, projection fallback when a book line is absent, edge, and one attribution line",
 );
 
 assert(

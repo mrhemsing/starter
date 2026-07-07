@@ -1505,11 +1505,11 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
           {market.projectedStrikeouts !== null ? <span className="text-zinc-500">Proj {market.projectedStrikeouts.toFixed(1)}</span> : null}
           {market.strikeoutEdge !== null ? <span className={edgeTone}>Edge {formatSigned(market.strikeoutEdge)}</span> : null}
         </span>
-      ) : (
+      ) : market.projectedStrikeouts !== null ? (
         <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-          K line pending
+          Proj K {market.projectedStrikeouts.toFixed(1)}
         </span>
-      )}
+      ) : null}
       {opposingTeamTotal !== null ? (
         <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
           Team total {opposingTeamTotal.toFixed(1)}
