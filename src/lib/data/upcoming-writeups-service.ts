@@ -60,11 +60,11 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 2;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 3;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 4;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
-const MAX_GENERATION_ATTEMPTS = 3;
+const MAX_GENERATION_ATTEMPTS = 5;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date));
@@ -140,7 +140,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one polished matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. Avoid formulaic phrasing like towers, clear separation, or form points.",
+          content: "Write one polished matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. For ACE_DUEL, explicitly say both starters are hot. For TBD, do not compare form with the unnamed side. Avoid formulaic phrasing like towers, clear separation, or form points.",
         },
         {
           role: "user",
