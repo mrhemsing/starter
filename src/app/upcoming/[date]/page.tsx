@@ -100,7 +100,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             >
               {formatUpcomingSlateStamp(slateState, today)}
             </p>
-            <div className="mt-5 flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-3" data-upcoming-toolbar-row>
+            <div className="mt-5 flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-3" data-upcoming-toolbar-row>
               <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} className="mt-0" />
               <UpcomingControls
                 controls={effectiveControls}
@@ -233,7 +233,7 @@ export function UpcomingControls({
 
   return (
     <div
-      className="mt-3 flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1"
+      className={`${className} flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1`}
       data-responsive-check="upcoming-controls"
       data-slate-range={slateRange}
       data-control-key={controlsKey}
