@@ -41,6 +41,7 @@ type UpcomingWriteupInput = {
   watchScore: string;
   confidence: TonightGame["watchScoreConfidence"];
   archetype: string;
+  deterministicFallback: string;
   starters: Array<{
     side: TonightStarter["side"];
     team: string;
@@ -75,7 +76,7 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 3;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 6;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 7;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -91,7 +92,7 @@ export async function readUpcomingWriteups(date: string) {
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
   const slate = await getTonightMustWatch({ date, window: 5, forceOpponentSplits: true });
   const factPackets = await buildUpcomingFactPackets(slate.games);
-  const inputs = slate.games.map((game) => upcomingWriteupInput(game, slate.leagueMeanGS, factPackets.get(game.gamePk) ?? { facts: [] }));
+  const inputs = slate.games.map((game, index) => upcomingWriteupInput(game, slate.leagueMeanGS, factPackets.get(game.gamePk) ?? { facts: [] }, upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)));
   const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
   if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasLlmWriteupsForGames(previous, slate.games)) {
@@ -103,8 +104,8 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   const writeups: Record<string, string> = {};
   const sources: UpcomingWriteupsState["sources"] = {};
   for (const [index, game] of slate.games.entries()) {
-    const fallback = upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS);
     const input = inputs[index];
+    const fallback = input.deterministicFallback;
     const generated = apiKey ? await generateOneUpcomingWriteupWithRetries(apiKey, input, game, slate.leagueMeanGS).catch(() => null) : null;
     const sentence = generated ?? fallback;
     if (!generated) fallbackCount += 1;
@@ -157,7 +158,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Use at most one factPacket fact only when it fits naturally; otherwise skip facts. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks only when a streak fact is supplied. Respect the archetype frame. For ACE_DUEL, start with Both and acknowledge both starters are hot. For PROVISIONAL, lead with limited sample or thin data. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, and owned.",
+          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Use at most one factPacket fact only when it fits naturally; otherwise skip facts. If uncertain, rewrite deterministicFallback in a more natural voice without adding facts. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks only when a streak fact is supplied. Respect the archetype frame. For ACE_DUEL, start with Both and acknowledge both starters are hot. For PROVISIONAL, lead with limited sample or thin data. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, and owned.",
         },
         {
           role: "user",
@@ -195,7 +196,7 @@ function extractResponseText(payload: { output_text?: string; output?: Array<{ c
   return payload.output?.flatMap((item) => item.content ?? []).map((content) => content.text ?? "").join(" ").trim() ?? "";
 }
 
-function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number, factPacket: MatchupFactPacket): UpcomingWriteupInput {
+function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number, factPacket: MatchupFactPacket, deterministicFallback: string): UpcomingWriteupInput {
   return {
     gamePk: game.gamePk,
     matchup: game.label,
@@ -203,6 +204,7 @@ function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number, factPacke
     watchScore: game.gameWatchScore.toFixed(1),
     confidence: game.watchScoreConfidence,
     archetype: upcomingSimpleContextArchetype(game, leagueMeanGS),
+    deterministicFallback,
     starters: game.starters.map((starter) => ({
       side: starter.side,
       team: starter.team,
