@@ -20,14 +20,12 @@ assert(tonightService.includes("function matchupLabel(game: MlbScheduleGame)") &
 assert(startService.includes("`${slateDate}-${probable.gamePk}-"), "probable IDs must include gamePk so doubleheader slots stay independent.");
 assert(tonightService.includes('["tonight-must-watch", "v15"]'), "Upcoming cache namespace must be bumped for corrected doubleheader probables.");
 
-assert(mustWatch.includes('data-visible-matchup-status-labels="none"'), "Upcoming cards must keep the former far-right matchup status slot empty.");
-assert(mustWatch.includes('data-matchup-status-label="none"'), "Each Upcoming card must expose the retired matchup status slot as empty telemetry.");
-assert(!mustWatch.includes("matchupStatusLabel("), "far-right matchup status label rendering must be removed.");
-assert(!mustWatch.includes("watchMatchupQualityBand(game.gameWatchScore)"), "watch quality labels must not replace the retired far-right matchup labels.");
-assert(!mustWatch.includes("TOP WATCH SCORE"), "top watch score must not render as a far-right matchup label.");
-for (const label of ["ELITE MATCHUP", "PLUS MATCHUP", "SOLID MATCHUP", "EVEN MATCHUP", "LIMITED DATA"]) {
-  assert(!mustWatch.includes(label), `far-right matchup label copy must stay removed: ${label}`);
-}
+assert(mustWatch.includes("data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game, game.gamePk === topWatchGamePk)).join(\"|\") : \"none\"}"), "Upcoming cards must expose one matchup quality/status label per visible card.");
+assert(mustWatch.includes("function matchupStatusLabel(game: TonightGame, isTopWatchScore: boolean)"), "Detailed cards must derive the top-right quality tag from one helper.");
+assert(mustWatch.includes('if (isTopWatchScore) return "TOP WATCH SCORE";'), "Exactly the max watch-score card must get TOP WATCH SCORE.");
+assert(mustWatch.includes("watchMatchupQualityBand(game.gameWatchScore).label"), "Non-top detailed cards must use shared watch matchup quality bands.");
+assert(mustWatch.includes("watchScoreConfidenceLabel(game.watchScoreConfidence)"), "Limited-data games must use confidence treatment instead of unqualified quality copy.");
+assert(mustWatch.includes("data-matchup-quality-tag={statusLabel}"), "Detailed cards must render the top-right quality tag in the status slot.");
 assert(!mustWatch.includes("return `${ordinal(game.matchupRankTonight)} matchup`;"), "ordinal matchup status labels must be retired.");
 assert(!mustWatch.includes("`${ordinal(game.matchupRankTonight)} ${rankLabel}`"), "ordinal matchup component detail copy must be retired.");
 

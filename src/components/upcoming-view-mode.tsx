@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { SegmentedControl } from "@/components/segmented-control";
 
@@ -15,15 +15,17 @@ const UpcomingViewModeContext = createContext<{
 
 export function UpcomingViewModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<UpcomingViewMode>(() => readStoredViewMode());
+  const storedMode = readStoredViewMode();
+  const effectiveMode = mode === "detailed" && storedMode === "simple" ? "simple" : mode;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Reconcile after hydration so a stored SIMPLE preference wins over the server default.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setModeState(readStoredViewMode());
   }, []);
 
   const value = useMemo(() => ({
-    mode,
+    mode: effectiveMode,
     setMode(nextMode: UpcomingViewMode) {
       setModeState(nextMode);
       try {
@@ -32,7 +34,7 @@ export function UpcomingViewModeProvider({ children }: { children: ReactNode }) 
         // Keep the in-session state when storage is blocked.
       }
     },
-  }), [mode]);
+  }), [effectiveMode]);
 
   return <UpcomingViewModeContext.Provider value={value}>{children}</UpcomingViewModeContext.Provider>;
 }
@@ -61,14 +63,22 @@ export function UpcomingViewModePanels({ detailed, simple }: { detailed: ReactNo
   const context = useUpcomingViewMode();
 
   return (
-    <div data-upcoming-view-mode={context.mode} data-upcoming-view-storage-key={STORAGE_KEY}>
-      <div hidden={context.mode !== "detailed"} data-upcoming-view-panel="detailed">
-        {detailed}
+    <>
+      <div data-upcoming-view-mode={context.mode} data-upcoming-view-storage-key={STORAGE_KEY}>
+        <div hidden={context.mode !== "detailed"} data-upcoming-view-panel="detailed">
+          {detailed}
+        </div>
+        <div hidden={context.mode !== "simple"} data-upcoming-view-panel="simple">
+          {simple}
+        </div>
       </div>
-      <div hidden={context.mode !== "simple"} data-upcoming-view-panel="simple">
-        {simple}
-      </div>
-    </div>
+      <script
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: `(() => { try { const mode = window.localStorage.getItem("${STORAGE_KEY}") === "SIMPLE" ? "simple" : "detailed"; const root = document.querySelector('[data-upcoming-view-storage-key="${STORAGE_KEY}"]'); if (!root) return; root.setAttribute("data-upcoming-view-mode", mode); root.querySelector('[data-upcoming-view-panel="detailed"]')?.toggleAttribute("hidden", mode !== "detailed"); root.querySelector('[data-upcoming-view-panel="simple"]')?.toggleAttribute("hidden", mode !== "simple"); } catch {} })();`,
+        }}
+      />
+    </>
   );
 }
 

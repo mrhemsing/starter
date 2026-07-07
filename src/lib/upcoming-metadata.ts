@@ -11,7 +11,8 @@ export function upcomingDayTitle(date: string) {
 }
 
 export function upcomingDayDescription(upcoming: Pick<TonightResponse, "date" | "scheduledGames" | "games">) {
-  const topGame = upcoming.games[0];
+  const games = orderedUpcomingDayGames(upcoming.games);
+  const topGame = games[0];
   const lead = topGame ? `Top watch: ${topGame.label} with a ${formatWatchScore(topGame.gameWatchScore)} watch score.` : "Probable starter watch list will update as starters are named.";
   return `Probable starting pitchers and pitching matchups for ${formatUpcomingDate(upcoming.date)}, ranked by watch score: top arms, pairing quality, and matchup context. ${lead}`;
 }
@@ -29,7 +30,7 @@ export function upcomingWeekDescription(upcoming: Pick<UpcomingResponse, "range"
 }
 
 export function jsonLdForUpcomingDay(upcoming: TonightResponse) {
-  const itemListGames = upcoming.games.slice(0, 10);
+  const itemListGames = orderedUpcomingDayGames(upcoming.games).slice(0, 10);
 
   return {
     "@context": "https://schema.org",
@@ -76,6 +77,12 @@ function orderedUpcomingWeekGames(upcoming: Pick<UpcomingResponse, "days">) {
         a.game.firstPitch.localeCompare(b.game.firstPitch) ||
         a.game.label.localeCompare(b.game.label),
     );
+}
+
+function orderedUpcomingDayGames(games: TonightGame[]) {
+  return [...games].sort(
+    (a, b) => b.gameWatchScore - a.gameWatchScore || a.firstPitch.localeCompare(b.firstPitch) || a.label.localeCompare(b.label),
+  );
 }
 
 function jsonLdForUpcomingGame(game: TonightGame) {

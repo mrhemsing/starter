@@ -6,7 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { LocalTime } from "@/components/local-time";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
-import { HEAT_BANDS, MUSTWATCH_CONFIG } from "@/lib/form-tokens";
+import { HEAT_BANDS, MUSTWATCH_CONFIG, watchMatchupQualityBand } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import { formatFirstPitchCountdown } from "@/lib/slate-state";
 import { slateTimeWordTitle } from "@/lib/time-words";
@@ -50,6 +50,7 @@ export function TonightsMustWatch({
   const eyebrowLabel = eyebrow ?? slateTimeWordTitle(tonight);
   const marketAttribution = marketAttributionForGames(shownGames);
   const showGameStatus = new Set(shownGames.map((game) => game.status)).size >= 2;
+  const topWatchGamePk = topWatchScoreGamePk(shownGames);
 
   return (
     <section
@@ -62,7 +63,7 @@ export function TonightsMustWatch({
       data-game-count={shownGames.length}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
       data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
-      data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join(",") : "none"}
+      data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join("|") : "none"}
       data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
       data-visible-team-names={shownGames.length ? shownGames.map((game) => `${game.awayName}/${game.homeName}`).join(",") : "none"}
       data-visible-venues={shownGames.length ? shownGames.map((game) => game.park ?? "Venue TBD").join(",") : "none"}
@@ -180,7 +181,7 @@ export function TonightsMustWatch({
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
       data-visible-matchup-context-statuses={shownGames.length ? shownGames.map((game) => game.matchupContext.status).join(",") : "none"}
       data-visible-matchup-context-labels={shownGames.length ? shownGames.map((game) => game.matchupContext.label).join(",") : "none"}
-      data-visible-matchup-status-labels="none"
+      data-visible-matchup-status-labels={shownGames.length ? shownGames.map((game) => matchupStatusLabel(game, game.gamePk === topWatchGamePk)).join("|") : "none"}
       data-visible-hook-reason-keys={shownGames.length ? shownGames.map((game) => watchHookReasonKeyValue(game, rankLabel)).join(",") : "none"}
       data-visible-hook-reasons={shownGames.length ? shownGames.map((game) => watchHookReasonValue(game, rankLabel)).join("|") : "none"}
       data-scheduled-games={tonight.scheduledGames}
@@ -247,9 +248,9 @@ export function TonightsMustWatch({
           </div>
         ) : (
           <div className="space-y-4">
-            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} />
+            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} />
             <div className="grid gap-3">
-              {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} />)}
+              {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
             </div>
           </div>
         )}
@@ -259,13 +260,14 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const awayStarter = game.starters[0];
   const homeStarter = game.starters[1];
   const awayAccent = starterFormAccent(awayStarter);
   const homeAccent = starterFormAccent(homeStarter);
+  const statusLabel = matchupStatusLabel(game, isTopWatchScore);
 
   return (
     <article
@@ -295,7 +297,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
       data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
-      data-matchup-status-label="none"
+      data-matchup-status-label={statusLabel}
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="headliner"
@@ -342,7 +344,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
             <GameEnvironmentChips game={game} />
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200">Top watch score</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200" data-matchup-quality-tag={statusLabel}>{statusLabel}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
               <p className="font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
               <WatchScoreConfidenceChip game={game} compact />
@@ -480,6 +482,25 @@ function watchTierLabel(game: TonightGame) {
   return watchTierForGame(game).label;
 }
 
+function topWatchScoreGamePk(games: TonightGame[]) {
+  if (games.length === 0) return null;
+  const topScore = Math.max(...games.map((game) => game.gameWatchScore));
+  return games.find((game) => game.gameWatchScore === topScore)?.gamePk ?? null;
+}
+
+function matchupStatusLabel(game: TonightGame, isTopWatchScore: boolean) {
+  if (isTopWatchScore) return "TOP WATCH SCORE";
+  const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  if (confidenceLabel) return confidenceLabel;
+  return watchMatchupQualityBand(game.gameWatchScore).label;
+}
+
+function matchupStatusColor(game: TonightGame, isTopWatchScore: boolean) {
+  if (isTopWatchScore) return "#FBBF24";
+  if (watchScoreConfidenceLabel(game.watchScoreConfidence)) return "#FBBF24";
+  return watchMatchupQualityBand(game.gameWatchScore).color;
+}
+
 function watchSortGroupValue(game: TonightGame) {
   return String(game.watchSortGroup);
 }
@@ -494,12 +515,14 @@ function watchSortGroupLabelValue(game: TonightGame) {
   return watchSortGroupLabel(game);
 }
 
-function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGameStatus }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean }) {
+function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
   const homeAccent = starterFormAccent(game.starters[1]);
+  const statusLabel = matchupStatusLabel(game, isTopWatchScore);
+  const statusColor = matchupStatusColor(game, isTopWatchScore);
 
   return (
     <article
@@ -529,7 +552,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
       data-matchup-confidence={game.matchupConfidence}
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
-      data-matchup-status-label="none"
+      data-matchup-status-label={statusLabel}
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="row"
@@ -582,6 +605,13 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
               </p>
               <GameEnvironmentChips game={game} compact />
             </div>
+            <p
+              className="inline-flex w-fit shrink-0 rounded border bg-black/30 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] md:ml-auto"
+              style={{ borderColor: `${statusColor}66`, color: statusColor }}
+              data-matchup-quality-tag={statusLabel}
+            >
+              {statusLabel}
+            </p>
           </div>
           <WatchComponentReadout game={game} compact rankLabel={rankLabel} />
           <div className="mt-3 grid gap-2 md:grid-cols-2">

@@ -19,6 +19,7 @@ type UpcomingWeekPageProps = {
   searchParams?: Promise<{
     pregame?: string;
     sort?: string;
+    team?: string;
   }>;
 };
 

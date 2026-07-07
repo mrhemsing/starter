@@ -64,13 +64,19 @@ export function SegmentedControl({
       data-segmented-control-storage-key={storageKey}
       onKeyDown={handleKeyDown}
     >
-      <div className="flex h-8 items-center gap-1 rounded-lg border border-white/10 bg-black/30 px-1.5 shadow-inner shadow-black/20">
+      <div
+        className="relative grid min-h-11 items-center rounded-full border border-white/10 bg-black/35 p-1 shadow-inner shadow-black/20"
+        style={{ gridTemplateColumns: `repeat(${segmentCount}, minmax(0, 1fr))` }}
+      >
         <span
           aria-hidden="true"
-          className="segmented-control-indicator sr-only"
+          className="segmented-control-indicator pointer-events-none absolute inset-y-1 left-1 rounded-full border border-white/10 bg-zinc-700 shadow-[0_8px_22px_rgba(0,0,0,0.25)] transition-transform duration-200 ease-out motion-reduce:transition-none"
           data-segmented-control-indicator
           data-segmented-control-indicator-index={activeIndex}
-          style={{ transform: `translateX(${activeIndex * 100}%)` }}
+          style={{
+            width: `calc((100% - 0.5rem) / ${segmentCount})`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
         />
         {segments.map((segment, index) => {
           const active = segment.value === activeValue;
@@ -91,7 +97,7 @@ export function SegmentedControl({
                 pendingLabel={pendingLabel}
                 scroll={false}
               >
-                {segment.label}
+                <SegmentedOptionLabel active={active}>{segment.label}</SegmentedOptionLabel>
               </FastFilterLink>
             );
           }
@@ -107,7 +113,7 @@ export function SegmentedControl({
               data-control-link-key={controlKey}
               onClick={() => onValueChange?.(segment.value)}
             >
-              {segment.label}
+              <SegmentedOptionLabel active={active}>{segment.label}</SegmentedOptionLabel>
             </button>
           );
         })}
@@ -118,8 +124,17 @@ export function SegmentedControl({
 
 function segmentedOptionClass(active: boolean, hasDivider: boolean) {
   return [
-    "relative z-10 inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md px-2 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.06em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-1.5 before:w-1.5 before:rounded-full before:border before:content-[''] sm:px-2.5 sm:text-[9px]",
-    active ? "bg-amber-300 text-zinc-950 before:border-zinc-950 before:bg-zinc-950" : "text-zinc-300 hover:bg-white/[0.04] hover:text-zinc-50 before:border-white/25 before:bg-transparent",
-    hasDivider ? "" : "",
+    "relative z-10 inline-flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-full px-2 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:px-2.5 sm:text-[10px]",
+    active ? "text-white" : "text-zinc-300 hover:text-zinc-50",
+    hasDivider ? "before:absolute before:left-0 before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-white/10 before:content-['']" : "",
   ].filter(Boolean).join(" ");
+}
+
+function SegmentedOptionLabel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center justify-center gap-1.5 leading-none" data-segmented-option-label>
+      {active ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/90" aria-hidden="true" data-segmented-active-dot /> : null}
+      <span>{children}</span>
+    </span>
+  );
 }

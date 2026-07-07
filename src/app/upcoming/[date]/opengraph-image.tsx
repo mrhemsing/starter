@@ -23,7 +23,10 @@ export default async function Image({ params }: UpcomingImageProps) {
   const { date } = await params;
   assertValidDateRouteParam(date);
   const upcoming = await getTonightMustWatch({ date, window: 5 });
-  const topGame = upcoming.games[0];
+  const games = [...upcoming.games].sort(
+    (a, b) => b.gameWatchScore - a.gameWatchScore || a.firstPitch.localeCompare(b.firstPitch) || a.label.localeCompare(b.label),
+  );
+  const topGame = games[0];
   const topTier = topGame ? watchTierOf(topGame.gameWatchScore) : null;
   const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.watchScoreConfidence) : "";
   const starters = topGame?.starters.filter((starter) => starter.name) ?? [];
@@ -67,7 +70,7 @@ export default async function Image({ params }: UpcomingImageProps) {
           )}
         </div>
         <div style={{ display: "flex", gap: 12, width: "100%" }}>
-          {upcoming.games.slice(0, 8).map((game) => (
+          {games.slice(0, 8).map((game) => (
             <div key={game.gamePk} style={{ background: game.gamePk === topGame?.gamePk ? "#EF9F27" : "#27272a", display: "flex", flex: Math.max(8, game.gameWatchScore), height: 28 }} />
           ))}
         </div>

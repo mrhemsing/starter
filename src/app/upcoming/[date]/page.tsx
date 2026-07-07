@@ -24,6 +24,7 @@ type UpcomingDatePageProps = {
   searchParams?: Promise<{
     pregame?: string;
     sort?: string;
+    team?: string;
   }>;
 };
 
@@ -130,7 +131,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                 compactTopPadding
               />
             )}
-            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} />}
+            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={effectiveControls.sort} />}
           />
         </PendingRegion>
       </main>

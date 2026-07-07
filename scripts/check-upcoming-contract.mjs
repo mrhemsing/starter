@@ -19,7 +19,7 @@ const FORM_ACCENT_COLORS = {
   neutral: "#888780",
 };
 const FORM_DRIVER_KEYS = ["k-rate", "walks", "depth", "run-prevention"];
-const ACTIVE_CARD_STATUSES = ["pregame", "delay", "live", "final"];
+const ACTIVE_CARD_STATUSES = ["pregame", "delay"];
 const WATCH_SCORE_WEIGHTS = {
   topArm: 0.5,
   pairAvg: 0.3,
@@ -468,7 +468,7 @@ function assertDay(day, expectedDate, options = {}) {
     assertNonEmptyString(game.homeName, `${game.gamePk} home team name`);
     assert(game.awayName !== game.away, `${game.gamePk} away team name should not duplicate abbreviation`);
     assert(game.homeName !== game.home, `${game.gamePk} home team name should not duplicate abbreviation`);
-    assert(game.label === `${game.away} @ ${game.home}`, `${game.gamePk} label should match away/home teams`);
+    assert(game.label === expectedGameLabel(game), `${game.gamePk} label should match away/home teams`);
     if (game.park !== null && game.park !== undefined) {
       assertNonEmptyString(game.park, `${game.gamePk} park`);
     }
@@ -599,6 +599,11 @@ function rankMatchupsForContract(games) {
 
 function gameOrder(day) {
   return day.games.map((game) => game.gamePk).join(",");
+}
+
+function expectedGameLabel(game) {
+  const base = `${game.away} @ ${game.home}`;
+  return game.doubleHeader && game.doubleHeader !== "N" && game.gameNumber ? `${base}, Gm ${game.gameNumber}` : base;
 }
 
 function assertGameEnvironmentContext(game, label) {
@@ -1087,6 +1092,10 @@ function assertNoIndexFollow(html, route) {
   assert(directives.includes("follow"), `${route} robots metadata should include follow`);
 }
 
+function assertNoRobotsMeta(html, route) {
+  assert(!html.includes('<meta name="robots"'), `${route} clean canonical page should not render robots metadata`);
+}
+
 function escapeHtmlAttribute(value) {
   return value
     .replace(/&/g, "&amp;")
@@ -1404,7 +1413,7 @@ function assertJsonLd(html, route, expectedName, expectedDescription, expectedIt
       const previousScore = jsonLdWatchScore(previousEntry);
       const currentScore = jsonLdWatchScore(entry);
       assert(previousScore >= currentScore, `${route} JSON-LD item ${index + 1} should preserve descending watch-score order`);
-      if (route.includes("/week") && previousScore === currentScore) {
+      if (previousScore === currentScore) {
         assert(
           previousEntry.item.startDate <= entry.item.startDate,
           `${route} JSON-LD item ${index + 1} should preserve first-pitch order when watch scores tie`,
@@ -1674,7 +1683,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "shared pending regions must expose stable label telemetry and only create named accessible regions when a label is provided",
   );
   assert(
-    UPCOMING_CONTROL_LINK_KEYS.every((key) => countOccurrences(upcomingDatePageSource, `controlKey="${key}"`) === 1),
+    ["status-all", "status-pregame"].every((key) => countOccurrences(upcomingDatePageSource, `controlKey="${key}"`) === 1) &&
+      ["sort-watch", "sort-time"].every((key) => countOccurrences(upcomingDatePageSource, `controlKey: "${key}"`) === 1),
     "upcoming filter controls must keep each stable public option key exactly once for status and sort links",
   );
   assert(
@@ -1686,21 +1696,24 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
     upcomingDatePageSource.includes('<ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>') &&
       upcomingDatePageSource.includes('<ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>') &&
-      upcomingDatePageSource.includes('<ControlLink controlKey="sort-watch" active={controls.sort === "watch"} href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank</ControlLink>') &&
-      upcomingDatePageSource.includes('<ControlLink controlKey="sort-time" active={controls.sort === "time"} href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time</ControlLink>'),
+      upcomingDatePageSource.includes('activeValue={controls.sort}') &&
+      upcomingDatePageSource.includes('{ value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" }') &&
+      upcomingDatePageSource.includes('{ value: "time", label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" }), controlKey: "sort-time" }'),
     "upcoming Status and Sort controls must keep their active flags and hrefs coupled to normalized control state",
   );
   assert(
     upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games') &&
       upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only') &&
-      upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, sort: "watch" })}>Watch rank') &&
-      upcomingDatePageSource.includes('href={upcomingControlHref(basePath, { ...controls, sort: "time" })}>Start time'),
+      upcomingDatePageSource.includes('label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" })') &&
+      upcomingDatePageSource.includes('label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" })'),
     "upcoming filter controls must build status and sort links from the current normalized control state",
   );
   assert(
     upcomingDatePageSource.includes('role="group" aria-label={`${label} filters`}') &&
       upcomingDatePageSource.includes('<ControlGroup label="Status">') &&
-      upcomingDatePageSource.includes('<ControlGroup label="Sort">'),
+      upcomingDatePageSource.includes('<SegmentedControl') &&
+      upcomingDatePageSource.includes('label="Sort"') &&
+      upcomingDatePageSource.includes('ariaLabel="Sort options"'),
     "upcoming filter controls must keep grouped Status and Sort semantics",
   );
   assert(
@@ -1774,7 +1787,12 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assert(
       tonightServiceSource.includes("pitcherId: String(probable.id),\n      name: probable.fullName,\n      team,\n      side,") &&
       tonightServiceSource.includes("pitcherId: form.pitcherId,\n    name: form.name,\n    team,\n    side,") &&
-      tonightServiceSource.includes('["tonight-must-watch", "v10"]') &&
+      tonightServiceSource.includes('["tonight-must-watch", "v15"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v14"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v13"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v12"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v11"]') &&
+      !tonightServiceSource.includes('["tonight-must-watch", "v10"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v9"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v8"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v6"]') &&
@@ -1782,14 +1800,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       !tonightServiceSource.includes('["tonight-must-watch", "v4"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v3"]') &&
       !tonightServiceSource.includes('["tonight-must-watch", "v2"]') &&
-      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];') &&
-      typesSource.includes('export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;') &&
+      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"];') &&
+      typesSource.includes('export type UpcomingCardStatus = "pregame" | "delay";') &&
       tonightApiSource.includes('export const dynamic = "force-dynamic";') &&
       upcomingApiSource.includes('export const dynamic = "force-dynamic";') &&
-      tonightServiceSource.includes("const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));") &&
+      tonightServiceSource.includes("const candidates = builtGames.filter(isUpcomingGame);") &&
       !tonightServiceSource.includes("isActiveUpcomingCardGame") &&
       !tonightServiceSource.includes("UPCOMING_LIVE_GAME_MAX_AGE_MS"),
-    "upcoming probable starters must use scheduled game slot teams, the refreshed v10 cache namespace, and only non-postponed active card statuses now that live has its own section",
+    "upcoming probable starters must use scheduled game slot teams, the refreshed v15 cache namespace, and only pregame/delay card statuses now that live and final have their own surfaces",
   );
   assert(
     typesSource.includes('source: "the-odds-api" | "prop-line" | "not-configured" | "odds-deferred";') &&
@@ -1824,9 +1842,10 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       (source) =>
         source.includes('import { getDefaultUpcomingDate } from "@/lib/data/start-service";') &&
         source.includes("await getDefaultUpcomingDate()") &&
-        !source.includes("getDefaultSlateDates"),
+        !source.includes("getDefaultSlateDates") &&
+        !source.includes("getHomeSlateDate"),
     ),
-    "upcoming wrapper pages and image routes must resolve through the upcoming-only default date without loading ranked slate defaults",
+    "upcoming wrapper pages and image routes must resolve through the upcoming-only default date without loading ranked or home slate defaults",
   );
   assert(
     upcomingIndexPageSource.includes(
@@ -1843,14 +1862,33 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       upcomingIndexImageSource.includes("width: 1200") &&
       upcomingIndexImageSource.includes("height: 630") &&
       upcomingIndexImageSource.includes('export const contentType = "image/png";') &&
+      upcomingIndexImageSource.includes('export const dynamic = "force-dynamic";') &&
+      countOccurrences(upcomingIndexImageSource, "await getDefaultUpcomingDate()") === 1 &&
       upcomingIndexImageSource.includes("return Image({ params: Promise.resolve({ date: upcomingDate }) });") &&
       upcomingWeekIndexImageSource.includes('import Image from "./[startDate]/opengraph-image";') &&
       upcomingWeekIndexImageSource.includes('export const alt = "Toe the Slab weekly upcoming starter watch card";') &&
       upcomingWeekIndexImageSource.includes("width: 1200") &&
       upcomingWeekIndexImageSource.includes("height: 630") &&
       upcomingWeekIndexImageSource.includes('export const contentType = "image/png";') &&
+      upcomingWeekIndexImageSource.includes('export const dynamic = "force-dynamic";') &&
+      countOccurrences(upcomingWeekIndexImageSource, "await getDefaultUpcomingDate()") === 1 &&
+      upcomingDateImageSource.includes('export const dynamic = "force-dynamic";') &&
+      upcomingWeekImageSource.includes('export const dynamic = "force-dynamic";') &&
       upcomingWeekIndexImageSource.includes("return Image({ params: Promise.resolve({ startDate: upcomingDate }) });"),
-    "upcoming Open Graph wrapper routes must stay thin 1200x630 PNG delegates to the dated share-card routes",
+    "upcoming Open Graph routes must stay dynamic, resolve one upcoming default date, and remain thin 1200x630 PNG delegates to the dated share-card routes",
+  );
+  assert(
+    upcomingIndexImageSource.includes('import Image from "./[date]/opengraph-image";') &&
+      upcomingIndexImageSource.includes("export default async function UpcomingIndexImage()") &&
+      upcomingIndexImageSource.includes("const upcomingDate = await getDefaultUpcomingDate();") &&
+      upcomingIndexImageSource.includes("return Image({ params: Promise.resolve({ date: upcomingDate }) });") &&
+      !upcomingIndexImageSource.includes("new ImageResponse") &&
+      upcomingWeekIndexImageSource.includes('import Image from "./[startDate]/opengraph-image";') &&
+      upcomingWeekIndexImageSource.includes("export default async function UpcomingWeekIndexImage()") &&
+      upcomingWeekIndexImageSource.includes("const upcomingDate = await getDefaultUpcomingDate();") &&
+      upcomingWeekIndexImageSource.includes("return Image({ params: Promise.resolve({ startDate: upcomingDate }) });") &&
+      !upcomingWeekIndexImageSource.includes("new ImageResponse"),
+    "upcoming wrapper Open Graph routes must delegate directly to the dated image renderers instead of duplicating share-card rendering",
   );
   assert(
     [
@@ -1884,6 +1922,107 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming page metadata must derive share-card images and Open Graph URLs from the canonical route URL",
   );
   assert(
+    upcomingIndexPageSource.includes('const url = "/upcoming";') &&
+      upcomingIndexPageSource.includes("const image = `${url}/opengraph-image`;") &&
+      !upcomingIndexPageSource.includes("upcomingDateHref(") &&
+      upcomingWeekIndexPageSource.includes('const url = "/upcoming/week";') &&
+      upcomingWeekIndexPageSource.includes("const image = `${url}/opengraph-image`;") &&
+      !upcomingWeekIndexPageSource.includes("upcomingWeekHref("),
+    "upcoming index metadata must keep canonical URLs and social images on the stable wrapper routes",
+  );
+  assert(
+    upcomingDateImageSource.includes('export const alt = "Toe the Slab upcoming starter watch card";') &&
+      upcomingDateImageSource.includes("width: 1200") &&
+      upcomingDateImageSource.includes("height: 630") &&
+      upcomingDateImageSource.includes('export const contentType = "image/png";') &&
+      upcomingDateImageSource.includes('export const dynamic = "force-dynamic";') &&
+      upcomingWeekImageSource.includes('export const alt = "Toe the Slab weekly upcoming starter watch card";') &&
+      upcomingWeekImageSource.includes("width: 1200") &&
+      upcomingWeekImageSource.includes("height: 630") &&
+      upcomingWeekImageSource.includes('export const contentType = "image/png";') &&
+      upcomingWeekImageSource.includes('export const dynamic = "force-dynamic";'),
+    "upcoming dated Open Graph image routes must keep canonical 1200x630 PNG metadata for delegated share cards",
+  );
+  assert(
+    [upcomingIndexImageSource, upcomingDateImageSource, upcomingWeekIndexImageSource, upcomingWeekImageSource].every(
+      (source) =>
+        !source.includes("export const revalidate") &&
+        !source.includes("export const fetchCache") &&
+        !source.includes("export const dynamicParams"),
+    ),
+    "upcoming Open Graph image routes must not add static cache exports while share cards depend on moving probable-starter data",
+  );
+  assert(
+    [upcomingDateImageSource, upcomingWeekImageSource].every(
+      (source) =>
+        !source.includes("getDefaultUpcomingDate") &&
+        !source.includes("getHomeSlateDate") &&
+        !source.includes("getDefaultSlateDates"),
+    ),
+    "upcoming dated Open Graph image routes must use their validated route params instead of resolving wrapper/default slate dates",
+  );
+  assert(
+    upcomingDateImageSource.includes("const { date } = await params;") &&
+      upcomingDateImageSource.includes("assertValidDateRouteParam(date);") &&
+      upcomingDateImageSource.indexOf("assertValidDateRouteParam(date);") < upcomingDateImageSource.indexOf("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
+      upcomingWeekImageSource.includes("const { startDate } = await params;") &&
+      upcomingWeekImageSource.includes("assertValidDateRouteParam(startDate);") &&
+      upcomingWeekImageSource.indexOf("assertValidDateRouteParam(startDate);") < upcomingWeekImageSource.indexOf("const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });"),
+    "upcoming dated Open Graph image routes must validate route params before fetching share-card data",
+  );
+  assert(
+    [upcomingDateImageSource, upcomingWeekImageSource].every(
+      (source) =>
+        source.includes('import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";') &&
+        source.includes("const confidenceLabel = topGame ? watchScoreConfidenceLabel(") &&
+        source.includes("{confidenceLabel ? (") &&
+        source.includes("{confidenceLabel}</div>"),
+    ),
+    "upcoming dated Open Graph image routes must keep the watch-score confidence badge on share cards",
+  );
+  assert(
+    upcomingDatePageSource.includes("const url = upcomingDateHref(resolvedDate);") &&
+      upcomingDatePageSource.includes("const image = `${url}/opengraph-image`;") &&
+      upcomingWeekPageSource.includes("const url = upcomingWeekHref(resolvedStartDate);") &&
+      upcomingWeekPageSource.includes("const image = `${url}/opengraph-image`;"),
+    "upcoming dated metadata must keep social images on canonical dated OG routes",
+  );
+  assert(
+    !upcomingIndexPageSource.includes("redirect(") &&
+      !upcomingWeekIndexPageSource.includes("redirect(") &&
+      upcomingIndexPageSource.includes("<UpcomingDatePage") &&
+      upcomingWeekIndexPageSource.includes("<UpcomingWeekPage"),
+    "upcoming index wrapper pages must render delegated dated pages in place instead of redirecting away from stable wrapper URLs",
+  );
+  assert(
+    upcomingIndexPageSource.includes('export const dynamic = "force-dynamic";') &&
+      upcomingWeekIndexPageSource.includes('export const dynamic = "force-dynamic";'),
+    "upcoming index wrapper pages must stay dynamic while metadata and renders resolve the moving default date",
+  );
+  assert(
+    countOccurrences(upcomingIndexPageSource, "await getDefaultUpcomingDate()") === 2 &&
+      upcomingIndexPageSource.includes("const date = await getDefaultUpcomingDate();") &&
+      upcomingIndexPageSource.includes("const upcomingDate = await getDefaultUpcomingDate();") &&
+      countOccurrences(upcomingWeekIndexPageSource, "await getDefaultUpcomingDate()") === 2 &&
+      upcomingWeekIndexPageSource.includes("const startDate = await getDefaultUpcomingDate();") &&
+      upcomingWeekIndexPageSource.includes("const upcomingDate = await getDefaultUpcomingDate();"),
+    "upcoming index metadata and wrapper renders must resolve their dates through the same upcoming default-date helper",
+  );
+  assert(
+    upcomingIndexPageSource.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
+      upcomingIndexPageSource.includes("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
+      upcomingIndexPageSource.includes("const title = upcomingDayTitle(upcoming.date);") &&
+      upcomingIndexPageSource.includes("const description = upcomingDayDescription(upcoming);"),
+    "upcoming index metadata must derive title and description from the same resolved slate data as the delegated day page",
+  );
+  assert(
+    upcomingWeekIndexPageSource.includes('import { getUpcomingMustWatch } from "@/lib/data/tonight-service";') &&
+      upcomingWeekIndexPageSource.includes("const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });") &&
+      upcomingWeekIndexPageSource.includes("const title = upcomingWeekTitle(upcoming.range.start);") &&
+      upcomingWeekIndexPageSource.includes("const description = upcomingWeekDescription(upcoming);"),
+    "upcoming week index metadata must derive title and description from the same resolved range data as the delegated week page",
+  );
+  assert(
     [
       upcomingIndexPageSource,
       upcomingDatePageSource,
@@ -1898,36 +2037,84 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     "upcoming page metadata must keep clean-route canonicals while filtered query variants stay noindex/follow",
   );
   assert(
+    upcomingDatePageSource.includes("export async function generateMetadata({ params, searchParams }: UpcomingDatePageProps): Promise<Metadata>") &&
+      upcomingDatePageSource.includes("const { date } = await params;") &&
+      upcomingDatePageSource.includes("assertValidDateRouteParam(date);") &&
+      upcomingDatePageSource.includes("const query = await searchParams;") &&
+      upcomingDatePageSource.includes("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
+      upcomingWeekPageSource.includes("export async function generateMetadata({ params, searchParams }: UpcomingWeekPageProps): Promise<Metadata>") &&
+      upcomingWeekPageSource.includes("const { startDate } = await params;") &&
+      upcomingWeekPageSource.includes("assertValidDateRouteParam(startDate);") &&
+      upcomingWeekPageSource.includes("const query = await searchParams;") &&
+      upcomingWeekPageSource.includes("const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });"),
+    "upcoming dated metadata must validate route params and read filter query params before deriving canonical social metadata",
+  );
+  assert(
+    upcomingIndexPageSource.includes("export default async function UpcomingPage({ searchParams }: UpcomingIndexPageProps)") &&
+      upcomingIndexPageSource.includes("export async function generateMetadata({ searchParams }: UpcomingIndexPageProps): Promise<Metadata>") &&
+      upcomingIndexPageSource.includes("team?: string;") &&
+      upcomingIndexPageSource.includes("return <UpcomingDatePage params={Promise.resolve({ date: upcomingDate })} searchParams={searchParams} />;") &&
+      upcomingWeekIndexPageSource.includes("export default async function UpcomingWeekIndexPage({ searchParams }: UpcomingWeekIndexPageProps)") &&
+      upcomingWeekIndexPageSource.includes("export async function generateMetadata({ searchParams }: UpcomingWeekIndexPageProps): Promise<Metadata>") &&
+      upcomingWeekIndexPageSource.includes("team?: string;") &&
+      upcomingWeekIndexPageSource.includes("return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} searchParams={searchParams} />;"),
+    "upcoming index wrapper pages must share typed searchParams across metadata and renders, including retired team queries, so filtered variants keep normalized controls and noindex metadata",
+  );
+  assert(
+    upcomingDatePageSource.includes("team?: string;") &&
+      upcomingWeekPageSource.includes("team?: string;"),
+    "upcoming dated page props must keep retired team queries typed through the delegated wrapper boundary",
+  );
+  assert(
     upcomingMetadataSource.includes('itemListOrder: "https://schema.org/ItemListOrderDescending",') &&
       countOccurrences(upcomingMetadataSource, 'itemListOrder: "https://schema.org/ItemListOrderDescending",') === 2,
     "upcoming day/week JSON-LD must declare descending ranked ItemList order for share/search metadata",
   );
   assert(
-    upcomingMetadataSource.includes("const games = orderedUpcomingWeekGames(upcoming);") &&
+    upcomingMetadataSource.includes("const games = orderedUpcomingDayGames(upcoming.games);") &&
+      upcomingMetadataSource.includes("const games = orderedUpcomingWeekGames(upcoming);") &&
       countOccurrences(upcomingMetadataSource, "const games = orderedUpcomingWeekGames(upcoming);") === 2 &&
       upcomingMetadataSource.includes("const scheduledGameCount = upcoming.days.reduce((total, day) => total + day.scheduledGames, 0);") &&
       upcomingMetadataSource.includes("const topGame = games[0]?.game;"),
-    "upcoming weekly description must use scheduled-game counts while sharing JSON-LD's deterministic game ordering",
+    "upcoming day/week descriptions must share JSON-LD's deterministic game ordering while weekly copy uses scheduled-game counts",
   );
   assert(
     upcomingMetadataSource.includes(
       "b.game.gameWatchScore - a.game.gameWatchScore ||",
+    ) &&
+      upcomingMetadataSource.includes(
+        "b.gameWatchScore - a.gameWatchScore ||",
     ),
-    "upcoming weekly JSON-LD must keep descending watch-score ordering",
+    "upcoming day/week JSON-LD must keep descending watch-score ordering",
   );
   assert(
     upcomingMetadataSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
-      upcomingMetadataSource.includes("a.game.label.localeCompare(b.game.label),"),
-    "upcoming weekly JSON-LD must keep stable first-pitch and matchup-label tie-breaking",
+      upcomingMetadataSource.includes("a.game.label.localeCompare(b.game.label),") &&
+      upcomingMetadataSource.includes("a.firstPitch.localeCompare(b.firstPitch) ||") &&
+      upcomingMetadataSource.includes("a.label.localeCompare(b.label),"),
+    "upcoming day/week JSON-LD must keep stable first-pitch and matchup-label tie-breaking",
   );
   assert(
     upcomingWeekImageSource.includes("b.game.gameWatchScore - a.game.gameWatchScore ||") &&
       upcomingWeekImageSource.includes("a.game.firstPitch.localeCompare(b.game.firstPitch) ||") &&
-      upcomingWeekImageSource.includes("a.game.label.localeCompare(b.game.label),"),
-    "upcoming weekly Open Graph image must use the same deterministic watch-score, first-pitch, and matchup-label ordering as weekly metadata",
+      upcomingWeekImageSource.includes("a.game.label.localeCompare(b.game.label),") &&
+      upcomingWeekImageSource.includes("const topGame = games[0];") &&
+      upcomingWeekImageSource.includes("games.slice(0, 12).map(({ game })") &&
+      upcomingWeekImageSource.includes('background: game.gamePk === topGame?.game.gamePk ? "#EF9F27" : "#27272a"'),
+    "upcoming weekly Open Graph image must use the same deterministic watch-score, first-pitch, and matchup-label ordering for the headline and spark bars as weekly metadata",
   );
   assert(
-    upcomingMetadataSource.includes("const itemListGames = upcoming.games.slice(0, 10);") &&
+    upcomingDateImageSource.includes("const games = [...upcoming.games].sort(") &&
+      upcomingDateImageSource.includes("b.gameWatchScore - a.gameWatchScore ||") &&
+      upcomingDateImageSource.includes("a.firstPitch.localeCompare(b.firstPitch) ||") &&
+      upcomingDateImageSource.includes("a.label.localeCompare(b.label),") &&
+      upcomingDateImageSource.includes("const topGame = games[0];") &&
+      upcomingDateImageSource.includes("games.slice(0, 8).map((game)") &&
+      upcomingDateImageSource.includes('background: game.gamePk === topGame?.gamePk ? "#EF9F27" : "#27272a"'),
+    "upcoming day Open Graph image must use the same deterministic watch-score, first-pitch, and matchup-label ordering for the headline and spark bars as day metadata",
+  );
+  assert(
+    upcomingMetadataSource.includes("const itemListGames = orderedUpcomingDayGames(upcoming.games).slice(0, 10);") &&
       upcomingMetadataSource.includes("const itemListGames = games.slice(0, 20);") &&
       upcomingMetadataSource.includes("numberOfItems: itemListGames.length,") &&
       countOccurrences(upcomingMetadataSource, "numberOfItems: itemListGames.length,") === 2 &&
@@ -1974,8 +2161,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       typesSource.includes('export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";') &&
       typesSource.includes('export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;') &&
       typesSource.includes('export type MatchupConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";') &&
-      typesSource.includes('export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;') &&
-      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];') &&
+      typesSource.includes('export type UpcomingCardStatus = "pregame" | "delay";') &&
+      tonightServiceSource.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"];') &&
       tonightServiceSource.includes("fetchMlbPitcherStartCompleteness") &&
       tonightServiceSource.includes("function classifyStarterForm(") &&
       tonightServiceSource.includes("matched <= FORM_COMPLETENESS.joinGapMatchFloor") &&
@@ -2053,6 +2240,11 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
       tonightsMustWatchSource.includes('data-watch-card-kind="headliner"') &&
       tonightsMustWatchSource.includes('data-watch-card-kind="row"'),
     "upcoming watch-card kind telemetry must share one headliner/row helper for section ordering",
+  );
+  assert(
+    tonightsMustWatchSource.includes("shownGames.map((game) => game.label).join(\"|\")") &&
+      !tonightsMustWatchSource.includes("shownGames.map((game) => game.label).join(\",\")"),
+    "upcoming public matchup label section telemetry must use pipe delimiters so doubleheader labels stay one value per card",
   );
   assert(
     tonightsMustWatchSource.includes("function watchScoreValue(game: TonightGame)") &&
@@ -2280,7 +2472,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   );
   assert(
     upcomingDatePageSource.includes("const activeControlCount = (showStatusFilter ? 1 : 0) + 1;") &&
-      countOccurrences(upcomingDatePageSource, "<ControlGroup label=") === 2 &&
+      countOccurrences(upcomingDatePageSource, "<ControlGroup label=") === 1 &&
+      upcomingDatePageSource.includes('label="Sort"') &&
       countOccurrences(upcomingDatePageSource, "data-control-active-count={activeControlCount}") === 1,
     "upcoming filter controls must expose exactly one active-count telemetry hook for the Status and Sort groups",
   );
@@ -2307,11 +2500,14 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   const statusFilterVisible = upcomingStatusFilterVisible(html);
   const effectiveExpectedLabel = statusFilterVisible ? expectedLabel : expectedLabel.replace("All statuses / ", "").replace("Pregame only / ", "");
   assert(
-    elementWithTextHasAttributes(html, "summary", { "aria-label": effectiveExpectedLabel }, effectiveExpectedLabel),
-    `${route} should expose the current upcoming filter state on the controls summary`,
+    elementHasAttributes(html, "div", {
+      "data-responsive-check": "upcoming-controls",
+      "aria-label": effectiveExpectedLabel,
+    }),
+    `${route} should expose the current upcoming filter state on the surfaced controls shell`,
   );
   assert(
-    elementHasAttributes(html, "details", {
+    elementHasAttributes(html, "div", {
       "data-responsive-check": "upcoming-controls",
       "data-control-label": effectiveExpectedLabel,
     }),
@@ -2320,7 +2516,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   const expectedControls = controlsFromLabel(effectiveExpectedLabel);
   const expectedSlateRange = route.startsWith("/upcoming/week") ? "week" : "day";
   assert(
-    elementHasAttributes(html, "details", {
+    elementHasAttributes(html, "div", {
       "data-responsive-check": "upcoming-controls",
       "data-slate-range": expectedSlateRange,
       "data-control-key": `${expectedControls.pregameOnly ? "pregame" : "all"}-${expectedControls.sort}`,
@@ -2333,8 +2529,8 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     !html.includes('data-control-team=') && !html.includes(">All teams<"),
     `${route} should not render team filtering in upcoming controls; use Heat Check team filters instead`,
   );
-  const renderedVisibleGames = Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-visible-games"));
-  const renderedScheduledGames = Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-scheduled-games"));
+  const renderedVisibleGames = Number(elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-visible-games"));
+  const renderedScheduledGames = Number(elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-scheduled-games"));
   assert(
     Number.isInteger(renderedVisibleGames) &&
       renderedVisibleGames >= 0 &&
@@ -2343,18 +2539,18 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
     `${route} should expose valid visible and scheduled game counts on the upcoming controls`,
   );
   assert(
-    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-empty") === String(renderedVisibleGames === 0),
+    elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-empty") === String(renderedVisibleGames === 0),
     `${route} should expose control empty-state telemetry that matches visible game count`,
   );
   assert(
-    Number(elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-hidden-games")) === Math.max(0, renderedScheduledGames - renderedVisibleGames),
+    Number(elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-hidden-games")) === Math.max(0, renderedScheduledGames - renderedVisibleGames),
     `${route} should expose hidden-game telemetry that matches scheduled minus visible games`,
   );
   const expectedControlCount = statusFilterVisible ? 4 : 2;
   const expectedActiveControlCount = statusFilterVisible ? 2 : 1;
   const expectedInactiveControlCount = statusFilterVisible ? 2 : 1;
   assert(
-    elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === String(expectedActiveControlCount),
+    elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count") === String(expectedActiveControlCount),
     `${route} should expose active upcoming control telemetry aligned with visible control groups`,
   );
   assert(
@@ -2382,7 +2578,7 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
   assertUpcomingControlLinkKeys(html, route);
   if (linkExpectations) {
     assert(
-      elementHasAttributes(html, "details", {
+      elementHasAttributes(html, "div", {
         "data-responsive-check": "upcoming-controls",
         "data-control-base-path": linkExpectations.basePath,
       }),
@@ -2408,70 +2604,66 @@ function assertUpcomingControls(html, route, expectedLabel = "Filters / All stat
 }
 
 function activeUpcomingControlLinkCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="true")[^>]*>/g) ?? []).length;
 }
 
 function inactiveUpcomingControlLinkCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="false")[^>]*>/g) ?? []).length;
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="false")[^>]*>/g) ?? []).length;
 }
 
 function upcomingControlActiveTelemetryCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-control-link-active="(?:true|false)")[^>]*>/g) ?? []).length;
   return scopedCount >= 4 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-control-link-active="(?:true|false)")[^>]*>/g) ?? []).length;
 }
 
 function activeUpcomingControlCurrentLinkCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-control-link-active="true")(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-control-link-active="true")(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
 }
 
 function upcomingControlCurrentLinkCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
   return scopedCount >= 2 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*aria-current="location")[^>]*>/g) ?? []).length;
 }
 
 function upcomingStatusFilterVisible(html) {
-  return elementAttributeValue(html, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-status-filter-visible") === "true";
+  return elementAttributeValue(html, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-status-filter-visible") === "true";
+}
+
+function upcomingControlsHtml(html) {
+  return balancedElementByOpeningTag(html, "div", (tag) => tag.includes('data-responsive-check="upcoming-controls"')) || html;
 }
 
 function upcomingFastFilterLinkCount(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
   return scopedCount >= 4 ? scopedCount : (html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? []).length;
 }
 
 function assertUpcomingControlGroups(html, route) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const statusFilterVisible = upcomingStatusFilterVisible(html);
-  const expectedLabels = statusFilterVisible ? ["Status", "Sort"] : ["Sort"];
-  const scopedGroupTags = controlHtml.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
+  const expectedLabels = statusFilterVisible ? ["Status filters", "Sort options"] : ["Sort options"];
+  const scopedGroupTags = controlHtml.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status filters|Sort options)")[^>]*>/g) ?? [];
   const groupTags =
     scopedGroupTags.length === expectedLabels.length
       ? scopedGroupTags
-      : html.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status|Sort) filters")[^>]*>/g) ?? [];
+      : html.match(/<div\b(?=[^>]*role="group")(?=[^>]*aria-label="(?:Status filters|Sort options)")[^>]*>/g) ?? [];
   assert(
-    groupTags.length === expectedLabels.length && expectedLabels.every((label) => groupTags.some((tag) => tag.includes(`aria-label="${label} filters"`))),
+    groupTags.length === expectedLabels.length && expectedLabels.every((label) => groupTags.some((tag) => tag.includes(`aria-label="${label}"`))),
     `${route} should render the visible upcoming controls as accessible filter groups: ${expectedLabels.join(" and ")}`,
   );
 }
 
 function assertUpcomingControlPendingRegions(html, route) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedCount = (controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)(?=[^>]*data-route-pending-region="upcoming-board")(?=[^>]*data-route-pending-label="Upcoming matchup board")[^>]*>/g) ?? []).length;
   const count =
     scopedCount >= 4
@@ -2491,8 +2683,7 @@ function assertUpcomingControlPendingRegions(html, route) {
 }
 
 function assertUpcomingActiveControlState(html, route) {
-  const controlMatches = [...html.matchAll(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/gs)].map((match) => match[0]);
-  const controlHtml = controlMatches.find((candidate) => candidate.includes("data-fast-filter-link")) ?? controlMatches[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const scopedControls = controlHtml.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
   const controlAnchors = scopedControls.length >= 4 ? scopedControls : html.match(/<a\b(?=[^>]*data-fast-filter-link)[^>]*>/g) ?? [];
   const activeControls = controlAnchors.filter((anchor) => anchor.includes('data-control-link-active="true"'));
@@ -2500,7 +2691,7 @@ function assertUpcomingActiveControlState(html, route) {
   const activeSortControls = activeControls.filter((anchor) => /data-control-link-key="sort-(watch|time)"/.test(anchor));
   const statusFilterVisible = upcomingStatusFilterVisible(html);
   const expectedActiveControlCount = statusFilterVisible ? 2 : 1;
-  const renderedActiveControlCount = elementAttributeValue(controlHtml, "details", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count");
+  const renderedActiveControlCount = elementAttributeValue(controlHtml, "div", { "data-responsive-check": "upcoming-controls" }, "data-control-active-count");
   assert(activeControls.length === expectedActiveControlCount, `${route} should render the expected active upcoming filter controls; rendered controls: ${controlAnchorSummary(html)}`);
   assert(activeStatusControls.length === (statusFilterVisible ? 1 : 0), `${route} should render active upcoming Status filters only when the status group is visible; rendered controls: ${controlAnchorSummary(html)}`);
   assert(activeSortControls.length === 1, `${route} should render exactly one active upcoming Sort filter; rendered controls: ${controlAnchorSummary(html)}`);
@@ -2511,8 +2702,7 @@ function assertUpcomingActiveControlState(html, route) {
 }
 
 function assertUpcomingControlLinkKeys(html, route) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   const expectedKeys = upcomingStatusFilterVisible(html) ? UPCOMING_CONTROL_LINK_KEYS : ["sort-watch", "sort-time"];
   for (const key of expectedKeys) {
     const scopedCount = (controlHtml.match(new RegExp(`<a\\b(?=[^>]*data-control-link-key="${key}")[^>]*>`, "g")) ?? []).length;
@@ -2551,8 +2741,7 @@ function assertUpcomingControlLinks(html, route, { basePath, controls }) {
 }
 
 function controlAnchorSummary(html) {
-  const controlMatch = html.match(/<details\b(?=[^>]*data-responsive-check="upcoming-controls")[^>]*>.*?<\/details>/s);
-  const controlHtml = controlMatch?.[0] ?? html;
+  const controlHtml = upcomingControlsHtml(html);
   return (controlHtml.match(/<a\b[^>]*>.*?<\/a>/gs) ?? [])
     .map((anchor) => {
       const href = anchor.match(/\bhref="([^"]*)"/)?.[1] ?? "no-href";
@@ -3096,7 +3285,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const showGameStatus = new Set(games.map((game) => game.status)).size >= 2;
   const renderedGamePks = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-pks"));
   const renderedGameDates = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-game-dates"));
-  const renderedMatchupLabels = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-labels"));
+  const renderedMatchupLabels = pipeAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-matchup-labels"));
   const renderedTeamMatchups = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-matchups"));
   const renderedTeamNames = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-team-names"));
   const renderedVenues = csvAttributeValues(elementAttributeValue(sectionHtml, "section", { id: sectionId }, "data-visible-venues"));
@@ -3219,8 +3408,8 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   );
   assert(
     renderedMatchupLabels.length === renderedGameCount &&
-      renderedMatchupLabels.every((label) => /^[A-Z0-9]{2,4} @ [A-Z0-9]{2,4}$/.test(label)),
-    `${route} ${sectionId} should expose one public matchup label per rendered card`,
+      renderedMatchupLabels.every((label) => /^[A-Z0-9]{2,4} @ [A-Z0-9]{2,4}(?:, Gm \d+)?$/.test(label)),
+    `${route} ${sectionId} should expose one public matchup label per rendered card; count=${renderedMatchupLabels.length}/${renderedGameCount} labels=${renderedMatchupLabels.join("|") || "none"}`,
   );
   assert(
     renderedTeamMatchups.length === renderedGameCount &&
@@ -3569,7 +3758,7 @@ function assertRenderedWatchCards(html, route, games, rankLabel, sectionId = "mu
   const failedWatchTelemetryChecks = watchTelemetryChecks.filter(([, passed]) => !passed).map(([name]) => name);
   assert(
     failedWatchTelemetryChecks.length === 0,
-    `${route} ${sectionId} should expose one rendered watch rank/label, score/label, tier key/label, sort group/label, fallback flag key/label set, component layout/score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game; failed=${failedWatchTelemetryChecks.join(",")} details=${renderedComponentDetails.join("|") || "none"} ranks=${renderedMatchupRanks.join(",") || "none"} statuses=${renderedMatchupContextStatuses.join(",") || "none"} hooks=${renderedHookReasonKeys.join(",") || "none"}`,
+      `${route} ${sectionId} should expose one rendered watch rank/label, score/label, tier key/label, sort group/label, fallback flag key/label set, component layout/score/detail/aria-label set, matchup rank, matchup context status, matchup status label, and hook reason key/label per visible game; failed=${failedWatchTelemetryChecks.join(",")} details=${renderedComponentDetails.join("|") || "none"} ranks=${renderedMatchupRanks.join(",") || "none"} statuses=${renderedMatchupContextStatuses.join(",") || "none"} hooks=${renderedHookReasonKeys.join(",") || "none"}`,
   );
   if (allowLiveSectionCountDrift && renderedGameCount !== games.length) {
     assert(
@@ -5219,6 +5408,18 @@ async function loadUpcomingSnapshotForStart(baseUrl, startDate) {
   };
 }
 
+function renderedUpcomingControlDate(html, route) {
+  const basePath = elementAttributeValue(
+    html,
+    "div",
+    { "data-responsive-check": "upcoming-controls" },
+    "data-control-base-path",
+  );
+  const match = basePath?.match(/^\/upcoming(?:\/week)?\/(\d{4}-\d{2}-\d{2})$/);
+  assert(match, `${route} should expose a dated upcoming controls base path`);
+  return match[1];
+}
+
 const port = await reservePort();
 const baseUrl = `http://${host}:${port}`;
 const serverEnv = {
@@ -5525,6 +5726,7 @@ try {
     expectedUpcomingDayTitle(date),
     expectedUpcomingDayDescription(upcoming.days[0]),
   );
+  assertNoRobotsMeta(dayHtml, `/upcoming/${date}`);
   assertUpcomingPageHeader(dayHtml, `/upcoming/${date}`);
   assertJsonLd(
     dayHtml,
@@ -5776,6 +5978,21 @@ try {
     defaultWeekGames,
   } = await loadDefaultUpcomingSnapshot(baseUrl));
   let defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
+
+  async function alignDefaultSnapshotToRenderedControls(html, route) {
+    const renderedUpcomingDate = renderedUpcomingControlDate(html, route);
+    if (renderedUpcomingDate === defaultDateUpcoming.range.start) return;
+    ({
+      defaultDateUpcoming,
+      homeSlateDate,
+      defaultDayTotals,
+      defaultWeekUpcoming,
+      defaultWeekGameCount,
+      defaultWeekGames,
+    } = await loadUpcomingSnapshotForStart(baseUrl, renderedUpcomingDate));
+    defaultPregameGames = pregameGames(defaultDateUpcoming.days[0].games);
+  }
+
   const upcomingIndex = await fetch(`${baseUrl}/upcoming`);
   assert(upcomingIndex.ok, "/upcoming returned HTTP " + upcomingIndex.status);
   const upcomingIndexHtml = await upcomingIndex.text();
@@ -5798,6 +6015,7 @@ try {
     expectedUpcomingDayTitle(defaultDateUpcoming.range.start),
     expectedUpcomingDayDescription(defaultDateUpcoming.days[0]),
   );
+  assertNoRobotsMeta(upcomingIndexHtml, "/upcoming");
   assertUpcomingPageHeader(upcomingIndexHtml, "/upcoming");
   assertJsonLd(
     upcomingIndexHtml,
@@ -5834,6 +6052,7 @@ try {
   const filteredUpcomingIndex = await fetch(`${baseUrl}/upcoming?sort=time`);
   assert(filteredUpcomingIndex.ok, "/upcoming?sort=time returned HTTP " + filteredUpcomingIndex.status);
   const filteredUpcomingIndexHtml = await filteredUpcomingIndex.text();
+  await alignDefaultSnapshotToRenderedControls(filteredUpcomingIndexHtml, "/upcoming?sort=time");
   assertMetadata(
     filteredUpcomingIndexHtml,
     "/upcoming",
@@ -5868,6 +6087,7 @@ try {
     const legacyTeamUpcomingIndex = await fetch(`${baseUrl}${legacyTeamUpcomingIndexPath}`);
     assert(legacyTeamUpcomingIndex.ok, `${legacyTeamUpcomingIndexPath} returned HTTP ${legacyTeamUpcomingIndex.status}`);
     const legacyTeamUpcomingIndexHtml = await legacyTeamUpcomingIndex.text();
+    await alignDefaultSnapshotToRenderedControls(legacyTeamUpcomingIndexHtml, legacyTeamUpcomingIndexPath);
     assertMetadata(
       legacyTeamUpcomingIndexHtml,
       "/upcoming",
@@ -5900,6 +6120,7 @@ try {
   const filteredUpcomingIndexTeam = await fetch(`${baseUrl}${filteredUpcomingIndexTeamPath}`);
   assert(filteredUpcomingIndexTeam.ok, `/upcoming?pregame=1 returned HTTP ${filteredUpcomingIndexTeam.status}`);
   const filteredUpcomingIndexTeamHtml = await filteredUpcomingIndexTeam.text();
+  await alignDefaultSnapshotToRenderedControls(filteredUpcomingIndexTeamHtml, filteredUpcomingIndexTeamPath);
   assertMetadata(
     filteredUpcomingIndexTeamHtml,
     "/upcoming",
@@ -5936,6 +6157,7 @@ try {
     `/upcoming?pregame=1&sort=time returned HTTP ${filteredSortedUpcomingIndexTeam.status}`,
   );
   const filteredSortedUpcomingIndexTeamHtml = await filteredSortedUpcomingIndexTeam.text();
+  await alignDefaultSnapshotToRenderedControls(filteredSortedUpcomingIndexTeamHtml, filteredSortedUpcomingIndexTeamPath);
   assertMetadata(
     filteredSortedUpcomingIndexTeamHtml,
     "/upcoming",
@@ -5987,6 +6209,7 @@ try {
       expectedUpcomingWeekTitle(date),
       expectedUpcomingWeekDescription(upcoming),
     );
+    assertNoRobotsMeta(weekHtml, `/upcoming/week/${date}`);
     assertUpcomingPageHeader(weekHtml, `/upcoming/week/${date}`);
     assertJsonLd(
       weekHtml,
@@ -6213,12 +6436,14 @@ try {
     const upcomingWeekIndex = await fetch(`${baseUrl}/upcoming/week`);
     assert(upcomingWeekIndex.ok, "/upcoming/week returned HTTP " + upcomingWeekIndex.status);
     const upcomingWeekIndexHtml = await upcomingWeekIndex.text();
+    await alignDefaultSnapshotToRenderedControls(upcomingWeekIndexHtml, "/upcoming/week");
     assertMetadata(
       upcomingWeekIndexHtml,
       "/upcoming/week",
       expectedUpcomingWeekTitle(defaultDateUpcoming.range.start),
       expectedUpcomingWeekDescription(defaultWeekUpcoming),
     );
+    assertNoRobotsMeta(upcomingWeekIndexHtml, "/upcoming/week");
     assertUpcomingPageHeader(upcomingWeekIndexHtml, "/upcoming/week");
     assertJsonLd(
       upcomingWeekIndexHtml,
@@ -6265,6 +6490,7 @@ try {
     const filteredUpcomingWeekIndex = await fetch(`${baseUrl}/upcoming/week?sort=time`);
     assert(filteredUpcomingWeekIndex.ok, "/upcoming/week?sort=time returned HTTP " + filteredUpcomingWeekIndex.status);
     const filteredUpcomingWeekIndexHtml = await filteredUpcomingWeekIndex.text();
+    await alignDefaultSnapshotToRenderedControls(filteredUpcomingWeekIndexHtml, "/upcoming/week?sort=time");
     assertMetadata(
       filteredUpcomingWeekIndexHtml,
       "/upcoming/week",
@@ -6305,6 +6531,7 @@ try {
         `${legacyTeamUpcomingWeekIndexPath} returned HTTP ${legacyTeamUpcomingWeekIndex.status}`,
       );
       const legacyTeamUpcomingWeekIndexHtml = await legacyTeamUpcomingWeekIndex.text();
+      await alignDefaultSnapshotToRenderedControls(legacyTeamUpcomingWeekIndexHtml, legacyTeamUpcomingWeekIndexPath);
       assertMetadata(
         legacyTeamUpcomingWeekIndexHtml,
         "/upcoming/week",
@@ -6347,6 +6574,7 @@ try {
       `/upcoming/week?pregame=1 returned HTTP ${filteredUpcomingWeekIndexTeam.status}`,
     );
     const filteredUpcomingWeekIndexTeamHtml = await filteredUpcomingWeekIndexTeam.text();
+    await alignDefaultSnapshotToRenderedControls(filteredUpcomingWeekIndexTeamHtml, filteredUpcomingWeekIndexTeamPath);
     assertMetadata(
       filteredUpcomingWeekIndexTeamHtml,
       "/upcoming/week",
@@ -6395,6 +6623,7 @@ try {
       `/upcoming/week?pregame=1&sort=time returned HTTP ${filteredSortedUpcomingWeekIndexTeam.status}`,
     );
     const filteredSortedUpcomingWeekIndexTeamHtml = await filteredSortedUpcomingWeekIndexTeam.text();
+    await alignDefaultSnapshotToRenderedControls(filteredSortedUpcomingWeekIndexTeamHtml, filteredSortedUpcomingWeekIndexTeamPath);
     assertMetadata(
       filteredSortedUpcomingWeekIndexTeamHtml,
       "/upcoming/week",
