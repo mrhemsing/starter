@@ -203,6 +203,13 @@ assert(
 );
 
 assert(
+  mustWatch.includes('data-starter-trend-chip-spacer="true"') &&
+    mustWatch.includes('className="mt-2 inline-flex"') &&
+    !mustWatch.includes('className="mt-1.5 inline-flex sm:mt-0"'),
+  "home must-watch RISING/FALLING trend chips must keep breathing room above them on mobile and desktop",
+);
+
+assert(
   homeDeferredSections.includes("topVelo={view.topVelo}") &&
     homeDeferredSections.includes("veloSparkline={view.veloSparkline}") &&
     homeDeferredSections.includes("whiffRate={view.whiffRate}") &&

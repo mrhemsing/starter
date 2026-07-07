@@ -850,7 +850,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
               <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
                 <StarterFormScoreLine starter={starter} accentColor={accent.color} />
                 {starter.trend && starter.deltaForm !== undefined ? (
-                  <span className="mt-1.5 inline-flex sm:mt-0">
+                  <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
                     <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
                   </span>
                 ) : null}
@@ -1211,7 +1211,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           <>
             <StarterFormScoreLine starter={starter} accentColor={accent.color} />
             {starter.trend && starter.deltaForm !== undefined ? (
-              <span className="mt-1.5 inline-flex sm:mt-0">
+              <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
                 <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
               </span>
             ) : null}
