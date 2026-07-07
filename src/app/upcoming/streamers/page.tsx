@@ -6,6 +6,7 @@ import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { LocalTime } from "@/components/local-time";
 import { getHomeSlateDate } from "@/lib/data/start-service";
+import { readFantasyStreamingRead } from "@/lib/data/streamers-read-service";
 import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
 import { formatUpcomingDate } from "@/lib/routes";
 import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";
@@ -46,6 +47,7 @@ export default async function UpcomingStreamersPage() {
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);
   const streamers = await getUpcomingStreamers(today);
+  const streamingRead = await readFantasyStreamingRead(streamers);
   const jsonLd = jsonLdForUpcomingStreamers(streamers);
 
   return (
@@ -75,6 +77,11 @@ export default async function UpcomingStreamersPage() {
           <UpcomingSlateRangeToggle activeDate={today} today={today} tomorrow={tomorrow} streamersActive />
         </header>
       </div>
+
+      <section className="mx-auto mb-5 max-w-7xl rounded border border-amber-300/20 bg-amber-300/[0.06] p-4" data-fantasy-streaming-read>
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">This week&apos;s streaming read</p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-200">{streamingRead}</p>
+      </section>
 
       <section
         className="mx-auto grid min-w-0 max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"

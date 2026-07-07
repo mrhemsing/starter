@@ -51,6 +51,7 @@
     "check:starts-rendered-photos": "node scripts/check-starts-rendered-photos.mjs",
     "mirror:top-performer-images": "node scripts/mirror-top-performer-action-images.mjs",
     "check:upcoming-streamers": "node scripts/check-upcoming-streamers-contract.mjs",
+    "check:fantasy-streaming-read": "node scripts/check-fantasy-streaming-read-contract.mjs",
     "test:contracts": "npm run test:slate-contract && npm run test:start-contract && npm run test:pitcher-contract && npm run check:home-ranked && npm run check:home-status && npm run check:home-best-starts && npm run check:pitcher-pages && npm run check:starts-page",
     "test:fixture-gates": "node scripts/run-fixture-gates.mjs",
     "test:pitcher-contract": "node scripts/check-pitcher-contract.mjs",
