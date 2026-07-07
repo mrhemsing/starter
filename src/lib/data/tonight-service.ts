@@ -23,10 +23,12 @@ type CachedTonight = {
   promise: Promise<TonightResponse>;
 };
 
+type ScheduleStatusInput = Pick<MlbScheduleGame, "gameDate" | "status" | "detailedState">;
+
 const TONIGHT_CACHE_TTL_MS = 60 * 1000;
 export const TONIGHT_REVALIDATE_SECONDS = 60;
 export const UPCOMING_REVALIDATE_SECONDS = 60;
-const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"];
+const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"];
 const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
 const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
@@ -37,7 +39,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v10"],
+  ["tonight-must-watch", "v11"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -65,7 +67,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
     getSlateSchedule({ window: "today", date }),
     getFormLeaderboard({ window, qualifiedOnly: false }),
   ]);
-  const oddsRequestGames = schedule.games.filter((game) => !isStartedStatus(normalizeGameStatus(game)));
+  const oddsRequestGames = schedule.games.filter((game) => !hasStarted(game));
   const probables = getProbablesFromSchedule(date, schedule);
   const probablePitcherIds = schedule.games.flatMap((game) => [
     game.probableAwayPitcher?.id,
@@ -88,7 +90,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
   const builtGames = await Promise.all(
     schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null, enrichAtRequestTime)),
   );
-  const candidates = builtGames.filter((game) => isUpcomingCardStatus(game.status));
+  const candidates = builtGames.filter(isUpcomingGame);
   const matchupRanks = rankMatchups(candidates);
   const games = sortUpcomingWatchGames(candidates
     .map((game) => ({
@@ -223,6 +225,21 @@ function isRequestTimeEnrichmentEnabled() {
 
 function isStartedStatus(status: TonightGameStatus) {
   return status === "live" || status === "final";
+}
+
+function hasStarted(game: ScheduleStatusInput) {
+  const status = normalizeGameStatus(game);
+  if (isStartedStatus(status)) return true;
+  if (status === "delay") return false;
+  const firstPitchAt = new Date(game.gameDate).valueOf();
+  return Number.isFinite(firstPitchAt) && firstPitchAt <= Date.now();
+}
+
+function isUpcomingGame(game: TonightGame) {
+  if (!isUpcomingCardStatus(game.status)) return false;
+  if (game.status === "delay") return true;
+  const firstPitchAt = new Date(game.firstPitch).valueOf();
+  return !Number.isFinite(firstPitchAt) || firstPitchAt > Date.now();
 }
 
 function sortUpcomingWatchGames(games: TonightGame[]) {
@@ -713,7 +730,7 @@ function rankMatchups(games: TonightGame[]) {
   return new Map(sorted.map((game, index) => [game.gamePk, index + 1]));
 }
 
-function normalizeGameStatus(game: MlbScheduleGame): TonightGameStatus {
+function normalizeGameStatus(game: ScheduleStatusInput): TonightGameStatus {
   const raw = `${game.status} ${game.detailedState}`.trim().toLowerCase();
   if (raw.includes("postponed") || raw.includes("ppd")) return "ppd";
   if (raw.includes("final") || raw.includes("game over")) return "final";

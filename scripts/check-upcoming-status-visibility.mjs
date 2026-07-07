@@ -13,8 +13,11 @@ const tonightCards = readFileSync("src/components/tonights-must-watch.tsx", "utf
 const types = readFileSync("src/lib/types.ts", "utf8");
 
 assert(types.includes('"pregame" | "delay" | "live" | "final" | "ppd"'), "TonightGameStatus must include mixed Upcoming statuses");
-assert(types.includes("Exclude<TonightGameStatus, \"ppd\">"), "UpcomingCardStatus must allow all non-postponed status cards");
-assert(tonightService.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay", "live", "final"]'), "Upcoming data should include pregame, delayed, live, and final games");
+assert(types.includes('export type UpcomingCardStatus = "pregame" | "delay";'), "UpcomingCardStatus must exclude games after first pitch");
+assert(tonightService.includes('const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"]'), "Upcoming data should include only not-yet-started and delayed games");
+assert(tonightService.includes("const candidates = builtGames.filter(isUpcomingGame);"), "Upcoming service must filter started games before ranking cards");
+assert(tonightService.includes("function hasStarted("), "Upcoming service must use a time-based started-game guard for stale MLB statuses");
+assert(tonightService.includes("firstPitchAt <= Date.now()"), "Upcoming service must remove pregame cards once scheduled first pitch has passed");
 assert(tonightService.includes('return "delay";'), "schedule status normalization must preserve delay status");
 
 assert(upcomingPage.includes("export function summarizeUpcomingStatuses"), "day Upcoming page must expose slate status summary");

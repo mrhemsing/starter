@@ -437,7 +437,7 @@ export type TonightStarter = {
 };
 
 export type TonightGameStatus = "pregame" | "delay" | "live" | "final" | "ppd";
-export type UpcomingCardStatus = Exclude<TonightGameStatus, "ppd">;
+export type UpcomingCardStatus = "pregame" | "delay";
 
 export type TonightGame = {
   gamePk: string;
