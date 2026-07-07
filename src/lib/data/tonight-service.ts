@@ -588,7 +588,7 @@ function buildMarketContext(
   marketContext: MlbOddsGameMarketContext | null,
 ): NonNullable<TonightStarter["marketContext"]> {
   const projectedStrikeouts = projection.line.strikeouts;
-  const strikeoutPropLine = starterName ? marketContext?.pitcherStrikeouts.get(normalizeOddsName(starterName)) ?? null : null;
+  const strikeoutPropLine = starterName && marketContext ? resolvePitcherStrikeoutPropLine(marketContext.pitcherStrikeouts, starterName) : null;
   const teamTotal = marketContext?.teamTotals.get(normalizeOddsName(opponentTeam)) ?? null;
   const opposingTeamTotal = teamTotal ?? (marketContext?.gameTotal ? round1(marketContext.gameTotal / 2) : null);
   const strikeoutEdge = projectedStrikeouts !== null && strikeoutPropLine !== null ? round1(projectedStrikeouts - strikeoutPropLine) : null;
@@ -644,6 +644,26 @@ function buildMarketContext(
     capturedAt: null,
     label: "K prop and implied team total feed pending. Add THE_BUMP_ODDS_API_KEY or THE_BUMP_PROPLINE_API_KEY to enable market lines.",
   };
+}
+
+function resolvePitcherStrikeoutPropLine(lines: Map<string, number>, starterName: string) {
+  const normalizedStarter = normalizeOddsName(starterName);
+  const exact = lines.get(normalizedStarter);
+  if (exact !== undefined) return exact;
+
+  const starterParts = normalizedStarter.split(" ").filter(Boolean);
+  const starterFirst = starterParts[0] ?? "";
+  const starterLast = starterParts.at(-1) ?? "";
+  if (!starterFirst || !starterLast) return null;
+
+  const candidates = [...lines.entries()].filter(([name]) => {
+    const parts = name.split(" ").filter(Boolean);
+    const first = parts[0] ?? "";
+    const last = parts.at(-1) ?? "";
+    return first[0] === starterFirst[0] && last === starterLast;
+  });
+
+  return candidates.length === 1 ? candidates[0][1] : null;
 }
 
 function oddsProviderLabel(source: OddsProviderSource) {

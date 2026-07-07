@@ -32,8 +32,10 @@ assert(
     oddsClient.includes("export function configuredOddsProviderSource()") &&
     oddsClient.includes("PROPLINE_API_BASE") &&
     oddsClient.includes("oddsEventsUrl(provider)") &&
-    oddsClient.includes("normalizedTeamKeys"),
-  "odds client must expose credit/match diagnostics, support PropLine as a provider, and must not cache empty failure results",
+    oddsClient.includes("normalizedTeamKeys") &&
+    oddsClient.includes('.normalize("NFD")') &&
+    oddsClient.includes("replace(/[\\u0300-\\u036f]/g, \"\")"),
+  "odds client must expose credit/match diagnostics, support PropLine as a provider, fold accented names, and must not cache empty failure results",
 );
 
 assert(
@@ -62,8 +64,11 @@ assert(
     tonightService.includes("readOddsSnapshotMarketContexts(date)") &&
     tonightService.includes("mergeMarketContexts(snapshotMarketContexts, requestMarketContexts)") &&
     tonightService.includes("fetchMlbOddsMarketContexts(oddsRequestGames)") &&
+    tonightService.includes("resolvePitcherStrikeoutPropLine(marketContext.pitcherStrikeouts, starterName)") &&
+    tonightService.includes("return first[0] === starterFirst[0] && last === starterLast;") &&
+    tonightService.includes("return candidates.length === 1 ? candidates[0][1] : null;") &&
     !tonightService.includes("writeRuntimeState("),
-  "render path must read odds snapshots and must not write odds state during render",
+  "render path must read odds snapshots, resolve conservative starter-name aliases, and must not write odds state during render",
 );
 
 assert(
