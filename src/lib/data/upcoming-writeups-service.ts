@@ -9,13 +9,14 @@ import {
 import type { TonightGame, TonightStarter } from "@/lib/types";
 
 type UpcomingWriteupsState = {
-  version: 1;
+  version: 2;
   date: string;
   inputHash: string;
   promptVersion: number;
   generatedAt: string;
   model: string;
   writeups: Record<string, string>;
+  sources: Record<string, "llm" | "fallback">;
   fallbackCount: number;
 };
 
@@ -58,11 +59,12 @@ type GenerateUpcomingWriteupsResult = {
   stored: boolean;
 };
 
-const UPCOMING_WRITEUPS_VERSION = 1;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 2;
+const UPCOMING_WRITEUPS_VERSION = 2;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 3;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
+const MAX_GENERATION_ATTEMPTS = 3;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date));
@@ -74,20 +76,26 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   const inputs = slate.games.map((game) => upcomingWriteupInput(game, slate.leagueMeanGS));
   const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
-  if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasWriteupsForGames(previous.writeups, slate.games)) {
+  if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasLlmWriteupsForGames(previous, slate.games)) {
     return { date: slate.date, generated: 0, reused: slate.games.length, fallbackCount: previous.fallbackCount, model: previous.model, stored: true };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   let fallbackCount = 0;
   const writeups: Record<string, string> = {};
+  const sources: UpcomingWriteupsState["sources"] = {};
   for (const [index, game] of slate.games.entries()) {
     const fallback = upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS);
     const input = inputs[index];
-    const generated = apiKey ? await generateOneUpcomingWriteup(apiKey, input, game, slate.leagueMeanGS).catch(() => null) : null;
+    const generated = apiKey ? await generateOneUpcomingWriteupWithRetries(apiKey, input, game, slate.leagueMeanGS).catch(() => null) : null;
     const sentence = generated ?? fallback;
     if (!generated) fallbackCount += 1;
+    sources[game.gamePk] = generated ? "llm" : "fallback";
     writeups[game.gamePk] = validateUpcomingSimpleContextSentence(sentence, game, slate.leagueMeanGS) ? sentence : fallback;
+    if (writeups[game.gamePk] === fallback && generated) {
+      sources[game.gamePk] = "fallback";
+      fallbackCount += 1;
+    }
   }
 
   const stored = await writeRuntimeState(upcomingWriteupsKey(slate.date), {
@@ -98,17 +106,26 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     generatedAt: new Date().toISOString(),
     model: UPCOMING_WRITEUPS_MODEL,
     writeups,
+    sources,
     fallbackCount,
   });
 
   return { date: slate.date, generated: slate.games.length - fallbackCount, reused: 0, fallbackCount, model: UPCOMING_WRITEUPS_MODEL, stored };
 }
 
-function hasWriteupsForGames(writeups: Record<string, string>, games: TonightGame[]) {
-  return games.every((game) => typeof writeups[game.gamePk] === "string" && writeups[game.gamePk].trim().length > 0);
+function hasLlmWriteupsForGames(state: UpcomingWriteupsState, games: TonightGame[]) {
+  return games.every((game) => state.sources?.[game.gamePk] === "llm" && typeof state.writeups[game.gamePk] === "string" && state.writeups[game.gamePk].trim().length > 0);
 }
 
-async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
+async function generateOneUpcomingWriteupWithRetries(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
+    const generated = await generateOneUpcomingWriteup(apiKey, input, game, leagueMeanGS, attempt);
+    if (generated) return generated;
+  }
+  return null;
+}
+
+async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number, attempt: number) {
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: "POST",
     headers: {
@@ -122,11 +139,11 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame.",
+          content: "Write one polished matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. Avoid formulaic phrasing like towers, clear separation, or form points.",
         },
         {
           role: "user",
-          content: JSON.stringify(input),
+          content: JSON.stringify({ ...input, attempt }),
         },
       ],
     }),

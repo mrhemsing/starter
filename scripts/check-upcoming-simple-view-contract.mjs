@@ -136,7 +136,10 @@ assert(
     writeupsService.includes("getTonightMustWatch({ date, window: 5, forceOpponentSplits: true })") &&
     writeupsService.includes("inputHash") &&
     writeupsService.includes("UPCOMING_WRITEUPS_PROMPT_VERSION") &&
-    writeupsService.includes("hasWriteupsForGames") &&
+    writeupsService.includes("hasLlmWriteupsForGames") &&
+    writeupsService.includes('sources: Record<string, "llm" | "fallback">') &&
+    writeupsService.includes('sources[game.gamePk] = generated ? "llm" : "fallback"') &&
+    writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
     writeupsService.includes("Do not use numeric digits.") &&
     writeupsService.includes("normalizeGeneratedSentence") &&
