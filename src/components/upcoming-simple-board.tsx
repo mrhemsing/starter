@@ -64,8 +64,6 @@ function UpcomingSimpleCard({
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
   const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
-  const awayPanelColor = starterHeatPanelColor(game.starters[0]);
-  const homePanelColor = starterHeatPanelColor(game.starters[1]);
   const showRank = sortMode === "watch";
 
   return (
@@ -82,16 +80,12 @@ function UpcomingSimpleCard({
         data-simple-card-accent={watchTier.key}
       />
       <div
-        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-0 lg:[background:var(--simple-vs-gradient)]"
-        style={{ "--simple-vs-gradient": simpleVsGradient(awayPanelColor, homePanelColor) } as CSSProperties}
+        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-0"
         data-simple-vs-composition
-        data-simple-vs-gradient={`${awayPanelColor}|${homePanelColor}`}
-        data-simple-vs-gradient-source="heat-band"
       >
-        <span className="pointer-events-none absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-white/20 lg:block" aria-hidden="true" data-simple-vs-seam />
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
         <div
-          className={`relative z-20 flex flex-col items-center px-1 text-center lg:justify-center lg:bg-black/25 lg:py-5 ${showRank ? "justify-start pt-2 sm:pt-4" : "justify-center py-4"}`}
+          className={`relative z-20 flex flex-col items-center px-1 text-center lg:justify-center lg:py-5 ${showRank ? "justify-start pt-2 sm:pt-4" : "justify-center py-4"}`}
           data-upcoming-simple-score
           data-simple-score-column
           data-simple-rank-visible={String(showRank)}
@@ -258,10 +252,6 @@ function simpleCardTint(score: number, accentColor: string) {
     key: "cool",
     background: `linear-gradient(135deg, rgba(55,138,221,0.20), rgba(16,16,20,0.97) 42%, ${hexToRgba(accentColor, 0.10)})`,
   };
-}
-
-function simpleVsGradient(awayPanelColor: string, homePanelColor: string) {
-  return `linear-gradient(90deg, ${hexToRgba(awayPanelColor, 0.52)} 0%, ${hexToRgba(awayPanelColor, 0.36)} 43%, rgba(12,12,16,0.72) 49%, rgba(12,12,16,0.72) 51%, ${hexToRgba(homePanelColor, 0.36)} 57%, ${hexToRgba(homePanelColor, 0.52)} 100%)`;
 }
 
 function simpleNameplateGradient(panelColor: string, align: "away" | "home") {
