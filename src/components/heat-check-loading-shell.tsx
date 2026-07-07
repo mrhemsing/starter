@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type React from "react";
+import { formWindowLabel } from "@/lib/form-tokens";
 
 type HeatCheckLoadingShellProps = {
   view: "trend" | "season";
@@ -31,7 +32,7 @@ export function HeatCheckLoadingDescription({ view }: HeatCheckLoadingShellProps
   const window = readWindow(searchParams);
 
   if (view === "season") return <>Starting pitchers ranked by season GS+.</>;
-  return <>How starting pitchers are trending over up to last {window} qualified starts.</>;
+  return <>How starting pitchers are trending. {formWindowLabel(window)}</>;
 }
 
 export function HeatCheckLoadingControls({ view }: HeatCheckLoadingShellProps) {

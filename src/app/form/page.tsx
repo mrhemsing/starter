@@ -26,7 +26,7 @@ import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
 import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import type { LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
-import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, qualityTierOf } from "@/lib/form-tokens";
+import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, formWindowLabel, qualityTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS, RANK_GUTTER_STYLE, RANK_GUTTER_WIDTH_CLASS } from "@/lib/rank-gutter";
 import { liveDateHref, pitcherHref, sourceParams } from "@/lib/routes";
@@ -266,8 +266,13 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            {trendView ? <>How starting pitchers are trending over up to last {window} qualified starts.</> : <>Starting pitchers ranked by season GS+.</>}
+            {trendView ? <>How starting pitchers are trending.</> : <>Starting pitchers ranked by season GS+.</>}
           </p>
+          {trendView ? (
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-heat-form-window-label data-form-window={window}>
+              {formWindowLabel(window)}
+            </p>
+          ) : null}
         </header>
 
         <section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">

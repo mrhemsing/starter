@@ -168,7 +168,10 @@ assert(
 
 assert(
   formPage.includes("{trendPulseView && biggestRiser && biggestFaller ? (") &&
-    formPage.includes('{trendView ? <>How starting pitchers are trending over up to last {window} qualified starts.</> : <>Starting pitchers ranked by season GS+.</>}') &&
+    formPage.includes('import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, formWindowLabel, qualityTierOf }') &&
+    formPage.includes('{trendView ? <>How starting pitchers are trending.</> : <>Starting pitchers ranked by season GS+.</>}') &&
+    formPage.includes("data-heat-form-window-label") &&
+    formPage.includes("{formWindowLabel(window)}") &&
     formPage.includes('import { PageContextStrip } from "@/components/page-context-strip";') &&
     pageContextStrip.includes("export function PageContextStrip") &&
     pageContextStrip.includes("const hasContext = Boolean(leading || primary);") &&
@@ -774,7 +777,7 @@ assert(
     heatSeasonLoading.includes('childrenMode="content"') &&
     !heatSeasonLoading.includes('controls="heat"') &&
     heatLoadingShell.includes("useSearchParams") &&
-    heatLoadingShell.includes("How starting pitchers are trending over up to last {window} qualified starts.") &&
+    heatLoadingShell.includes("How starting pitchers are trending. {formWindowLabel(window)}") &&
     heatLoadingShell.includes('data-navigation-shell-controls="heat-real"') &&
     formPage.includes("export function MomentumHeroSkeleton()") &&
     formPage.includes('data-skeleton-row="heat-momentum-hero"'),

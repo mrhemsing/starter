@@ -34,6 +34,10 @@ export const FORM_CONFIG = {
   heatIndexTrendWeight: 0.7,
 };
 
+export function formWindowLabel(window: number = FORM_CONFIG.windowDefault) {
+  return `FORM: LAST ${window} STARTS`;
+}
+
 export function seasonQualificationMinStarts(teamGamesPlayed: number) {
   return Math.max(1, Math.ceil(Math.max(0, teamGamesPlayed) / FORM_CONFIG.seasonQualificationDivisor));
 }

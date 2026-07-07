@@ -5,7 +5,7 @@ import { FormSparkline } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
-import { HEAT_BANDS, HOME_CONFIG, formDeltaBand } from "@/lib/form-tokens";
+import { HEAT_BANDS, HOME_CONFIG, formDeltaBand, formWindowLabel } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
 
@@ -17,7 +17,10 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Rolling form trend</p>
             <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Moving</h2>
-            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Up to last {home.window} qualified starts, direction, and next probable start context.</p>
+            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Direction and next probable start context.</p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-heat-form-window-label data-form-window={home.window}>
+              {formWindowLabel(home.window)}
+            </p>
             <p className={`mt-2 font-mono text-[10px] uppercase tracking-[0.16em] ${home.stale ? "text-amber-300" : "text-zinc-500"}`} title={home.latestScoredStartDate ? `Latest scored start date: ${home.latestScoredStartDate}` : undefined}>
               {home.formThroughDate ? `Form through ${home.formThroughDate}` : "Form data loading"}{home.stale ? " / updating" : ""}
             </p>

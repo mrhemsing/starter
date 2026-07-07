@@ -34,7 +34,12 @@ assert(upcomingPage.includes("data-control-status-summary"), "Upcoming controls 
 assert(!upcomingPage.includes("<details\n      className=\"mt-5"), "Upcoming controls must not collapse filters and sort behind an expandable details row");
 assert(!upcomingPage.includes("<summary className=\"cursor-pointer font-mono text-xs uppercase"), "Upcoming controls must not render the old Filters / Start time summary row");
 assert(upcomingPage.includes('data-upcoming-toolbar-row') && upcomingPage.includes('className="mt-5 flex flex-col gap-2"') && upcomingPage.includes('className="mt-0"'), "Upcoming day toolbar must place compact toggles on a second row below the range tabs.");
-assert(upcomingPage.includes('className={`${className} flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1`}'), "Upcoming controls must render surfaced compact toggles with caller-controlled spacing.");
+assert(
+  upcomingPage.includes('className={`${className} flex max-w-full flex-col gap-1`}') &&
+    upcomingPage.includes('data-upcoming-control-row') &&
+    upcomingPage.includes("data-upcoming-form-window-label"),
+  "Upcoming controls must render surfaced compact toggles with caller-controlled spacing and the form-window label.",
+);
 assert(slateDateNav.includes('mobileLabel: "Week"') && slateDateNav.includes('className="sm:hidden"') && slateDateNav.includes('className="hidden sm:inline"'), "Upcoming range tabs must show WEEK on mobile and THIS WEEK on larger screens.");
 
 assert(upcomingWeekPage.includes("summarizeUpcomingStatuses"), "week Upcoming page must use the same status summary");

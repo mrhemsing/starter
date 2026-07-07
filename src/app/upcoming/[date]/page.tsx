@@ -10,6 +10,7 @@ import { UpcomingSimpleBoard } from "@/components/upcoming-simple-board";
 import { UpcomingViewModePanels, UpcomingViewModeProvider, UpcomingViewModeToggle } from "@/components/upcoming-view-mode";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { formWindowLabel } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -118,6 +119,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                 showStatusFilter={statusVaries}
                 statusSummary={statusSummary}
                 viewModeToggle={<UpcomingViewModeToggle />}
+                formWindow={visibleUpcoming.formWindow}
                 className="mt-0"
               />
             </div>
@@ -220,6 +222,7 @@ export function UpcomingControls({
   showStatusFilter = true,
   statusSummary,
   viewModeToggle,
+  formWindow,
   className = "mt-3",
 }: {
   controls: UpcomingControlsState;
@@ -230,6 +233,7 @@ export function UpcomingControls({
   showStatusFilter?: boolean;
   statusSummary?: UpcomingStatusSummary;
   viewModeToggle?: React.ReactNode;
+  formWindow: number;
   className?: string;
 }) {
   const controlsLabel = upcomingControlsLabel(controls, showStatusFilter);
@@ -240,7 +244,7 @@ export function UpcomingControls({
 
   return (
     <div
-      className={`${className} flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1`}
+      className={`${className} flex max-w-full flex-col gap-1`}
       data-responsive-check="upcoming-controls"
       data-slate-range={slateRange}
       data-control-key={controlsKey}
@@ -257,25 +261,30 @@ export function UpcomingControls({
       data-control-active-count={activeControlCount}
       aria-label={controlsLabel}
     >
-      {showStatusFilter ? (
-        <ControlGroup label="Status">
-          <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
-          <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
-        </ControlGroup>
-      ) : null}
-      <SegmentedControl
-        label="Sort"
-        ariaLabel="Sort options"
-        activeValue={controls.sort}
-        segments={[
-          { value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" },
-          { value: "time", label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" }), controlKey: "sort-time" },
-        ]}
-        pendingRegion="upcoming-board"
-        pendingLabel="Upcoming matchup board"
-        ariaControls="upcoming-board"
-      />
-      {viewModeToggle}
+      <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1" data-upcoming-control-row>
+        {showStatusFilter ? (
+          <ControlGroup label="Status">
+            <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
+            <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
+          </ControlGroup>
+        ) : null}
+        <SegmentedControl
+          label="Sort"
+          ariaLabel="Sort options"
+          activeValue={controls.sort}
+          segments={[
+            { value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" },
+            { value: "time", label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" }), controlKey: "sort-time" },
+          ]}
+          pendingRegion="upcoming-board"
+          pendingLabel="Upcoming matchup board"
+          ariaControls="upcoming-board"
+        />
+        {viewModeToggle}
+      </div>
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-upcoming-form-window-label data-form-window={formWindow}>
+        {formWindowLabel(formWindow)}
+      </p>
     </div>
   );
 }

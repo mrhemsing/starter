@@ -60,7 +60,7 @@ assert(
 
 assert(
     formPage.includes("const pulseDirectionCounts = directionCountsForPitchers(pulsePitchers);") &&
-    formPage.includes('import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, qualityTierOf }') &&
+    formPage.includes('import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, formWindowLabel, qualityTierOf }') &&
     formPage.includes('<SummaryStat label="Steady" value={String(pulseDirectionCounts.steady)} />') &&
     !formPage.includes('<SummaryStat label="Even" value={String(pulseBandCounts.find') &&
     formPage.includes("const riserCandidates = heroCandidates.filter(isRisingDelta).sort") &&
@@ -91,12 +91,14 @@ assert(
 );
 
 assert(
-  formPage.includes("over up to last {window} qualified starts") &&
-    heatLoadingShell.includes("over up to last {window} qualified starts") &&
-    heatHero.includes("Up to last {home.window} qualified starts") &&
+  formPage.includes("formWindowLabel(window)") &&
+    heatLoadingShell.includes("formWindowLabel(window)") &&
+    heatHero.includes("formWindowLabel(home.window)") &&
     !formPage.includes("over their last {window} starts") &&
+    !formPage.includes("over up to last {window} qualified starts") &&
+    !heatHero.includes("Up to last {home.window} qualified starts") &&
     !heatHero.includes("Last {home.window} qualified starts"),
-  "Heat Check subtitles must use up-to-last window copy",
+  "Heat Check subtitles must use the shared form-window label copy",
 );
 
 assert(
