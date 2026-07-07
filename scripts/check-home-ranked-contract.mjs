@@ -135,6 +135,17 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("function shouldShowHomeHookSpine(ranked: RankedHomeResponse | null, watchDate: string)") &&
+    homeDeferredSections.includes("return ranked?.areTodayStartsComplete === true && ranked.date === watchDate;") &&
+    homeDeferredSections.includes("showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}") &&
+    mustWatch.includes("showHookSpine = true,") &&
+    mustWatch.includes("showHookSpine?: boolean;") &&
+    mustWatch.includes('data-watch-hook-visible={showHookSpine ? "true" : "false"}') &&
+    mustWatch.includes("{showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}"),
+  "homepage must hide the Must-Watch Hook spine until today's slate is fully final while preserving the default Hook on non-home surfaces",
+);
+
+assert(
   homeDeferredSections.includes("export type HomeDeferredInitialData = {") &&
     homeDeferredSections.includes("todayWatch?: TonightResponse | null;") &&
     homeDeferredSections.includes("duels?: PitchingDuelsResponse | null;") &&

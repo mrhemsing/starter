@@ -29,6 +29,7 @@ export function TonightsMustWatch({
   previewLimit,
   sectionId = "must-watch",
   compactTopPadding = false,
+  showHookSpine = true,
 }: {
   tonight: TonightResponse;
   fullSlateHref: string;
@@ -40,6 +41,7 @@ export function TonightsMustWatch({
   previewLimit?: number;
   sectionId?: string;
   compactTopPadding?: boolean;
+  showHookSpine?: boolean;
 }) {
   const shownGames = typeof previewLimit === "number" ? tonight.games.slice(0, previewLimit) : tonight.games;
   const headliner = shownGames[0];
@@ -245,7 +247,7 @@ export function TonightsMustWatch({
           </div>
         ) : (
           <div className="space-y-4">
-            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} />
+            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} />
             <div className="grid gap-3">
               {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} />)}
             </div>
@@ -257,7 +259,7 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const awayStarter = game.starters[0];
@@ -346,9 +348,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus }: {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(230px,0.78fr)_minmax(0,1fr)] lg:items-stretch">
+        <div className={`mt-5 grid gap-4 ${showHookSpine ? "lg:grid-cols-[minmax(0,1fr)_minmax(230px,0.78fr)_minmax(0,1fr)]" : "lg:grid-cols-2"} lg:items-stretch`} data-watch-hook-visible={showHookSpine ? "true" : "false"}>
           <DuelStarterPanel starter={awayStarter} leagueMeanGS={leagueMeanGS} align="away" />
-          <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} />
+          {showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}
           <DuelStarterPanel starter={homeStarter} leagueMeanGS={leagueMeanGS} align="home" />
         </div>
 

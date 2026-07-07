@@ -150,6 +150,7 @@ export function HomeDeferredSections({
           title="Must-Watch Games"
           rankLabel={watchWord}
           previewLimit={3}
+          showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
         />
       ) : null,
       duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null,
@@ -198,6 +199,7 @@ export function HomeDeferredSections({
           title="Must-Watch Games"
           rankLabel={watchWord}
           previewLimit={3}
+          showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
         />
       ) : null}
 
@@ -409,6 +411,10 @@ function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {
 function shouldShowHomeRankedRecap(ranked: RankedHomeResponse | null): ranked is RankedHomeResponse {
   if (!ranked?.areTodayStartsComplete) return false;
   return ranked.starts.some((start) => start.source?.line !== "fixture" && isRankedRegularStart(start));
+}
+
+function shouldShowHomeHookSpine(ranked: RankedHomeResponse | null, watchDate: string) {
+  return ranked?.areTodayStartsComplete === true && ranked.date === watchDate;
 }
 
 function filterHomeMustWatchGames(watch: TonightResponse | null) {
