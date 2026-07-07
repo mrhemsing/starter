@@ -100,7 +100,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             >
               {formatUpcomingSlateStamp(slateState, today)}
             </p>
-            <div className="mt-5 flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-3" data-upcoming-toolbar-row>
+            <div className="mt-5 flex flex-col gap-2" data-upcoming-toolbar-row>
               <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} className="mt-0" />
               <UpcomingControls
                 controls={effectiveControls}
