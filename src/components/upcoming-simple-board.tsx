@@ -5,6 +5,7 @@ import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
 import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
+import type { CSSProperties } from "react";
 
 export function UpcomingSimpleBoard({
   tonight,
@@ -30,7 +31,7 @@ export function UpcomingSimpleBoard({
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
           </div>
         ) : (
-          <div className="grid gap-4" data-upcoming-simple-card-list>
+          <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[minmax(0,560px)] lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-desktop-layout="two-up-vs">
             {tonight.games.map((game, index) => (
               <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} />
             ))}
@@ -56,6 +57,8 @@ function UpcomingSimpleCard({
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
   const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
+  const awayTeamColor = starterTeamColor(game.starters[0]);
+  const homeTeamColor = starterTeamColor(game.starters[1]);
 
   return (
     <UpcomingSimpleCardFrame
@@ -70,9 +73,16 @@ function UpcomingSimpleCard({
         style={{ backgroundColor: accentColor }}
         data-simple-card-accent={watchTier.key}
       />
-      <div className="grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-5">
+      <div
+        className="relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-stretch gap-2 overflow-hidden rounded-lg sm:grid-cols-[minmax(0,1fr)_126px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)] lg:gap-0 lg:[background:var(--simple-vs-gradient)]"
+        style={{ "--simple-vs-gradient": simpleVsGradient(awayTeamColor, homeTeamColor) } as CSSProperties}
+        data-simple-vs-composition
+        data-simple-vs-gradient={`${awayTeamColor}|${homeTeamColor}`}
+      >
+        <span className="pointer-events-none absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-white/20 lg:block" aria-hidden="true" data-simple-vs-seam />
+        <span className="pointer-events-none absolute left-1/2 top-[42%] z-10 hidden -translate-x-1/2 rounded-full border border-white/15 bg-black/45 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-300 lg:block" aria-hidden="true" data-simple-vs-mark>VS</span>
         <SimpleStarter starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
-        <div className="pt-2 text-center sm:pt-4" data-upcoming-simple-score>
+        <div className="relative z-20 flex flex-col items-center justify-start px-1 pt-2 text-center sm:pt-4 lg:justify-center lg:bg-black/20 lg:py-5" data-upcoming-simple-score data-simple-score-column>
           <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">#{rank}</p>
           <p className="font-serif text-[2.35rem] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
           {confidenceLabel ? (
@@ -111,21 +121,21 @@ function SimpleStarter({
 }) {
   const formBand = starter.formStatus === "ok" ? starter.tier ?? null : null;
   const name = starter.name ?? `TBD ${starter.team}`;
-  const teamColor = starter.status === "tbd" ? "#888780" : teamAccentColor(starter.team);
+  const teamColor = starterTeamColor(starter);
 
   return (
     <div
-      className={`min-w-0 overflow-hidden rounded-lg border bg-black/20 ${align === "home" ? "text-right" : ""}`}
-      style={{ borderColor: `${teamColor}CC` }}
+      className={`relative z-10 min-w-0 overflow-hidden rounded-lg border bg-black/20 lg:rounded-none lg:border-0 lg:[background:var(--simple-starter-panel-gradient)] ${align === "home" ? "text-right" : ""}`}
+      style={{ borderColor: `${teamColor}CC`, "--simple-starter-panel-gradient": simpleStarterPanelGradient(teamColor, align) } as CSSProperties}
       data-upcoming-simple-starter={starter.side}
       data-simple-starter-frame
       data-simple-starter-team-color={teamColor}
     >
-      <div className="flex justify-center bg-black/15 px-2 pt-2">
+      <div className={`flex justify-center bg-black/15 px-2 pt-2 lg:absolute lg:top-0 lg:h-[150px] lg:w-[calc(100%-18px)] lg:overflow-hidden lg:bg-transparent lg:p-0 ${align === "home" ? "lg:right-0 lg:justify-end" : "lg:left-0 lg:justify-start"}`} data-simple-portrait-bleed>
         <StarterHeadshot starter={starter} formBand={formBand} />
       </div>
       <div
-        className="px-2 py-2"
+        className="px-2 py-2 lg:relative lg:z-10 lg:mt-[112px] lg:min-h-[72px] lg:px-3 lg:py-2.5"
         style={{ background: `linear-gradient(135deg, ${teamColor}F0, rgba(12,12,16,0.92))` }}
         data-simple-starter-nameplate
       >
@@ -134,7 +144,7 @@ function SimpleStarter({
         </p>
         <p className="mt-1 truncate font-mono text-[8px] uppercase tracking-[0.12em] text-white/75" data-simple-orientation>{orientation}</p>
       </div>
-      <div className="px-2 pb-2 pt-2" data-simple-starter-card-back>
+      <div className="px-2 pb-2 pt-2 lg:relative lg:z-10 lg:px-3" data-simple-starter-card-back>
         <p className={`inline-flex rounded border px-1.5 py-1 font-mono text-[8px] uppercase tracking-[0.1em] ${formChipClass(starter, formBand)}`} data-simple-form-chip data-form-band={formBand ?? starter.formStatus}>
           {simpleFormChipLabel(starter, formBand)}
         </p>
@@ -170,7 +180,7 @@ function StarterHeadshot({ starter, formBand }: { starter: TonightStarter; formB
       sampleSufficient={starter.formStatus === "ok" && !starter.flags?.limitedSample}
       decorative
       starterStatus={starter.status}
-      className="rounded-lg"
+      className="rounded-lg lg:h-[150px] lg:w-[112px] lg:rounded-none lg:border-0 lg:bg-transparent"
     />
   );
 }
@@ -206,6 +216,15 @@ function simpleCardTint(score: number, accentColor: string) {
     key: "cool",
     background: `linear-gradient(135deg, rgba(55,138,221,0.20), rgba(16,16,20,0.97) 42%, ${hexToRgba(accentColor, 0.10)})`,
   };
+}
+
+function simpleVsGradient(awayTeamColor: string, homeTeamColor: string) {
+  return `linear-gradient(90deg, ${hexToRgba(awayTeamColor, 0.42)} 0%, ${hexToRgba(awayTeamColor, 0.30)} 43%, rgba(12,12,16,0.74) 49%, rgba(12,12,16,0.74) 51%, ${hexToRgba(homeTeamColor, 0.30)} 57%, ${hexToRgba(homeTeamColor, 0.42)} 100%)`;
+}
+
+function simpleStarterPanelGradient(teamColor: string, align: "away" | "home") {
+  const direction = align === "home" ? "225deg" : "135deg";
+  return `linear-gradient(${direction}, ${hexToRgba(teamColor, 0.36)}, rgba(8,8,12,0.34) 48%, ${hexToRgba(teamColor, 0.22)})`;
 }
 
 function hexToRgba(hex: string, alpha: number) {
@@ -251,6 +270,10 @@ function teamAccentColor(team: string) {
     WSH: "#AB0003",
   };
   return colors[team] ?? "#888780";
+}
+
+function starterTeamColor(starter: TonightStarter) {
+  return starter.status === "tbd" ? "#888780" : teamAccentColor(starter.team);
 }
 
 function formatFormValue(starter: TonightStarter, formBand: FormTier | null) {
