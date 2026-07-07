@@ -58,14 +58,14 @@ assert(simpleBoard.includes('size="simple"'), "Simple starter headshots must use
 assert(simpleBoard.includes("data-simple-starter-frame") && simpleBoard.includes("data-simple-starter-panel-color={panelColor}") && simpleBoard.includes('data-simple-starter-panel-source="three-band"') && simpleBoard.includes("data-simple-starter-nameplate"), "Simple starters must render baseball-card style portrait frames with explicit top, middle, and bottom color bands.");
 assert(simpleBoard.includes("data-simple-starter-portrait-zone") && simpleBoard.includes('data-simple-starter-portrait-zone-source="heat-band"') && simpleBoard.includes("simpleStarterHeatZoneGradient(panelColor, align, \"top\")"), "Simple starter portrait surround must use the heat-band color as the top zone.");
 assert(simpleBoard.includes('data-simple-starter-nameplate-source="team-color"') && simpleBoard.includes("simpleNameplateGradient(teamColor, align)") && simpleBoard.includes("border-y border-white/20"), "Simple starter nameplate stripe must stay team-colored with a clean edge treatment.");
-assert(simpleBoard.includes('data-simple-starter-card-back-source="heat-band"') && simpleBoard.includes("simpleStarterHeatZoneGradient(panelColor, align, \"bottom\")") && simpleBoard.includes("lg:[background:var(--simple-starter-card-back-bg)]"), "Simple starter bottom stat bar must use the heat-band color on desktop only.");
+assert(simpleBoard.includes('data-simple-starter-card-back-source="heat-band"') && simpleBoard.includes("simpleStarterHeatZoneGradient(panelColor, align, \"bottom\")"), "Simple starter bottom stat bar must use the heat-band color.");
 assert(simpleBoard.includes("data-simple-portrait-bleed") && simpleBoard.includes("lg:absolute") && simpleBoard.includes("lg:top-0"), "Desktop Simple portrait panels must bleed toward the top and outer edge.");
 assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("miniStatLine(starter)") && simpleBoard.includes("Starter TBD"), "Simple starter frames must render compact card-back stats and honest TBD placeholders.");
 assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("lg:text-white"), "Simple desktop mini-stat text, including Proj GS+, must render white.");
 assert(headshot.includes('starterStatus === "tbd" ? "TBD"') && headshot.includes("{fallbackLabel}"), "TBD starter headshot placeholders must render TBD instead of initials like TN.");
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
-assert(simpleBoard.includes("data-simple-form-chip\n") && countOccurrences(simpleBoard, "data-simple-form-chip\n") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
+assert(countExactLineOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
 assert(simpleBoard.includes('starter.formStatus === "mlb_debut"') && simpleBoard.includes("MLB DEBUT"), "Simple starter form chip must show MLB DEBUT instead of generic form pending for debut starters.");
 assert(simpleBoard.includes("const SIMPLE_EVEN_PANEL_COLOR") && simpleBoard.includes("starterHeatPanelColor") && simpleBoard.includes("data-simple-starter-panel-source=\"three-band\"") && simpleBoard.includes("data-simple-form-chip-color={heatColor}") && simpleBoard.includes("HEAT_BANDS.find"), "Simple starter heat zones must use shared heat-band color tokens.");
 assert(!simpleBoard.includes("data-simple-heat-accent"), "Simple starter panels must remove the redundant separate heat-accent stripe once the panel itself carries heat.");
@@ -116,4 +116,8 @@ console.log("upcoming simple view contract ok");
 
 function countOccurrences(source, needle) {
   return source.split(needle).length - 1;
+}
+
+function countExactLineOccurrences(source, needle) {
+  return source.split(/\r?\n/).filter((line) => line.trim() === needle).length;
 }
