@@ -15,8 +15,6 @@ const UpcomingViewModeContext = createContext<{
 
 export function UpcomingViewModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<UpcomingViewMode>(() => readStoredViewMode());
-  const storedMode = readStoredViewMode();
-  const effectiveMode = mode === "detailed" && storedMode === "simple" ? "simple" : mode;
 
   useLayoutEffect(() => {
     // Reconcile after hydration so a stored SIMPLE preference wins over the server default.
@@ -25,7 +23,7 @@ export function UpcomingViewModeProvider({ children }: { children: ReactNode }) 
   }, []);
 
   const value = useMemo(() => ({
-    mode: effectiveMode,
+    mode,
     setMode(nextMode: UpcomingViewMode) {
       setModeState(nextMode);
       try {
@@ -34,7 +32,7 @@ export function UpcomingViewModeProvider({ children }: { children: ReactNode }) 
         // Keep the in-session state when storage is blocked.
       }
     },
-  }), [effectiveMode]);
+  }), [mode]);
 
   return <UpcomingViewModeContext.Provider value={value}>{children}</UpcomingViewModeContext.Provider>;
 }
@@ -54,6 +52,12 @@ export function UpcomingViewModeToggle() {
           { value: "simple", label: "Simple", controlKey: "view-simple" },
         ]}
         onValueChange={(value) => context.setMode(value === "simple" ? "simple" : "detailed")}
+      />
+      <script
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: `(() => { if (window.__ttsUpcomingViewModeClickBridge) return; window.__ttsUpcomingViewModeClickBridge = true; const storageKey = "${STORAGE_KEY}"; const applyMode = (mode, persist) => { try { if (persist) window.localStorage.setItem(storageKey, mode === "simple" ? "SIMPLE" : "DETAILED"); } catch {} const root = document.querySelector('[data-upcoming-view-storage-key="${STORAGE_KEY}"]'); if (root) { root.setAttribute("data-upcoming-view-mode", mode); root.querySelector('[data-upcoming-view-panel="detailed"]')?.toggleAttribute("hidden", mode !== "detailed"); root.querySelector('[data-upcoming-view-panel="simple"]')?.toggleAttribute("hidden", mode !== "simple"); } const control = document.querySelector('[data-upcoming-view-mode-control]'); if (!control) return; control.querySelector('[data-segmented-control]')?.setAttribute("data-segmented-control-active", mode); control.querySelectorAll('[data-view-mode-option]').forEach((option) => { const active = option.getAttribute("data-view-mode-option") === mode; option.setAttribute("data-control-link-active", String(active)); option.setAttribute("aria-pressed", String(active)); }); const indicator = control.querySelector('[data-segmented-control-indicator]'); if (indicator) { const index = mode === "simple" ? 1 : 0; indicator.setAttribute("data-segmented-control-indicator-index", String(index)); indicator.style.transform = \`translateX(\${index * 100}%)\`; } }; try { applyMode(window.localStorage.getItem(storageKey) === "SIMPLE" ? "simple" : "detailed", false); } catch { applyMode("detailed", false); } document.addEventListener("click", (event) => { const target = event.target instanceof Element ? event.target.closest('[data-upcoming-view-mode-control] [data-view-mode-option]') : null; if (!target) return; applyMode(target.getAttribute("data-view-mode-option") === "simple" ? "simple" : "detailed", true); }, true); })();`,
+        }}
       />
     </div>
   );
