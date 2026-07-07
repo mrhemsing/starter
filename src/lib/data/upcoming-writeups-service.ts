@@ -13,6 +13,7 @@ type UpcomingWriteupsState = {
   version: 3;
   date: string;
   inputHash: string;
+  inputHashes?: Record<string, string>;
   promptVersion: number;
   generatedAt: string;
   model: string;
@@ -76,7 +77,7 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 3;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 9;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 10;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -93,6 +94,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   const slate = await getTonightMustWatch({ date, window: 5, forceOpponentSplits: true });
   const factPackets = await buildUpcomingFactPackets(slate.games);
   const inputs = slate.games.map((game, index) => upcomingWriteupInput(game, slate.leagueMeanGS, factPackets.get(game.gamePk) ?? { facts: [] }, upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)));
+  const inputHashes = Object.fromEntries(inputs.map((input) => [input.gamePk, hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, input })]));
   const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
   if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasLlmWriteupsForGames(previous, slate.games)) {
@@ -108,7 +110,8 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   for (const [index, game] of slate.games.entries()) {
     const input = inputs[index];
     const fallback = input.deterministicFallback;
-    if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && previous.sources?.[game.gamePk] === "llm" && previous.writeups[game.gamePk]?.trim()) {
+    const inputUnchanged = previous?.inputHashes ? previous.inputHashes[game.gamePk] === inputHashes[game.gamePk] : previous?.inputHash === inputHash;
+    if (previous?.version === UPCOMING_WRITEUPS_VERSION && inputUnchanged && previous.sources?.[game.gamePk] === "llm" && previous.writeups[game.gamePk]?.trim()) {
       writeups[game.gamePk] = previous.writeups[game.gamePk];
       sources[game.gamePk] = "llm";
       reusedCount += 1;
@@ -131,6 +134,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     version: UPCOMING_WRITEUPS_VERSION,
     date: slate.date,
     inputHash,
+    inputHashes,
     promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION,
     generatedAt: new Date().toISOString(),
     model: UPCOMING_WRITEUPS_MODEL,
