@@ -48,6 +48,7 @@ export function Headshot({
   const hasImage = Boolean(playerId) && !failed;
   const width = headshotImageWidth(size);
   const label = alt ?? (team ? `${name}, ${team}` : name);
+  const fallbackLabel = starterStatus === "tbd" ? "TBD" : initials(name || team || "TBD");
 
   return (
     <span
@@ -76,7 +77,7 @@ export function Headshot({
         />
       ) : (
         <span className="relative z-10 flex h-full w-full items-center justify-center bg-black/10 font-mono text-xs font-semibold text-zinc-300">
-          {initials(name || team || "TBD")}
+          {fallbackLabel}
         </span>
       )}
     </span>

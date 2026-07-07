@@ -6,6 +6,7 @@ const viewMode = await readFile("src/components/upcoming-view-mode.tsx", "utf8")
 const segmentedControl = await readFile("src/components/segmented-control.tsx", "utf8");
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
 const context = await readFile("src/lib/upcoming-simple-context.ts", "utf8");
+const headshot = await readFile("src/components/headshot.tsx", "utf8");
 
 assert(page.includes("<UpcomingViewModeProvider>"), "Upcoming page must wrap toolbar and board in one view-mode provider.");
 assert(page.includes('viewModeToggle={<UpcomingViewModeToggle />}'), "Upcoming toolbar must render the simple/detailed toggle inside the existing controls.");
@@ -59,6 +60,7 @@ assert(simpleBoard.includes('data-simple-starter-nameplate-source="team-color"')
 assert(simpleBoard.includes('data-simple-starter-card-back-source="heat-band"') && simpleBoard.includes("simpleStarterHeatZoneGradient(panelColor, align, \"bottom\")"), "Simple starter bottom stat bar must use the heat-band color.");
 assert(simpleBoard.includes("data-simple-portrait-bleed") && simpleBoard.includes("lg:absolute") && simpleBoard.includes("lg:top-0"), "Desktop Simple portrait panels must bleed toward the top and outer edge.");
 assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("miniStatLine(starter)") && simpleBoard.includes("Starter TBD"), "Simple starter frames must render compact card-back stats and honest TBD placeholders.");
+assert(headshot.includes('starterStatus === "tbd" ? "TBD"') && headshot.includes("{fallbackLabel}"), "TBD starter headshot placeholders must render TBD instead of initials like TN.");
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
 assert(simpleBoard.includes("data-simple-form-chip\n") && countOccurrences(simpleBoard, "data-simple-form-chip\n") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
