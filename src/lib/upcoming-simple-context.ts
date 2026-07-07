@@ -130,9 +130,9 @@ export function upcomingSimpleContextSentence(game: TonightGame, rank: number, l
   return validateSentence(candidate, input) ? candidate : archetypeSentence(input, `${game.gamePk}:fallback`);
 }
 
-export function validateUpcomingSimpleContextSentence(sentence: string, game: TonightGame, leagueMeanGS: number) {
+export function validateUpcomingSimpleContextSentence(sentence: string, game: TonightGame, leagueMeanGS: number, extraAllowedNumbers: string[] = []) {
   const input = classifyMatchup(game, leagueMeanGS);
-  return validateSentence(sentence.trim(), input);
+  return validateSentence(sentence.trim(), input, extraAllowedNumbers);
 }
 
 export function upcomingSimpleContextArchetype(game: TonightGame, leagueMeanGS: number) {
@@ -303,7 +303,7 @@ function watchBandPhrases(game: TonightGame, rank: number) {
   }));
 }
 
-function validateSentence(sentence: string, input: ContextInput) {
+function validateSentence(sentence: string, input: ContextInput, extraAllowedNumbers: string[] = []) {
   if (wordCount(sentence) > 22 || sentence.includes("—") || /\bthis one\b/i.test(sentence)) return false;
   if (sentenceCount(sentence) !== 1) return false;
   if (NARRATIVE_VERBS.test(sentence)) return false;
@@ -311,7 +311,9 @@ function validateSentence(sentence: string, input: ContextInput) {
   if (input.archetype !== "CLEAR_EDGE" && /\b(separation|owns the form gap)\b/i.test(sentence)) return false;
   if (input.archetype === "ACE_DUEL" && !/\b(both|Two)\b/i.test(sentence)) return false;
   if (input.archetype === "TBD" && /\b(gap|separation|towers|runs away)\b/i.test(sentence)) return false;
-  return numberTokens(sentence).every((token) => allowedNumberTokens(input).has(token));
+  const allowed = allowedNumberTokens(input);
+  for (const token of extraAllowedNumbers) allowed.add(token);
+  return numberTokens(sentence).every((token) => allowed.has(token));
 }
 
 function signal(type: SignalType, score: number, phrases: string[]): ContextSignal {

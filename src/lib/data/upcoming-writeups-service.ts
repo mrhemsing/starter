@@ -1,15 +1,16 @@
 import { createHash } from "node:crypto";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { getPitcherForm } from "@/lib/data/form-service";
 import {
   upcomingSimpleContextArchetype,
   upcomingSimpleContextSentence,
   validateUpcomingSimpleContextSentence,
 } from "@/lib/upcoming-simple-context";
-import type { TonightGame, TonightStarter } from "@/lib/types";
+import type { FormStartPoint, TonightGame, TonightStarter } from "@/lib/types";
 
 type UpcomingWriteupsState = {
-  version: 2;
+  version: 3;
   date: string;
   inputHash: string;
   promptVersion: number;
@@ -18,6 +19,19 @@ type UpcomingWriteupsState = {
   writeups: Record<string, string>;
   sources: Record<string, "llm" | "fallback">;
   fallbackCount: number;
+};
+
+type MatchupFactPacket = {
+  facts: MatchupFact[];
+};
+
+type MatchupFact = {
+  key: "venue_history" | "season_best" | "streak" | "k_line";
+  owner: string;
+  text: string;
+  source: "form-service" | "odds-feed";
+  score: number;
+  trace: string[];
 };
 
 type UpcomingWriteupInput = {
@@ -48,6 +62,7 @@ type UpcomingWriteupInput = {
     label: string;
     runValue: string;
   };
+  factPacket: MatchupFactPacket;
 };
 
 type GenerateUpcomingWriteupsResult = {
@@ -59,12 +74,13 @@ type GenerateUpcomingWriteupsResult = {
   stored: boolean;
 };
 
-const UPCOMING_WRITEUPS_VERSION = 2;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 4;
+const UPCOMING_WRITEUPS_VERSION = 3;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 5;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
 const MAX_GENERATION_ATTEMPTS = 5;
+const MAX_FACTS_PER_MATCHUP = 2;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date));
@@ -74,7 +90,8 @@ export async function readUpcomingWriteups(date: string) {
 
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
   const slate = await getTonightMustWatch({ date, window: 5, forceOpponentSplits: true });
-  const inputs = slate.games.map((game) => upcomingWriteupInput(game, slate.leagueMeanGS));
+  const factPackets = await buildUpcomingFactPackets(slate.games);
+  const inputs = slate.games.map((game) => upcomingWriteupInput(game, slate.leagueMeanGS, factPackets.get(game.gamePk) ?? { facts: [] }));
   const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
   if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasLlmWriteupsForGames(previous, slate.games)) {
@@ -140,7 +157,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one polished matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Do not use numeric digits. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. For ACE_DUEL, explicitly say both starters are hot. For TBD, do not compare form with the unnamed side. Avoid formulaic phrasing like towers, clear separation, or form points.",
+          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. You may use at most one or two factPacket facts when useful, adding nothing. Every number must appear in the input. Do not invent history, health, streaks, results, ranks, or numbers. Respect the archetype frame. For ACE_DUEL, explicitly say both starters are hot. For TBD, do not compare form with the unnamed side. Avoid formulaic phrasing like towers, clear separation, or form points.",
         },
         {
           role: "user",
@@ -160,8 +177,9 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
 function validateGeneratedUpcomingText(sentence: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
   const clean = normalizeGeneratedSentence(sentence);
   if (!clean) return false;
-  if (!validateUpcomingSimpleContextSentence(clean, game, leagueMeanGS)) return false;
-  if (/\b(unhittable|dominant stretch|has been|since|streak|revenge|owns him|owned)\b/i.test(clean)) return false;
+  if (!validateUpcomingSimpleContextSentence(clean, game, leagueMeanGS, factAllowedNumberTokens(input))) return false;
+  if (/\b(unhittable|dominant stretch|has been|since|revenge|owns him|owned)\b/i.test(clean)) return false;
+  if (!validateFactTrace(clean, input)) return false;
   const allowedNumbers = new Set(JSON.stringify(input).match(/\d+(?:\.\d+)?/g) ?? []);
   return (clean.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token));
 }
@@ -177,7 +195,7 @@ function extractResponseText(payload: { output_text?: string; output?: Array<{ c
   return payload.output?.flatMap((item) => item.content ?? []).map((content) => content.text ?? "").join(" ").trim() ?? "";
 }
 
-function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number): UpcomingWriteupInput {
+function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number, factPacket: MatchupFactPacket): UpcomingWriteupInput {
   return {
     gamePk: game.gamePk,
     matchup: game.label,
@@ -206,7 +224,146 @@ function upcomingWriteupInput(game: TonightGame, leagueMeanGS: number): Upcoming
       label: game.weatherContext.label,
       runValue: game.weatherContext.runValue.toFixed(1),
     },
+    factPacket,
   };
+}
+
+async function buildUpcomingFactPackets(games: TonightGame[]) {
+  const slateHighKLine = highestStrikeoutLine(games);
+  const entries = await Promise.all(games.map(async (game) => [game.gamePk, await buildUpcomingFactPacket(game, slateHighKLine)] as const));
+  return new Map(entries);
+}
+
+async function buildUpcomingFactPacket(game: TonightGame, slateHighKLine: number | null): Promise<MatchupFactPacket> {
+  const factGroups = await Promise.all(game.starters.map((starter) => buildStarterFacts(game, starter, slateHighKLine)));
+  const facts = factGroups.flat().sort((a, b) => b.score - a.score).slice(0, MAX_FACTS_PER_MATCHUP);
+  return { facts };
+}
+
+async function buildStarterFacts(game: TonightGame, starter: TonightStarter, slateHighKLine: number | null): Promise<MatchupFact[]> {
+  if (!starter.pitcherId || !starter.name) return [];
+  const facts: MatchupFact[] = [];
+  const lineFact = starterStrikeoutLineFact(starter, slateHighKLine);
+  if (lineFact) facts.push(lineFact);
+
+  const form = await getPitcherForm(starter.pitcherId, { window: 5 }).catch(() => null);
+  if (!form) return facts;
+
+  const venueFact = starterVenueHistoryFact(game, starter, form.series);
+  if (venueFact) facts.push(venueFact);
+  const seasonBestFact = starterSeasonBestFact(starter, form.series);
+  if (seasonBestFact) facts.push(seasonBestFact);
+  const streakFact = starterStreakFact(starter, form.series);
+  if (streakFact) facts.push(streakFact);
+  return facts;
+}
+
+function starterStrikeoutLineFact(starter: TonightStarter, slateHighKLine: number | null): MatchupFact | null {
+  const line = starter.marketContext?.strikeoutPropLine;
+  if (!starter.name || typeof line !== "number") return null;
+  const projection = starter.marketContext?.projectedStrikeouts;
+  const isSlateHigh = typeof slateHighKLine === "number" && line === slateHighKLine;
+  const edge = typeof projection === "number" ? Math.abs(line - projection) : 0;
+  if (!isSlateHigh && edge < 0.8) return null;
+
+  const lineText = formatNumber(line);
+  const projectionText = typeof projection === "number" ? formatNumber(projection) : null;
+  const text = isSlateHigh
+    ? `${starter.name}'s K line is ${lineText}, highest on the slate`
+    : `${starter.name}'s K line is ${lineText}, ${formatNumber(edge)} away from his ${projectionText} projection`;
+  return {
+    key: "k_line",
+    owner: starter.name,
+    text,
+    source: "odds-feed",
+    score: isSlateHigh ? 95 : 58 + edge,
+    trace: [starter.name, lineText, ...(projectionText ? [projectionText] : []), "K line", "highest on the slate"],
+  };
+}
+
+function starterVenueHistoryFact(game: TonightGame, starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
+  if (!starter.name) return null;
+  const prior = [...series].reverse().find((start) => start.park === game.park && start.gamePk !== game.gamePk);
+  if (!prior || (prior.k < 8 && prior.gsPlus < 60)) return null;
+  const text = `${starter.name}'s last ${game.park} start: ${prior.k} K, ${formatNumber(prior.ip)} IP`;
+  return {
+    key: "venue_history",
+    owner: starter.name,
+    text,
+    source: "form-service",
+    score: 80 + Math.max(0, prior.k - 8) * 2 + Math.max(0, prior.gsPlus - 60) / 4,
+    trace: [starter.name, game.park, String(prior.k), formatNumber(prior.ip), "last", "start"],
+  };
+}
+
+function starterSeasonBestFact(starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
+  if (!starter.name || series.length === 0) return null;
+  const best = series.reduce((leader, start) => start.gsPlus > leader.gsPlus ? start : leader, series[0]);
+  if (best.gsPlus < 65) return null;
+  const gsPlus = formatNumber(best.gsPlus);
+  const text = `${starter.name}'s season best is ${gsPlus} GS+ with ${best.k} K`;
+  return {
+    key: "season_best",
+    owner: starter.name,
+    text,
+    source: "form-service",
+    score: 70 + Math.max(0, best.gsPlus - 65) / 3 + Math.max(0, best.k - 7),
+    trace: [starter.name, gsPlus, String(best.k), "season best", "GS+"],
+  };
+}
+
+function starterStreakFact(starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
+  if (!starter.name) return null;
+  const hotCount = countWhile([...series].reverse(), (start) => start.gsPlus >= 55);
+  if (hotCount < 3) return null;
+  const text = `${starter.name} has ${hotCount} straight starts at GS+ 55 plus`;
+  return {
+    key: "streak",
+    owner: starter.name,
+    text,
+    source: "form-service",
+    score: 66 + hotCount,
+    trace: [starter.name, String(hotCount), "straight starts", "GS+", "55 plus"],
+  };
+}
+
+function highestStrikeoutLine(games: TonightGame[]) {
+  const lines = games.flatMap((game) => game.starters.flatMap((starter) => typeof starter.marketContext?.strikeoutPropLine === "number" ? [starter.marketContext.strikeoutPropLine] : []));
+  return lines.length > 0 ? Math.max(...lines) : null;
+}
+
+function validateFactTrace(sentence: string, input: UpcomingWriteupInput) {
+  const lower = sentence.toLowerCase();
+  const facts = input.factPacket.facts;
+  const factText = facts.map((fact) => fact.text.toLowerCase()).join(" ");
+  const hasFact = (key: MatchupFact["key"]) => facts.some((fact) => fact.key === key);
+  if (/\b(last at|last .* start|venue|park|ballpark)\b/i.test(lower) && !hasFact("venue_history")) return false;
+  if (/\b(season best|best start)\b/i.test(lower) && !hasFact("season_best")) return false;
+  if (/\b(straight starts|streak)\b/i.test(lower) && !hasFact("streak")) return false;
+  if (/\b(k line|strikeout line|highest on the slate)\b/i.test(lower) && !hasFact("k_line")) return false;
+  for (const fact of facts) {
+    for (const trace of fact.trace) {
+      if (trace.length > 3 && lower.includes(trace.toLowerCase()) && !factText.includes(trace.toLowerCase())) return false;
+    }
+  }
+  return true;
+}
+
+function factAllowedNumberTokens(input: UpcomingWriteupInput) {
+  return input.factPacket.facts.flatMap((fact) => fact.trace.flatMap((trace) => trace.match(/\d+(?:\.\d+)?/g) ?? []));
+}
+
+function countWhile<T>(values: T[], predicate: (value: T) => boolean) {
+  let count = 0;
+  for (const value of values) {
+    if (!predicate(value)) break;
+    count += 1;
+  }
+  return count;
+}
+
+function formatNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function upcomingWriteupsKey(date: string) {

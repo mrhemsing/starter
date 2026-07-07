@@ -136,20 +136,31 @@ assert(
     writeupsService.includes("getTonightMustWatch({ date, window: 5, forceOpponentSplits: true })") &&
     writeupsService.includes("inputHash") &&
     writeupsService.includes("UPCOMING_WRITEUPS_PROMPT_VERSION") &&
+    writeupsService.includes("buildUpcomingFactPackets") &&
+    writeupsService.includes("factPacket: MatchupFactPacket") &&
+    writeupsService.includes('source: "form-service" | "odds-feed"') &&
+    writeupsService.includes("getPitcherForm(starter.pitcherId, { window: 5 })") &&
+    writeupsService.includes("starterVenueHistoryFact") &&
+    writeupsService.includes("starterSeasonBestFact") &&
+    writeupsService.includes("starterStreakFact") &&
+    writeupsService.includes("starterStrikeoutLineFact") &&
+    writeupsService.includes("highest on the slate") &&
+    writeupsService.includes("MAX_FACTS_PER_MATCHUP = 2") &&
+    writeupsService.includes("validateFactTrace(clean, input)") &&
     writeupsService.includes("hasLlmWriteupsForGames") &&
     writeupsService.includes('sources: Record<string, "llm" | "fallback">') &&
     writeupsService.includes('sources[game.gamePk] = generated ? "llm" : "fallback"') &&
     writeupsService.includes('state.sources?.[gamePk] === "llm"') &&
     writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
-    writeupsService.includes("Do not use numeric digits.") &&
+    writeupsService.includes("Every number must appear in the input.") &&
     writeupsService.includes("normalizeGeneratedSentence") &&
     writeupsService.includes("validateGeneratedUpcomingText") &&
     writeupsService.includes("validateUpcomingSimpleContextSentence") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
     writeupsService.includes("AbortSignal.timeout") &&
     !simpleBoard.includes("OPENAI_API_KEY"),
-  "Upcoming LLM writeups must generate off the request path, store by input hash, validate output, and fall back to deterministic copy without client/request-path key usage.",
+  "Upcoming LLM writeups must generate off the request path, store by input hash, inject traceable fact packets, validate output, and fall back to deterministic copy without client/request-path key usage.",
 );
 
 assert(
