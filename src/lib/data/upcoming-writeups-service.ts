@@ -76,7 +76,7 @@ type GenerateUpcomingWriteupsResult = {
 };
 
 const UPCOMING_WRITEUPS_VERSION = 3;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 8;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 9;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -101,19 +101,29 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
 
   const apiKey = process.env.OPENAI_API_KEY;
   let fallbackCount = 0;
+  let reusedCount = 0;
+  let generatedCount = 0;
   const writeups: Record<string, string> = {};
   const sources: UpcomingWriteupsState["sources"] = {};
   for (const [index, game] of slate.games.entries()) {
     const input = inputs[index];
     const fallback = input.deterministicFallback;
+    if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && previous.sources?.[game.gamePk] === "llm" && previous.writeups[game.gamePk]?.trim()) {
+      writeups[game.gamePk] = previous.writeups[game.gamePk];
+      sources[game.gamePk] = "llm";
+      reusedCount += 1;
+      continue;
+    }
     const generated = apiKey ? await generateOneUpcomingWriteupWithRetries(apiKey, input, game, slate.leagueMeanGS).catch(() => null) : null;
     const sentence = generated ?? fallback;
     if (!generated) fallbackCount += 1;
     sources[game.gamePk] = generated ? "llm" : "fallback";
+    if (generated) generatedCount += 1;
     writeups[game.gamePk] = validateUpcomingSimpleContextSentence(sentence, game, slate.leagueMeanGS) ? sentence : fallback;
     if (writeups[game.gamePk] === fallback && generated) {
       sources[game.gamePk] = "fallback";
       fallbackCount += 1;
+      generatedCount -= 1;
     }
   }
 
@@ -129,7 +139,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     fallbackCount,
   });
 
-  return { date: slate.date, generated: slate.games.length - fallbackCount, reused: 0, fallbackCount, model: UPCOMING_WRITEUPS_MODEL, stored };
+  return { date: slate.date, generated: generatedCount, reused: reusedCount, fallbackCount, model: UPCOMING_WRITEUPS_MODEL, stored };
 }
 
 function hasLlmWriteupsForGames(state: UpcomingWriteupsState, games: TonightGame[]) {
