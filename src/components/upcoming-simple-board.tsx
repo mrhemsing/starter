@@ -182,7 +182,7 @@ function SimpleStarter({
         data-simple-starter-card-back-color={panelColor}
       >
         <p
-          className="inline-flex flex-col items-center justify-center rounded border px-1.5 py-1 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)] sm:flex-row sm:gap-1"
+          className="inline-flex w-full flex-col items-center justify-center rounded border px-1.5 py-1 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)] sm:w-auto sm:flex-row sm:gap-1"
           style={formChipStyle(starter, formBand)}
           data-simple-form-chip
           data-form-band={formBand ?? starter.formStatus}
