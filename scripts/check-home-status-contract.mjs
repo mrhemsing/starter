@@ -263,7 +263,8 @@ assert(
   "homepage masthead must not render the shared GS+ scale sentence after the tightened pitch update",
 );
 
-const heroWhyCopy = "Game Score, adjusted for park, opponent, and swing-and-miss, so the best matchups rise to the top.";
+const heroWhyCopyStart = "Game Score, adjusted for park, opponent, and swing-and-miss,";
+const heroWhyCopyEnd = "so the best matchups rise to the top.";
 const differentiatorCards = [
   {
     title: "Context, not just the line.",
@@ -280,14 +281,17 @@ const differentiatorCards = [
 ];
 
 assert(
-  homePage.includes(`const GS_PLUS_HERO_WHY_LINE = "${heroWhyCopy}";`) &&
+  homePage.includes(`const GS_PLUS_HERO_WHY_LINE_START = "${heroWhyCopyStart}";`) &&
+    homePage.includes(`const GS_PLUS_HERO_WHY_LINE_END = "${heroWhyCopyEnd}";`) &&
     homePage.includes("data-home-hero-why-line") &&
     homePage.includes("text-[15px]") &&
+    homePage.includes("<br />") &&
     homePage.includes("<HomeDeferredSections") &&
     homePage.includes('whyGsPlusBand={<WhyGsPlusBand />}') &&
     homePage.indexOf("data-home-hero-why-line") < homePage.indexOf("Methodology") &&
     !homePage.includes('className="hidden text-[11px] sm:inline sm:text-sm"') &&
-    !heroWhyCopy.includes("—"),
+    !heroWhyCopyStart.includes("—") &&
+    !heroWhyCopyEnd.includes("—"),
   "homepage hero must render exactly one pitch subtitle followed by the methodology link without em dash copy",
 );
 
