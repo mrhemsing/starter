@@ -42,12 +42,14 @@ export function HomeDeferredSections({
   tomorrow,
   slatePhase,
   slatePhaseExperiment = false,
+  whyGsPlusBand = null,
   initialData,
 }: {
   today: string;
   tomorrow: string;
   slatePhase: HomeSlatePhase;
   slatePhaseExperiment?: boolean;
+  whyGsPlusBand?: ReactNode;
   initialData?: HomeDeferredInitialData;
 }) {
   const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(initialData?.todayWatch ?? null);
@@ -174,6 +176,7 @@ export function HomeDeferredSections({
         {getHomeModuleOrder(slatePhase, slatePhaseVariant).map((module) => (
           <div key={module} data-home-module={module} onClickCapture={() => trackModuleClick(module)}>
             {modules[module]}
+            {module === "watch" ? whyGsPlusBand : null}
           </div>
         ))}
       </div>
@@ -202,6 +205,8 @@ export function HomeDeferredSections({
           showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
         />
       ) : null}
+
+      {whyGsPlusBand}
 
       {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null}
       {formHome ? <HeatCheckHero home={formHome} /> : null}

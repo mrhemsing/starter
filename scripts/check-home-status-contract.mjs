@@ -21,6 +21,7 @@ const [
   packageJson,
   vercelConfig,
   methodologyPage,
+  homeDeferredSections,
   gsPlusCopy,
   methodologyContent,
 ] = await Promise.all([
@@ -38,6 +39,7 @@ const [
   readFile("package.json", "utf8"),
   readFile("vercel.json", "utf8"),
   readFile("src/app/methodology/page.tsx", "utf8"),
+  readFile("src/components/home-deferred-sections.tsx", "utf8"),
   readFile("src/lib/gs-plus-copy.ts", "utf8"),
   readFile("src/lib/methodology-content.ts", "utf8"),
 ]);
@@ -254,8 +256,8 @@ assert(
 );
 
 assert(
-  homePage.includes("GS_PLUS_SCALE_SENTENCE") && !homePage.includes("Probable starters, form, matchup context"),
-  "homepage masthead value prop must use the shared GS+ scale sentence",
+  !homePage.includes("GS_PLUS_SCALE_SENTENCE") && !homePage.includes("Probable starters, form, matchup context"),
+  "homepage masthead must not render the shared GS+ scale sentence after the tightened pitch update",
 );
 
 const heroWhyCopy = "It's Game Score with the context added back in: park, opponent, and swing-and-miss, so the games worth watching rise to the top.";
@@ -276,10 +278,13 @@ const differentiatorCards = [
 
 assert(
   homePage.includes(`const GS_PLUS_HERO_WHY_LINE = "${heroWhyCopy}";`) &&
-    homePage.indexOf("GS_PLUS_SCALE_SENTENCE") < homePage.indexOf("GS_PLUS_HERO_WHY_LINE") &&
     homePage.includes("data-home-hero-why-line") &&
+    homePage.includes("<HomeDeferredSections") &&
+    homePage.includes('whyGsPlusBand={<WhyGsPlusBand />}') &&
+    homePage.indexOf("data-home-hero-why-line") < homePage.indexOf("Methodology") &&
+    !homePage.includes('className="hidden text-[11px] sm:inline sm:text-sm"') &&
     !heroWhyCopy.includes("—"),
-  "homepage hero must render the shared scale sentence followed by the exact why-GS+ subline without em dash copy",
+  "homepage hero must render exactly one pitch subtitle followed by the methodology link without em dash copy",
 );
 
 for (const card of differentiatorCards) {
@@ -300,18 +305,29 @@ assert(
     homePage.includes('data-home-gs-plus-methodology-link') &&
     homePage.includes('href="/methodology"') &&
     !homePage.includes('href="/calibration"') &&
-    homePage.indexOf("<WhyGsPlusBand />") < homePage.indexOf("<HomeDeferredSections"),
-  "homepage must insert the WHY GS+ differentiator band above Must-Watch, stack on mobile, and link the public breakdown phrase to methodology",
+    homePage.includes('whyGsPlusBand={<WhyGsPlusBand />}') &&
+    homePage.indexOf("<HomeDeferredSections") < homePage.indexOf("function WhyGsPlusBand") &&
+    homeDeferredSections.includes("whyGsPlusBand?: ReactNode") &&
+    homeDeferredSections.includes('{module === "watch" ? whyGsPlusBand : null}') &&
+    homeDeferredSections.includes(
+      `{watch ? (
+        <TonightsMustWatch`,
+    ) &&
+    homeDeferredSections.includes(`      {whyGsPlusBand}
+
+      {duels ? <PitchingDuelsModule`),
+  "homepage must render the WHY GS+ differentiator band below Must-Watch and above Closest Matchups, stack on mobile, and link the public breakdown phrase to methodology",
 );
 
 assert(
   gsPlusCopy.includes("GS+ grades a single start on the 20-80 scouting scale, league average near 50.") &&
-    homePage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
+    !homePage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
     methodologyPage.includes('import { GS_PLUS_SCALE_SENTENCE } from "@/lib/gs-plus-copy";') &&
+    methodologyPage.includes("{GS_PLUS_SCALE_SENTENCE}") &&
     !homePage.includes("0-100") &&
     !methodologyPage.includes("0-100") &&
     !homePage.includes("0 to 100"),
-  "GS+ scale copy must live in one shared fragment and avoid legacy 0-100 language outside the methodology FAQ explainer",
+  "GS+ scale copy must stay in the shared fragment and methodology page while no longer rendering in the homepage hero",
 );
 
 assert(
@@ -370,13 +386,10 @@ assert(
 );
 
 assert(
-  homePage.includes('className="block text-[11px] sm:hidden"') &&
-    homePage.includes("GS+ grades a single start on the 20-80 scouting scale,") &&
-    homePage.includes("<br />") &&
-    homePage.includes("league average near 50.") &&
-    homePage.includes('className="hidden text-[11px] sm:inline sm:text-sm"') &&
-    homePage.includes('className="mt-1 block font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline sm:ml-[10px] sm:mt-0 sm:inline"'),
-  "homepage mobile GS+ value prop must force a break after the comma and before methodology",
+  !homePage.includes("GS+ grades a single start on the 20-80 scouting scale,") &&
+    !homePage.includes("league average near 50.") &&
+    homePage.includes('className="mt-2 block w-fit font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline"'),
+  "homepage mobile hero must use the single pitch subtitle and keep methodology below it",
 );
 
 assert(
