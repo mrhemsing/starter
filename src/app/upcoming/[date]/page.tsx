@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type React from "react";
-import { FastFilterLink } from "@/components/fast-filter-link";
 import { PendingRegion } from "@/components/route-control-pending";
 import { SegmentedControl } from "@/components/segmented-control";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
@@ -17,7 +16,6 @@ import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
-import type { TonightGameStatus } from "@/lib/types";
 
 type UpcomingDatePageProps = {
   params: Promise<{
@@ -79,10 +77,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
     readUpcomingWriteups(date),
   ]);
   const resolvedDate = upcoming.date;
-  const statusSummary = summarizeUpcomingStatuses(upcoming.games);
-  const statusVaries = statusSummary.distinctStatuses >= 2;
-  const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false };
-  const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, effectiveControls) };
+  const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };
   const jsonLd = jsonLdForUpcomingDay(visibleUpcoming);
 
   return (
@@ -113,13 +108,11 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             <div className="mt-5 flex flex-col gap-2" data-upcoming-toolbar-row>
               <UpcomingSlateRangeToggle activeDate={resolvedDate} today={today} tomorrow={tomorrow} className="mt-0" />
               <UpcomingControls
-                controls={effectiveControls}
+                controls={controls}
                 basePath={upcomingDateHref(resolvedDate)}
                 slateRange="day"
                 visibleGameCount={visibleUpcoming.games.length}
                 scheduledGameCount={upcoming.scheduledGames}
-                showStatusFilter={statusVaries}
-                statusSummary={statusSummary}
                 viewModeToggle={<UpcomingViewModeToggle />}
                 formWindow={visibleUpcoming.formWindow}
                 className="mt-0"
@@ -141,7 +134,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                 compactTopPadding
               />
             )}
-            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={effectiveControls.sort} contextWriteups={contextWriteups} />}
+            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={controls.sort} contextWriteups={contextWriteups} />}
           />
         </PendingRegion>
       </main>
@@ -202,13 +195,13 @@ type UpcomingControlsState = {
 
 export function normalizeUpcomingControls(params?: { pregame?: string; sort?: string }): UpcomingControlsState {
   return {
-    pregameOnly: params?.pregame === "1",
+    pregameOnly: false,
     sort: params?.sort === "time" ? "time" : "watch",
   };
 }
 
-export function filterAndSortGames<T extends { status: string; firstPitch: string; gameWatchScore: number }>(games: T[], controls: UpcomingControlsState) {
-  const visibleGames = games.filter((game) => !controls.pregameOnly || game.status === "pregame");
+export function filterAndSortGames<T extends { firstPitch: string; gameWatchScore: number }>(games: T[], controls: UpcomingControlsState) {
+  const visibleGames = games;
   if (controls.sort === "time") {
     return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);
   }
@@ -221,8 +214,6 @@ export function UpcomingControls({
   slateRange,
   visibleGameCount,
   scheduledGameCount,
-  showStatusFilter = true,
-  statusSummary,
   viewModeToggle,
   formWindow,
   className = "mt-3",
@@ -232,17 +223,15 @@ export function UpcomingControls({
   slateRange: "day" | "week";
   visibleGameCount: number;
   scheduledGameCount: number;
-  showStatusFilter?: boolean;
-  statusSummary?: UpcomingStatusSummary;
   viewModeToggle?: React.ReactNode;
   formWindow: number;
   className?: string;
 }) {
-  const controlsLabel = upcomingControlsLabel(controls, showStatusFilter);
-  const controlsKey = `${controls.pregameOnly ? "pregame" : "all"}-${controls.sort}`;
+  const controlsLabel = upcomingControlsLabel(controls);
+  const controlsKey = `all-${controls.sort}`;
   const controlsEmpty = visibleGameCount === 0;
   const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);
-  const activeControlCount = (showStatusFilter ? 1 : 0) + 1;
+  const activeControlCount = 1;
 
   return (
     <div
@@ -251,11 +240,11 @@ export function UpcomingControls({
       data-slate-range={slateRange}
       data-control-key={controlsKey}
       data-control-label={controlsLabel}
-      data-control-pregame={String(controls.pregameOnly)}
+      data-control-pregame="false"
       data-control-sort={controls.sort}
       data-control-empty={String(controlsEmpty)}
-      data-control-status-filter-visible={String(showStatusFilter)}
-      data-control-status-summary={statusSummary ? statusSummaryValue(statusSummary) : "unknown"}
+      data-control-status-filter-visible="false"
+      data-control-status-summary="removed"
       data-control-base-path={basePath}
       data-control-visible-games={visibleGameCount}
       data-control-scheduled-games={scheduledGameCount}
@@ -264,12 +253,6 @@ export function UpcomingControls({
       aria-label={controlsLabel}
     >
       <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1" data-upcoming-control-row>
-        {showStatusFilter ? (
-          <ControlGroup label="Status">
-            <ControlLink controlKey="status-all" active={!controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: false })}>All games</ControlLink>
-            <ControlLink controlKey="status-pregame" active={controls.pregameOnly} href={upcomingControlHref(basePath, { ...controls, pregameOnly: true })}>Pregame only</ControlLink>
-          </ControlGroup>
-        ) : null}
         <SegmentedControl
           label="Sort"
           ariaLabel="Sort options"
@@ -291,61 +274,15 @@ export function UpcomingControls({
   );
 }
 
-function upcomingControlsLabel(controls: UpcomingControlsState, showStatusFilter: boolean) {
-  const status = showStatusFilter ? `${controls.pregameOnly ? "Pregame only" : "All statuses"} / ` : "";
-  return `Filters / ${status}${controls.sort === "time" ? "Start time" : "Watch rank"}`;
-}
-
-function ControlGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div role="group" aria-label={`${label} filters`}>
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
-  );
-}
-
-function ControlLink({ controlKey, active, href, children }: { controlKey: string; active: boolean; href: string; children: React.ReactNode }) {
-  return (
-    <FastFilterLink className={`inline-flex min-h-11 items-center rounded border px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] ${active ? "border-amber-300 bg-amber-300 text-zinc-950" : "border-white/10 text-zinc-300"}`} href={href} ariaCurrent={active ? "location" : undefined} aria-controls="upcoming-board" data-control-link-active={String(active)} data-control-link-key={controlKey} pendingRegion="upcoming-board" pendingLabel="Upcoming matchup board" scroll={false}>
-      {children}
-    </FastFilterLink>
-  );
+function upcomingControlsLabel(controls: UpcomingControlsState) {
+  return `Filters / ${controls.sort === "time" ? "Start time" : "Watch rank"}`;
 }
 
 function upcomingControlHref(basePath: string, controls: UpcomingControlsState) {
   const params = new URLSearchParams();
-  if (controls.pregameOnly) params.set("pregame", "1");
   if (controls.sort !== "watch") params.set("sort", controls.sort);
   const query = params.toString();
   return `${basePath}${query ? `?${query}` : ""}`;
-}
-
-type UpcomingStatusSummary = {
-  pregame: number;
-  delay: number;
-  live: number;
-  final: number;
-  distinctStatuses: number;
-};
-
-export function summarizeUpcomingStatuses(games: Array<{ status: TonightGameStatus }>): UpcomingStatusSummary {
-  const summary = games.reduce<UpcomingStatusSummary>(
-    (current, game) => {
-      if (game.status === "pregame") current.pregame += 1;
-      else if (game.status === "delay") current.delay += 1;
-      else if (game.status === "live") current.live += 1;
-      else if (game.status === "final") current.final += 1;
-      return current;
-    },
-    { pregame: 0, delay: 0, live: 0, final: 0, distinctStatuses: 0 },
-  );
-  summary.distinctStatuses = [summary.pregame, summary.delay, summary.live, summary.final].filter((count) => count > 0).length;
-  return summary;
-}
-
-function statusSummaryValue(summary: UpcomingStatusSummary) {
-  return `pregame:${summary.pregame},delay:${summary.delay},live:${summary.live},final:${summary.final}`;
 }
 
 function addDays(date: string, days: number) {

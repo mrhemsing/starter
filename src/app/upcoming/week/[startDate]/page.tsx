@@ -4,7 +4,7 @@ import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
-import { filterAndSortGames, normalizeUpcomingControls, summarizeUpcomingStatuses, UpcomingControls } from "@/app/upcoming/[date]/page";
+import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { FORM_CONFIG } from "@/lib/form-tokens";
@@ -77,11 +77,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
         a.game.firstPitch.localeCompare(b.game.firstPitch) ||
         a.game.label.localeCompare(b.game.label),
     )[0];
-  const allGames = upcoming.days.flatMap((day) => day.games);
-  const statusSummary = summarizeUpcomingStatuses(allGames);
-  const statusVaries = statusSummary.distinctStatuses >= 2;
-  const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false };
-  const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, effectiveControls) }));
+  const filteredDays = upcoming.days.map((day) => ({ ...day, games: filterAndSortGames(day.games, controls) }));
   const visibleUpcoming = { ...upcoming, days: filteredDays };
   const jsonLd = jsonLdForUpcomingWeek(visibleUpcoming);
   const visibleGameCount = filteredDays.reduce((count, day) => count + day.games.length, 0);
@@ -116,13 +112,11 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             </Link>
           ) : null}
           <UpcomingControls
-            controls={effectiveControls}
+            controls={controls}
             basePath={upcomingWeekHref(resolvedStartDate)}
             slateRange="week"
             visibleGameCount={visibleGameCount}
             scheduledGameCount={scheduledGameCount}
-            showStatusFilter={statusVaries}
-            statusSummary={statusSummary}
             formWindow={upcoming.days[0]?.formWindow ?? FORM_CONFIG.windowDefault}
           />
         </header>

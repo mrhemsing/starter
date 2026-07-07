@@ -24,13 +24,11 @@ assert(tonightService.includes("status: splitMatchupScore === null && baselineMa
 assert(!tonightService.includes("firstPitchAt <= Date.now()"), "Upcoming service must not remove Warming/Pre-Game cards only because scheduled first pitch has passed");
 assert(tonightService.includes('return "delay";'), "schedule status normalization must preserve delay status");
 
-assert(upcomingPage.includes("export function summarizeUpcomingStatuses"), "day Upcoming page must expose slate status summary");
-assert(upcomingPage.includes("statusSummary.distinctStatuses >= 2"), "day Upcoming page must compute status variation");
-assert(upcomingPage.includes("showStatusFilter={statusVaries}"), "day Upcoming controls must hide status filter when status does not vary");
-assert(upcomingPage.includes("const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false }"), "day Upcoming page must ignore pregame-only control when status does not vary");
+assert(!upcomingPage.includes("All games") && !upcomingPage.includes("Pregame only"), "day Upcoming controls must remove the old status filter buttons");
+assert(!upcomingPage.includes("showStatusFilter") && !upcomingPage.includes("summarizeUpcomingStatuses"), "day Upcoming controls must not revive the status filter plumbing");
+assert(upcomingPage.includes('data-control-status-filter-visible="false"'), "Upcoming controls must expose that the status filter is removed for DOM checks");
 assert(upcomingPage.includes("jsonLdForUpcomingDay(visibleUpcoming)"), "day Upcoming JSON-LD must match the visible filtered slate");
-assert(upcomingPage.includes("data-control-status-filter-visible"), "Upcoming controls must expose status-filter visibility for DOM checks");
-assert(upcomingPage.includes("data-control-status-summary"), "Upcoming controls must expose status summary for DOM checks");
+assert(upcomingPage.includes('data-control-status-summary="removed"'), "Upcoming controls must expose removed status summary telemetry for DOM checks");
 assert(!upcomingPage.includes("<details\n      className=\"mt-5"), "Upcoming controls must not collapse filters and sort behind an expandable details row");
 assert(!upcomingPage.includes("<summary className=\"cursor-pointer font-mono text-xs uppercase"), "Upcoming controls must not render the old Filters / Start time summary row");
 assert(upcomingPage.includes('data-upcoming-toolbar-row') && upcomingPage.includes('className="mt-5 flex flex-col gap-2"') && upcomingPage.includes('className="mt-0"'), "Upcoming day toolbar must place compact toggles on a second row below the range tabs.");
@@ -42,9 +40,7 @@ assert(
 );
 assert(slateDateNav.includes('mobileLabel: "Week"') && slateDateNav.includes('className="sm:hidden"') && slateDateNav.includes('className="hidden sm:inline"'), "Upcoming range tabs must show WEEK on mobile and THIS WEEK on larger screens.");
 
-assert(upcomingWeekPage.includes("summarizeUpcomingStatuses"), "week Upcoming page must use the same status summary");
-assert(upcomingWeekPage.includes("showStatusFilter={statusVaries}"), "week Upcoming controls must hide status filter when status does not vary");
-assert(upcomingWeekPage.includes("const effectiveControls = statusVaries ? controls : { ...controls, pregameOnly: false }"), "week Upcoming page must ignore pregame-only control when status does not vary");
+assert(!upcomingWeekPage.includes("summarizeUpcomingStatuses") && !upcomingWeekPage.includes("showStatusFilter"), "week Upcoming page must use the same status-filter-free controls");
 assert(upcomingWeekPage.includes("jsonLdForUpcomingWeek(visibleUpcoming)"), "week Upcoming JSON-LD must match the visible filtered slate");
 
 assert(tonightCards.includes("const showGameStatus = new Set(shownGames.map((game) => game.status)).size >= 2"), "Upcoming cards must render lifecycle status only when visible status varies");

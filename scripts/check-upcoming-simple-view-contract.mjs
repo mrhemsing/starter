@@ -50,7 +50,7 @@ assert(!viewMode.includes("data-upcoming-simple-hover-hint") && !viewMode.includ
 assert(!viewMode.includes("data-upcoming-simple-details") && !viewMode.includes(">Details<"), "Simple cards must not render standalone DETAILS buttons.");
 assert(simpleBoard.includes("data-simple-visible-game-pks"), "Simple board must expose game order for parity checks.");
 assert(simpleBoard.includes("data-simple-watch-ranks"), "Simple board must expose rank order for parity checks.");
-assert(page.includes("sortMode={effectiveControls.sort}") && simpleBoard.includes('data-simple-sort-mode={sortMode}'), "Simple cards must receive the active sort mode.");
+assert(page.includes("sortMode={controls.sort}") && simpleBoard.includes('data-simple-sort-mode={sortMode}'), "Simple cards must receive the active sort mode.");
 assert(simpleBoard.includes('data-simple-rank-visible={String(showRank)}') && simpleBoard.includes('const showRank = sortMode === "watch";') && simpleBoard.includes("data-simple-card-rank"), "Simple desktop VS ranks must render only for watch-rank sort.");
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
