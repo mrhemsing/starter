@@ -113,11 +113,13 @@ function SimpleStarter({
         <StarterHeadshot starter={starter} formBand={formBand} />
         <div className="min-w-0">
           {starter.pitcherId ? (
-            <Link href={pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming"))} className="block truncate text-sm font-semibold text-zinc-50" data-simple-starter-name>
-              {name}
+            <Link href={pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming"))} className={`block max-w-[6.75rem] whitespace-normal break-words text-sm font-semibold leading-[1.08] text-zinc-50 sm:max-w-none sm:text-base ${align === "home" ? "ml-auto" : ""}`} data-simple-starter-name>
+              <PitcherNameLines name={name} />
             </Link>
           ) : (
-            <p className="truncate text-sm font-semibold text-zinc-50" data-simple-starter-name>{name}</p>
+            <p className={`max-w-[6.75rem] whitespace-normal break-words text-sm font-semibold leading-[1.08] text-zinc-50 sm:max-w-none sm:text-base ${align === "home" ? "ml-auto" : ""}`} data-simple-starter-name>
+              <PitcherNameLines name={name} />
+            </p>
           )}
           <p className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500" data-simple-orientation>{orientation}</p>
         </div>
@@ -126,6 +128,19 @@ function SimpleStarter({
         {formBand ? heatBandLabel(formBand) : "Form"} {formatFormValue(starter, formBand)}
       </p>
     </div>
+  );
+}
+
+function PitcherNameLines({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return <>{name}</>;
+  const last = parts.pop();
+  return (
+    <>
+      <span className="block">{parts.join(" ")}</span>
+      {" "}
+      <span className="block">{last}</span>
+    </>
   );
 }
 

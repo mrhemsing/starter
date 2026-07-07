@@ -57,24 +57,21 @@ export function SegmentedControl({
     <div
       role="group"
       aria-label={ariaLabel ?? `${label} options`}
-      className="w-full min-w-0 sm:w-auto"
+      className="min-w-0 shrink-0"
       data-segmented-control={label.toLowerCase()}
       data-segmented-control-active={activeValue}
       data-segmented-control-count={segmentCount}
       data-segmented-control-storage-key={storageKey}
       onKeyDown={handleKeyDown}
     >
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</p>
-      <div className="relative grid min-h-11 overflow-hidden rounded-full border border-white/10 bg-black/30 p-1 shadow-inner shadow-black/30" style={{ gridTemplateColumns: `repeat(${segmentCount}, minmax(0, 1fr))` }}>
+      <div className="flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-2 py-1.5 shadow-inner shadow-black/20">
+        <p className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">{label}</p>
         <span
           aria-hidden="true"
-          className="segmented-control-indicator pointer-events-none absolute left-1 top-1 h-[calc(100%-0.5rem)] rounded-full bg-amber-300 transition-transform duration-[175ms] ease-out"
+          className="segmented-control-indicator sr-only"
           data-segmented-control-indicator
           data-segmented-control-indicator-index={activeIndex}
-          style={{
-            width: `calc((100% - 0.5rem) / ${segmentCount})`,
-            transform: `translateX(${activeIndex * 100}%)`,
-          }}
+          style={{ transform: `translateX(${activeIndex * 100}%)` }}
         />
         {segments.map((segment, index) => {
           const active = segment.value === activeValue;
@@ -122,8 +119,8 @@ export function SegmentedControl({
 
 function segmentedOptionClass(active: boolean, hasDivider: boolean) {
   return [
-    "relative z-10 inline-flex min-h-11 items-center justify-center rounded-full px-3 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200",
-    active ? "text-zinc-950" : "text-zinc-300 hover:text-zinc-50",
-    hasDivider ? "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-px before:-translate-y-1/2 before:bg-white/10 before:content-['']" : "",
+    "relative z-10 inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 before:h-2 before:w-2 before:rounded-full before:border before:content-[''] sm:min-h-10 sm:px-3 sm:text-[11px]",
+    active ? "bg-amber-300 text-zinc-950 before:border-zinc-950 before:bg-zinc-950" : "text-zinc-300 hover:bg-white/[0.04] hover:text-zinc-50 before:border-white/25 before:bg-transparent",
+    hasDivider ? "" : "",
   ].filter(Boolean).join(" ");
 }

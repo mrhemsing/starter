@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 const page = await readFile("src/app/upcoming/[date]/page.tsx", "utf8");
 const viewMode = await readFile("src/components/upcoming-view-mode.tsx", "utf8");
 const segmentedControl = await readFile("src/components/segmented-control.tsx", "utf8");
-const globals = await readFile("src/app/globals.css", "utf8");
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
 const context = await readFile("src/lib/upcoming-simple-context.ts", "utf8");
 
@@ -18,8 +17,7 @@ assert(page.includes('import { SegmentedControl } from "@/components/segmented-c
 assert(viewMode.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming VIEW must use the shared segmented-control primitive.");
 assert(page.includes('label="Sort"') && page.includes('{ value: "watch", label: "Watch rank"') && page.includes('{ value: "time", label: "Start time"'), "Upcoming SORT must render as WATCH RANK / START TIME segmented options.");
 assert(viewMode.includes('label="View"') && viewMode.includes('{ value: "detailed", label: "Detailed"') && viewMode.includes('{ value: "simple", label: "Simple"'), "Upcoming VIEW must render as DETAILED / SIMPLE segmented options.");
-assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("transition-transform duration-[175ms]"), "Segmented controls must render a sliding indicator.");
-assert(globals.includes("@media (prefers-reduced-motion: reduce)") && globals.includes(".segmented-control-indicator") && globals.includes("transition: none;"), "Segmented indicator animation must disable under reduced motion.");
+assert(segmentedControl.includes("data-segmented-control-indicator") && segmentedControl.includes("segmented-control-indicator") && segmentedControl.includes("before:h-2 before:w-2 before:rounded-full"), "Segmented controls must render as modern radio-style buttons.");
 assert(segmentedControl.includes('role="group"') && segmentedControl.includes("handleKeyDown") && segmentedControl.includes("ArrowLeft") && segmentedControl.includes("ArrowRight"), "Segmented controls must expose labeled group semantics and arrow-key movement.");
 assert(segmentedControl.includes("min-h-11"), "Segmented controls must keep touch targets at least 44px tall.");
 assert(viewMode.includes('window.localStorage.getItem(STORAGE_KEY) === "SIMPLE"'), "Stored SIMPLE preference must restore simple view.");
@@ -42,6 +40,7 @@ assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis o
 assert(simpleBoard.includes('className="grid gap-4"'), "Simple cards must have visible gaps between discrete card surfaces.");
 assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simpleBoard.includes("style={{ color: accentColor }}"), "Simple cards must tint the edge and score by watch band.");
 assert(simpleBoard.includes('size="simple"'), "Simple starter headshots must use the enlarged simple size.");
+assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("mt-3") && simpleBoard.includes("data-simple-first-pitch"), "Simple card must add breathing room above first pitch time.");
 assert(countOccurrences(simpleBoard, "data-simple-form-chip") === 1, "Simple starter renderer should create exactly one form chip per starter instance.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
