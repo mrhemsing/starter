@@ -309,7 +309,7 @@ async function PitcherProfileBody({
             <NextStartProjectionCard nextStart={nextStart} venueSplitContext={venueSplitContext} />
           </div>
         ) : null}
-        <PitcherWirePanel events={wireEvents} pitcherName={summary.name} />
+        <PitcherWirePanel events={wireEvents} />
         {pitcher ? <AdvancedPercentilePanel pitcher={pitcher} /> : null}
         <SplitsPanel splits={pitcher?.splits.groups ?? []} venueSplit={summary.venueSplit ?? null} />
         <Callout label="Best start" value={`GS+ ${best.gsPlus}`} detail={`${best.gameDate} ${formStartMatchupLabel(best)}`} href={startHref(best.id, sourceParams(source))} />
@@ -324,20 +324,18 @@ async function PitcherProfileBody({
   );
 }
 
-function PitcherWirePanel({ events, pitcherName }: { events: WatchlistWireEvent[]; pitcherName: string }) {
+function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
+  if (events.length === 0) return null;
+
   return (
     <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-profile-wire">
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Pitcher Wire</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
-      {events.length === 0 ? (
-        <p className="mt-3 text-sm leading-6 text-zinc-500">No recent Wire items for {pitcherName}.</p>
-      ) : (
-        <div className="mt-4 grid gap-2">
-          {events.slice(0, 6).map((event) => (
-            <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
-          ))}
-        </div>
-      )}
+      <div className="mt-4 grid gap-2">
+        {events.slice(0, 6).map((event) => (
+          <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
+        ))}
+      </div>
     </section>
   );
 }

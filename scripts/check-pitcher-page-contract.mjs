@@ -300,14 +300,15 @@ assert(
 assert(
   pitcherFormPage.includes('import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";') &&
     pitcherFormPage.includes("sortWatchlistWireEvents") &&
-    pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} pitcherName={summary.name} />") &&
+    pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} />") &&
+    pitcherFormPage.includes("if (events.length === 0) return null;") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-profile-wire"') &&
-    pitcherFormPage.includes("No recent Wire items for {pitcherName}.") &&
+    !pitcherFormPage.includes("No recent Wire items for") &&
     pitcherFormPage.includes('target="_blank"') &&
     pitcherFormPage.includes('rel="noopener"') &&
     pitcherFormPage.includes("event.headline.source") &&
     pitcherFormPage.includes("relativeEventTime(event.headline.publishedAt)"),
-  "pitcher profile must render a pitcher-specific Wire section from stored headline events, newest first, with external source attribution",
+  "pitcher profile must render a pitcher-specific Wire section only when stored headline events exist, newest first, with external source attribution",
 );
 
 assert(
