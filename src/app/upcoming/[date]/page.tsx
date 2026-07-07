@@ -10,6 +10,7 @@ import { UpcomingSimpleBoard } from "@/components/upcoming-simple-board";
 import { UpcomingViewModePanels, UpcomingViewModeProvider, UpcomingViewModeToggle } from "@/components/upcoming-view-mode";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { readUpcomingWriteups } from "@/lib/data/upcoming-writeups-service";
 import { formWindowLabel } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
@@ -72,9 +73,10 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);
-  const [upcoming, slateState] = await Promise.all([
+  const [upcoming, slateState, contextWriteups] = await Promise.all([
     getTonightMustWatch({ date, window: 5 }),
     getSlateStartProgress({ window: "today", date }),
+    readUpcomingWriteups(date),
   ]);
   const resolvedDate = upcoming.date;
   const statusSummary = summarizeUpcomingStatuses(upcoming.games);
@@ -139,7 +141,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                 compactTopPadding
               />
             )}
-            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={effectiveControls.sort} />}
+            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={effectiveControls.sort} contextWriteups={contextWriteups} />}
           />
         </PendingRegion>
       </main>

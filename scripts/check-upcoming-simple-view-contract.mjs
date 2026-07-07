@@ -6,6 +6,9 @@ const viewMode = await readFile("src/components/upcoming-view-mode.tsx", "utf8")
 const segmentedControl = await readFile("src/components/segmented-control.tsx", "utf8");
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
 const context = await readFile("src/lib/upcoming-simple-context.ts", "utf8");
+const writeupsService = await readFile("src/lib/data/upcoming-writeups-service.ts", "utf8");
+const writeupsCron = await readFile("src/app/api/cron/upcoming-writeups/route.ts", "utf8");
+const vercelConfig = await readFile("vercel.json", "utf8");
 const headshot = await readFile("src/components/headshot.tsx", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 
@@ -13,6 +16,7 @@ assert(page.includes("<UpcomingViewModeProvider>"), "Upcoming page must wrap too
 assert(page.includes('viewModeToggle={<UpcomingViewModeToggle />}'), "Upcoming toolbar must render the simple/detailed toggle inside the existing controls.");
 assert(page.includes("<UpcomingViewModePanels") && page.includes("<TonightsMustWatch") && page.includes("<UpcomingSimpleBoard"), "Upcoming board must switch between detailed and simple panels without changing data.");
 assert(!page.includes("viewMode="), "Upcoming simple mode must not be URL-backed.");
+assert(page.includes('import { readUpcomingWriteups } from "@/lib/data/upcoming-writeups-service";') && page.includes("readUpcomingWriteups(date)") && page.includes("contextWriteups={contextWriteups}"), "Upcoming page must only read stored LLM writeups during render and pass them to Simple cards.");
 
 assert(viewMode.includes('const STORAGE_KEY = "tts.upcoming.view";'), "Upcoming view preference must use the namespaced storage key.");
 assert(page.includes('import { SegmentedControl } from "@/components/segmented-control";'), "Upcoming SORT must use the shared segmented-control primitive.");
@@ -51,6 +55,7 @@ assert(simpleBoard.includes('data-simple-rank-visible={String(showRank)}') && si
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
+assert(simpleBoard.includes("contextWriteup ?? upcomingSimpleContextSentence") && simpleBoard.includes('data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}'), "Simple cards must render stored LLM writeups when present and deterministic fallback copy otherwise.");
 assert(simpleBoard.includes("text-center text-sm") && simpleBoard.includes("lg:text-left"), "Simple context text must stay centered on mobile and left-aligned on desktop.");
 assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
@@ -119,7 +124,32 @@ assert(context.includes("bothTop && gap < CLEAR_EDGE_GAP") && context.includes('
 assert(context.includes("namedStarters.length < 2") && context.includes('archetype: "TBD"'), "Simple context must explain TBD starter slots without form contrast.");
 assert(context.includes("validateSentence(candidate, input)") && context.includes("NARRATIVE_VERBS") && context.includes("numberTokens(sentence)") && context.includes("allowedNumberTokens(input)"), "Simple context must validate voice, narrative claims, and number fidelity before rendering.");
 assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
-assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i'), "Simple context validator must enforce the 22-word, no-em-dash, no-this-one voice rules.");
+assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i') && context.includes("sentenceCount(sentence) !== 1"), "Simple context validator must enforce the one-sentence, 22-word, no-em-dash, no-this-one voice rules.");
+assert(context.includes("export function validateUpcomingSimpleContextSentence") && context.includes("export function upcomingSimpleContextArchetype"), "Simple context must expose validator/archetype helpers for write-time LLM storage.");
+
+assert(
+  writeupsService.includes("OPENAI_API_KEY") &&
+    writeupsService.includes("readRuntimeState") &&
+    writeupsService.includes("writeRuntimeState") &&
+    writeupsService.includes("getTonightMustWatch({ date, window: 5, forceOpponentSplits: true })") &&
+    writeupsService.includes("inputHash") &&
+    writeupsService.includes("hasWriteupsForGames") &&
+    writeupsService.includes("OPENAI_RESPONSES_URL") &&
+    writeupsService.includes("validateGeneratedUpcomingText") &&
+    writeupsService.includes("validateUpcomingSimpleContextSentence") &&
+    writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
+    writeupsService.includes("AbortSignal.timeout") &&
+    !simpleBoard.includes("OPENAI_API_KEY"),
+  "Upcoming LLM writeups must generate off the request path, store by input hash, validate output, and fall back to deterministic copy without client/request-path key usage.",
+);
+
+assert(
+  writeupsCron.includes("generateUpcomingWriteupsForDate(date)") &&
+    writeupsCron.includes("CRON_SECRET") &&
+    vercelConfig.includes('"/api/cron/upcoming-writeups"') &&
+    vercelConfig.includes('"20 */6 * * *"'),
+  "Upcoming LLM writeups must run from an authorized low-cadence cron to avoid unnecessary API spend.",
+);
 
 const phraseBankMatches = context.match(/\[[^\]]+\]/gs) ?? [];
 const signalPhraseGroups = phraseBankMatches.filter((group) => (group.match(/"/g) ?? []).length >= 8);

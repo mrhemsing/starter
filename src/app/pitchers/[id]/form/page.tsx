@@ -16,7 +16,7 @@ import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-ser
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
 import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
-import { WATCHLIST_COOKIE, getWatchlistPitcherIds, sortWatchlistWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
+import { WATCHLIST_COOKIE, getWatchlistPitcherIds, sortPitcherWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
@@ -282,7 +282,7 @@ async function PitcherProfileBody({
   const [pitcher, recentDepthBundle, nextStart, wireEventsByPitcher] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise, wireEventsPromise]);
   const { recentDepth, recentHighlights } = recentDepthBundle;
   const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
-  const wireEvents = sortWatchlistWireEvents(wireEventsByPitcher.get(summary.pitcherId) ?? []);
+  const wireEvents = sortPitcherWireEvents(wireEventsByPitcher.get(summary.pitcherId) ?? [], summary.name);
 
   return (
     <section className="grid min-w-0 gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_360px]" data-responsive-check="pitcher-profile-stacks">
@@ -326,17 +326,29 @@ async function PitcherProfileBody({
 
 function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
   if (events.length === 0) return null;
+  const visibleEvents = events.slice(0, 8);
+  const hiddenCount = Math.max(0, events.length - visibleEvents.length);
 
   return (
-    <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-profile-wire">
+    <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-profile-wire" data-wire-visible-count={visibleEvents.length} data-wire-hidden-count={hiddenCount}>
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">Pitcher Wire</p>
       <h2 className="mt-2 font-serif text-3xl font-bold text-zinc-50">The Wire</h2>
       <p className="mt-1 text-sm text-zinc-500">News for this arm</p>
       <div className="mt-4 grid gap-2">
-        {events.slice(0, 10).map((event) => (
+        {visibleEvents.map((event) => (
           <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
         ))}
       </div>
+      {hiddenCount > 0 ? (
+        <details className="mt-3 rounded border border-white/10 bg-black/20 p-3" data-wire-more>
+          <summary className="cursor-pointer list-none font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">Show {hiddenCount} more</summary>
+          <div className="mt-3 grid gap-2">
+            {events.slice(visibleEvents.length).map((event) => (
+              <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
+            ))}
+          </div>
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -346,11 +358,10 @@ function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
   return (
     <a href={event.headline?.url ?? "#"} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
       <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" data-wire-eyebrow>{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
         <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
       </div>
       <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.sentence}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
     </a>
   );
 }

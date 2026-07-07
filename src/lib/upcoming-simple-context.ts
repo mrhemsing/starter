@@ -130,6 +130,15 @@ export function upcomingSimpleContextSentence(game: TonightGame, rank: number, l
   return validateSentence(candidate, input) ? candidate : archetypeSentence(input, `${game.gamePk}:fallback`);
 }
 
+export function validateUpcomingSimpleContextSentence(sentence: string, game: TonightGame, leagueMeanGS: number) {
+  const input = classifyMatchup(game, leagueMeanGS);
+  return validateSentence(sentence.trim(), input);
+}
+
+export function upcomingSimpleContextArchetype(game: TonightGame, leagueMeanGS: number) {
+  return classifyMatchup(game, leagueMeanGS).archetype;
+}
+
 function classifyMatchup(game: TonightGame, leagueMeanGS: number): ContextInput {
   const namedStarters = game.starters.filter(hasNamedStarter);
   const [awayStarter, homeStarter] = game.starters;
@@ -296,6 +305,7 @@ function watchBandPhrases(game: TonightGame, rank: number) {
 
 function validateSentence(sentence: string, input: ContextInput) {
   if (wordCount(sentence) > 22 || sentence.includes("—") || /\bthis one\b/i.test(sentence)) return false;
+  if (sentenceCount(sentence) !== 1) return false;
   if (NARRATIVE_VERBS.test(sentence)) return false;
   if (input.gap < CLEAR_EDGE_GAP && PROHIBITED_SMALL_GAP_CLAIMS.test(sentence)) return false;
   if (input.archetype !== "CLEAR_EDGE" && /\b(separation|owns the form gap)\b/i.test(sentence)) return false;
@@ -419,4 +429,8 @@ function hash(value: string) {
 
 function wordCount(sentence: string) {
   return sentence.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function sentenceCount(sentence: string) {
+  return sentence.match(/[.!?](?:\s|$)/g)?.length ?? 0;
 }

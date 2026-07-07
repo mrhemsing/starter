@@ -13,10 +13,12 @@ export function UpcomingSimpleBoard({
   tonight,
   rankLabel = "today",
   sortMode = "watch",
+  contextWriteups = {},
 }: {
   tonight: TonightResponse;
   rankLabel?: string;
   sortMode?: "watch" | "time";
+  contextWriteups?: Record<string, string>;
 }) {
   return (
     <section
@@ -26,7 +28,8 @@ export function UpcomingSimpleBoard({
       data-simple-visible-game-pks={tonight.games.length ? tonight.games.map((game) => game.gamePk).join(",") : "none"}
       data-simple-watch-ranks={tonight.games.length ? tonight.games.map((game, index) => simpleRankValue(game, index)).join(",") : "none"}
       data-simple-watch-scores={tonight.games.length ? tonight.games.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
-      data-simple-context-sentences={tonight.games.length ? tonight.games.map((game, index) => upcomingSimpleContextSentence(game, index + 1, tonight.leagueMeanGS)).join("|") : "none"}
+      data-simple-context-sentences={tonight.games.length ? tonight.games.map((game, index) => simpleContextSentence(game, index + 1, tonight.leagueMeanGS, contextWriteups)).join("|") : "none"}
+      data-simple-context-source={Object.keys(contextWriteups).length > 0 ? "stored-llm-or-fallback" : "deterministic-fallback"}
       data-simple-rank-label={rankLabel}
       data-simple-sort-mode={sortMode}
     >
@@ -38,7 +41,7 @@ export function UpcomingSimpleBoard({
         ) : (
           <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[minmax(0,560px)] lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-desktop-layout="two-up-vs">
             {tonight.games.map((game, index) => (
-              <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode={sortMode} />
+              <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode={sortMode} contextWriteup={contextWriteups[game.gamePk]} />
             ))}
           </div>
         )}
@@ -52,14 +55,16 @@ function UpcomingSimpleCard({
   rank,
   leagueMeanGS,
   sortMode,
+  contextWriteup,
 }: {
   game: TonightGame;
   rank: number;
   leagueMeanGS: number;
   rankLabel: string;
   sortMode: "watch" | "time";
+  contextWriteup?: string;
 }) {
-  const sentence = upcomingSimpleContextSentence(game, rank, leagueMeanGS);
+  const sentence = contextWriteup ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
@@ -113,6 +118,7 @@ function UpcomingSimpleCard({
         data-simple-context-word-count={wordCount(sentence)}
         data-simple-context-has-em-dash={String(sentence.includes("—"))}
         data-simple-context-has-this-one={String(/\bthis one\b/i.test(sentence))}
+        data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}
       >
         {sentence}
       </p>
@@ -363,4 +369,8 @@ function wordCount(sentence: string) {
 
 function sentenceCount(sentence: string) {
   return sentence.match(/[.!?](?:\s|$)/g)?.length ?? 0;
+}
+
+function simpleContextSentence(game: TonightGame, rank: number, leagueMeanGS: number, contextWriteups: Record<string, string>) {
+  return contextWriteups[game.gamePk] ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
 }

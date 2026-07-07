@@ -300,25 +300,28 @@ assert(
 
 assert(
   pitcherFormPage.includes('import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";') &&
-    pitcherFormPage.includes("sortWatchlistWireEvents") &&
+    pitcherFormPage.includes("sortPitcherWireEvents") &&
     pitcherFormPage.includes("<PitcherWirePanel events={wireEvents} />") &&
     pitcherFormPage.includes("if (events.length === 0) return null;") &&
     pitcherFormPage.includes('data-responsive-check="pitcher-profile-wire"') &&
     pitcherFormPage.includes("News for this arm") &&
-    pitcherFormPage.includes("events.slice(0, 10)") &&
+    pitcherFormPage.includes("events.slice(0, 8)") &&
+    pitcherFormPage.includes("data-wire-visible-count={visibleEvents.length}") &&
+    pitcherFormPage.includes("data-wire-hidden-count={hiddenCount}") &&
+    pitcherFormPage.includes("data-wire-more") &&
     !pitcherFormPage.includes("No recent Wire items for") &&
+    !pitcherFormPage.includes(">NEWS<") &&
     pitcherFormPage.includes('target="_blank"') &&
     pitcherFormPage.includes('rel="noopener"') &&
     pitcherFormPage.includes("event.headline?.source ?? \"News\"") &&
     pitcherFormPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
-    pitcherFormPage.includes("formatArticleDate(detectedAt)") &&
-    pitcherFormPage.includes("month: \"short\", day: \"numeric\"") &&
+    pitcherFormPage.includes("data-wire-eyebrow") &&
     pitcherFormPage.includes('aria-label="Unread Wire item"') &&
     watchlistPage.includes("function WireEventCard") &&
     watchlistPage.includes("event.headline?.source ?? \"News\"") &&
     watchlistPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
     watchlistPage.includes("formatArticleDate(detectedAt)"),
-  "pitcher profile must render API-backed Wire headlines with the same NEWS card treatment and older-article date formatting as Watchlist Wire",
+  "pitcher profile must render capped API-backed Wire headline links with source/time eyebrows, no redundant NEWS chip, and a more affordance",
 );
 
 assert(
@@ -346,8 +349,11 @@ assert(
     headlineService.includes("const headlineTokens = new Set(normalizedTokens(headline));") &&
     headlineService.includes("if (!headlineTokens.has(normalizeText(surname))) return null;") &&
     headlineService.includes("containsTokenPhrase(headlineTokens, pitcherTokens)") &&
-    headlineService.includes("containsTokenPhrase(headlineTokens, normalizedTokens(other.name))"),
-  "pitcher profile Wire must fetch related articles on demand from headline APIs, resolve syndicated Google News items to publisher dates, require token-level pitcher relevance, reuse stored events, and dedupe duplicate stories before render",
+    headlineService.includes("containsTokenPhrase(headlineTokens, normalizedTokens(other.name))") &&
+    watchlistPage.includes("sortWatchlistWireEvents") &&
+    pitcherFormPage.includes("sortPitcherWireEvents(wireEventsByPitcher.get(summary.pitcherId) ?? [], summary.name)") &&
+    (await readFile("src/lib/data/watchlist-service.ts", "utf8")).includes("export function sortPitcherWireEvents"),
+  "pitcher profile Wire must fetch related articles on demand from headline APIs, resolve syndicated Google News items to publisher dates, require token-level pitcher relevance, reuse stored events, dedupe duplicate stories before render, and rank direct-subject headlines first",
 );
 
 assert(

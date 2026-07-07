@@ -226,9 +226,35 @@ export function sortWatchlistWireEvents<T extends WatchlistWireEvent>(events: T[
   return [...events].sort((a, b) => watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || a.label.localeCompare(b.label));
 }
 
+export function sortPitcherWireEvents<T extends WatchlistWireEvent>(events: T[], pitcherName: string): T[] {
+  return [...events].sort((a, b) => {
+    const relevanceDelta = pitcherHeadlineRelevance(b, pitcherName) - pitcherHeadlineRelevance(a, pitcherName);
+    if (relevanceDelta !== 0) return relevanceDelta;
+    return watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || wireHeadlineText(a).localeCompare(wireHeadlineText(b));
+  });
+}
+
 function watchlistWireEventSortTime(event: WatchlistWireEvent) {
   const value = Date.parse(event.headline?.publishedAt ?? event.detectedAt);
   return Number.isFinite(value) ? value : 0;
+}
+
+function pitcherHeadlineRelevance(event: WatchlistWireEvent, pitcherName: string) {
+  const headline = wireHeadlineText(event);
+  const lowerHeadline = headline.toLowerCase();
+  const lowerName = pitcherName.toLowerCase();
+  const last = lowerName.split(/\s+/).filter(Boolean).at(-1) ?? lowerName;
+  if (!headline || !last) return 0;
+  if (lowerHeadline.startsWith(lowerName) || lowerHeadline.startsWith(last)) return 40;
+  const fullIndex = lowerHeadline.indexOf(lowerName);
+  if (fullIndex >= 0) return fullIndex <= Math.max(24, lowerHeadline.length / 2) ? 32 : 18;
+  const lastIndex = lowerHeadline.indexOf(last);
+  if (lastIndex >= 0) return lastIndex <= Math.max(18, lowerHeadline.length / 2) ? 24 : 10;
+  return 0;
+}
+
+function wireHeadlineText(event: WatchlistWireEvent) {
+  return event.headline?.text ?? event.sentence ?? "";
 }
 
 function isWatchlistLiveRow(row: LiveScoreboardRow): row is LiveScoreboardRow & { scoreLabel: "PROV" | "FINAL" } {
