@@ -184,7 +184,7 @@ function SimpleStarter({
         >
           {simpleFormChipLabel(starter, formBand)}
         </p>
-        <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400" data-simple-mini-stat-line>
+        <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400 lg:text-white" data-simple-mini-stat-line>
           {miniStatLine(starter)}
         </p>
       </div>
