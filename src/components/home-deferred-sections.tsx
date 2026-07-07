@@ -140,8 +140,6 @@ export function HomeDeferredSections({
           null
         ) : ranked.topPerformer ? (
           <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
-        ) : ranked.liveLeaderboard ? (
-          <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
         ) : null,
       watch: watch ? (
         <TonightsMustWatch
@@ -189,8 +187,6 @@ export function HomeDeferredSections({
         null
       ) : ranked.topPerformer ? (
         <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
-      ) : ranked.liveLeaderboard ? (
-        <LiveLeaderboardStrip entries={ranked.liveLeaderboard} />
       ) : null}
 
       {watch ? (
@@ -374,35 +370,6 @@ function homeTopPerformerImageFromLiveRow(): HomeTopPerformer["image"] {
     objectPosition: "50% 45%",
     mobileObjectPosition: "50% 45%",
   };
-}
-
-function LiveLeaderboardStrip({ entries }: { entries: NonNullable<RankedHomeResponse["liveLeaderboard"]> }) {
-  const liveHref = entries[0]?.href ?? "/live";
-
-  return (
-    <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-responsive-check="home-live-leaderboard-strip">
-      <div className="mx-auto max-w-7xl">
-        <div className="max-w-full overflow-hidden rounded border border-white/10 bg-[#101014] p-3">
-          <div className="flex max-w-full min-w-0 items-center gap-3 overflow-x-auto pb-3 sm:pb-1">
-            <p className="shrink-0 font-mono text-xs uppercase leading-5 tracking-[0.2em] text-amber-300 sm:whitespace-nowrap">
-              <span className="block sm:inline">Live</span>
-              <span className="hidden sm:inline"> </span>
-              <span className="block sm:inline">Leaders</span>
-            </p>
-            {entries.map((entry) => (
-              <a key={entry.id} href={entry.href} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-300 transition hover:border-amber-300/30 hover:text-amber-200">
-                <span className="font-serif text-lg normal-case tracking-normal text-zinc-50">{entry.pitcherLastName}</span>
-                <span className="text-[#FF7A3D]">Live {entry.score.toFixed(1)}</span>
-              </a>
-            ))}
-            <a href={liveHref} className="flex shrink-0 items-center whitespace-nowrap rounded border border-amber-300/25 bg-black/20 px-3 py-2 font-mono text-xs uppercase tracking-[0.12em] text-amber-300 transition hover:border-amber-300/50 hover:text-amber-200">
-              Full live results
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function hasMissingBestStartHighlight(bestStarts: BestStartsHomeResponse) {

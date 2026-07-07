@@ -12,9 +12,10 @@ type SlateCountsProps = {
   initialState: SlateProgressState;
   initialLabel?: string;
   variant: "home" | "ranked";
+  className?: string;
 };
 
-export function SlateCounts({ initialState, initialLabel, variant }: SlateCountsProps) {
+export function SlateCounts({ initialState, initialLabel, variant, className = "" }: SlateCountsProps) {
   const router = useRouter();
   const [slateState, setSlateState] = useState(initialState);
   const [label, setLabel] = useState(initialLabel ?? slateCountsLabel(variant, initialState));
@@ -80,10 +81,10 @@ export function SlateCounts({ initialState, initialLabel, variant }: SlateCounts
 
   if (!label) return null;
   if (variant === "ranked") return <RankedSlateCounts state={slateState} label={label} />;
-  return <HomeSlateCounts state={slateState} label={label} />;
+  return <HomeSlateCounts state={slateState} label={label} className={className} />;
 }
 
-function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: string }) {
+function HomeSlateCounts({ state, label, className }: { state: SlateProgressState; label: string; className: string }) {
   const mobilePreFirstPitchLine = splitPreFirstPitchStatusLine(label, state.state);
   const liveHref = shouldLinkLiveScoreboard(state) ? liveDateHref(state.date) : null;
   const upcomingStarts = slateUpcomingStarts(state);
@@ -104,7 +105,7 @@ function HomeSlateCounts({ state, label }: { state: SlateProgressState; label: s
 
   return (
     <div
-      className="mb-4 block max-w-full overflow-hidden font-mono text-[10px] leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em]"
+      className={`block max-w-full overflow-hidden font-mono text-[10px] leading-5 tracking-[0.12em] text-white sm:whitespace-nowrap sm:text-ellipsis sm:text-xs sm:leading-normal sm:tracking-[0.18em] ${className}`}
       data-responsive-check="home-slate-status-line"
       data-slate-counts="home"
       data-slate-date={state.date}

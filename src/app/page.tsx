@@ -7,12 +7,14 @@ import type { Metadata } from "next";
 import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getFormHome } from "@/lib/data/form-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
-import { getRankedHome } from "@/lib/data/home-ranked-service";
+import { getRankedHome, type LiveLeaderboardEntry } from "@/lib/data/home-ranked-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
+import { liveDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
+import type { SlateProgressState } from "@/lib/slate-state";
 import type { TonightResponse } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -116,7 +118,6 @@ export default async function Home() {
 
             <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
               <div className="min-w-0 lg:max-w-3xl">
-                <SlateCounts initialState={slateStatus} variant="home" />
                 <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
                   <span className="block">Every MLB start,</span>
                   <span className="block">ranked.</span>
@@ -127,6 +128,7 @@ export default async function Home() {
                 <a href="/methodology" className="mt-2 block w-fit font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology
                 </a>
+                <HomeHeroStateBanner slateStatus={slateStatus} liveLeaderboard={ranked?.liveLeaderboard ?? null} />
               </div>
             </div>
           </div>
@@ -149,6 +151,35 @@ export default async function Home() {
         />
       </HomeLiveBoardProvider>
     </main>
+  );
+}
+
+function HomeHeroStateBanner({ slateStatus, liveLeaderboard }: { slateStatus: SlateProgressState; liveLeaderboard: LiveLeaderboardEntry[] | null }) {
+  const liveHref = liveDateHref(slateStatus.date);
+  const hasLiveLeaders = Boolean(liveLeaderboard?.length);
+
+  return (
+    <div
+      className="mt-4 max-w-2xl rounded border border-white/10 bg-black/25 px-3 py-3 shadow-[0_16px_34px_rgba(0,0,0,0.2)] backdrop-blur-sm"
+      data-responsive-check="home-hero-state-banner"
+      data-home-hero-state-banner={slateStatus.state}
+    >
+      <SlateCounts initialState={slateStatus} variant="home" className="mb-0" />
+      {hasLiveLeaders ? (
+        <div className="mt-3 flex max-w-full items-center gap-2 overflow-x-auto border-t border-white/10 pt-3" data-home-hero-live-leaders-strip>
+          <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Live leaders</p>
+          {liveLeaderboard?.slice(0, 3).map((entry) => (
+            <a key={entry.id} href={entry.href} className="flex shrink-0 items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-zinc-300 transition hover:border-amber-300/35 hover:text-amber-200">
+              <span className="font-serif text-base normal-case tracking-normal text-zinc-50">{entry.pitcherLastName}</span>
+              <span className="text-[#FF7A3D]">Live {entry.score.toFixed(1)}</span>
+            </a>
+          ))}
+          <a href={liveHref} className="shrink-0 rounded border border-amber-300/25 bg-amber-300/10 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-amber-300 transition hover:border-amber-300/50 hover:text-amber-200">
+            Full live results
+          </a>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

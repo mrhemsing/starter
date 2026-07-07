@@ -156,7 +156,7 @@ assert(
 
 assert(
   homePage.includes('import { getPitchingDuels } from "@/lib/data/duels-service";') &&
-    homePage.includes('import { getRankedHome } from "@/lib/data/home-ranked-service";') &&
+    homePage.includes('import { getRankedHome, type LiveLeaderboardEntry } from "@/lib/data/home-ranked-service";') &&
     homePage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     homePage.includes('import type { TonightResponse } from "@/lib/types";') &&
     homePage.includes("const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);") &&
@@ -165,6 +165,7 @@ assert(
     homePage.includes("function hasPregameWatchGames(watch: TonightResponse | null)") &&
     homePage.includes('watch?.games.some((game) => game.status === "pregame") ?? false') &&
     homePage.includes("<HomeDeferredSections") &&
+    homePage.includes("<HomeHeroStateBanner") &&
     homePage.includes("initialData={{") &&
     homePage.includes("ranked,") &&
     homePage.includes("todayWatch,") &&
@@ -471,15 +472,15 @@ assert(
     rankedService.includes("href: row.liveHref,") &&
     rankedService.includes('return row.scoreLabel !== "PROJ" && row.gsPlus !== null;') &&
     rankedService.includes("function lastName(name: string)") &&
-    homeDeferredSections.includes("ranked.liveLeaderboard ? (") &&
-    homeDeferredSections.includes("<LiveLeaderboardStrip entries={ranked.liveLeaderboard} />") &&
-    homeDeferredSections.includes('data-responsive-check="home-live-leaderboard-strip"') &&
-    homeDeferredSections.includes('className="block sm:inline">Live</span>') &&
-    homeDeferredSections.includes('className="hidden sm:inline"> </span>') &&
-    homeDeferredSections.includes('className="block sm:inline">Leaders</span>') &&
-    homeDeferredSections.includes("{entry.pitcherLastName}") &&
-    homeDeferredSections.includes("Full live results"),
-  "home must show a compact top-five live leaderboard stripe with last names only until a qualified live leader replaces it",
+    homePage.includes("function HomeHeroStateBanner") &&
+    homePage.includes("liveLeaderboard={ranked?.liveLeaderboard ?? null}") &&
+    homePage.includes('data-responsive-check="home-hero-state-banner"') &&
+    homePage.includes("data-home-hero-live-leaders-strip") &&
+    homePage.includes("{entry.pitcherLastName}") &&
+    homePage.includes("Full live results") &&
+    homePage.indexOf("Methodology") < homePage.indexOf("HomeHeroStateBanner") &&
+    !homeDeferredSections.includes("<LiveLeaderboardStrip entries={ranked.liveLeaderboard} />"),
+  "home must show a compact top-five live leaderboard stripe inside the hero state banner below the persistent pitch block until a qualified live leader replaces it",
 );
 
 assert(

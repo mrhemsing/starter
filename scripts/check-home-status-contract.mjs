@@ -154,7 +154,10 @@ assert(
 assert(
   homePage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
     startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
-    homePage.includes('<SlateCounts initialState={slateStatus} variant="home" />') &&
+    homePage.includes('<HomeHeroStateBanner slateStatus={slateStatus} liveLeaderboard={ranked?.liveLeaderboard ?? null} />') &&
+    homePage.includes('<SlateCounts initialState={slateStatus} variant="home" className="mb-0" />') &&
+    homePage.indexOf("data-home-hero-why-line") < homePage.indexOf("Methodology") &&
+    homePage.indexOf("Methodology") < homePage.indexOf("HomeHeroStateBanner") &&
     startsPage.includes('<SlateCounts') &&
     startsPage.includes('variant="ranked"') &&
     slateCounts.includes('data-responsive-check="home-slate-status-line"') &&
@@ -165,7 +168,7 @@ assert(
     slateCounts.includes("data-slate-total-starts={state.totalStarts}") &&
     slateCounts.includes("data-slate-completed-starts={state.completedStarts}") &&
     slateCounts.includes("aria-label={label}"),
-  "homepage status line must keep the full state-aware line available",
+  "homepage status line must keep the full state-aware line available in the hero state banner below the persistent pitch block",
 );
 
 assert(
