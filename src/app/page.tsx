@@ -21,8 +21,7 @@ export const dynamic = "force-dynamic";
 
 const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
-const GS_PLUS_HERO_WHY_LINE_START = "Game Score, adjusted for park, opponent, and swing-and-miss,";
-const GS_PLUS_HERO_WHY_LINE_END = "so the best matchups rise to the top.";
+const GS_PLUS_HERO_WHY_LINE = "Game Score, adjusted for park, opponent, and swing-and-miss, so the best matchups rise to the top.";
 const GS_PLUS_DIFFERENTIATORS = [
   {
     title: "Context, not just the line.",
@@ -118,15 +117,14 @@ export default async function Home() {
             <HomeLiveTicker />
 
             <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
-              <div className="min-w-0 lg:max-w-3xl">
+              <div className="min-w-0 lg:max-w-none">
                 <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">
-                  <span className="block">Every MLB start,</span>
-                  <span className="block">ranked.</span>
+                  <span className="block lg:inline">Every MLB start,</span>
+                  {" "}
+                  <span className="block lg:inline">ranked.</span>
                 </h1>
-                <p className="mt-3 max-w-2xl text-[15px] leading-6 text-zinc-400 lg:mb-[10px]" data-home-hero-why-line>
-                  <span>{GS_PLUS_HERO_WHY_LINE_START}</span>
-                  <br />
-                  <span>{GS_PLUS_HERO_WHY_LINE_END}</span>
+                <p className="mt-3 max-w-2xl text-[15px] leading-6 text-zinc-400 lg:mb-[10px] lg:max-w-none" data-home-hero-why-line>
+                  {GS_PLUS_HERO_WHY_LINE}
                 </p>
                 <a href="/methodology" className="mt-2 block w-fit font-mono text-xs uppercase tracking-[0.12em] text-amber-300 underline-offset-4 hover:underline">
                   Methodology
