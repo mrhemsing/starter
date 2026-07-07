@@ -5,7 +5,6 @@ const statsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const tonightService = await readFile("src/lib/data/tonight-service.ts", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
-const formTokens = await readFile("src/lib/form-tokens.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 
 assert(statsClient.includes("function reportedProbableKey(awayAbbreviation: string, homeAbbreviation: string, side: \"home\" | \"away\", gameDate?: string)"), "reported probable merge key must include gameDate.");
@@ -21,13 +20,14 @@ assert(tonightService.includes("function matchupLabel(game: MlbScheduleGame)") &
 assert(startService.includes("`${slateDate}-${probable.gamePk}-"), "probable IDs must include gamePk so doubleheader slots stay independent.");
 assert(tonightService.includes('["tonight-must-watch", "v15"]'), "Upcoming cache namespace must be bumped for corrected doubleheader probables.");
 
-assert(formTokens.includes("export const WATCH_MATCHUP_QUALITY_BANDS"), "watch matchup quality tags must derive from shared constants.");
-for (const label of ["ELITE MATCHUP", "PLUS MATCHUP", "SOLID MATCHUP", "EVEN MATCHUP"]) {
-  assert(formTokens.includes(label), `missing shared watch quality label ${label}`);
+assert(mustWatch.includes('data-visible-matchup-status-labels="none"'), "Upcoming cards must keep the former far-right matchup status slot empty.");
+assert(mustWatch.includes('data-matchup-status-label="none"'), "Each Upcoming card must expose the retired matchup status slot as empty telemetry.");
+assert(!mustWatch.includes("matchupStatusLabel("), "far-right matchup status label rendering must be removed.");
+assert(!mustWatch.includes("watchMatchupQualityBand(game.gameWatchScore)"), "watch quality labels must not replace the retired far-right matchup labels.");
+assert(!mustWatch.includes("TOP WATCH SCORE"), "top watch score must not render as a far-right matchup label.");
+for (const label of ["ELITE MATCHUP", "PLUS MATCHUP", "SOLID MATCHUP", "EVEN MATCHUP", "LIMITED DATA"]) {
+  assert(!mustWatch.includes(label), `far-right matchup label copy must stay removed: ${label}`);
 }
-assert(mustWatch.includes('if (topWatchScoreGamePk && game.gamePk === topWatchScoreGamePk) return "TOP WATCH SCORE";'), "top watch score tag must be tied to the max watch score game.");
-assert(mustWatch.includes("watchMatchupQualityBand(game.gameWatchScore)"), "non-top matchup tags must derive from shared watch score bands.");
-assert(mustWatch.includes("watchScoreConfidenceLabel(game.watchScoreConfidence)"), "medium/low confidence games must render the existing confidence treatment.");
 assert(!mustWatch.includes("return `${ordinal(game.matchupRankTonight)} matchup`;"), "ordinal matchup status labels must be retired.");
 assert(!mustWatch.includes("`${ordinal(game.matchupRankTonight)} ${rankLabel}`"), "ordinal matchup component detail copy must be retired.");
 
