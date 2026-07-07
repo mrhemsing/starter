@@ -1302,7 +1302,7 @@ function ProbableConfidenceChip({ starter, align, compact = false }: { starter: 
   if (starter.probableConfidence !== "REPORTED") return null;
 
   return (
-    <p className={`mt-1 inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200 ${align === "home" ? "lg:ml-auto" : ""} ${compact ? "text-[8px]" : ""}`}>
+    <p className={`mr-2 mt-1 inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200 ${align === "home" ? "lg:ml-auto" : ""} ${compact ? "text-[8px]" : ""}`} data-probable-confidence-chip-spacer="true">
       UNCONFIRMED
     </p>
   );

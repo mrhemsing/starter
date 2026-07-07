@@ -210,6 +210,12 @@ assert(
 );
 
 assert(
+  mustWatch.includes('data-probable-confidence-chip-spacer="true"') &&
+    mustWatch.includes("mr-2 mt-1 inline-flex items-center rounded border border-amber-300/30"),
+  "home must-watch UNCONFIRMED probable chips must keep space before the team dot/text",
+);
+
+assert(
   homeDeferredSections.includes("topVelo={view.topVelo}") &&
     homeDeferredSections.includes("veloSparkline={view.veloSparkline}") &&
     homeDeferredSections.includes("whiffRate={view.whiffRate}") &&
