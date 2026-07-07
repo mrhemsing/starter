@@ -58,10 +58,10 @@ assert(
 assert(
   tonightService.includes('const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";') &&
     tonightService.includes("const enrichAtRequestTime = isRequestTimeEnrichmentEnabled();") &&
-    tonightService.includes("enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts") &&
+    tonightService.includes("shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts") &&
     tonightService.includes("enrichAtRequestTime ? fetchMlbOddsMarketContexts") &&
-    tonightService.includes("getNeutralGameTimeWeather(game.venue)"),
-  "Upcoming request-time MLB/Odds/weather enrichments must remain behind the explicit enrichment flag",
+    tonightService.includes("const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);"),
+  "Upcoming request-time MLB/Odds enrichments must remain behind the explicit enrichment flag while cached Open-Meteo weather may load",
 );
 
 assert(

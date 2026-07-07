@@ -131,8 +131,8 @@ assert(
   environmentService.includes("const WEATHER_REVALIDATE_SECONDS = 15 * 60;") &&
     environmentService.includes("next: { revalidate: WEATHER_REVALIDATE_SECONDS }") &&
     environmentService.includes("export function getNeutralGameTimeWeather") &&
-    environmentService.includes("export function isRequestTimeEnvironmentEnrichmentEnabled()") &&
-    environmentService.includes('process.env.THE_BUMP_REQUEST_TIME_ENRICHMENT === "1"') &&
+    environmentService.includes("export async function getGameTimeWeather") &&
+    environmentService.includes("fetchOpenMeteoWeather(profile, gameDate)") &&
     !environmentService.includes('cache: "no-store"'),
   "Game-time weather must be revalidated instead of fetched no-store on every render",
 );
@@ -143,12 +143,11 @@ assert(
     tonightService.includes("enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts") &&
     tonightService.includes("enrichAtRequestTime ? fetchMlbOddsMarketContexts") &&
     tonightService.includes("enrichAtRequestTime\n    ? await fetchMlbPitcherStartCompleteness") &&
-    tonightService.includes("enrichAtRequestTime ? await getGameTimeWeather") &&
-    tonightService.includes("getNeutralGameTimeWeather(game.venue)") &&
+    tonightService.includes("const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);") &&
     formService.includes('const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";') &&
     formService.includes("? fetchMlbPitcherAvailabilityStatuses") &&
     formService.includes(": Promise.resolve(new Map())"),
-  "idle page assembly must not perform optional live enrichment fetches unless THE_BUMP_REQUEST_TIME_ENRICHMENT=1 is explicitly set",
+  "idle page assembly must keep heavy live MLB/Odds enrichments behind THE_BUMP_REQUEST_TIME_ENRICHMENT while allowing cached Open-Meteo weather",
 );
 
 assert(

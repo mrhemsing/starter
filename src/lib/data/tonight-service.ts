@@ -4,7 +4,7 @@ import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
 import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service";
-import { getGameTimeWeather, getNeutralGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
+import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
@@ -39,7 +39,7 @@ const tonightCache = new Map<string, CachedTonight>();
 
 const getCachedTonightMustWatch = unstable_cache(
   async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v12"],
+  ["tonight-must-watch", "v13"],
   { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
 );
 
@@ -88,7 +88,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
   const marketContexts = mergeMarketContexts(snapshotMarketContexts, requestMarketContexts);
   const probableScoresByGame = groupProbableMatchupScores(probables);
   const builtGames = await Promise.all(
-    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null, enrichAtRequestTime)),
+    schedule.games.map((game) => buildTonightGame(game, date, formByPitcher, completenessByPitcher, probableScoresByGame.get(game.gamePk) ?? [], leaderboard.leagueMeanGS, opponentSplits, marketContexts.get(String(game.gamePk)) ?? null)),
   );
   const candidates = builtGames.filter(isUpcomingGame);
   const matchupRanks = rankMatchups(candidates);
@@ -143,11 +143,10 @@ async function buildTonightGame(
   leagueMeanGS: number,
   opponentSplits: Map<string, MlbTeamHandednessSplitContext>,
   marketContext: MlbOddsGameMarketContext | null,
-  enrichAtRequestTime: boolean,
 ): Promise<TonightGame> {
   const status = normalizeGameStatus(game);
   const parkContext = getParkContext(game.venue);
-  const weatherContext = enrichAtRequestTime ? await getGameTimeWeather(game.venue, game.gameDate) : getNeutralGameTimeWeather(game.venue);
+  const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);
   const awayStarter = buildTonightStarter(game.probableAwayPitcher, "away", game.awayTeam.abbreviation, game.homeTeam.abbreviation, game.homeTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const homeStarter = buildTonightStarter(game.probableHomePitcher, "home", game.homeTeam.abbreviation, game.awayTeam.abbreviation, game.awayTeam.name, date, leagueMeanGS, formByPitcher, completenessByPitcher, parkContext, weatherContext, opponentSplits, marketContext);
   const tbd = awayStarter.status === "tbd" || homeStarter.status === "tbd";

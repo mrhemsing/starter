@@ -79,6 +79,7 @@ const VENUE_WEATHER_PROFILES: Record<string, VenueWeatherProfile> = {
   "Sutter Health Park": { latitude: 38.5804, longitude: -121.5135, outdoor: true, label: "West Sacramento, CA" },
   "T-Mobile Park": { latitude: 47.5914, longitude: -122.3325, outdoor: false, label: "Seattle, WA" },
   "Target Field": { latitude: 44.9817, longitude: -93.2776, outdoor: true, label: "Minneapolis, MN" },
+  "Tropicana Field": { latitude: 27.7683, longitude: -82.6534, outdoor: false, label: "St. Petersburg, FL" },
   "Truist Park": { latitude: 33.8908, longitude: -84.4678, outdoor: true, label: "Atlanta, GA" },
   "UNIQLO Field at Dodger Stadium": { latitude: 34.0739, longitude: -118.24, outdoor: true, label: "Los Angeles, CA" },
   "Wrigley Field": { latitude: 41.9484, longitude: -87.6553, outdoor: true, label: "Chicago, IL" },
@@ -150,8 +151,6 @@ export function isValidParkRunFactor(runFactor: number | undefined | null): runF
 }
 
 export async function getGameTimeWeather(venue: string, gameDate: string): Promise<DecisionWeatherContext> {
-  if (!isRequestTimeEnvironmentEnrichmentEnabled()) return getNeutralGameTimeWeather(venue);
-
   const profile = VENUE_WEATHER_PROFILES[venue];
   if (!profile) {
     return {
