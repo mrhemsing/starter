@@ -1011,7 +1011,7 @@ function FormLeaderboardRow({
           <div className={`grid min-w-0 ${HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS} items-start gap-x-3`}>
             <div className="min-w-0" data-heat-mobile-rank>
               <RankSlot rank={rank} unranked={unranked} seasonView={seasonView} className={treatment.rankClass} />
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{rankDetailLabel}</p>
+              <p className={`${RANK_GUTTER_WIDTH_CLASS} mt-1 text-right font-mono text-[10px] uppercase leading-tight tracking-[0.14em]`} style={{ color: bandColor }} data-rank-gutter-label>{rankDetailLabel}</p>
             </div>
             <span data-heat-mobile-headshot>
               <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={`Open ${pitcher.name} form page`}>
@@ -1074,7 +1074,7 @@ function FormLeaderboardRow({
       />
       <div className="hidden min-w-0 sm:block">
         <RankSlot rank={rank} unranked={unranked} seasonView={seasonView} className={treatment.rankClass} />
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{rankDetailLabel}</p>
+        <p className={`${RANK_GUTTER_WIDTH_CLASS} mt-1 text-right font-mono text-[10px] uppercase leading-tight tracking-[0.14em]`} style={{ color: bandColor }} data-rank-gutter-label>{rankDetailLabel}</p>
       </div>
       <HeatPitcherProfileLink href={profileHref} className="hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:block" ariaLabel={`Open ${pitcher.name} form page`}>
       <Headshot playerId={pitcher.pitcherId} name={pitcher.name} team={pitcher.team} size={treatment.headshotSize} band={thermalBand} sampleSufficient={fullWindow} decorative className="ml-1" />

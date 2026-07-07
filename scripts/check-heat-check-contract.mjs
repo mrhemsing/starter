@@ -225,8 +225,10 @@ assert(
     formPage.includes("grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto]") &&
     formPage.includes("grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto]") &&
     formPage.includes("data-rank-gutter") &&
+    formPage.includes("data-rank-gutter-label") &&
     formPage.includes("data-rank-value={unranked ? \"unranked\" : rank}") &&
     formPage.includes("text-right font-mono leading-none text-zinc-500 tabular-nums") &&
+    formPage.includes("mt-1 text-right font-mono text-[10px] uppercase leading-tight tracking-[0.14em]") &&
     !formPage.includes("grid-cols-[68px_44px_minmax(0,1fr)]") &&
     !formPage.includes("grid-cols-[44px_42px_minmax(0,1fr)_auto]") &&
     !formPage.includes("grid-cols-[44px_50px_minmax(0,1fr)_auto]") &&
