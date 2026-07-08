@@ -1,15 +1,18 @@
 {
   "startId": "2026-07-05-min-nyy-657746",
-  "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/t7z04fcufdznz8mkd7ab.jpg",
-  "alt": "Joe Ryan fans nine vs. Yankees",
-  "autoPromoted": true,
+  "imageUrl": "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
+  "alt": "Joe Ryan pitching action photo for 2026-07-05",
+  "attribution": "20260526_MIN_Ryan_K_B1",
   "clean": true,
   "focalPoint": {
-    "x": 62,
+    "x": 50,
     "y": 50
   },
-  "objectPosition": "62% 50%",
-  "mobileObjectPosition": "62% 50%",
-  "playUrl": "https://www.mlb.com/video/joe-ryan-fans-nine-vs-yankees",
-  "expiresAt": 1785878015717
+  "objectPosition": "50% 50%",
+  "mobileObjectPosition": "50% 50%",
+  "playUrl": "https://www.youtube.com/watch?v=tMUgTt5EwLQ",
+  "reviewNote": "Keep the clean stored Joe Ryan action photo as the hero image; render the YouTube highlight separately.",
+  "expiresAt": 1814725749571,
+  "sourceImageUrl": "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
+  "storage": "local-static"
 }

@@ -75,6 +75,13 @@ const mobileScoreSource =
     : "";
 const archivedStartOfDayActionFixtures = [
   {
+    date: "2026-07-05",
+    pitcher: "Joe Ryan",
+    metadataPath: "public/images/top-performer-action-shots/2026-07-05-min-nyy-657746-mlb-action-v4.json",
+    expectedImageUrl: "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
+    expectedSourceFragment: "2026-05-26-min-cws-657746-action.jpg",
+  },
+  {
     date: "2026-07-03",
     pitcher: "Dylan Cease",
     metadataPath: "public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-mlb-action-v4.json",
