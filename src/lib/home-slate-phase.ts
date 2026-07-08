@@ -3,18 +3,18 @@ import type { SlateProgressState } from "@/lib/slate-state";
 
 export type HomeSlatePhase = "PREGAME" | "EARLY" | "PRIME" | "WRAP";
 export type HomeSlatePhaseVariant = "control" | "phase-aware";
-export type HomeModuleKey = "spotlight" | "watch" | "duels" | "heat" | "ranked" | "best";
+export type HomeModuleKey = "spotlight" | "watch" | "heat" | "ranked" | "best";
 
 export const HOME_SLATE_PHASE_EXPERIMENT_ENV = "NEXT_PUBLIC_HOME_SLATE_PHASE_EXPERIMENT";
 export const HOME_PRIME_LIVE_GS_PLUS_THRESHOLD = 50;
 
-const CONTROL_MODULE_ORDER: HomeModuleKey[] = ["spotlight", "watch", "duels", "heat", "ranked", "best"];
+const CONTROL_MODULE_ORDER: HomeModuleKey[] = ["spotlight", "watch", "heat", "ranked", "best"];
 
 const PHASE_MODULE_ORDER: Record<HomeSlatePhase, HomeModuleKey[]> = {
-  PREGAME: ["watch", "heat", "ranked", "duels", "spotlight", "best"],
-  EARLY: ["watch", "spotlight", "duels", "heat", "ranked", "best"],
+  PREGAME: ["watch", "heat", "ranked", "spotlight", "best"],
+  EARLY: ["watch", "spotlight", "heat", "ranked", "best"],
   PRIME: CONTROL_MODULE_ORDER,
-  WRAP: ["ranked", "watch", "spotlight", "heat", "duels", "best"],
+  WRAP: ["ranked", "watch", "spotlight", "heat", "best"],
 };
 
 export function isHomeSlatePhaseExperimentEnabled() {

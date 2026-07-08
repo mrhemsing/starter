@@ -150,28 +150,24 @@ assert(
 assert(
   homeDeferredSections.includes("export type HomeDeferredInitialData = {") &&
     homeDeferredSections.includes("todayWatch?: TonightResponse | null;") &&
-    homeDeferredSections.includes("duels?: PitchingDuelsResponse | null;") &&
     homeDeferredSections.includes("ranked?: RankedHomeResponse | null;"),
-  "home deferred sections must accept server-prefetched initial data for the top homepage modules",
+  "home deferred sections must accept server-prefetched initial data for the top homepage modules without the retired home duels module",
 );
 
 assert(
-  homePage.includes('import { getPitchingDuels } from "@/lib/data/duels-service";') &&
-    homePage.includes('import { getRankedHome, type LiveLeaderboardEntry } from "@/lib/data/home-ranked-service";') &&
+  homePage.includes('import { getRankedHome, type LiveLeaderboardEntry } from "@/lib/data/home-ranked-service";') &&
     homePage.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
-    homePage.includes('import type { TonightResponse } from "@/lib/types";') &&
     homePage.includes("const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);") &&
-    homePage.includes("const duelsPromise = todayWatchPromise") &&
-    homePage.includes('getPitchingDuels(hasPregameWatchGames(watch) ? today : tomorrow, "upcoming")') &&
-    homePage.includes("function hasPregameWatchGames(watch: TonightResponse | null)") &&
-    homePage.includes('watch?.games.some((game) => game.status === "pregame") ?? false') &&
+    !homePage.includes("const duelsPromise") &&
+    !homePage.includes("getPitchingDuels(") &&
+    !homePage.includes("function hasPregameWatchGames") &&
     homePage.includes("<HomeDeferredSections") &&
     homePage.includes("<HomeHeroStateBanner") &&
     homePage.includes("initialData={{") &&
     homePage.includes("ranked,") &&
     homePage.includes("todayWatch,") &&
-    homePage.includes("duels,"),
-  "homepage must server-prefetch ranked, must-watch, and duels data before rendering the client sections",
+    !homePage.includes("duels,"),
+  "homepage must server-prefetch ranked and must-watch data without fetching the retired home duels module",
 );
 
 assert(
@@ -211,18 +207,17 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes("const duelsTitle = duels ? `Best Duels ${homeDuelsSlateTitle(duels, today)}` : \"Best Duels Today\";") &&
-    homeDeferredSections.includes("function homeDuelsSlateTitle(duels: PitchingDuelsResponse, today: string)") &&
-    homeDeferredSections.includes("return slateTimeWordTitle({ date: duels.date }, { today });") &&
-    homeDeferredSections.includes("<PitchingDuelsModule duels={duels} title={duelsTitle} compact />"),
-  "home Best Duels title must follow the rendered duels slate date",
+  !homeDeferredSections.includes("PitchingDuelsModule") &&
+    !homeDeferredSections.includes("PitchingDuelsResponse") &&
+    !homeDeferredSections.includes("/api/duels") &&
+    !homeDeferredSections.includes("Best Duels"),
+  "homepage must not render or client-fetch the retired Best Duels section",
 );
 
 assert(
   homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null)") &&
     homeDeferredSections.includes('const games = watch.games.filter((game) => game.status === "pregame");') &&
-    homeDeferredSections.includes("function hasPregameMustWatchGames(watch: TonightResponse | null)") &&
-    homeDeferredSections.includes('hasPregameMustWatchGames(watch) ? today : tomorrow') &&
+    !homeDeferredSections.includes("function hasPregameMustWatchGames") &&
     homeDeferredSections.includes("const activeTodayWatch = filterHomeMustWatchGames(todayWatch);") &&
     homeDeferredSections.includes("const watch = activeTodayWatch?.games.length ? activeTodayWatch : activeTomorrowWatch;"),
   "home must-watch should switch to tomorrow once today has no true pregame cards left",

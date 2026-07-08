@@ -325,8 +325,9 @@ assert(
     ) &&
     homeDeferredSections.includes(`      {whyGsPlusBand}
 
-      {duels ? <PitchingDuelsModule`),
-  "homepage must render the WHY GS+ differentiator band below Must-Watch and above Closest Matchups, stack on mobile, and link the public breakdown phrase to methodology",
+      {formHome ? <HeatCheckHero home={formHome} /> : null}`) &&
+    !homeDeferredSections.includes("PitchingDuelsModule"),
+  "homepage must render the WHY GS+ differentiator band below Must-Watch and above Heat Check, stack on mobile, and link the public breakdown phrase to methodology",
 );
 
 assert(

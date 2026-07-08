@@ -4,7 +4,6 @@ import { HomeLiveTicker } from "@/components/home-live-ticker";
 import { SlateCounts } from "@/components/slate-counts";
 import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
-import { getPitchingDuels } from "@/lib/data/duels-service";
 import { getFormHome } from "@/lib/data/form-service";
 import { getBestStartsHome } from "@/lib/data/home-best-starts-service";
 import { getRankedHome, type LiveLeaderboardEntry } from "@/lib/data/home-ranked-service";
@@ -15,7 +14,6 @@ import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home
 import { liveDateHref } from "@/lib/routes";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
-import type { TonightResponse } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -50,18 +48,14 @@ export default async function Home() {
   const tomorrow = addDays(today, 1);
   const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);
   const tomorrowWatchPromise = getTonightMustWatch({ date: tomorrow, window: 5 }).catch(() => null);
-  const duelsPromise = todayWatchPromise
-    .then((watch) => getPitchingDuels(hasPregameWatchGames(watch) ? today : tomorrow, "upcoming"))
-    .catch(() => null);
   const bestStartsPromise = getBestStartsHome().catch(() => null);
   const formHomePromise = getFormHome({ window: 5 }).catch(() => null);
   const homeTickerBoardPromise = getLiveScoreboard({ date: today }).catch(() => null);
-  const [slateStatus, ranked, todayWatch, tomorrowWatch, duels, bestStarts, formHome, homeTickerBoard] = await Promise.all([
+  const [slateStatus, ranked, todayWatch, tomorrowWatch, bestStarts, formHome, homeTickerBoard] = await Promise.all([
     getSlateStartProgress({ window: "today", date: today }),
     getRankedHome().catch(() => null),
     todayWatchPromise,
     tomorrowWatchPromise,
-    duelsPromise,
     bestStartsPromise,
     formHomePromise,
     homeTickerBoardPromise,
@@ -145,7 +139,6 @@ export default async function Home() {
             ranked,
             todayWatch,
             tomorrowWatch,
-            duels,
             bestStarts,
             formHome,
           }}
@@ -214,8 +207,4 @@ function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
-}
-
-function hasPregameWatchGames(watch: TonightResponse | null) {
-  return watch?.games.some((game) => game.status === "pregame") ?? false;
 }

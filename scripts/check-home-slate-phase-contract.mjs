@@ -22,11 +22,13 @@ assert(
 );
 
 assert(
-  phase.includes('PREGAME: ["watch", "heat", "ranked", "duels", "spotlight", "best"]') &&
-    phase.includes('EARLY: ["watch", "spotlight", "duels", "heat", "ranked", "best"]') &&
+  phase.includes('export type HomeModuleKey = "spotlight" | "watch" | "heat" | "ranked" | "best";') &&
+    phase.includes('PREGAME: ["watch", "heat", "ranked", "spotlight", "best"]') &&
+    phase.includes('EARLY: ["watch", "spotlight", "heat", "ranked", "best"]') &&
     phase.includes("PRIME: CONTROL_MODULE_ORDER") &&
-    phase.includes('WRAP: ["ranked", "watch", "spotlight", "heat", "duels", "best"]'),
-  "home slate phase experiment must define the requested phase-specific module weights",
+    phase.includes('WRAP: ["ranked", "watch", "spotlight", "heat", "best"]') &&
+    !phase.includes('"duels"'),
+  "home slate phase experiment must define module weights without the retired Best Duels section",
 );
 
 assert(

@@ -9,7 +9,6 @@ import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
 import { useHomeLiveBoard } from "@/components/home-live-board-provider";
-import { PitchingDuelsModule } from "@/components/pitching-duels";
 import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
@@ -24,14 +23,13 @@ import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboa
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { formatStartLine } from "@/lib/format";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
-import type { FeaturedStartHighlight, FormHomeResponse, FormTier, PitchingDuelsResponse, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormTier, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 
 export type HomeDeferredInitialData = {
   todayWatch?: TonightResponse | null;
   tomorrowWatch?: TonightResponse | null;
-  duels?: PitchingDuelsResponse | null;
   ranked?: RankedHomeResponse | null;
   bestStarts?: BestStartsHomeResponse | null;
   formHome?: FormHomeResponse | null;
@@ -54,7 +52,6 @@ export function HomeDeferredSections({
 }) {
   const [todayWatch, setTodayWatch] = useState<TonightResponse | null>(initialData?.todayWatch ?? null);
   const [tomorrowWatch, setTomorrowWatch] = useState<TonightResponse | null>(initialData?.tomorrowWatch ?? null);
-  const [duels, setDuels] = useState<PitchingDuelsResponse | null>(initialData?.duels ?? null);
   const [formHome, setFormHome] = useState<FormHomeResponse | null>(initialData?.formHome ?? null);
   const [ranked, setRanked] = useState<RankedHomeResponse | null>(initialData?.ranked ?? null);
   const [bestStarts, setBestStarts] = useState<BestStartsHomeResponse | null>(initialData?.bestStarts ?? null);
@@ -68,22 +65,12 @@ export function HomeDeferredSections({
       if (!cancelled) setter(value);
     };
 
-    const todayWatchPromise = todayWatch
-      ? Promise.resolve(todayWatch)
-      : fetchJson<TonightResponse>(`/api/tonight?date=${today}&window=5`).then((value) => {
-          setIfLive(setTodayWatch)(value);
-          return value;
-        });
+    if (!todayWatch) {
+      fetchJson<TonightResponse>(`/api/tonight?date=${today}&window=5`).then(setIfLive(setTodayWatch)).catch(() => undefined);
+    }
 
     if (!tomorrowWatch) {
       fetchJson<TonightResponse>(`/api/tonight?date=${tomorrow}&window=5`).then(setIfLive(setTomorrowWatch)).catch(() => undefined);
-    }
-
-    if (!duels) {
-      todayWatchPromise
-        .then((watch) => fetchJson<PitchingDuelsResponse>(`/api/duels?date=${hasPregameMustWatchGames(watch) ? today : tomorrow}&mode=upcoming`))
-        .then(setIfLive(setDuels))
-        .catch(() => undefined);
     }
 
     if (!formHome) {
@@ -100,7 +87,7 @@ export function HomeDeferredSections({
     return () => {
       cancelled = true;
     };
-  }, [bestStarts, duels, formHome, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
+  }, [bestStarts, formHome, ranked, today, todayWatch, tomorrow, tomorrowWatch]);
 
   const activeTodayWatch = filterHomeMustWatchGames(todayWatch);
   const activeTomorrowWatch = filterHomeMustWatchGames(tomorrowWatch);
@@ -108,7 +95,6 @@ export function HomeDeferredSections({
   const watchDate = resolveHomeMustWatchDate(watch, activeTodayWatch?.games.length ? today : tomorrow);
   const watchWord = watch ? slateTimeWord({ date: watchDate }, { today }) : "today";
   const watchEyebrow = watch ? slateTimeWordTitle({ date: watchDate }, { today }) : "Today";
-  const duelsTitle = duels ? `Best Duels ${homeDuelsSlateTitle(duels, today)}` : "Best Duels Today";
 
   useEffect(() => {
     if (!slatePhaseExperiment) return;
@@ -154,7 +140,6 @@ export function HomeDeferredSections({
           showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
         />
       ) : null,
-      duels: duels ? <PitchingDuelsModule duels={duels} title={duelsTitle} compact /> : null,
       heat: formHome ? <HeatCheckHero home={formHome} /> : null,
       ranked: shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
       best: bestStarts ? (
@@ -205,7 +190,6 @@ export function HomeDeferredSections({
 
       {whyGsPlusBand}
 
-      {duels ? <PitchingDuelsModule duels={duels} title={duelsTitle} compact /> : null}
       {formHome ? <HeatCheckHero home={formHome} /> : null}
       {shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : null}
       {bestStarts ? (
@@ -394,15 +378,6 @@ function filterHomeMustWatchGames(watch: TonightResponse | null) {
   if (!watch) return null;
   const games = watch.games.filter((game) => game.status === "pregame");
   return { ...watch, games };
-}
-
-function hasPregameMustWatchGames(watch: TonightResponse | null) {
-  return watch?.games.some((game) => game.status === "pregame") ?? false;
-}
-
-function homeDuelsSlateTitle(duels: PitchingDuelsResponse, today: string) {
-  if (duels.mode === "settled") return "Last Settled";
-  return slateTimeWordTitle({ date: duels.date }, { today });
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
