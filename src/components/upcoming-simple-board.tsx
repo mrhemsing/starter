@@ -112,7 +112,7 @@ function UpcomingSimpleCard({
         <SimpleStarter starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
       </div>
       <p
-        className="mt-4 border-t border-white/10 pt-4 text-center text-sm leading-5 text-zinc-300 lg:text-left"
+        className="mt-4 border-t border-white/10 pt-4 text-left text-sm leading-5 text-zinc-300"
         data-upcoming-simple-context
         data-simple-context-sentence-count={sentenceCount(sentence)}
         data-simple-context-word-count={wordCount(sentence)}
