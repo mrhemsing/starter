@@ -227,6 +227,9 @@ function SimpleIdentityStrip({
   const name = starter.name ?? `TBD ${starter.team}`;
   const heatColor = starterHeatColor(starter, formBand);
   const bandLabel = simpleStarterBandLabel(starter, formBand);
+  const qualifiedSample = Boolean(formBand);
+  const valueColor = formBandValueColor(formBand, qualifiedSample);
+  const formValue = typeof starter.rgs === "number" ? starter.rgs.toFixed(1) : "--";
   const href = starter.pitcherId && starter.name ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")) : null;
   const nameNode = (
     <div className={`${align === "home" ? "text-right" : "text-left"}`} data-simple-starter-name-block>
@@ -239,13 +242,17 @@ function SimpleIdentityStrip({
           <PitcherNameLines name={name} />
         </p>
       )}
-      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-name-band-label>{bandLabel}</p>
+      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-name-band-label>
+        <span className="font-semibold tabular-nums sm:hidden" style={{ color: valueColor }} data-simple-mobile-form-value>{formValue}</span>
+        <span className="sm:hidden" aria-hidden="true"> </span>
+        {bandLabel}
+      </p>
     </div>
   );
   const valueNode = <SimpleFormValueBlock starter={starter} formBand={formBand} align={align} />;
   return (
     <div className={`min-w-0 px-4 py-4 ${align === "home" ? "text-right" : "text-left"}`} data-simple-identity-strip data-simple-starter-card-back data-simple-starter-card-back-source="heat-band">
-      <div className={`grid items-start gap-2 ${align === "home" ? "grid-cols-[54px_minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_54px]"}`} data-simple-name-value-row>
+      <div className={`grid grid-cols-1 items-start gap-2 ${align === "home" ? "sm:grid-cols-[54px_minmax(0,1fr)]" : "sm:grid-cols-[minmax(0,1fr)_54px]"}`} data-simple-name-value-row>
         {align === "home" ? valueNode : nameNode}
         {align === "home" ? nameNode : valueNode}
       </div>
@@ -264,7 +271,7 @@ function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightSt
 
   return (
     <div
-      className={`${align === "home" ? "text-left" : "text-right"}`}
+      className={`hidden sm:block ${align === "home" ? "text-left" : "text-right"}`}
       data-simple-form-line
       data-simple-form-value-block
       data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
