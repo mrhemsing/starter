@@ -185,8 +185,8 @@ function SimpleStarter({
           className="w-full text-left"
           data-simple-form-line
           data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
-          data-simple-form-chip-color={heatColor}
-          data-simple-form-chip-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
+          data-simple-form-line-color={heatColor}
+          data-simple-form-line-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
         >
           <SimpleFormLine starter={starter} formBand={formBand} />
         </p>
