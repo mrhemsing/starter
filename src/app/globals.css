@@ -248,7 +248,7 @@ html[data-upcoming-view-mode-init="simple"] [data-upcoming-view-storage-key="tts
 }
 
 .thermal-headshot {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  box-shadow: none;
   isolation: isolate;
 }
 
