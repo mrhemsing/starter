@@ -101,25 +101,26 @@ function UpcomingSimpleCard({
         data-simple-rank-visible={String(showRank)}
       >
         {showRank ? <p className="pt-1 font-mono text-[12px] font-semibold uppercase tracking-[0.18em] text-zinc-400" data-simple-card-rank>#{rank}</p> : <span />}
-        <div className="text-center" data-upcoming-simple-score>
-          <p className="font-serif text-[42px] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
-          <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-500" data-simple-vs-mark data-simple-vs-text>vs.</p>
-          {confidenceLabel ? (
-            <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
-              {confidenceLabel}
-            </p>
-          ) : null}
-        </div>
+        <span aria-hidden="true" />
         <p className="pt-1 text-right font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-400" data-simple-first-pitch>
           <LocalTime value={game.firstPitch} fallback="First pitch" />
         </p>
       </div>
       <div
-        className="relative grid min-h-[150px] grid-cols-2 overflow-hidden"
+        className="relative grid min-h-[150px] grid-cols-[minmax(0,1fr)_86px_minmax(0,1fr)] overflow-hidden sm:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)]"
         data-simple-vs-composition
         data-simple-diagonal-panels
       >
         <SimplePortraitPanel starter={game.starters[0]} align="away" />
+        <div className="relative z-20 flex min-h-[150px] flex-col items-center justify-center bg-black/35 px-1 text-center shadow-[0_0_26px_rgba(0,0,0,0.42)]" data-upcoming-simple-score data-simple-score-seam-column>
+          <p className="font-serif text-[38px] font-black leading-none sm:text-[42px]" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
+          <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-400" data-simple-vs-mark data-simple-vs-text>vs.</p>
+          {confidenceLabel ? (
+            <p className="mx-auto mt-2 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
+              {confidenceLabel}
+            </p>
+          ) : null}
+        </div>
         <SimplePortraitPanel starter={game.starters[1]} align="home" />
       </div>
       <div className="grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 bg-[#07070a]" data-simple-form-strip>
@@ -153,7 +154,7 @@ function SimplePortraitPanel({
 
   return (
     <div
-      className={`relative min-w-0 overflow-hidden bg-[#09090d] ${align === "home" ? "-ml-5 pl-5" : "-mr-5 pr-5"}`}
+      className={`relative min-w-0 overflow-hidden bg-[#09090d] ${align === "home" ? "-ml-4 pl-4" : "-mr-4 pr-4"}`}
       style={{
         background: simplePortraitPanelGradient(panelColor),
         clipPath: align === "home" ? "polygon(14% 0, 100% 0, 100% 100%, 0 100%)" : "polygon(0 0, 100% 0, 86% 100%, 0 100%)",
@@ -165,7 +166,7 @@ function SimplePortraitPanel({
       data-simple-starter-panel-source="heat-band"
       data-simple-panel-clip-path={align === "home" ? "right-slash" : "left-slash"}
     >
-      <div className={`flex min-h-[150px] items-end ${align === "home" ? "justify-end pr-4" : "justify-start pl-4"}`} data-simple-portrait-bleed data-simple-starter-portrait-zone data-simple-starter-portrait-zone-source="heat-band" data-simple-starter-portrait-zone-color={panelColor}>
+      <div className={`flex min-h-[150px] items-end ${align === "home" ? "justify-end pr-2" : "justify-start pl-2"}`} data-simple-portrait-bleed data-simple-starter-portrait-zone data-simple-starter-portrait-zone-source="heat-band" data-simple-starter-portrait-zone-color={panelColor}>
         <StarterHeadshot starter={starter} formBand={formBand} />
       </div>
     </div>
