@@ -146,14 +146,14 @@ function classifyMatchup(game: TonightGame, leagueMeanGS: number): ContextInput 
   const gap = Math.abs(values[0] - values[1]);
   const leader = values[0] >= values[1] ? awayStarter : homeStarter;
   const trailer = leader === awayStarter ? homeStarter : awayStarter;
-  const confidenceStarter = namedStarters.find((starter) => starter.formStatus !== "ok" || starter.limitedReason) ?? namedStarters[0] ?? awayStarter;
+  const confidenceStarter = namedStarters.find(isProvisionalStarter) ?? namedStarters[0] ?? awayStarter;
 
   if (namedStarters.length < 2) {
     const named = namedStarters[0] ?? awayStarter;
     const pending = game.starters.find((starter) => !hasNamedStarter(starter)) ?? homeStarter;
     return { archetype: "TBD", namedStarters, values, gap, leader: named, trailer: pending, confidenceStarter: named };
   }
-  if (game.watchScoreConfidence !== "HIGH" || game.flags?.limitedForm || namedStarters.some((starter) => starter.formStatus !== "ok" || starter.limitedReason)) {
+  if (game.watchScoreConfidence !== "HIGH" || game.flags?.limitedForm || namedStarters.some(isProvisionalStarter)) {
     return { archetype: "PROVISIONAL", namedStarters, values, gap, leader, trailer, confidenceStarter };
   }
 
@@ -311,9 +311,51 @@ function validateSentence(sentence: string, input: ContextInput, extraAllowedNum
   if (input.archetype !== "CLEAR_EDGE" && /\b(separation|owns the form gap)\b/i.test(sentence)) return false;
   if (input.archetype === "ACE_DUEL" && !/\b(both|Two)\b/i.test(sentence)) return false;
   if (input.archetype === "TBD" && /\b(gap|separation|towers|runs away)\b/i.test(sentence)) return false;
+  if (!validateAttributedClaims(sentence, input)) return false;
   const allowed = allowedNumberTokens(input);
   for (const token of extraAllowedNumbers) allowed.add(token);
   return numberTokens(sentence).every((token) => allowed.has(token));
+}
+
+function validateAttributedClaims(sentence: string, input: ContextInput) {
+  const subject = namedStarterInSentence(sentence, input.namedStarters);
+  if (!subject) return true;
+  if (/\b(thin sample|limited data|sample is light|small-sample|small sample|provisional|less settled)\b/i.test(sentence) && !isProvisionalStarter(subject)) return false;
+  if (/\b(on fire|both hot|bring heat|rolling|hot arms?)\b/i.test(sentence) && !isStarterInTopBand(subject)) return false;
+  if (/\b(cold|scuffling|stuck low|drag)\b/i.test(sentence) && !isStarterInLowBand(subject)) return false;
+  if (/\brising\b|\barrow points up\b|\bmomentum\b/i.test(sentence) && trendDirection(subject) !== "rising") return false;
+  if (/\btrends down\b|\bform slips\b|\bslides\b/i.test(sentence) && trendDirection(subject) !== "falling") return false;
+  return true;
+}
+
+function namedStarterInSentence(sentence: string, starters: readonly TonightStarter[]) {
+  const normalized = sentence.toLowerCase();
+  return starters.find((starter) => {
+    const name = starter.name?.trim();
+    if (!name) return false;
+    const last = shortName(starter).toLowerCase();
+    return containsNameToken(normalized, name.toLowerCase()) || (last.length >= 3 && containsNameToken(normalized, last));
+  }) ?? null;
+}
+
+function isProvisionalStarter(starter: TonightStarter) {
+  return starter.formStatus !== "ok" || Boolean(starter.limitedReason) || starter.flags?.limitedSample === true;
+}
+
+function containsNameToken(sentence: string, token: string) {
+  return new RegExp(`(^|[^a-z])${escapeRegExp(token)}([^a-z]|$)`, "i").test(sentence);
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isStarterInTopBand(starter: TonightStarter) {
+  return starter.tier ? TOP_BANDS.includes(starter.tier) : false;
+}
+
+function isStarterInLowBand(starter: TonightStarter) {
+  return starter.tier ? LOW_BANDS.includes(starter.tier) : false;
 }
 
 function signal(type: SignalType, score: number, phrases: string[]): ContextSignal {

@@ -841,7 +841,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
 
   return (
     <div
-      className={`relative flex h-full flex-col overflow-hidden rounded border border-white/10 bg-black/25 p-4 ${isHome ? "lg:text-right" : ""}`}
+      className={`relative flex flex-col overflow-hidden rounded border border-white/10 bg-black/25 p-4 ${isHome ? "lg:text-right" : ""}`}
       style={{
         borderColor: `${accent.color}${accent.source === "form-band" ? "66" : "33"}`,
         boxShadow: `inset ${isHome ? "-" : ""}4px 0 0 ${accent.color}, 0 0 28px rgb(${accent.rgb} / 0.10)`,
@@ -853,6 +853,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
       data-starter-mirrored-component="DuelStarterPanel"
       data-starter-mirror-side={side}
       data-starter-baseline-grid="true"
+      data-starter-height-policy="content"
       data-starter-side={starter.side}
       data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
       data-starter-name={starter.name ?? "TBD"}
@@ -900,7 +901,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
           <StarterRoleContextLine starter={starter} align={side} />
         </div>
       </div>
-      <div className={`mt-3 grid flex-1 grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_1fr] gap-2 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid>
+      <div className={`mt-3 grid grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_minmax(42px,auto)] gap-2 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid data-starter-empty-space-policy="content-height">
         <div className="min-h-16" data-starter-baseline-row="form">
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
             <div className={`flex max-h-16 flex-wrap items-start gap-2 overflow-hidden ${isHome ? "lg:justify-end" : ""}`} data-starter-chip-wrap-row>
@@ -931,7 +932,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
         <div data-starter-baseline-row="market">
           <MarketContextLine starter={starter} compact align={side} />
         </div>
-        <div className="mt-auto flex min-h-[42px] items-end" data-starter-baseline-row="sparkline" data-starter-sparkline-baseline="bottom">
+        <div className="flex min-h-[42px] items-end" data-starter-baseline-row="sparkline" data-starter-sparkline-baseline="bottom">
           {hasStarterSparkForm(starter) ? (
             <div className="w-full">
               <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />

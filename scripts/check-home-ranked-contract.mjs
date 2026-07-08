@@ -256,9 +256,13 @@ assert(
     mustWatch.includes('data-starter-identity-unit') &&
     mustWatch.includes("data-starter-identity-direction={isHome ? \"row-reverse\" : \"row\"}") &&
     mustWatch.includes('data-starter-stat-baseline-grid') &&
+    mustWatch.includes('data-starter-height-policy="content"') &&
+    mustWatch.includes('data-starter-empty-space-policy="content-height"') &&
     mustWatch.includes('data-starter-baseline-row="sparkline"') &&
-    mustWatch.includes('data-starter-sparkline-baseline="bottom"'),
-  "detailed Must-Watch starter panels must render from one side-prop mirror component with a shared baseline grid and matched sparkline baseline",
+    mustWatch.includes('data-starter-sparkline-baseline="bottom"') &&
+    !mustWatch.includes("grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_1fr]") &&
+    !mustWatch.includes('className="mt-auto flex min-h-[42px] items-end"'),
+  "detailed Must-Watch starter panels must render from one side-prop mirror component with a shared content-height baseline grid and no filler row",
 );
 
 assert(

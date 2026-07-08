@@ -180,6 +180,18 @@ assert(context.includes("validateSentence(candidate, input)") && context.include
 assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
 assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i') && context.includes("sentenceCount(sentence) !== 1"), "Simple context validator must enforce the one-sentence, 22-word, no-em-dash, no-this-one voice rules.");
 assert(context.includes("export function validateUpcomingSimpleContextSentence") && context.includes("export function upcomingSimpleContextArchetype"), "Simple context must expose validator/archetype helpers for write-time LLM storage.");
+assert(
+  context.includes("namedStarters.find(isProvisionalStarter)") &&
+    context.includes("namedStarters.some(isProvisionalStarter)") &&
+    context.includes("function isProvisionalStarter(starter: TonightStarter)") &&
+    context.includes("starter.flags?.limitedSample === true") &&
+    context.includes("validateAttributedClaims(sentence, input)") &&
+    context.includes("containsNameToken(normalized, last)") &&
+    context.includes("function escapeRegExp(value: string)") &&
+    context.includes("thin sample") &&
+    context.includes("!isProvisionalStarter(subject)"),
+  "Simple context must bind provisional/thin-sample claims to the starter whose limitedSample or limited status is actually true.",
+);
 
 assert(
   writeupsService.includes("OPENAI_API_KEY") &&
@@ -211,8 +223,12 @@ assert(
     writeupsService.includes("validateUpcomingSimpleContextSentence") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
     writeupsService.includes("AbortSignal.timeout") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 4;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 11;") &&
+    writeupsService.includes("limitedSample: starter.flags?.limitedSample === true") &&
+    writeupsService.includes("limitedSample is true") &&
     !simpleBoard.includes("OPENAI_API_KEY"),
-  "Upcoming LLM writeups must generate off the request path, store by input hash, inject traceable fact packets, validate output, and fall back to deterministic copy without client/request-path key usage.",
+  "Upcoming LLM writeups must generate off the request path, store by input hash, inject traceable fact packets including limited-sample ownership, validate output, and fall back to deterministic copy without client/request-path key usage.",
 );
 
 assert(
