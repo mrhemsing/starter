@@ -105,15 +105,21 @@ export function UpcomingSimpleCardFrame({
   return (
     <article
       aria-label={ariaLabel}
-      className="heat-glow-card relative block overflow-hidden rounded-lg border border-white/10 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:p-5"
+      className="heat-glow-card relative block overflow-hidden border-y border-white/10 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:rounded-lg sm:border"
       style={{ background, borderColor: `${accentColor}44` }}
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
-      data-simple-card-interaction="static-preview"
+      data-simple-card-interaction="whole-card-link"
       data-simple-card-tint={bandKey}
       data-simple-card-background={background}
       data-simple-card-edge-color={accentColor}
     >
+      <a
+        href={`#upcoming-game-${gamePk}`}
+        className="absolute inset-0 z-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        aria-label={`${ariaLabel}. Jump to detailed matchup card.`}
+        data-simple-card-link
+      />
       {children}
     </article>
   );
