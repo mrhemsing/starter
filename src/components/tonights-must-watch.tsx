@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
-import { hasQualifiedStarterFormSample, LimitedSampleFormChip } from "@/components/limited-sample-form-chip";
+import { FormValueWhisperLine, hasQualifiedStarterFormSample } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
@@ -884,7 +884,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
-                <StarterFormScoreLine starter={starter} accentColor={accent.color} />
+                <StarterFormScoreLine starter={starter} />
                 {starter.trend && starter.deltaForm !== undefined ? (
                   <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
                     <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
@@ -1245,7 +1245,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       <div className="ml-auto text-right">
         {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
           <>
-            <StarterFormScoreLine starter={starter} accentColor={accent.color} />
+            <StarterFormScoreLine starter={starter} />
             {starter.trend && starter.deltaForm !== undefined ? (
               <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
                 <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
@@ -1253,7 +1253,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
             ) : null}
           </>
         ) : starter.formStatus === "ok" ? (
-          <LimitedSampleFormChip value={starter.rgs} compact className="ml-auto" />
+          <StarterFormScoreLine starter={starter} />
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
             {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
@@ -1309,7 +1309,7 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
 
   return (
     <div className="mt-3 text-sm text-zinc-400">
-      <LimitedSampleFormChip value={starter.rgs} className="text-xs" />
+      <StarterFormScoreLine starter={starter} />
       {starter.lastStart ? (
         <p className="mt-1">
           <MetaLine
@@ -1593,23 +1593,11 @@ function formatMarketCapturedAt(value: string) {
   }).format(parsed);
 }
 
-function EraAnchor({ starter }: { starter: TonightStarter }) {
-  const era = starter.seasonStats?.era;
-  const ip = starter.seasonStats?.inningsPitched ?? 0;
-  if (typeof era !== "number") return <span className="text-zinc-500"> · —</span>;
-  if (ip < 10) return null;
-  return <span className="font-normal text-zinc-500" title="ERA over the selected recent-start form window"> · {era.toFixed(2)} L5 ERA</span>;
-}
-
-function StarterFormScoreLine({ starter, accentColor }: { starter: TonightStarter; accentColor: string }) {
+function StarterFormScoreLine({ starter }: { starter: TonightStarter }) {
+  const qualifiedSample = hasQualifiedStarterFormSample(starter);
   return (
-    <p
-      className={`font-mono text-[11px] leading-none ${starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`}
-      style={{ color: accentColor }}
-      data-starter-form-context-line="rgs-era"
-    >
-      {starter.rgs?.toFixed(1)}
-      <EraAnchor starter={starter} />
+    <p className={`leading-none ${qualifiedSample && starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`} data-starter-form-context-line="value-whisper-era">
+      <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} />
     </p>
   );
 }

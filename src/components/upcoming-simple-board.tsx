@@ -1,12 +1,11 @@
 import { Headshot } from "@/components/headshot";
-import { hasQualifiedStarterFormSample, limitedSampleFormText, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
+import { FormValueWhisperLine, hasQualifiedStarterFormSample, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
 import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
-import type { CSSProperties } from "react";
 
 const SIMPLE_EVEN_PANEL_COLOR = "#A79B83";
 
@@ -183,14 +182,13 @@ function SimpleStarter({
         data-simple-starter-card-back-color={panelColor}
       >
         <p
-          className="inline-flex w-full flex-col items-center justify-center rounded border px-1.5 py-1 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)] sm:w-auto sm:flex-row sm:gap-1"
-          style={formChipStyle(starter, formBand)}
-          data-simple-form-chip
+          className="w-full text-left"
+          data-simple-form-line
           data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
           data-simple-form-chip-color={heatColor}
           data-simple-form-chip-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
         >
-          <SimpleFormChipLabel starter={starter} formBand={formBand} />
+          <SimpleFormLine starter={starter} formBand={formBand} />
         </p>
         <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400 lg:text-white" data-simple-mini-stat-line>
           {miniStatLine(starter)}
@@ -323,24 +321,20 @@ function starterTeamColor(starter: TonightStarter) {
   return starter.status === "tbd" ? "#888780" : teamAccentColor(starter.team);
 }
 
-function formatFormValue(starter: TonightStarter, formBand: FormTier | null) {
-  if (starter.rgs === null || starter.rgs === undefined) return "pending";
-  return formBand ? starter.rgs.toFixed(1) : starter.rgs.toFixed(1);
-}
-
-function heatBandLabel(band: FormTier) {
-  return HEAT_BANDS.find((candidate) => candidate.key === band)?.label ?? "Form";
-}
-
-function SimpleFormChipLabel({ starter, formBand }: { starter: TonightStarter; formBand: FormTier | null }) {
-  if (starter.status === "tbd") return <span className="whitespace-nowrap">TBD</span>;
-  if (starter.formStatus === "mlb_debut") return <span className="whitespace-nowrap">MLB DEBUT</span>;
-  const value = formBand ? formatFormValue(starter, formBand) : limitedSampleFormText(starter.rgs);
+function SimpleFormLine({ starter, formBand }: { starter: TonightStarter; formBand: FormTier | null }) {
+  if (starter.status === "tbd") return <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-400">TBD · -- L5 ERA</span>;
+  if (starter.formStatus === "mlb_debut") return <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200">MLB DEBUT · -- L5 ERA</span>;
   return (
-    <>
-      {formBand ? <span className="whitespace-nowrap">{heatBandLabel(formBand)}</span> : null}
-      <span className="whitespace-nowrap">{value}</span>
-    </>
+    <FormValueWhisperLine
+      value={starter.rgs}
+      tier={formBand}
+      qualifiedSample={Boolean(formBand)}
+      era={starter.seasonStats?.era}
+      compact
+      className="leading-4"
+      valueClassName="text-[10px]"
+      whisperClassName="text-[8px]"
+    />
   );
 }
 
@@ -355,15 +349,6 @@ function starterHeatPanelColor(starter: TonightStarter, band: FormTier | null = 
   if (band === "even") return SIMPLE_EVEN_PANEL_COLOR;
   if (!band) return SIMPLE_EVEN_PANEL_COLOR;
   return HEAT_BANDS.find((candidate) => candidate.key === band)?.color ?? SIMPLE_EVEN_PANEL_COLOR;
-}
-
-function formChipStyle(starter: TonightStarter, band: FormTier | null): CSSProperties {
-  const color = starterHeatColor(starter, band);
-  return {
-    borderColor: color,
-    backgroundColor: hexToRgba(color, band ? 0.88 : 0.36),
-    color: band === "even" ? "#0b0b0f" : "#ffffff",
-  };
 }
 
 function simpleRankValue(game: TonightGame, index: number) {

@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
-import { tierLabel } from "@/components/form-visuals";
-import { hasQualifiedFormSummarySample, LIMITED_SAMPLE_FORM_LABEL } from "@/components/limited-sample-form-chip";
+import { FormValueWhisperLine, hasQualifiedFormSummarySample } from "@/components/limited-sample-form-chip";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormSummary } from "@/lib/types";
 
@@ -63,7 +62,8 @@ export function WatchlistSuggestedFollows({ results, followedIds, query }: Watch
           <div key={pitcher.pitcherId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded border border-white/10 bg-black/20 p-3">
             <Link href={pitcherHref(pitcher, sourceParams("watchlist"))} className="min-w-0">
               <p className="truncate font-serif text-lg font-bold text-zinc-50">{pitcher.name}</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team} · {hasQualifiedFormSummarySample(pitcher) ? `${tierLabel(pitcher.tier)} ${Math.round(pitcher.rgs)}` : `${LIMITED_SAMPLE_FORM_LABEL} ${Math.round(pitcher.rgs)}`}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{pitcher.team}</p>
+              <FormValueWhisperLine value={pitcher.rgs} tier={pitcher.tier} qualifiedSample={hasQualifiedFormSummarySample(pitcher)} era={pitcher.seasonStats?.era} compact className="mt-1" />
               <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-2" />
             </Link>
             <FollowPitcherButton pitcherId={pitcher.pitcherId} pitcherName={pitcher.name} initialFollowing={followed.has(pitcher.pitcherId)} compact refreshOnChange />

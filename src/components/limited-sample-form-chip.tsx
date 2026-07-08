@@ -1,5 +1,6 @@
+import { HEAT_BANDS, FORM_CONFIG } from "@/lib/form-tokens";
 import { WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED } from "@/lib/watch-score-confidence";
-import type { FormSummary, TonightStarter } from "@/lib/types";
+import type { FormSummary, FormTier, TonightStarter } from "@/lib/types";
 
 export const LIMITED_SAMPLE_FORM_LABEL = "LTD";
 export const LIMITED_SAMPLE_FORM_COLOR = "#71717a";
@@ -18,6 +19,64 @@ export function hasQualifiedFormSummarySample(summary: Pick<FormSummary, "window
 
 export function limitedSampleFormText(value: number | null | undefined) {
   return typeof value === "number" ? `${LIMITED_SAMPLE_FORM_LABEL} ${value.toFixed(1)}` : LIMITED_SAMPLE_FORM_LABEL;
+}
+
+export function formBandWhisperLabel(tier: FormTier | null | undefined, qualifiedSample: boolean) {
+  if (!qualifiedSample) return LIMITED_SAMPLE_FORM_LABEL;
+  return HEAT_BANDS.find((candidate) => candidate.key === tier)?.label ?? "FORM";
+}
+
+export function formBandValueColor(tier: FormTier | null | undefined, qualifiedSample: boolean) {
+  if (!qualifiedSample) return LIMITED_SAMPLE_FORM_COLOR;
+  return HEAT_BANDS.find((candidate) => candidate.key === tier)?.color ?? "#888780";
+}
+
+export function formLineEraText(era: number | null | undefined, window: number = FORM_CONFIG.windowDefault) {
+  return `${typeof era === "number" ? era.toFixed(2) : "--"} L${window} ERA`;
+}
+
+export function FormValueWhisperLine({
+  value,
+  tier,
+  qualifiedSample,
+  era,
+  window = FORM_CONFIG.windowDefault,
+  className = "",
+  valueClassName = "",
+  whisperClassName = "",
+  compact = false,
+}: {
+  value?: number | null;
+  tier?: FormTier | null;
+  qualifiedSample: boolean;
+  era?: number | null;
+  window?: number;
+  className?: string;
+  valueClassName?: string;
+  whisperClassName?: string;
+  compact?: boolean;
+}) {
+  const valueColor = formBandValueColor(tier, qualifiedSample);
+  const whisper = formBandWhisperLabel(tier, qualifiedSample);
+  return (
+    <span
+      className={`inline-flex flex-wrap items-baseline gap-x-1.5 font-mono uppercase tracking-[0.12em] ${compact ? "text-[9px]" : "text-[11px]"} ${className}`}
+      data-form-value-whisper-line
+      data-form-value-color={valueColor}
+      data-form-whisper={whisper}
+      data-form-window={window}
+    >
+      <span className={`font-semibold tabular-nums ${valueClassName}`} style={{ color: valueColor }} data-form-colored-value>
+        {typeof value === "number" ? value.toFixed(1) : "--"}
+      </span>
+      <span className={`text-zinc-500 ${whisperClassName}`} data-form-band-whisper>
+        {whisper}
+      </span>
+      <span className="text-zinc-500" data-form-line-era>
+        · {formLineEraText(era, window)}
+      </span>
+    </span>
+  );
 }
 
 export function LimitedSampleFormChip({

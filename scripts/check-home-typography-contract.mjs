@@ -204,10 +204,11 @@ assert(
     mustWatch.includes("gameVenueLabel(game)") &&
     mustWatch.includes("watch rank") &&
     mustWatch.includes("function StarterFormScoreLine") &&
-    mustWatch.includes('data-starter-form-context-line="rgs-era"') &&
-    mustWatch.includes("<StarterFormScoreLine starter={starter} accentColor={accent.color} />") &&
+    mustWatch.includes('data-starter-form-context-line="value-whisper-era"') &&
+    mustWatch.includes("<FormValueWhisperLine value={starter.rgs}") &&
+    mustWatch.includes("<StarterFormScoreLine starter={starter} />") &&
     !mustWatch.includes("formatStartLine"),
-  "must-watch cards must use segmented meta lines, tokenized visible stat lines, and a tiny score/ERA line above trend chips",
+  "must-watch cards must use segmented meta lines, tokenized visible stat lines, and a colored value/whisper/ERA line above trend chips",
 );
 
 assert(

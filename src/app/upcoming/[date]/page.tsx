@@ -10,7 +10,6 @@ import { UpcomingViewModePanels, UpcomingViewModeProvider, UpcomingViewModeToggl
 import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { readUpcomingWriteups } from "@/lib/data/upcoming-writeups-service";
-import { formWindowLabel } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -114,7 +113,6 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                 visibleGameCount={visibleUpcoming.games.length}
                 scheduledGameCount={upcoming.scheduledGames}
                 viewModeToggle={<UpcomingViewModeToggle />}
-                formWindow={visibleUpcoming.formWindow}
                 className="mt-0"
               />
             </div>
@@ -215,7 +213,6 @@ export function UpcomingControls({
   visibleGameCount,
   scheduledGameCount,
   viewModeToggle,
-  formWindow,
   className = "mt-3",
 }: {
   controls: UpcomingControlsState;
@@ -224,7 +221,6 @@ export function UpcomingControls({
   visibleGameCount: number;
   scheduledGameCount: number;
   viewModeToggle?: React.ReactNode;
-  formWindow: number;
   className?: string;
 }) {
   const controlsLabel = upcomingControlsLabel(controls);
@@ -267,9 +263,6 @@ export function UpcomingControls({
         />
         {viewModeToggle}
       </div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-upcoming-form-window-label data-form-window={formWindow}>
-        {formWindowLabel(formWindow)}
-      </p>
     </div>
   );
 }

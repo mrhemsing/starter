@@ -7,7 +7,6 @@ import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
-import { FORM_CONFIG } from "@/lib/form-tokens";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
@@ -117,7 +116,6 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             slateRange="week"
             visibleGameCount={visibleGameCount}
             scheduledGameCount={scheduledGameCount}
-            formWindow={upcoming.days[0]?.formWindow ?? FORM_CONFIG.windowDefault}
           />
         </header>
       </div>

@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
-import { hasQualifiedFormSummarySample, LimitedSampleFormChip, LIMITED_SAMPLE_FORM_COLOR, LIMITED_SAMPLE_FORM_LABEL } from "@/components/limited-sample-form-chip";
+import { FormValueWhisperLine, hasQualifiedFormSummarySample, LIMITED_SAMPLE_FORM_COLOR, LIMITED_SAMPLE_FORM_LABEL } from "@/components/limited-sample-form-chip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";
@@ -224,7 +224,8 @@ function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
           <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-3 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:items-center">
             <div className="min-w-0">
               <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team} · {hasQualifiedFormSummarySample(entry) ? `${tierLabel(entry.tier)} ${Math.round(entry.rgs)}` : `${LIMITED_SAMPLE_FORM_LABEL} ${Math.round(entry.rgs)}`}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team}</p>
+              <FormValueWhisperLine value={entry.rgs} tier={entry.tier} qualifiedSample={hasQualifiedFormSummarySample(entry)} era={entry.seasonStats?.era} compact className="mt-1" />
             </div>
             <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
           </Link>
@@ -322,13 +323,15 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
       </div>
       <div className="min-w-0">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Form</p>
-        <div className="flex items-end gap-2">
-          <p className={`font-serif text-5xl font-bold leading-none ${qualifiedSample ? tierTextClass(entry.tier) : "text-zinc-300"}`}>{Math.round(entry.rgs)}</p>
-          {qualifiedSample ? (
-            <span className="mb-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{tierLabel(entry.tier)}</span>
-          ) : (
-            <LimitedSampleFormChip value={entry.rgs} compact className="mb-1" />
-          )}
+        <div className="mt-1">
+          <FormValueWhisperLine
+            value={entry.rgs}
+            tier={entry.tier}
+            qualifiedSample={qualifiedSample}
+            era={entry.seasonStats?.era}
+            className={qualifiedSample ? tierTextClass(entry.tier) : "text-zinc-300"}
+            valueClassName="font-serif text-5xl font-bold leading-none tracking-normal"
+          />
         </div>
         <div className="mt-5"><TrendChip summary={entry} compact /></div>
       </div>

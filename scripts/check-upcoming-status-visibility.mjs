@@ -35,8 +35,8 @@ assert(upcomingPage.includes('data-upcoming-toolbar-row') && upcomingPage.includ
 assert(
   upcomingPage.includes('className={`${className} flex max-w-full flex-col gap-1`}') &&
     upcomingPage.includes('data-upcoming-control-row') &&
-    upcomingPage.includes("data-upcoming-form-window-label"),
-  "Upcoming controls must render surfaced compact toggles with caller-controlled spacing and the form-window label.",
+    !upcomingPage.includes("data-upcoming-form-window-label"),
+  "Upcoming controls must render surfaced compact toggles without the old persistent form-window label.",
 );
 assert(slateDateNav.includes('mobileLabel: "Week"') && slateDateNav.includes('className="sm:hidden"') && slateDateNav.includes('className="hidden sm:inline"'), "Upcoming range tabs must show WEEK on mobile and THIS WEEK on larger screens.");
 
