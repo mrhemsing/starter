@@ -315,6 +315,10 @@ assert(
   homePage.includes('data-responsive-check="home-gs-plus-differentiator-band"') &&
     homePage.includes("WHY GS+") &&
     homePage.includes("Why GS+ is different") &&
+    homePage.includes('bg-[#0c0c10] px-4 py-10 sm:px-6 lg:px-8') &&
+    homePage.includes('mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end') &&
+    homePage.includes('font-mono text-xs uppercase tracking-[0.24em] text-zinc-500') &&
+    homePage.includes('section-title mt-2 font-serif text-4xl font-bold text-zinc-50') &&
     homePage.includes('data-home-gs-plus-differentiator-cards') &&
     homePage.includes('data-home-gs-plus-proof-panels') &&
     homePage.includes('data-home-gs-plus-proof-card="context"') &&

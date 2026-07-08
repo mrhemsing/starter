@@ -183,18 +183,20 @@ function HomeHeroStateBanner({ slateStatus, liveLeaderboard }: { slateStatus: Sl
 function WhyGsPlusBand({ proof }: { proof: HomeGsPlusProofs }) {
   const [contextWinner, contextRunnerUp] = proof.contextPair;
   return (
-    <section className="border-y border-white/10 bg-[#0c0c10] px-4 py-5 sm:px-6 lg:px-8" data-responsive-check="home-gs-plus-differentiator-band" aria-labelledby="home-gs-plus-differentiator-kicker">
+    <section className="border-y border-white/10 bg-[#0c0c10] px-4 py-10 sm:px-6 lg:px-8" data-responsive-check="home-gs-plus-differentiator-band" aria-labelledby="home-gs-plus-differentiator-kicker">
       <div className="mx-auto max-w-7xl">
-        <p id="home-gs-plus-differentiator-kicker" className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-          WHY GS+
-        </p>
-        <div className="mt-2 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
-          <h2 className="font-serif text-3xl font-black leading-tight text-zinc-50">Why GS+ is different</h2>
+        <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
+          <div>
+            <p id="home-gs-plus-differentiator-kicker" className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">
+              WHY GS+
+            </p>
+            <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Why GS+ is different</h2>
+          </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" data-home-gs-plus-proof-source={proof.source}>
             Proof packet: {proof.source === "cron" ? "fresh settled starts" : "documented fallback"}
           </p>
         </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]" data-home-gs-plus-differentiator-cards data-home-gs-plus-proof-panels>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]" data-home-gs-plus-differentiator-cards data-home-gs-plus-proof-panels>
           <article className="rounded border border-amber-300/25 bg-[#101014] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]" data-home-gs-plus-differentiator-card="1" data-home-gs-plus-proof-card="context">
             <div className="flex items-start justify-between gap-3">
               <div>

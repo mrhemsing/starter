@@ -496,7 +496,7 @@ assert(
   cacheTags.includes('export const HOME_RANKED_CACHE_TAG = "home-ranked-surfaces";') &&
     rankedService.includes('import { HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     rankedService.includes("tags: [HOME_RANKED_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG]") &&
-    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG, LIVE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     warmLiveStartsJob.includes('import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";') &&
     warmLiveStartsJob.includes("const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);") &&
     warmLiveStartsJob.includes("const topPerformer = await warmRankedHome(progressKey, progress, options);") &&
