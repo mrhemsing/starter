@@ -399,7 +399,7 @@ assert(
     rankedService.includes('import { HOME_LIVE_LEADER_FLOOR, HOME_LIVE_LEADER_MIN_INNINGS, resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";') &&
     rankedService.includes("function isLiveTopPerformerEligibleStart(start: StartSummary)") &&
     rankedService.includes("start.gameScorePlus >= HOME_LIVE_LEADER_FLOOR && inningsFromIP(start.line.inningsPitched) >= HOME_LIVE_LEADER_MIN_INNINGS") &&
-    rankedService.includes('["home-ranked", "v17"]'),
+    rankedService.includes('["home-ranked", "v18"]'),
   "home top performer must unmount after first pitch until a qualifying solid GS+ 50 contender with at least the shared Ranked Starts IP floor posts",
 );
 
