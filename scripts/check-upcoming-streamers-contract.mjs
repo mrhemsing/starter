@@ -6,11 +6,12 @@ function assert(condition, message) {
   }
 }
 
-const [packageJson, routes, toggle, streamersService, tonightService, streamersPage, streamersLoading, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
+const [packageJson, routes, toggle, streamersService, streamersReadServiceSource, tonightService, streamersPage, streamersLoading, streamersImage, sitemapRoute, siteNav, proxy, notFoundCard] = await Promise.all([
   readFile("package.json", "utf8"),
   readFile("src/lib/routes.ts", "utf8"),
   readFile("src/components/slate-date-nav.tsx", "utf8"),
   readFile("src/lib/data/streamers-service.ts", "utf8"),
+  readFile("src/lib/data/streamers-read-service.ts", "utf8"),
   readFile("src/lib/data/tonight-service.ts", "utf8"),
   readFile("src/app/upcoming/streamers/page.tsx", "utf8"),
   readFile("src/app/upcoming/streamers/loading.tsx", "utf8"),
@@ -128,11 +129,21 @@ assert(
     streamersPage.includes("Two-start pitchers") &&
     streamersPage.includes("Two starts in one fantasy week doubles the counting stats.") &&
     streamersPage.includes("const hasTwoStartPitchers = streamers.twoStartPitchers.length > 0") &&
-    streamersPage.includes('data-fantasy-streamers-layout={hasTwoStartPitchers ? "balanced-columns" : "streamers-expanded"}') &&
+    streamersPage.includes("const fantasyCoach = await readFantasyCoach(streamers)") &&
+    streamersPage.includes('data-fantasy-streamers-layout="fantasy-coach-balanced"') &&
+    streamersPage.includes('data-fantasy-coach-layout="coach-left-board-right"') &&
+    streamersPage.includes("data-fantasy-coach-column") &&
+    streamersPage.includes("function FantasyCoachPanel") &&
+    streamersPage.includes("data-fantasy-coach-tier={tier.key}") &&
+    streamersPage.includes("data-fantasy-coach-callouts") &&
+    streamersPage.includes("data-fantasy-coach-plan") &&
     streamersPage.includes('data-two-start-state={hasTwoStartPitchers ? "populated" : "early-week-empty"}') &&
-    streamersPage.includes("function TwoStartEmptyState()") &&
-    streamersPage.includes("Two-start pitchers confirm midweek. Check back as probables are announced.") &&
+    streamersReadServiceSource.includes("Two-start pitchers confirm midweek. Check back as probables are announced.") &&
+    streamersPage.includes('data-two-start-empty-state={coach.midweekNote ? "early-week" : "coach-populated"}') &&
     streamersPage.includes('data-two-start-empty-state-height="compact-under-200"') &&
+    !streamersPage.includes("function TwoStartEmptyState()") &&
+    !streamersPage.includes("data-fantasy-streaming-read") &&
+    !streamersPage.includes("This week&apos;s streaming read") &&
     !streamersPage.includes("No two-start pitchers are visible yet.") &&
     !streamersPage.includes("No two-start streamers are visible yet.") &&
     streamersPage.includes("Form risers with soft matchups") &&

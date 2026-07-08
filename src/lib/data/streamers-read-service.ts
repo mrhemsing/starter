@@ -2,35 +2,82 @@ import { createHash } from "node:crypto";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
+import { formatUpcomingDate } from "@/lib/routes";
 
-type FantasyStreamingReadState = {
-  version: 1;
+export type FantasyCoachTierKey = "must-start" | "solid-streamer" | "matchup-dependent" | "fade-despite-rank";
+
+export type FantasyCoachArm = {
+  pitcherId: string;
+  name: string;
+  team: string;
+  href: string;
+  reason: string;
+};
+
+export type FantasyCoachTier = {
+  key: FantasyCoachTierKey;
+  label: "MUST START" | "SOLID STREAMER" | "MATCHUP DEPENDENT / RISKY" | "FADE DESPITE THE RANK";
+  arms: FantasyCoachArm[];
+};
+
+export type FantasyCoachCallout = FantasyCoachArm & {
+  sentence: string;
+};
+
+export type FantasyCoachContent = {
+  version: 2;
+  weekStart: string;
+  weekEnd: string;
+  tiers: FantasyCoachTier[];
+  trap: FantasyCoachCallout | null;
+  sleeper: FantasyCoachCallout | null;
+  weeklyPlan: string[];
+  midweekNote: string | null;
+  source: "llm" | "fallback";
+};
+
+type FantasyCoachState = {
+  version: 2;
   weekStart: string;
   inputHash: string;
   promptVersion: number;
   generatedAt: string;
   model: string;
-  read: string;
+  coach: FantasyCoachContent;
   source: "llm" | "fallback";
 };
 
-type FantasyStreamingReadInput = {
+type FantasyCoachInput = {
   weekStart: string;
   weekEnd: string;
-  twoStartPitchers: FantasyStreamingReadCandidate[];
-  formRisers: FantasyStreamingReadCandidate[];
-  standout: FantasyStreamingReadCandidate | null;
-  caution: FantasyStreamingReadCandidate | null;
+  twoStartPitchers: FantasyCoachCandidate[];
+  formRisers: FantasyCoachCandidate[];
 };
 
-type FantasyStreamingReadCandidate = {
+type FantasyCoachCandidate = {
+  pitcherId: string;
   name: string;
   team: string;
+  href: string;
   streamScore: string;
   heatLabel: string;
-  matchups: string[];
+  heatBand: "onfire" | "hot" | null;
+  trendDelta: string;
+  formScore: string;
+  matchupScore: string;
+  parkScore: string;
+  matchupDataAvailable: boolean;
   softMatchups: number;
-  parkLabels: string[];
+  toughMatchups: number;
+  hitterParks: number;
+  pitcherParks: number;
+  matchups: Array<{
+    date: string;
+    opponent: string;
+    lineupTier: "Soft" | "Neutral" | "Tough" | "Pending";
+    parkLabel: string;
+    parkFactor: string;
+  }>;
 };
 
 type GenerateFantasyStreamingReadResult = {
@@ -41,34 +88,41 @@ type GenerateFantasyStreamingReadResult = {
   stored: boolean;
 };
 
-const FANTASY_STREAMING_READ_VERSION = 1;
-const FANTASY_STREAMING_READ_PROMPT_VERSION = 2;
+const FANTASY_STREAMING_READ_VERSION = 2;
+const FANTASY_STREAMING_READ_PROMPT_VERSION = 3;
 const FANTASY_STREAMING_READ_MODEL = process.env.OPENAI_MODEL_FANTASY_READ ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
 
-export async function readFantasyStreamingRead(streamers: UpcomingStreamersResponse) {
-  const input = fantasyStreamingReadInput(streamers);
-  const state = await readRuntimeState<FantasyStreamingReadState>(fantasyStreamingReadKey(input.weekStart));
-  if (state?.version === FANTASY_STREAMING_READ_VERSION && state.inputHash === fantasyStreamingReadInputHash(input) && state.read.trim()) {
-    return state.read;
+export async function readFantasyCoach(streamers: UpcomingStreamersResponse) {
+  const input = fantasyCoachInput(streamers);
+  const state = await readRuntimeState<FantasyCoachState>(fantasyStreamingReadKey(input.weekStart));
+  if (state?.version === FANTASY_STREAMING_READ_VERSION && state.inputHash === fantasyCoachInputHash(input) && validateFantasyCoach(state.coach, input)) {
+    return state.coach;
   }
-  return fallbackFantasyStreamingRead(input);
+  return fallbackFantasyCoach(input);
+}
+
+export async function readFantasyStreamingRead(streamers: UpcomingStreamersResponse) {
+  const coach = await readFantasyCoach(streamers);
+  const firstTierArm = coach.tiers.flatMap((tier) => tier.arms)[0];
+  if (firstTierArm) return `${firstTierArm.name}: ${firstTierArm.reason}. ${coach.midweekNote ?? coach.weeklyPlan[0] ?? ""}`.trim();
+  return coach.midweekNote ?? "Two-start pitchers confirm midweek. Check back as probables are announced.";
 }
 
 export async function generateFantasyStreamingRead(anchorDate = getHomeSlateDate()): Promise<GenerateFantasyStreamingReadResult> {
   const streamers = await getUpcomingStreamers(anchorDate);
-  const input = fantasyStreamingReadInput(streamers);
-  const inputHash = fantasyStreamingReadInputHash(input);
-  const previous = await readRuntimeState<FantasyStreamingReadState>(fantasyStreamingReadKey(input.weekStart));
-  if (previous?.version === FANTASY_STREAMING_READ_VERSION && previous.inputHash === inputHash && previous.source === "llm" && previous.read.trim()) {
+  const input = fantasyCoachInput(streamers);
+  const inputHash = fantasyCoachInputHash(input);
+  const previous = await readRuntimeState<FantasyCoachState>(fantasyStreamingReadKey(input.weekStart));
+  if (previous?.version === FANTASY_STREAMING_READ_VERSION && previous.inputHash === inputHash && previous.source === "llm" && validateFantasyCoach(previous.coach, input)) {
     return { weekStart: input.weekStart, generated: false, source: "llm", model: previous.model, stored: true };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
-  const fallback = fallbackFantasyStreamingRead(input);
-  const generated = apiKey ? await generateFantasyRead(apiKey, input).catch(() => null) : null;
-  const read = generated ?? fallback;
+  const fallback = fallbackFantasyCoach(input);
+  const generated = apiKey ? await generateFantasyCoach(apiKey, input).catch(() => null) : null;
+  const coach = generated ?? fallback;
   const source = generated ? "llm" : "fallback";
   const stored = await writeRuntimeState(fantasyStreamingReadKey(input.weekStart), {
     version: FANTASY_STREAMING_READ_VERSION,
@@ -77,14 +131,15 @@ export async function generateFantasyStreamingRead(anchorDate = getHomeSlateDate
     promptVersion: FANTASY_STREAMING_READ_PROMPT_VERSION,
     generatedAt: new Date().toISOString(),
     model: FANTASY_STREAMING_READ_MODEL,
-    read,
+    coach: { ...coach, source },
     source,
   });
 
+  console.info("[fantasy-coach]", { weekStart: input.weekStart, source, fallback: !generated });
   return { weekStart: input.weekStart, generated: Boolean(generated), source, model: FANTASY_STREAMING_READ_MODEL, stored };
 }
 
-async function generateFantasyRead(apiKey: string, input: FantasyStreamingReadInput) {
+async function generateFantasyCoach(apiKey: string, input: FantasyCoachInput) {
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: "POST",
     headers: {
@@ -93,12 +148,12 @@ async function generateFantasyRead(apiKey: string, input: FantasyStreamingReadIn
     },
     body: JSON.stringify({
       model: FANTASY_STREAMING_READ_MODEL,
-      temperature: 0.25,
-      max_output_tokens: 120,
+      temperature: 0.2,
+      max_output_tokens: 700,
       input: [
         {
           role: "system",
-          content: "Write 2 to 3 fantasy baseball streaming sentences under 60 words total from provided data only. Use sell-voice. Use the words Target and Fade or Caution. Name at least two listed pitchers when two are available. No em dash. Every number must appear in the input. Do not invent facts, rankings, injuries, history, or projections.",
+          content: "Return strict JSON for fantasy baseball coach content from provided data only. Include tiered verdicts, optional trap, optional sleeper, and weeklyPlan when two-start pitchers exist. Reasons are one short clause. No em dash. Every number must appear in the input. Every name must appear in the input. Do not invent injuries, weather, history, roles, or projections.",
         },
         {
           role: "user",
@@ -110,100 +165,193 @@ async function generateFantasyRead(apiKey: string, input: FantasyStreamingReadIn
   });
   if (!response.ok) return null;
   const payload = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> };
-  const text = normalizeGeneratedRead(extractResponseText(payload));
-  return validateFantasyRead(text, input) ? text : null;
+  const parsed = parseGeneratedCoach(extractResponseText(payload), input);
+  return parsed && validateFantasyCoach(parsed, input) ? parsed : null;
 }
 
-function fantasyStreamingReadInput(streamers: UpcomingStreamersResponse): FantasyStreamingReadInput {
-  const candidates = uniqueCandidates([...streamers.twoStartPitchers, ...streamers.formRisers]);
-  const standout = candidates[0] ?? null;
-  const caution = [...candidates].reverse().find((candidate) => !candidate.matchupDataAvailable || candidate.matchups.some((matchup) => matchup.opponentLineupTier === "Tough")) ?? streamers.formRisers[0] ?? null;
+function fallbackFantasyCoach(input: FantasyCoachInput): FantasyCoachContent {
+  const candidates = allCoachCandidates(input);
+  const used = new Set<string>();
+  const mustStart = candidates.filter((candidate) => candidate.streamScoreValue >= 60 && candidate.softMatchups > 0 && candidate.matchupDataAvailable).slice(0, 4);
+  mustStart.forEach((candidate) => used.add(candidate.pitcherId));
+  const solid = candidates.filter((candidate) => !used.has(candidate.pitcherId) && candidate.streamScoreValue >= 52 && candidate.toughMatchups === 0).slice(0, 4);
+  solid.forEach((candidate) => used.add(candidate.pitcherId));
+  const risky = candidates.filter((candidate) => !used.has(candidate.pitcherId) && hasRiskSignal(candidate)).slice(0, 4);
+  risky.forEach((candidate) => used.add(candidate.pitcherId));
+  const fade = candidates.filter((candidate) => hasRiskSignal(candidate) && candidate.streamScoreValue >= 50).slice(0, 4);
+  const trapCandidate = candidates.find((candidate) => hasRiskSignal(candidate) && candidate.streamScoreValue >= 50) ?? null;
+  const sleeperCandidate = candidates.find((candidate, index) => index >= 3 && candidate.softMatchups > 0 && candidate.heatBand) ?? null;
+
+  return {
+    version: FANTASY_STREAMING_READ_VERSION,
+    weekStart: input.weekStart,
+    weekEnd: input.weekEnd,
+    tiers: [
+      tier("must-start", "MUST START", mustStart.length ? mustStart.map((candidate) => arm(candidate, targetReason(candidate))) : candidates.slice(0, 1).map((candidate) => arm(candidate, targetReason(candidate)))),
+      tier("solid-streamer", "SOLID STREAMER", solid.map((candidate) => arm(candidate, solidReason(candidate)))),
+      tier("matchup-dependent", "MATCHUP DEPENDENT / RISKY", risky.map((candidate) => arm(candidate, riskReason(candidate)))),
+      tier("fade-despite-rank", "FADE DESPITE THE RANK", fade.map((candidate) => arm(candidate, riskReason(candidate)))),
+    ].filter((candidateTier) => candidateTier.arms.length > 0),
+    trap: trapCandidate ? callout(trapCandidate, "THE TRAP", riskReason(trapCandidate)) : null,
+    sleeper: sleeperCandidate ? callout(sleeperCandidate, "THE SLEEPER", targetReason(sleeperCandidate)) : null,
+    weeklyPlan: input.twoStartPitchers.length ? fallbackWeeklyPlan(input) : [],
+    midweekNote: input.twoStartPitchers.length ? null : "Two-start pitchers confirm midweek. Check back as probables are announced.",
+    source: "fallback",
+  };
+}
+
+function fantasyCoachInput(streamers: UpcomingStreamersResponse): FantasyCoachInput {
   return {
     weekStart: streamers.range.start,
     weekEnd: streamers.range.end,
-    twoStartPitchers: streamers.twoStartPitchers.slice(0, 4).map(readCandidate),
-    formRisers: streamers.formRisers.slice(0, 4).map(readCandidate),
-    standout: standout ? readCandidate(standout) : null,
-    caution: caution ? readCandidate(caution) : null,
+    twoStartPitchers: streamers.twoStartPitchers.slice(0, 8).map(readCandidate),
+    formRisers: streamers.formRisers.slice(0, 10).map(readCandidate),
   };
 }
 
-function readCandidate(candidate: StreamerCandidate): FantasyStreamingReadCandidate {
-  const parkLabels = Array.from(new Set(candidate.matchups.map((matchup) => matchup.parkLabel).filter(Boolean))).slice(0, 2);
+function readCandidate(candidate: StreamerCandidate): FantasyCoachCandidate {
   return {
+    pitcherId: candidate.pitcherId,
     name: candidate.pitcherName,
     team: candidate.team,
+    href: candidate.pitcherHref,
     streamScore: candidate.streamScore.toFixed(1),
     heatLabel: candidate.heatLabel,
-    matchups: candidate.matchups.map((matchup) => `${matchup.opponent} ${matchup.opponentLineupTier}`).slice(0, 3),
+    heatBand: candidate.heatBand,
+    trendDelta: candidate.trendDelta.toFixed(1),
+    formScore: candidate.components.form.toFixed(1),
+    matchupScore: candidate.components.matchup.toFixed(1),
+    parkScore: candidate.components.park.toFixed(1),
+    matchupDataAvailable: candidate.matchupDataAvailable,
     softMatchups: candidate.matchups.filter((matchup) => matchup.opponentLineupTier === "Soft").length,
-    parkLabels,
+    toughMatchups: candidate.matchups.filter((matchup) => matchup.opponentLineupTier === "Tough").length,
+    hitterParks: candidate.matchups.filter((matchup) => matchup.parkLabel.toLowerCase().includes("hitter")).length,
+    pitcherParks: candidate.matchups.filter((matchup) => matchup.parkLabel.toLowerCase().includes("pitcher")).length,
+    matchups: candidate.matchups.map((matchup) => ({
+      date: matchup.date,
+      opponent: matchup.opponent,
+      lineupTier: matchup.opponentLineupTier,
+      parkLabel: matchup.parkLabel,
+      parkFactor: matchup.parkFactor.toFixed(2),
+    })),
   };
 }
 
-function fallbackFantasyStreamingRead(input: FantasyStreamingReadInput) {
-  const target = input.standout ?? input.twoStartPitchers[0] ?? input.formRisers[0];
-  const alternate = allReadCandidates(input).find((candidate) => candidate.name !== target?.name);
-  const caution = input.caution?.name !== target?.name ? input.caution : alternate;
-  if (!target) return "Streaming board is still forming as probable starters lock in. Target the first confirmed soft matchup. Fade thin-data arms until the next refresh.";
-
-  const targetCopy = `Target ${target.name}${formatReadTargetReason(target)}.`;
-  if (caution) return `${targetCopy} Fade ${caution.name}${formatReadCautionReason(caution)}.`;
-  return `${targetCopy} Keep the last roster spot flexible. Fade thin-data arms until another streamer separates.`;
+function tier(key: FantasyCoachTierKey, label: FantasyCoachTier["label"], arms: FantasyCoachArm[]): FantasyCoachTier {
+  return { key, label, arms };
 }
 
-function validateFantasyRead(read: string, input: FantasyStreamingReadInput) {
-  if (!read || wordCount(read) > 60 || read.includes("—")) return false;
-  const sentenceCount = (read.match(/[.!?]/g) ?? []).length;
-  if (sentenceCount < 2 || sentenceCount > 3) return false;
-  if (!/\btarget\b/i.test(read) || !/\b(fade|caution)\b/i.test(read)) return false;
-  if (/\b(has been|since|streak|injury|injured|revenge|lock|must-start)\b/i.test(read)) return false;
+function arm(candidate: FantasyCoachCandidate & { streamScoreValue?: number }, reason: string): FantasyCoachArm {
+  return {
+    pitcherId: candidate.pitcherId,
+    name: candidate.name,
+    team: candidate.team,
+    href: candidate.href,
+    reason,
+  };
+}
+
+function callout(candidate: FantasyCoachCandidate & { streamScoreValue?: number }, label: "THE TRAP" | "THE SLEEPER", reason: string): FantasyCoachCallout {
+  const prefix = label === "THE TRAP" ? "Fade" : "Grab";
+  return {
+    ...arm(candidate, reason),
+    sentence: `${label}: ${prefix} ${candidate.name} because ${reason.toLowerCase()}.`,
+  };
+}
+
+function fallbackWeeklyPlan(input: FantasyCoachInput) {
+  const anchors = input.twoStartPitchers.slice(0, 2);
+  const first = anchors[0];
+  if (!first) return [];
+  const starts = first.matchups.map((matchup) => formatUpcomingDate(matchup.date)).slice(0, 2).join(" and ");
+  const sentences = [`Anchor with ${first.name}${starts ? ` on ${starts}` : ""}.`];
+  const second = anchors[1];
+  if (second) sentences.push(`Use ${second.name} as the second two-start play.`);
+  const risky = allCoachCandidates(input).find(hasRiskSignal);
+  if (risky) sentences.push(`Avoid ${risky.name} where ${riskReason(risky).toLowerCase()}.`);
+  return sentences.slice(0, 5);
+}
+
+function targetReason(candidate: FantasyCoachCandidate) {
+  if (candidate.softMatchups > 0 && candidate.heatBand) return "soft lineup plus hot form";
+  if (candidate.softMatchups > 0) return "soft lineup draw";
+  if (candidate.matchups.length >= 2) return "two confirmed starts";
+  if (candidate.pitcherParks > 0) return "pitcher park support";
+  return `${candidate.heatLabel.toLowerCase()} form`;
+}
+
+function solidReason(candidate: FantasyCoachCandidate) {
+  if (candidate.matchups.length >= 2) return "extra volume with playable context";
+  if (candidate.pitcherParks > 0) return "park context helps the stream";
+  return "score and form are playable";
+}
+
+function riskReason(candidate: FantasyCoachCandidate) {
+  if (!candidate.matchupDataAvailable) return "matchup data is still thin";
+  if (candidate.toughMatchups > 0) return "a tough lineup is attached";
+  if (candidate.hitterParks > 0) return "hitter park context raises risk";
+  return "the edge is matchup dependent";
+}
+
+function hasRiskSignal(candidate: FantasyCoachCandidate) {
+  return !candidate.matchupDataAvailable || candidate.toughMatchups > 0 || candidate.hitterParks > 0;
+}
+
+function validateFantasyCoach(coach: FantasyCoachContent, input: FantasyCoachInput) {
+  if (!coach || coach.version !== FANTASY_STREAMING_READ_VERSION || coach.weekStart !== input.weekStart || coach.weekEnd !== input.weekEnd) return false;
+  const candidates = allCoachCandidates(input);
+  const candidateIds = new Set(candidates.map((candidate) => candidate.pitcherId));
+  const candidateNames = new Set(candidates.map((candidate) => candidate.name));
   const allowedNumbers = new Set(JSON.stringify(input).match(/\d+(?:\.\d+)?/g) ?? []);
-  if (!(read.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token))) return false;
-  const names = new Set([...input.twoStartPitchers, ...input.formRisers].map((candidate) => candidate.name));
-  const namedPitchers = [...names].filter((name) => read.includes(name.split(" ")[0]) || read.includes(name.split(" ").slice(-1)[0]));
-  return namedPitchers.length >= Math.min(2, names.size);
+  const strings = [
+    ...coach.tiers.flatMap((candidateTier) => candidateTier.arms.map((candidate) => `${candidate.name} ${candidate.reason}`)),
+    coach.trap?.sentence ?? "",
+    coach.sleeper?.sentence ?? "",
+    ...coach.weeklyPlan,
+    coach.midweekNote ?? "",
+  ];
+  if (strings.some((value) => value.includes("—") || /\b(injury|injured|revenge|lock)\b/i.test(value))) return false;
+  if (!strings.every((value) => (value.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token)))) return false;
+  if (!coach.tiers.every((candidateTier) => candidateTier.arms.length >= 1 && candidateTier.arms.length <= 4 && candidateTier.arms.every((candidate) => candidateIds.has(candidate.pitcherId) && candidateNames.has(candidate.name)))) return false;
+  const fadeTier = coach.tiers.find((candidateTier) => candidateTier.key === "fade-despite-rank");
+  if (fadeTier && !fadeTier.arms.every((candidate) => hasRiskSignalById(candidate.pitcherId, candidates))) return false;
+  if (coach.trap && !hasRiskSignalById(coach.trap.pitcherId, candidates)) return false;
+  if (coach.sleeper && !candidateIds.has(coach.sleeper.pitcherId)) return false;
+  if (input.twoStartPitchers.length > 0 && (coach.weeklyPlan.length < 1 || coach.weeklyPlan.length > 5 || wordCount(coach.weeklyPlan.join(" ")) > 90)) return false;
+  if (input.twoStartPitchers.length === 0 && !coach.midweekNote?.includes("Two-start pitchers confirm midweek")) return false;
+  return true;
 }
 
-function formatReadTargetReason(candidate: FantasyStreamingReadCandidate) {
-  if (candidate.softMatchups > 0) return " behind a soft lineup draw";
-  if (candidate.matchups.length >= 2) return " for two listed starts";
-  const parkReason = formatParkReason(candidate.parkLabels, "pitcher");
-  if (parkReason) return ` with ${parkReason}`;
-  return ` with ${candidate.heatLabel.toLowerCase()} form`;
+function hasRiskSignalById(pitcherId: string, candidates: FantasyCoachCandidate[]) {
+  const candidate = candidates.find((item) => item.pitcherId === pitcherId);
+  return candidate ? hasRiskSignal(candidate) : false;
 }
 
-function formatReadCautionReason(candidate: FantasyStreamingReadCandidate) {
-  if (candidate.matchups.some((matchup) => /\bTough\b/.test(matchup))) return " around a tough lineup draw";
-  const parkReason = formatParkReason(candidate.parkLabels, "hitter");
-  if (parkReason) return ` around ${parkReason}`;
-  if (candidate.matchups.length === 0) return " until matchup data firms up";
-  return " until the matchup edge gets clearer";
-}
-
-function formatParkReason(labels: string[], kind: "pitcher" | "hitter") {
-  return labels.find((label) => label.toLowerCase().includes(kind))?.toLowerCase() ?? null;
-}
-
-function allReadCandidates(input: FantasyStreamingReadInput) {
-  const byName = new Map<string, FantasyStreamingReadCandidate>();
+function allCoachCandidates(input: FantasyCoachInput) {
+  const byPitcher = new Map<string, FantasyCoachCandidate & { streamScoreValue: number }>();
   for (const candidate of [...input.twoStartPitchers, ...input.formRisers]) {
-    byName.set(candidate.name, candidate);
+    byPitcher.set(candidate.pitcherId, { ...candidate, streamScoreValue: Number(candidate.streamScore) });
   }
-  return [...byName.values()];
+  return [...byPitcher.values()].sort((a, b) => b.streamScoreValue - a.streamScoreValue || b.matchups.length - a.matchups.length || a.name.localeCompare(b.name));
 }
 
-function uniqueCandidates(candidates: StreamerCandidate[]) {
-  const seen = new Set<string>();
-  return candidates.filter((candidate) => {
-    if (seen.has(candidate.pitcherId)) return false;
-    seen.add(candidate.pitcherId);
-    return true;
-  });
-}
-
-function normalizeGeneratedRead(value: string) {
-  return value.replace(/[“”"]/g, "").replace(/\s+/g, " ").trim();
+function parseGeneratedCoach(text: string, input: FantasyCoachInput): FantasyCoachContent | null {
+  try {
+    const parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()) as Partial<FantasyCoachContent>;
+    return {
+      version: FANTASY_STREAMING_READ_VERSION,
+      weekStart: input.weekStart,
+      weekEnd: input.weekEnd,
+      tiers: Array.isArray(parsed.tiers) ? parsed.tiers : [],
+      trap: parsed.trap ?? null,
+      sleeper: parsed.sleeper ?? null,
+      weeklyPlan: Array.isArray(parsed.weeklyPlan) ? parsed.weeklyPlan : [],
+      midweekNote: parsed.midweekNote ?? (input.twoStartPitchers.length ? null : "Two-start pitchers confirm midweek. Check back as probables are announced."),
+      source: "llm",
+    };
+  } catch {
+    return null;
+  }
 }
 
 function extractResponseText(payload: { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> }) {
@@ -211,7 +359,7 @@ function extractResponseText(payload: { output_text?: string; output?: Array<{ c
   return payload.output?.flatMap((item) => item.content ?? []).map((content) => content.text ?? "").join(" ").trim() ?? "";
 }
 
-function fantasyStreamingReadInputHash(input: FantasyStreamingReadInput) {
+function fantasyCoachInputHash(input: FantasyCoachInput) {
   return createHash("sha256").update(JSON.stringify({ promptVersion: FANTASY_STREAMING_READ_PROMPT_VERSION, input })).digest("hex").slice(0, 24);
 }
 

@@ -6,7 +6,7 @@ import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { LocalTime } from "@/components/local-time";
 import { getHomeSlateDate } from "@/lib/data/start-service";
-import { readFantasyStreamingRead } from "@/lib/data/streamers-read-service";
+import { readFantasyCoach, type FantasyCoachContent } from "@/lib/data/streamers-read-service";
 import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
 import { formatUpcomingDate } from "@/lib/routes";
 import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";
@@ -47,7 +47,7 @@ export default async function UpcomingStreamersPage() {
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);
   const streamers = await getUpcomingStreamers(today);
-  const streamingRead = await readFantasyStreamingRead(streamers);
+  const fantasyCoach = await readFantasyCoach(streamers);
   const jsonLd = jsonLdForUpcomingStreamers(streamers);
   const hasTwoStartPitchers = streamers.twoStartPitchers.length > 0;
 
@@ -79,33 +79,28 @@ export default async function UpcomingStreamersPage() {
         </header>
       </div>
 
-      <section className="mx-auto mb-5 max-w-7xl rounded border border-amber-300/20 bg-amber-300/[0.06] p-4" data-fantasy-streaming-read>
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">This week&apos;s streaming read</p>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-200">{streamingRead}</p>
-      </section>
-
       <section
-        className={`mx-auto grid min-w-0 max-w-7xl gap-5 ${
-          hasTwoStartPitchers ? "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]" : "lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start"
-        }`}
+        className="mx-auto grid min-w-0 max-w-7xl gap-5 lg:grid-cols-[minmax(320px,0.88fr)_minmax(0,1.12fr)] lg:items-start"
         data-responsive-check="upcoming-streamers"
         data-two-start-count={streamers.twoStartPitchers.length}
         data-form-riser-count={streamers.formRisers.length}
-        data-fantasy-streamers-layout={hasTwoStartPitchers ? "balanced-columns" : "streamers-expanded"}
+        data-fantasy-streamers-layout="fantasy-coach-balanced"
         data-two-start-state={hasTwoStartPitchers ? "populated" : "early-week-empty"}
+        data-fantasy-coach-layout="coach-left-board-right"
       >
-        {hasTwoStartPitchers ? (
-          <StreamerSection
-            title="Two-start pitchers"
-            eyebrow="Fantasy week"
-            description="Two starts in one fantasy week doubles the counting stats."
-            emptyCopy="No confirmed two-start pitchers are visible yet."
-            candidates={streamers.twoStartPitchers}
-            range={streamers.range}
-          />
-        ) : (
-          <TwoStartEmptyState />
-        )}
+        <div className="space-y-5" data-fantasy-coach-column data-fantasy-coach-mobile-order="summary-first">
+          <FantasyCoachPanel coach={fantasyCoach} />
+          {hasTwoStartPitchers ? (
+            <StreamerSection
+              title="Two-start pitchers"
+              eyebrow="Fantasy week"
+              description="Two starts in one fantasy week doubles the counting stats."
+              emptyCopy="No confirmed two-start pitchers are visible yet."
+              candidates={streamers.twoStartPitchers}
+              range={streamers.range}
+            />
+          ) : null}
+        </div>
         <StreamerSection
           title="Form risers with soft matchups"
           eyebrow="Pickup lens"
@@ -120,22 +115,69 @@ export default async function UpcomingStreamersPage() {
   );
 }
 
-function TwoStartEmptyState() {
+function FantasyCoachPanel({ coach }: { coach: FantasyCoachContent }) {
   return (
     <section
-      className="min-w-0 self-start rounded border border-white/10 bg-[#101014] p-4"
-      aria-labelledby="two-start-pitchers-heading"
-      data-two-start-empty-state="early-week"
+      className="min-w-0 self-start rounded border border-amber-300/20 bg-amber-300/[0.06] p-4"
+      aria-labelledby="fantasy-coach-heading"
+      data-fantasy-coach
+      data-fantasy-coach-source={coach.source}
+      data-fantasy-coach-tier-count={coach.tiers.length}
+      data-fantasy-coach-trap={coach.trap ? "present" : "none"}
+      data-fantasy-coach-sleeper={coach.sleeper ? "present" : "none"}
+      data-two-start-empty-state={coach.midweekNote ? "early-week" : "coach-populated"}
       data-two-start-empty-state-height="compact-under-200"
     >
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Fantasy week</p>
-      <h2 id="two-start-pitchers-heading" className="mt-2 font-serif text-2xl font-black text-zinc-50">
-        Two-start pitchers
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Fantasy coach</p>
+      <h2 id="fantasy-coach-heading" className="mt-2 font-serif text-2xl font-black text-zinc-50">
+        Start, stash, or fade
       </h2>
-      <p className="mt-2 text-sm leading-6 text-zinc-400">
-        Two-start pitchers confirm midweek. Check back as probables are announced.
-      </p>
+      <p className="mt-2 text-sm leading-6 text-zinc-400">Use the board as the data, but treat this as the weekly call sheet.</p>
+      <div className="mt-4 space-y-4">
+        {coach.tiers.map((tier) => (
+          <div key={tier.key} data-fantasy-coach-tier={tier.key}>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">{tier.label}</p>
+            <ul className="mt-2 space-y-2">
+              {tier.arms.map((arm) => (
+                <li key={`${tier.key}-${arm.pitcherId}`} className="rounded border border-white/10 bg-[#0b0b0e] p-3" data-fantasy-coach-arm={arm.pitcherId}>
+                  <Link href={arm.href} className="font-semibold text-zinc-50 hover:text-amber-200">{arm.name}</Link>
+                  <p className="mt-1 text-sm leading-5 text-zinc-400">{arm.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        <div className="grid gap-3 min-[560px]:grid-cols-2 lg:grid-cols-1" data-fantasy-coach-callouts>
+          {coach.trap ? <FantasyCoachCallout label="The trap" callout={coach.trap} /> : null}
+          {coach.sleeper ? <FantasyCoachCallout label="The sleeper" callout={coach.sleeper} /> : null}
+        </div>
+        <div className="rounded border border-white/10 bg-[#0b0b0e] p-3" data-fantasy-coach-plan>
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{coach.weeklyPlan.length ? "Weekly plan" : "Two-start watch"}</p>
+          {coach.weeklyPlan.length ? (
+            <ol className="mt-2 space-y-2 text-sm leading-6 text-zinc-300">
+              {coach.weeklyPlan.map((sentence) => <li key={sentence}>{sentence}</li>)}
+            </ol>
+          ) : (
+            <p className="mt-2 text-sm leading-6 text-zinc-300">{coach.midweekNote}</p>
+          )}
+        </div>
+      </div>
     </section>
+  );
+}
+
+function FantasyCoachCallout({ label, callout }: { label: string; callout: NonNullable<FantasyCoachContent["trap"]> }) {
+  const action = label === "The trap" ? "Fade" : "Grab";
+
+  return (
+    <div className="rounded border border-white/10 bg-[#0b0b0e] p-3" data-fantasy-coach-callout={slugLabel(label)}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        {action}{" "}
+        <Link href={callout.href} className="font-semibold text-zinc-50 hover:text-amber-200">{callout.name}</Link>
+        {": "}{callout.reason}.
+      </p>
+    </div>
   );
 }
 
