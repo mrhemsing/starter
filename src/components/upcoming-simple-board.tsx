@@ -216,8 +216,8 @@ function SimpleIdentityStrip({
         {align === "home" ? nameNode : valueNode}
       </div>
       <p className="mt-2 truncate font-mono text-[12px] uppercase tracking-[0.14em] text-zinc-500" data-simple-orientation>{orientation}</p>
-      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.1em] text-zinc-500" data-simple-mini-stat-line data-simple-form-microline data-simple-form-line-color={heatColor}>
-        {formMicroLine(starter)}
+      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.1em] text-zinc-500" data-simple-mini-stat-line data-simple-form-microline data-simple-form-microline-text={formMicroLine(starter)} data-simple-form-line-color={heatColor}>
+        <SimpleFormMicroLine starter={starter} />
       </p>
     </div>
   );
@@ -297,6 +297,20 @@ function formMicroLine(starter: TonightStarter) {
   const projected = starter.projection?.projectedGsPlus;
   if (typeof projected === "number") return `${era} · PROJ ${projected.toFixed(1)}`;
   return `${era} · ${miniStatLine(starter).toUpperCase()}`;
+}
+
+function SimpleFormMicroLine({ starter }: { starter: TonightStarter }) {
+  const era = formLineEraText(starter.seasonStats?.era);
+  const projected = starter.projection?.projectedGsPlus;
+  const detail = typeof projected === "number" ? `PROJ ${projected.toFixed(1)}` : miniStatLine(starter).toUpperCase();
+
+  return (
+    <>
+      <span>{era}</span>
+      <span className="hidden sm:inline"> · </span>
+      <span className="block sm:inline" data-simple-form-mobile-break-before-proj>{detail}</span>
+    </>
+  );
 }
 
 function simpleCardTint(score: number, accentColor: string) {

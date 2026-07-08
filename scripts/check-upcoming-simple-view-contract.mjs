@@ -90,7 +90,15 @@ assert(simpleBoard.includes('data-simple-starter-card-back-source="heat-band"') 
 assert(simpleBoard.includes("data-simple-portrait-bleed") && !simpleBoard.includes("lg:w-[calc(100)]"), "Simple portrait panels must retain portrait bleed hooks without invalid width utilities.");
 assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("miniStatLine(starter)") && simpleBoard.includes("Starter TBD"), "Simple starter frames must render compact card-back stats and honest TBD placeholders.");
 assert(simpleBoard.includes("data-simple-form-promoted-value") && simpleBoard.includes("text-[26px]") && simpleBoard.includes("formBandValueColor(formBand, qualifiedSample)") && !simpleBoard.includes("data-simple-form-promoted-whisper"), "Simple form strips must promote form GS+ beside the name without repeating the heat-band whisper under the score.");
-assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("formMicroLine(starter)") && simpleBoard.includes("PROJ ${projected.toFixed(1)}"), "Simple form strips must move L5 ERA and PROJ into the remaining 12px microline.");
+assert(
+  simpleBoard.includes("data-simple-mini-stat-line") &&
+    simpleBoard.includes("data-simple-form-microline-text={formMicroLine(starter)}") &&
+    simpleBoard.includes("function SimpleFormMicroLine") &&
+    simpleBoard.includes('className="hidden sm:inline"> · </span>') &&
+    simpleBoard.includes('className="block sm:inline" data-simple-form-mobile-break-before-proj') &&
+    simpleBoard.includes("PROJ ${projected.toFixed(1)}"),
+  "Simple form strips must keep desktop L5 ERA dot PROJ inline while forcing a mobile line break before PROJ.",
+);
 assert(headshot.includes('starterStatus === "tbd" ? "TBD"') && headshot.includes("{fallbackLabel}"), "TBD starter headshot placeholders must render TBD instead of initials like TN.");
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("data-simple-name-band-label") && simpleBoard.includes("simpleStarterBandLabel(starter, formBand)") && simpleBoard.includes("text-[12px] uppercase tracking-[0.12em] text-zinc-500"), "Simple starter names must show the heat-band whisper label underneath the pitcher name on mobile and desktop.");
