@@ -1,12 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { RawGsPlusValueLine } from "@/components/gs-plus-score";
 import { Headshot } from "@/components/headshot";
 import { ShareStartButton } from "@/components/share-start-button";
 import { SiteHeader } from "@/components/site-header";
 import { rankBestStarts } from "@/lib/best-starts-ranking";
-import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getArchivedSeasonStartSummaries, getHomeSlateDate } from "@/lib/data/start-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { formatStartLine } from "@/lib/format";
@@ -14,7 +12,7 @@ import { rawGameScorePlus } from "@/lib/gs-plus-raw";
 import { pitcherHref, sourceParams, startHref, startPath } from "@/lib/routes";
 import { formatMonth, largeImageTwitter, websiteOpenGraph } from "@/lib/seo";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
-import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
+import type { StartSummary } from "@/lib/types";
 
 type BestStartsPageProps = {
   params: Promise<{ month: string }>;
@@ -43,10 +41,7 @@ export default async function BestStartsMonthPage({ params }: BestStartsPageProp
   const season = safeMonth.slice(0, 4);
   const starts = rankBestStarts((await getArchivedSeasonStartSummaries(season)).filter((start) => start.date.startsWith(`${safeMonth}-`)));
   const topStart = starts[0] ?? null;
-  const [heroHighlight, heroImage] = await Promise.all([
-    resolveSummaryHighlight(topStart),
-    topStart ? resolveTopPerformerImage(topStart, null) : Promise.resolve(null),
-  ]);
+  const heroImage = topStart ? await resolveTopPerformerImage(topStart, null) : null;
   const monthStats = monthStatCells(starts);
   const months = seasonMonths(today);
   const activeIndex = months.indexOf(safeMonth);
@@ -74,7 +69,7 @@ export default async function BestStartsMonthPage({ params }: BestStartsPageProp
 
         {topStart ? (
           <section className="py-5">
-            <MonthHero start={topStart} monthName={monthName} highlight={heroHighlight} imageUrl={heroImage?.imageUrl ?? topStart.pitcher.headshotUrl} />
+            <MonthHero start={topStart} monthName={monthName} imageUrl={heroImage?.imageUrl ?? topStart.pitcher.headshotUrl} />
           </section>
         ) : (
           <section className="rounded border border-white/10 bg-[#101014] p-6 text-sm text-zinc-400">No settled starts this month yet.</section>
@@ -109,7 +104,7 @@ export default async function BestStartsMonthPage({ params }: BestStartsPageProp
   );
 }
 
-function MonthHero({ start, monthName, highlight, imageUrl }: { start: StartSummary; monthName: string; highlight: FeaturedStartHighlight | null; imageUrl: string }) {
+function MonthHero({ start, monthName, imageUrl }: { start: StartSummary; monthName: string; imageUrl: string }) {
   const color = scoreBandColor(start.gameScorePlus);
   return (
     <article className="overflow-hidden rounded border border-amber-300/35 bg-[#101014] shadow-[inset_3px_0_0_var(--level-onfire)]" data-best-starts-month-hero="true">
@@ -138,11 +133,6 @@ function MonthHero({ start, monthName, highlight, imageUrl }: { start: StartSumm
           <ScorePanel start={start} />
         </div>
       </div>
-      {highlight ? (
-        <div className="border-t border-white/10 p-4">
-          <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
-        </div>
-      ) : null}
     </article>
   );
 }
@@ -229,10 +219,6 @@ function MonthPager({ previousMonth, nextMonth }: { previousMonth: string | null
       {nextMonth ? <Link href={`/best-starts/${nextMonth}`} className="rounded border border-white/10 px-3 py-2 text-zinc-300 hover:border-amber-300/50">Next</Link> : <span className="rounded border border-white/5 px-3 py-2 text-zinc-700">Next</span>}
     </div>
   );
-}
-
-async function resolveSummaryHighlight(start: StartSummary | null) {
-  return start ? resolveFeaturedStartHighlight(start) : null;
 }
 
 function monthStatCells(starts: StartSummary[]) {

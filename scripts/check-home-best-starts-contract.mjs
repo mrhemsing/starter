@@ -338,6 +338,14 @@ assert(
 );
 
 assert(
+  !monthlyBestStartsPage.includes("FeaturedStartHighlightEmbed") &&
+    !monthlyBestStartsPage.includes("resolveFeaturedStartHighlight") &&
+    !monthlyBestStartsPage.includes("heroHighlight") &&
+    monthlyBestStartsPage.includes("topStart ? await resolveTopPerformerImage(topStart, null) : null"),
+  "monthly best-starts archive pages must keep the hero image-only and avoid rendering video highlight embeds",
+);
+
+assert(
   !homeDeferredSections.includes("HomeDeferredFallback") &&
     !homeDeferredSections.includes("Loading best starts") &&
     !homeDeferredSections.includes('aria-busy="true"'),
