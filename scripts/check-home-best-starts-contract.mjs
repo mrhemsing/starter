@@ -52,7 +52,7 @@ assert(
   bestStartsService.includes('import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";') &&
     bestStartsService.includes("weeklyHighlight") &&
     bestStartsService.includes("monthlyHighlight") &&
-    bestStartsService.includes("highlightUrl: image?.playUrl ?? highlight?.watchUrl ?? null"),
+    bestStartsService.includes("highlightUrl: highlight?.watchUrl ?? image?.playUrl ?? null"),
   "home best-starts service must include weekly, monthly, and season top-start highlight payload fields",
 );
 
@@ -71,6 +71,7 @@ assert(
     featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
     featuredHighlightService.includes('"2026-06-30-wsh-bos-676917": "C-uwf39UDjw"') &&
     featuredHighlightService.includes('"2026-07-05-min-nyy-657746": "tMUgTt5EwLQ"') &&
+    featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );

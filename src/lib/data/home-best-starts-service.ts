@@ -91,7 +91,7 @@ async function hydrateSeasonTopStarts(starts: StartSummary[], anchorDate: string
         start,
         rawScore: rawGameScorePlus(start.gameScorePlusBreakdown),
         image,
-        highlightUrl: image?.playUrl ?? highlight?.watchUrl ?? null,
+        highlightUrl: highlight?.watchUrl ?? image?.playUrl ?? null,
         isNew: daysBetween(start.date, anchorDate) <= 2,
       };
     }),

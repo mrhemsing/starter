@@ -46,6 +46,7 @@ assert(
     rankedService.includes("resolveFeaturedStartHighlight(state.start),") &&
     homeDeferredSections.includes("highlight={view.highlight}") &&
     featuredHighlightService.includes('"2026-06-25-hou-det-837227": "fSu5y2kmChE"') &&
+    featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
     featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes("readSupabaseFeaturedStartHighlight(start.id)") &&
@@ -550,13 +551,13 @@ assert(
     imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
     imageService.includes("clean: Boolean(autoPromotion),") &&
     imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
-    imageService.includes("const hasTrustedMlbPitcherThumbnail = isTrustedMlbPitcherHighlightThumbnail(item, start);") &&
-    imageService.includes("if (!isPitcherNamed || (!hasTrustedPhotoCredit && !hasTrustedMlbPitcherThumbnail)) return null;") &&
+    imageService.includes("if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;") &&
     imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
     imageService.includes("return { focalPoint: { x: 62, y: 50 } };") &&
-    imageService.includes("function isTrustedMlbPitcherHighlightThumbnail(item: MlbGameContentItem, start: StartSummary)") &&
+    !imageService.includes("isTrustedMlbPitcherHighlightThumbnail") &&
     imageService.includes('text.includes(fullName)') &&
     imageService.includes("if (value.clean !== true) return null;") &&
+    imageService.includes('value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "")') &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
     imageService.includes("function cachedActionFocalPoint(value: CachedMlbGameContentActionImage)") &&
     imageService.includes("focalXOverride") &&
@@ -582,27 +583,23 @@ assert(
     imageService.includes("function isPhotoCreditImageTitle(title: string)") &&
     imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
-    imageService.includes("function isSinglePitchMlbActionFrame(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function pitcherActionHighlightPattern()") &&
     imageService.includes("function singlePitchActionFramePattern()") &&
-    imageService.includes("function broadSummaryMlbTitlePattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&
     imageService.includes('/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/') &&
     !imageService.includes('/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/') &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
     imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
-    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start) || isPitcherActionHighlight(item, start);') &&
+    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "");') &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
     imageService.includes("if (isPitcherActionHighlight(item, start)) score += 30;") &&
     imageService.includes("pitcherActionHighlightPattern().test(text)") &&
     imageService.includes("singlePitchActionFramePattern().test(text)") &&
-    imageService.includes("!broadSummaryMlbTitlePattern().test(text)") &&
     imageService.includes('${item.description ?? ""}') &&
     imageService.includes("first k|first strikeout|called out on strikes|strikes out swinging|swinging strike") &&
-    imageService.includes("dominant start|quality start|outing|game highlights?|win|strikes? out \\d+|fans? \\d+") &&
     imageService.includes("fuel(?:s|ed)?\\b.*\\bwin") &&
     imageService.includes("gettyimages|imagn|usa today|reuters") &&
     imageService.includes("^ap\\d+") &&

@@ -131,6 +131,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
     source: "action",
     imageUrl: normalizeMlbImageUrl(cut.src),
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
+    attribution: item.image?.title,
     objectPosition,
     mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
     focalPoint: autoPromoted?.focalPoint ?? null,
@@ -200,19 +201,14 @@ function isPhotoCreditImageTitle(title: string) {
 }
 
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
-  return isPhotoCreditImageTitle(item.image?.title ?? "") || isSinglePitchMlbActionFrame(item, start) || isPitcherActionHighlight(item, start);
+  void start;
+  return isPhotoCreditImageTitle(item.image?.title ?? "");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
-}
-
-function isSinglePitchMlbActionFrame(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.slug ?? ""}`.toLowerCase();
-  const last = lastName(start.pitcher.name).toLowerCase();
-  return text.includes(last) && singlePitchActionFramePattern().test(text) && !broadSummaryMlbTitlePattern().test(text);
 }
 
 function pitcherActionHighlightPattern() {
@@ -223,10 +219,6 @@ function singlePitchActionFramePattern() {
   return /\b(first k|first strikeout|called out on strikes|strikes out swinging|swinging strike)\b/i;
 }
 
-function broadSummaryMlbTitlePattern() {
-  return /\b(dominant start|quality start|outing|game highlights?|win|strikes? out \d+|fans? \d+)\b|\d+\s*-\s*\d+/i;
-}
-
 function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary): { focalPoint: { x: number; y: number } } | null {
   const { item, score } = candidate;
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
@@ -234,26 +226,11 @@ function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCan
   const last = lastName(start.pitcher.name).toLowerCase();
   const isPitcherNamed = text.includes(fullName) || text.includes(last);
   const hasTrustedPhotoCredit = isPhotoCreditImageTitle(item.image?.title ?? "");
-  const hasTrustedMlbPitcherThumbnail = isTrustedMlbPitcherHighlightThumbnail(item, start);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
-  if (!isPitcherNamed || (!hasTrustedPhotoCredit && !hasTrustedMlbPitcherThumbnail)) return null;
+  if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;
   if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;
   if (score < 125 && !hasPitchingActionCopy) return null;
   return { focalPoint: { x: 62, y: 50 } };
-}
-
-function isTrustedMlbPitcherHighlightThumbnail(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.slug ?? ""}`.toLowerCase();
-  const fullName = start.pitcher.name.toLowerCase();
-  const cut = selectMlbImageCut(item);
-  return (
-    item.type === "video" &&
-    !!cut?.src &&
-    text.includes(fullName) &&
-    pitcherActionHighlightPattern().test(text) &&
-    !nonActionMlbContentPattern().test(text) &&
-    !nonActionMlbTitlePattern().test(text)
-  );
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {
@@ -295,6 +272,7 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   const value = JSON.parse(body) as CachedMlbGameContentActionImage;
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
+  if (value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "")) return null;
   if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;
   if (value.focalX !== undefined && value.focalX !== null && !isValidFocalCoordinate(value.focalX)) return null;
   if (value.focalY !== undefined && value.focalY !== null && !isValidFocalCoordinate(value.focalY)) return null;

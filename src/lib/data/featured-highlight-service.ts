@@ -18,6 +18,7 @@ const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-06-29-det-nyy-663554": "Z1ZawNQNDh8",
   "2026-06-30-wsh-bos-676917": "C-uwf39UDjw",
   "2026-07-05-min-nyy-657746": "tMUgTt5EwLQ",
+  "2026-07-07-phi-cin-554430": "dq9meO_64Fk",
 };
 
 type CachedResolution = {
