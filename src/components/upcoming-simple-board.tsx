@@ -226,7 +226,6 @@ function SimpleIdentityStrip({
 function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightStarter; formBand: FormTier | null; align: "away" | "home" }) {
   const qualifiedSample = Boolean(formBand);
   const valueColor = formBandValueColor(formBand, qualifiedSample);
-  const whisper = simpleStarterBandLabel(starter, formBand);
   const value = typeof starter.rgs === "number" ? starter.rgs.toFixed(1) : "--";
 
   return (
@@ -239,7 +238,6 @@ function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightSt
       data-simple-form-line-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
     >
       <p className="font-serif text-[26px] font-black leading-none tabular-nums" style={{ color: valueColor }} data-simple-form-promoted-value>{value}</p>
-      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-form-promoted-whisper>{whisper}</p>
     </div>
   );
 }
