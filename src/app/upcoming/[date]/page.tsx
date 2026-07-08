@@ -77,6 +77,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
   ]);
   const resolvedDate = upcoming.date;
   const visibleUpcoming = { ...upcoming, games: filterAndSortGames(upcoming.games, controls) };
+  const showMatchupBoard = visibleUpcoming.games.length > 0;
   const jsonLd = jsonLdForUpcomingDay(visibleUpcoming);
 
   return (
@@ -118,23 +119,25 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
             </div>
           </header>
         </div>
-        <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
-          <UpcomingViewModePanels
-            detailed={(
-              <TonightsMustWatch
-                tonight={visibleUpcoming}
-                fullSlateHref={upcomingWeekHref(resolvedDate)}
-                fullSlateLabel="Week view"
-                fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
-                eyebrow={formatUpcomingSectionDate(resolvedDate)}
-                title="Matchup Board"
-                rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
-                compactTopPadding
-              />
-            )}
-            simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={controls.sort} contextWriteups={contextWriteups} />}
-          />
-        </PendingRegion>
+        {showMatchupBoard ? (
+          <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="transition data-[route-pending=true]:opacity-70">
+            <UpcomingViewModePanels
+              detailed={(
+                <TonightsMustWatch
+                  tonight={visibleUpcoming}
+                  fullSlateHref={upcomingWeekHref(resolvedDate)}
+                  fullSlateLabel="Week view"
+                  fullSlateAriaLabel={`View week of ${formatUpcomingDate(resolvedDate)}`}
+                  eyebrow={formatUpcomingSectionDate(resolvedDate)}
+                  title="Matchup Board"
+                  rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
+                  compactTopPadding
+                />
+              )}
+              simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={controls.sort} contextWriteups={contextWriteups} />}
+            />
+          </PendingRegion>
+        ) : null}
       </main>
     </UpcomingViewModeProvider>
   );

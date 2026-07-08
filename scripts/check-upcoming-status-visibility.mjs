@@ -28,6 +28,13 @@ assert(!upcomingPage.includes("All games") && !upcomingPage.includes("Pregame on
 assert(!upcomingPage.includes("showStatusFilter") && !upcomingPage.includes("summarizeUpcomingStatuses"), "day Upcoming controls must not revive the status filter plumbing");
 assert(upcomingPage.includes('data-control-status-filter-visible="false"'), "Upcoming controls must expose that the status filter is removed for DOM checks");
 assert(upcomingPage.includes("jsonLdForUpcomingDay(visibleUpcoming)"), "day Upcoming JSON-LD must match the visible filtered slate");
+assert(upcomingPage.includes("const showMatchupBoard = visibleUpcoming.games.length > 0;"), "day Upcoming must hide the Matchup Board when no active upcoming matchups remain.");
+assert(
+  upcomingPage.includes("{showMatchupBoard ? (") &&
+    upcomingPage.includes('<PendingRegion id="upcoming-board"') &&
+    upcomingPage.includes(") : null}"),
+  "day Upcoming board region must only render when active matchup cards are available.",
+);
 assert(upcomingPage.includes('data-control-status-summary="removed"'), "Upcoming controls must expose removed status summary telemetry for DOM checks");
 assert(upcomingPage.includes('data-upcoming-control-row style={{ marginLeft: "-4px" }}'), "Upcoming control row must keep the requested -4px inline margin.");
 assert(!upcomingPage.includes("<details\n      className=\"mt-5"), "Upcoming controls must not collapse filters and sort behind an expandable details row");
