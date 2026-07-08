@@ -93,11 +93,6 @@ function UpcomingSimpleCard({
         data-simple-heat-strip-away-color={awayHeatColor}
         data-simple-heat-strip-home-color={homeHeatColor}
       />
-      {showRankSlot && hasNamedStarterMatchup ? (
-        <span className="pointer-events-none absolute -right-2 -top-5 font-serif text-[96px] font-black leading-none text-white opacity-[0.05] sm:text-[110px]" aria-hidden="true" data-simple-ghost-rank>
-          {rank}
-        </span>
-      ) : null}
       <div
         className="relative z-10 flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5"
         data-simple-header-band
