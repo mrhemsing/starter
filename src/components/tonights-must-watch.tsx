@@ -354,9 +354,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
         </div>
 
         <div className={`mt-5 grid gap-4 ${showHookSpine ? "lg:grid-cols-[minmax(0,1fr)_minmax(230px,0.78fr)_minmax(0,1fr)]" : "lg:grid-cols-2"} lg:items-stretch`} data-watch-hook-visible={showHookSpine ? "true" : "false"}>
-          <DuelStarterPanel starter={awayStarter} leagueMeanGS={leagueMeanGS} align="away" />
+          <DuelStarterPanel starter={awayStarter} leagueMeanGS={leagueMeanGS} side="away" />
           {showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}
-          <DuelStarterPanel starter={homeStarter} leagueMeanGS={leagueMeanGS} align="home" />
+          <DuelStarterPanel starter={homeStarter} leagueMeanGS={leagueMeanGS} side="home" />
         </div>
 
         <WatchComponentReadout game={game} rankLabel={rankLabel} featured />
@@ -819,23 +819,27 @@ function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
   }, 0);
 }
 
-function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightStarter; leagueMeanGS: number; align: "away" | "home" }) {
+function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightStarter; leagueMeanGS: number; side: "away" | "home" }) {
   const name = starter.name ?? "TBD";
   const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : null;
   const accent = starterFormAccent(starter);
   const teamColor = teamAccentColor(starter.team);
+  const isHome = side === "home";
 
   return (
     <div
-      className={`relative overflow-hidden rounded border border-white/10 bg-black/25 p-4 ${align === "home" ? "lg:text-right" : ""}`}
+      className={`relative flex h-full flex-col overflow-hidden rounded border border-white/10 bg-black/25 p-4 ${isHome ? "lg:text-right" : ""}`}
       style={{
         borderColor: `${accent.color}${accent.source === "form-band" ? "66" : "33"}`,
-        boxShadow: `inset ${align === "home" ? "-" : ""}4px 0 0 ${accent.color}, 0 0 28px rgb(${accent.rgb} / 0.10)`,
-        background: `linear-gradient(${align === "home" ? "270deg" : "90deg"}, rgb(${accent.rgb} / 0.12), rgba(0,0,0,0.25) 48%)`,
+        boxShadow: `inset ${isHome ? "-" : ""}4px 0 0 ${accent.color}, 0 0 28px rgb(${accent.rgb} / 0.10)`,
+        background: `linear-gradient(${isHome ? "270deg" : "90deg"}, rgb(${accent.rgb} / 0.12), rgba(0,0,0,0.25) 48%)`,
       }}
       role="group"
       aria-label={starterBlockAriaLabel(starter)}
       data-starter-layout="duel"
+      data-starter-mirrored-component="DuelStarterPanel"
+      data-starter-mirror-side={side}
+      data-starter-baseline-grid="true"
       data-starter-side={starter.side}
       data-starter-pitcher-id={starter.pitcherId ?? "tbd"}
       data-starter-name={starter.name ?? "TBD"}
@@ -861,13 +865,13 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
       {...starterWorkloadData(starter)}
       {...starterDriverData(starter)}
     >
-      <div className={`flex gap-3 sm:gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
+      <div className={`flex items-start gap-3 sm:gap-4 ${isHome ? "lg:flex-row-reverse" : ""}`} data-starter-identity-unit data-starter-identity-direction={isHome ? "row-reverse" : "row"}>
         <StarterHeadshot starter={starter} size="duel" />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">
             <MetaLine
               segments={[
-                <span key="team" className={`inline-flex items-center gap-1.5 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
+                <span key="team" className={`inline-flex items-center gap-1.5 ${isHome ? "lg:flex-row-reverse" : ""}`}>
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamColor }} aria-hidden="true" />
                   {starter.team}
                 </span>,
@@ -878,12 +882,16 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           <h4 className="pitcher-name mt-1 min-w-0 font-serif text-2xl font-bold leading-tight text-zinc-50 lg:text-3xl">
             {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
           </h4>
-          <ProbableConfidenceChip starter={starter} align={align} />
-          <LikelyOpenerBadge starter={starter} align={align} />
-          <StarterRoleContextLine starter={starter} align={align} />
+          <ProbableConfidenceChip starter={starter} align={side} />
+          <LikelyOpenerBadge starter={starter} align={side} />
+          <StarterRoleContextLine starter={starter} align={side} />
+        </div>
+      </div>
+      <div className={`mt-3 grid flex-1 grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_1fr] gap-2 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid>
+        <div className="min-h-16" data-starter-baseline-row="form">
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
-            <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
-              <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
+            <div className={`flex max-h-16 flex-wrap items-start gap-2 overflow-hidden ${isHome ? "lg:justify-end" : ""}`} data-starter-chip-wrap-row>
+              <div className={`flex flex-col gap-1 ${isHome ? "lg:items-end" : "items-start"}`}>
                 <StarterFormScoreLine starter={starter} />
                 {starter.trend && starter.deltaForm !== undefined ? (
                   <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
@@ -892,22 +900,32 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
                 ) : null}
               </div>
               <StarterStatusChips starter={starter} />
-              <FormDriverChips chips={starter.driverChips} limit={3} compact />
+              <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop className={isHome ? "lg:justify-end" : ""} />
             </div>
           ) : (
-            <LimitedStarterLine starter={starter} />
+            <LimitedStarterLine starter={starter} compact align={side} />
           )}
-          <PitcherAvailabilityNote availability={starter.availability} compact className={align === "home" ? "mt-2 lg:ml-auto" : "mt-2"} />
-          <StarterProjectionLine starter={starter} align={align} />
-          <OpponentSplitLine starter={starter} align={align} />
-          <MarketContextLine starter={starter} align={align} />
+        </div>
+        <div data-starter-baseline-row="availability">
+          <PitcherAvailabilityNote availability={starter.availability} compact className={isHome ? "lg:ml-auto" : ""} />
+        </div>
+        <div data-starter-baseline-row="projection">
+          <StarterProjectionLine starter={starter} compact align={side} />
+        </div>
+        <div data-starter-baseline-row="opponent-split">
+          <OpponentSplitLine starter={starter} compact align={side} />
+        </div>
+        <div data-starter-baseline-row="market">
+          <MarketContextLine starter={starter} compact align={side} />
+        </div>
+        <div className="mt-auto flex min-h-[42px] items-end" data-starter-baseline-row="sparkline" data-starter-sparkline-baseline="bottom">
+          {hasStarterSparkForm(starter) ? (
+            <div className="w-full">
+              <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />
+            </div>
+          ) : null}
         </div>
       </div>
-      {hasStarterSparkForm(starter) ? (
-        <div className="mt-3">
-          <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -1279,11 +1297,14 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
   );
 }
 
-function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
+function LimitedStarterLine({ starter, compact = false, align }: { starter: TonightStarter; compact?: boolean; align?: "away" | "home" }) {
+  const rootClass = `${compact ? "" : "mt-3"} text-sm text-zinc-400 ${align === "home" ? "lg:text-right" : ""}`;
+  const chipClass = align === "home" ? "lg:ml-auto" : "";
+
   if (starter.status === "tbd") {
     return (
-      <div className="mt-3 text-sm text-zinc-400" aria-label={starterFallbackAriaLabel(starter)}>
-        <p className="inline-flex items-center rounded border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300">PROVISIONAL</p>
+      <div className={rootClass} aria-label={starterFallbackAriaLabel(starter)}>
+        <p className={`inline-flex items-center rounded border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300 ${chipClass}`}>PROVISIONAL</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500">Starter unconfirmed. Score uses league baseline.</p>
       </div>
     );
@@ -1291,8 +1312,8 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
 
   if (starter.formStatus === "mlb_debut") {
     return (
-      <div className="mt-3 text-sm text-zinc-400">
-        <p className="inline-flex items-center rounded border border-amber-300/40 bg-amber-300/15 px-2 py-1 font-mono text-xs uppercase tracking-[0.14em] text-amber-100" aria-label={starterFallbackAriaLabel(starter)}>MLB DEBUT</p>
+      <div className={rootClass}>
+        <p className={`inline-flex items-center rounded border border-amber-300/40 bg-amber-300/15 px-2 py-1 font-mono text-xs uppercase tracking-[0.14em] text-amber-100 ${chipClass}`} aria-label={starterFallbackAriaLabel(starter)}>MLB DEBUT</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500">First major-league start carries the watch story.</p>
       </div>
     );
@@ -1300,7 +1321,7 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
 
   if (starter.formStatus === "join_gap") {
     return (
-      <div className="mt-3 text-sm text-zinc-400">
+      <div className={rootClass}>
         <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" aria-label={starterFallbackAriaLabel(starter)}>Form pending</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500">Schedule context is live while pitcher form joins.</p>
       </div>
@@ -1308,7 +1329,7 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
   }
 
   return (
-    <div className="mt-3 text-sm text-zinc-400">
+    <div className={rootClass}>
       <StarterFormScoreLine starter={starter} />
       {starter.lastStart ? (
         <p className="mt-1">

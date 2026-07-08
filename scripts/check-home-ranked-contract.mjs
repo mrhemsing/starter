@@ -245,6 +245,18 @@ assert(
 );
 
 assert(
+  mustWatch.includes("function DuelStarterPanel({ starter, leagueMeanGS, side }") &&
+    mustWatch.includes('data-starter-mirrored-component="DuelStarterPanel"') &&
+    mustWatch.includes("data-starter-mirror-side={side}") &&
+    mustWatch.includes('data-starter-identity-unit') &&
+    mustWatch.includes("data-starter-identity-direction={isHome ? \"row-reverse\" : \"row\"}") &&
+    mustWatch.includes('data-starter-stat-baseline-grid') &&
+    mustWatch.includes('data-starter-baseline-row="sparkline"') &&
+    mustWatch.includes('data-starter-sparkline-baseline="bottom"'),
+  "detailed Must-Watch starter panels must render from one side-prop mirror component with a shared baseline grid and matched sparkline baseline",
+);
+
+assert(
   mustWatch.includes('data-hook-confidence-chip-placement="below-reason"') &&
     mustWatch.includes('<p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>') &&
     mustWatch.includes('<div className="mt-3 flex justify-center" data-hook-confidence-chip-placement="below-reason">') &&
