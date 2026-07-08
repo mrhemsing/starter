@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, TrendChip, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { hasQualifiedStarterFormSample, LimitedSampleFormChip } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
@@ -880,7 +881,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, align }: { starter: TonightSt
           <ProbableConfidenceChip starter={starter} align={align} />
           <LikelyOpenerBadge starter={starter} align={align} />
           <StarterRoleContextLine starter={starter} align={align} />
-          {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
+          {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
             <div className={`mt-3 flex flex-wrap items-center gap-2 ${align === "home" ? "lg:justify-end" : ""}`}>
               <div className={`flex flex-col gap-1 ${align === "home" ? "lg:items-end" : "items-start"}`}>
                 <StarterFormScoreLine starter={starter} accentColor={accent.color} />
@@ -959,7 +960,7 @@ function formClashData(away: TonightStarter, home: TonightStarter) {
 }
 
 function hasStarterSparkForm(starter: TonightStarter): starter is TonightStarter & { spark: number[]; tier: FormTier } {
-  return starter.formStatus === "ok" && Boolean(starter.spark?.length && starter.tier);
+  return hasQualifiedStarterFormSample(starter) && Boolean(starter.spark?.length && starter.tier);
 }
 
 function starterSparkCountValue(starter: TonightStarter) {
@@ -1242,7 +1243,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         ) : null}
       </div>
       <div className="ml-auto text-right">
-        {starter.formStatus === "ok" && starter.rgs !== undefined && starter.tier ? (
+        {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
           <>
             <StarterFormScoreLine starter={starter} accentColor={accent.color} />
             {starter.trend && starter.deltaForm !== undefined ? (
@@ -1251,6 +1252,8 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
               </span>
             ) : null}
           </>
+        ) : starter.formStatus === "ok" ? (
+          <LimitedSampleFormChip value={starter.rgs} compact className="ml-auto" />
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
             {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
@@ -1306,7 +1309,7 @@ function LimitedStarterLine({ starter }: { starter: TonightStarter }) {
 
   return (
     <div className="mt-3 text-sm text-zinc-400">
-      <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>Limited form sample</p>
+      <LimitedSampleFormChip value={starter.rgs} className="text-xs" />
       {starter.lastStart ? (
         <p className="mt-1">
           <MetaLine

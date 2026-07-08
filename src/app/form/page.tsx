@@ -7,6 +7,7 @@ import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
 import { FormSparkline, tierLabel } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { LIMITED_SAMPLE_FORM_LABEL } from "@/components/limited-sample-form-chip";
 import { HeatCheckEscapeClear } from "@/components/heat-check-escape-clear";
 import { HeatCheckFilterLink } from "@/components/heat-check-filter-link";
 import { HeatCheckFilterWarmup } from "@/components/heat-check-filter-warmup";
@@ -1022,7 +1023,7 @@ function FormLeaderboardRow({
   const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;
   const fullWindow = pitcher.windowCount >= window;
   const thermalBand = seasonView ? qualityTier.key : fullWindow && !limitedSampleRow ? pitcher.tier : null;
-  const rankDetailLabel = limitedSampleRow ? "Limited" : seasonView ? qualityTier.label : tierLabel(pitcher.tier);
+  const rankDetailLabel = limitedSampleRow ? LIMITED_SAMPLE_FORM_LABEL : seasonView ? qualityTier.label : tierLabel(pitcher.tier);
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
   const score = seasonView ? Math.round(pitcher.bgs) : Math.round(pitcher.rgs);
   const todayStart = startContext?.get(pitcher.pitcherId) ?? null;

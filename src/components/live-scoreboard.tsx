@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CtaArrow } from "@/components/cta-arrow";
 import { Headshot } from "@/components/headshot";
+import { hasQualifiedStarterFormSample, LimitedSampleFormChip } from "@/components/limited-sample-form-chip";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
-import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
+import { HEAT_BANDS, qualityTierOf, watchTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { pitcherHref, rankedStartsPath, sourceParams, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus, formatWatchScore } from "@/lib/score-display";
@@ -756,7 +757,7 @@ function PregameStarterBlock({ starter, align }: { starter: TonightStarter; alig
   return (
     <div className={`rounded border border-white/10 bg-black/25 p-4 ${align === "home" ? "lg:text-right" : ""}`} data-live-pregame-starter={starter.side} data-starter-pitcher-id={starter.pitcherId ?? "tbd"}>
       <div className={`flex items-center gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
-        <Headshot playerId={starter.pitcherId} name={name} team={starter.team} size="marquee" band={starter.tier ?? null} sampleSufficient={starter.formStatus === "ok"} decorative={!href} />
+        <Headshot playerId={starter.pitcherId} name={name} team={starter.team} size="marquee" band={starter.tier ?? null} sampleSufficient={hasQualifiedStarterFormSample(starter)} decorative={!href} />
         <div className="min-w-0">
           {href ? (
             <Link href={href} className="pitcher-name block font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
@@ -786,14 +787,16 @@ function PregameStarterBlock({ starter, align }: { starter: TonightStarter; alig
 }
 
 function PregameFormChip({ starter }: { starter: TonightStarter }) {
-  if (starter.formStatus === "ok" && typeof starter.rgs === "number") {
-    const tier = starter.tier ? qualityTierOf(starter.rgs) : null;
+  if (hasQualifiedStarterFormSample(starter) && typeof starter.rgs === "number") {
+    const tier = HEAT_BANDS.find((candidate) => candidate.key === starter.tier) ?? null;
     return (
       <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: tier?.color ?? "#d4d4d8" }}>
-        Form {starter.rgs.toFixed(1)}{starter.tier ? ` · ${starter.tier}` : ""}
+        {tier?.label ?? "Form"} {starter.rgs.toFixed(1)}
       </span>
     );
   }
+
+  if (starter.formStatus === "ok") return <LimitedSampleFormChip value={starter.rgs} compact />;
 
   const label = starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited";
   return (

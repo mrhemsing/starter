@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormSparkline, TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
+import { hasQualifiedFormSummarySample, LimitedSampleFormChip, LIMITED_SAMPLE_FORM_COLOR, LIMITED_SAMPLE_FORM_LABEL } from "@/components/limited-sample-form-chip";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
 import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";
@@ -223,7 +224,7 @@ function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
           <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-3 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:items-center">
             <div className="min-w-0">
               <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team} · Form {Math.round(entry.rgs)}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team} · {hasQualifiedFormSummarySample(entry) ? `${tierLabel(entry.tier)} ${Math.round(entry.rgs)}` : `${LIMITED_SAMPLE_FORM_LABEL} ${Math.round(entry.rgs)}`}</p>
             </div>
             <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
           </Link>
@@ -299,16 +300,17 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
     ? `Last GS+ ${entry.lastStart.gsPlus} vs ${entry.lastStart.opp} / ${formatStartLine({ inningsPitched: entry.lastStart.ip, hits: entry.lastStart.h, earnedRuns: entry.lastStart.er, walks: entry.lastStart.bb, strikeouts: entry.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
   const band = HEAT_BANDS.find((candidate) => candidate.key === entry.tier);
-  const bandColor = band?.color ?? "#fbbf24";
+  const qualifiedSample = hasQualifiedFormSummarySample(entry);
+  const bandColor = qualifiedSample ? band?.color ?? "#fbbf24" : LIMITED_SAMPLE_FORM_COLOR;
 
   return (
     <article className="grid gap-3 rounded border border-l-4 border-white/10 bg-[#101014] p-4 sm:grid-cols-[minmax(0,1fr)_140px] lg:grid-cols-[minmax(0,1fr)_150px_170px]" style={{ borderLeftColor: bandColor }}>
       <div className="grid min-w-0 grid-cols-[52px_minmax(0,1fr)] gap-3">
-        <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok"} decorative className="ml-1" />
+        <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok" && qualifiedSample} decorative className="ml-1" />
         <div className="min-w-0">
           <Link href={pitcherHref(entry, sourceParams("watchlist"))} className="block min-w-0">
             <h2 className="truncate font-serif text-2xl font-bold leading-tight text-zinc-50">{entry.name}</h2>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {tierLabel(entry.tier)} · {entry.windowCount} starts</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {qualifiedSample ? tierLabel(entry.tier) : LIMITED_SAMPLE_FORM_LABEL} · {entry.windowCount} starts</p>
           </Link>
           <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
           <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
@@ -321,8 +323,12 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
       <div className="min-w-0">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Form</p>
         <div className="flex items-end gap-2">
-          <p className={`font-serif text-5xl font-bold leading-none ${tierTextClass(entry.tier)}`}>{Math.round(entry.rgs)}</p>
-          <span className="mb-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">Form</span>
+          <p className={`font-serif text-5xl font-bold leading-none ${qualifiedSample ? tierTextClass(entry.tier) : "text-zinc-300"}`}>{Math.round(entry.rgs)}</p>
+          {qualifiedSample ? (
+            <span className="mb-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{tierLabel(entry.tier)}</span>
+          ) : (
+            <LimitedSampleFormChip value={entry.rgs} compact className="mb-1" />
+          )}
         </div>
         <div className="mt-5"><TrendChip summary={entry} compact /></div>
       </div>

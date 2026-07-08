@@ -1,4 +1,5 @@
 import { Headshot } from "@/components/headshot";
+import { hasQualifiedStarterFormSample, limitedSampleFormText, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
@@ -135,7 +136,7 @@ function SimpleStarter({
   orientation: string;
   align: "away" | "home";
 }) {
-  const formBand = starter.formStatus === "ok" ? starter.tier ?? null : null;
+  const formBand = hasQualifiedStarterFormSample(starter) ? starter.tier ?? null : null;
   const name = starter.name ?? `TBD ${starter.team}`;
   const teamColor = starterTeamColor(starter);
   const heatColor = starterHeatColor(starter, formBand);
@@ -185,8 +186,9 @@ function SimpleStarter({
           className="inline-flex w-full flex-col items-center justify-center rounded border px-1.5 py-1 text-center font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)] sm:w-auto sm:flex-row sm:gap-1"
           style={formChipStyle(starter, formBand)}
           data-simple-form-chip
-          data-form-band={formBand ?? starter.formStatus}
+          data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
           data-simple-form-chip-color={heatColor}
+          data-simple-form-chip-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
         >
           <SimpleFormChipLabel starter={starter} formBand={formBand} />
         </p>
@@ -333,11 +335,10 @@ function heatBandLabel(band: FormTier) {
 function SimpleFormChipLabel({ starter, formBand }: { starter: TonightStarter; formBand: FormTier | null }) {
   if (starter.status === "tbd") return <span className="whitespace-nowrap">TBD</span>;
   if (starter.formStatus === "mlb_debut") return <span className="whitespace-nowrap">MLB DEBUT</span>;
-  const label = formBand ? heatBandLabel(formBand) : "Form";
-  const value = formatFormValue(starter, formBand);
+  const value = formBand ? formatFormValue(starter, formBand) : limitedSampleFormText(starter.rgs);
   return (
     <>
-      <span className="whitespace-nowrap">{label}</span>
+      {formBand ? <span className="whitespace-nowrap">{heatBandLabel(formBand)}</span> : null}
       <span className="whitespace-nowrap">{value}</span>
     </>
   );
@@ -345,11 +346,11 @@ function SimpleFormChipLabel({ starter, formBand }: { starter: TonightStarter; f
 
 function starterHeatColor(starter: TonightStarter, band: FormTier | null) {
   if (starter.formStatus === "mlb_debut") return "#FBBF24";
-  if (!band) return "#888780";
+  if (!band) return LIMITED_SAMPLE_FORM_COLOR;
   return HEAT_BANDS.find((candidate) => candidate.key === band)?.color ?? "#888780";
 }
 
-function starterHeatPanelColor(starter: TonightStarter, band: FormTier | null = starter.formStatus === "ok" ? starter.tier ?? null : null) {
+function starterHeatPanelColor(starter: TonightStarter, band: FormTier | null = hasQualifiedStarterFormSample(starter) ? starter.tier ?? null : null) {
   if (starter.formStatus === "mlb_debut") return "#FBBF24";
   if (band === "even") return SIMPLE_EVEN_PANEL_COLOR;
   if (!band) return SIMPLE_EVEN_PANEL_COLOR;
