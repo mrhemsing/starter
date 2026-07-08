@@ -242,10 +242,9 @@ function SimpleIdentityStrip({
           <PitcherNameLines name={name} />
         </p>
       )}
-      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-name-band-label>
+      <p className="mt-1 inline-flex items-end gap-2 font-mono text-[12px] uppercase leading-none tracking-[0.12em] text-zinc-500" data-simple-name-band-label data-simple-name-band-label-align="bottom">
         <span className="font-semibold tabular-nums sm:hidden" style={{ color: valueColor }} data-simple-mobile-form-value>{formValue}</span>
-        <span className="sm:hidden" aria-hidden="true"> </span>
-        {bandLabel}
+        <span className="leading-none">{bandLabel}</span>
       </p>
     </div>
   );
