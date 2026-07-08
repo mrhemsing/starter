@@ -100,7 +100,7 @@ function UpcomingSimpleCard({
         data-simple-named-starter-matchup={String(hasNamedStarterMatchup)}
       >
         <div className="flex min-w-0 items-start gap-2 pt-1 font-mono text-[12px] uppercase text-zinc-400" data-simple-header-left>
-          {showRankSlot ? <p className="font-semibold tracking-[0.18em]" data-simple-card-rank>{rankLabelText}</p> : null}
+          {showRankSlot ? <p className={`font-semibold tracking-[0.18em] ${rank === 1 && hasNamedStarterMatchup ? "text-white" : "text-zinc-400"}`} data-simple-card-rank data-simple-card-rank-tone={rank === 1 && hasNamedStarterMatchup ? "lead" : "muted"}>{rankLabelText}</p> : null}
           <p className="tracking-[0.12em]" data-simple-first-pitch>
             <LocalTime value={game.firstPitch} fallback="First pitch" />
           </p>
