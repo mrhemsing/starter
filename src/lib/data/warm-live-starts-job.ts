@@ -1,7 +1,8 @@
-import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";
+import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG, LIVE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
+import { updateNoHitterBidStateFromLiveBoard } from "@/lib/data/no-hitter-alert-service";
 import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";
 import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
@@ -141,18 +142,27 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
       progressState: liveBoard?.slateProgress.state ?? (completion.isFinal ? "all-starts-complete" : activeGames > 0 ? "starts-in-progress" : "pre-first-pitch"),
     }),
   });
+  const noHitterAlerts = liveBoard
+    ? await updateNoHitterBidStateFromLiveBoard(date, liveBoard.rows, startedAt)
+    : { changed: false, activeAlerts: 0, events: 0 };
+  if (noHitterAlerts.changed) {
+    options.revalidateTag?.(LIVE_CACHE_TAG, "max");
+    options.revalidatePath?.("/");
+    options.revalidatePath?.(`/live/${date}`);
+    console.log("warm-live-starts revalidated no-hitter alert surfaces", { date, activeAlerts: noHitterAlerts.activeAlerts, events: noHitterAlerts.events });
+  }
 
   if (activeGames === 0) {
-    console.log("warm-live-starts end", { date, warmed: openingRevalidated, reason: "no-live-or-final-games", openingRevalidated });
+    console.log("warm-live-starts end", { date, warmed: openingRevalidated || noHitterAlerts.changed, reason: "no-live-or-final-games", openingRevalidated, noHitterAlerts });
     return {
-      warmed: openingRevalidated,
+      warmed: openingRevalidated || noHitterAlerts.changed,
       date,
       reason: "no-live-or-final-games",
       liveGames,
       finalGames: completion.finalGames,
       totalGames: completion.totalGames,
       openingRevalidated,
-      revalidated: openingRevalidated,
+      revalidated: openingRevalidated || noHitterAlerts.changed,
     };
   }
 
@@ -260,7 +270,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
     openingRevalidated,
     homeLeaderRevalidated,
     rankedStartsPageWarmed,
-    revalidated: completedStarts.length > 0 || openingRevalidated || homeLeaderRevalidated,
+    revalidated: completedStarts.length > 0 || openingRevalidated || homeLeaderRevalidated || noHitterAlerts.changed,
     durationMs,
     generatedAt: finishedAt.toISOString(),
   };

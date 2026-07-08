@@ -283,6 +283,7 @@ type MlbGameFeedPitchingStats = {
   runs?: number;
   homeRuns?: number;
   baseOnBalls?: number;
+  hitBatsmen?: number;
   strikeOuts?: number;
   numberOfPitches?: number;
   pitchesThrown?: number;
@@ -361,6 +362,9 @@ type MlbGameFeedPlay = {
     pitcher?: {
       id?: number;
     };
+  };
+  result?: {
+    eventType?: string;
   };
   about?: {
     inning?: number;
@@ -1529,6 +1533,8 @@ function readLivePitchingLine(
   if (pitcherMlbId !== starterMlbId) return undefined;
 
   const line = readStartLine(stats);
+  const reachedOnError = countReachedOnErrorForPitcher(payload, pitcherMlbId);
+  if (line && reachedOnError > 0) line.reachedOnError = reachedOnError;
   const status = readLiveLineStatus(payload, starterIsOut, line);
   return {
     gamePk,
@@ -1541,6 +1547,7 @@ function readLivePitchingLine(
     line: line ?? { inningsPitched: 0, hits: 0, earnedRuns: 0, walks: 0, strikeouts: 0, pitches: 0 },
     gameStatus: status,
     starterIsOut,
+    gameFinal: isFinalGameFeedState(payload),
     inningLabel,
   };
 }
@@ -1609,9 +1616,16 @@ function readStartLine(stats: MlbGameFeedPitchingStats): StartLine | undefined {
     ...(typeof stats.runs === "number" ? { runsAllowed: stats.runs } : {}),
     ...(typeof stats.homeRuns === "number" ? { homeRunsAllowed: stats.homeRuns } : {}),
     walks: stats.baseOnBalls ?? 0,
+    ...(typeof stats.hitBatsmen === "number" ? { hitBatters: stats.hitBatsmen } : {}),
     strikeouts: stats.strikeOuts ?? 0,
     pitches: stats.numberOfPitches ?? stats.pitchesThrown ?? 0,
   };
+}
+
+function countReachedOnErrorForPitcher(payload: MlbGameFeedResponse, pitcherMlbId: number) {
+  return (payload.liveData?.plays?.allPlays ?? []).filter((play) => (
+    play.matchup?.pitcher?.id === pitcherMlbId && play.result?.eventType === "field_error"
+  )).length;
 }
 
 function readPitchingDecision(pitcherMlbId: number, payload: MlbGameFeedResponse): MlbCompletedPitchingLine["result"] {

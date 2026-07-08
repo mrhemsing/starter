@@ -72,6 +72,8 @@ export type StartLine = {
   runsAllowed?: number;
   homeRunsAllowed?: number;
   walks: number;
+  hitBatters?: number;
+  reachedOnError?: number;
   strikeouts: number;
   pitches: number;
 };
@@ -674,6 +676,7 @@ export type MlbCompletedPitchingLine = {
 export type MlbLivePitchingLine = MlbCompletedPitchingLine & {
   gameStatus: "live" | "final" | "warming" | "delay";
   starterIsOut: boolean;
+  gameFinal: boolean;
   inningLabel: string | null;
 };
 

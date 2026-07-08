@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
+import { readWatchlistNoHitterWireEvents } from "@/lib/data/no-hitter-alert-service";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getParkContext } from "@/lib/data/run-environment";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
@@ -56,7 +57,7 @@ export type WatchlistLiveEntry = WatchlistEntry & {
 };
 
 export type WatchlistWireEvent = {
-  key: "rest-anomaly" | "two-start-week" | "streak" | "gem" | "blowup" | "headlines";
+  key: "rest-anomaly" | "two-start-week" | "streak" | "gem" | "blowup" | "headlines" | "no-hitter-bid";
   label: string;
   sentence: string | null;
   detectedAt: string;
@@ -160,12 +161,13 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   await rememberWatchlistPitcherIds(pitcherIds);
 
   const today = getHomeSlateDate();
-  const [leaderboard, nextStarts, upcomingStarts, headlineEventsByPitcher, liveBoard] = await Promise.all([
+  const [leaderboard, nextStarts, upcomingStarts, headlineEventsByPitcher, liveBoard, noHitterEventsByPitcher] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
     getNextStartMap(pitcherIds),
     getUpcomingStartMap(pitcherIds),
     readWatchlistHeadlineEvents(pitcherIds),
     getLiveScoreboard({ date: today }).catch(() => null),
+    readWatchlistNoHitterWireEvents(pitcherIds, today),
   ]);
   const lastStartPercentiles = buildLastStartPercentiles(leaderboard.pitchers);
   const liveRowsByPitcherId = new Map((liveBoard?.rows ?? []).filter(isWatchlistLiveRow).map((row) => [row.pitcherId, row]));
@@ -177,7 +179,10 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
       const rawNextStart = nextStarts.get(pitcher.pitcherId) ?? null;
       const nextStart = rawNextStart ? { ...rawNextStart, daysRest: daysBetween(pitcher.lastStart?.gameDate ?? today, rawNextStart.date) } : null;
       const signalEvents = wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles);
-      const headlineEvents = capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? [], pitcher.name);
+      const headlineEvents = [
+        ...(noHitterEventsByPitcher.get(pitcher.pitcherId) ?? []),
+        ...capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? [], pitcher.name),
+      ];
       return {
         ...pitcher,
         nextStart,

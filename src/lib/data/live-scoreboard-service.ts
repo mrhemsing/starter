@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
+import { readNoHitterBidAlerts, type NoHitterBidAlert } from "@/lib/data/no-hitter-alert-service";
 import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
@@ -33,6 +34,8 @@ export type LiveScoreboardRow = {
   outingStatus: "qualifying" | "provisional" | "short";
   qualityLabel: "Elite" | "Plus" | "Solid" | "Below" | "Poor" | null;
   provisional: boolean;
+  starterIsOut: boolean;
+  gameFinal: boolean;
   inningLabel: string | null;
   pitchCount: number | null;
   pitcherHref: string;
@@ -52,6 +55,7 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   nextSlateTopGame: TonightResponse["games"][number] | null;
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
+  noHitterAlerts: NoHitterBidAlert[];
 };
 
 export type LivePregameSlate = {
@@ -112,6 +116,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   }
 
   const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
+  const noHitterAlerts = await readNoHitterBidAlerts(date, generatedAt);
   const currentPregameWatch = pregame ? await getTonightMustWatch({ date, window: 5 }).catch(() => null) : null;
   const nextSlate = slateComplete || rows.length === 0 ? await resolveNextSlate(date) : null;
   const pregameSlate = currentPregameWatch
@@ -133,6 +138,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     ...startCounts,
     rows,
     leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null,
+    noHitterAlerts,
   };
 }
 
@@ -215,6 +221,8 @@ function buildLiveRow(
   const gsPlus = hasRealLine ? resolveLiveRowGsPlus(status, start, line) : null;
   const pitchCount = hasRealLine ? line.pitches : null;
   const inningLabel = hasRealLine && !liveLine?.starterIsOut ? liveLine?.inningLabel ?? null : null;
+  const starterIsOut = liveLine?.starterIsOut ?? status === "final";
+  const gameFinal = liveLine?.gameFinal ?? status === "final";
 
   return {
     id: `${start.gamePk}-${start.pitcher.mlbId}`,
@@ -235,6 +243,8 @@ function buildLiveRow(
     outingStatus,
     qualityLabel: gsPlus === null ? null : qualityLabel(gsPlus),
     provisional: scoreLabel === "PROV",
+    starterIsOut,
+    gameFinal,
     inningLabel,
     pitchCount,
     pitcherHref: pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("live")),
@@ -345,6 +355,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
       ...cachedBoard,
       rows,
       leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
+      noHitterAlerts: cachedBoard.noHitterAlerts ?? [],
       pregameSlate: cachedBoard.pregameSlate ?? null,
       nextSlateDate: cachedBoard.nextSlateDate ?? null,
       nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
@@ -357,6 +368,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
     ...board,
     rows,
     leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
+    noHitterAlerts: [],
     slateProgress: fallbackSlateProgress(board, date),
     pregameSlate: null,
     nextSlateDate: null,
@@ -366,10 +378,12 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
 }
 
 function normalizeCachedLiveRow(row: LiveScoreboardRow | (Omit<LiveScoreboardRow, "outingStatus"> & { outingStatus?: LiveScoreboardRow["outingStatus"] })): LiveScoreboardRow {
-  if (row.outingStatus) return row as LiveScoreboardRow;
+  if (row.outingStatus && typeof (row as LiveScoreboardRow).starterIsOut === "boolean" && typeof (row as LiveScoreboardRow).gameFinal === "boolean") return row as LiveScoreboardRow;
   return {
     ...row,
     outingStatus: liveOutingStatus(row.status, row.scoreLabel, row.line),
+    starterIsOut: row.status === "final",
+    gameFinal: row.status === "final",
   };
 }
 
