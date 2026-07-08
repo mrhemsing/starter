@@ -47,6 +47,7 @@ export function Headshot({
 }: HeadshotProps) {
   const [failed, setFailed] = useState(false);
   const resolvedBand = sampleSufficient ? band : null;
+  const shouldSuppressThermalBackground = suppressThermalBackground || size === "simple";
   const hasImage = Boolean(playerId) && !failed;
   const width = headshotImageWidth(size);
   const label = alt ?? (team ? `${name}, ${team}` : name);
@@ -56,8 +57,8 @@ export function Headshot({
     <span
       className={`headshot thermal-headshot ${thermalHeadshotClass(resolvedBand)} ${sizeClasses[size]} relative grid shrink-0 place-items-center overflow-hidden rounded-xl border bg-[#15181C] ${className}`}
       style={{
-        borderColor: suppressThermalBackground ? "transparent" : thermalBorderColor(resolvedBand),
-        background: suppressThermalBackground ? "transparent" : thermalBackground(resolvedBand),
+        borderColor: shouldSuppressThermalBackground ? "transparent" : thermalBorderColor(resolvedBand),
+        background: shouldSuppressThermalBackground ? "transparent" : thermalBackground(resolvedBand),
       }}
       data-form-band={resolvedBand ?? "neutral"}
       data-headshot-size={size}
