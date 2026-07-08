@@ -168,7 +168,7 @@ export default async function MethodologyPage() {
             Watch score confidence uses the same recent-start window as form. HIGH means both probable starters have at least {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED} qualified starts in the payload. MEDIUM means one side is below {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED}; LOW means both sides are below {WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED}.
           </p>
           <p className="mt-3 text-base leading-7 text-zinc-400">
-            When a side is below the threshold, that side&apos;s form-derived watch component is multiplied by {WATCH_SCORE_FALLBACK_FORM_HAIRCUT.toFixed(2)} before the game score is composed. The card then shows LIMITED DATA or LOW CONFIDENCE beside the watch score. Baseline projected GS+ values are tagged BASELINE so placeholder-derived values do not read like measured form.
+            When a side is below the threshold, that side&apos;s form-derived watch component is multiplied by {WATCH_SCORE_FALLBACK_FORM_HAIRCUT.toFixed(2)} before the game score is composed. The card then shows LIMITED or LOW CONFIDENCE beside the watch score. Baseline projected GS+ values are tagged BASELINE so placeholder-derived values do not read like measured form.
           </p>
           <dl className="mt-4 grid gap-2 font-mono text-xs sm:grid-cols-2">
             <FormulaItem label="Minimum qualified starts" value={String(WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED)} />

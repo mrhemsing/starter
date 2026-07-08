@@ -28,7 +28,7 @@ export function UpcomingSimpleBoard({
       data-simple-game-count={tonight.games.length}
       data-simple-visible-game-pks={tonight.games.length ? tonight.games.map((game) => game.gamePk).join(",") : "none"}
       data-simple-watch-ranks={tonight.games.length ? tonight.games.map((game, index) => simpleRankValue(game, index)).join(",") : "none"}
-      data-simple-watch-scores={tonight.games.length ? tonight.games.map((game) => game.gameWatchScore.toFixed(1)).join(",") : "none"}
+      data-simple-watch-scores={tonight.games.length ? tonight.games.map(simpleScoreLabel).join(",") : "none"}
       data-simple-context-sentences={tonight.games.length ? tonight.games.map((game, index) => simpleContextSentence(game, index + 1, tonight.leagueMeanGS, contextWriteups)).join("|") : "none"}
       data-simple-context-source={Object.keys(contextWriteups).length > 0 ? "stored-llm-or-fallback" : "deterministic-fallback"}
       data-simple-rank-label={rankLabel}
@@ -67,17 +67,20 @@ function UpcomingSimpleCard({
 }) {
   const sentence = contextWriteup ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  const hasNamedStarterMatchup = hasNamedStarters(game);
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
   const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
-  const showRank = sortMode === "watch";
+  const showRankSlot = sortMode === "watch";
+  const rankLabelText = hasNamedStarterMatchup ? `#${rank}` : "--";
+  const scoreLabel = hasNamedStarterMatchup ? game.gameWatchScore.toFixed(1) : "--";
   const awayHeatColor = starterHeatPanelColor(game.starters[0]);
   const homeHeatColor = starterHeatPanelColor(game.starters[1]);
 
   return (
     <UpcomingSimpleCardFrame
       gamePk={game.gamePk}
-      ariaLabel={`${starterDisplayName(game.starters[0])} versus ${starterDisplayName(game.starters[1])}, watch score ${game.gameWatchScore.toFixed(1)}, ${game.label}`}
+      ariaLabel={`${starterDisplayName(game.starters[0])} versus ${starterDisplayName(game.starters[1])}, watch score ${scoreLabel}, ${game.label}`}
       bandKey={cardTint.key}
       background={cardTint.background}
       accentColor={accentColor}
@@ -90,7 +93,7 @@ function UpcomingSimpleCard({
         data-simple-heat-strip-away-color={awayHeatColor}
         data-simple-heat-strip-home-color={homeHeatColor}
       />
-      {showRank ? (
+      {showRankSlot && hasNamedStarterMatchup ? (
         <span className="pointer-events-none absolute -right-2 -top-5 font-serif text-[96px] font-black leading-none text-white opacity-[0.05] sm:text-[110px]" aria-hidden="true" data-simple-ghost-rank>
           {rank}
         </span>
@@ -98,10 +101,11 @@ function UpcomingSimpleCard({
       <div
         className="relative z-10 flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5"
         data-simple-header-band
-        data-simple-rank-visible={String(showRank)}
+        data-simple-rank-visible={String(showRankSlot)}
+        data-simple-named-starter-matchup={String(hasNamedStarterMatchup)}
       >
         <div className="flex min-w-0 items-start gap-2 pt-1 font-mono text-[12px] uppercase text-zinc-400" data-simple-header-left>
-          {showRank ? <p className="font-semibold tracking-[0.18em]" data-simple-card-rank>#{rank}</p> : null}
+          {showRankSlot ? <p className="font-semibold tracking-[0.18em]" data-simple-card-rank>{rankLabelText}</p> : null}
           <p className="tracking-[0.12em]" data-simple-first-pitch>
             <LocalTime value={game.firstPitch} fallback="First pitch" />
           </p>
@@ -115,7 +119,7 @@ function UpcomingSimpleCard({
       >
         <SimplePortraitPanel starter={game.starters[0]} align="away" />
         <div className="relative z-20 flex min-h-[150px] flex-col items-center justify-center bg-black/35 px-1 text-center shadow-[0_0_26px_rgba(0,0,0,0.42)]" data-upcoming-simple-score data-simple-score-seam-column>
-          <p className="font-serif text-[38px] font-black leading-none sm:text-[42px]" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
+          <p className="font-serif text-[38px] font-black leading-none sm:text-[42px]" style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }} data-simple-watch-score>{scoreLabel}</p>
           <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-400" data-simple-vs-mark data-simple-vs-text>vs.</p>
           {confidenceLabel ? (
             <p className="mx-auto mt-2 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
@@ -338,7 +342,16 @@ function starterHeatPanelColor(starter: TonightStarter, band: FormTier | null = 
 }
 
 function simpleRankValue(game: TonightGame, index: number) {
+  if (!hasNamedStarters(game)) return "-";
   return game.status === "ppd" && index === 0 ? "-" : String(index + 1);
+}
+
+function simpleScoreLabel(game: TonightGame) {
+  return hasNamedStarters(game) ? game.gameWatchScore.toFixed(1) : "--";
+}
+
+function hasNamedStarters(game: TonightGame) {
+  return game.starters.every((starter) => starter.status !== "tbd" && Boolean(starter.name));
 }
 
 function wordCount(sentence: string) {

@@ -60,7 +60,7 @@ assert(
     helper.includes("watchScoreConfidenceForSideCounts") &&
     helper.includes("WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED") &&
     helper.includes("WATCH_SCORE_FALLBACK_FORM_HAIRCUT") &&
-    helper.includes('"LIMITED DATA"') &&
+    helper.includes('"LIMITED"') &&
     helper.includes('"LOW CONFIDENCE"'),
   "shared watch-score confidence helper must expose constants, tiers, and chip labels",
 );
@@ -92,7 +92,7 @@ assert(
 );
 
 assert(
-  tonightService.includes('["tonight-must-watch", "v10"]') &&
+    tonightService.includes('["tonight-must-watch", "v15"]') &&
     tonightService.includes("const watchScoreQualifiedStartCounts = {") &&
     tonightService.includes("watchScoreConfidenceForSideCounts(watchScoreQualifiedStartCounts.away, watchScoreQualifiedStartCounts.home)") &&
     tonightService.includes("adjustedStarterWatchValue(awayStarter, leagueMeanGS)") &&
@@ -126,7 +126,7 @@ assert(
   methodology.includes("Watch Score Confidence") &&
     methodology.includes("WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED") &&
     methodology.includes("WATCH_SCORE_FALLBACK_FORM_HAIRCUT") &&
-    methodology.includes("LIMITED DATA or LOW CONFIDENCE") &&
+    methodology.includes("LIMITED or LOW CONFIDENCE") &&
     methodology.includes("Fallback form multiplier"),
   "methodology must document watch-score confidence thresholds and haircut from the config constants",
 );
