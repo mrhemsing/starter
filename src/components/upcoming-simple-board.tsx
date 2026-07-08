@@ -149,14 +149,14 @@ export function UpcomingSimpleCard({
       >
         <SimplePortraitPanel starter={game.starters[0]} align="away" />
         <div
-          className="absolute inset-y-0 left-1/2 z-20 flex w-[26%] min-w-[94px] max-w-[110px] -translate-x-1/2 flex-col items-center justify-center bg-[#08080c] px-2 text-center shadow-[0_0_26px_rgba(0,0,0,0.42)] sm:w-[124px] sm:min-w-0 sm:max-w-none"
+          className="absolute inset-y-0 left-1/2 z-20 flex w-[26%] min-w-[94px] max-w-[110px] -translate-x-1/2 flex-col items-center justify-center bg-[#08080c] px-3 text-center shadow-[0_0_26px_rgba(0,0,0,0.42)] sm:w-[124px] sm:min-w-0 sm:max-w-none sm:px-2"
           style={{ clipPath: "polygon(18% 0, 100% 0, 82% 100%, 0 100%)" }}
           data-upcoming-simple-score
           data-simple-score-seam-column
           data-simple-score-seam-bar="single-opaque"
           data-simple-score-seam-bar-width="26%"
         >
-          <p className="font-serif text-[38px] font-black leading-none sm:text-[42px]" style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }} data-simple-watch-score>{scoreLabel}</p>
+          <p className="font-serif text-[34px] font-black leading-none sm:text-[42px]" style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }} data-simple-watch-score>{scoreLabel}</p>
           <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-400" data-simple-vs-mark data-simple-vs-text>vs.</p>
           {confidenceLabel ? (
             <p className="mx-auto mt-2 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
