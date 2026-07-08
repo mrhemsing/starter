@@ -24,18 +24,18 @@ export function WatchlistNextStartBlock({ nextStart, compact = false }: { nextSt
       <div className="grid max-w-full grid-cols-2 gap-2 text-[10px] sm:grid-cols-3" data-watchlist-next-start-row="context">
         {isValidParkRunFactor(nextStart.parkRunFactor) ? <MicroColumn label="Park" value={nextStart.parkRunFactor.toFixed(2)} /> : null}
         <MicroColumn label="Rest" value={nextStart.daysRest === null ? "TBD" : `${nextStart.daysRest} days`} />
-        <MicroColumn label="Proj GS+" value={String(nextStart.projectedGsPlus)} badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined} />
+        <MicroColumn label="Proj GS+" value={nextStart.projectionSource === "baseline" ? null : String(nextStart.projectedGsPlus)} badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined} />
       </div>
     </div>
   );
 }
 
-function MicroColumn({ label, value, badge }: { label: string; value: string; badge?: string }) {
+function MicroColumn({ label, value, badge }: { label: string; value: string | null; badge?: string }) {
   return (
     <div className="min-w-0 rounded border border-white/10 bg-black/20 px-2 py-2">
       <p className="text-[9px] tracking-[0.14em] text-zinc-600">{label}</p>
       <p className="mt-1 flex flex-wrap items-center gap-1 text-zinc-300">
-        <span>{value}</span>
+        {value ? <span>{value}</span> : null}
         {badge ? <span className="rounded border border-amber-300/30 px-1 py-0.5 text-[8px] text-amber-200">{badge}</span> : null}
       </p>
     </div>

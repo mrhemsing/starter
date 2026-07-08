@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site-header";
 import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";
 import { WatchlistSearchForm } from "@/components/watchlist-search-form";
 import { WatchlistSuggestedFollows } from "@/components/watchlist-suggested-follows";
+import { WireEventCard } from "@/components/wire-event-card";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { WATCHLIST_COOKIE, WATCHLIST_SOON_DAYS, getWatchlistView, type WatchlistEntry, type WatchlistLiveEntry, type WatchlistSort } from "@/lib/data/watchlist-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -82,6 +83,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
 
         <section className="grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
+            {watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
             <NextOnTheSlabModule entries={watchlist.pitchingSoon} />
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
@@ -120,7 +122,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
                 {watchlist.sort === "default" ? (
                   <>
-                    <WatchlistGroup title={watchlist.pitchingSoon.length === 0 ? "Followed arms" : "Everyone else"} detail="Sorted by Form descending" entries={watchlist.bench} />
+                    <WatchlistGroup title="Following" detail="Sorted by Form descending" entries={watchlist.bench} />
                   </>
                 ) : (
                   <WatchlistGroup title={sortOptions.find((option) => option.key === watchlist.sort)?.label ?? "Watchlist"} detail={`${watchlist.entries.length} followed pitchers`} entries={watchlist.entries} />
@@ -142,7 +144,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               ) : (
                 <div className="mt-4 grid gap-2">
                   {watchlist.wireEvents.slice(0, 10).map((event) => (
-                    <WireEventCard key={`${event.pitcherId}-${event.key}-${event.sentence ?? event.headline?.url}`} event={event} />
+                    <WireEventCard key={`${event.pitcherId}-${event.key}-${event.sentence ?? event.headline?.url}`} event={event} pitcherName={event.pitcherName} />
                   ))}
                 </div>
               )}
@@ -153,6 +155,53 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
       </div>
     </main>
   );
+}
+
+function WatchlistMorningBrief({ entries, pitchingSoon }: { entries: WatchlistEntry[]; pitchingSoon: WatchlistEntry[] }) {
+  const nearest = pitchingSoon[0] ?? entries.find((entry) => entry.nextStart) ?? null;
+  const biggestMover = [...entries].sort((a, b) => Math.abs(b.deltaForm) - Math.abs(a.deltaForm))[0] ?? null;
+  const coldArm = entries.find((entry) => entry.rgs < 45 || entry.deltaForm <= -4) ?? null;
+  const sentences: string[] = [];
+
+  if (nearest?.nextStart) {
+    sentences.push(`${nearest.name} is next up ${nearest.nextStart.side === "away" ? "at" : "vs"} ${nearest.nextStart.opponent} on ${formatShortDate(nearest.nextStart.date)} with ${nearest.nextStart.probableStatus} status.`);
+  }
+  if (biggestMover) {
+    const direction = biggestMover.deltaForm >= 0 ? "up" : "down";
+    sentences.push(`${biggestMover.name} is the biggest mover, ${direction} ${Math.abs(biggestMover.deltaForm).toFixed(1)} to ${Math.round(biggestMover.rgs)} Form.`);
+  }
+  if (coldArm && coldArm.pitcherId !== biggestMover?.pitcherId) {
+    sentences.push(`${coldArm.name} is cold at ${Math.round(coldArm.rgs)} Form, so wait for a cleaner turn.`);
+  }
+
+  const brief = trimBrief(sentences.length >= 2 ? sentences : fallbackBrief(entries));
+
+  return (
+    <section className="mb-4 rounded border border-amber-300/25 bg-amber-300/[0.06] p-4" data-responsive-check="watchlist-morning-brief">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">Your morning brief</p>
+      <p className="mt-2 text-sm leading-6 text-zinc-200">{brief.join(" ")}</p>
+    </section>
+  );
+}
+
+function fallbackBrief(entries: WatchlistEntry[]) {
+  const top = [...entries].sort((a, b) => b.rgs - a.rgs)[0];
+  const mover = [...entries].sort((a, b) => Math.abs(b.deltaForm) - Math.abs(a.deltaForm))[0] ?? top;
+  if (!top) return ["Follow an arm to build your morning brief.", "The Wire will stay quiet until there is news for your list."];
+  return [
+    `${top.name} leads your list at ${Math.round(top.rgs)} Form.`,
+    `${mover.name} is the biggest mover at ${mover.deltaForm >= 0 ? "plus" : "minus"} ${Math.abs(mover.deltaForm).toFixed(1)}.`,
+  ];
+}
+
+function trimBrief(sentences: string[]) {
+  const capped = sentences.slice(0, 3);
+  while (wordCount(capped.join(" ")) > 60 && capped.length > 2) capped.pop();
+  return capped;
+}
+
+function wordCount(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
 function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
@@ -184,20 +233,6 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
         ))}
       </div>
     </section>
-  );
-}
-
-function WireEventCard({ event }: { event: WatchlistEntry["wireEvents"][number] & { pitcherId: string; pitcherName: string } }) {
-  const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
-  return (
-    <a href={event.headline?.url ?? "#"} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-300">NEWS</p>
-        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
-      </div>
-      <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.pitcherName}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
-    </a>
   );
 }
 
@@ -362,22 +397,6 @@ function formatShortDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
-}
-
-function relativeEventTime(detectedAt: string) {
-  const elapsedMs = Date.now() - Date.parse(detectedAt);
-  if (!Number.isFinite(elapsedMs) || elapsedMs < 60_000) return "Just now";
-  const minutes = Math.round(elapsedMs / 60_000);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} hr ago`;
-  return formatArticleDate(detectedAt);
-}
-
-function formatArticleDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.valueOf())) return "Date unavailable";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/Los_Angeles" }).format(date);
 }
 
 function watchlistHref(values: { sort?: WatchlistSort; q?: string }) {

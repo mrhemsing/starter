@@ -68,6 +68,7 @@ const NEWS_RSS_TIMEOUT_MS = 8000;
 const GOOGLE_NEWS_ARTICLE_RESOLVE_LIMIT = 20;
 const PROFILE_HEADLINE_FETCH_RETRY_MS = 30 * 60 * 1000;
 const DEFAULT_USER_AGENT = "ToeTheSlab/1.0 watchlist-headlines";
+const BETTING_FORWARD_HEADLINE_PATTERN = /\b(moneyline|odds?|picks?|spread|prediction|predictions|parlay|bets?|betting|prop bet|wager)\b/i;
 
 export async function readWatchlistHeadlineEvents(pitcherIds: string[]): Promise<Map<string, WatchlistWireEvent[]>> {
   const events = new Map<string, WatchlistWireEvent[]>();
@@ -256,6 +257,7 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
   const publishedAt = normalizePublishedAt(candidate.publishedAt);
   if (!headline || !url || !publishedAt) return null;
   if (!isPublishedWithinHeadlineWindow(publishedAt)) return null;
+  if (BETTING_FORWARD_HEADLINE_PATTERN.test(headline)) return null;
 
   const headlineTokens = new Set(normalizedTokens(headline));
   const pitcherTokens = normalizedTokens(pitcher.name);
@@ -278,7 +280,9 @@ function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSumm
 }
 
 function isLikelyPitcherHeadline(headline: string, pitcher: FormSummary) {
-  const headlineTokens = new Set(normalizedTokens(decodeHtml(stripTags(headline))));
+  const cleanHeadline = decodeHtml(stripTags(headline));
+  if (BETTING_FORWARD_HEADLINE_PATTERN.test(cleanHeadline)) return false;
+  const headlineTokens = new Set(normalizedTokens(cleanHeadline));
   const pitcherTokens = normalizedTokens(pitcher.name);
   const surname = normalizeText(lastName(pitcher.name));
   if (!headlineTokens.has(surname)) return false;

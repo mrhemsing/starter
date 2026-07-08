@@ -18,6 +18,7 @@ const pitcherProfileScrollReset = await readFile("src/components/pitcher-profile
 const entityOrientation = await readFile("src/components/entity-orientation.tsx", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
+const wireEventCard = await readFile("src/components/wire-event-card.tsx", "utf8");
 const headlineService = await readFile("src/lib/data/watchlist-headlines-service.ts", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
@@ -311,16 +312,16 @@ assert(
     pitcherFormPage.includes("data-wire-more") &&
     !pitcherFormPage.includes("No recent Wire items for") &&
     !pitcherFormPage.includes(">NEWS<") &&
-    pitcherFormPage.includes('target="_blank"') &&
-    pitcherFormPage.includes('rel="noopener"') &&
-    pitcherFormPage.includes("event.headline?.source ?? \"News\"") &&
-    pitcherFormPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
-    pitcherFormPage.includes("data-wire-eyebrow") &&
-    pitcherFormPage.includes('aria-label="Unread Wire item"') &&
-    watchlistPage.includes("function WireEventCard") &&
-    watchlistPage.includes("event.headline?.source ?? \"News\"") &&
-    watchlistPage.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
-    watchlistPage.includes("formatArticleDate(detectedAt)"),
+    pitcherFormPage.includes('import { WireEventCard } from "@/components/wire-event-card";') &&
+    watchlistPage.includes('import { WireEventCard } from "@/components/wire-event-card";') &&
+    wireEventCard.includes('target="_blank"') &&
+    wireEventCard.includes('rel="noopener"') &&
+    wireEventCard.includes("event.headline?.source ?? \"News\"") &&
+    wireEventCard.includes("relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)") &&
+    wireEventCard.includes("data-wire-eyebrow") &&
+    wireEventCard.includes('aria-label="Unread Wire item"') &&
+    !wireEventCard.includes(">NEWS<") &&
+    wireEventCard.includes("formatArticleDate(detectedAt)"),
   "pitcher profile must render capped API-backed Wire headline links with source/time eyebrows, no redundant NEWS chip, and a more affordance",
 );
 

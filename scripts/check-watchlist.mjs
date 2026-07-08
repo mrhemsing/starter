@@ -6,7 +6,7 @@ import net from "node:net";
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
 
-const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource] = await Promise.all([
+const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource, wireEventCardSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
   readFile("src/lib/data/watchlist-service.ts", "utf8"),
   readFile("src/lib/data/watchlist-headlines-service.ts", "utf8"),
@@ -16,6 +16,7 @@ const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headl
   readFile("src/components/follow-pitcher-button.tsx", "utf8"),
   readFile("src/components/watchlist-next-start-block.tsx", "utf8"),
   readFile("src/components/watchlist-suggested-follows.tsx", "utf8"),
+  readFile("src/components/wire-event-card.tsx", "utf8"),
 ]);
 
 function assert(condition, message) {
@@ -82,7 +83,7 @@ assert(
     watchlistPageSource.includes("The Wire") &&
     watchlistPageSource.includes("News for your arms") &&
     watchlistPageSource.includes("Quiet stretch for your arms.") &&
-    watchlistPageSource.includes("data-wire-event") &&
+    wireEventCardSource.includes("data-wire-event") &&
     watchlistServiceSource.includes("wireEventsForPitcher") &&
     watchlistServiceSource.includes("headlineEvents: WatchlistWireEvent[];") &&
     watchlistServiceSource.includes("signalEvents: WatchlistWireEvent[];") &&
@@ -99,6 +100,14 @@ assert(
     watchlistServiceSource.includes('"headlines"') &&
     watchlistPageSource.includes("<SignalsRow events={entry.signalEvents} />"),
   "watchlist Wire v1 should keep derived rest, two-start, streak, gem, and blowup events as capped card signals",
+);
+assert(
+  watchlistPageSource.includes("<WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} />") &&
+    watchlistPageSource.includes('data-responsive-check="watchlist-morning-brief"') &&
+    watchlistPageSource.includes("Your morning brief") &&
+    watchlistPageSource.includes("wordCount(capped.join") &&
+    watchlistPageSource.includes("wordCount(capped.join(\" \")) > 60"),
+  "watchlist must render a server-side morning brief from followed-arm data with a 60-word cap",
 );
 assert(
   watchlistServiceSource.includes("export function sortWatchlistWireEvents") &&
@@ -118,6 +127,8 @@ assert(
     headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
     headlineServiceSource.includes("HEADLINE_SOURCE_SUFFIX_PATTERN") &&
     headlineServiceSource.includes("stripSourceSuffix(headline.headline, headline.source)") &&
+    headlineServiceSource.includes("BETTING_FORWARD_HEADLINE_PATTERN") &&
+    headlineServiceSource.includes("moneyline|odds?|picks?|spread|prediction|predictions|parlay|bets?|betting") &&
     headlineServiceSource.includes("mlb news") &&
     headlineServiceSource.includes("rotoballer") &&
     headlineServiceSource.includes("HEADLINE_TOPIC_STOP_WORDS"),
@@ -163,15 +174,16 @@ assert(
   "headline ingest must allowlist headline/source/url/published fields, resolve Google News syndication to publisher metadata dates, require token-level pitcher relevance, and never store snippets, summaries, excerpts, or rotowire text",
 );
 assert(
-  watchlistPageSource.includes("event.headline?.url") &&
-    watchlistPageSource.includes('target="_blank"') &&
-    watchlistPageSource.includes('rel="noopener"') &&
-    watchlistPageSource.includes(">NEWS<") &&
-    watchlistPageSource.includes("event.headline?.source") &&
-    watchlistPageSource.includes("formatArticleDate(detectedAt)") &&
-    watchlistPageSource.includes("month: \"short\", day: \"numeric\"") &&
-    watchlistPageSource.includes("text-zinc-500"),
-  "watchlist Wire NEWS items must render as external headline links with visible source attribution and absolute dates for older articles",
+  watchlistPageSource.includes('import { WireEventCard } from "@/components/wire-event-card";') &&
+    wireEventCardSource.includes("event.headline?.url") &&
+    wireEventCardSource.includes('target="_blank"') &&
+    wireEventCardSource.includes('rel="noopener"') &&
+    !wireEventCardSource.includes(">NEWS<") &&
+    wireEventCardSource.includes("event.headline?.source") &&
+    wireEventCardSource.includes("formatArticleDate(detectedAt)") &&
+    wireEventCardSource.includes("month: \"short\", day: \"numeric\"") &&
+    wireEventCardSource.includes("text-zinc-500"),
+  "watchlist Wire items must share the pitcher-page Wire card with source/time eyebrows and no redundant NEWS chip",
 );
 assert(
   headlineCronSource.includes('import { ingestWatchlistHeadlines } from "@/lib/data/watchlist-headlines-service";') &&
@@ -190,12 +202,13 @@ assert(
     nextStartBlockSource.includes('import { isValidParkRunFactor } from "@/lib/data/run-environment";') &&
     nextStartBlockSource.includes("isValidParkRunFactor(nextStart.parkRunFactor)") &&
     nextStartBlockSource.includes("nextStart.parkRunFactor.toFixed(2)") &&
+    nextStartBlockSource.includes('value={nextStart.projectionSource === "baseline" ? null : String(nextStart.projectedGsPlus)}') &&
     nextStartBlockSource.includes('badge={nextStart.projectionSource === "baseline" ? "BASELINE" : undefined}') &&
     watchlistServiceSource.includes('projectionSource: Math.round(probable.matchupScore) === 50 ? "baseline" : "measured"') &&
     watchlistServiceSource.includes("const parkRunFactor = parkContext?.available ? parkContext.runFactor : null") &&
     !watchlistPageSource.includes("formatNextStartBlock") &&
     !watchlistPageSource.includes(`Park ${"0.0"}`),
-  "watchlist next-start cards should use the shared two-row block, omit missing parks, and tag baseline-looking projected GS+ values",
+  "watchlist next-start cards should use the shared two-row block, omit missing parks, and suppress numeric baseline-looking projected GS+ values",
 );
 assert(
   watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} />") &&
@@ -315,7 +328,8 @@ try {
   assert(html.includes("Sort"), "watchlist should render sort controls");
   assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
   assert(html.includes('data-responsive-check="watchlist-pitching-soon"'), "watchlist should render the merged next-on-the-slab module");
-  assert(html.includes("Everyone else") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list");
+  assert(html.includes("Following") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list with respectful following copy");
+  assert(!html.includes("Everyone else"), "watchlist should not render the old Everyone else header");
   assert(html.includes("Following"), "watchlist should render following control");
   assert(html.includes('aria-pressed="true"'), "followed watchlist rows should render filled/following star state");
   assert(html.includes(pitcherId) || html.includes("Misiorowski"), "watchlist should render followed pitcher");

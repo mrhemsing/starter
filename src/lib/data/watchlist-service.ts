@@ -177,7 +177,7 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
       const rawNextStart = nextStarts.get(pitcher.pitcherId) ?? null;
       const nextStart = rawNextStart ? { ...rawNextStart, daysRest: daysBetween(pitcher.lastStart?.gameDate ?? today, rawNextStart.date) } : null;
       const signalEvents = wireEventsForPitcher(pitcher, nextStart, upcomingStarts.get(pitcher.pitcherId) ?? [], lastStartPercentiles);
-      const headlineEvents = capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? []);
+      const headlineEvents = capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? [], pitcher.name);
       return {
         ...pitcher,
         nextStart,
@@ -245,12 +245,20 @@ function pitcherHeadlineRelevance(event: WatchlistWireEvent, pitcherName: string
   const lowerName = pitcherName.toLowerCase();
   const last = lowerName.split(/\s+/).filter(Boolean).at(-1) ?? lowerName;
   if (!headline || !last) return 0;
+  if (bettingDominantHeadlinePattern().test(lowerHeadline)) return -80;
   if (lowerHeadline.startsWith(lowerName) || lowerHeadline.startsWith(last)) return 40;
   const fullIndex = lowerHeadline.indexOf(lowerName);
-  if (fullIndex >= 0) return fullIndex <= Math.max(24, lowerHeadline.length / 2) ? 32 : 18;
+  if (fullIndex >= 0) return fullIndex <= Math.max(24, lowerHeadline.length / 2) ? 32 : 12;
   const lastIndex = lowerHeadline.indexOf(last);
-  if (lastIndex >= 0) return lastIndex <= Math.max(18, lowerHeadline.length / 2) ? 24 : 10;
+  if (lastIndex >= 0) {
+    const trailingListPenalty = /,\s*[^,]+,\s*[^,]+/.test(lowerHeadline.slice(0, lastIndex)) ? -10 : 0;
+    return (lastIndex <= Math.max(18, lowerHeadline.length / 2) ? 24 : 6) + trailingListPenalty;
+  }
   return 0;
+}
+
+function bettingDominantHeadlinePattern() {
+  return /\b(moneyline|odds?|picks?|spread|prediction|predictions|parlay|bets?|betting|prop bet|wager)\b/i;
 }
 
 function wireHeadlineText(event: WatchlistWireEvent) {
@@ -390,9 +398,9 @@ function probableToWatchlistNextStart(probable: ProbableStart, today: string): W
   };
 }
 
-function capWireEventsPerPitcherDay<T extends WatchlistWireEvent>(events: T[]) {
+function capWireEventsPerPitcherDay<T extends WatchlistWireEvent>(events: T[], pitcherName: string) {
   const counts = new Map<string, number>();
-  return sortWatchlistWireEvents(events).filter((event) => {
+  return sortPitcherWireEvents(events, pitcherName).filter((event) => {
     const day = new Date(watchlistWireEventSortTime(event)).toISOString().slice(0, 10);
     const count = counts.get(day) ?? 0;
     if (count >= 2) return false;

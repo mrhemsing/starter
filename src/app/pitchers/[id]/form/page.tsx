@@ -12,6 +12,7 @@ import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PitcherProfileScrollReset } from "@/components/pitcher-profile-scroll-reset";
 import { SiteHeader } from "@/components/site-header";
 import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
+import { WireEventCard } from "@/components/wire-event-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
@@ -336,7 +337,7 @@ function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
       <p className="mt-1 text-sm text-zinc-500">News for this arm</p>
       <div className="mt-4 grid gap-2">
         {visibleEvents.map((event) => (
-          <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
+          <WireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
         ))}
       </div>
       {hiddenCount > 0 ? (
@@ -344,42 +345,13 @@ function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
           <summary className="cursor-pointer list-none font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">Show {hiddenCount} more</summary>
           <div className="mt-3 grid gap-2">
             {events.slice(visibleEvents.length).map((event) => (
-              <PitcherWireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
+              <WireEventCard key={`${event.key}-${event.headline?.url ?? event.detectedAt}`} event={event} />
             ))}
           </div>
         </details>
       ) : null}
     </section>
   );
-}
-
-function PitcherWireEventCard({ event }: { event: WatchlistWireEvent }) {
-  const sharedClassName = "rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40";
-  return (
-    <a href={event.headline?.url ?? "#"} target="_blank" rel="noopener" className={sharedClassName} data-wire-event={event.key} data-wire-payload={event.payloadValues.join("|")}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" data-wire-eyebrow>{event.headline?.source ?? "News"} · {relativeEventTime(event.headline?.publishedAt ?? event.detectedAt)}</p>
-        <span className="h-2 w-2 rounded-full bg-amber-300" aria-label="Unread Wire item" />
-      </div>
-      <p className="mt-2 text-sm font-semibold leading-5 text-zinc-100">{event.headline?.text ?? event.sentence}</p>
-    </a>
-  );
-}
-
-function relativeEventTime(detectedAt: string) {
-  const elapsedMs = Date.now() - Date.parse(detectedAt);
-  if (!Number.isFinite(elapsedMs) || elapsedMs < 60_000) return "Just now";
-  const minutes = Math.round(elapsedMs / 60_000);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} hr ago`;
-  return formatArticleDate(detectedAt);
-}
-
-function formatArticleDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.valueOf())) return "Date unavailable";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/Los_Angeles" }).format(date);
 }
 
 function GameLogPanel({
