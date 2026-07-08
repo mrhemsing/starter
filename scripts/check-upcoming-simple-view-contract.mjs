@@ -60,7 +60,7 @@ assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must rende
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
 assert(simpleBoard.includes("contextWriteup ?? upcomingSimpleContextSentence") && simpleBoard.includes('data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}'), "Simple cards must render stored LLM writeups when present and deterministic fallback copy otherwise.");
-assert(simpleBoard.includes("text-center font-serif") && !simpleBoard.includes("lg:text-left"), "Simple context text must render centered in the serif voice face at the card foot.");
+assert(simpleBoard.includes("text-center text-base") && !simpleBoard.includes("text-center font-serif") && !simpleBoard.includes("lg:text-left"), "Simple context text must render centered in the body copy face at the card foot.");
 assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
 assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis one\\b/i.test(sentence))}'), "Simple context sentences must guard against this-one copy.");
@@ -70,7 +70,8 @@ assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simple
 assert(simpleBoard.includes("data-simple-header-band") && simpleBoard.includes("data-upcoming-simple-score") && simpleBoard.includes("text-[42px]") && simpleBoard.includes("data-simple-watch-score>{game.gameWatchScore.toFixed(1)}") && !simpleBoard.includes("data-simple-score-column"), "Simple cards must render the watch score once in the top header at display size.");
 assert(simpleBoard.includes("data-simple-heat-strip") && simpleBoard.includes("simpleHeatStripGradient(awayHeatColor, homeHeatColor)") && simpleBoard.includes("data-simple-heat-strip-away-color") && simpleBoard.includes("data-simple-heat-strip-home-color"), "Simple cards must open with a four-pixel heat strip based on both starter heat colors.");
 assert(simpleBoard.includes("data-simple-ghost-rank") && simpleBoard.includes("opacity-[0.05]") && simpleBoard.includes('aria-hidden="true"'), "Simple cards must render the low-opacity ghost rank numeral behind the header.");
-assert(simpleBoard.includes("data-simple-diagonal-panels") && simpleBoard.includes("clipPath") && simpleBoard.includes("polygon(") && simpleBoard.includes("data-simple-vs-pin"), "Simple cards must render diagonal collision panels with a centered VS pin.");
+assert(simpleBoard.includes("data-simple-diagonal-panels") && simpleBoard.includes("clipPath") && simpleBoard.includes("polygon(") && !simpleBoard.includes("data-simple-vs-pin"), "Simple cards must keep diagonal collision panels and remove the diamond seam pin.");
+assert(simpleBoard.includes("data-simple-vs-text") && simpleBoard.includes(">vs.</p>") && simpleBoard.includes("text-[12px] lowercase"), "Simple cards must render a centered lowercase vs. label beneath the header score.");
 assert(simpleBoard.includes("simplePortraitPanelGradient(panelColor)") && simpleBoard.includes("linear-gradient(0deg") && simpleBoard.includes("0.82") && simpleBoard.includes("100%"), "Simple portrait panels must use heat-only ember gradients strongest at the bottom.");
 assert(simpleBoard.includes("data-simple-confidence-chip={game.watchScoreConfidence}") && simpleBoard.includes("mx-auto mt-1 inline-flex"), "Simple confidence chip must live near the header score.");
 assert(!page.includes("data-upcoming-form-window-label") && !page.includes("{formWindowLabel(formWindow)}"), "Upcoming toolbar must not render the old global FORM: LAST n STARTS caption.");
@@ -82,13 +83,14 @@ assert(!simpleBoard.includes("simpleNameplateGradient") && !simpleBoard.includes
 assert(simpleBoard.includes('data-simple-starter-card-back-source="heat-band"') && simpleBoard.includes("data-simple-identity-strip"), "Simple identity/form strip must replace the old card-back/nameplate stack.");
 assert(simpleBoard.includes("data-simple-portrait-bleed") && !simpleBoard.includes("lg:w-[calc(100)]"), "Simple portrait panels must retain portrait bleed hooks without invalid width utilities.");
 assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("miniStatLine(starter)") && simpleBoard.includes("Starter TBD"), "Simple starter frames must render compact card-back stats and honest TBD placeholders.");
-assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("Proj GS+"), "Simple form strips must include compact projected GS+ microcopy when available.");
+assert(simpleBoard.includes("data-simple-form-promoted-value") && simpleBoard.includes("text-[26px]") && simpleBoard.includes("formBandValueColor(formBand, qualifiedSample)") && simpleBoard.includes("data-simple-form-promoted-whisper") && simpleBoard.includes("text-[12px]"), "Simple form strips must promote form GS+ beside the name with a 24px+ colored value and 12px+ whisper.");
+assert(simpleBoard.includes("data-simple-mini-stat-line") && simpleBoard.includes("formMicroLine(starter)") && simpleBoard.includes("PROJ ${projected.toFixed(1)}"), "Simple form strips must move L5 ERA and PROJ into the remaining 12px microline.");
 assert(headshot.includes('starterStatus === "tbd" ? "TBD"') && headshot.includes("{fallbackLabel}"), "TBD starter headshot placeholders must render TBD instead of initials like TN.");
 assert(simpleBoard.includes("whitespace-normal") && simpleBoard.includes("break-words") && simpleBoard.includes("function PitcherNameLines") && simpleBoard.includes('className="block"') && !simpleBoard.includes("block truncate text-sm") && !simpleBoard.includes('className="truncate text-sm'), "Simple starter names must render full names on two lines instead of truncating.");
 assert(simpleBoard.includes("data-simple-first-pitch") && simpleBoard.includes("text-right font-mono"), "Simple header must keep first-pitch time on the right side of the score band.");
 assert(countExactLineOccurrences(simpleBoard, "data-simple-form-line") === 1, "Simple starter renderer should create exactly one shared form line per starter instance.");
-assert(simpleBoard.includes("<FormValueWhisperLine") && simpleBoard.includes("value={starter.rgs}") && simpleBoard.includes("era={starter.seasonStats?.era}") && simpleBoard.includes("qualifiedSample={Boolean(formBand)}"), "Simple form line must render colored value, whisper band, and L5 ERA through the shared component.");
-assert(simpleBoard.includes('starter.formStatus === "mlb_debut"') && simpleBoard.includes("MLB DEBUT"), "Simple starter form chip must show MLB DEBUT instead of generic form pending for debut starters.");
+assert(simpleBoard.includes("formBandWhisperLabel(formBand, qualifiedSample)") && simpleBoard.includes("formLineEraText(starter.seasonStats?.era)") && !simpleBoard.includes("<FormValueWhisperLine"), "Simple form block must reuse shared band/limited tokens while moving the value out of the microline.");
+assert(simpleBoard.includes('starter.formStatus === "mlb_debut"') && simpleBoard.includes('"DEBUT"'), "Simple starter form value block must show a debut whisper instead of generic form pending for debut starters.");
 assert(limitedSampleChip.includes('export const LIMITED_SAMPLE_FORM_LABEL = "LTD";') && limitedSampleChip.includes('export const LIMITED_SAMPLE_FORM_COLOR = "#71717a";'), "Limited-sample card chips must reuse the Heat Check LTD token and neutral color.");
 assert(limitedSampleChip.includes("WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED") && limitedSampleChip.includes("hasQualifiedStarterFormSample") && limitedSampleChip.includes("hasQualifiedFormSummarySample"), "Limited-sample card qualification must use the shared confidence threshold helper, not a local threshold.");
 assert(limitedSampleChip.includes("export function FormValueWhisperLine") && limitedSampleChip.includes("formBandWhisperLabel") && limitedSampleChip.includes("formLineEraText") && limitedSampleChip.includes("L${window} ERA"), "Colored value plus whisper plus Ln ERA must be one shared component.");
@@ -103,7 +105,8 @@ assert(!simpleBoard.includes("data-simple-starter-team-color") && simpleBoard.in
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
 assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render pitch-mix or driver chip rows.");
 assert(!simpleBoard.includes("projectedStrikeouts") && !simpleBoard.includes("K line"), "Simple cards must not render K-line elements.");
-assert(simpleBoard.includes("starter.projection?.projectedGsPlus") && simpleBoard.includes("Proj GS+"), "Simple baseball-card backs may surface a compact projected GS+ stat.");
+assert(simpleBoard.includes("starter.projection?.projectedGsPlus") && simpleBoard.includes("PROJ"), "Simple baseball-card backs may surface a compact projected GS+ stat.");
+assert(!/text-\[(?:8|9|10|11)px\]/.test(simpleBoard), "Simple fight-card text utilities must keep a 12px floor.");
 
 const retiredSlop = [
   "'s form carries this one",

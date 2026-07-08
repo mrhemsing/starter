@@ -1,5 +1,5 @@
 import { Headshot } from "@/components/headshot";
-import { FormValueWhisperLine, hasQualifiedStarterFormSample, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
+import { formBandValueColor, formBandWhisperLabel, formLineEraText, hasQualifiedStarterFormSample, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
@@ -100,16 +100,17 @@ function UpcomingSimpleCard({
         data-simple-header-band
         data-simple-rank-visible={String(showRank)}
       >
-        {showRank ? <p className="pt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400" data-simple-card-rank>#{rank}</p> : <span />}
+        {showRank ? <p className="pt-1 font-mono text-[12px] font-semibold uppercase tracking-[0.18em] text-zinc-400" data-simple-card-rank>#{rank}</p> : <span />}
         <div className="text-center" data-upcoming-simple-score>
           <p className="font-serif text-[42px] font-black leading-none sm:text-5xl" style={{ color: accentColor }} data-simple-watch-score>{game.gameWatchScore.toFixed(1)}</p>
+          <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-500" data-simple-vs-mark data-simple-vs-text>vs.</p>
           {confidenceLabel ? (
-            <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
+            <p className="mx-auto mt-1 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
               {confidenceLabel}
             </p>
           ) : null}
         </div>
-        <p className="pt-1 text-right font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-400" data-simple-first-pitch>
+        <p className="pt-1 text-right font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-400" data-simple-first-pitch>
           <LocalTime value={game.firstPitch} fallback="First pitch" />
         </p>
       </div>
@@ -120,16 +121,13 @@ function UpcomingSimpleCard({
       >
         <SimplePortraitPanel starter={game.starters[0]} align="away" />
         <SimplePortraitPanel starter={game.starters[1]} align="home" />
-        <div className="absolute left-1/2 top-1/2 z-20 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 rotate-45 place-items-center border border-amber-300/70 bg-[#111116] shadow-[0_6px_18px_rgba(0,0,0,0.45)]" data-simple-vs-pin>
-          <span className="-rotate-45 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-zinc-100" data-simple-vs-mark>VS</span>
-        </div>
       </div>
       <div className="grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 bg-[#07070a]" data-simple-form-strip>
         <SimpleIdentityStrip starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
         <SimpleIdentityStrip starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
       </div>
       <p
-        className="px-4 py-5 text-center font-serif text-base leading-6 text-zinc-200 sm:px-6"
+        className="px-4 py-5 text-center text-base leading-6 text-zinc-200 sm:px-6"
         data-upcoming-simple-context
         data-simple-context-sentence-count={sentenceCount(sentence)}
         data-simple-context-word-count={wordCount(sentence)}
@@ -187,34 +185,51 @@ function SimpleIdentityStrip({
   const name = starter.name ?? `TBD ${starter.team}`;
   const heatColor = starterHeatColor(starter, formBand);
   const href = starter.pitcherId && starter.name ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")) : null;
-  const content = (
-    <PitcherNameLines name={name} />
-  );
-
-  return (
-    <div className={`min-w-0 px-4 py-4 ${align === "home" ? "text-right" : "text-left"}`} data-simple-identity-strip data-simple-starter-card-back data-simple-starter-card-back-source="heat-band">
+  const nameNode = (
+    <div className={`${align === "home" ? "text-right" : "text-left"}`} data-simple-starter-name-block>
       {href ? (
         <a href={href} className="relative z-30 block whitespace-normal break-words font-serif text-[21px] font-black leading-[0.98] text-white hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" data-simple-starter-name>
-          {content}
+          <PitcherNameLines name={name} />
         </a>
       ) : (
         <p className="whitespace-normal break-words font-serif text-[21px] font-black leading-[0.98] text-white" data-simple-starter-name>
-          {content}
+          <PitcherNameLines name={name} />
         </p>
       )}
-      <p className="mt-2 truncate font-mono text-[8px] uppercase tracking-[0.14em] text-zinc-500" data-simple-orientation>{orientation}</p>
-      <p
-        className={`mt-2 w-full ${align === "home" ? "text-right" : "text-left"}`}
-        data-simple-form-line
-        data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
-        data-simple-form-line-color={heatColor}
-        data-simple-form-line-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
-      >
-        <SimpleFormLine starter={starter} formBand={formBand} />
+    </div>
+  );
+  const valueNode = <SimpleFormValueBlock starter={starter} formBand={formBand} align={align} />;
+  return (
+    <div className={`min-w-0 px-4 py-4 ${align === "home" ? "text-right" : "text-left"}`} data-simple-identity-strip data-simple-starter-card-back data-simple-starter-card-back-source="heat-band">
+      <div className={`grid items-start gap-2 ${align === "home" ? "grid-cols-[54px_minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_54px]"}`} data-simple-name-value-row>
+        {align === "home" ? valueNode : nameNode}
+        {align === "home" ? nameNode : valueNode}
+      </div>
+      <p className="mt-2 truncate font-mono text-[12px] uppercase tracking-[0.14em] text-zinc-500" data-simple-orientation>{orientation}</p>
+      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.1em] text-zinc-500" data-simple-mini-stat-line data-simple-form-microline data-simple-form-line-color={heatColor}>
+        {formMicroLine(starter)}
       </p>
-      <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-500" data-simple-mini-stat-line>
-        {miniStatLine(starter)}
-      </p>
+    </div>
+  );
+}
+
+function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightStarter; formBand: FormTier | null; align: "away" | "home" }) {
+  const qualifiedSample = Boolean(formBand);
+  const valueColor = formBandValueColor(formBand, qualifiedSample);
+  const whisper = starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "DEBUT" : formBandWhisperLabel(formBand, qualifiedSample);
+  const value = typeof starter.rgs === "number" ? starter.rgs.toFixed(1) : "--";
+
+  return (
+    <div
+      className={`${align === "home" ? "text-left" : "text-right"}`}
+      data-simple-form-line
+      data-simple-form-value-block
+      data-form-band={formBand ?? (starter.formStatus === "ok" ? "limited" : starter.formStatus)}
+      data-simple-form-line-color={valueColor}
+      data-simple-form-line-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}
+    >
+      <p className="font-serif text-[26px] font-black leading-none tabular-nums" style={{ color: valueColor }} data-simple-form-promoted-value>{value}</p>
+      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-form-promoted-whisper>{whisper}</p>
     </div>
   );
 }
@@ -262,6 +277,13 @@ function miniStatLine(starter: TonightStarter) {
   return starter.probableConfidence === "REPORTED" ? "Reported probable" : "Probable starter";
 }
 
+function formMicroLine(starter: TonightStarter) {
+  const era = formLineEraText(starter.seasonStats?.era);
+  const projected = starter.projection?.projectedGsPlus;
+  if (typeof projected === "number") return `${era} · PROJ ${projected.toFixed(1)}`;
+  return `${era} · ${miniStatLine(starter).toUpperCase()}`;
+}
+
 function simpleCardTint(score: number, accentColor: string) {
   if (score >= 58) {
     return {
@@ -296,23 +318,6 @@ function hexToRgba(hex: string, alpha: number) {
   const green = (value >> 8) & 255;
   const blue = value & 255;
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
-
-function SimpleFormLine({ starter, formBand }: { starter: TonightStarter; formBand: FormTier | null }) {
-  if (starter.status === "tbd") return <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-400">TBD · -- L5 ERA</span>;
-  if (starter.formStatus === "mlb_debut") return <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-amber-200">MLB DEBUT · -- L5 ERA</span>;
-  return (
-    <FormValueWhisperLine
-      value={starter.rgs}
-      tier={formBand}
-      qualifiedSample={Boolean(formBand)}
-      era={starter.seasonStats?.era}
-      compact
-      className="leading-4"
-      valueClassName="text-[10px]"
-      whisperClassName="text-[8px]"
-    />
-  );
 }
 
 function starterHeatColor(starter: TonightStarter, band: FormTier | null) {
