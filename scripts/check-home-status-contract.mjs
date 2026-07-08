@@ -24,6 +24,8 @@ const [
   homeDeferredSections,
   gsPlusCopy,
   methodologyContent,
+  homeGsPlusProofService,
+  homeGsPlusProofCron,
 ] = await Promise.all([
   readFile("src/app/page.tsx", "utf8"),
   readFile("src/app/starts/[id]/page.tsx", "utf8"),
@@ -42,6 +44,8 @@ const [
   readFile("src/components/home-deferred-sections.tsx", "utf8"),
   readFile("src/lib/gs-plus-copy.ts", "utf8"),
   readFile("src/lib/methodology-content.ts", "utf8"),
+  readFile("src/lib/data/home-gs-plus-proof-service.ts", "utf8"),
+  readFile("src/app/api/cron/home-gs-plus-proofs/route.ts", "utf8"),
 ]);
 
 assert(
@@ -290,7 +294,7 @@ assert(
     homePage.includes('<span className="block lg:inline">ranked.</span>') &&
     homePage.includes("lg:max-w-none") &&
     homePage.includes("<HomeDeferredSections") &&
-    homePage.includes('whyGsPlusBand={<WhyGsPlusBand />}') &&
+    homePage.includes('whyGsPlusBand={<WhyGsPlusBand proof={gsPlusProofs} />}') &&
     homePage.indexOf("data-home-hero-why-line") < homePage.indexOf("Methodology") &&
     !homePage.includes('className="hidden text-[11px] sm:inline sm:text-sm"') &&
     !heroWhyCopy.includes("—"),
@@ -310,12 +314,26 @@ for (const card of differentiatorCards) {
 assert(
   homePage.includes('data-responsive-check="home-gs-plus-differentiator-band"') &&
     homePage.includes("WHY GS+") &&
+    homePage.includes("Why GS+ is different") &&
     homePage.includes('data-home-gs-plus-differentiator-cards') &&
-    homePage.includes('md:grid-cols-3') &&
+    homePage.includes('data-home-gs-plus-proof-panels') &&
+    homePage.includes('data-home-gs-plus-proof-card="context"') &&
+    homePage.includes('data-home-gs-plus-proof-card="stuff"') &&
+    homePage.includes('data-home-gs-plus-proof-card="breakdown"') &&
+    homePage.includes("lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]") &&
+    !homePage.includes('md:grid-cols-3') &&
+    homePage.includes('data-home-gs-plus-context-pair') &&
+    homePage.includes('data-home-gs-plus-context-start') &&
+    homePage.includes('data-home-gs-plus-stuff-proof') &&
+    homePage.includes('data-home-gs-plus-freeze-proof') &&
+    homePage.includes('data-home-gs-plus-lock') &&
+    homePage.includes('data-home-gs-plus-breakdown-link') &&
+    homePage.includes("Proof packet:") &&
+    homePage.includes("readHomeGsPlusProofs()") &&
     homePage.includes('data-home-gs-plus-methodology-link') &&
     homePage.includes('href="/methodology"') &&
     !homePage.includes('href="/calibration"') &&
-    homePage.includes('whyGsPlusBand={<WhyGsPlusBand />}') &&
+    homePage.includes('whyGsPlusBand={<WhyGsPlusBand proof={gsPlusProofs} />}') &&
     homePage.indexOf("<HomeDeferredSections") < homePage.indexOf("function WhyGsPlusBand") &&
     homeDeferredSections.includes("whyGsPlusBand?: ReactNode") &&
     homeDeferredSections.includes('{module === "watch" ? whyGsPlusBand : null}') &&
@@ -327,7 +345,33 @@ assert(
 
       {formHome ? <HeatCheckHero home={formHome} /> : null}`) &&
     !homeDeferredSections.includes("PitchingDuelsModule"),
-  "homepage must render the WHY GS+ differentiator band below Must-Watch and above Heat Check, stack on mobile, and link the public breakdown phrase to methodology",
+  "homepage must render the rebuilt WHY GS+ proof band below Must-Watch and above Heat Check, with structured context, stuff, and frozen-breakdown proof panels",
+);
+
+assert(
+  homeGsPlusProofService.includes('readRuntimeState') &&
+    homeGsPlusProofService.includes('writeRuntimeState') &&
+    homeGsPlusProofService.includes('export async function readHomeGsPlusProofs') &&
+    homeGsPlusProofService.includes('export async function generateHomeGsPlusProofs') &&
+    homeGsPlusProofService.includes('getArchivedSeasonStartSummaries') &&
+    homeGsPlusProofService.includes('HOME_GS_PLUS_PROOF_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000') &&
+    homeGsPlusProofService.includes('selectContextPair') &&
+    homeGsPlusProofService.includes('lineDistance > 4') &&
+    homeGsPlusProofService.includes('gsDiff < 8') &&
+    homeGsPlusProofService.includes('contextComponentValue') &&
+    homeGsPlusProofService.includes('stuffComponentValue') &&
+    homeGsPlusProofService.includes('FALLBACK_HOME_GS_PLUS_PROOFS') &&
+    homeGsPlusProofService.includes('2026-06-24-min-lad-657746') &&
+    homeGsPlusProofService.includes('2026-06-14-hou-kc-681293') &&
+    homeGsPlusProofService.includes('2026-06-02-stl-tex-669160') &&
+    homeGsPlusProofService.includes('2026-06-30-wsh-bos-676917') &&
+    homeGsPlusProofService.includes('Documented real fallback, sourced from frozen canonical start records') &&
+    homeGsPlusProofCron.includes('export const dynamic = "force-dynamic";') &&
+    homeGsPlusProofCron.includes('generateHomeGsPlusProofs(date)') &&
+    homeGsPlusProofCron.includes('CRON_SECRET') &&
+    vercelConfig.includes('"path": "/api/cron/home-gs-plus-proofs"') &&
+    vercelConfig.includes('"schedule": "45 10 * * *"'),
+  "homepage GS+ proof packet must be cron-selected and stored, with documented real fallbacks for context, stuff, and breakdown proof",
 );
 
 assert(
