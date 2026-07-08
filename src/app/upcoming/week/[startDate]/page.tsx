@@ -4,6 +4,8 @@ import { PendingRegion } from "@/components/route-control-pending";
 import { UpcomingSlateRangeToggle } from "@/components/slate-date-nav";
 import { SiteHeader } from "@/components/site-header";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
+import { UpcomingSimpleBoard } from "@/components/upcoming-simple-board";
+import { UpcomingViewModePanels, UpcomingViewModeProvider, UpcomingViewModeToggle } from "@/components/upcoming-view-mode";
 import { filterAndSortGames, normalizeUpcomingControls, UpcomingControls } from "@/app/upcoming/[date]/page";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
@@ -83,59 +85,81 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
   const scheduledGameCount = upcoming.days.reduce((count, day) => count + day.scheduledGames, 0);
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
-      <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-3 pb-3">
-          <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            One card per game, ranked by starter form and matchup context.
-          </p>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp">
-            Week of {formatUpcomingDate(resolvedStartDate)} · {visibleGameCount} of {scheduledGameCount} games shown
-          </p>
-          <UpcomingSlateRangeToggle activeDate={resolvedStartDate} today={today} tomorrow={tomorrow} weekActive />
-          {bestGame ? (
-            <Link
-              href={upcomingDateHref(bestGame.day)}
-              className="mt-4 inline-flex rounded border border-amber-300/30 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
-              aria-label={`View featured game day slate for ${formatUpcomingDate(bestGame.day)}`}
-              data-responsive-check="upcoming-week-feature"
-              data-feature-date={bestGame.day}
-              data-feature-game-id={bestGame.game.gamePk}
-              data-feature-watch-score={bestGame.game.gameWatchScore}
-              data-feature-rank="1"
-            >
-              Week&apos;s must-watch: {bestGame.game.label} / {formatUpcomingDate(bestGame.day)} / #1 week pick
-            </Link>
-          ) : null}
-          <UpcomingControls
-            controls={controls}
-            basePath={upcomingWeekHref(resolvedStartDate)}
-            slateRange="week"
-            visibleGameCount={visibleGameCount}
-            scheduledGameCount={scheduledGameCount}
-          />
-        </header>
-      </div>
+    <UpcomingViewModeProvider>
+      <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try { document.documentElement.setAttribute("data-upcoming-view-mode-init", window.localStorage.getItem("tts.upcoming.view") === "DETAILED" ? "detailed" : "simple"); } catch { document.documentElement.setAttribute("data-upcoming-view-mode-init", "simple"); } })();`,
+          }}
+        />
+        <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-3 pb-3">
+            <SiteHeader active="upcoming" today={today} rankedDate={rankedDate} />
+            <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Upcoming Matchups</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+              One card per game, ranked by starter form and matchup context.
+            </p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-responsive-check="upcoming-slate-stamp">
+              Week of {formatUpcomingDate(resolvedStartDate)} · {visibleGameCount} of {scheduledGameCount} games shown
+            </p>
+            <UpcomingSlateRangeToggle activeDate={resolvedStartDate} today={today} tomorrow={tomorrow} weekActive />
+            {bestGame ? (
+              <Link
+                href={upcomingDateHref(bestGame.day)}
+                className="mt-4 inline-flex rounded border border-amber-300/30 px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] text-amber-300 transition hover:border-amber-300/60 hover:text-amber-200"
+                aria-label={`View featured game day slate for ${formatUpcomingDate(bestGame.day)}`}
+                data-responsive-check="upcoming-week-feature"
+                data-feature-date={bestGame.day}
+                data-feature-game-id={bestGame.game.gamePk}
+                data-feature-watch-score={bestGame.game.gameWatchScore}
+                data-feature-rank="1"
+              >
+                Week&apos;s must-watch: {bestGame.game.label} / {formatUpcomingDate(bestGame.day)} / #1 week pick
+              </Link>
+            ) : null}
+            <UpcomingControls
+              controls={controls}
+              basePath={upcomingWeekHref(resolvedStartDate)}
+              slateRange="week"
+              visibleGameCount={visibleGameCount}
+              scheduledGameCount={scheduledGameCount}
+              viewModeToggle={<UpcomingViewModeToggle />}
+            />
+          </header>
+        </div>
 
-      <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="space-y-8 transition data-[route-pending=true]:opacity-70">
-        {filteredDays.map((day) => (
-          <TonightsMustWatch
-            key={day.date}
-            tonight={day}
-            fullSlateHref={upcomingDateHref(day.date)}
-            fullSlateLabel="Day slate"
-            fullSlateAriaLabel={`View day slate for ${formatUpcomingDate(day.date)}`}
-            eyebrow={formatUpcomingDate(day.date)}
-            title="Matchup Board"
-            rankLabel={`on ${formatUpcomingDate(day.date)}`}
-            sectionId={`must-watch-${day.date}`}
+        <PendingRegion id="upcoming-board" region="upcoming-board" label="Upcoming matchup board" className="space-y-8 transition data-[route-pending=true]:opacity-70">
+          <UpcomingViewModePanels
+            detailed={(
+              <>
+                {filteredDays.map((day) => (
+                  <TonightsMustWatch
+                    key={day.date}
+                    tonight={day}
+                    fullSlateHref={upcomingDateHref(day.date)}
+                    fullSlateLabel="Day slate"
+                    fullSlateAriaLabel={`View day slate for ${formatUpcomingDate(day.date)}`}
+                    eyebrow={formatUpcomingDate(day.date)}
+                    title="Matchup Board"
+                    rankLabel={`on ${formatUpcomingDate(day.date)}`}
+                    sectionId={`must-watch-${day.date}`}
+                  />
+                ))}
+              </>
+            )}
+            simple={(
+              <div className="space-y-8" data-upcoming-week-simple-board>
+                {filteredDays.map((day) => (
+                  <UpcomingSimpleBoard key={day.date} tonight={day} rankLabel={`on ${formatUpcomingDate(day.date)}`} sortMode={controls.sort} />
+                ))}
+              </div>
+            )}
           />
-        ))}
-      </PendingRegion>
-    </main>
+        </PendingRegion>
+      </main>
+    </UpcomingViewModeProvider>
   );
 }
 

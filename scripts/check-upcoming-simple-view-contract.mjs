@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const page = await readFile("src/app/upcoming/[date]/page.tsx", "utf8");
+const weekPage = await readFile("src/app/upcoming/week/[startDate]/page.tsx", "utf8");
 const viewMode = await readFile("src/components/upcoming-view-mode.tsx", "utf8");
 const segmentedControl = await readFile("src/components/segmented-control.tsx", "utf8");
 const simpleBoard = await readFile("src/components/upcoming-simple-board.tsx", "utf8");
@@ -19,6 +20,7 @@ const globals = await readFile("src/app/globals.css", "utf8");
 assert(page.includes("<UpcomingViewModeProvider>"), "Upcoming page must wrap toolbar and board in one view-mode provider.");
 assert(page.includes('viewModeToggle={<UpcomingViewModeToggle />}'), "Upcoming toolbar must render the simple/detailed toggle inside the existing controls.");
 assert(page.includes("<UpcomingViewModePanels") && page.includes("<TonightsMustWatch") && page.includes("<UpcomingSimpleBoard"), "Upcoming board must switch between detailed and simple panels without changing data.");
+assert(weekPage.includes("<UpcomingViewModeProvider>") && weekPage.includes('viewModeToggle={<UpcomingViewModeToggle />}') && weekPage.includes("<UpcomingViewModePanels") && weekPage.includes("<UpcomingSimpleBoard") && weekPage.includes("data-upcoming-week-simple-board"), "Upcoming week page must include the same Simple/Detailed view toggle and per-day Simple boards.");
 assert(!page.includes("viewMode="), "Upcoming simple mode must not be URL-backed.");
 assert(page.includes('import { readUpcomingWriteups } from "@/lib/data/upcoming-writeups-service";') && page.includes("readUpcomingWriteups(date)") && page.includes("contextWriteups={contextWriteups}"), "Upcoming page must only read stored LLM writeups during render and pass them to Simple cards.");
 
