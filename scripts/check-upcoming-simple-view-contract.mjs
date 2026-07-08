@@ -60,7 +60,7 @@ assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must rende
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
 assert(simpleBoard.includes("contextWriteup ?? upcomingSimpleContextSentence") && simpleBoard.includes('data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}'), "Simple cards must render stored LLM writeups when present and deterministic fallback copy otherwise.");
-assert(simpleBoard.includes("text-center text-base") && !simpleBoard.includes("text-center font-serif") && !simpleBoard.includes("lg:text-left"), "Simple context text must render centered in the body copy face at the card foot.");
+assert(simpleBoard.includes("text-left text-base") && !simpleBoard.includes("text-center text-base") && !simpleBoard.includes("text-center font-serif") && !simpleBoard.includes("lg:text-left"), "Simple context text must render left-aligned in the body copy face at the card foot.");
 assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
 assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis one\\b/i.test(sentence))}'), "Simple context sentences must guard against this-one copy.");

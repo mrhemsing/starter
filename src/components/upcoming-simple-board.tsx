@@ -128,7 +128,7 @@ function UpcomingSimpleCard({
         <SimpleIdentityStrip starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
       </div>
       <p
-        className="px-4 py-5 text-center text-base leading-6 text-zinc-200 sm:px-6"
+        className="px-4 py-5 text-left text-base leading-6 text-zinc-200 sm:px-6"
         data-upcoming-simple-context
         data-simple-context-sentence-count={sentenceCount(sentence)}
         data-simple-context-word-count={wordCount(sentence)}
