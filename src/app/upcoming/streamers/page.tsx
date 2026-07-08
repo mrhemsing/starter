@@ -49,6 +49,7 @@ export default async function UpcomingStreamersPage() {
   const streamers = await getUpcomingStreamers(today);
   const streamingRead = await readFantasyStreamingRead(streamers);
   const jsonLd = jsonLdForUpcomingStreamers(streamers);
+  const hasTwoStartPitchers = streamers.twoStartPitchers.length > 0;
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -84,19 +85,27 @@ export default async function UpcomingStreamersPage() {
       </section>
 
       <section
-        className="mx-auto grid min-w-0 max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+        className={`mx-auto grid min-w-0 max-w-7xl gap-5 ${
+          hasTwoStartPitchers ? "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]" : "lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start"
+        }`}
         data-responsive-check="upcoming-streamers"
         data-two-start-count={streamers.twoStartPitchers.length}
         data-form-riser-count={streamers.formRisers.length}
+        data-fantasy-streamers-layout={hasTwoStartPitchers ? "balanced-columns" : "streamers-expanded"}
+        data-two-start-state={hasTwoStartPitchers ? "populated" : "early-week-empty"}
       >
-        <StreamerSection
-          title="Two-start pitchers"
-          eyebrow="Fantasy week"
-          description="Two starts in one fantasy week doubles the counting stats."
-          emptyCopy="No two-start pitchers are visible yet."
-          candidates={streamers.twoStartPitchers}
-          range={streamers.range}
-        />
+        {hasTwoStartPitchers ? (
+          <StreamerSection
+            title="Two-start pitchers"
+            eyebrow="Fantasy week"
+            description="Two starts in one fantasy week doubles the counting stats."
+            emptyCopy="No confirmed two-start pitchers are visible yet."
+            candidates={streamers.twoStartPitchers}
+            range={streamers.range}
+          />
+        ) : (
+          <TwoStartEmptyState />
+        )}
         <StreamerSection
           title="Form risers with soft matchups"
           eyebrow="Pickup lens"
@@ -108,6 +117,25 @@ export default async function UpcomingStreamersPage() {
         />
       </section>
     </main>
+  );
+}
+
+function TwoStartEmptyState() {
+  return (
+    <section
+      className="min-w-0 self-start rounded border border-white/10 bg-[#101014] p-4"
+      aria-labelledby="two-start-pitchers-heading"
+      data-two-start-empty-state="early-week"
+      data-two-start-empty-state-height="compact-under-200"
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Fantasy week</p>
+      <h2 id="two-start-pitchers-heading" className="mt-2 font-serif text-2xl font-black text-zinc-50">
+        Two-start pitchers
+      </h2>
+      <p className="mt-2 text-sm leading-6 text-zinc-400">
+        Two-start pitchers confirm midweek. Check back as probables are announced.
+      </p>
+    </section>
   );
 }
 

@@ -42,7 +42,7 @@ type GenerateFantasyStreamingReadResult = {
 };
 
 const FANTASY_STREAMING_READ_VERSION = 1;
-const FANTASY_STREAMING_READ_PROMPT_VERSION = 1;
+const FANTASY_STREAMING_READ_PROMPT_VERSION = 2;
 const FANTASY_STREAMING_READ_MODEL = process.env.OPENAI_MODEL_FANTASY_READ ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
@@ -98,7 +98,7 @@ async function generateFantasyRead(apiKey: string, input: FantasyStreamingReadIn
       input: [
         {
           role: "system",
-          content: "Write 2 to 3 fantasy baseball streaming sentences under 60 words total from provided data only. Name a target and a caution. No em dash. Every number must appear in the input. Do not invent facts, rankings, injuries, history, or projections.",
+          content: "Write 2 to 3 fantasy baseball streaming sentences under 60 words total from provided data only. Use sell-voice. Use the words Target and Fade or Caution. Name at least two listed pitchers when two are available. No em dash. Every number must appear in the input. Do not invent facts, rankings, injuries, history, or projections.",
         },
         {
           role: "user",
@@ -143,23 +143,54 @@ function readCandidate(candidate: StreamerCandidate): FantasyStreamingReadCandid
 
 function fallbackFantasyStreamingRead(input: FantasyStreamingReadInput) {
   const target = input.standout ?? input.twoStartPitchers[0] ?? input.formRisers[0];
-  const caution = input.caution ?? input.formRisers[0] ?? input.twoStartPitchers[1] ?? target;
-  if (!target) return "This week's streaming read is still forming as probable starters lock in. Check back after the next refresh.";
-  const targetMatchup = target.matchups[0] ? ` with ${target.matchups[0]}` : "";
-  const cautionCopy = caution && caution.name !== target.name ? ` Watch ${caution.name} more carefully until the matchup data firms up.` : "";
-  return `${target.name} is the top streaming target${targetMatchup}. ${cautionCopy || "Keep the back end flexible until more starters are confirmed."}`;
+  const alternate = allReadCandidates(input).find((candidate) => candidate.name !== target?.name);
+  const caution = input.caution?.name !== target?.name ? input.caution : alternate;
+  if (!target) return "Streaming board is still forming as probable starters lock in. Target the first confirmed soft matchup. Fade thin-data arms until the next refresh.";
+
+  const targetCopy = `Target ${target.name}${formatReadTargetReason(target)}.`;
+  if (caution) return `${targetCopy} Fade ${caution.name}${formatReadCautionReason(caution)}.`;
+  return `${targetCopy} Keep the last roster spot flexible. Fade thin-data arms until another streamer separates.`;
 }
 
 function validateFantasyRead(read: string, input: FantasyStreamingReadInput) {
   if (!read || wordCount(read) > 60 || read.includes("—")) return false;
   const sentenceCount = (read.match(/[.!?]/g) ?? []).length;
   if (sentenceCount < 2 || sentenceCount > 3) return false;
+  if (!/\btarget\b/i.test(read) || !/\b(fade|caution)\b/i.test(read)) return false;
   if (/\b(has been|since|streak|injury|injured|revenge|lock|must-start)\b/i.test(read)) return false;
   const allowedNumbers = new Set(JSON.stringify(input).match(/\d+(?:\.\d+)?/g) ?? []);
   if (!(read.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token))) return false;
   const names = new Set([...input.twoStartPitchers, ...input.formRisers].map((candidate) => candidate.name));
-  const namedPitcher = [...names].some((name) => read.includes(name.split(" ")[0]) || read.includes(name.split(" ").slice(-1)[0]));
-  return namedPitcher;
+  const namedPitchers = [...names].filter((name) => read.includes(name.split(" ")[0]) || read.includes(name.split(" ").slice(-1)[0]));
+  return namedPitchers.length >= Math.min(2, names.size);
+}
+
+function formatReadTargetReason(candidate: FantasyStreamingReadCandidate) {
+  if (candidate.softMatchups > 0) return " behind a soft lineup draw";
+  if (candidate.matchups.length >= 2) return " for two listed starts";
+  const parkReason = formatParkReason(candidate.parkLabels, "pitcher");
+  if (parkReason) return ` with ${parkReason}`;
+  return ` with ${candidate.heatLabel.toLowerCase()} form`;
+}
+
+function formatReadCautionReason(candidate: FantasyStreamingReadCandidate) {
+  if (candidate.matchups.some((matchup) => /\bTough\b/.test(matchup))) return " around a tough lineup draw";
+  const parkReason = formatParkReason(candidate.parkLabels, "hitter");
+  if (parkReason) return ` around ${parkReason}`;
+  if (candidate.matchups.length === 0) return " until matchup data firms up";
+  return " until the matchup edge gets clearer";
+}
+
+function formatParkReason(labels: string[], kind: "pitcher" | "hitter") {
+  return labels.find((label) => label.toLowerCase().includes(kind))?.toLowerCase() ?? null;
+}
+
+function allReadCandidates(input: FantasyStreamingReadInput) {
+  const byName = new Map<string, FantasyStreamingReadCandidate>();
+  for (const candidate of [...input.twoStartPitchers, ...input.formRisers]) {
+    byName.set(candidate.name, candidate);
+  }
+  return [...byName.values()];
 }
 
 function uniqueCandidates(candidates: StreamerCandidate[]) {

@@ -127,7 +127,13 @@ assert(
     streamersPage.includes("data-streamers-coverage") &&
     streamersPage.includes("Two-start pitchers") &&
     streamersPage.includes("Two starts in one fantasy week doubles the counting stats.") &&
-    streamersPage.includes('emptyCopy="No two-start pitchers are visible yet."') &&
+    streamersPage.includes("const hasTwoStartPitchers = streamers.twoStartPitchers.length > 0") &&
+    streamersPage.includes('data-fantasy-streamers-layout={hasTwoStartPitchers ? "balanced-columns" : "streamers-expanded"}') &&
+    streamersPage.includes('data-two-start-state={hasTwoStartPitchers ? "populated" : "early-week-empty"}') &&
+    streamersPage.includes("function TwoStartEmptyState()") &&
+    streamersPage.includes("Two-start pitchers confirm midweek. Check back as probables are announced.") &&
+    streamersPage.includes('data-two-start-empty-state-height="compact-under-200"') &&
+    !streamersPage.includes("No two-start pitchers are visible yet.") &&
     !streamersPage.includes("No two-start streamers are visible yet.") &&
     streamersPage.includes("Form risers with soft matchups") &&
     streamersPage.includes("Trending arms drawing a weak lineup in their next start.") &&
