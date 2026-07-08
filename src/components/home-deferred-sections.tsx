@@ -95,6 +95,7 @@ export function HomeDeferredSections({
   const watchDate = resolveHomeMustWatchDate(watch, activeTodayWatch?.games.length ? today : tomorrow);
   const watchWord = watch ? slateTimeWord({ date: watchDate }, { today }) : "today";
   const watchEyebrow = watch ? slateTimeWordTitle({ date: watchDate }, { today }) : "Today";
+  const topMatchupsTitle = `${watchEyebrow}'s Top Matchups`;
 
   useEffect(() => {
     if (!slatePhaseExperiment) return;
@@ -129,16 +130,17 @@ export function HomeDeferredSections({
           <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
         ) : null,
       watch: watch ? (
-        <TonightsMustWatch
-          tonight={watch}
-          fullSlateHref={upcomingDateHref(watchDate)}
-          fullSlateLabel={`See ${watchWord}'s full slate`}
-          eyebrow={watchEyebrow}
-          title="Must-Watch Games"
-          rankLabel={watchWord}
-          previewLimit={3}
-          showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
-        />
+          <TonightsMustWatch
+            tonight={watch}
+            fullSlateHref={upcomingDateHref(watchDate)}
+            fullSlateLabel="See full slate"
+            eyebrow={watchEyebrow}
+            title={topMatchupsTitle}
+            rankLabel={watchWord}
+            previewLimit={3}
+            showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
+            layout="top-matchups"
+          />
       ) : null,
       heat: formHome ? <HeatCheckHero home={formHome} /> : null,
       ranked: shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
@@ -179,12 +181,13 @@ export function HomeDeferredSections({
         <TonightsMustWatch
           tonight={watch}
           fullSlateHref={upcomingDateHref(watchDate)}
-          fullSlateLabel={`See ${watchWord}'s full slate`}
+          fullSlateLabel="See full slate"
           eyebrow={watchEyebrow}
-          title="Must-Watch Games"
+          title={topMatchupsTitle}
           rankLabel={watchWord}
           previewLimit={3}
           showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
+          layout="top-matchups"
         />
       ) : null}
 

@@ -6,6 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { FormValueWhisperLine, hasQualifiedStarterFormSample } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
+import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
 import { HEAT_BANDS, MUSTWATCH_CONFIG, watchMatchupQualityBand } from "@/lib/form-tokens";
 import { pitcherHref, sourceParams } from "@/lib/routes";
@@ -31,6 +32,7 @@ export function TonightsMustWatch({
   sectionId = "must-watch",
   compactTopPadding = false,
   showHookSpine = true,
+  layout = "default",
 }: {
   tonight: TonightResponse;
   fullSlateHref: string;
@@ -43,6 +45,7 @@ export function TonightsMustWatch({
   sectionId?: string;
   compactTopPadding?: boolean;
   showHookSpine?: boolean;
+  layout?: "default" | "top-matchups";
 }) {
   const shownGames = typeof previewLimit === "number" ? tonight.games.slice(0, previewLimit) : tonight.games;
   const headliner = shownGames[0];
@@ -52,6 +55,7 @@ export function TonightsMustWatch({
   const marketAttribution = marketAttributionForGames(shownGames);
   const showGameStatus = new Set(shownGames.map((game) => game.status)).size >= 2;
   const topWatchGamePk = topWatchScoreGamePk(shownGames);
+  const isTopMatchupsLayout = layout === "top-matchups";
 
   return (
     <section
@@ -59,6 +63,7 @@ export function TonightsMustWatch({
       aria-labelledby={headingId}
       className={`border-y border-white/10 bg-[#0d0d11] px-4 ${compactTopPadding ? "pb-10 pt-4" : "py-10"} sm:px-6 lg:px-8`}
       data-responsive-check="must-watch"
+      data-home-matchups-layout={layout}
       data-slate-date={tonight.date}
       data-generated-at={tonight.generatedAt}
       data-game-count={shownGames.length}
@@ -209,7 +214,7 @@ export function TonightsMustWatch({
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{eyebrowLabel}</p>
             <h2 id={headingId} className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">{title}</h2>
             <p className="blurb mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              One card per game, ranked by starter form and matchup context.
+              {isTopMatchupsLayout ? "Ranked by starter form and matchup context." : "One card per game, ranked by starter form and matchup context."}
             </p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-600">
               <MetaLine
@@ -248,11 +253,19 @@ export function TonightsMustWatch({
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4" data-home-top-matchups-composition={isTopMatchupsLayout ? "detailed-hero-plus-simple-cards" : undefined}>
             <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} />
-            <div className="grid gap-3">
-              {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
-            </div>
+            {isTopMatchupsLayout ? (
+              <div className="grid gap-4 lg:grid-cols-2" data-home-top-matchups-simple-row data-home-top-matchups-simple-count={rows.slice(0, 2).length}>
+                {rows.slice(0, 2).map((game, index) => (
+                  <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 2} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode="watch" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
+              </div>
+            )}
           </div>
         )}
         {marketAttribution ? <MarketAttributionLine attribution={marketAttribution} /> : null}

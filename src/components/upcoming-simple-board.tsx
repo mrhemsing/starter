@@ -51,7 +51,7 @@ export function UpcomingSimpleBoard({
   );
 }
 
-function UpcomingSimpleCard({
+export function UpcomingSimpleCard({
   game,
   rank,
   leagueMeanGS,

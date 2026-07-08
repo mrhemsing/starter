@@ -195,8 +195,13 @@ assert(
 );
 
 assert(
-  homeDeferredSections.includes('title="Must-Watch Games"') && !homeDeferredSections.includes('title="Tonight\\\'s Must-Watch Games"'),
-  "home must-watch section title must read Must-Watch Games without the Tonight prefix",
+  homeDeferredSections.includes("const topMatchupsTitle = `${watchEyebrow}'s Top Matchups`;") &&
+    homeDeferredSections.includes('title={topMatchupsTitle}') &&
+    homeDeferredSections.includes('fullSlateLabel="See full slate"') &&
+    homeDeferredSections.includes('layout="top-matchups"') &&
+    !homeDeferredSections.includes('title="Must-Watch Games"') &&
+    !homeDeferredSections.includes('title="Tonight\\\'s Must-Watch Games"'),
+  "home matchup section title must be slate-aware Top Matchups, link to the full slate, and stop rendering Must-Watch framing",
 );
 
 assert(
@@ -254,6 +259,19 @@ assert(
     mustWatch.includes('data-starter-baseline-row="sparkline"') &&
     mustWatch.includes('data-starter-sparkline-baseline="bottom"'),
   "detailed Must-Watch starter panels must render from one side-prop mirror component with a shared baseline grid and matched sparkline baseline",
+);
+
+assert(
+  mustWatch.includes('import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";') &&
+    mustWatch.includes('layout?: "default" | "top-matchups";') &&
+    mustWatch.includes('data-home-matchups-layout={layout}') &&
+    mustWatch.includes('data-home-top-matchups-composition={isTopMatchupsLayout ? "detailed-hero-plus-simple-cards" : undefined}') &&
+    mustWatch.includes('data-home-top-matchups-simple-row') &&
+    mustWatch.includes("rows.slice(0, 2).map((game, index) => (") &&
+    mustWatch.includes("<UpcomingSimpleCard") &&
+    mustWatch.includes('sortMode="watch"') &&
+    mustWatch.includes('"Ranked by starter form and matchup context."'),
+  "home Top Matchups must reuse the detailed hero and Upcoming SIMPLE cards for #2/#3 without a homepage fork",
 );
 
 assert(
