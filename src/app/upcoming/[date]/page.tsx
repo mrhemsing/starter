@@ -248,7 +248,7 @@ export function UpcomingControls({
       data-control-active-count={activeControlCount}
       aria-label={controlsLabel}
     >
-      <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1" data-upcoming-control-row>
+      <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1" data-upcoming-control-row style={{ marginLeft: "-4px" }}>
         <SegmentedControl
           label="Sort"
           ariaLabel="Sort options"
