@@ -108,6 +108,7 @@ export function HomeDeferredSections({
   const watchDate = resolveHomeMustWatchDate(watch, activeTodayWatch?.games.length ? today : tomorrow);
   const watchWord = watch ? slateTimeWord({ date: watchDate }, { today }) : "today";
   const watchEyebrow = watch ? slateTimeWordTitle({ date: watchDate }, { today }) : "Today";
+  const duelsTitle = duels ? `Best Duels ${homeDuelsSlateTitle(duels, today)}` : "Best Duels Today";
 
   useEffect(() => {
     if (!slatePhaseExperiment) return;
@@ -153,7 +154,7 @@ export function HomeDeferredSections({
           showHookSpine={shouldShowHomeHookSpine(ranked, watchDate)}
         />
       ) : null,
-      duels: duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null,
+      duels: duels ? <PitchingDuelsModule duels={duels} title={duelsTitle} compact /> : null,
       heat: formHome ? <HeatCheckHero home={formHome} /> : null,
       ranked: shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} compact={slatePhase === "PREGAME"} /> : null,
       best: bestStarts ? (
@@ -204,7 +205,7 @@ export function HomeDeferredSections({
 
       {whyGsPlusBand}
 
-      {duels ? <PitchingDuelsModule duels={duels} title="Best Duels Today" compact /> : null}
+      {duels ? <PitchingDuelsModule duels={duels} title={duelsTitle} compact /> : null}
       {formHome ? <HeatCheckHero home={formHome} /> : null}
       {shouldShowHomeRankedRecap(ranked) ? <RankedStartsRecap date={ranked.date} label={ranked.label} starts={ranked.starts} highlights={new Map()} /> : null}
       {bestStarts ? (
@@ -397,6 +398,11 @@ function filterHomeMustWatchGames(watch: TonightResponse | null) {
 
 function hasPregameMustWatchGames(watch: TonightResponse | null) {
   return watch?.games.some((game) => game.status === "pregame") ?? false;
+}
+
+function homeDuelsSlateTitle(duels: PitchingDuelsResponse, today: string) {
+  if (duels.mode === "settled") return "Last Settled";
+  return slateTimeWordTitle({ date: duels.date }, { today });
 }
 
 async function fetchJson<T>(url: string): Promise<T> {

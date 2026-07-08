@@ -211,6 +211,14 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("const duelsTitle = duels ? `Best Duels ${homeDuelsSlateTitle(duels, today)}` : \"Best Duels Today\";") &&
+    homeDeferredSections.includes("function homeDuelsSlateTitle(duels: PitchingDuelsResponse, today: string)") &&
+    homeDeferredSections.includes("return slateTimeWordTitle({ date: duels.date }, { today });") &&
+    homeDeferredSections.includes("<PitchingDuelsModule duels={duels} title={duelsTitle} compact />"),
+  "home Best Duels title must follow the rendered duels slate date",
+);
+
+assert(
   homeDeferredSections.includes("function filterHomeMustWatchGames(watch: TonightResponse | null)") &&
     homeDeferredSections.includes('const games = watch.games.filter((game) => game.status === "pregame");') &&
     homeDeferredSections.includes("function hasPregameMustWatchGames(watch: TonightResponse | null)") &&
