@@ -156,7 +156,7 @@ export function UpcomingSimpleCard({
           data-simple-score-seam-bar="single-opaque"
           data-simple-score-seam-bar-width="26%"
         >
-          <p className="font-serif text-[34px] font-black leading-none sm:text-[42px]" style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }} data-simple-watch-score>{scoreLabel}</p>
+          <p className="font-serif text-[32px] font-black leading-none sm:text-[42px]" style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }} data-simple-watch-score>{scoreLabel}</p>
           <p className="mt-1 font-mono text-[12px] lowercase tracking-[0.14em] text-zinc-400" data-simple-vs-mark data-simple-vs-text>vs.</p>
           {confidenceLabel ? (
             <p className="mx-auto mt-2 inline-flex rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.1em] text-amber-100" data-simple-confidence-chip={game.watchScoreConfidence}>
