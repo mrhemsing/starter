@@ -197,6 +197,7 @@ function SimpleIdentityStrip({
   const formBand = hasQualifiedStarterFormSample(starter) ? starter.tier ?? null : null;
   const name = starter.name ?? `TBD ${starter.team}`;
   const heatColor = starterHeatColor(starter, formBand);
+  const bandLabel = simpleStarterBandLabel(starter, formBand);
   const href = starter.pitcherId && starter.name ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")) : null;
   const nameNode = (
     <div className={`${align === "home" ? "text-right" : "text-left"}`} data-simple-starter-name-block>
@@ -209,6 +210,7 @@ function SimpleIdentityStrip({
           <PitcherNameLines name={name} />
         </p>
       )}
+      <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-name-band-label>{bandLabel}</p>
     </div>
   );
   const valueNode = <SimpleFormValueBlock starter={starter} formBand={formBand} align={align} />;
@@ -229,7 +231,7 @@ function SimpleIdentityStrip({
 function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightStarter; formBand: FormTier | null; align: "away" | "home" }) {
   const qualifiedSample = Boolean(formBand);
   const valueColor = formBandValueColor(formBand, qualifiedSample);
-  const whisper = starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "DEBUT" : formBandWhisperLabel(formBand, qualifiedSample);
+  const whisper = simpleStarterBandLabel(starter, formBand);
   const value = typeof starter.rgs === "number" ? starter.rgs.toFixed(1) : "--";
 
   return (
@@ -245,6 +247,12 @@ function SimpleFormValueBlock({ starter, formBand, align }: { starter: TonightSt
       <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-500" data-simple-form-promoted-whisper>{whisper}</p>
     </div>
   );
+}
+
+function simpleStarterBandLabel(starter: TonightStarter, formBand: FormTier | null) {
+  if (starter.status === "tbd") return "TBD";
+  if (starter.formStatus === "mlb_debut") return "DEBUT";
+  return formBandWhisperLabel(formBand, Boolean(formBand));
 }
 
 function PitcherNameLines({ name }: { name: string }) {
