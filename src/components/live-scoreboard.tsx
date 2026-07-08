@@ -5,17 +5,16 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CtaArrow } from "@/components/cta-arrow";
 import { Headshot } from "@/components/headshot";
-import { FormValueWhisperLine, hasQualifiedStarterFormSample } from "@/components/limited-sample-form-chip";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
+import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";
 import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
-import { pitcherHref, rankedStartsPath, sourceParams, upcomingDateHref } from "@/lib/routes";
+import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus, formatWatchScore } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
 import type { TonightGame, TonightStarter } from "@/lib/types";
-import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 
 type LiveScoreboardProps = {
   initialBoard: LiveScoreboardData;
@@ -708,8 +707,6 @@ function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
 }
 
 function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: TonightGame }) {
-  const [awayStarter, homeStarter] = game.starters;
-  const tier = watchTierOf(game.gameWatchScore);
   const gameHref = `${slate.upcomingHref}#upcoming-game-${game.gamePk}`;
 
   return (
@@ -731,76 +728,10 @@ function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: Tonigh
           Upcoming card
         </Link>
       </div>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.72fr)_minmax(0,1fr)] lg:items-stretch">
-        <PregameStarterBlock starter={awayStarter} align="away" />
-        <div className="flex min-h-full flex-col justify-center rounded border border-amber-300/25 bg-black/35 p-4 text-center shadow-[inset_0_0_42px_rgba(251,191,36,0.08)]" data-responsive-check="live-pregame-hook">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200">{formatFirstPitch(game.firstPitch)}</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">{game.park}</p>
-          <div className="mt-3 flex flex-wrap items-end justify-center gap-2">
-            <p className="font-serif text-5xl font-black leading-none" style={{ color: tier.color }}>{formatWatchScore(game.gameWatchScore)}</p>
-            <PregameConfidenceChip game={game} />
-          </div>
-          <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>
-        </div>
-        <PregameStarterBlock starter={homeStarter} align="home" />
+      <div className="mt-4" data-live-pregame-simple-card="true">
+        <UpcomingSimpleCard game={game} rank={1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />
       </div>
     </section>
-  );
-}
-
-function PregameStarterBlock({ starter, align }: { starter: TonightStarter; align: "away" | "home" }) {
-  const name = starter.name ?? "TBD";
-  const href = starter.pitcherId ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("live")) : null;
-  const projection = starter.projection?.projectedGsPlus;
-  const baselineProjection = starter.formStatus === "cold_start";
-
-  return (
-    <div className={`rounded border border-white/10 bg-black/25 p-4 ${align === "home" ? "lg:text-right" : ""}`} data-live-pregame-starter={starter.side} data-starter-pitcher-id={starter.pitcherId ?? "tbd"}>
-      <div className={`flex items-center gap-4 ${align === "home" ? "lg:flex-row-reverse" : ""}`}>
-        <Headshot playerId={starter.pitcherId} name={name} team={starter.team} size="marquee" band={starter.tier ?? null} sampleSufficient={hasQualifiedStarterFormSample(starter)} decorative={!href} />
-        <div className="min-w-0">
-          {href ? (
-            <Link href={href} className="pitcher-name block font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-              {name}
-            </Link>
-          ) : (
-            <p className="pitcher-name font-serif text-2xl font-bold leading-tight text-zinc-50">{name}</p>
-          )}
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-            {starter.team} · {starter.side === "away" ? "Away starter" : "Home starter"}
-          </p>
-          <div className={`mt-3 flex flex-wrap gap-1.5 ${align === "home" ? "lg:justify-end" : ""}`}>
-            <PregameFormChip starter={starter} />
-            <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">
-              Proj GS+ {projection === null || projection === undefined ? "pending" : projection.toFixed(1)}
-            </span>
-            {baselineProjection ? (
-              <span className="inline-flex min-h-6 items-center rounded border border-amber-300/25 bg-amber-300/10 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
-                BASELINE
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PregameFormChip({ starter }: { starter: TonightStarter }) {
-  if (starter.formStatus === "ok") {
-    const qualifiedSample = hasQualifiedStarterFormSample(starter);
-    return (
-      <span className="inline-flex min-h-6 items-center" data-live-pregame-form-line>
-        <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} compact />
-      </span>
-    );
-  }
-
-  const label = starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited";
-  return (
-    <span className="inline-flex min-h-6 items-center rounded border border-white/10 bg-white/[0.04] px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-      {label}
-    </span>
   );
 }
 
@@ -821,17 +752,6 @@ function PregameNextUpRows({ slate }: { slate: LivePregameSlate }) {
         </Link>
       ))}
     </section>
-  );
-}
-
-function PregameConfidenceChip({ game }: { game: TonightGame }) {
-  const label = watchScoreConfidenceLabel(game.watchScoreConfidence);
-  if (!label) return null;
-
-  return (
-    <span className="inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-100">
-      {label}
-    </span>
   );
 }
 

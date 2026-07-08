@@ -224,7 +224,7 @@ assert(
     liveComponent.includes("if (!board.hasActiveStarts && !pregame) return;") &&
     liveComponent.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
     liveComponent.includes('import { Headshot } from "@/components/headshot";') &&
-    liveComponent.includes('import { pitcherHref, rankedStartsPath, sourceParams, upcomingDateHref } from "@/lib/routes";') &&
+    liveComponent.includes('import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";') &&
     liveComponent.includes('import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";') &&
     liveComponent.includes('grid-cols-[35px_minmax(0,1fr)_auto]') &&
     liveComponent.includes("<Headshot playerId={row.pitcherMlbId}") &&
@@ -287,12 +287,14 @@ assert(
     liveComponent.includes("Preview all matchups") &&
     liveComponent.includes("function PregameMarquee") &&
     liveComponent.includes('data-live-pregame-header={slate.headerLabel}') &&
-    liveComponent.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>') &&
-    liveComponent.includes("function PregameStarterBlock") &&
-    liveComponent.includes('size="marquee"') &&
+    liveComponent.includes('import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";') &&
+    liveComponent.includes('data-live-pregame-simple-card="true"') &&
+    liveComponent.includes('<UpcomingSimpleCard game={game} rank={1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />') &&
+    !liveComponent.includes('data-responsive-check="live-pregame-hook"') &&
+    !liveComponent.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>') &&
+    !liveComponent.includes("function PregameStarterBlock") &&
+    !liveComponent.includes('size="marquee"') &&
     liveComponent.includes("function PregameNextUpRows") &&
-    liveComponent.includes("function PregameConfidenceChip") &&
-    liveComponent.includes("watchScoreConfidenceLabel(game.watchScoreConfidence)") &&
     liveComponent.includes("`${slate.upcomingHref}#upcoming-game-${game.gamePk}`") &&
     countOccurrences(tonightsMustWatch, 'id={`upcoming-game-${game.gamePk}`}') >= 2 &&
     !liveComponent.includes("Preview matchups -&gt;") &&
