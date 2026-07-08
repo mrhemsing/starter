@@ -44,7 +44,9 @@ export function FormValueWhisperLine({
   className = "",
   valueClassName = "",
   whisperClassName = "",
+  eraClassName = "",
   compact = false,
+  eraOnNewLine = false,
 }: {
   value?: number | null;
   tier?: FormTier | null;
@@ -54,7 +56,9 @@ export function FormValueWhisperLine({
   className?: string;
   valueClassName?: string;
   whisperClassName?: string;
+  eraClassName?: string;
   compact?: boolean;
+  eraOnNewLine?: boolean;
 }) {
   const valueColor = formBandValueColor(tier, qualifiedSample);
   const whisper = formBandWhisperLabel(tier, qualifiedSample);
@@ -72,8 +76,8 @@ export function FormValueWhisperLine({
       <span className={`text-zinc-500 ${whisperClassName}`} data-form-band-whisper>
         {whisper}
       </span>
-      <span className="text-zinc-500" data-form-line-era>
-        · {formLineEraText(era, window)}
+      <span className={`text-zinc-500 ${eraOnNewLine ? "basis-full" : ""} ${eraClassName}`} data-form-line-era>
+        {formLineEraText(era, window)}
       </span>
     </span>
   );

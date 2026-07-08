@@ -176,9 +176,8 @@ function SimpleStarter({
       </div>
       <div
         className="min-h-[68px] px-2 pb-2 pt-2 lg:relative lg:z-10 lg:min-h-[84px] lg:px-3"
-        style={{ background: simpleStarterHeatZoneGradient(panelColor, align, "bottom") }}
         data-simple-starter-card-back
-        data-simple-starter-card-back-source="heat-band"
+        data-simple-starter-card-back-source="flat"
         data-simple-starter-card-back-color={panelColor}
       >
         <p
@@ -190,7 +189,7 @@ function SimpleStarter({
         >
           <SimpleFormLine starter={starter} formBand={formBand} />
         </p>
-        <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-zinc-400 lg:text-white" data-simple-mini-stat-line>
+        <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400 lg:text-white" data-simple-mini-stat-line>
           {miniStatLine(starter)}
         </p>
       </div>
@@ -332,8 +331,10 @@ function SimpleFormLine({ starter, formBand }: { starter: TonightStarter; formBa
       era={starter.seasonStats?.era}
       compact
       className="leading-4"
-      valueClassName="text-[10px]"
+      valueClassName="text-[12px]"
       whisperClassName="text-[8px]"
+      eraClassName="text-[8px]"
+      eraOnNewLine
     />
   );
 }
