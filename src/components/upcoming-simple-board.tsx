@@ -96,15 +96,17 @@ function UpcomingSimpleCard({
         </span>
       ) : null}
       <div
-        className="relative z-10 grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5"
+        className="relative z-10 flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5"
         data-simple-header-band
         data-simple-rank-visible={String(showRank)}
       >
-        {showRank ? <p className="pt-1 font-mono text-[12px] font-semibold uppercase tracking-[0.18em] text-zinc-400" data-simple-card-rank>#{rank}</p> : <span />}
+        <div className="flex min-w-0 items-start gap-2 pt-1 font-mono text-[12px] uppercase text-zinc-400" data-simple-header-left>
+          {showRank ? <p className="font-semibold tracking-[0.18em]" data-simple-card-rank>#{rank}</p> : null}
+          <p className="tracking-[0.12em]" data-simple-first-pitch>
+            <LocalTime value={game.firstPitch} fallback="First pitch" />
+          </p>
+        </div>
         <span aria-hidden="true" />
-        <p className="pt-1 text-right font-mono text-[12px] uppercase tracking-[0.12em] text-zinc-400" data-simple-first-pitch>
-          <LocalTime value={game.firstPitch} fallback="First pitch" />
-        </p>
       </div>
       <div
         className="relative grid min-h-[150px] grid-cols-[minmax(0,1fr)_86px_minmax(0,1fr)] overflow-hidden sm:grid-cols-[minmax(0,1fr)_104px_minmax(0,1fr)]"
