@@ -85,7 +85,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(() => { try { document.documentElement.setAttribute("data-upcoming-view-mode-init", window.localStorage.getItem("tts.upcoming.view") === "DETAILED" ? "detailed" : "simple"); } catch { document.documentElement.setAttribute("data-upcoming-view-mode-init", "simple"); } })();`,
+            __html: `(() => { try { document.documentElement.setAttribute("data-upcoming-view-mode-init", window.localStorage.getItem("tts.upcoming.view") === "SIMPLE" ? "simple" : "detailed"); } catch { document.documentElement.setAttribute("data-upcoming-view-mode-init", "detailed"); } })();`,
           }}
         />
         <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
