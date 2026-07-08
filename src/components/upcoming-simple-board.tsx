@@ -259,6 +259,7 @@ function StarterHeadshot({ starter, formBand }: { starter: TonightStarter; formB
       sampleSufficient={starter.formStatus === "ok" && !starter.flags?.limitedSample}
       decorative
       starterStatus={starter.status}
+      suppressThermalBackground
       className="h-[128px] w-[128px] rounded-none border-0 bg-transparent sm:h-[150px] sm:w-[150px] [&_.headshot__img]:h-full [&_.headshot__img]:max-h-none [&_.headshot__img]:max-w-none [&_.headshot__img]:object-cover [&_.headshot__img]:object-[center_18%] [&_.headshot__img]:w-full"
     />
   );

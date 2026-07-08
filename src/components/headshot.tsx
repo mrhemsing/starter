@@ -17,6 +17,7 @@ type HeadshotProps = {
   loading?: "eager" | "lazy";
   className?: string;
   starterStatus?: string;
+  suppressThermalBackground?: boolean;
 };
 
 const sizeClasses: Record<HeadshotSize, string> = {
@@ -42,6 +43,7 @@ export function Headshot({
   loading = "lazy",
   className = "",
   starterStatus,
+  suppressThermalBackground = false,
 }: HeadshotProps) {
   const [failed, setFailed] = useState(false);
   const resolvedBand = sampleSufficient ? band : null;
@@ -54,8 +56,8 @@ export function Headshot({
     <span
       className={`headshot thermal-headshot ${thermalHeadshotClass(resolvedBand)} ${sizeClasses[size]} relative grid shrink-0 place-items-center overflow-hidden rounded-xl border bg-[#15181C] ${className}`}
       style={{
-        borderColor: thermalBorderColor(resolvedBand),
-        background: thermalBackground(resolvedBand),
+        borderColor: suppressThermalBackground ? "transparent" : thermalBorderColor(resolvedBand),
+        background: suppressThermalBackground ? "transparent" : thermalBackground(resolvedBand),
       }}
       data-form-band={resolvedBand ?? "neutral"}
       data-headshot-size={size}
