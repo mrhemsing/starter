@@ -21,6 +21,7 @@ assert(page.includes("<UpcomingViewModeProvider>"), "Upcoming page must wrap too
 assert(page.includes('viewModeToggle={<UpcomingViewModeToggle />}'), "Upcoming toolbar must render the simple/detailed toggle inside the existing controls.");
 assert(page.includes("<UpcomingViewModePanels") && page.includes("<TonightsMustWatch") && page.includes("<UpcomingSimpleBoard"), "Upcoming board must switch between detailed and simple panels without changing data.");
 assert(weekPage.includes("<UpcomingViewModeProvider>") && weekPage.includes('viewModeToggle={<UpcomingViewModeToggle />}') && weekPage.includes("<UpcomingViewModePanels") && weekPage.includes("<UpcomingSimpleBoard") && weekPage.includes("data-upcoming-week-simple-board"), "Upcoming week page must include the same Simple/Detailed view toggle and per-day Simple boards.");
+assert(weekPage.includes("dateLabel={formatUpcomingDate(day.date)}") && weekPage.includes("showCardDate"), "Upcoming week Simple view must pass each day label and render per-card dates for multi-day slates.");
 assert(!page.includes("viewMode="), "Upcoming simple mode must not be URL-backed.");
 assert(page.includes('import { readUpcomingWriteups } from "@/lib/data/upcoming-writeups-service";') && page.includes("readUpcomingWriteups(date)") && page.includes("contextWriteups={contextWriteups}"), "Upcoming page must only read stored LLM writeups during render and pass them to Simple cards.");
 
@@ -56,6 +57,24 @@ assert(!viewMode.includes("data-upcoming-simple-hover-hint") && !viewMode.includ
 assert(!viewMode.includes("data-upcoming-simple-details") && !viewMode.includes(">Details<"), "Simple cards must not render standalone DETAILS buttons.");
 assert(simpleBoard.includes("data-simple-visible-game-pks"), "Simple board must expose game order for parity checks.");
 assert(simpleBoard.includes("data-simple-watch-ranks"), "Simple board must expose rank order for parity checks.");
+assert(
+  simpleBoard.includes("function simpleDateGroups") &&
+    simpleBoard.includes("data-upcoming-simple-date-group") &&
+    simpleBoard.includes("data-upcoming-simple-date-header") &&
+    simpleBoard.includes("data-simple-date-header-label={label}") &&
+    simpleBoard.includes("groups.sort((a, b) => a.date.localeCompare(b.date))") &&
+    simpleBoard.includes("data-simple-date-groups={dateGroups.length ? dateGroups.map((group) => group.date).join(\",\") : \"none\"}") &&
+    simpleBoard.includes("data-simple-date-header-labels={dateHeaderLabels.length ? dateHeaderLabels.join(\"|\") : \"none\"}"),
+  "Simple board must group cards by game date and expose date-header parity hooks.",
+);
+assert(
+  simpleBoard.includes("function formatSimpleCardDate") &&
+    simpleBoard.includes("data-simple-card-date") &&
+    simpleBoard.includes("data-simple-card-date-source={game.date}") &&
+    simpleBoard.includes("data-simple-card-date-visible={String(showCardDate)}") &&
+    page.includes("dateLabel={formatUpcomingSectionDate(resolvedDate)}"),
+  "Simple cards must support per-card dates for multi-day views while single-day pages keep a date group header.",
+);
 assert(page.includes("sortMode={controls.sort}") && simpleBoard.includes('data-simple-sort-mode={sortMode}'), "Simple cards must receive the active sort mode.");
 assert(simpleBoard.includes('data-simple-rank-visible={String(showRankSlot)}') && simpleBoard.includes('const showRankSlot = sortMode === "watch";') && simpleBoard.includes('const rankLabelText = hasNamedStarterMatchup ? `#${rank}` : "--";') && simpleBoard.includes("data-simple-card-rank") && simpleBoard.includes("function hasNamedStarters"), "Simple desktop VS rank slots must render only for watch-rank sort and dash TBD matchups.");
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
@@ -68,7 +87,7 @@ assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.in
 assert(simpleBoard.includes('data-simple-context-has-this-one={String(/\\bthis one\\b/i.test(sentence))}'), "Simple context sentences must guard against this-one copy.");
 assert(simpleBoard.includes("lg:grid-cols-[repeat(2,minmax(500px,560px))]") && simpleBoard.includes('data-simple-desktop-layout="two-up-vs"'), "Desktop Simple board must render as a centered two-up capped grid.");
 assert(simpleBoard.includes("justify-center gap-0") && simpleBoard.includes("sm:gap-4") && simpleBoard.includes("lg:gap-5"), "Simple board must be full-bleed with hairline-separated mobile cards while preserving larger breakpoint spacing.");
-assert(simpleBoard.includes("data-upcoming-simple-card-list") && simpleBoard.includes("pb-8") && simpleBoard.includes("sm:pb-10") && simpleBoard.includes("lg:pb-12"), "Simple board card list must leave bottom breathing room on mobile and desktop.");
+assert(simpleBoard.includes("data-upcoming-simple-date-groups-wrapper") && simpleBoard.includes("pb-8") && simpleBoard.includes("sm:pb-10") && simpleBoard.includes("lg:pb-12") && simpleBoard.includes("data-upcoming-simple-card-list"), "Simple board date-group wrapper must leave bottom breathing room on mobile and desktop.");
 assert(simpleBoard.includes("data-simple-card-accent={watchTier.key}") && simpleBoard.includes("simpleCardTint(game.gameWatchScore, accentColor)") && viewMode.includes("data-simple-card-background={background}") && viewMode.includes("data-simple-card-edge-color={accentColor}") && simpleBoard.includes('style={{ color: hasNamedStarterMatchup ? accentColor : "#888780" }}'), "Simple cards must tint named matchup scores by watch band and show TBD matchup dashes in neutral.");
 assert(simpleBoard.includes("data-simple-header-band") && simpleBoard.includes("data-simple-header-left") && simpleBoard.includes("<span aria-hidden=\"true\" />") && simpleBoard.includes("data-upcoming-simple-score") && simpleBoard.indexOf("data-upcoming-simple-score") > simpleBoard.indexOf("data-simple-diagonal-panels"), "Simple header must contain rank and time only, grouped on the left, with score moved out of the header.");
 assert(simpleBoard.includes("grid-cols-2") && simpleBoard.includes('data-simple-seam-layout="single-opaque-bar"') && simpleBoard.includes("data-simple-score-seam-column") && simpleBoard.includes('data-simple-score-seam-bar="single-opaque"') && simpleBoard.includes('data-simple-score-seam-bar-width="26%"') && simpleBoard.includes("w-[26%]") && simpleBoard.includes("min-w-[94px]") && simpleBoard.includes("max-w-[110px]") && simpleBoard.includes("bg-[#08080c]") && simpleBoard.includes("text-[38px]") && simpleBoard.includes("data-simple-watch-score>{scoreLabel}</p>") && simpleBoard.includes('const scoreLabel = hasNamedStarterMatchup ? game.gameWatchScore.toFixed(1) : "--";'), "Simple cards must render the watch score in a single opaque 24-28% seam bar between portrait cells and dash TBD matchups.");

@@ -134,7 +134,15 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                   compactTopPadding
                 />
               )}
-              simple={<UpcomingSimpleBoard tonight={visibleUpcoming} rankLabel={`on ${formatUpcomingDate(resolvedDate)}`} sortMode={controls.sort} contextWriteups={contextWriteups} />}
+              simple={(
+                <UpcomingSimpleBoard
+                  tonight={visibleUpcoming}
+                  rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
+                  sortMode={controls.sort}
+                  contextWriteups={contextWriteups}
+                  dateLabel={formatUpcomingSectionDate(resolvedDate)}
+                />
+              )}
             />
           </PendingRegion>
         ) : null}

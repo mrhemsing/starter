@@ -152,7 +152,14 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
             simple={(
               <div className="space-y-8" data-upcoming-week-simple-board>
                 {filteredDays.map((day) => (
-                  <UpcomingSimpleBoard key={day.date} tonight={day} rankLabel={`on ${formatUpcomingDate(day.date)}`} sortMode={controls.sort} />
+                  <UpcomingSimpleBoard
+                    key={day.date}
+                    tonight={day}
+                    rankLabel={`on ${formatUpcomingDate(day.date)}`}
+                    sortMode={controls.sort}
+                    dateLabel={formatUpcomingDate(day.date)}
+                    showCardDate
+                  />
                 ))}
               </div>
             )}

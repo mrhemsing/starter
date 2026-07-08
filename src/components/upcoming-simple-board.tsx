@@ -3,7 +3,7 @@ import { formBandValueColor, formBandWhisperLabel, formLineEraText, hasQualified
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
-import { pitcherHref, sourceParams } from "@/lib/routes";
+import { formatUpcomingDate, pitcherHref, sourceParams } from "@/lib/routes";
 import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
@@ -15,12 +15,19 @@ export function UpcomingSimpleBoard({
   rankLabel = "today",
   sortMode = "watch",
   contextWriteups = {},
+  dateLabel,
+  showCardDate = false,
 }: {
   tonight: TonightResponse;
   rankLabel?: string;
   sortMode?: "watch" | "time";
   contextWriteups?: Record<string, string>;
+  dateLabel?: string;
+  showCardDate?: boolean;
 }) {
+  const dateGroups = simpleDateGroups(tonight.games);
+  const dateHeaderLabels = dateGroups.map((group) => simpleDateHeaderLabel(group.date, dateLabel));
+
   return (
     <section
       className="border-y border-white/10 bg-[#0d0d11] px-0 pb-10 pt-4 sm:px-6 lg:px-8"
@@ -33,6 +40,9 @@ export function UpcomingSimpleBoard({
       data-simple-context-source={Object.keys(contextWriteups).length > 0 ? "stored-llm-or-fallback" : "deterministic-fallback"}
       data-simple-rank-label={rankLabel}
       data-simple-sort-mode={sortMode}
+      data-simple-date-groups={dateGroups.length ? dateGroups.map((group) => group.date).join(",") : "none"}
+      data-simple-date-header-labels={dateHeaderLabels.length ? dateHeaderLabels.join("|") : "none"}
+      data-simple-card-date-visible={String(showCardDate)}
     >
       <div className="mx-auto max-w-7xl">
         {tonight.games.length === 0 ? (
@@ -40,9 +50,25 @@ export function UpcomingSimpleBoard({
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{tonight.scheduledGames > 0 ? "Slate complete" : "No games on this slate"}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 justify-center gap-0 pb-8 sm:grid-cols-[minmax(0,560px)] sm:gap-4 sm:pb-10 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5 lg:pb-12" data-upcoming-simple-card-list data-simple-desktop-layout="two-up-vs">
-            {tonight.games.map((game, index) => (
-              <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 1} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode={sortMode} contextWriteup={contextWriteups[game.gamePk]} />
+          <div className="space-y-8 pb-8 sm:pb-10 lg:pb-12" data-upcoming-simple-date-groups-wrapper>
+            {dateGroups.map((group, groupIndex) => (
+              <div key={group.date} data-upcoming-simple-date-group data-simple-date-group-date={group.date} data-simple-date-group-index={groupIndex}>
+                <SimpleDateGroupHeader date={group.date} label={simpleDateHeaderLabel(group.date, dateLabel)} />
+                <div className="grid grid-cols-1 justify-center gap-0 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-date-card-list={group.date} data-simple-desktop-layout="two-up-vs">
+                  {group.games.map(({ game, rankIndex }) => (
+                    <UpcomingSimpleCard
+                      key={game.gamePk}
+                      game={game}
+                      rank={rankIndex + 1}
+                      leagueMeanGS={tonight.leagueMeanGS}
+                      rankLabel={rankLabel}
+                      sortMode={sortMode}
+                      contextWriteup={contextWriteups[game.gamePk]}
+                      showCardDate={showCardDate}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -57,6 +83,7 @@ export function UpcomingSimpleCard({
   leagueMeanGS,
   sortMode,
   contextWriteup,
+  showCardDate = false,
 }: {
   game: TonightGame;
   rank: number;
@@ -64,6 +91,7 @@ export function UpcomingSimpleCard({
   rankLabel: string;
   sortMode: "watch" | "time";
   contextWriteup?: string;
+  showCardDate?: boolean;
 }) {
   const sentence = contextWriteup ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
@@ -102,6 +130,12 @@ export function UpcomingSimpleCard({
         <div className="flex min-w-0 items-start gap-2 pt-1 font-mono text-[12px] uppercase text-zinc-400" data-simple-header-left>
           {showRankSlot ? <p className={`font-semibold tracking-[0.18em] ${rank === 1 && hasNamedStarterMatchup ? "text-white" : "text-zinc-400"}`} data-simple-card-rank data-simple-card-rank-tone={rank === 1 && hasNamedStarterMatchup ? "lead" : "muted"}>{rankLabelText}</p> : null}
           <p className="tracking-[0.12em]" data-simple-first-pitch>
+            {showCardDate ? (
+              <>
+                <span data-simple-card-date data-simple-card-date-source={game.date}>{formatSimpleCardDate(game.date)}</span>
+                <span aria-hidden="true"> · </span>
+              </>
+            ) : null}
             <LocalTime value={game.firstPitch} fallback="First pitch" />
           </p>
         </div>
@@ -276,6 +310,48 @@ function StarterHeadshot({ starter, formBand }: { starter: TonightStarter; formB
       className="h-[128px] w-[128px] rounded-none border-0 bg-transparent sm:h-[150px] sm:w-[150px] [&_.headshot__img]:h-full [&_.headshot__img]:max-h-none [&_.headshot__img]:max-w-none [&_.headshot__img]:object-cover [&_.headshot__img]:object-[center_18%] [&_.headshot__img]:w-full"
     />
   );
+}
+
+function SimpleDateGroupHeader({ date, label }: { date: string; label: string }) {
+  return (
+    <div className="mx-4 mb-4 border-b border-white/10 pb-3 sm:mx-0" data-upcoming-simple-date-header data-simple-date-header-date={date} data-simple-date-header-label={label}>
+      <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">{label}</p>
+      <h2 className="mt-2 font-serif text-3xl font-black text-zinc-50 sm:text-4xl">Matchup Board</h2>
+    </div>
+  );
+}
+
+function simpleDateGroups(games: TonightGame[]) {
+  const groups: Array<{ date: string; games: Array<{ game: TonightGame; rankIndex: number }> }> = [];
+  const byDate = new Map<string, Array<{ game: TonightGame; rankIndex: number }>>();
+
+  games.forEach((game, rankIndex) => {
+    const date = game.date;
+    const current = byDate.get(date);
+    if (current) {
+      current.push({ game, rankIndex });
+      return;
+    }
+    byDate.set(date, [{ game, rankIndex }]);
+    groups.push({ date, games: byDate.get(date) ?? [] });
+  });
+
+  return groups.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function simpleDateHeaderLabel(date: string, preferredLabel?: string) {
+  return preferredLabel ?? formatUpcomingDate(date);
+}
+
+function formatSimpleCardDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date.toUpperCase();
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed).replace(",", "").toUpperCase();
 }
 
 function starterDisplayName(starter: TonightStarter) {
