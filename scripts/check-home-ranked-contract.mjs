@@ -237,10 +237,15 @@ assert(
 );
 
 assert(
-  mustWatch.includes('data-starter-trend-chip-spacer="true"') &&
-    mustWatch.includes('className="mt-2 inline-flex"') &&
-    !mustWatch.includes('className="mt-1.5 inline-flex sm:mt-0"'),
-  "home must-watch RISING/FALLING trend chips must keep breathing room above them on mobile and desktop",
+  mustWatch.includes('data-starter-trend-chip-spacer="compact"') &&
+    mustWatch.includes("data-starter-form-workload-row={isHome") &&
+    mustWatch.includes("flex max-h-6 flex-wrap items-center gap-2 overflow-hidden") &&
+    mustWatch.includes('"workload-before-form"') &&
+    mustWatch.includes('"form-before-workload"') &&
+    mustWatch.includes('className={`inline-flex ${isHome') &&
+    mustWatch.includes('"lg:self-end"') &&
+    mustWatch.includes('"self-start"'),
+  "home must-watch RISING/FALLING chips must stay compact, with the home form text after workload labels and right-aligned trend chip",
 );
 
 assert(
@@ -258,11 +263,14 @@ assert(
     mustWatch.includes('data-starter-stat-baseline-grid') &&
     mustWatch.includes('data-starter-height-policy="content"') &&
     mustWatch.includes('data-starter-empty-space-policy="content-height"') &&
+    mustWatch.includes("grid-rows-[auto_auto_auto_auto_auto_minmax(36px,auto)] gap-1.5") &&
     mustWatch.includes('data-starter-baseline-row="sparkline"') &&
     mustWatch.includes('data-starter-sparkline-baseline="bottom"') &&
     !mustWatch.includes("grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_1fr]") &&
+    !mustWatch.includes("grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_minmax(42px,auto)]") &&
+    !mustWatch.includes('className="min-h-16" data-starter-baseline-row="form"') &&
     !mustWatch.includes('className="mt-auto flex min-h-[42px] items-end"'),
-  "detailed Must-Watch starter panels must render from one side-prop mirror component with a shared content-height baseline grid and no filler row",
+  "detailed Must-Watch starter panels must render from one side-prop mirror component with a compact content-height baseline grid and no filler row",
 );
 
 assert(

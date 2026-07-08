@@ -901,20 +901,30 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
           <StarterRoleContextLine starter={starter} align={side} />
         </div>
       </div>
-      <div className={`mt-3 grid grid-rows-[minmax(64px,auto)_minmax(24px,auto)_minmax(30px,auto)_minmax(28px,auto)_minmax(28px,auto)_minmax(42px,auto)] gap-2 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid data-starter-empty-space-policy="content-height">
-        <div className="min-h-16" data-starter-baseline-row="form">
+      <div className={`mt-3 grid grid-rows-[auto_auto_auto_auto_auto_minmax(36px,auto)] gap-1.5 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid data-starter-empty-space-policy="content-height">
+        <div data-starter-baseline-row="form">
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
-            <div className={`flex max-h-16 flex-wrap items-start gap-2 overflow-hidden ${isHome ? "lg:justify-end" : ""}`} data-starter-chip-wrap-row>
-              <div className={`flex flex-col gap-1 ${isHome ? "lg:items-end" : "items-start"}`}>
-                <StarterFormScoreLine starter={starter} />
-                {starter.trend && starter.deltaForm !== undefined ? (
-                  <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
-                    <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
-                  </span>
-                ) : null}
+            <div className={`flex flex-col gap-1 overflow-hidden ${isHome ? "lg:items-end" : "items-start"}`} data-starter-chip-wrap-row>
+              <div className={`flex max-h-6 flex-wrap items-center gap-2 overflow-hidden ${isHome ? "lg:justify-end" : ""}`} data-starter-form-workload-row={isHome ? "workload-before-form" : "form-before-workload"}>
+                {isHome ? (
+                  <>
+                    <StarterStatusChips starter={starter} />
+                    <StarterFormScoreLine starter={starter} />
+                    <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop className="lg:justify-end" />
+                  </>
+                ) : (
+                  <>
+                    <StarterFormScoreLine starter={starter} />
+                    <StarterStatusChips starter={starter} />
+                    <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop />
+                  </>
+                )}
               </div>
-              <StarterStatusChips starter={starter} />
-              <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop className={isHome ? "lg:justify-end" : ""} />
+              {starter.trend && starter.deltaForm !== undefined ? (
+                <span className={`inline-flex ${isHome ? "lg:self-end" : "self-start"}`} data-starter-trend-chip-spacer="compact">
+                  <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
+                </span>
+              ) : null}
             </div>
           ) : (
             <LimitedStarterLine starter={starter} compact align={side} />
@@ -932,7 +942,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
         <div data-starter-baseline-row="market">
           <MarketContextLine starter={starter} compact align={side} />
         </div>
-        <div className="flex min-h-[42px] items-end" data-starter-baseline-row="sparkline" data-starter-sparkline-baseline="bottom">
+        <div className="flex min-h-9 items-end" data-starter-baseline-row="sparkline" data-starter-sparkline-baseline="bottom">
           {hasStarterSparkForm(starter) ? (
             <div className="w-full">
               <FormSparkline values={starter.spark} tier={starter.tier} leagueMeanGS={leagueMeanGS} label={`${name} recent form GS+: ${starter.spark.join(", ")}`} trend={starter.trend ?? "steady"} strokeColor={accent.color} variant="row" />
