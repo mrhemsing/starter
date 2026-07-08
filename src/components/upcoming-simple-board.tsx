@@ -54,7 +54,7 @@ export function UpcomingSimpleBoard({
             {dateGroups.map((group, groupIndex) => (
               <div key={group.date} data-upcoming-simple-date-group data-simple-date-group-date={group.date} data-simple-date-group-index={groupIndex}>
                 <SimpleDateGroupHeader date={group.date} label={simpleDateHeaderLabel(group.date, dateLabel)} />
-                <div className="grid grid-cols-1 justify-center gap-0 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-date-card-list={group.date} data-simple-desktop-layout="two-up-vs">
+                <div className="grid grid-cols-1 justify-center gap-3 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-date-card-list={group.date} data-simple-desktop-layout="two-up-vs">
                   {group.games.map(({ game, rankIndex }) => (
                     <UpcomingSimpleCard
                       key={game.gamePk}
