@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DecisionChip } from "@/components/decision-chip";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherChip } from "@/components/pitcher-chip";
@@ -270,21 +271,7 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
 }
 
 function DecisionPill({ result }: { result: StartSummary["result"] }) {
-  return (
-    <span
-      className="inline-flex rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400"
-      data-home-start-decision={result}
-      title="Official pitcher decision, shown as context only"
-    >
-      {decisionLabel(result)}
-    </span>
-  );
-}
-
-function decisionLabel(result: StartSummary["result"]) {
-  if (result === "W") return "Win";
-  if (result === "L") return "Loss";
-  return "No decision";
+  return <DecisionChip result={result} surface="home-start" compact className="text-zinc-400" />;
 }
 
 function isRecapGasStart(start: StartSummary, bandLabel: string) {

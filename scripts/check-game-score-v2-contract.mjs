@@ -14,6 +14,7 @@ const mlbStatsClient = await readFile("src/lib/data/mlb-stats-client.ts", "utf8"
 const slatePage = await readFile("src/app/slate/[window]/[date]/page.tsx", "utf8");
 const methodologyPage = await readFile("src/app/methodology/page.tsx", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
+const decisionChip = await readFile("src/components/decision-chip.tsx", "utf8");
 
 const publishedTangoFixtures = [
   {
@@ -98,13 +99,12 @@ assert(
 );
 
 assert(
-  slatePage.includes("GSv2 {start.gameScoreV2}") &&
+    slatePage.includes("GSv2 {start.gameScoreV2}") &&
     slatePage.includes("function formatGsAdjustment(start: StartSummary)") &&
     slatePage.includes("return `GS+ ${formatSigned(start.gameScorePlus - start.gameScoreV2)} adj`;") &&
-    slatePage.includes("data-slate-start-decision={start.result}") &&
-    slatePage.includes("function formatDecisionLabel(result: StartSummary[\"result\"])") &&
-    slatePage.includes('if (result === "W") return "Win";') &&
-    slatePage.includes('if (result === "L") return "Loss";') &&
+    slatePage.includes('import { DecisionChip } from "@/components/decision-chip";') &&
+    slatePage.includes('<DecisionChip result={start.result} surface="slate-start" compact />') &&
+    decisionChip.includes('"data-slate-start-decision"') &&
     slatePage.includes("data-slate-start-event-flags={start.eventFlags.join(\",\")}") &&
     slatePage.includes("function formatStartEventFlag(flag: NonNullable<StartSummary[\"eventFlags\"]>[number])"),
   "completed slate cards must expose canonical GSv2, GS+ adjustment context, pitcher decisions, and start event flags",

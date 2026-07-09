@@ -4,6 +4,7 @@ import { track } from "@vercel/analytics";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { DecisionChip } from "@/components/decision-chip";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { HeatCheckHero } from "@/components/heat-check-hero";
@@ -461,13 +462,7 @@ function BestStartCard({ start, badge, highlight, compact = false }: { start: St
           <p className="mt-2 font-mono text-xs leading-5 text-zinc-400">
             <MetaLine segments={[startMatchupLabel(start), formatShortDate(start.date)]} />
           </p>
-          <span
-            className="mt-2 inline-flex rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-zinc-400"
-            data-home-best-start-decision={start.result}
-            title="Official pitcher decision, shown as context only"
-          >
-            {formatDecisionLabel(start.result)}
-          </span>
+          <DecisionChip result={start.result} surface="home-best-start" compact className="mt-2 text-zinc-400" />
         </div>
         <div className="score-bug rounded border border-amber-300/30 bg-amber-300 px-3 py-2 text-center text-zinc-950">
           <p className="font-serif text-4xl font-bold leading-none">{start.gameScorePlus}</p>
@@ -620,12 +615,6 @@ function scoreBandColor(score: number) {
   if (score >= 46) return "var(--level-even-text)";
   if (score >= 30) return "var(--level-cooling)";
   return "var(--level-ice)";
-}
-
-function formatDecisionLabel(result: StartSummary["result"]) {
-  if (result === "W") return "Win";
-  if (result === "L") return "Loss";
-  return "No decision";
 }
 
 function formatShortDate(date: string) {

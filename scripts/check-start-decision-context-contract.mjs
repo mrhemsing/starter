@@ -11,6 +11,7 @@ const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const pitcherFormPage = await readFile("src/app/pitchers/[id]/form/page.tsx", "utf8");
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const homeDeferred = await readFile("src/components/home-deferred-sections.tsx", "utf8");
+const decisionChip = await readFile("src/components/decision-chip.tsx", "utf8");
 
 assert(
   types.includes('result: StartSummary["result"];') &&
@@ -31,12 +32,9 @@ assert(
 );
 
 assert(
-  pitcherFormPage.includes("function DecisionPill({ result, className = \"\" }") &&
-    pitcherFormPage.includes("data-pitcher-start-decision={result}") &&
-    pitcherFormPage.includes("Official pitcher decision, shown as context only") &&
-    pitcherFormPage.includes('if (result === "W") return "Win";') &&
-    pitcherFormPage.includes('if (result === "L") return "Loss";') &&
-    pitcherFormPage.includes("return \"No decision\";") &&
+  pitcherFormPage.includes('import { DecisionChip } from "@/components/decision-chip";') &&
+    pitcherFormPage.includes("function DecisionPill({ result, className = \"\" }") &&
+    pitcherFormPage.includes('<DecisionChip result={result} surface="pitcher-start" className={className} />') &&
     pitcherFormPage.includes("<DecisionPill result={start.result} />") &&
     pitcherFormPage.includes("<DecisionPill result={start.result} className=\"mt-3\" />") &&
     pitcherFormPage.includes("W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)}") &&
@@ -45,11 +43,17 @@ assert(
 );
 
 assert(
-  rankedRecap.includes("function DecisionPill({ result }: { result: StartSummary[\"result\"] })") &&
-    rankedRecap.includes("data-home-start-decision={result}") &&
+  rankedRecap.includes('import { DecisionChip } from "@/components/decision-chip";') &&
+    rankedRecap.includes("function DecisionPill({ result }: { result: StartSummary[\"result\"] })") &&
+    rankedRecap.includes('<DecisionChip result={result} surface="home-start" compact') &&
     rankedRecap.includes("<DecisionPill result={start.result} />") &&
-    homeDeferred.includes("data-home-best-start-decision={start.result}") &&
-    homeDeferred.includes("function formatDecisionLabel(result: StartSummary[\"result\"])"),
+    homeDeferred.includes('import { DecisionChip } from "@/components/decision-chip";') &&
+    homeDeferred.includes('<DecisionChip result={start.result} surface="home-best-start" compact') &&
+    decisionChip.includes('"data-pitcher-start-decision"') &&
+    decisionChip.includes('"data-home-start-decision"') &&
+    decisionChip.includes('"data-home-best-start-decision"') &&
+    decisionChip.includes('return "ND";') &&
+    decisionChip.includes('aria-label={decisionAccessibleLabel(result)}'),
   "homepage completed-start recap surfaces must show canonical pitcher decisions as context",
 );
 

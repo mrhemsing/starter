@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { notFound } from "next/navigation";
 import { CtaArrow } from "@/components/cta-arrow";
+import { DecisionChip } from "@/components/decision-chip";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
 import { RawGsPlusLine } from "@/components/gs-plus-score";
@@ -860,26 +861,6 @@ function ScoreBridge({ gameScorePlus, gameScoreV2, compact = false }: { gameScor
       GSv2 {gameScoreV2} / GS+ {formatSigned(delta)} adj
     </p>
   );
-}
-
-function DecisionChip({ result, className = "", compact = false }: { result: StartSummary["result"]; className?: string; compact?: boolean }) {
-  return (
-    <div className={`flex flex-wrap gap-1.5 ${className}`}>
-      <span
-        className={`inline-flex min-h-7 items-center rounded border border-white/10 bg-white/5 px-2 font-mono ${compact ? "text-[9px]" : "text-[10px]"} uppercase tracking-[0.12em] text-zinc-300`}
-        data-start-decision={result}
-        title="Official pitcher decision, shown as context only"
-      >
-        {decisionLabel(result)}
-      </span>
-    </div>
-  );
-}
-
-function decisionLabel(result: StartSummary["result"]) {
-  if (result === "W") return "Win";
-  if (result === "L") return "Loss";
-  return "No decision";
 }
 
 function StartEventFlagChips({ flags, className = "" }: { flags?: StartSummary["eventFlags"]; className?: string }) {

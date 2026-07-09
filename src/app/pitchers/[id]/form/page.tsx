@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { DecisionChip } from "@/components/decision-chip";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
@@ -788,21 +789,7 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
 }
 
 function DecisionPill({ result, className = "" }: { result: FormStartPoint["result"]; className?: string }) {
-  return (
-    <span
-      className={`inline-flex min-h-7 w-fit items-center rounded border border-white/10 bg-white/5 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300 ${className}`}
-      data-pitcher-start-decision={result}
-      title="Official pitcher decision, shown as context only"
-    >
-      {decisionLabel(result)}
-    </span>
-  );
-}
-
-function decisionLabel(result: FormStartPoint["result"]) {
-  if (result === "W") return "Win";
-  if (result === "L") return "Loss";
-  return "No decision";
+  return <DecisionChip result={result} surface="pitcher-start" className={className} />;
 }
 
 function formStartMatchupLabel(start: FormStartPoint) {

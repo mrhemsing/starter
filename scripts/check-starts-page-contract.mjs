@@ -39,6 +39,7 @@ const startsSlateShape = await readFile("src/components/ranked-starts-slate-shap
 const pageContextStrip = await readFile("src/components/page-context-strip.tsx", "utf8");
 const mobileCardShell = await readFile("src/components/mobile-card-shell.tsx", "utf8");
 const ctaArrow = await readFile("src/components/cta-arrow.tsx", "utf8");
+const decisionChip = await readFile("src/components/decision-chip.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
 const slateCounts = await readFile("src/components/slate-counts.tsx", "utf8");
 const homeStatusRoute = await readFile("src/app/api/home/status/route.ts", "utf8");
@@ -581,13 +582,15 @@ assert(
 );
 
 assert(
-  startsPage.includes("function DecisionChip({ result, className = \"\", compact = false }") &&
-    startsPage.includes("data-start-decision={result}") &&
-    startsPage.includes("Official pitcher decision, shown as context only") &&
-    startsPage.includes('if (result === "W") return "Win";') &&
-    startsPage.includes('if (result === "L") return "Loss";') &&
-    startsPage.includes('return "No decision";') &&
+  startsPage.includes('import { DecisionChip } from "@/components/decision-chip";') &&
+    decisionChip.includes("export function DecisionChip({ result, className = \"\", compact = false, surface = \"start\" }") &&
+    decisionChip.includes('"data-start-decision"') &&
+    decisionChip.includes('return "ND";') &&
+    decisionChip.includes('return "No decision";') &&
+    decisionChip.includes('aria-label={decisionAccessibleLabel(result)}') &&
+    decisionChip.includes('compact ? "min-h-6 w-12 text-[9px]" : "min-h-7 w-16 text-[10px]"') &&
     startsPage.includes("<DecisionChip result={start.result}") &&
+    !startsPage.includes(">No decision</span>") &&
     !startsPage.includes("sort === \"result\"") &&
     !startsPage.includes("sort === \"decision\"") &&
     !startsPage.includes("sort === \"win\"") &&
