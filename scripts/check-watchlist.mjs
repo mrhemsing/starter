@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import net from "node:net";
 
 const host = "127.0.0.1";
-const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "694819";
+const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "656302";
 
 const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource, wireEventCardSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
@@ -211,12 +211,18 @@ assert(
   "watchlist next-start cards should use the shared two-row block, omit missing parks, and suppress numeric baseline-looking projected GS+ values",
 );
 assert(
-  watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} />") &&
-    watchlistPageSource.includes("Today on the slab") &&
+  watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} />") &&
+    watchlistPageSource.includes('import { getHomeSlateDate } from "@/lib/data/start-service";') &&
+    watchlistPageSource.includes('function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; today: string })') &&
     watchlistPageSource.includes("Next on the slab") &&
+    watchlistPageSource.includes("Your followed arms' next scheduled starts.") &&
+    watchlistPageSource.includes("entry.nextStart?.date === today") &&
+    watchlistPageSource.includes("data-watchlist-next-start-today") &&
+    !watchlistPageSource.includes("Today on the slab") &&
+    !watchlistPageSource.includes("Followed starters scheduled today.") &&
     !watchlistPageSource.includes(`Daily ${"decision"} strip`) &&
     !watchlistPageSource.includes("<WatchlistGroup title=\"Pitching today / soon\""),
-  "watchlist must merge the daily decision strip and pitching-soon list into one next-on-the-slab module",
+  "watchlist next-on-the-slab module must use Option A label honesty: no today header above mixed dates, shared slate-date TODAY chips only",
 );
 assert(
   watchlistPageSource.includes("WatchlistSuggestedFollows") &&

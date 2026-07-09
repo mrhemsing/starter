@@ -85,7 +85,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <div>
             {watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
-            <NextOnTheSlabModule entries={watchlist.pitchingSoon} />
+            <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} />
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
@@ -236,12 +236,10 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
   );
 }
 
-function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
-  const title = entries.some((entry) => entry.nextStart?.daysAway === 0) ? "Today on the slab" : entries.length > 0 ? "Next on the slab" : "No followed arms scheduled";
+function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; today: string }) {
+  const title = entries.length > 0 ? "Next on the slab" : "No followed arms scheduled";
   const subtitle = entries.length > 0
-    ? entries[0]?.nextStart?.daysAway === 0
-      ? "Followed starters scheduled today."
-      : `Nearest followed start: ${formatShortDate(entries[0]?.nextStart?.date ?? "")}.`
+    ? "Your followed arms' next scheduled starts."
     : `No followed arms scheduled in the next ${WATCHLIST_SOON_DAYS} days.`;
   return (
     <section className="mb-4 rounded border border-amber-300/25 bg-amber-300/[0.06] p-4" data-responsive-check="watchlist-pitching-soon">
@@ -258,7 +256,14 @@ function NextOnTheSlabModule({ entries }: { entries: WatchlistEntry[] }) {
         {entries.map((entry) => (
           <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-3 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:items-center">
             <div className="min-w-0">
-              <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
+                {entry.nextStart?.date === today ? (
+                  <span className="shrink-0 rounded border border-amber-300/50 bg-amber-300 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-950" data-watchlist-next-start-today>
+                    TODAY
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team}</p>
               <FormValueWhisperLine value={entry.rgs} tier={entry.tier} qualifiedSample={hasQualifiedFormSummarySample(entry)} era={entry.seasonStats?.era} compact className="mt-1" />
             </div>
