@@ -45,6 +45,7 @@ export function FormValueWhisperLine({
   valueClassName = "",
   whisperClassName = "",
   compact = false,
+  stacked = false,
 }: {
   value?: number | null;
   tier?: FormTier | null;
@@ -55,9 +56,33 @@ export function FormValueWhisperLine({
   valueClassName?: string;
   whisperClassName?: string;
   compact?: boolean;
+  stacked?: boolean;
 }) {
   const valueColor = formBandValueColor(tier, qualifiedSample);
   const whisper = formBandWhisperLabel(tier, qualifiedSample);
+  if (stacked) {
+    return (
+      <span
+        className={`inline-flex flex-col items-start font-mono uppercase tracking-[0.12em] ${compact ? "text-[9px]" : "text-[11px]"} ${className}`}
+        data-form-value-whisper-line
+        data-form-value-whisper-layout="stacked"
+        data-form-value-color={valueColor}
+        data-form-whisper={whisper}
+        data-form-window={window}
+      >
+        <span className={`font-semibold tabular-nums ${valueClassName}`} style={{ color: valueColor }} data-form-colored-value>
+          {typeof value === "number" ? value.toFixed(1) : "--"}
+        </span>
+        <span className={`mt-0.5 text-zinc-500 ${whisperClassName}`} data-form-band-whisper>
+          {whisper}
+        </span>
+        <span className="mt-0.5 text-zinc-500" data-form-line-era>
+          {formLineEraText(era, window)}
+        </span>
+      </span>
+    );
+  }
+
   return (
     <span
       className={`inline-flex flex-wrap items-baseline gap-x-1.5 font-mono uppercase tracking-[0.12em] ${compact ? "text-[9px]" : "text-[11px]"} ${className}`}

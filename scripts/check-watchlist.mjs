@@ -6,7 +6,7 @@ import net from "node:net";
 const host = "127.0.0.1";
 const pitcherId = process.env.THE_BUMP_WATCHLIST_PITCHER_ID ?? "656302";
 
-const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource, wireEventCardSource] = await Promise.all([
+const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headlineCronSource, vercelConfigSource, searchFormSource, followButtonSource, nextStartBlockSource, suggestedFollowsSource, wireEventCardSource, limitedSampleFormChipSource] = await Promise.all([
   readFile("src/app/watchlist/page.tsx", "utf8"),
   readFile("src/lib/data/watchlist-service.ts", "utf8"),
   readFile("src/lib/data/watchlist-headlines-service.ts", "utf8"),
@@ -17,6 +17,7 @@ const [watchlistPageSource, watchlistServiceSource, headlineServiceSource, headl
   readFile("src/components/watchlist-next-start-block.tsx", "utf8"),
   readFile("src/components/watchlist-suggested-follows.tsx", "utf8"),
   readFile("src/components/wire-event-card.tsx", "utf8"),
+  readFile("src/components/limited-sample-form-chip.tsx", "utf8"),
 ]);
 
 function assert(condition, message) {
@@ -48,6 +49,15 @@ assert(
 assert(
   watchlistPageSource.includes('<div className="mt-5"><TrendChip summary={entry} compact /></div>'),
   "watchlist row trend chip should keep enough top space to align with the follow action box",
+);
+assert(
+  watchlistPageSource.includes("valueClassName=\"font-serif text-5xl font-bold leading-none tracking-normal\"") &&
+    watchlistPageSource.includes("stacked") &&
+    limitedSampleFormChipSource.includes('data-form-value-whisper-layout="stacked"') &&
+    limitedSampleFormChipSource.includes("inline-flex flex-col items-start") &&
+    limitedSampleFormChipSource.includes("{formLineEraText(era, window)}") &&
+    !/if \(stacked\) \{[\s\S]*?· \{formLineEraText\(era, window\)\}[\s\S]*?\n  \}/.test(limitedSampleFormChipSource),
+  "watchlist row form score should stack score, band label, and L5 ERA on separate lines without a middle dot",
 );
 assert(
   watchlistServiceSource.includes('import { getLiveScoreboard, type LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";') &&
