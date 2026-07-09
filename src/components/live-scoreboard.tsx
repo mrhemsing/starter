@@ -711,7 +711,7 @@ function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: Tonigh
 
   return (
     <section
-      className="rounded border border-amber-300/25 bg-[#101014] p-4 sm:p-5"
+      className="sm:rounded sm:border sm:border-amber-300/25 sm:bg-[#101014] sm:p-5"
       data-live-pregame-marquee="true"
       data-live-pregame-header={slate.headerLabel}
       data-game-pk={game.gamePk}

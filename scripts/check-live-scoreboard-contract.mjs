@@ -286,6 +286,7 @@ assert(
     liveComponent.includes('<CtaArrow\n        href={previewHref}') &&
     liveComponent.includes("Preview all matchups") &&
     liveComponent.includes("function PregameMarquee") &&
+    liveComponent.includes('className="sm:rounded sm:border sm:border-amber-300/25 sm:bg-[#101014] sm:p-5"') &&
     liveComponent.includes('data-live-pregame-header={slate.headerLabel}') &&
     liveComponent.includes('import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";') &&
     liveComponent.includes('data-live-pregame-simple-card="true"') &&
