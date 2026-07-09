@@ -37,6 +37,7 @@ const pitcherFormRoute = await read("src/app/api/form/pitcher/[id]/route.ts");
 const pitcherProfileRoute = await read("src/app/api/pitchers/[id]/route.ts");
 const fastFilterLink = await read("src/components/fast-filter-link.tsx");
 const heatCheckWarmup = await read("src/components/heat-check-filter-warmup.tsx");
+const segmentedControlSource = await read("src/components/segmented-control.tsx");
 const heatCheckPage = await read("src/app/form/page.tsx");
 const upcomingDatePage = await read("src/app/upcoming/[date]/page.tsx");
 const upcomingIndexPage = await read("src/app/upcoming/page.tsx");
@@ -52,7 +53,7 @@ assert(
     tonightService.includes("export const TONIGHT_REVALIDATE_SECONDS = 60;") &&
     tonightService.includes("const getCachedTonightMustWatch = unstable_cache(") &&
     tonightService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
-    tonightService.includes("const promise = getCachedTonightMustWatch(date, window);"),
+    tonightService.includes("const promise = getCachedTonightMustWatch(date, window, forceOpponentSplits);"),
   "Must-Watch data must use Next data cache, not only per-process memoization",
 );
 
@@ -63,7 +64,7 @@ assert(
     tonightService.includes("const probables = getProbablesFromSchedule(date, schedule);") &&
     tonightService.includes('import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";') &&
     tonightService.includes("const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();") &&
-    upcomingDatePage.includes("const [upcoming, slateState] = await Promise.all([") &&
+    upcomingDatePage.includes("const [upcoming, slateState, contextWriteups] = await Promise.all([") &&
     upcomingIndexPage.includes('import { getDefaultUpcomingDate } from "@/lib/data/start-service";') &&
     upcomingIndexPage.includes("const date = await getDefaultUpcomingDate();") &&
     upcomingIndexPage.includes("const title = upcomingDayTitle(date);") &&
@@ -72,7 +73,7 @@ assert(
 );
 
 assert(
-  startService.includes('import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+  startService.includes('import { HEAT_CHECK_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     startService.includes("const getCachedDefaultUpcomingDate = unstable_cache(") &&
     startService.includes("export async function getDefaultUpcomingDate") &&
     startService.includes("tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG]") &&
@@ -91,7 +92,7 @@ assert(
     cacheTags.includes("export const DATA_CHANGE_CACHE_TAGS = [") &&
     warmLiveStartsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
     warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
-    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG } from "@/lib/data/cache-tags";') &&
+    warmLiveStartsJob.includes('import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG, LIVE_CACHE_TAG } from "@/lib/data/cache-tags";') &&
     warmLiveStartsJob.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
     warmLiveStartsJob.includes('options.revalidateTag?.(tag, "max");'),
   "data-change cron must push revalidation through shared cache tags for slate surfaces",
@@ -138,11 +139,14 @@ assert(
 );
 
 assert(
-  tonightService.includes('const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";') &&
+    tonightService.includes('const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";') &&
     tonightService.includes("const enrichAtRequestTime = isRequestTimeEnrichmentEnabled();") &&
-    tonightService.includes("enrichAtRequestTime ? fetchMlbTeamHandednessSplitContexts") &&
+    tonightService.includes("const shouldFetchOpponentSplits = enrichAtRequestTime || forceOpponentSplits;") &&
+    tonightService.includes("shouldFetchOpponentSplits ? fetchMlbTeamHandednessSplitContexts") &&
     tonightService.includes("enrichAtRequestTime ? fetchMlbOddsMarketContexts") &&
-    tonightService.includes("enrichAtRequestTime\n    ? await fetchMlbPitcherStartCompleteness") &&
+    tonightService.includes("const completenessPitcherIds = enrichAtRequestTime") &&
+    tonightService.includes(": probablePitcherIds.filter((id) => shouldFetchLimitedStarterCompleteness(formByPitcher.get(String(id))))") &&
+    tonightService.includes("completenessPitcherIds.length > 0") &&
     tonightService.includes("const weatherContext = await getGameTimeWeather(game.venue, game.gameDate);") &&
     formService.includes('const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";') &&
     formService.includes("? fetchMlbPitcherAvailabilityStatuses") &&
@@ -164,11 +168,14 @@ assert(
 assert(
   supabaseArchive.includes("export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;") &&
     supabaseArchive.includes('const ARCHIVE_MANIFESTS_TABLE = "toetheslab_mlb_archive_manifests";') &&
+    supabaseArchive.includes('const COMPLETED_STARTS_SELECT = "date,game_pk,game_date,venue,away_team,home_team,pitcher_mlb_id,pitcher_name,team,opponent,side,result,line";') &&
+    supabaseArchive.includes("SUPABASE_ARCHIVE_REVALIDATE_SECONDS = 15 * 60") &&
     supabaseArchive.includes("const manifest = await readSupabaseArchiveManifest(season);") &&
     supabaseArchive.includes("const starts = manifest ? [] : await readSupabaseArchivedSeasonCompletedStarts(season);") &&
     supabaseArchive.includes('import { readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";') &&
     supabaseArchive.includes('select: "season,start_date,end_date,counts,synced_at"') &&
-    supabaseArchive.includes('url.searchParams.set("select", String(filters.select ?? "*"));') &&
+    supabaseArchive.includes("select: COMPLETED_STARTS_SELECT") &&
+    !supabaseArchive.includes('String(filters.select ?? "*")') &&
     supabaseArchive.includes("expectedLastCompletedDate?: string;") &&
     supabaseArchive.includes("archiveFreshness(lastDate, options.expectedLastCompletedDate)") &&
     supabaseArchive.includes("const completeSlateDates = await readCompleteCanonicalSlateStateDates(season);") &&
@@ -184,6 +191,19 @@ assert(
     renderPathAudit.includes("directUpstreamImports") &&
     packageJson.includes('"check:render-path-audit": "node scripts/check-render-path-audit.mjs"'),
   "Supabase archive status must expose freshness lag and any complete-slate archive gap",
+);
+
+assert(
+  startService.includes("const ARCHIVED_SLATE_REVALIDATE_SECONDS = 15 * 60;") &&
+    startService.includes("const ARCHIVED_SEASON_RANGE_REVALIDATE_SECONDS = 15 * 60;") &&
+    startService.includes("const getCachedArchivedSlateStarts = unstable_cache(") &&
+    startService.includes("const getCachedArchivedSeasonRangeStartSummaries = unstable_cache(") &&
+    startService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, HEAT_CHECK_CACHE_TAG]") &&
+    startService.includes("const ranges = seasonHalfMonthRanges(season);") &&
+    startService.includes("Promise.all(ranges.map((range) => getCachedArchivedSeasonRangeStartSummaries(range.startDate, range.endDate)))") &&
+    startService.includes("readSupabaseArchivedCompletedStartsRange(startDate, endDate)") &&
+    startService.includes("function seasonHalfMonthRanges(season: string)"),
+  "Archive-derived slate and half-month season summaries must be cached to absorb crawler bursts without oversized PostgREST cache entries",
 );
 
 const seededMissingYesterdayArchiveGap = {
@@ -245,7 +265,9 @@ assert(
     fastFilterLink.includes("const currentHref = `${pathname}${currentSearch ? `?${currentSearch}` : \"\"}`;") &&
     fastFilterLink.includes('import { useRouteControlPending } from "@/components/route-control-pending";') &&
     fastFilterLink.includes("const { pending, beginPending } = useRouteControlPending") &&
-    fastFilterLink.includes("onClick={() => beginPending()}") &&
+    fastFilterLink.includes("const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {") &&
+    fastFilterLink.includes("if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;") &&
+    fastFilterLink.includes("onClick={handleClick}") &&
     fastFilterLink.includes('pending ? " opacity-70" : ""') &&
     fastFilterLink.includes("scroll?: boolean;") &&
     fastFilterLink.includes("scroll = true") &&
@@ -265,7 +287,7 @@ assert(
 );
 
 assert(
-  upcomingDatePage.includes("data-control-link-active={String(active)}"),
+  segmentedControlSource.includes("data-control-link-active={String(active)}"),
   "Upcoming filter controls must preserve active-state metadata",
 );
 

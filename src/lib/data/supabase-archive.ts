@@ -59,6 +59,10 @@ const PITCHER_ARCHIVE_ARSENALS_TABLE = "toetheslab_pitcher_archive_arsenals";
 const FEATURED_START_HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
 const ARCHIVE_MANIFESTS_TABLE = "toetheslab_mlb_archive_manifests";
 const PAGE_SIZE = 1000;
+const SUPABASE_ARCHIVE_REVALIDATE_SECONDS = 15 * 60;
+const COMPLETED_STARTS_SELECT = "date,game_pk,game_date,venue,away_team,home_team,pitcher_mlb_id,pitcher_name,team,opponent,side,result,line";
+const PITCHER_ARCHIVE_ARSENAL_SELECT = "season,pitcher_mlb_id,pitcher_name,team,arsenal,starts,pitch_events,first_start_date,last_start_date,start_date,end_date,archived_at,source";
+const FEATURED_START_HIGHLIGHT_SELECT = "start_id,video_id,is_short";
 export const ARCHIVE_FRESHNESS_MAX_LAG_DAYS = 2;
 
 type SupabaseArchiveStatusOptions = {
@@ -148,6 +152,7 @@ export async function readSupabaseArchivedCompletedStarts(date: string): Promise
   if (!isSupabaseArchiveConfigured()) return [];
 
   const rows = await fetchCompletedStartRows({
+    select: COMPLETED_STARTS_SELECT,
     date: `eq.${date}`,
     order: "game_pk.asc,pitcher_mlb_id.asc",
   });
@@ -158,8 +163,15 @@ export async function readSupabaseArchivedCompletedStarts(date: string): Promise
 export async function readSupabaseArchivedSeasonCompletedStarts(season: string): Promise<ArchivedCompletedStartSummary[]> {
   if (!isSupabaseArchiveConfigured()) return [];
 
+  return readSupabaseArchivedCompletedStartsRange(`${season}-01-01`, `${season}-12-31`);
+}
+
+export async function readSupabaseArchivedCompletedStartsRange(startDate: string, endDate: string): Promise<ArchivedCompletedStartSummary[]> {
+  if (!isSupabaseArchiveConfigured()) return [];
+
   const rows = await fetchCompletedStartRows({
-    date: [`gte.${season}-01-01`, `lte.${season}-12-31`],
+    select: COMPLETED_STARTS_SELECT,
+    date: [`gte.${startDate}`, `lte.${endDate}`],
     order: "date.asc,game_pk.asc,pitcher_mlb_id.asc",
   });
 
@@ -172,6 +184,7 @@ export async function readSupabaseArchivedPitcherRecentArsenal(pitcherMlbId: num
   const rows = await fetchSupabaseRows<SupabasePitcherArchiveArsenalRow>(
     PITCHER_ARCHIVE_ARSENALS_TABLE,
     {
+      select: PITCHER_ARCHIVE_ARSENAL_SELECT,
       season: `eq.${season}`,
       pitcher_mlb_id: `eq.${pitcherMlbId}`,
       limit: "1",
@@ -206,6 +219,7 @@ export async function readSupabaseFeaturedStartHighlight(startId: string): Promi
   const rows = await fetchSupabaseRows<SupabaseFeaturedStartHighlightRow>(
     FEATURED_START_HIGHLIGHTS_TABLE,
     {
+      select: FEATURED_START_HIGHLIGHT_SELECT,
       start_id: `eq.${startId}`,
       limit: "1",
     },
@@ -218,7 +232,11 @@ export async function readSupabaseFeaturedStartHighlight(startId: string): Promi
   return highlightFromStoredVideoId(row.video_id, Boolean(row.is_short));
 }
 
-async function fetchCompletedStartRows(filters: Record<string, string | string[]>) {
+type SupabaseRowFilters = Record<string, string | string[]> & {
+  select: string;
+};
+
+async function fetchCompletedStartRows(filters: SupabaseRowFilters) {
   const rows: SupabaseCompletedStartRow[] = [];
 
   for (let offset = 0; ; offset += PAGE_SIZE) {
@@ -253,13 +271,13 @@ async function readSupabaseArchiveManifest(season: string): Promise<SupabaseArch
   return rows[0] ?? null;
 }
 
-async function fetchSupabaseRows<T>(table: string, filters: Record<string, string | string[]>, from: number, to: number): Promise<T[]> {
+async function fetchSupabaseRows<T>(table: string, filters: SupabaseRowFilters, from: number, to: number): Promise<T[]> {
   const baseUrl = supabaseUrl();
   const key = supabaseServiceKey();
   if (!baseUrl || !key) return [];
 
   const url = new URL(`/rest/v1/${table}`, baseUrl);
-  url.searchParams.set("select", String(filters.select ?? "*"));
+  url.searchParams.set("select", filters.select);
 
   for (const [name, value] of Object.entries(filters)) {
     if (name === "select") continue;
@@ -276,7 +294,7 @@ async function fetchSupabaseRows<T>(table: string, filters: Record<string, strin
         authorization: `Bearer ${key}`,
         range: `${from}-${to}`,
       },
-      next: { revalidate: 60 },
+      next: { revalidate: SUPABASE_ARCHIVE_REVALIDATE_SECONDS },
     });
 
     if (!response.ok) return [];

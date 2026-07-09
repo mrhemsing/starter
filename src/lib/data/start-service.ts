@@ -3,14 +3,14 @@ import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStar
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
 import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalSlateState, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import type { CanonicalSlateStateSnapshot } from "@/lib/data/canonical-start-store";
-import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
+import { HEAT_CHECK_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
 import { getVenueRunFactor as sharedVenueRunFactor } from "@/lib/data/run-environment";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
-import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedPitcherRecentArsenal, readSupabaseArchivedSeasonCompletedStarts } from "@/lib/data/supabase-archive";
+import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedCompletedStartsRange, readSupabaseArchivedPitcherRecentArsenal } from "@/lib/data/supabase-archive";
 import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
@@ -38,6 +38,8 @@ type CompletedPitchingLineEntry = MlbCompletedPitchingLine & {
 
 const LIVE_STARTER_RESULT_REVALIDATE_SECONDS = 60;
 const DEFAULT_UPCOMING_DATE_REVALIDATE_SECONDS = 60;
+const ARCHIVED_SLATE_REVALIDATE_SECONDS = 15 * 60;
+const ARCHIVED_SEASON_RANGE_REVALIDATE_SECONDS = 15 * 60;
 
 const teamColors: Record<string, { color: string; accent: string }> = {
   ARI: { color: "#a71930", accent: "#e3d4ad" },
@@ -108,6 +110,17 @@ export function addDays(date: string, days: number) {
 
 function daysBetween(olderDate: string, newerDate: string) {
   return Math.round((new Date(`${newerDate}T00:00:00.000Z`).getTime() - new Date(`${olderDate}T00:00:00.000Z`).getTime()) / ONE_DAY_MS);
+}
+
+function seasonHalfMonthRanges(season: string) {
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = String(index + 1).padStart(2, "0");
+    const monthEnd = toIsoDate(new Date(Date.UTC(Number(season), index + 1, 0)));
+    return [
+      { startDate: `${season}-${month}-01`, endDate: `${season}-${month}-15` },
+      { startDate: `${season}-${month}-16`, endDate: monthEnd },
+    ];
+  }).flat();
 }
 
 function round1(value: number) {
@@ -1998,7 +2011,23 @@ function scheduledGameToStarts(
     });
 }
 
+const getCachedArchivedSlateStarts = unstable_cache(
+  async (date: string) => buildArchivedSlateStarts(date),
+  ["archived-slate-starts", "v2"],
+  { revalidate: ARCHIVED_SLATE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
+);
+
+const getCachedArchivedSeasonRangeStartSummaries = unstable_cache(
+  async (startDate: string, endDate: string) => buildArchivedSeasonRangeStartSummaries(startDate, endDate),
+  ["archived-season-range-start-summaries", "v1"],
+  { revalidate: ARCHIVED_SEASON_RANGE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, HEAT_CHECK_CACHE_TAG] },
+);
+
 export async function getArchivedSlateStarts(date: string): Promise<StartSummary[]> {
+  return getCachedArchivedSlateStarts(date);
+}
+
+async function buildArchivedSlateStarts(date: string): Promise<StartSummary[]> {
   const archivedStarts = await readCompletedStarts(date);
 
   const starts = canonicalizeStartSummaries(rankStarts(archivedStarts.map((start) => archivedCompletedStartToSummary(start))));
@@ -2012,7 +2041,13 @@ function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], pers
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {
-  const archivedStarts = await readSeasonCompletedStarts(season);
+  const ranges = seasonHalfMonthRanges(season);
+  const rangeStarts = await Promise.all(ranges.map((range) => getCachedArchivedSeasonRangeStartSummaries(range.startDate, range.endDate)));
+  return rangeStarts.flat().sort((a, b) => a.date.localeCompare(b.date) || a.rank - b.rank);
+}
+
+async function buildArchivedSeasonRangeStartSummaries(startDate: string, endDate: string): Promise<StartSummary[]> {
+  const archivedStarts = await readRangeCompletedStarts(startDate, endDate);
 
   const startsByDate = new Map<string, StartSummary[]>();
   for (const start of archivedStarts.map((item) => archivedCompletedStartToSummary(item))) {
@@ -2045,9 +2080,11 @@ async function readCompletedStarts(date: string) {
   return supabaseStarts;
 }
 
-async function readSeasonCompletedStarts(season: string) {
-  const supabaseStarts = await readSupabaseArchivedSeasonCompletedStarts(season);
-  return supabaseStarts.length > 0 ? supabaseStarts : readArchivedSeasonCompletedStarts(season);
+async function readRangeCompletedStarts(startDate: string, endDate: string) {
+  const supabaseStarts = await readSupabaseArchivedCompletedStartsRange(startDate, endDate);
+  if (supabaseStarts.length > 0) return supabaseStarts;
+  const season = startDate.slice(0, 4);
+  return (await readArchivedSeasonCompletedStarts(season)).filter((start) => start.date >= startDate && start.date <= endDate);
 }
 
 function missingArchivedPitchers(expected: Awaited<ReturnType<typeof readArchivedCompletedStarts>>, actual: Awaited<ReturnType<typeof readArchivedCompletedStarts>>) {

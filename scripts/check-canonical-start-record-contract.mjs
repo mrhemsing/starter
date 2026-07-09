@@ -131,7 +131,8 @@ assert(
     canonicalStore.includes("async function mergeWithLatestDurableRecords(") &&
     canonicalStore.includes("function canonicalStartRecordToRow(") &&
     canonicalStore.includes("function canonicalSlateCountsFromRecords(") &&
-    canonicalStore.includes("cache: \"no-store\"") &&
+    canonicalStore.includes("const CANONICAL_STORE_READ_REVALIDATE_SECONDS = 60;") &&
+    canonicalStore.includes("next: { revalidate: CANONICAL_STORE_READ_REVALIDATE_SECONDS }") &&
     canonicalStore.includes("prefer: \"resolution=merge-duplicates\"") &&
     canonicalStore.includes("function assertCanonicalStartStoreDate(") &&
     canonicalStore.includes("const CANONICAL_STORE_READ_TIMEOUT_MS = 2_500;") &&

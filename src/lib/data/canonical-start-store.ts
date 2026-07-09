@@ -45,6 +45,7 @@ const CANONICAL_SLATE_STATES_TABLE = "toetheslab_canonical_slate_states";
 const ALLOW_VOLATILE_CANONICAL_START_STORE = "THE_BUMP_ALLOW_VOLATILE_CANONICAL_STORE";
 const CANONICAL_STORE_READ_TIMEOUT_MS = 2_500;
 const CANONICAL_STORE_WRITE_TIMEOUT_MS = 5_000;
+const CANONICAL_STORE_READ_REVALIDATE_SECONDS = 60;
 const CANONICAL_STORE_SLOW_QUERY_MS = 1_000;
 const CANONICAL_STORE_WRITE_FAILURE_LIMIT = 3;
 const CANONICAL_STORE_CIRCUIT_OPEN_MS = 60_000;
@@ -125,7 +126,7 @@ export async function readCompleteCanonicalSlateStateDates(season: string): Prom
   try {
     const response = await timedCanonicalStoreFetch("canonical-slate-states.complete-dates", url, {
       headers: canonicalStoreSupabaseHeaders(serviceKey),
-      cache: "no-store",
+      next: { revalidate: CANONICAL_STORE_READ_REVALIDATE_SECONDS },
     }, CANONICAL_STORE_READ_TIMEOUT_MS);
     if (!response.ok) {
       const message = `${CANONICAL_SLATE_STATES_TABLE} complete-date read failed with HTTP ${response.status}: ${await response.text()}`;
@@ -164,7 +165,7 @@ export async function readCanonicalSlateState(date: string): Promise<CanonicalSl
   try {
     const response = await timedCanonicalStoreFetch("canonical-slate-state.read", url, {
       headers: canonicalStoreSupabaseHeaders(serviceKey),
-      cache: "no-store",
+      next: { revalidate: CANONICAL_STORE_READ_REVALIDATE_SECONDS },
     }, CANONICAL_STORE_READ_TIMEOUT_MS);
     if (!response.ok) {
       console.warn(`${CANONICAL_SLATE_STATES_TABLE} state read failed with HTTP ${response.status}: ${await response.text()}`);
@@ -349,7 +350,7 @@ async function readDurableCanonicalStartStore(date: string): Promise<CanonicalSt
   try {
     const response = await timedCanonicalStoreFetch("canonical-start-records.read", url, {
       headers: canonicalStoreSupabaseHeaders(serviceKey),
-      cache: "no-store",
+      next: { revalidate: CANONICAL_STORE_READ_REVALIDATE_SECONDS },
     }, CANONICAL_STORE_READ_TIMEOUT_MS);
     if (!response.ok) {
       const message = `${CANONICAL_STARTS_TABLE} read failed with HTTP ${response.status}: ${await response.text()}`;

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { getDefaultUpcomingDate } from "@/lib/data/start-service";
-import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { noIndexFollow } from "@/lib/seo";
-import { upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
+import { upcomingDayTitle } from "@/lib/upcoming-metadata";
 import UpcomingDatePage from "./[date]/page";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +17,8 @@ type UpcomingIndexPageProps = {
 export async function generateMetadata({ searchParams }: UpcomingIndexPageProps): Promise<Metadata> {
   const query = await searchParams;
   const date = await getDefaultUpcomingDate();
-  const upcoming = await getTonightMustWatch({ date, window: 5 });
-  const title = upcomingDayTitle(upcoming.date);
-  const description = upcomingDayDescription(upcoming);
+  const title = upcomingDayTitle(date);
+  const description = `Probable starting pitchers and pitching matchups for ${date}, ranked by watch score, starter form, pairing quality, and matchup context.`;
   const url = "/upcoming";
   const image = `${url}/opengraph-image`;
 
