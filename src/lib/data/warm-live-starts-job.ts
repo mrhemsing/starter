@@ -1,7 +1,7 @@
 import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG, LIVE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
-import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
+import { getLiveScoreboard, writeSlateStoryForFinalBoard } from "@/lib/data/live-scoreboard-service";
 import { updateNoHitterBidStateFromLiveBoard } from "@/lib/data/no-hitter-alert-service";
 import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";
 import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";
@@ -227,6 +227,14 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
   }
 
   const homeLeaderRevalidated = await revalidateHomeLeaderSnapshotOnChange(date, options);
+  const slateStoryStored = liveBoard && liveBoard.totalStarts > 0 && liveBoard.finalStarts >= liveBoard.totalStarts
+    ? await writeSlateStoryForFinalBoard(date, liveBoard.rows, liveBoard.totalStarts, startedAt)
+    : false;
+  if (slateStoryStored) {
+    options.revalidateTag?.(LIVE_CACHE_TAG, "max");
+    options.revalidatePath?.(`/live/${date}`);
+    console.log("warm-live-starts stored slate story", { date, totalStarts: liveBoard?.totalStarts ?? 0 });
+  }
   const topPerformer = await warmRankedHome(progressKey, progress, options);
   const finishedAt = new Date();
   const durationMs = finishedAt.getTime() - startedAt.getTime();

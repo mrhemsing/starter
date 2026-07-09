@@ -167,13 +167,28 @@ function recapSummary(start: StartDetail) {
   const flags = start.eventFlags ?? [];
   const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
   const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
+  const notableSentence = startNarrativeNotableSentence(start);
   const flagSentence = flags.includes("HARD_LUCK")
     ? "The hard-luck tag fits the score and decision."
     : flags.includes("VULTURE")
       ? "The vulture tag marks the decision as context, not ranking credit."
       : "The ranking stays driven by the canonical GS+ line.";
 
-  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}${qualitySentence ? ` ${qualitySentence}` : ""}`;
+  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. ${notableSentence ? `${notableSentence} ` : ""}The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}${qualitySentence ? ` ${qualitySentence}` : ""}`;
+}
+
+function startNarrativeNotableSentence(start: StartDetail) {
+  const noHit = start.narrativeNotables?.noHitDepth;
+  if (noHit?.firstHitInning && noHit.innings >= 8) return `${start.pitcher.name} carried a no-hitter into the ${ordinal(noHit.firstHitInning)}.`;
+  if (noHit?.hitlessStintComplete && noHit.innings >= 5) return `${start.pitcher.name} worked ${noHit.innings}.0 hitless innings.`;
+  if (start.narrativeNotables?.strikeouts?.doubleDigit) return `${start.pitcher.name} reached double digits with ${start.line.strikeouts} strikeouts.`;
+  return null;
+}
+
+function ordinal(value: number) {
+  if (value === 8) return "eighth";
+  if (value === 9) return "ninth";
+  return `${value}th`;
 }
 
 function formatDecision(result: StartSummary["result"]) {

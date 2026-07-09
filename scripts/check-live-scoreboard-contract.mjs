@@ -307,7 +307,13 @@ assert(
     liveComponent.includes('data-live-board-complete="true"') &&
     liveComponent.includes("function SlateCompleteHandoff") &&
     liveComponent.includes("const nextSlateLine = formatNextSlateLine(board);") &&
-    liveComponent.includes("const verdictLine = formatSlateCompleteVerdict(board, rows);") &&
+    liveComponent.includes("const verdictLine = board.slateStory?.story ?? formatSlateCompleteVerdict(board, rows);") &&
+    liveService.includes("slateStory: SlateStory | null;") &&
+    liveService.includes("export async function writeSlateStoryForFinalBoard") &&
+    liveService.includes("function buildDeterministicSlateStory") &&
+    liveService.includes("function isSupportedSlateStory") &&
+    liveService.includes("carried a no-hitter into the ${ordinal(noHit.firstHitInning)}") &&
+    liveService.includes("slateStory = slateComplete ? await readSlateStory(date, rows, startCounts.totalStarts, generatedAt) : null") &&
     livePage.includes('const boardTitle = slateComplete ? "Slate final" : "Live GS+ Scoreboard";') &&
     !livePage.includes('? "This slate is final."') &&
     !liveComponent.includes("This slate is final.") &&
@@ -323,6 +329,7 @@ assert(
     liveComponent.includes("return `All ${board.totalStarts} starts are in.`;") &&
     liveComponent.includes("split the day at ${leader.gsPlus}.") &&
     liveComponent.includes("took the day.") &&
+    !liveComponent.includes("Fallback:") &&
     !liveComponent.includes(deletedFinalPanelCopy) &&
     !liveComponent.includes(deletedFinalPanelRankedCopy) &&
     liveComponent.includes("data-live-next-slate") &&

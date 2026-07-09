@@ -1,6 +1,6 @@
 import { roundToScorePrecision, SCORE_DISPLAY_PRECISION } from "@/lib/score-display";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
-import type { StartApiGameScorePlusBreakdown, StartContext, StartDataSource, StartEventFlag, StartLine, StartSummary } from "@/lib/types";
+import type { StartApiGameScorePlusBreakdown, StartContext, StartDataSource, StartEventFlag, StartLine, StartNarrativeNotables, StartSummary } from "@/lib/types";
 
 export type CanonicalStartStatus = "scheduled" | "live" | "final";
 
@@ -13,7 +13,7 @@ export type CanonicalStartAuditEntry = {
 };
 
 export type CanonicalStartLineDiff = {
-  field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue";
+  field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue" | "narrativeNotables";
   before: number | string | undefined;
   after: number | string | undefined;
 };
@@ -33,6 +33,7 @@ export type CanonicalStartRecord = {
   gameScorePlus: number;
   gameScoreV2: number;
   eventFlags: StartEventFlag[];
+  narrativeNotables?: StartNarrativeNotables;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   contextSnapshot?: StartContext;
   result: StartSummary["result"];
@@ -132,6 +133,7 @@ export function canonicalStartRecordFromSummary(start: StartSummary, now = new D
     gameScorePlus,
     gameScoreV2,
     eventFlags,
+    narrativeNotables: normalizeNarrativeNotables(start.narrativeNotables),
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(start.gameScorePlusBreakdown, gameScorePlus, final) : undefined,
     contextSnapshot: final ? freezeStartContextSnapshot(start.context) : undefined,
     result: start.result,
@@ -164,6 +166,7 @@ export function startSummaryFromCanonicalRecord(record: CanonicalStartRecord, st
     gameScorePlus: record.gameScorePlus,
     gameScoreV2: record.gameScoreV2,
     eventFlags: record.eventFlags,
+    narrativeNotables: record.narrativeNotables,
     gameScorePlusBreakdown: record.gameScorePlusBreakdown,
     result: record.result,
     source: record.source,
@@ -189,6 +192,7 @@ export function reconcileCanonicalStartRecord(
     gameScorePlus: number;
     gameScoreV2?: number;
     gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
+    narrativeNotables?: StartNarrativeNotables;
     contextSnapshot?: StartContext;
     result?: StartSummary["result"];
     venue?: string;
@@ -202,8 +206,9 @@ export function reconcileCanonicalStartRecord(
   const result = official.result ?? record.result;
   const venue = safeCanonicalVenue(official.venue) ?? record.venue;
   const eventFlags = deriveStartEventFlags(result, gameScorePlus);
-  const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);
+  const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue, official.narrativeNotables);
   const contextSnapshot = official.contextSnapshot ?? record.contextSnapshot;
+  const narrativeNotables = normalizeNarrativeNotables(official.narrativeNotables ?? record.narrativeNotables);
 
   const nextRecord: CanonicalStartRecord = {
     ...record,
@@ -213,6 +218,7 @@ export function reconcileCanonicalStartRecord(
     gameScorePlus,
     gameScoreV2,
     eventFlags,
+    narrativeNotables,
     gameScorePlusBreakdown: official.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(official.gameScorePlusBreakdown, gameScorePlus, true) : record.gameScorePlusBreakdown,
     contextSnapshot: contextSnapshot ? freezeStartContextSnapshot(contextSnapshot) : record.contextSnapshot,
     result,
@@ -288,6 +294,7 @@ export function diffCanonicalStartRecord(
   officialGameScoreV2 = calculateGameScoreV2(officialLine),
   officialResult?: StartSummary["result"],
   officialVenue?: string,
+  officialNarrativeNotables?: StartNarrativeNotables,
 ): CanonicalStartLineDiff[] {
   const diffs: CanonicalStartLineDiff[] = [];
   const fields: Array<keyof StartLine> = ["inningsPitched", "hits", "earnedRuns", "runsAllowed", "homeRunsAllowed", "walks", "strikeouts", "pitches"];
@@ -315,7 +322,33 @@ export function diffCanonicalStartRecord(
     diffs.push({ field: "venue", before: record.venue, after: officialVenue });
   }
 
+  if (!sameStableJson(record.narrativeNotables, normalizeNarrativeNotables(officialNarrativeNotables ?? record.narrativeNotables))) {
+    diffs.push({ field: "narrativeNotables", before: stableJson(record.narrativeNotables), after: stableJson(normalizeNarrativeNotables(officialNarrativeNotables)) });
+  }
+
   return diffs;
+}
+
+export function diffCanonicalStartNarrativeNotables(record: CanonicalStartRecord, narrativeNotables?: StartNarrativeNotables): CanonicalStartLineDiff[] {
+  if (sameStableJson(record.narrativeNotables, normalizeNarrativeNotables(narrativeNotables))) return [];
+  return [{ field: "narrativeNotables", before: stableJson(record.narrativeNotables), after: stableJson(normalizeNarrativeNotables(narrativeNotables)) }];
+}
+
+function normalizeNarrativeNotables(notables: StartNarrativeNotables | undefined) {
+  if (!notables) return undefined;
+  const normalized: StartNarrativeNotables = {};
+  if (notables.noHitDepth && notables.noHitDepth.innings >= 5) normalized.noHitDepth = notables.noHitDepth;
+  if (notables.perfectDepth && notables.perfectDepth.innings >= 5) normalized.perfectDepth = notables.perfectDepth;
+  if (notables.strikeouts?.doubleDigit) normalized.strikeouts = { doubleDigit: true };
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+function stableJson(value: unknown) {
+  return value === undefined ? undefined : JSON.stringify(value);
+}
+
+function sameStableJson(left: unknown, right: unknown) {
+  return stableJson(left) === stableJson(right);
 }
 
 function safeCanonicalVenue(venue: string | undefined) {

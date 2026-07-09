@@ -78,6 +78,22 @@ export type StartLine = {
   pitches: number;
 };
 
+export type StartNarrativeNotables = {
+  noHitDepth?: {
+    innings: number;
+    firstHitInning: number | null;
+    hitlessStintComplete: boolean;
+  };
+  perfectDepth?: {
+    innings: number;
+    firstBaserunnerInning: number | null;
+    perfectStintComplete: boolean;
+  };
+  strikeouts?: {
+    doubleDigit: boolean;
+  };
+};
+
 export type StartContext = {
   label: string;
   whiffDeltaPct: number;
@@ -143,6 +159,7 @@ export type StartSummary = {
   gameScorePlus: number;
   gameScoreV2?: number;
   eventFlags?: StartEventFlag[];
+  narrativeNotables?: StartNarrativeNotables;
   expectedGameScorePlus?: number;
   gameScorePlusBreakdown?: StartApiGameScorePlusBreakdown;
   plannedStarter?: boolean;
@@ -197,6 +214,7 @@ export type FormStartPoint = {
   bb: number;
   k: number;
   gsPlus: number;
+  narrativeNotables?: StartNarrativeNotables;
   result: StartSummary["result"];
   tier: FormTier;
   rollingMean: number;
@@ -671,6 +689,7 @@ export type MlbCompletedPitchingLine = {
   gameStatus?: "live" | "final" | "warming" | "delay";
   result: StartSummary["result"];
   line: StartLine;
+  narrativeNotables?: StartNarrativeNotables;
 };
 
 export type MlbLivePitchingLine = MlbCompletedPitchingLine & {
@@ -1010,6 +1029,7 @@ export type SlateApiStart = {
   gameScorePlus: number;
   gameScoreV2?: number;
   eventFlags?: StartEventFlag[];
+  narrativeNotables?: StartNarrativeNotables;
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];
@@ -1172,6 +1192,7 @@ export type StartApiResponse = {
   gameScorePlus: number;
   gameScoreV2?: number;
   eventFlags?: StartEventFlag[];
+  narrativeNotables?: StartNarrativeNotables;
   gameScorePlusBreakdown: StartApiGameScorePlusBreakdown;
   source: {
     schedule: StartDataSource["schedule"];

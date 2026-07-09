@@ -1,7 +1,7 @@
 import { demoProbableStarts } from "@/lib/data/demo";
 import { readRuntimeStates, writeRuntimeStates } from "@/lib/data/runtime-state-store";
 import { inningsFromIP } from "@/lib/innings";
-import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine } from "@/lib/types";
+import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine, StartNarrativeNotables } from "@/lib/types";
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
 const MLB_GAME_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game";
@@ -1092,6 +1092,7 @@ function mergeReportedProbablePitchers(schedule: MlbSchedule, reported: Map<stri
 
 async function logProbableConfidenceTransitions(schedule: MlbSchedule) {
   if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return;
+  if (process.env.THE_BUMP_DISABLE_PROBABLE_CONFIDENCE_LOG === "1") return;
 
   const slots = schedule.games
     .filter((game) => !isBeyondProbableConfidenceTransitionHorizon(game.gameDate))
@@ -1568,6 +1569,7 @@ function readLivePitchingLine(
   const line = readStartLine(stats);
   const reachedOnError = countReachedOnErrorForPitcher(payload, pitcherMlbId);
   if (line && reachedOnError > 0) line.reachedOnError = reachedOnError;
+  const narrativeNotables = line ? computeStartNarrativeNotables(payload, pitcherMlbId, line, starterIsOut) : undefined;
   const status = readLiveLineStatus(payload, starterIsOut, line);
   return {
     gamePk,
@@ -1578,6 +1580,7 @@ function readLivePitchingLine(
     side,
     result: readPitchingDecision(pitcherMlbId, payload),
     line: line ?? { inningsPitched: 0, hits: 0, earnedRuns: 0, walks: 0, strikeouts: 0, pitches: 0 },
+    narrativeNotables,
     gameStatus: status,
     starterIsOut,
     gameFinal: isFinalGameFeedState(payload),
@@ -1602,6 +1605,8 @@ function readCompletedPitchingLine(
 
   const line = readStartLine(stats);
   if (!line) return undefined;
+  const reachedOnError = countReachedOnErrorForPitcher(payload, pitcherMlbId);
+  if (reachedOnError > 0) line.reachedOnError = reachedOnError;
 
   return {
     gamePk,
@@ -1613,6 +1618,7 @@ function readCompletedPitchingLine(
     gameStatus: "final",
     result: readPitchingDecision(pitcherMlbId, payload),
     line,
+    narrativeNotables: computeStartNarrativeNotables(payload, pitcherMlbId, line, starterIsOut),
   };
 }
 
@@ -1659,6 +1665,61 @@ function countReachedOnErrorForPitcher(payload: MlbGameFeedResponse, pitcherMlbI
   return (payload.liveData?.plays?.allPlays ?? []).filter((play) => (
     play.matchup?.pitcher?.id === pitcherMlbId && play.result?.eventType === "field_error"
   )).length;
+}
+
+export function computeStartNarrativeNotables(
+  payload: Pick<MlbGameFeedResponse, "liveData">,
+  pitcherMlbId: number,
+  line: StartLine,
+  starterIsOut: boolean,
+): StartNarrativeNotables | undefined {
+  const plays = (payload.liveData?.plays?.allPlays ?? [])
+    .filter((play) => play.matchup?.pitcher?.id === pitcherMlbId)
+    .sort((a, b) => (a.about?.inning ?? 0) - (b.about?.inning ?? 0));
+  const firstHitInning = firstPlayInning(plays, isHitEvent);
+  const firstBaserunnerInning = firstPlayInning(plays, isBaserunnerEvent);
+  const completeInnings = completeInningsFromLine(line.inningsPitched);
+  const noHitDepth = firstHitInning ? Math.max(0, firstHitInning - 1) : completeInnings;
+  const perfectDepth = firstBaserunnerInning ? Math.max(0, firstBaserunnerInning - 1) : completeInnings;
+  const notables: StartNarrativeNotables = {};
+
+  if (noHitDepth >= 5) {
+    notables.noHitDepth = {
+      innings: noHitDepth,
+      firstHitInning,
+      hitlessStintComplete: line.hits === 0 && starterIsOut,
+    };
+  }
+
+  if (perfectDepth >= 5) {
+    notables.perfectDepth = {
+      innings: perfectDepth,
+      firstBaserunnerInning,
+      perfectStintComplete: line.hits === 0 && line.walks === 0 && (line.hitBatters ?? 0) === 0 && (line.reachedOnError ?? 0) === 0 && starterIsOut,
+    };
+  }
+
+  if (line.strikeouts >= 10) {
+    notables.strikeouts = { doubleDigit: true };
+  }
+
+  return Object.keys(notables).length > 0 ? notables : undefined;
+}
+
+function firstPlayInning(plays: MlbGameFeedPlay[], predicate: (eventType: string) => boolean) {
+  return plays.find((play) => predicate(play.result?.eventType ?? ""))?.about?.inning ?? null;
+}
+
+function isHitEvent(eventType: string) {
+  return /^(single|double|triple|home_run)$/i.test(eventType);
+}
+
+function isBaserunnerEvent(eventType: string) {
+  return isHitEvent(eventType) || /^(walk|intent_walk|hit_by_pitch|field_error|catcher_interf|catcher_interference)$/i.test(eventType);
+}
+
+function completeInningsFromLine(inningsPitched: number) {
+  return Math.trunc(inningsFromIP(inningsPitched) / 3);
 }
 
 function readPitchingDecision(pitcherMlbId: number, payload: MlbGameFeedResponse): MlbCompletedPitchingLine["result"] {

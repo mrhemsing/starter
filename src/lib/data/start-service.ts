@@ -659,6 +659,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
         gameScorePlus: start.gameScorePlus,
         gameScoreV2: start.gameScoreV2,
         eventFlags: start.eventFlags,
+        narrativeNotables: start.narrativeNotables,
         gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
         source: {
           schedule: schedule.source,
@@ -734,6 +735,7 @@ export async function getStartDetail(startId: string) {
     gameScorePlus: canonicalRecord?.gameScorePlus ?? matchedStart.gameScorePlus,
     gameScoreV2: canonicalRecord?.gameScoreV2 ?? matchedStart.gameScoreV2,
     eventFlags: canonicalRecord?.eventFlags ?? matchedStart.eventFlags,
+    narrativeNotables: canonicalRecord?.narrativeNotables ?? matchedStart.narrativeNotables,
     gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown ?? matchedStart.gameScorePlusBreakdown,
     context: frozenContext,
     source: canonicalRecord?.source ?? matchedStart.source,
@@ -810,6 +812,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
     gameScorePlus,
     gameScoreV2: canonicalRecord?.gameScoreV2,
     eventFlags: canonicalRecord?.eventFlags,
+    narrativeNotables: canonicalRecord?.narrativeNotables,
     gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown,
     game: {
       gamePk: game.gamePk,
@@ -897,6 +900,7 @@ async function getArchivedCompletedStartDetailByRouteId(date: string, startId: s
     gameScorePlus,
     gameScoreV2: canonicalRecord?.gameScoreV2 ?? calculateGameScoreV2(line),
     eventFlags: canonicalRecord?.eventFlags,
+    narrativeNotables: canonicalRecord?.narrativeNotables,
     gameScorePlusBreakdown: canonicalRecord?.gameScorePlusBreakdown ?? summarizeGameScorePlus(line, gameScorePlus, frozenContext),
     game: {
       gamePk: start.gamePk,
@@ -945,6 +949,7 @@ export async function getStartApiResponse(startId: string): Promise<StartApiResp
     gameScorePlus: start.gameScorePlus,
     gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
     eventFlags: start.eventFlags,
+    narrativeNotables: start.narrativeNotables,
     gameScorePlusBreakdown: start.gameScorePlusBreakdown ?? summarizeGameScorePlus(start.line, start.gameScorePlus, start.context),
     source: {
       schedule: start.source?.schedule ?? "fixture",
@@ -1563,6 +1568,7 @@ function withStartSummaries(start: StartDetail): StartDetail {
     expectedGameScorePlus: summarizeExpectedGameScorePlus(start.line, start.context),
     gameScoreV2: start.gameScoreV2 ?? calculateGameScoreV2(start.line),
     eventFlags: start.eventFlags ?? deriveStartEventFlags(start.result, start.gameScorePlus),
+    narrativeNotables: start.narrativeNotables,
     velocityTrend: summarizeVelocityTrend(start.pitchEvents),
     inningTimeline: summarizeInningTimeline(start.pitchEvents),
     countLeverage: summarizeCountLeverage(start.pitchEvents),
@@ -2013,6 +2019,7 @@ function scheduledGameToStarts(
         line,
         gameScorePlus,
         gameScorePlusBreakdown,
+        narrativeNotables: completedLine?.narrativeNotables,
         plannedStarter,
         teamColor: colors.color,
         accentColor: colors.accent,

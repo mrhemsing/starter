@@ -291,7 +291,7 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
 
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {
   const nextSlateLine = formatNextSlateLine(board);
-  const verdictLine = formatSlateCompleteVerdict(board, rows);
+  const verdictLine = board.slateStory?.story ?? formatSlateCompleteVerdict(board, rows);
   const topRows = rows.slice(0, 5);
   const slateAverage = average(rows.map((row) => row.gsPlus).filter((score): score is number => score !== null));
   const signals = buildSlateSignals(rows, board.date);
@@ -561,13 +561,13 @@ function buildSlateSignals(rows: LiveScoreboardRow[], date: string) {
     {
       label: "Beat of the day",
       value: beat ? `${lastName(beat.row.pitcherName)} +${beat.delta.toFixed(1)} over proj` : fallbackGem ? `${lastName(fallbackGem.pitcherName)} ${formatScore(fallbackGem.gsPlus)}` : "No scored starts",
-      detail: beat ? "Largest settled edge over projection" : "Fallback: second-best gem",
+      detail: beat ? "Largest settled edge over projection" : fallbackGem ? lineText(fallbackGem) : "No final line available",
       href: beat?.row.startHref ?? fallbackGem?.startHref ?? rankedStartsPath(date),
     },
     {
       label: "Miss of the day",
       value: miss ? `${lastName(miss.row.pitcherName)} ${miss.delta.toFixed(1)} under proj` : fallbackRough ? `${lastName(fallbackRough.pitcherName)} ${formatScore(fallbackRough.gsPlus)}` : "No scored starts",
-      detail: miss ? "Largest settled miss against projection" : "Fallback: second-roughest start",
+      detail: miss ? "Largest settled miss against projection" : fallbackRough ? lineText(fallbackRough) : "No final line available",
       href: miss?.row.startHref ?? fallbackRough?.startHref ?? rankedStartsPath(date),
     },
   ];

@@ -60,7 +60,7 @@ assert(
     canonicalRecord.includes("const result = official.result ?? record.result;") &&
     canonicalRecord.includes("const venue = safeCanonicalVenue(official.venue) ?? record.venue;") &&
     canonicalRecord.includes("const contextSnapshot = official.contextSnapshot ?? record.contextSnapshot;") &&
-    canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue);") &&
+    canonicalRecord.includes("const diffs = diffCanonicalStartRecord(record, official.line, gameScorePlus, gameScoreV2, result, venue, official.narrativeNotables);") &&
     canonicalRecord.includes("gameScorePlusBreakdown: official.gameScorePlusBreakdown ? freezeGameScorePlusBreakdown(official.gameScorePlusBreakdown, gameScorePlus, true) : record.gameScorePlusBreakdown") &&
     canonicalRecord.includes("contextSnapshot: contextSnapshot ? freezeStartContextSnapshot(contextSnapshot) : record.contextSnapshot") &&
     canonicalRecord.includes('event: record.frozen && diffs.length > 0 ? "final-correction" : "final-reconciled"') &&
@@ -73,11 +73,12 @@ assert(
 );
 
 assert(
-  canonicalRecord.includes('field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue";') &&
+  canonicalRecord.includes('field: keyof StartLine | "gameScorePlus" | "gameScoreV2" | "result" | "venue" | "narrativeNotables";') &&
     canonicalRecord.includes("if (record.gameScoreV2 !== officialGameScoreV2)") &&
     canonicalRecord.includes('diffs.push({ field: "gameScoreV2", before: record.gameScoreV2, after: officialGameScoreV2 });') &&
     canonicalRecord.includes('diffs.push({ field: "result", before: record.result, after: officialResult });') &&
     canonicalRecord.includes('diffs.push({ field: "venue", before: record.venue, after: officialVenue });') &&
+    canonicalRecord.includes('diffs.push({ field: "narrativeNotables"') &&
     canonicalRecord.includes("function safeCanonicalVenue") &&
     canonicalRecord.includes("export function validateCanonicalSettledRecord") &&
     canonicalRecord.includes("export function assertValidCanonicalSettledRecord") &&
@@ -158,7 +159,7 @@ assert(
     canonicalStore.includes("process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE") &&
     canonicalStore.includes("if (existing.frozen) {") &&
     canonicalStore.includes('if (next.status !== "final") return existing;') &&
-    canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue)") &&
+    canonicalStore.includes("diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue, next.narrativeNotables)") &&
     canonicalStore.includes("existing.source.lineStatus !== next.source.lineStatus") &&
     canonicalStore.includes("result: next.result") &&
     canonicalStore.includes("venue: next.venue") &&

@@ -28,7 +28,7 @@ type MatchupFactPacket = {
 };
 
 type MatchupFact = {
-  key: "venue_history" | "season_best" | "streak" | "k_line";
+  key: "venue_history" | "season_best" | "streak" | "k_line" | "narrative_notable";
   owner: string;
   text: string;
   source: "form-service" | "odds-feed";
@@ -414,9 +414,41 @@ async function buildStarterFacts(game: TonightGame, starter: TonightStarter, sla
   if (venueFact) facts.push(venueFact);
   const seasonBestFact = starterSeasonBestFact(starter, form.series);
   if (seasonBestFact) facts.push(seasonBestFact);
+  const narrativeFact = starterNarrativeNotableFact(starter, form.series);
+  if (narrativeFact) facts.push(narrativeFact);
   const streakFact = starterStreakFact(starter, form.series);
   if (streakFact) facts.push(streakFact);
   return facts;
+}
+
+function starterNarrativeNotableFact(starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
+  if (!starter.name || series.length === 0) return null;
+  const last = [...series].reverse()[0];
+  const noHit = last?.narrativeNotables?.noHitDepth;
+  if (noHit?.firstHitInning && noHit.innings >= 8) {
+    const inning = ordinal(noHit.firstHitInning);
+    const text = `${starter.name}'s last start carried a no-hitter into the ${inning}`;
+    return {
+      key: "narrative_notable",
+      owner: starter.name,
+      text,
+      source: "form-service",
+      score: 98 + noHit.innings,
+      trace: [starter.name, "last start", "no-hitter", inning],
+    };
+  }
+  if (noHit?.hitlessStintComplete && noHit.innings >= 5) {
+    const text = `${starter.name}'s last start included ${noHit.innings}.0 hitless innings`;
+    return {
+      key: "narrative_notable",
+      owner: starter.name,
+      text,
+      source: "form-service",
+      score: 90 + noHit.innings,
+      trace: [starter.name, "last start", `${noHit.innings}.0`, "hitless innings"],
+    };
+  }
+  return null;
 }
 
 function starterStrikeoutLineFact(starter: TonightStarter, slateHighKLine: number | null): MatchupFact | null {
@@ -502,6 +534,7 @@ function validateFactTrace(sentence: string, input: UpcomingWriteupInput) {
   if (/\b(season best|best start)\b/i.test(lower) && !hasFact("season_best")) return false;
   if (/\b(straight starts|streak)\b/i.test(lower) && !hasFact("streak")) return false;
   if (/\b(k line|strikeout line|highest on the slate)\b/i.test(lower) && !hasFact("k_line")) return false;
+  if (/\b(no-hitter|hitless innings)\b/i.test(lower) && !hasFact("narrative_notable")) return false;
   for (const fact of facts) {
     for (const trace of fact.trace) {
       if (trace.length > 3 && lower.includes(trace.toLowerCase()) && !factText.includes(trace.toLowerCase())) return false;
@@ -525,6 +558,12 @@ function countWhile<T>(values: T[], predicate: (value: T) => boolean) {
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function ordinal(value: number) {
+  if (value === 8) return "eighth";
+  if (value === 9) return "ninth";
+  return `${value}th`;
 }
 
 function shortName(name: string) {

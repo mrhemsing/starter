@@ -244,13 +244,14 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
   if (existing.frozen) {
     if (next.status !== "final") return existing;
 
-    const diffs = diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue);
+    const diffs = diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue, next.narrativeNotables);
     return diffs.length > 0
       ? reconcileCanonicalStartRecord(existing, {
         line: next.line,
         gameScorePlus: next.gameScorePlus,
         gameScoreV2: next.gameScoreV2,
         gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+        narrativeNotables: next.narrativeNotables,
         contextSnapshot: next.contextSnapshot,
         result: next.result,
         venue: next.venue,
@@ -263,9 +264,10 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
     return reconcileCanonicalStartRecord(existing, {
       line: next.line,
       gameScorePlus: next.gameScorePlus,
-      gameScoreV2: next.gameScoreV2,
-      gameScorePlusBreakdown: next.gameScorePlusBreakdown,
-      contextSnapshot: next.contextSnapshot,
+        gameScoreV2: next.gameScoreV2,
+        gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+        narrativeNotables: next.narrativeNotables,
+        contextSnapshot: next.contextSnapshot,
       result: next.result,
       venue: next.venue,
       source: officialCanonicalLineSource(next.source.line),
@@ -275,7 +277,7 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
   const changed = existing.status !== next.status
     || existing.source.line !== next.source.line
     || existing.source.lineStatus !== next.source.lineStatus
-    || diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue).length > 0;
+    || diffCanonicalStartRecord(existing, next.line, next.gameScorePlus, next.gameScoreV2, next.result, next.venue, next.narrativeNotables).length > 0;
 
   if (!changed) return existing;
 
@@ -421,6 +423,7 @@ function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, n
       gameScorePlus: next.gameScorePlus,
       gameScoreV2: next.gameScoreV2,
       gameScorePlusBreakdown: next.gameScorePlusBreakdown,
+      narrativeNotables: next.narrativeNotables,
       contextSnapshot: next.contextSnapshot,
       result: next.result,
       venue: next.venue,

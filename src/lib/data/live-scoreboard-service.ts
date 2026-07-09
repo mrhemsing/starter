@@ -2,13 +2,14 @@ import { unstable_cache } from "next/cache";
 import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { readNoHitterBidAlerts, type NoHitterBidAlert } from "@/lib/data/no-hitter-alert-service";
+import { readCachedRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
 import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";
-import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartSummary, TonightResponse } from "@/lib/types";
+import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
 const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;
@@ -38,6 +39,7 @@ export type LiveScoreboardRow = {
   gameFinal: boolean;
   inningLabel: string | null;
   pitchCount: number | null;
+  narrativeNotables?: StartNarrativeNotables;
   pitcherHref: string;
   startHref: string;
   liveHref: string;
@@ -56,6 +58,15 @@ export type LiveScoreboard = SlateStartBucketCounts & {
   rows: LiveScoreboardRow[];
   leader: LiveScoreboardRow | null;
   noHitterAlerts: NoHitterBidAlert[];
+  slateStory: SlateStory | null;
+};
+
+export type SlateStory = {
+  version: 1;
+  date: string;
+  story: string;
+  generatedAt: string;
+  source: "stored" | "fallback";
 };
 
 export type LivePregameSlate = {
@@ -117,6 +128,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
 
   const slateProgress = getSlateProgressState(schedule, startCounts.finalStarts, generatedAt);
   const noHitterAlerts = await readNoHitterBidAlerts(date, generatedAt);
+  const slateStory = slateComplete ? await readSlateStory(date, rows, startCounts.totalStarts, generatedAt) : null;
   const currentPregameWatch = pregame ? await getTonightMustWatch({ date, window: 5 }).catch(() => null) : null;
   const nextSlate = slateComplete || rows.length === 0 ? await resolveNextSlate(date) : null;
   const pregameSlate = currentPregameWatch
@@ -139,7 +151,33 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     rows,
     leader: scoredRows.filter(isLiveLeaderEligibleRow)[0] ?? null,
     noHitterAlerts,
+    slateStory,
   };
+}
+
+export async function writeSlateStoryForFinalBoard(date: string, rows: LiveScoreboardRow[], totalStarts: number, now = new Date()) {
+  const story = buildDeterministicSlateStory(date, rows, totalStarts);
+  if (!story) return false;
+  return writeRuntimeState(slateStoryKey(date), {
+    version: 1,
+    date,
+    story,
+    generatedAt: now.toISOString(),
+    source: "stored",
+  });
+}
+
+async function readSlateStory(date: string, rows: LiveScoreboardRow[], totalStarts: number, now: Date): Promise<SlateStory | null> {
+  const stored = await readCachedRuntimeState<SlateStory>(slateStoryKey(date), 60);
+  if (stored?.version === 1 && stored.date === date && isSupportedSlateStory(stored.story, rows)) {
+    return { ...stored, source: "stored" };
+  }
+  const story = buildDeterministicSlateStory(date, rows, totalStarts);
+  return story ? { version: 1, date, story, generatedAt: now.toISOString(), source: "fallback" } : null;
+}
+
+function slateStoryKey(date: string) {
+  return `live-slate-story:${date}`;
 }
 
 async function resolveNextSlate(date: string) {
@@ -247,6 +285,7 @@ function buildLiveRow(
     gameFinal,
     inningLabel,
     pitchCount,
+    narrativeNotables: liveLine?.narrativeNotables ?? start.narrativeNotables,
     pitcherHref: pitcherHref({ id: start.pitcher.id, name: start.pitcher.name }, sourceParams("live")),
     startHref: startHref(start, sourceParams("live")),
     liveHref: liveDateHref(date),
@@ -264,6 +303,93 @@ function getUpcomingProjectionMap(upcoming: TonightResponse) {
   }
 
   return projections;
+}
+
+function buildDeterministicSlateStory(date: string, rows: LiveScoreboardRow[], totalStarts: number) {
+  const scored = rows
+    .filter((row): row is LiveScoreboardRow & { gsPlus: number } => row.gsPlus !== null && row.scoreLabel === "FINAL")
+    .sort((a, b) => b.gsPlus - a.gsPlus || b.line.strikeouts - a.line.strikeouts);
+  if (scored.length === 0) return null;
+
+  const notables = slateNarrativeNotables(scored);
+  const notable = notables[0] ?? null;
+  const secondaryNotable = notable
+    ? notables.find((item) => item.row.startId !== notable.row.startId && item.score >= 100) ?? null
+    : null;
+  const leader = scored[0];
+  const tiedLeaders = scored.filter((row) => row.gsPlus === leader.gsPlus);
+  const leaderLine = tiedLeaders.length === 2
+    ? `${lastName(tiedLeaders[0].pitcherName)} and ${lastName(tiedLeaders[1].pitcherName)} split the day at ${leader.gsPlus}.`
+    : `${lastName(leader.pitcherName)} led the day at GS+ ${leader.gsPlus}.`;
+  const countLine = `All ${totalStarts} starts are in.`;
+
+  if (!notable) return `${countLine} ${leaderLine}`;
+  return [countLine, notable.sentence, secondaryNotable?.sentence, leaderLine].filter(Boolean).join(" ");
+}
+
+function slateNarrativeNotables(rows: Array<LiveScoreboardRow & { gsPlus: number }>) {
+  return rows
+    .flatMap((row) => slateNarrativeNotableSentences(row).map((sentence) => ({ row, sentence, score: slateNarrativeNotableScore(row) })))
+    .sort((a, b) => b.score - a.score || b.row.gsPlus - a.row.gsPlus);
+}
+
+function slateNarrativeNotableSentences(row: LiveScoreboardRow) {
+  const noHit = row.narrativeNotables?.noHitDepth;
+  if (noHit?.firstHitInning && noHit.innings >= 8) {
+    return [`${lastName(row.pitcherName)} carried a no-hitter into the ${ordinal(noHit.firstHitInning)}.`];
+  }
+  if (noHit?.hitlessStintComplete && noHit.innings >= 5) {
+    return [`${lastName(row.pitcherName)} worked ${formatInnings(noHit.innings)} hitless innings.`];
+  }
+  if (row.narrativeNotables?.strikeouts?.doubleDigit) {
+    return [`${lastName(row.pitcherName)} punched out ${row.line.strikeouts}.`];
+  }
+  return [];
+}
+
+function slateNarrativeNotableScore(row: LiveScoreboardRow) {
+  const noHit = row.narrativeNotables?.noHitDepth;
+  if (noHit?.firstHitInning && noHit.innings >= 8) return 120 + noHit.innings;
+  if (noHit?.hitlessStintComplete && noHit.innings >= 6) return 105 + noHit.innings;
+  if (noHit && noHit.innings >= 5) return 90 + noHit.innings;
+  if (row.narrativeNotables?.strikeouts?.doubleDigit) return 70 + row.line.strikeouts;
+  return 0;
+}
+
+function isSupportedSlateStory(story: string, rows: LiveScoreboardRow[]) {
+  const noHitTimingClaims = [...story.matchAll(/\bno-hitter into the (\w+)\b/gi)];
+  return noHitTimingClaims.every((claim) => {
+    const claimedInning = ordinalWordToNumber(claim[1]);
+    if (!claimedInning) return false;
+    return rows.some((row) => row.narrativeNotables?.noHitDepth?.firstHitInning === claimedInning);
+  });
+}
+
+function ordinal(value: number) {
+  if (value === 1) return "first";
+  if (value === 2) return "second";
+  if (value === 3) return "third";
+  if (value === 4) return "fourth";
+  if (value === 5) return "fifth";
+  if (value === 6) return "sixth";
+  if (value === 7) return "seventh";
+  if (value === 8) return "eighth";
+  if (value === 9) return "ninth";
+  return `${value}th`;
+}
+
+function ordinalWordToNumber(value: string) {
+  const normalized = value.toLowerCase();
+  const words: Record<string, number> = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9 };
+  return words[normalized] ?? (Number(normalized.replace(/\D/g, "")) || null);
+}
+
+function formatInnings(innings: number) {
+  return `${innings}.0`;
+}
+
+function lastName(name: string) {
+  return name.trim().split(/\s+/).at(-1) ?? name;
 }
 
 function hasNonEmptyLine(line: StartLine) {
@@ -360,6 +486,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
       nextSlateDate: cachedBoard.nextSlateDate ?? null,
       nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
       nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null,
+      slateStory: cachedBoard.slateStory ?? null,
     };
   }
   const rows = board.rows.map(normalizeCachedLiveRow);
@@ -369,6 +496,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
     rows,
     leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
     noHitterAlerts: [],
+    slateStory: null,
     slateProgress: fallbackSlateProgress(board, date),
     pregameSlate: null,
     nextSlateDate: null,
