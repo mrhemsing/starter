@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readCachedRuntimeState, readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
 import { formatUpcomingDate } from "@/lib/routes";
@@ -93,10 +93,11 @@ const FANTASY_STREAMING_READ_PROMPT_VERSION = 3;
 const FANTASY_STREAMING_READ_MODEL = process.env.OPENAI_MODEL_FANTASY_READ ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
+const FANTASY_STREAMING_READ_REVALIDATE_SECONDS = 15 * 60;
 
 export async function readFantasyCoach(streamers: UpcomingStreamersResponse) {
   const input = fantasyCoachInput(streamers);
-  const state = await readRuntimeState<FantasyCoachState>(fantasyStreamingReadKey(input.weekStart));
+  const state = await readCachedRuntimeState<FantasyCoachState>(fantasyStreamingReadKey(input.weekStart), FANTASY_STREAMING_READ_REVALIDATE_SECONDS);
   if (state?.version === FANTASY_STREAMING_READ_VERSION && state.inputHash === fantasyCoachInputHash(input) && validateFantasyCoach(state.coach, input)) {
     return state.coach;
   }

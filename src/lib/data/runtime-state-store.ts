@@ -1,5 +1,8 @@
+import { unstable_cache } from "next/cache";
+
 const RUNTIME_STATE_TABLE = "toetheslab_runtime_state";
 const RUNTIME_STATE_TIMEOUT_MS = 2500;
+const RUNTIME_STATE_CACHE_VERSION = "runtime-state-read-v1";
 const runtimeStateFallback = new Map<string, RuntimeStateValue>();
 const reportedRuntimeStateFailures = new Set<string>();
 
@@ -11,6 +14,22 @@ type RuntimeStateRow = {
 };
 
 export async function readRuntimeState<T extends RuntimeStateValue>(key: string): Promise<T | null> {
+  return readRuntimeStateInternal<T>(key, { cache: "no-store" });
+}
+
+export function readCachedRuntimeState<T extends RuntimeStateValue>(key: string, revalidateSeconds: number): Promise<T | null> {
+  assertRuntimeStateKey(key);
+  return unstable_cache(
+    async (stateKey: string) => readRuntimeStateInternal<T>(stateKey, { next: { revalidate: revalidateSeconds } }),
+    ["runtime-state", RUNTIME_STATE_CACHE_VERSION, String(revalidateSeconds)],
+    { revalidate: revalidateSeconds },
+  )(key);
+}
+
+async function readRuntimeStateInternal<T extends RuntimeStateValue>(
+  key: string,
+  cacheOptions: { cache: "no-store" } | { next: { revalidate: number } },
+): Promise<T | null> {
   assertRuntimeStateKey(key);
   const baseUrl = runtimeStateSupabaseUrl();
   const serviceKey = runtimeStateSupabaseServiceKey();
@@ -24,7 +43,7 @@ export async function readRuntimeState<T extends RuntimeStateValue>(key: string)
   try {
     const response = await fetch(url, {
       headers: runtimeStateSupabaseHeaders(serviceKey),
-      cache: "no-store",
+      ...cacheOptions,
       signal: AbortSignal.timeout(RUNTIME_STATE_TIMEOUT_MS),
     });
     if (!response.ok) {

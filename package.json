@@ -16,6 +16,7 @@
     "check:form-debug": "node scripts/check-form-debug.mjs",
     "check:form-staleness": "node scripts/check-form-staleness-contract.mjs",
     "check:supabase-egress": "node scripts/check-supabase-egress-contract.mjs",
+    "check:read-path-cache": "node scripts/check-read-path-cache-contract.mjs",
     "check:innings": "node --experimental-strip-types scripts/check-innings-helper.mjs",
     "check:shared-tokens": "node --experimental-strip-types scripts/check-shared-tokens.mjs",
     "check:decision-tools": "node scripts/check-decision-tools-foundation.mjs",

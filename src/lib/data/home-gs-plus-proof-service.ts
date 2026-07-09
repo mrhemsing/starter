@@ -1,4 +1,4 @@
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readCachedRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getArchivedSeasonStartSummaries, getHomeSlateDate } from "@/lib/data/start-service";
 import { startPath } from "@/lib/routes";
 import type { StartApiGameScorePlusComponent, StartSummary } from "@/lib/types";
@@ -43,9 +43,10 @@ type HomeGsPlusProofState = HomeGsPlusProofs & {
 const HOME_GS_PLUS_PROOF_VERSION = 1;
 const HOME_GS_PLUS_PROOF_KEY = `home-gs-plus-proof:v${HOME_GS_PLUS_PROOF_VERSION}`;
 const HOME_GS_PLUS_PROOF_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+const HOME_GS_PLUS_PROOF_REVALIDATE_SECONDS = 15 * 60;
 
 export async function readHomeGsPlusProofs(): Promise<HomeGsPlusProofs> {
-  const state = await readRuntimeState<HomeGsPlusProofState>(HOME_GS_PLUS_PROOF_KEY);
+  const state = await readCachedRuntimeState<HomeGsPlusProofState>(HOME_GS_PLUS_PROOF_KEY, HOME_GS_PLUS_PROOF_REVALIDATE_SECONDS);
   if (state && validateHomeGsPlusProofs(state) && Date.now() - Date.parse(state.generatedAt) <= HOME_GS_PLUS_PROOF_MAX_AGE_MS) {
     return state;
   }

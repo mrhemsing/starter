@@ -25,7 +25,7 @@ type UpcomingWeekPageProps = {
   }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({ params, searchParams }: UpcomingWeekPageProps): Promise<Metadata> {
   const { startDate } = await params;

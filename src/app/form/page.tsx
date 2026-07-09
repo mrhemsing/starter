@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { FastFilterLink } from "@/components/fast-filter-link";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { FormDriverChips } from "@/components/form-driver-chips";
@@ -25,7 +24,6 @@ import { getFormLeaderboard, getRotationLeaderboard, parseFormWindow } from "@/l
 import type { RotationLeaderboardRow } from "@/lib/data/form-service";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
-import { WATCHLIST_COOKIE, getWatchlistPitcherIds } from "@/lib/data/watchlist-service";
 import type { LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { formPageTitle, jsonLdForFormPage } from "@/lib/form-metadata";
 import { FORM_CONFIG, HEAT_BANDS, formDeltaBand, formDeltaDirection, formWindowLabel, qualityTierOf } from "@/lib/form-tokens";
@@ -60,6 +58,8 @@ type FormPageProps = {
 };
 
 type HeatCheckView = "trend" | "season";
+
+export const revalidate = 900;
 
 const sortOptions = [
   { key: "form", label: "Direction" },
@@ -161,14 +161,13 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
   const coolingExpanded = Boolean(team) || params?.cooling === "show" || band === "cooling" || sort !== "form";
   const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";
-  const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
   const today = getHomeSlateDate();
   const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));
   const [leaderboard, rotationLeaderboard, teamRotationLeaderboard, followedIds, rotationSchedules, liveBoard] = await Promise.all([
     getFormLeaderboard({ window, qualifiedOnly: seasonView ? true : false, team }),
     teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null),
     teamView ? getRotationLeaderboard({ window }) : Promise.resolve(null),
-    getWatchlistPitcherIds(accountId),
+    Promise.resolve([] as string[]),
     Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date }))),
     getLiveScoreboard({ date: today }),
   ]);

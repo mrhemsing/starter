@@ -18,6 +18,8 @@ type BestStartsPageProps = {
   params: Promise<{ month: string }>;
 };
 
+export const revalidate = 900;
+
 export async function generateMetadata({ params }: BestStartsPageProps): Promise<Metadata> {
   const { month } = await params;
   const monthLabel = formatMonth(month);

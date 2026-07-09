@@ -11,7 +11,7 @@ import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersRes
 import { formatUpcomingDate } from "@/lib/routes";
 import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 const title = "MLB Pitcher Streamers This Week";
 const description = "Widely-available arms worth a one-start pickup this week, plus everyone scheduled to start twice.";

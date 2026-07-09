@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { FollowPitcherButton } from "@/components/follow-pitcher-button";
 import { TrendChip, tierLabel, tierTextClass } from "@/components/form-visuals";
@@ -17,7 +16,7 @@ import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-ser
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
 import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
-import { WATCHLIST_COOKIE, getWatchlistPitcherIds, sortPitcherWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
+import { sortPitcherWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
 import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
@@ -37,6 +36,8 @@ type PitcherFormPageProps = {
     window?: string;
   }>;
 };
+
+export const revalidate = 900;
 
 export async function generateMetadata({ params, searchParams }: PitcherFormPageProps): Promise<Metadata> {
   const routeParams = await params;
@@ -85,8 +86,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   const rankedDate = addDays(today, -1);
   const sourceInfo = entitySources[source];
   const sourceHref = entitySourceHref(source, { rankedDate, upcomingDate: today });
-  const accountId = (await cookies()).get(WATCHLIST_COOKIE)?.value ?? null;
-  const followedIdsPromise = getWatchlistPitcherIds(accountId);
+  const followedIdsPromise = Promise.resolve([] as string[]);
   const form = initialForm ?? await getPitcherForm(id, { window });
   if (!form) notFound();
 

@@ -5,7 +5,7 @@ import { noIndexFollow } from "@/lib/seo";
 import { upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 import UpcomingWeekPage from "./[startDate]/page";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type UpcomingWeekIndexPageProps = {
   searchParams?: Promise<{

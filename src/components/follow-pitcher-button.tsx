@@ -13,6 +13,7 @@ type FollowPitcherButtonProps = {
 };
 
 const followState = new Map<string, boolean>();
+let followStateHydration: Promise<void> | null = null;
 
 const FOLLOW_STATE_EVENT = "toe-the-slab-follow-state";
 
@@ -32,7 +33,6 @@ export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing =
     if (initialFollowing || !followState.has(pitcherId)) {
       followState.set(pitcherId, initialFollowing || (followState.get(pitcherId) ?? false));
     }
-
     const current = initialFollowing || (followState.get(pitcherId) ?? false);
     latestIntent.current = current;
     persisted.current = current;
@@ -46,6 +46,7 @@ export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing =
     }
 
     window.addEventListener(FOLLOW_STATE_EVENT, onFollowStateChange);
+    void hydrateFollowState();
     return () => window.removeEventListener(FOLLOW_STATE_EVENT, onFollowStateChange);
   }, [initialFollowing, pitcherId]);
 
@@ -125,6 +126,22 @@ export function FollowPitcherButton({ pitcherId, pitcherName, initialFollowing =
       {error ? <span className="max-w-36 text-right text-[10px] leading-tight text-amber-300" role="status">{error}</span> : null}
     </span>
   );
+}
+
+async function hydrateFollowState() {
+  followStateHydration ??= fetch("/api/watchlist", { cache: "no-store" })
+    .then(async (response) => {
+      if (!response.ok) return;
+      const view = await response.json() as { pitcherIds?: string[] };
+      const ids = Array.isArray(view.pitcherIds) ? view.pitcherIds.map(String) : [];
+      for (const pitcherId of ids) {
+        followState.set(pitcherId, true);
+        window.dispatchEvent(new CustomEvent(FOLLOW_STATE_EVENT, { detail: { pitcherId, following: true } }));
+      }
+    })
+    .catch(() => undefined);
+
+  return followStateHydration;
 }
 
 function StarIcon({ filled, size, className }: { filled: boolean; size: number; className?: string }) {

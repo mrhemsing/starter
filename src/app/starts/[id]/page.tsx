@@ -52,7 +52,7 @@ type StartPageProps = {
   }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({ params, searchParams }: StartPageProps): Promise<Metadata> {
   const { id } = await params;

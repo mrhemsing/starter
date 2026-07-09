@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   twitter: largeImageTwitter("Best Starts of 2026", "The best starts of the 2026 season, with rolling 7 and 30-day leaders up top."),
 };
 
+export const revalidate = 900;
+
 export default async function BestStartsSeasonHubPage() {
   const today = getHomeSlateDate();
   const season = today.slice(0, 4);

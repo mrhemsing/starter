@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readCachedRuntimeState, readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getPitcherForm } from "@/lib/data/form-service";
 import {
@@ -84,9 +84,10 @@ const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
 const MAX_GENERATION_ATTEMPTS = 7;
 const MAX_FACTS_PER_MATCHUP = 2;
+const UPCOMING_WRITEUPS_REVALIDATE_SECONDS = 60;
 
 export async function readUpcomingWriteups(date: string) {
-  const state = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date));
+  const state = await readCachedRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date), UPCOMING_WRITEUPS_REVALIDATE_SECONDS);
   if (state?.version !== UPCOMING_WRITEUPS_VERSION) return {};
   return Object.fromEntries(Object.entries(state.writeups).filter(([gamePk, text]) => state.sources?.[gamePk] === "llm" && text.trim().length > 0));
 }
