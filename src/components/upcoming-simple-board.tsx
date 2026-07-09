@@ -65,6 +65,7 @@ export function UpcomingSimpleBoard({
                       sortMode={sortMode}
                       contextWriteup={contextWriteups[game.gamePk]}
                       showCardDate={showCardDate}
+                      cardClassName="mb-4 sm:mb-0"
                     />
                   ))}
                 </div>
@@ -84,6 +85,7 @@ export function UpcomingSimpleCard({
   sortMode,
   contextWriteup,
   showCardDate = false,
+  cardClassName,
 }: {
   game: TonightGame;
   rank: number;
@@ -92,6 +94,7 @@ export function UpcomingSimpleCard({
   sortMode: "watch" | "time";
   contextWriteup?: string;
   showCardDate?: boolean;
+  cardClassName?: string;
 }) {
   const sentence = contextWriteup ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
@@ -112,6 +115,7 @@ export function UpcomingSimpleCard({
       bandKey={cardTint.key}
       background={cardTint.background}
       accentColor={accentColor}
+      className={cardClassName}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-1"

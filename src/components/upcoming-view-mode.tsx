@@ -93,6 +93,7 @@ export function UpcomingSimpleCardFrame({
   bandKey,
   background,
   accentColor,
+  className = "",
   children,
 }: {
   gamePk: string;
@@ -100,12 +101,13 @@ export function UpcomingSimpleCardFrame({
   bandKey: string;
   background: string;
   accentColor: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <article
       aria-label={ariaLabel}
-      className="heat-glow-card relative block overflow-hidden border-y border-white/10 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:rounded-lg sm:border"
+      className={`heat-glow-card relative block overflow-hidden border-y border-white/10 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:rounded-lg sm:border ${className}`}
       style={{ background, borderColor: `${accentColor}44` }}
       data-responsive-check="upcoming-simple-card"
       data-game-pk={gamePk}
