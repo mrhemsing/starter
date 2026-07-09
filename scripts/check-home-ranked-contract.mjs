@@ -47,6 +47,7 @@ assert(
     homeDeferredSections.includes("highlight={view.highlight}") &&
     featuredHighlightService.includes('"2026-06-25-hou-det-837227": "fSu5y2kmChE"') &&
     featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
+    featuredHighlightService.includes('"2026-07-08-tor-sf-656302": "0AmJgvdkVbk"') &&
     featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes("readSupabaseFeaturedStartHighlight(start.id)") &&

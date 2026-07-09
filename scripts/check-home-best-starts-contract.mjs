@@ -72,6 +72,7 @@ assert(
     featuredHighlightService.includes('"2026-06-30-wsh-bos-676917": "C-uwf39UDjw"') &&
     featuredHighlightService.includes('"2026-07-05-min-nyy-657746": "tMUgTt5EwLQ"') &&
     featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
+    featuredHighlightService.includes('"2026-07-08-tor-sf-656302": "0AmJgvdkVbk"') &&
     featuredHighlightService.includes("if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);"),
   "featured highlights must keep quota-safe dynamic search disabled by default and manually map known official MLB videos for current Recent Gems",
 );
