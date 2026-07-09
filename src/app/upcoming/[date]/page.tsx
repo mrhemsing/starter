@@ -205,7 +205,7 @@ type UpcomingControlsState = {
 export function normalizeUpcomingControls(params?: { pregame?: string; sort?: string }): UpcomingControlsState {
   return {
     pregameOnly: false,
-    sort: params?.sort === "time" ? "time" : "watch",
+    sort: params?.sort === "watch" ? "watch" : "time",
   };
 }
 
@@ -265,8 +265,8 @@ export function UpcomingControls({
           ariaLabel="Sort options"
           activeValue={controls.sort}
           segments={[
-            { value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" },
             { value: "time", label: "Start time", href: upcomingControlHref(basePath, { ...controls, sort: "time" }), controlKey: "sort-time" },
+            { value: "watch", label: "Watch rank", href: upcomingControlHref(basePath, { ...controls, sort: "watch" }), controlKey: "sort-watch" },
           ]}
           pendingRegion="upcoming-board"
           pendingLabel="Upcoming matchup board"
@@ -284,7 +284,7 @@ function upcomingControlsLabel(controls: UpcomingControlsState) {
 
 function upcomingControlHref(basePath: string, controls: UpcomingControlsState) {
   const params = new URLSearchParams();
-  if (controls.sort !== "watch") params.set("sort", controls.sort);
+  if (controls.sort !== "time") params.set("sort", controls.sort);
   const query = params.toString();
   return `${basePath}${query ? `?${query}` : ""}`;
 }
