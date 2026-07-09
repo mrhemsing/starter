@@ -11,7 +11,7 @@ import {
 import type { FormStartPoint, TonightGame, TonightStarter } from "@/lib/types";
 
 type UpcomingWriteupsState = {
-  version: 5;
+  version: 6;
   date: string;
   inputHash: string;
   inputHashes?: Record<string, string>;
@@ -78,21 +78,21 @@ type GenerateUpcomingWriteupsResult = {
   stored: boolean;
 };
 
-const UPCOMING_WRITEUPS_VERSION = 5;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 12;
+const UPCOMING_WRITEUPS_VERSION = 6;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
 const MAX_GENERATION_ATTEMPTS = 7;
 const MAX_FACTS_PER_MATCHUP = 2;
 const UPCOMING_WRITEUPS_REVALIDATE_SECONDS = 60;
-const PROHIBITED_MATCHUP_PHRASES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close)\b/i;
-const MODEL_JARGON = /\b(contextual|grade|grading system|the board leans|model|algorithm)\b/i;
+const PROHIBITED_MATCHUP_PHRASES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge)\b/i;
+const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|the board leans|model|algorithm)\b/i;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readCachedRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date), UPCOMING_WRITEUPS_REVALIDATE_SECONDS);
   if (state?.version !== UPCOMING_WRITEUPS_VERSION) return {};
-  return Object.fromEntries(Object.entries(state.writeups).filter(([gamePk, text]) => state.sources?.[gamePk] === "llm" && text.trim().length > 0));
+  return Object.fromEntries(Object.entries(state.writeups).filter(([, text]) => text.trim().length > 0));
 }
 
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
@@ -103,7 +103,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   const inputHashes = Object.fromEntries(inputs.map((input) => [input.gamePk, hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, input })]));
   const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
-  if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasLlmWriteupsForGames(previous, slate.games)) {
+  if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasUsableWriteupsForGames(previous, slate.games)) {
     return { date: slate.date, generated: 0, reused: slate.games.length, fallbackCount: previous.fallbackCount, model: previous.model, stored: true };
   }
 
@@ -124,7 +124,8 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
       previous.sources?.[game.gamePk] === "llm" &&
       previous.writeups[game.gamePk]?.trim() &&
       validateGeneratedUpcomingText(previous.writeups[game.gamePk], input, game, slate.leagueMeanGS) &&
-      !hasSlateNgramCollision(previous.writeups[game.gamePk], input, acceptedSlateSentences)
+      !hasSlateNgramCollision(previous.writeups[game.gamePk], input, acceptedSlateSentences) &&
+      !hasSlateStructureCrowding(previous.writeups[game.gamePk], input, acceptedSlateSentences)
     ) {
       const reused = normalizeGeneratedSentence(previous.writeups[game.gamePk]);
       writeups[game.gamePk] = reused;
@@ -134,24 +135,24 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
       continue;
     }
     const generated = apiKey ? await generateOneUpcomingWriteupWithRetries(apiKey, input, game, slate.leagueMeanGS, acceptedSlateSentences).catch(() => null) : null;
-    const sentence = generated ?? slateUniqueFallback(fallback, input, acceptedSlateSentences);
+    const sentence = generated ?? slateUniqueFallback(fallback, input, acceptedSlateSentences, game, slate.leagueMeanGS);
     const acceptedGenerated = Boolean(generated);
     if (!acceptedGenerated) fallbackCount += 1;
     sources[game.gamePk] = acceptedGenerated ? "llm" : "fallback";
     if (acceptedGenerated) generatedCount += 1;
-    writeups[game.gamePk] = validateUpcomingSimpleContextSentence(sentence, game, slate.leagueMeanGS) ? sentence : slateUniqueFallback(fallback, input, acceptedSlateSentences);
+    writeups[game.gamePk] = validateGeneratedUpcomingText(sentence, input, game, slate.leagueMeanGS) ? sentence : slateUniqueFallback(fallback, input, acceptedSlateSentences, game, slate.leagueMeanGS);
     if (writeups[game.gamePk] !== sentence && acceptedGenerated) {
       sources[game.gamePk] = "fallback";
       fallbackCount += 1;
       generatedCount -= 1;
     }
-    if (hasSlateNgramCollision(writeups[game.gamePk], input, acceptedSlateSentences)) {
+    if (hasSlateNgramCollision(writeups[game.gamePk], input, acceptedSlateSentences) || hasSlateStructureCrowding(writeups[game.gamePk], input, acceptedSlateSentences)) {
       console.warn("[upcoming-writeups] slate n-gram collision fell back", {
         date: slate.date,
         gamePk: game.gamePk,
         matchup: input.matchup,
       });
-      writeups[game.gamePk] = slateUniqueFallback(fallback, input, acceptedSlateSentences);
+      writeups[game.gamePk] = slateUniqueFallback(fallback, input, acceptedSlateSentences, game, slate.leagueMeanGS);
       sources[game.gamePk] = "fallback";
     }
     acceptedSlateSentences.push(writeups[game.gamePk]);
@@ -173,17 +174,17 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   return { date: slate.date, generated: generatedCount, reused: reusedCount, fallbackCount, model: UPCOMING_WRITEUPS_MODEL, stored };
 }
 
-function hasLlmWriteupsForGames(state: UpcomingWriteupsState, games: TonightGame[]) {
-  return games.every((game) => state.sources?.[game.gamePk] === "llm" && typeof state.writeups[game.gamePk] === "string" && state.writeups[game.gamePk].trim().length > 0);
+function hasUsableWriteupsForGames(state: UpcomingWriteupsState, games: TonightGame[]) {
+  return games.every((game) => typeof state.writeups[game.gamePk] === "string" && state.writeups[game.gamePk].trim().length > 0);
 }
 
 async function generateOneUpcomingWriteupWithRetries(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number, acceptedSlateSentences: string[]) {
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
     const generated = await generateOneUpcomingWriteup(apiKey, input, game, leagueMeanGS, attempt, acceptedSlateSentences);
-    if (generated && !hasSlateNgramCollision(generated, input, acceptedSlateSentences)) return generated;
+    if (generated && !hasSlateNgramCollision(generated, input, acceptedSlateSentences) && !hasSlateStructureCrowding(generated, input, acceptedSlateSentences)) return generated;
   }
   const rewrite = await generateFallbackRewrite(apiKey, input, game, leagueMeanGS, acceptedSlateSentences);
-  return rewrite && !hasSlateNgramCollision(rewrite, input, acceptedSlateSentences) ? rewrite : null;
+  return rewrite && !hasSlateNgramCollision(rewrite, input, acceptedSlateSentences) && !hasSlateStructureCrowding(rewrite, input, acceptedSlateSentences) ? rewrite : null;
 }
 
 async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number, attempt: number, acceptedSlateSentences: string[]) {
@@ -200,7 +201,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one hook-first matchup sentence from provided baseball data only. Under 22 words. No em dash. No phrase 'this one'. Write like a broadcaster describing baseball, not an analyst describing the model. Use one supplied factPacket fact when it is genuinely interesting; otherwise use one concrete input number or named factor. Every sentence needs one specific number, fact, park/weather/rest/K-line detail, or opponent-total detail. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks only when a streak fact is supplied. Respect the archetype frame. For ACE_DUEL, start with Both or Two and acknowledge both starters are hot. For COIN_FLIP, name the actual tiebreaker factor, never vague context. For PROVISIONAL, lead with limited sample or thin data only for the starter whose limitedSample is true or whose band is not ok. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, owned, better number, making the context do the work, adding shape to the grade, contextual lean, the board leans on, matchup details, run stress, and sit close.",
+          content: "Write one high-energy matchup sentence from provided baseball data only. Under 24 words. No em dash. No phrase 'this one'. Make a fan want to watch or feel fine skipping this game. Lead with the most electric true thing: a supplied factPacket hook, hot arm, no-hit notable, K line, streak, park/weather chaos, or real tiebreaker. Use one supplied factPacket fact when genuinely interesting. Prefer one sharp claim plus one vivid supporting specific; do not write a short caption unless the archetype is QUIET SHARP/TBD. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks, venue history, no-hit bids, or hitless innings only when supplied as factPacket facts. Respect the archetype frame. For ACE_DUEL, start with Both or Two and acknowledge both starters are hot. For COIN_FLIP, name the actual tiebreaker factor, never vague context. For PROVISIONAL, lead with limited sample or thin data only for the starter whose limitedSample is true or whose band is not ok. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, owned, better number, making the context do the work, adding shape to the grade, contextual lean, the board leans on, matchup details, run stress, sit close, the starter read, the trust edge, sets the tone, leads the read, anchors the read, and keeps the trust edge.",
         },
         {
           role: "user",
@@ -231,7 +232,7 @@ async function generateFallbackRewrite(apiKey: string, input: UpcomingWriteupInp
       input: [
         {
           role: "system",
-          content: "Rewrite deterministicFallback as one natural baseball sentence. Under 22 words. No em dash. No new facts or numbers. Keep the same supported claim and avoid any listed four-word phrase. If needed, return deterministicFallback exactly.",
+          content: "Rewrite deterministicFallback as one energetic baseball sentence. Under 24 words. No em dash. No new facts or numbers. Keep the same supported claim and avoid any listed four-word phrase. If needed, return deterministicFallback exactly.",
         },
         {
           role: "user",
@@ -258,6 +259,8 @@ async function generateFallbackRewrite(apiKey: string, input: UpcomingWriteupInp
 function validateGeneratedUpcomingText(sentence: string, input: UpcomingWriteupInput, game: TonightGame, leagueMeanGS: number) {
   const clean = normalizeGeneratedSentence(sentence);
   if (!clean) return false;
+  if (wordCount(clean) > 24) return false;
+  if (wordCount(clean) < 12 && !["BOTH_COLD", "PROVISIONAL", "TBD"].includes(input.archetype)) return false;
   if (!validateUpcomingSimpleContextSentence(clean, game, leagueMeanGS, factAllowedNumberTokens(input))) return false;
   if (/\b(unhittable|dominant stretch|has been|since|revenge|owns him|owned)\b/i.test(clean)) return false;
   if (PROHIBITED_MATCHUP_PHRASES.test(clean) || MODEL_JARGON.test(clean)) return false;
@@ -266,6 +269,10 @@ function validateGeneratedUpcomingText(sentence: string, input: UpcomingWriteupI
   if (!validateFactTrace(clean, input)) return false;
   const allowedNumbers = new Set(JSON.stringify(input).match(/\d+(?:\.\d+)?/g) ?? []);
   return (clean.match(/\d+(?:\.\d+)?/g) ?? []).every((token) => allowedNumbers.has(token));
+}
+
+function wordCount(sentence: string) {
+  return sentence.trim().split(/\s+/).filter(Boolean).length;
 }
 
 function hasSlateNgramCollision(sentence: string, input: UpcomingWriteupInput, acceptedSlateSentences: string[]) {
@@ -278,6 +285,28 @@ function hasSlateNgramCollision(sentence: string, input: UpcomingWriteupInput, a
     }
     return false;
   });
+}
+
+function hasSlateStructureCrowding(sentence: string, input: UpcomingWriteupInput, acceptedSlateSentences: string[]) {
+  const key = sentenceStructureKey(sentence, input);
+  if (key !== "possessive-number-single-clause") return false;
+  const matching = acceptedSlateSentences.filter((accepted) => sentenceStructureKey(accepted, input) === key).length;
+  return matching + 1 > Math.max(1, Math.floor((acceptedSlateSentences.length + 1) / 3));
+}
+
+function sentenceStructureKey(sentence: string, input: UpcomingWriteupInput) {
+  const lower = sentence.toLowerCase();
+  const startsWithPossessiveNumber = input.starters.some((starter) => {
+    if (!starter.name) return false;
+    const last = shortName(starter.name).toLowerCase();
+    return new RegExp(`^${escapeRegExp(last)}['’]s\\s+\\d+(?:\\.\\d+)?\\b`).test(lower);
+  });
+  if (startsWithPossessiveNumber && !/[;,]/.test(sentence)) return "possessive-number-single-clause";
+  if (/^(both|two)\b/i.test(sentence)) return "both-open";
+  if (/^only\b/i.test(sentence)) return "only-open";
+  if (/^(not the marquee|dead even|a pending|limited|thin|small-sample)\b/i.test(sentence)) return "context-open";
+  if (input.factPacket.facts.some((fact) => lower.startsWith(shortName(fact.owner).toLowerCase()))) return "fact-owner-open";
+  return "other";
 }
 
 function slateNgramsForPrompt(sentences: string[], input: UpcomingWriteupInput) {
@@ -312,16 +341,38 @@ function normalizeForSlateNgrams(sentence: string, input: UpcomingWriteupInput) 
   return value.replace(/\s+/g, " ").trim();
 }
 
-function slateUniqueFallback(fallback: string, input: UpcomingWriteupInput, acceptedSlateSentences: string[]) {
+function slateUniqueFallback(fallback: string, input: UpcomingWriteupInput, acceptedSlateSentences: string[], game: TonightGame, leagueMeanGS: number) {
+  const candidates = [factHookFallback(input), normalizeGeneratedSentence(fallback)].filter((candidate): candidate is string => Boolean(candidate));
+  for (const candidate of candidates) {
+    if (
+      validateGeneratedUpcomingText(candidate, input, game, leagueMeanGS) &&
+      !hasSlateNgramCollision(candidate, input, acceptedSlateSentences) &&
+      !hasSlateStructureCrowding(candidate, input, acceptedSlateSentences)
+    ) {
+      return candidate;
+    }
+  }
   const clean = normalizeGeneratedSentence(fallback);
-  if (!hasSlateNgramCollision(clean, input, acceptedSlateSentences)) return clean;
+  if (!hasSlateNgramCollision(clean, input, acceptedSlateSentences) && !hasSlateStructureCrowding(clean, input, acceptedSlateSentences)) return clean;
   const matchupSuffix = ` ${input.matchup}.`;
   const withoutPeriod = clean.replace(/[.!?]$/, "");
   const candidate = `${withoutPeriod}${matchupSuffix}`;
-  if (candidate.split(/\s+/).filter(Boolean).length <= 22 && !hasSlateNgramCollision(candidate, input, acceptedSlateSentences)) {
+  if (candidate.split(/\s+/).filter(Boolean).length <= 24 && !hasSlateNgramCollision(candidate, input, acceptedSlateSentences) && !hasSlateStructureCrowding(candidate, input, acceptedSlateSentences)) {
     return candidate;
   }
   return clean;
+}
+
+function factHookFallback(input: UpcomingWriteupInput) {
+  const fact = input.factPacket.facts[0];
+  if (!fact) return null;
+  const owner = shortName(fact.owner);
+  if (fact.key === "narrative_notable") return normalizeGeneratedSentence(`${fact.text}; ${owner} brings the night's loudest hook.`);
+  if (fact.key === "k_line") return normalizeGeneratedSentence(`${fact.text}, putting strikeout chase at the center of ${input.matchup}.`);
+  if (fact.key === "venue_history") return normalizeGeneratedSentence(`${fact.text}, giving ${owner} real ballpark history for ${input.matchup}.`);
+  if (fact.key === "season_best") return normalizeGeneratedSentence(`${fact.text}, so ${input.matchup} has ceiling baked in.`);
+  if (fact.key === "streak") return normalizeGeneratedSentence(`${fact.text}, making the form arrow worth watching in ${input.matchup}.`);
+  return null;
 }
 
 function hasCommaChain(sentence: string) {

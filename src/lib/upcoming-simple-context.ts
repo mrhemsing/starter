@@ -26,8 +26,8 @@ const TOP_BANDS: HeatBandKey[] = ["onfire", "hot"];
 const LOW_BANDS: HeatBandKey[] = ["cooling", "ice"];
 const PROHIBITED_SMALL_GAP_CLAIMS = /\b(separation|towers|clear|runs away)\b/i;
 const NARRATIVE_VERBS = /\b(unhittable|dominant stretch|has been|since|revenge|owns him)\b/i;
-const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close)\b/i;
-const MODEL_JARGON = /\b(contextual|grade|grading system|board leans|model|algorithm)\b/i;
+const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge)\b/i;
+const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|board leans|model|algorithm)\b/i;
 
 const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
   ACE_DUEL: [
@@ -37,16 +37,16 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "Both starters are rolling, with {leader} a tick ahead at {leadForm}.",
   ],
   CLEAR_EDGE: [
-    "{leader}'s {leadForm} form sets the tone against {trailer}.",
-    "{leader}'s {leadForm} gives the sharper recent read against {trailer}.",
+    "{leader} brings {leadForm} form into a matchup {trailer} has to answer.",
+    "{leader}'s {leadForm} makes {trailer} chase the stronger recent arm.",
     "{leader}'s {leadForm} is the loudest starter signal against {trailer}.",
-    "{leader}'s {leadForm} gives him the trusted side over {trailer}.",
+    "{leader} walks in with {leadForm} form and the cleaner starter side over {trailer}.",
   ],
   MISMATCH_DOWN: [
-    "{trailer} is cold, while {leader}'s {leadForm} keeps the trust edge.",
+    "{leader}'s {leadForm} runs into cold {trailer}, making the gap hard to ignore.",
     "{leader} brings the only strong form side against cold {trailer}.",
     "{trailer}'s cold band drags the matchup below {leader}'s side.",
-    "{leader} is the steadier read with {trailer} stuck low.",
+    "{leader} has the steadier arm with {trailer} stuck low.",
   ],
   COIN_FLIP: [
     "Only {gap} points separate the starters, so {leader}'s side needs the tiebreaker.",
@@ -67,10 +67,10 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "Small-sample flags make {name}'s side less settled.",
   ],
   TBD: [
-    "{team} has not named a starter; {name} anchors the read.",
+    "{team} has not named a starter; {name}'s side carries the only firm angle.",
     "{team}'s starter is still open, leaving {name} as the anchor.",
     "A pending {team} arm keeps the matchup provisional around {name}.",
-    "{team} remains TBD, so {name}'s side carries the read.",
+    "{team} remains TBD, so {name}'s side carries the card.",
   ],
 };
 
@@ -142,7 +142,7 @@ export function upcomingSimpleContextSentencesForSlate(games: readonly TonightGa
 function slateUniqueContextSentence(game: TonightGame, input: ContextInput, rank: number, accepted: string[]) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const candidate = buildContextSentence(game, input, `${game.gamePk}:${attempt}`, rank);
-    if (!hasSlateNgramCollision(candidate, input, accepted)) return candidate;
+    if (!hasSlateNgramCollision(candidate, input, accepted) && !hasSlateStructureCrowding(candidate, input, accepted)) return candidate;
   }
   const fallback = matchupSpecificFallback(game, input);
   return validateSentence(fallback, input) ? fallback : buildContextSentence(game, input, `${game.gamePk}:fallback`, rank);
@@ -331,7 +331,7 @@ function watchBandPhrases(game: TonightGame, rank: number) {
 }
 
 function validateSentence(sentence: string, input: ContextInput, extraAllowedNumbers: string[] = []) {
-  if (wordCount(sentence) > 22 || sentence.includes("—") || /\bthis one\b/i.test(sentence)) return false;
+  if (wordCount(sentence) > 24 || sentence.includes("—") || /\bthis one\b/i.test(sentence)) return false;
   if (sentenceCount(sentence) !== 1) return false;
   if (NARRATIVE_VERBS.test(sentence)) return false;
   if (PROHIBITED_CLICHES.test(sentence) || MODEL_JARGON.test(sentence)) return false;
@@ -353,6 +353,7 @@ function hasConcreteSpecific(sentence: string, input: ContextInput, extraAllowed
   if (/\b(Petco|Wrigley|Fenway|Oracle|Coors|Camden|Yankee Stadium|Citi Field|Dodger Stadium|T-Mobile Park|Globe Life Field|Rogers Centre|PNC Park|Comerica Park|Target Field|Progressive Field|Kauffman Stadium|Minute Maid Park|loanDepot park|American Family Field|Great American Ball Park|Busch Stadium|Chase Field|Truist Park|Rate Field|Daikin Park)\b/i.test(sentence)) return true;
   if (/\b(wind|weather|hitter-friendly|suppresses|toward bats|toward arms|rest edge|days|K line|strikeout|opponent total|implied total|vs LHP|vs RHP)\b/i.test(sentence)) return true;
   if (extraAllowedNumbers.length > 0 && /\b(last|season best|straight starts|highest on the slate|GS\+|K line)\b/i.test(lower)) return true;
+  if (/\b(no-hitter|hitless innings|last start)\b/i.test(lower)) return true;
   if (input.archetype === "TBD" && /\b(TBD|not named|pending|starter is still open)\b/i.test(sentence)) return true;
   return false;
 }
@@ -379,6 +380,26 @@ function hasSlateNgramCollision(sentence: string, input: ContextInput, accepted:
     }
     return false;
   });
+}
+
+function hasSlateStructureCrowding(sentence: string, input: ContextInput, accepted: string[]) {
+  const key = sentenceStructureKey(sentence, input);
+  if (key !== "possessive-number-single-clause") return false;
+  const matching = accepted.filter((prior) => sentenceStructureKey(prior, input) === key).length;
+  return matching + 1 > Math.max(1, Math.floor((accepted.length + 1) / 3));
+}
+
+function sentenceStructureKey(sentence: string, input: ContextInput) {
+  const lower = sentence.toLowerCase();
+  const startsWithPossessiveNumber = input.namedStarters.some((starter) => {
+    const name = shortName(starter).toLowerCase();
+    return new RegExp(`^${escapeRegExp(name)}['’]s\\s+\\d+(?:\\.\\d+)?\\b`).test(lower);
+  });
+  if (startsWithPossessiveNumber && !/[;,]/.test(sentence)) return "possessive-number-single-clause";
+  if (/^(both|two)\b/i.test(sentence)) return "both-open";
+  if (/^only\b/i.test(sentence)) return "only-open";
+  if (/^(dead even|not the marquee|a pending|limited|thin|small-sample)\b/i.test(sentence)) return "context-open";
+  return "other";
 }
 
 function slateNgrams(sentence: string, input: ContextInput) {
@@ -411,7 +432,7 @@ function normalizeSlateSentence(sentence: string, input: ContextInput) {
 }
 
 function matchupSpecificFallback(game: TonightGame, input: ContextInput) {
-  return `${game.away} at ${game.home}: ${shortName(input.leader)}'s ${formatScore(starterValue(input.leader, input))} leads the starter read.`;
+  return `${game.away} at ${game.home}: ${shortName(input.leader)} brings ${formatScore(starterValue(input.leader, input))} form into the cleaner starter side.`;
 }
 
 function validateAttributedClaims(sentence: string, input: ContextInput) {

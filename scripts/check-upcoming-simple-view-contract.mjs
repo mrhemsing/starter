@@ -180,7 +180,7 @@ assert(context.includes("bothTop && gap < CLEAR_EDGE_GAP") && context.includes('
 assert(context.includes("namedStarters.length < 2") && context.includes('archetype: "TBD"'), "Simple context must explain TBD starter slots without form contrast.");
 assert(context.includes("validateSentence(candidate, input)") && context.includes("NARRATIVE_VERBS") && context.includes("numberTokens(sentence)") && context.includes("allowedNumberTokens(input)"), "Simple context must validate voice, narrative claims, and number fidelity before rendering.");
 assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
-assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i') && context.includes("sentenceCount(sentence) !== 1"), "Simple context validator must enforce the one-sentence, 22-word, no-em-dash, no-this-one voice rules.");
+assert(context.includes("wordCount(sentence) > 24") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i') && context.includes("sentenceCount(sentence) !== 1"), "Simple context validator must enforce the one-sentence, 24-word, no-em-dash, no-this-one voice rules.");
 assert(context.includes("export function validateUpcomingSimpleContextSentence") && context.includes("export function upcomingSimpleContextArchetype") && context.includes("export function upcomingSimpleContextSentencesForSlate"), "Simple context must expose validator/archetype helpers and slate-deduped fallback generation for write-time LLM storage.");
 assert(
   context.includes("namedStarters.find(isProvisionalStarter)") &&
@@ -213,11 +213,11 @@ assert(
     writeupsService.includes("highest on the slate") &&
     writeupsService.includes("MAX_FACTS_PER_MATCHUP = 2") &&
     writeupsService.includes("validateFactTrace(clean, input)") &&
-    writeupsService.includes("hasLlmWriteupsForGames") &&
+    writeupsService.includes("hasUsableWriteupsForGames") &&
     writeupsService.includes('sources: Record<string, "llm" | "fallback">') &&
     writeupsService.includes("const acceptedGenerated = Boolean(generated)") &&
     writeupsService.includes('sources[game.gamePk] = acceptedGenerated ? "llm" : "fallback"') &&
-    writeupsService.includes('state.sources?.[gamePk] === "llm"') &&
+    writeupsService.includes("Object.entries(state.writeups).filter(([, text]) => text.trim().length > 0)") &&
     writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
     writeupsService.includes("Every number must appear exactly in the input.") &&
@@ -227,8 +227,8 @@ assert(
     writeupsService.includes("upcomingSimpleContextSentencesForSlate(slate.games, slate.leagueMeanGS)") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
     writeupsService.includes("AbortSignal.timeout") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 5;") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 12;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;") &&
     writeupsService.includes("limitedSample: starter.flags?.limitedSample === true") &&
     writeupsService.includes("limitedSample is true") &&
     !simpleBoard.includes("OPENAI_API_KEY"),

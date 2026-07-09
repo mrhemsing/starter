@@ -14,6 +14,12 @@ const bannedPhrases = [
   "matchup details",
   "run stress",
   "sit close",
+  "the starter read",
+  "the trust edge",
+  "sets the tone",
+  "leads the read",
+  "anchors the read",
+  "keeps the trust edge",
 ];
 
 for (const phrase of bannedPhrases) {
@@ -82,10 +88,10 @@ assert(
 );
 
 assert(
-  writeups.includes("Use one supplied factPacket fact when it is genuinely interesting") &&
-    writeups.includes("Write like a broadcaster describing baseball") &&
-    writeups.includes("Every sentence needs one specific number, fact, park/weather/rest/K-line detail, or opponent-total detail"),
-  "Prompt must push concrete baseball language and fact-packet hooks instead of model jargon.",
+  writeups.includes("Make a fan want to watch or feel fine skipping this game") &&
+    writeups.includes("Lead with the most electric true thing") &&
+    writeups.includes("Use one supplied factPacket fact when genuinely interesting"),
+  "Prompt must push energetic baseball language and fact-packet hooks instead of model jargon.",
 );
 
 assert(
@@ -97,11 +103,28 @@ assert(
 );
 
 assert(
-  writeups.includes("const UPCOMING_WRITEUPS_VERSION = 5;") &&
-    writeups.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 12;") &&
-    simpleContract.includes("const UPCOMING_WRITEUPS_VERSION = 5;") &&
-    simpleContract.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 12;"),
+  writeups.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
+    writeups.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;") &&
+    simpleContract.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
+    simpleContract.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;"),
   "Writeup version and prompt version must force current-slate regeneration under the tightened rules.",
+);
+
+assert(
+  context.includes("hasSlateStructureCrowding") &&
+    context.includes("sentenceStructureKey") &&
+    writeups.includes("hasSlateStructureCrowding") &&
+    writeups.includes("possessive-number-single-clause") &&
+    writeups.includes("wordCount(clean) < 12"),
+  "Energy pass must reject structural sameness and undersized captions unless the matchup is quiet or provisional.",
+);
+
+assert(
+  writeups.includes("factHookFallback") &&
+    writeups.includes("state.writeups") &&
+    writeups.includes('fact.key === "narrative_notable"') &&
+    writeups.includes("Object.entries(state.writeups).filter(([, text]) => text.trim().length > 0)"),
+  "Fact packets must be allowed to drive stored fallback sentences instead of disappearing when LLM output is unavailable.",
 );
 
 console.log("matchup sentence tightening contract ok");
