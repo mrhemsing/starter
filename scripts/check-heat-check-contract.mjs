@@ -184,10 +184,12 @@ assert(
     formPage.includes('view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale}') &&
     formPage.includes('data-responsive-check="heat-controls-context"') &&
     formPage.includes('meta={formThroughLabel}') &&
+    formPage.includes("` / latest settled ${leaderboard.latestScoredStartDate} pending`") &&
     formPage.includes('metaClassName={`font-mono text-xs uppercase leading-4 tracking-[0.16em] ${stale ? "text-amber-300" : "text-zinc-400"}`}') &&
     !formPage.includes('const heatScopeLabel = team ? teamDisplayName(team) : "All teams";') &&
     !formPage.includes('{heatScopeLabel} · Form through {leaderboard.formThroughDate ?? "pending"}') &&
     !formPage.includes("All teams · Form through") &&
+    !formPage.includes("` / updating from ${leaderboard.latestScoredStartDate}`") &&
     !formPage.includes('className="mt-3 max-w-2xl min-h-12 text-sm leading-6 text-zinc-400"') &&
     !formPage.includes('className={`mt-3 min-h-8 font-mono text-xs uppercase leading-4 tracking-[0.16em]') &&
     !formPage.includes("Starting-pitcher FORM over the last {window} starts") &&

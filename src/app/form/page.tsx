@@ -252,7 +252,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
   const throughPrefix = seasonView ? "Season through" : "Form through";
   const formThroughLabel = leaderboard.formThroughDate
-    ? `${throughPrefix} ${leaderboard.formThroughDate}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / updating from ${leaderboard.latestScoredStartDate}` : ""}`
+    ? `${throughPrefix} ${leaderboard.formThroughDate}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / latest settled ${leaderboard.latestScoredStartDate} pending` : ""}`
     : seasonView ? "Season data loading" : "Form data loading";
   const trendBoardEmpty = limitedFilter
     ? trendLimitedPitchers.length === 0

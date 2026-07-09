@@ -155,14 +155,16 @@ assert(
 );
 
 assert(
-  formService.includes("const RECENT_FORM_RENDER_GAP_LIMIT_DAYS = 2;") &&
-    formService.includes("const selectedDates = dates.slice(-RECENT_FORM_RENDER_GAP_LIMIT_DAYS);") &&
-    formService.includes("[form-pipeline] archive gap exceeds render fan-out cap; serving stale archive/canonical data") &&
+  formService.includes("const RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS = 14;") &&
+    formService.includes("const selectedDates = dates.slice(-RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS);") &&
+    formService.includes("[form-pipeline] archive gap exceeds canonical fold-in cap; serving freshest bounded canonical form data") &&
+    formService.includes("export function evaluateFormFreshness") &&
+    formService.includes("lagDays > 1") &&
     formService.includes("readRecentCanonicalFormSlate") &&
     formService.includes("readCanonicalStartRecords(date)") &&
     !formService.includes('import { getArchivedSeasonStartSummaries, getDailySlate') &&
     !formService.includes("dates.map((date) => getDailySlate"),
-  "Heat Check render paths must cap archive-gap fan-out and read canonical data instead of rebuilding/writing slates",
+  "Heat Check render paths must fold in recent settled canonical gaps without rebuilding/writing slates",
 );
 
 assert(

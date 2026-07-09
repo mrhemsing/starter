@@ -195,7 +195,7 @@ assert(
     warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
     warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap" | "already-running";') &&
     warmLiveStartsJob.includes("getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) })") &&
-    warmLiveStartsJob.includes('console.error("warm-live-starts archive gap detected; deferring to archive job"') &&
+    warmLiveStartsJob.includes('console.error("warm-live-starts archive gap detected; continuing canonical settle/revalidation path"') &&
     warmLiveStartsJob.includes("const lockKey = warmLiveStartsLockKey(date);") &&
     warmLiveStartsJob.includes("const lock = await acquireWarmLiveStartsLock(lockKey);") &&
     warmLiveStartsJob.includes('console.warn("warm-live-starts overlap lock active; exiting"') &&

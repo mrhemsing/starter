@@ -76,20 +76,12 @@ export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {
   console.log("warm-live-starts start", { date, batchSize: WARM_LIVE_STARTS_BATCH_SIZE, startedAt: startedAt.toISOString() });
   const archiveStatus = await getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) });
   if (archiveStatus.freshness?.stale) {
-    console.error("warm-live-starts archive gap detected; deferring to archive job", {
+    console.error("warm-live-starts archive gap detected; continuing canonical settle/revalidation path", {
       date,
       lastDate: archiveStatus.lastDate,
       expectedLastCompletedDate: archiveStatus.freshness.expectedLastCompletedDate,
       lagDays: archiveStatus.freshness.lagDays,
     });
-    return {
-      warmed: false,
-      date,
-      reason: "archive-gap",
-      liveGames: 0,
-      finalGames: 0,
-      totalGames: 0,
-    };
   }
 
   const lockKey = warmLiveStartsLockKey(date);

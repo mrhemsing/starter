@@ -82,7 +82,7 @@ type SeasonFallbackProfile = Pick<MlbPitcherSeasonProfile, "mlbId" | "name" | "t
 };
 
 const RECENT_FORM_LIVE_LOOKBACK_DAYS = 35;
-const RECENT_FORM_RENDER_GAP_LIMIT_DAYS = 2;
+const RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS = 14;
 const FORM_CACHE_TTL_MS = 60 * 1000;
 const FORM_DATA_REVALIDATE_SECONDS = 15 * 60;
 const FORM_CACHE_VERSION = "form-level-bands-v5";
@@ -609,7 +609,8 @@ async function getQualifiedFormStarts(season: string): Promise<FormStartSet> {
   const qualifiedStarts = filterQualifiedStarts(scoredStarts);
   const formThroughDate = latestStartDate(qualifiedStarts);
   const latestScoredStartDate = latestStartDate(scoredStarts.filter((start) => start.source?.line !== "fixture"));
-  const stale = recent.truncated || Boolean(formThroughDate && latestScoredStartDate && formThroughDate < latestScoredStartDate);
+  const freshness = evaluateFormFreshness({ formThroughDate, latestScoredStartDate });
+  const stale = recent.truncated || freshness.stale;
 
   if (stale) {
     const affectedPitchers = new Set(scoredStarts.filter((start) => start.date === latestScoredStartDate).map((start) => String(start.pitcher.mlbId)));
@@ -672,10 +673,10 @@ async function buildRecentLiveFormStarts(season: string, today: string, latestAr
     .reverse();
   if (dates.length === 0) return { starts: [], truncated: false, gapDates: [] };
 
-  const selectedDates = dates.slice(-RECENT_FORM_RENDER_GAP_LIMIT_DAYS);
+  const selectedDates = dates.slice(-RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS);
   const truncated = dates.length > selectedDates.length;
   if (truncated) {
-    console.error("[form-pipeline] archive gap exceeds render fan-out cap; serving stale archive/canonical data", {
+    console.error("[form-pipeline] archive gap exceeds canonical fold-in cap; serving freshest bounded canonical form data", {
       today,
       latestArchivedDate,
       gapDays: dates.length,
@@ -704,6 +705,18 @@ async function readRecentCanonicalFormSlate(date: string): Promise<StartSummary[
   return records
     .filter((record) => record.status === "final" || record.status === "live")
     .map((record, index) => canonicalRecordToFormStart(record, index + 1));
+}
+
+export function evaluateFormFreshness(freshness: { formThroughDate: string | null; latestScoredStartDate: string | null }) {
+  const lagDays = freshness.formThroughDate && freshness.latestScoredStartDate
+    ? Math.max(0, daysBetween(freshness.formThroughDate, freshness.latestScoredStartDate))
+    : null;
+
+  return {
+    ...freshness,
+    lagDays,
+    stale: typeof lagDays === "number" && lagDays > 1,
+  };
 }
 
 function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanonicalStartRecords>>[number], rank: number): StartSummary {

@@ -14,6 +14,7 @@
     "ingest:featured-highlights": "node scripts/ingest-featured-start-highlights.mjs",
     "check:mlb-archive": "node scripts/check-mlb-archive.mjs",
     "check:form-debug": "node scripts/check-form-debug.mjs",
+    "check:form-staleness": "node scripts/check-form-staleness-contract.mjs",
     "check:innings": "node --experimental-strip-types scripts/check-innings-helper.mjs",
     "check:shared-tokens": "node --experimental-strip-types scripts/check-shared-tokens.mjs",
     "check:decision-tools": "node scripts/check-decision-tools-foundation.mjs",

@@ -47,12 +47,13 @@ const [formService, tonightService, rankedStartsPageService, startService, warmL
 ]);
 
 assert(
-  formService.includes("const RECENT_FORM_RENDER_GAP_LIMIT_DAYS = 2;") &&
+  formService.includes("const RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS = 14;") &&
     formService.includes("readRecentCanonicalFormSlate") &&
     formService.includes("readCanonicalStartRecords(date)") &&
+    formService.includes("evaluateFormFreshness({ formThroughDate, latestScoredStartDate })") &&
     !formService.includes('import { getArchivedSeasonStartSummaries, getDailySlate') &&
     !formService.includes("dates.map((date) => getDailySlate"),
-  "Heat Check form render must cap recent live fan-out and read canonical rows, never rebuild slates in page render",
+  "Heat Check form render must use a bounded recent canonical fold-in and read canonical rows, never rebuild slates in page render",
 );
 
 assert(
@@ -115,6 +116,7 @@ assert(
   warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag })") || warmLiveStartsCron.includes("runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });")
     ? warmLiveStartsJob.includes("await warmFormLeaderboards();") &&
       warmLiveStartsJob.includes("warm-live-starts batch warmed global form leaderboards") &&
+      warmLiveStartsJob.includes("warm-live-starts archive gap detected; continuing canonical settle/revalidation path") &&
       warmLiveStartsJob.includes("await warmFormLeaderboards({ teams: batch, includeGlobal: false });") &&
       warmLiveStartsJob.includes("for (const tag of DATA_CHANGE_CACHE_TAGS)") &&
       warmLiveStartsJob.includes('options.revalidateTag?.(tag, "max");')
