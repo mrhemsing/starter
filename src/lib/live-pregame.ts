@@ -1,0 +1,1 @@
+export const PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS = 2 * 60 * 60 * 1000;

@@ -5,6 +5,7 @@ import { readNoHitterBidAlerts, type NoHitterBidAlert } from "@/lib/data/no-hitt
 import { readCachedRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
+import { PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS } from "@/lib/live-pregame";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
@@ -74,6 +75,7 @@ export type LivePregameSlate = {
   headerLabel: "FIRST UP" | "NEXT SLATE";
   firstPitchAt: string | null;
   marqueeGame: TonightResponse["games"][number] | null;
+  firstUpGames: TonightResponse["games"][number][];
   nextUpGames: TonightResponse["games"][number][];
   leagueMeanGS: number;
   starterCount: number;
@@ -200,14 +202,21 @@ async function resolveNextSlate(date: string) {
 }
 
 function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate["headerLabel"]): LivePregameSlate {
-  const marqueeGame = watch.games
+  const pregameGames = watch.games
     .filter((game) => game.status === "pregame")
     .map((game) => ({ game, firstPitchMs: new Date(game.firstPitch).getTime() }))
     .filter((entry) => Number.isFinite(entry.firstPitchMs))
-    .sort((a, b) => a.firstPitchMs - b.firstPitchMs)[0]?.game ?? null;
-  const nextUpGames = watch.games
-    .filter((game) => game.status === "pregame" && game.gamePk !== marqueeGame?.gamePk)
-    .sort((a, b) => b.gameWatchScore - a.gameWatchScore || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime())
+    .sort((a, b) => a.firstPitchMs - b.firstPitchMs);
+  const marqueeGame = pregameGames[0]?.game ?? null;
+  const firstPitchMs = pregameGames[0]?.firstPitchMs ?? null;
+  const firstUpGames = pregameGames
+    .filter((entry, index) => index === 0 || (firstPitchMs !== null && entry.firstPitchMs - firstPitchMs <= PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS))
+    .slice(0, 2)
+    .map((entry) => entry.game);
+  const firstUpGamePks = new Set(firstUpGames.map((game) => game.gamePk));
+  const nextUpGames = pregameGames
+    .filter((entry) => !firstUpGamePks.has(entry.game.gamePk))
+    .map((entry) => entry.game)
     .slice(0, 2);
 
   return {
@@ -215,6 +224,7 @@ function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel
     headerLabel,
     firstPitchAt: marqueeGame?.firstPitch ?? null,
     marqueeGame,
+    firstUpGames,
     nextUpGames,
     leagueMeanGS: watch.leagueMeanGS,
     starterCount: watch.scheduledGames * 2,
@@ -482,7 +492,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
       rows,
       leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
       noHitterAlerts: cachedBoard.noHitterAlerts ?? [],
-      pregameSlate: cachedBoard.pregameSlate ?? null,
+      pregameSlate: normalizeCachedPregameSlate(cachedBoard.pregameSlate ?? null),
       nextSlateDate: cachedBoard.nextSlateDate ?? null,
       nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null,
       nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null,
@@ -502,6 +512,17 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
     nextSlateDate: null,
     nextSlateFirstPitchAt: null,
     nextSlateTopGame: null,
+  };
+}
+
+function normalizeCachedPregameSlate(slate: LivePregameSlate | null): LivePregameSlate | null {
+  if (!slate) return null;
+  const firstUpGames = slate.firstUpGames?.length ? slate.firstUpGames : slate.marqueeGame ? [slate.marqueeGame] : [];
+  const firstUpGamePks = new Set(firstUpGames.map((game) => game.gamePk));
+  return {
+    ...slate,
+    firstUpGames,
+    nextUpGames: slate.nextUpGames.filter((game) => !firstUpGamePks.has(game.gamePk)),
   };
 }
 

@@ -1,4 +1,5 @@
 import { Headshot } from "@/components/headshot";
+import type { HTMLAttributes } from "react";
 import { formBandValueColor, formBandWhisperLabel, formLineEraText, hasQualifiedStarterFormSample, LIMITED_SAMPLE_FORM_COLOR } from "@/components/limited-sample-form-chip";
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
@@ -56,7 +57,7 @@ export function UpcomingSimpleBoard({
             {dateGroups.map((group, groupIndex) => (
               <div key={group.date} data-upcoming-simple-date-group data-simple-date-group-date={group.date} data-simple-date-group-index={groupIndex}>
                 <SimpleDateGroupHeader date={group.date} label={simpleDateHeaderLabel(group.date, dateLabel)} />
-                <div className="grid grid-cols-1 justify-center gap-3 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5" data-upcoming-simple-card-list data-simple-date-card-list={group.date} data-simple-desktop-layout="two-up-vs">
+                <UpcomingSimpleCardGrid data-simple-date-card-list={group.date}>
                   {group.games.map(({ game, rankIndex }) => (
                     <UpcomingSimpleCard
                       key={game.gamePk}
@@ -71,13 +72,30 @@ export function UpcomingSimpleBoard({
                       cardClassName="mb-4 sm:mb-0"
                     />
                   ))}
-                </div>
+                </UpcomingSimpleCardGrid>
               </div>
             ))}
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+export function UpcomingSimpleCardGrid({
+  children,
+  className = "",
+  ...attributes
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={`grid grid-cols-1 justify-center gap-3 sm:grid-cols-[minmax(0,560px)] sm:gap-4 lg:grid-cols-[repeat(2,minmax(500px,560px))] lg:gap-5 ${className}`}
+      data-upcoming-simple-card-list
+      data-simple-desktop-layout="two-up-vs"
+      {...attributes}
+    >
+      {children}
+    </div>
   );
 }
 

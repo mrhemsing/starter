@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CtaArrow } from "@/components/cta-arrow";
 import { Headshot } from "@/components/headshot";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
-import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";
+import { UpcomingSimpleCard, UpcomingSimpleCardGrid } from "@/components/upcoming-simple-board";
 import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
@@ -707,7 +707,7 @@ function PregameHandoffLoading({ board }: { board: LiveScoreboardData }) {
 }
 
 function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: TonightGame }) {
-  const gameHref = `${slate.upcomingHref}#upcoming-game-${game.gamePk}`;
+  const firstUpGames = slate.firstUpGames.length > 0 ? slate.firstUpGames : [game];
 
   return (
     <section
@@ -724,12 +724,16 @@ function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: Tonigh
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F6C445]">{slate.headerLabel}</p>
           <h2 className="mt-1 font-serif text-2xl font-black text-zinc-50 sm:text-3xl">{game.label}</h2>
         </div>
-        <Link href={gameHref} className="rounded border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300 transition hover:border-amber-300/40 hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <Link href={`${slate.upcomingHref}#upcoming-game-${game.gamePk}`} className="rounded border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-300 transition hover:border-amber-300/40 hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           Upcoming card
         </Link>
       </div>
       <div className="mt-4" data-live-pregame-simple-card="true">
-        <UpcomingSimpleCard game={game} rank={1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />
+        <UpcomingSimpleCardGrid data-live-pregame-first-up-grid="true" data-live-pregame-first-up-count={firstUpGames.length}>
+          {firstUpGames.map((firstUpGame, index) => (
+            <UpcomingSimpleCard key={firstUpGame.gamePk} game={firstUpGame} rank={index + 1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />
+          ))}
+        </UpcomingSimpleCardGrid>
       </div>
     </section>
   );

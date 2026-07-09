@@ -6,7 +6,7 @@ function assert(condition, message) {
   }
 }
 
-const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, primaryNavLink, homeRanked, homeStatus, globals, tonightsMustWatch, slabImage] = await Promise.all([
+const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, mlbClient, types, startService, routes, siteNav, primaryNavLink, homeRanked, homeStatus, globals, tonightsMustWatch, upcomingSimpleBoard, livePregame, slabImage] = await Promise.all([
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/app/live/[date]/page.tsx", "utf8"),
   readFile("src/app/api/live/[date]/route.ts", "utf8"),
@@ -23,6 +23,8 @@ const [liveService, livePage, liveApi, liveComponent, liveNavLabel, ctaArrow, ml
   readFile("src/components/slate-counts.tsx", "utf8"),
   readFile("src/app/globals.css", "utf8"),
   readFile("src/components/tonights-must-watch.tsx", "utf8"),
+  readFile("src/components/upcoming-simple-board.tsx", "utf8"),
+  readFile("src/lib/live-pregame.ts", "utf8"),
   stat("public/images/slab-2.png"),
 ]);
 const deletedFinalPanelCopy = "Live returns" + " with the next slate.";
@@ -93,7 +95,9 @@ assert(
     liveService.includes("pregameSlate: LivePregameSlate | null;") &&
     liveService.includes('headerLabel: "FIRST UP" | "NEXT SLATE";') &&
     liveService.includes('marqueeGame: TonightResponse["games"][number] | null;') &&
+    liveService.includes('firstUpGames: TonightResponse["games"][number][];') &&
     liveService.includes('nextUpGames: TonightResponse["games"][number][];') &&
+    liveService.includes('import { PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS } from "@/lib/live-pregame";') &&
     liveService.includes("starterCount: number;") &&
     liveService.includes("nextSlateDate: string | null;") &&
     liveService.includes("nextSlateFirstPitchAt: string | null;") &&
@@ -113,14 +117,21 @@ assert(
     !liveService.includes("game.ms > afterMs") &&
     liveService.includes("if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch };") &&
     liveService.includes("function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate[\"headerLabel\"])") &&
-    liveService.includes('.sort((a, b) => a.firstPitchMs - b.firstPitchMs)[0]?.game ?? null') &&
-    liveService.includes(".filter((game) => game.status === \"pregame\" && game.gamePk !== marqueeGame?.gamePk)") &&
-    liveService.includes(".sort((a, b) => b.gameWatchScore - a.gameWatchScore || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime())") &&
+    liveService.includes("const pregameGames = watch.games") &&
+    liveService.includes(".sort((a, b) => a.firstPitchMs - b.firstPitchMs);") &&
+    liveService.includes("const marqueeGame = pregameGames[0]?.game ?? null;") &&
+    liveService.includes("entry.firstPitchMs - firstPitchMs <= PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS") &&
+    liveService.includes(".slice(0, 2)") &&
+    liveService.includes("const firstUpGamePks = new Set(firstUpGames.map((game) => game.gamePk));") &&
+    liveService.includes(".filter((entry) => !firstUpGamePks.has(entry.game.gamePk))") &&
+    !liveService.includes(".filter((game) => game.status === \"pregame\" && game.gamePk !== marqueeGame?.gamePk)") &&
+    !liveService.includes(".sort((a, b) => b.gameWatchScore - a.gameWatchScore || new Date(a.firstPitch).getTime() - new Date(b.firstPitch).getTime())") &&
     liveService.includes("starterCount: watch.scheduledGames * 2,") &&
     liveService.includes("normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date)") &&
+    liveService.includes("function normalizeCachedPregameSlate") &&
     liveService.includes("function fallbackSlateProgress") &&
     liveService.includes("nextSlateDate: cachedBoard.nextSlateDate ?? null") &&
-    liveService.includes("pregameSlate: cachedBoard.pregameSlate ?? null") &&
+    liveService.includes("pregameSlate: normalizeCachedPregameSlate(cachedBoard.pregameSlate ?? null)") &&
     liveService.includes("nextSlateFirstPitchAt: cachedBoard.nextSlateFirstPitchAt ?? null") &&
     liveService.includes("nextSlateTopGame: cachedBoard.nextSlateTopGame ?? null") &&
     liveService.includes("formatFirstPitchCountdown(new Date(firstPitchAt).getTime() - Date.now())") &&
@@ -188,6 +199,19 @@ assert(
     liveApi.includes("getLiveScoreboard({ date })") &&
     liveApi.includes("export const revalidate = 30;"),
   "/live/[date] route and API must render the cached live board at the shared site width with stable Live naming",
+);
+
+assert(
+  livePregame.includes("export const PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS = 2 * 60 * 60 * 1000;") &&
+    upcomingSimpleBoard.includes("export function UpcomingSimpleCardGrid") &&
+    upcomingSimpleBoard.includes("lg:grid-cols-[repeat(2,minmax(500px,560px))]") &&
+    upcomingSimpleBoard.includes('data-upcoming-simple-card-list') &&
+    upcomingSimpleBoard.includes('data-simple-desktop-layout="two-up-vs"') &&
+    upcomingSimpleBoard.includes("<UpcomingSimpleCardGrid data-simple-date-card-list={group.date}>") &&
+    liveComponent.includes("UpcomingSimpleCardGrid") &&
+    liveService.includes("PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS") &&
+    !liveComponent.includes("lg:grid-cols-[repeat(2,minmax(500px,560px))]"),
+  "Live FIRST UP must import the shared Upcoming SIMPLE two-up grid and service promotion must use the shared two-hour proximity constant",
 );
 
 assert(
@@ -288,9 +312,12 @@ assert(
     liveComponent.includes("function PregameMarquee") &&
     liveComponent.includes('className="sm:rounded sm:border sm:border-amber-300/25 sm:bg-[#101014] sm:p-5"') &&
     liveComponent.includes('data-live-pregame-header={slate.headerLabel}') &&
-    liveComponent.includes('import { UpcomingSimpleCard } from "@/components/upcoming-simple-board";') &&
+    liveComponent.includes('import { UpcomingSimpleCard, UpcomingSimpleCardGrid } from "@/components/upcoming-simple-board";') &&
     liveComponent.includes('data-live-pregame-simple-card="true"') &&
-    liveComponent.includes('<UpcomingSimpleCard game={game} rank={1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />') &&
+    liveComponent.includes("const firstUpGames = slate.firstUpGames.length > 0 ? slate.firstUpGames : [game];") &&
+    liveComponent.includes('<UpcomingSimpleCardGrid data-live-pregame-first-up-grid="true" data-live-pregame-first-up-count={firstUpGames.length}>') &&
+    liveComponent.includes("firstUpGames.map((firstUpGame, index) => (") &&
+    liveComponent.includes('<UpcomingSimpleCard key={firstUpGame.gamePk} game={firstUpGame} rank={index + 1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />') &&
     !liveComponent.includes('data-responsive-check="live-pregame-hook"') &&
     !liveComponent.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">Watch score</p>') &&
     !liveComponent.includes("function PregameStarterBlock") &&
