@@ -38,7 +38,8 @@ const [formService, warmJob, formPage, packageJson] = await Promise.all([
 assert(
   formService.includes("const RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS = 14;") &&
     formService.includes("const selectedDates = dates.slice(-RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS);") &&
-    formService.includes("[form-pipeline] archive gap exceeds canonical fold-in cap; serving freshest bounded canonical form data") &&
+    formService.includes("[form-pipeline] canonical fold-in window exceeded; serving freshest bounded canonical form data") &&
+    !formService.includes("[form-pipeline] recent canonical form gap") &&
     formService.includes("readRecentCanonicalFormSlate") &&
     formService.includes("readCanonicalStartRecords(date)") &&
     !formService.includes("dates.map((date) => getDailySlate"),

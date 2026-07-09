@@ -676,18 +676,12 @@ async function buildRecentLiveFormStarts(season: string, today: string, latestAr
   const selectedDates = dates.slice(-RECENT_FORM_CANONICAL_GAP_LIMIT_DAYS);
   const truncated = dates.length > selectedDates.length;
   if (truncated) {
-    console.error("[form-pipeline] archive gap exceeds canonical fold-in cap; serving freshest bounded canonical form data", {
+    console.error("[form-pipeline] canonical fold-in window exceeded; serving freshest bounded canonical form data", {
       today,
       latestArchivedDate,
       gapDays: dates.length,
       renderedGapDays: selectedDates.length,
       skippedDates: dates.slice(0, -selectedDates.length),
-    });
-  } else {
-    console.info("[form-pipeline] recent canonical form gap", {
-      today,
-      latestArchivedDate,
-      gapDays: selectedDates.length,
     });
   }
 
