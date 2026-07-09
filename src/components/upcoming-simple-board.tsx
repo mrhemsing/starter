@@ -164,8 +164,8 @@ export function UpcomingSimpleCard({
               </>
             ) : null}
             <LocalTime value={game.firstPitch} fallback="First pitch" />
-            <span aria-hidden="true"> / </span>
-            <span data-simple-ballpark data-simple-ballpark-source={game.park}>{formatSimpleBallpark(game.park)}</span>
+            <span className="hidden sm:inline" aria-hidden="true"> / </span>
+            <span className="hidden sm:inline" data-simple-ballpark data-simple-ballpark-source={game.park}>{formatSimpleBallpark(game.park)}</span>
           </p>
         </div>
         <span aria-hidden="true" />
