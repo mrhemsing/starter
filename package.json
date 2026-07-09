@@ -26,6 +26,8 @@
     "check:publish-prep": "node scripts/check-publish-prep.mjs",
     "check:daily-social": "node scripts/check-daily-social-contract.mjs",
     "check:site-performance": "node scripts/check-site-performance-contract.mjs",
+    "check:performance-guardrail": "node scripts/check-performance-guardrail-contract.mjs",
+    "measure:performance-guardrail": "node scripts/measure-performance-guardrail.mjs",
     "check:render-path-audit": "node scripts/check-render-path-audit.mjs",
     "check:stale-shell": "node scripts/check-stale-shell-contract.mjs",
     "check:start-matchup-label": "node scripts/check-start-matchup-label-contract.mjs",
