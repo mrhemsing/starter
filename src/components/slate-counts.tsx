@@ -40,6 +40,10 @@ export function SlateCounts({ initialState, initialLabel, variant, className = "
           refreshedStaleShell = true;
           router.refresh();
         }
+        if (variant === "ranked" && nextState.completedStarts > initialState.completedStarts && !refreshedStaleShell) {
+          refreshedStaleShell = true;
+          router.refresh();
+        }
         shouldContinuePolling = nextState.liveStarts > 0;
 
         if (shouldContinuePolling) {
@@ -58,7 +62,7 @@ export function SlateCounts({ initialState, initialLabel, variant, className = "
       cancelled = true;
       if (timeout) window.clearTimeout(timeout);
     };
-  }, [initialState.date, initialState.liveStarts, router, variant]);
+  }, [initialState.completedStarts, initialState.date, initialState.liveStarts, router, variant]);
 
   useEffect(() => {
     if (variant !== "home" || slateState.state !== "pre-first-pitch" || !slateState.firstPitchAt) return;

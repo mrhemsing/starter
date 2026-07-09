@@ -317,6 +317,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
             <RankedStartsEmptyState
               cause={emptyStateCause}
               completionState={completionState}
+              firstPitchAt={slateProgress.firstPitchAt}
               settledStartsCount={starts.length}
               date={date}
               clearFilterHref={rankedStartsHref(date, { sort, showOpeners })}
@@ -351,6 +352,11 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                     </div>
                   </div>
                 ))}
+                {completionState.liveStarts > 0 ? (
+                  <p className="pt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" data-ranked-starts-live-footer>
+                    {completionState.liveStarts} {completionState.liveStarts === 1 ? "start is" : "starts are"} still live. Board updates as starts settle.
+                  </p>
+                ) : null}
               </section>
             ) : null}
             {shortStarts.length > 0 ? (
@@ -401,6 +407,7 @@ function resolveRankedStartsEmptyCause({
   qualifiedStartsCount: number;
   visibleStartsCount: number;
 }): RankedStartsEmptyCause | null {
+  if (slateProgress.state === "no-games") return "off-day";
   if (completionState.totalGames === 0 && completionState.totalStarts === 0) return "off-day";
   if (qualifiedStartsCount === 0 && (completionState.isFinal || slateProgress.state === "all-starts-complete")) return "settled-zero-rankable";
   if (qualifiedStartsCount === 0 && completionState.totalStarts > 0) return "live-none-settled";
@@ -411,6 +418,7 @@ function resolveRankedStartsEmptyCause({
 function RankedStartsEmptyState({
   cause,
   completionState,
+  firstPitchAt,
   settledStartsCount,
   date,
   clearFilterHref,
@@ -418,18 +426,20 @@ function RankedStartsEmptyState({
 }: {
   cause: RankedStartsEmptyCause;
   completionState: {
+    date: string;
     completedStarts: number;
     totalStarts: number;
     totalGames: number;
     liveStarts: number;
     warmingStarts: number;
   };
+  firstPitchAt: string | null;
   settledStartsCount: number;
   date: string;
   clearFilterHref: string;
   previousRankedDate: string | null;
 }) {
-  const copy = rankedStartsEmptyStateCopy(cause, completionState, settledStartsCount);
+  const copy = rankedStartsEmptyStateCopy(cause, { ...completionState, firstPitchAt }, settledStartsCount);
 
   return (
     <section
@@ -442,9 +452,14 @@ function RankedStartsEmptyState({
       <p className="mt-3 font-serif text-2xl font-bold text-zinc-50">{copy.title}</p>
       <p className="mt-2 text-sm text-zinc-400">{copy.detail}</p>
       <div className="mt-5 flex flex-wrap gap-3">
-        {cause === "live-none-settled" ? (
+        {cause === "live-none-settled" && completionState.liveStarts > 0 ? (
           <CtaArrow href={liveDateHref(date)} tone="orange" className="bg-orange-300/10 hover:bg-orange-300 hover:text-zinc-950">
             Live scoreboard
+          </CtaArrow>
+        ) : null}
+        {cause === "live-none-settled" && completionState.liveStarts === 0 ? (
+          <CtaArrow href={upcomingDateHref(date)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+            Today&apos;s probables
           </CtaArrow>
         ) : null}
         {cause === "filter-zero" ? (
@@ -467,14 +482,24 @@ function RankedStartsEmptyState({
   );
 }
 
-function rankedStartsEmptyStateCopy(cause: RankedStartsEmptyCause, state: { completedStarts: number; totalStarts: number; liveStarts: number; warmingStarts: number }, settledStartsCount: number) {
+function rankedStartsEmptyStateCopy(
+  cause: RankedStartsEmptyCause,
+  state: { date: string; completedStarts: number; totalStarts: number; liveStarts: number; warmingStarts: number; firstPitchAt?: string | null },
+  settledStartsCount: number,
+) {
   if (cause === "live-none-settled") {
     const settled = Math.max(0, state.completedStarts, settledStartsCount);
-    const inFlight = Math.max(0, state.liveStarts + state.warmingStarts);
-    const upcoming = Math.max(0, state.totalStarts - settled - inFlight);
+    if (settled === 0 && state.liveStarts > 0) {
+      return {
+        title: "Nothing final yet.",
+        detail: `${state.liveStarts} ${state.liveStarts === 1 ? "start is" : "starts are"} live right now. First rankings land when the early games finish.`,
+      };
+    }
+
+    const firstPitch = formatRankedFirstPitchLocal(state.firstPitchAt);
     return {
-      title: "Rankings post as starts go final.",
-      detail: `${settled} of ${state.totalStarts} in so far, ${upcoming} still to come.`,
+      title: "Nothing final yet.",
+      detail: firstPitch ? `First pitch is at ${firstPitch}. The board fills in as starts finish.` : "The board fills in as starts finish.",
     };
   }
 
@@ -487,7 +512,7 @@ function rankedStartsEmptyStateCopy(cause: RankedStartsEmptyCause, state: { comp
 
   if (cause === "off-day") {
     return {
-      title: "No games scheduled.",
+      title: `No starts scheduled for ${formatShortDate(state.date)}.`,
       detail: "Check upcoming matchups.",
     };
   }
@@ -1279,4 +1304,16 @@ function formatRankedFirstPitch(value: string | null) {
     timeZone: "America/Los_Angeles",
   }).format(parsed);
   return `${time} PT`;
+}
+
+function formatRankedFirstPitchLocal(value: string | null | undefined) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+    timeZoneName: "short",
+  }).format(parsed);
 }

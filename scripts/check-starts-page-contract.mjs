@@ -722,6 +722,8 @@ const rankedPregameNothingThrownFixture = { liveStarts: 0, completedStarts: 0 };
 const rankedFirstPitchThrownFixture = { liveStarts: 2, completedStarts: 0 };
 const rankedLiveNoneSettledFixture = { completedStarts: 1, liveStarts: 1, warmingStarts: 0, totalStarts: 32 };
 const rankedLiveNoneSettledUpcoming = Math.max(0, rankedLiveNoneSettledFixture.totalStarts - rankedLiveNoneSettledFixture.completedStarts - rankedLiveNoneSettledFixture.liveStarts - rankedLiveNoneSettledFixture.warmingStarts);
+const rankedEmptyLiveFixture = { completedStarts: 0, liveStarts: 10, totalStarts: 26 };
+const rankedEmptyLiveUpcoming = Math.max(0, rankedEmptyLiveFixture.totalStarts - rankedEmptyLiveFixture.completedStarts - rankedEmptyLiveFixture.liveStarts);
 assert(
   (rankedPregameNothingThrownFixture.liveStarts > 0 || rankedPregameNothingThrownFixture.completedStarts > 0) === false &&
     (rankedFirstPitchThrownFixture.liveStarts > 0 || rankedFirstPitchThrownFixture.completedStarts > 0) === true &&
@@ -736,21 +738,32 @@ assert(
     startsPage.includes("function RankedStartsEmptyState") &&
     startsPage.includes("function rankedStartsEmptyStateCopy") &&
     startsPage.includes("data-ranked-empty-cause={cause}") &&
+    startsPage.includes('if (slateProgress.state === "no-games") return "off-day";') &&
+    startsPage.includes("firstPitchAt={slateProgress.firstPitchAt}") &&
     startsPage.includes("settledStartsCount={starts.length}") &&
-    startsPage.includes('title: "Rankings post as starts go final.",') &&
     startsPage.includes("const settled = Math.max(0, state.completedStarts, settledStartsCount);") &&
-    startsPage.includes("`${settled} of ${state.totalStarts} in so far, ${upcoming} still to come.`") &&
+    startsPage.includes('title: "Nothing final yet.",') &&
+    startsPage.includes("`${state.liveStarts} ${state.liveStarts === 1 ? \"start is\" : \"starts are\"} live right now. First rankings land when the early games finish.`") &&
+    startsPage.includes("formatRankedFirstPitchLocal(state.firstPitchAt)") &&
+    startsPage.includes("firstPitch ? `First pitch is at ${firstPitch}. The board fills in as starts finish.` : \"The board fills in as starts finish.\"") &&
     startsPage.includes("Live scoreboard") &&
+    startsPage.includes('cause === "live-none-settled" && completionState.liveStarts > 0') &&
+    startsPage.includes('cause === "live-none-settled" && completionState.liveStarts === 0') &&
     startsPage.includes("liveDateHref(date)") &&
+    startsPage.includes("Today&apos;s probables") &&
     startsPage.includes('title: "No starts in this band.",') &&
     startsPage.includes('detail: "Try another band or clear the filter.",') &&
     startsPage.includes("Clear filter") &&
     startsPage.includes("href={clearFilterHref}") &&
-    startsPage.includes('title: "No games scheduled.",') &&
+    startsPage.includes("title: `No starts scheduled for ${formatShortDate(state.date)}.`") &&
     startsPage.includes('detail: "Check upcoming matchups.",') &&
     startsPage.includes("upcomingDateHref(date)") &&
     startsPage.includes('title: "No qualifying starts on this slate.",') &&
     startsPage.includes('detail: "Starts under 2.0 innings stay out of ranked positions.",') &&
+    startsPage.includes("data-ranked-starts-live-footer") &&
+    slateCounts.includes('if (variant === "ranked" && nextState.completedStarts > initialState.completedStarts && !refreshedStaleShell)') &&
+    !startsPage.includes("in so far") &&
+    !startsPage.includes("still to come") &&
     startsPage.includes("<RankedStartsArchiveNav") &&
     startsPage.indexOf("<RankedStartsArchiveNav") < startsPage.indexOf("{emptyStateCause ? (") &&
     startsPage.includes("<SlateCounts") &&
@@ -770,8 +783,9 @@ assert(
     !ctaArrow.includes("truncate") &&
     !startsPage.includes("Final gamefeed data has not settled for this date yet.") &&
     !startsPage.includes("No completed starts ready") &&
-    rankedLiveNoneSettledUpcoming === 30,
-  "ranked starts empty state must route live-none-settled, filter-zero, off-day, and fully-settled short-only causes through one component with useful actions",
+    rankedLiveNoneSettledUpcoming === 30 &&
+    rankedEmptyLiveUpcoming === 16,
+  "ranked starts empty state must route pre-slate, live-none-final, filter-zero, off-day, and fully-settled short-only causes through state-aware copy with useful actions",
 );
 
 assert(
