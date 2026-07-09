@@ -4,7 +4,7 @@ import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
 import { formatUpcomingDate, pitcherHref, sourceParams } from "@/lib/routes";
-import { upcomingSimpleContextSentence } from "@/lib/upcoming-simple-context";
+import { upcomingSimpleContextSentence, upcomingSimpleContextSentencesForSlate } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
 import { watchScoreConfidenceLabel } from "@/lib/watch-score-confidence";
 
@@ -27,6 +27,8 @@ export function UpcomingSimpleBoard({
 }) {
   const dateGroups = simpleDateGroups(tonight.games);
   const dateHeaderLabels = dateGroups.map((group) => simpleDateHeaderLabel(group.date, dateLabel));
+  const fallbackContextSentences = upcomingSimpleContextSentencesForSlate(tonight.games, tonight.leagueMeanGS);
+  const renderedContextSentences = Object.fromEntries(tonight.games.map((game) => [game.gamePk, contextWriteups[game.gamePk] ?? fallbackContextSentences[game.gamePk] ?? upcomingSimpleContextSentence(game, 1, tonight.leagueMeanGS)]));
 
   return (
     <section
@@ -36,7 +38,7 @@ export function UpcomingSimpleBoard({
       data-simple-visible-game-pks={tonight.games.length ? tonight.games.map((game) => game.gamePk).join(",") : "none"}
       data-simple-watch-ranks={tonight.games.length ? tonight.games.map((game, index) => simpleRankValue(game, index)).join(",") : "none"}
       data-simple-watch-scores={tonight.games.length ? tonight.games.map(simpleScoreLabel).join(",") : "none"}
-      data-simple-context-sentences={tonight.games.length ? tonight.games.map((game, index) => simpleContextSentence(game, index + 1, tonight.leagueMeanGS, contextWriteups)).join("|") : "none"}
+      data-simple-context-sentences={tonight.games.length ? tonight.games.map((game) => renderedContextSentences[game.gamePk]).join("|") : "none"}
       data-simple-context-source={Object.keys(contextWriteups).length > 0 ? "stored-llm-or-fallback" : "deterministic-fallback"}
       data-simple-rank-label={rankLabel}
       data-simple-sort-mode={sortMode}
@@ -64,6 +66,7 @@ export function UpcomingSimpleBoard({
                       rankLabel={rankLabel}
                       sortMode={sortMode}
                       contextWriteup={contextWriteups[game.gamePk]}
+                      fallbackContextSentence={fallbackContextSentences[game.gamePk]}
                       showCardDate={showCardDate}
                       cardClassName="mb-4 sm:mb-0"
                     />
@@ -84,6 +87,7 @@ export function UpcomingSimpleCard({
   leagueMeanGS,
   sortMode,
   contextWriteup,
+  fallbackContextSentence,
   showCardDate = false,
   cardClassName,
 }: {
@@ -93,10 +97,11 @@ export function UpcomingSimpleCard({
   rankLabel: string;
   sortMode: "watch" | "time";
   contextWriteup?: string;
+  fallbackContextSentence?: string;
   showCardDate?: boolean;
   cardClassName?: string;
 }) {
-  const sentence = contextWriteup ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
+  const sentence = contextWriteup ?? fallbackContextSentence ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
   const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
   const hasNamedStarterMatchup = hasNamedStarters(game);
   const watchTier = watchTierOf(game.gameWatchScore);
@@ -467,8 +472,4 @@ function wordCount(sentence: string) {
 
 function sentenceCount(sentence: string) {
   return sentence.match(/[.!?](?:\s|$)/g)?.length ?? 0;
-}
-
-function simpleContextSentence(game: TonightGame, rank: number, leagueMeanGS: number, contextWriteups: Record<string, string>) {
-  return contextWriteups[game.gamePk] ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
 }

@@ -80,7 +80,7 @@ assert(simpleBoard.includes('data-simple-rank-visible={String(showRankSlot)}') &
 assert(simpleBoard.includes("data-simple-watch-score"), "Simple cards must render one hero watch score.");
 assert(simpleBoard.includes("data-simple-first-pitch"), "Simple cards must render one first-pitch time.");
 assert(simpleBoard.includes("data-upcoming-simple-context"), "Simple cards must render one deterministic context sentence.");
-assert(simpleBoard.includes("contextWriteup ?? upcomingSimpleContextSentence") && simpleBoard.includes('data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}'), "Simple cards must render stored LLM writeups when present and deterministic fallback copy otherwise.");
+assert(simpleBoard.includes("upcomingSimpleContextSentencesForSlate") && simpleBoard.includes("fallbackContextSentences") && simpleBoard.includes("contextWriteup ?? fallbackContextSentence ?? upcomingSimpleContextSentence") && simpleBoard.includes('data-simple-context-source={contextWriteup ? "stored-llm" : "deterministic-fallback"}'), "Simple cards must render stored LLM writeups when present and slate-deduped deterministic fallback copy otherwise.");
 assert(simpleBoard.includes("text-left text-base") && !simpleBoard.includes("text-center text-base") && !simpleBoard.includes("text-center font-serif") && !simpleBoard.includes("lg:text-left"), "Simple context text must render left-aligned in the body copy face at the card foot.");
 assert(simpleBoard.includes("data-simple-context-sentence-count={sentenceCount(sentence)}"), "Simple context copy must expose sentence counts.");
 assert(simpleBoard.includes('data-simple-context-has-em-dash={String(sentence.includes("—"))}'), "Simple context sentences must guard against em dash copy.");
@@ -181,7 +181,7 @@ assert(context.includes("namedStarters.length < 2") && context.includes('archety
 assert(context.includes("validateSentence(candidate, input)") && context.includes("NARRATIVE_VERBS") && context.includes("numberTokens(sentence)") && context.includes("allowedNumberTokens(input)"), "Simple context must validate voice, narrative claims, and number fidelity before rendering.");
 assert(context.includes("restEdgeSignal") && context.includes("trendSplitSignal") && context.includes("marketTotalSignalFor"), "Simple context must include rest, trend, and market-total signals.");
 assert(context.includes("wordCount(sentence) > 22") && context.includes('sentence.includes("—")') && context.includes('/\\bthis one\\b/i') && context.includes("sentenceCount(sentence) !== 1"), "Simple context validator must enforce the one-sentence, 22-word, no-em-dash, no-this-one voice rules.");
-assert(context.includes("export function validateUpcomingSimpleContextSentence") && context.includes("export function upcomingSimpleContextArchetype"), "Simple context must expose validator/archetype helpers for write-time LLM storage.");
+assert(context.includes("export function validateUpcomingSimpleContextSentence") && context.includes("export function upcomingSimpleContextArchetype") && context.includes("export function upcomingSimpleContextSentencesForSlate"), "Simple context must expose validator/archetype helpers and slate-deduped fallback generation for write-time LLM storage.");
 assert(
   context.includes("namedStarters.find(isProvisionalStarter)") &&
     context.includes("namedStarters.some(isProvisionalStarter)") &&
@@ -215,7 +215,8 @@ assert(
     writeupsService.includes("validateFactTrace(clean, input)") &&
     writeupsService.includes("hasLlmWriteupsForGames") &&
     writeupsService.includes('sources: Record<string, "llm" | "fallback">') &&
-    writeupsService.includes('sources[game.gamePk] = generated ? "llm" : "fallback"') &&
+    writeupsService.includes("const acceptedGenerated = Boolean(generated)") &&
+    writeupsService.includes('sources[game.gamePk] = acceptedGenerated ? "llm" : "fallback"') &&
     writeupsService.includes('state.sources?.[gamePk] === "llm"') &&
     writeupsService.includes("MAX_GENERATION_ATTEMPTS") &&
     writeupsService.includes("OPENAI_RESPONSES_URL") &&
@@ -223,10 +224,11 @@ assert(
     writeupsService.includes("normalizeGeneratedSentence") &&
     writeupsService.includes("validateGeneratedUpcomingText") &&
     writeupsService.includes("validateUpcomingSimpleContextSentence") &&
+    writeupsService.includes("upcomingSimpleContextSentencesForSlate(slate.games, slate.leagueMeanGS)") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
     writeupsService.includes("AbortSignal.timeout") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 4;") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 11;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 5;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 12;") &&
     writeupsService.includes("limitedSample: starter.flags?.limitedSample === true") &&
     writeupsService.includes("limitedSample is true") &&
     !simpleBoard.includes("OPENAI_API_KEY"),

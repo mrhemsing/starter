@@ -26,19 +26,21 @@ const TOP_BANDS: HeatBandKey[] = ["onfire", "hot"];
 const LOW_BANDS: HeatBandKey[] = ["cooling", "ice"];
 const PROHIBITED_SMALL_GAP_CLAIMS = /\b(separation|towers|clear|runs away)\b/i;
 const NARRATIVE_VERBS = /\b(unhittable|dominant stretch|has been|since|revenge|owns him)\b/i;
+const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close)\b/i;
+const MODEL_JARGON = /\b(contextual|grade|grading system|board leans|model|algorithm)\b/i;
 
 const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
   ACE_DUEL: [
     "{leader} and {trailer} are both hot, with {leader} slightly higher at {leadForm}.",
     "Two hot arms meet, and {leader}'s {leadForm} gives the small lean.",
-    "{leader} and {trailer} both bring heat; {leader} has the better number.",
+    "{leader}'s {leadForm} edges {trailer} in a two-hot-starter matchup.",
     "Both starters are rolling, with {leader} a tick ahead at {leadForm}.",
   ],
   CLEAR_EDGE: [
-    "{leader}'s sharper form sets the tone against {trailer}.",
-    "{leader} brings the stronger recent shape against {trailer}.",
-    "{leader}'s form is the matchup's loudest signal against {trailer}.",
-    "{leader} has the trusted side of the form read over {trailer}.",
+    "{leader}'s {leadForm} form sets the tone against {trailer}.",
+    "{leader}'s {leadForm} gives the sharper recent read against {trailer}.",
+    "{leader}'s {leadForm} is the loudest starter signal against {trailer}.",
+    "{leader}'s {leadForm} gives him the trusted side over {trailer}.",
   ],
   MISMATCH_DOWN: [
     "{trailer} is cold, while {leader}'s {leadForm} keeps the trust edge.",
@@ -47,20 +49,20 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "{leader} is the steadier read with {trailer} stuck low.",
   ],
   COIN_FLIP: [
-    "Pick-em on form, so the park and run context matter most.",
-    "{leader} leads by only {gap} points, making the context do the work.",
-    "Small form gap, with {leader} getting the narrow contextual lean.",
-    "The starters sit close, so the board leans on matchup details.",
+    "Only {gap} points separate the starters, so {leader}'s side needs the tiebreaker.",
+    "{leader}'s form edge is just {gap} points, keeping the matchup close.",
+    "Dead even on form, with {leader}'s {leadForm} only {gap} points clear.",
+    "{leader}'s {leadForm} barely clears {trailer}, so one real factor must decide it.",
   ],
   BOTH_COLD: [
-    "Two cold arms meet, and the lower grade is honest.",
+    "Two cold arms meet, with {leader}'s {leadForm} still the higher side.",
     "{leader} gets the lean, but both starters are scuffling.",
     "Both bands sit low, keeping the watch score restrained.",
-    "Cold form on both sides makes this a cautious grade.",
+    "Cold form on both sides keeps this matchup cautious.",
   ],
   PROVISIONAL: [
     "Thin sample on {name}, so read the number as provisional.",
-    "Limited data around {name} keeps the grade cautious.",
+    "Limited data around {name} keeps the matchup cautious.",
     "{name}'s sample is light, so the score needs restraint.",
     "Small-sample flags make {name}'s side less settled.",
   ],
@@ -83,10 +85,10 @@ const SECONDARY_BANK: Record<SignalType, readonly string[]> = {
     "{up} brings momentum while {down} slides.",
   ],
   park: [
-    "{parkLabel} at {park} raises the run stress.",
-    "{park} tilts {parkTone}, sharpening the context.",
-    "{parkLabel} makes the setting matter here.",
-    "The park leans {parkTone}, adding shape to the grade.",
+    "{park} tilts {parkTone}, turning the ballpark into the tiebreaker.",
+    "{parkLabel} at {park} points {parkTone}.",
+    "{park} plays {parkTone}, which changes the run outlook.",
+    "{parkLabel} gives {park} a clear {parkTone} lean.",
   ],
   rest: [
     "{name} gets the rest edge at {rest} days.",
@@ -109,12 +111,12 @@ const SECONDARY_BANK: Record<SignalType, readonly string[]> = {
   "market-total": [
     "{name} faces the higher implied total at {total}.",
     "Markets put more run pressure on {name} at {total}.",
-    "{name}'s opponent total is the sharper betting warning.",
-    "The run-total edge makes {name}'s side tougher.",
+    "{name}'s opponent total is the warning at {total}.",
+    "{name}'s side gets tougher with a {total} opponent total.",
   ],
   "watch-band": [
     "{label} score, with both sides close enough to matter.",
-    "The watch grade lands {label}, not just schedule filler.",
+    "The watch score lands {label}, not just schedule filler.",
     "{label} board position keeps the matchup in play.",
     "The score reads {label}, with starter context attached.",
   ],
@@ -122,12 +124,37 @@ const SECONDARY_BANK: Record<SignalType, readonly string[]> = {
 
 export function upcomingSimpleContextSentence(game: TonightGame, rank: number, leagueMeanGS: number) {
   const input = classifyMatchup(game, leagueMeanGS);
-  const primary = archetypeSentence(input, game.gamePk);
+  return buildContextSentence(game, input, game.gamePk, rank);
+}
+
+export function upcomingSimpleContextSentencesForSlate(games: readonly TonightGame[], leagueMeanGS: number) {
+  const accepted: string[] = [];
+  const sentences: Record<string, string> = {};
+  for (const [index, game] of games.entries()) {
+    const input = classifyMatchup(game, leagueMeanGS);
+    const sentence = slateUniqueContextSentence(game, input, index + 1, accepted);
+    sentences[game.gamePk] = sentence;
+    accepted.push(sentence);
+  }
+  return sentences;
+}
+
+function slateUniqueContextSentence(game: TonightGame, input: ContextInput, rank: number, accepted: string[]) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = buildContextSentence(game, input, `${game.gamePk}:${attempt}`, rank);
+    if (!hasSlateNgramCollision(candidate, input, accepted)) return candidate;
+  }
+  const fallback = matchupSpecificFallback(game, input);
+  return validateSentence(fallback, input) ? fallback : buildContextSentence(game, input, `${game.gamePk}:fallback`, rank);
+}
+
+function buildContextSentence(game: TonightGame, input: ContextInput, seed: string, rank: number) {
+  const primary = archetypeSentence(input, seed);
   const secondary = contextSignals(game, input, rank)
     .sort((a, b) => b.score - a.score || a.type.localeCompare(b.type))
     .find((signal) => signal.score >= 82);
-  const candidate = fitSentence(primary, secondary ? pickPhrase(secondary, `${game.gamePk}:${input.archetype}`) : null);
-  return validateSentence(candidate, input) ? candidate : archetypeSentence(input, `${game.gamePk}:fallback`);
+  const candidate = fitSentence(primary, secondary ? pickPhrase(secondary, `${seed}:${input.archetype}`) : null);
+  return validateSentence(candidate, input) ? candidate : archetypeSentence(input, `${seed}:fallback`);
 }
 
 export function validateUpcomingSimpleContextSentence(sentence: string, game: TonightGame, leagueMeanGS: number, extraAllowedNumbers: string[] = []) {
@@ -307,14 +334,84 @@ function validateSentence(sentence: string, input: ContextInput, extraAllowedNum
   if (wordCount(sentence) > 22 || sentence.includes("—") || /\bthis one\b/i.test(sentence)) return false;
   if (sentenceCount(sentence) !== 1) return false;
   if (NARRATIVE_VERBS.test(sentence)) return false;
+  if (PROHIBITED_CLICHES.test(sentence) || MODEL_JARGON.test(sentence)) return false;
+  if (hasCommaChain(sentence) || hasDuplicateComparativeConclusion(sentence, input)) return false;
   if (input.gap < CLEAR_EDGE_GAP && PROHIBITED_SMALL_GAP_CLAIMS.test(sentence)) return false;
   if (input.archetype !== "CLEAR_EDGE" && /\b(separation|owns the form gap)\b/i.test(sentence)) return false;
   if (input.archetype === "ACE_DUEL" && !/\b(both|Two)\b/i.test(sentence)) return false;
   if (input.archetype === "TBD" && /\b(gap|separation|towers|runs away)\b/i.test(sentence)) return false;
+  if (!hasConcreteSpecific(sentence, input, extraAllowedNumbers)) return false;
   if (!validateAttributedClaims(sentence, input)) return false;
   const allowed = allowedNumberTokens(input);
   for (const token of extraAllowedNumbers) allowed.add(token);
   return numberTokens(sentence).every((token) => allowed.has(token));
+}
+
+function hasConcreteSpecific(sentence: string, input: ContextInput, extraAllowedNumbers: string[]) {
+  if (numberTokens(sentence).length > 0) return true;
+  const lower = sentence.toLowerCase();
+  if (/\b(Petco|Wrigley|Fenway|Oracle|Coors|Camden|Yankee Stadium|Citi Field|Dodger Stadium|T-Mobile Park|Globe Life Field|Rogers Centre|PNC Park|Comerica Park|Target Field|Progressive Field|Kauffman Stadium|Minute Maid Park|loanDepot park|American Family Field|Great American Ball Park|Busch Stadium|Chase Field|Truist Park|Rate Field|Daikin Park)\b/i.test(sentence)) return true;
+  if (/\b(wind|weather|hitter-friendly|suppresses|toward bats|toward arms|rest edge|days|K line|strikeout|opponent total|implied total|vs LHP|vs RHP)\b/i.test(sentence)) return true;
+  if (extraAllowedNumbers.length > 0 && /\b(last|season best|straight starts|highest on the slate|GS\+|K line)\b/i.test(lower)) return true;
+  if (input.archetype === "TBD" && /\b(TBD|not named|pending|starter is still open)\b/i.test(sentence)) return true;
+  return false;
+}
+
+function hasCommaChain(sentence: string) {
+  return (sentence.match(/,/g) ?? []).length >= 2;
+}
+
+function hasDuplicateComparativeConclusion(sentence: string, input: ContextInput) {
+  const lower = sentence.toLowerCase();
+  const leader = shortName(input.leader).toLowerCase();
+  const trailer = shortName(input.trailer).toLowerCase();
+  if (!containsNameToken(lower, leader) || !containsNameToken(lower, trailer)) return false;
+  const comparativeClaims = lower.match(/\b(ahead|leads?|edges?|lean|higher|stronger|trusted side|puts .* ahead|clears)\b/g) ?? [];
+  return comparativeClaims.length > 1;
+}
+
+function hasSlateNgramCollision(sentence: string, input: ContextInput, accepted: string[]) {
+  const candidate = slateNgrams(sentence, input);
+  return accepted.some((prior) => {
+    const priorNgrams = slateNgrams(prior, input);
+    for (const phrase of candidate) {
+      if (priorNgrams.has(phrase)) return true;
+    }
+    return false;
+  });
+}
+
+function slateNgrams(sentence: string, input: ContextInput) {
+  const normalized = normalizeSlateSentence(sentence, input);
+  const words = normalized.split(/\s+/).filter(Boolean);
+  const phrases = new Set<string>();
+  for (let size = 4; size <= Math.min(7, words.length); size += 1) {
+    for (let index = 0; index <= words.length - size; index += 1) {
+      phrases.add(words.slice(index, index + size).join(" "));
+    }
+  }
+  return phrases;
+}
+
+function normalizeSlateSentence(sentence: string, input: ContextInput) {
+  let value = sentence
+    .toLowerCase()
+    .replace(/\d+(?:\.\d+)?/g, "{num}")
+    .replace(/[^a-z0-9{}+.\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  for (const starter of input.namedStarters) {
+    const name = starter.name?.trim();
+    if (!name) continue;
+    for (const token of [name, shortName(starter)]) {
+      value = value.replace(new RegExp(`(^|\\s)${escapeRegExp(token.toLowerCase())}(?=\\s|$)`, "g"), " {pitcher}");
+    }
+  }
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function matchupSpecificFallback(game: TonightGame, input: ContextInput) {
+  return `${game.away} at ${game.home}: ${shortName(input.leader)}'s ${formatScore(starterValue(input.leader, input))} leads the starter read.`;
 }
 
 function validateAttributedClaims(sentence: string, input: ContextInput) {
