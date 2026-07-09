@@ -122,10 +122,10 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
                 {watchlist.sort === "default" ? (
                   <>
-                    <WatchlistGroup title="Following" detail="Sorted by Form descending" entries={watchlist.bench} />
+                    <WatchlistGroup title="Following" detail="Sorted by Form descending" entries={watchlist.bench} today={today} />
                   </>
                 ) : (
-                  <WatchlistGroup title={sortOptions.find((option) => option.key === watchlist.sort)?.label ?? "Watchlist"} detail={`${watchlist.entries.length} followed pitchers`} entries={watchlist.entries} />
+                  <WatchlistGroup title={sortOptions.find((option) => option.key === watchlist.sort)?.label ?? "Watchlist"} detail={`${watchlist.entries.length} followed pitchers`} entries={watchlist.entries} today={today} />
                 )}
               </div>
             )}
@@ -258,11 +258,7 @@ function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; to
             <div className="min-w-0">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
-                {entry.nextStart?.date === today ? (
-                  <span className="shrink-0 rounded border border-amber-300/50 bg-amber-300 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-950" data-watchlist-next-start-today>
-                    TODAY
-                  </span>
-                ) : null}
+                <WatchlistStartStatusBadge entry={entry} today={today} />
               </div>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team}</p>
               <FormValueWhisperLine value={entry.rgs} tier={entry.tier} qualifiedSample={hasQualifiedFormSummarySample(entry)} era={entry.seasonStats?.era} compact className="mt-1" />
@@ -276,7 +272,32 @@ function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; to
   );
 }
 
-function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = false }: { title: string; detail: string; entries: WatchlistEntry[]; empty?: string; collapsibleWhenEmpty?: boolean }) {
+function WatchlistStartStatusBadge({ entry, today, className = "" }: { entry: WatchlistEntry; today: string; className?: string }) {
+  const label = watchlistStartStatusLabel(entry, today);
+  if (!label) return null;
+
+  return (
+    <span
+      className={`inline-flex min-h-8 w-fit items-center whitespace-nowrap rounded border border-teal-300/35 bg-teal-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-teal-200 ${className}`}
+      data-watchlist-start-status-chip="scheduled"
+      data-watchlist-next-start-today={entry.nextStart?.date === today ? "true" : undefined}
+    >
+      <span className="whitespace-nowrap">{label}</span>
+    </span>
+  );
+}
+
+function watchlistStartStatusLabel(entry: WatchlistEntry, today: string) {
+  if (!entry.nextStart?.date) return null;
+  if (entry.nextStart.date === today) return "STARTS TODAY";
+
+  const daysAway = daysBetweenDates(today, entry.nextStart.date);
+  if (daysAway > 0 && daysAway <= 6) return `STARTS ${formatWeekday(entry.nextStart.date)}`;
+
+  return `STARTS ${formatMonthDay(entry.nextStart.date)}`;
+}
+
+function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = false, today }: { title: string; detail: string; entries: WatchlistEntry[]; empty?: string; collapsibleWhenEmpty?: boolean; today?: string }) {
   if (entries.length === 0 && collapsibleWhenEmpty) {
     return (
       <section className="rounded border border-white/10 bg-[#101014] p-3">
@@ -299,7 +320,7 @@ function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = 
         <div className="rounded border border-white/10 bg-[#101014] p-4 text-sm text-zinc-500">{empty ?? "No followed pitchers in this group."}</div>
       ) : (
         <div className="grid gap-3">
-          {entries.map((entry) => <WatchlistRow key={entry.pitcherId} entry={entry} />)}
+          {entries.map((entry) => <WatchlistRow key={entry.pitcherId} entry={entry} today={today} />)}
         </div>
       )}
     </section>
@@ -336,7 +357,7 @@ export function WatchlistRowSkeleton({ index = 0 }: { index?: number }) {
   );
 }
 
-function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
+function WatchlistRow({ entry, today }: { entry: WatchlistEntry; today?: string }) {
   const lastLine = entry.lastStart
     ? `Last GS+ ${entry.lastStart.gsPlus} vs ${entry.lastStart.opp} / ${formatStartLine({ inningsPitched: entry.lastStart.ip, hits: entry.lastStart.h, earnedRuns: entry.lastStart.er, walks: entry.lastStart.bb, strikeouts: entry.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
@@ -356,6 +377,7 @@ function WatchlistRow({ entry }: { entry: WatchlistEntry }) {
           <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
           <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
           <div className="mt-3">
+            {today ? <WatchlistStartStatusBadge entry={entry} today={today} className="mb-2" /> : null}
             <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
           </div>
           <SignalsRow events={entry.signalEvents} />
@@ -402,6 +424,25 @@ function formatShortDate(date: string) {
   const parsed = new Date(`${date}T00:00:00.000Z`);
   if (Number.isNaN(parsed.valueOf())) return date;
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function formatWeekday(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return formatMonthDay(date);
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(parsed).toUpperCase();
+}
+
+function formatMonthDay(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return date;
+  return new Intl.DateTimeFormat("en-US", { month: "numeric", day: "numeric", timeZone: "UTC" }).format(parsed);
+}
+
+function daysBetweenDates(start: string, end: string) {
+  const startMs = new Date(`${start}T00:00:00.000Z`).valueOf();
+  const endMs = new Date(`${end}T00:00:00.000Z`).valueOf();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return Number.POSITIVE_INFINITY;
+  return Math.round((endMs - startMs) / 86_400_000);
 }
 
 function watchlistHref(values: { sort?: WatchlistSort; q?: string }) {

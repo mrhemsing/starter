@@ -217,12 +217,18 @@ assert(
     watchlistPageSource.includes("Next on the slab") &&
     watchlistPageSource.includes("Your followed arms' next scheduled starts.") &&
     watchlistPageSource.includes("entry.nextStart?.date === today") &&
+    watchlistPageSource.includes("function WatchlistStartStatusBadge") &&
+    watchlistPageSource.includes("function watchlistStartStatusLabel") &&
+    watchlistPageSource.includes('return "STARTS TODAY";') &&
+    watchlistPageSource.includes('return `STARTS ${formatWeekday(entry.nextStart.date)}`;') &&
+    watchlistPageSource.includes('return `STARTS ${formatMonthDay(entry.nextStart.date)}`;') &&
+    watchlistPageSource.includes('data-watchlist-start-status-chip="scheduled"') &&
     watchlistPageSource.includes("data-watchlist-next-start-today") &&
     !watchlistPageSource.includes("Today on the slab") &&
     !watchlistPageSource.includes("Followed starters scheduled today.") &&
     !watchlistPageSource.includes(`Daily ${"decision"} strip`) &&
     !watchlistPageSource.includes("<WatchlistGroup title=\"Pitching today / soon\""),
-  "watchlist next-on-the-slab module must use Option A label honesty: no today header above mixed dates, shared slate-date TODAY chips only",
+  "watchlist next-on-the-slab module must use Option A label honesty and Heat Check-style STARTS TODAY/STARTS WEEKDAY badges",
 );
 assert(
   watchlistPageSource.includes("WatchlistSuggestedFollows") &&
@@ -344,6 +350,12 @@ try {
   assert(formSorted.ok, `/watchlist?sort=form returned ${formSorted.status}`);
   const formHtml = await formSorted.text();
   assert(formHtml.includes('data-watchlist-sort="form"'), "watchlist form sort should render sorted rows");
+
+  const nextStartCookie = "the_bump_watchlist_id=wlids_682243.543243.669302";
+  const nextStartPage = await fetch(`${baseUrl}/watchlist`, { headers: { cookie: nextStartCookie } });
+  assert(nextStartPage.ok, `/watchlist next-start fixture returned ${nextStartPage.status}`);
+  const nextStartHtml = await nextStartPage.text();
+  assert(nextStartHtml.includes('data-watchlist-start-status-chip="scheduled"') && /STARTS (TODAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|\d{1,2}\/\d{1,2})/.test(nextStartHtml), "watchlist should render Heat Check-style next-start status badges");
 
   const unfollowed = await fetch(`${baseUrl}/api/watchlist`, {
     method: "DELETE",
