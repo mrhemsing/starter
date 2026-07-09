@@ -164,6 +164,8 @@ export function UpcomingSimpleCard({
               </>
             ) : null}
             <LocalTime value={game.firstPitch} fallback="First pitch" />
+            <span aria-hidden="true"> / </span>
+            <span data-simple-ballpark data-simple-ballpark-source={game.park}>{formatSimpleBallpark(game.park)}</span>
           </p>
         </div>
         <span aria-hidden="true" />
@@ -385,6 +387,11 @@ function formatSimpleCardDate(date: string) {
     day: "numeric",
     timeZone: "UTC",
   }).format(parsed).replace(",", "").toUpperCase();
+}
+
+function formatSimpleBallpark(park: string) {
+  const trimmed = park.trim();
+  return trimmed.length > 0 ? trimmed.toUpperCase() : "VENUE TBD";
 }
 
 function starterDisplayName(starter: TonightStarter) {
