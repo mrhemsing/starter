@@ -267,7 +267,7 @@ assert(
   "homepage masthead must not render the shared GS+ scale sentence after the tightened pitch update",
 );
 
-const heroWhyCopy = "Game Score, adjusted for park, opponent, and swing-and-miss, so the best matchups rise to the top.";
+const heroWhyCopy = "Game Score, adjusted for park, opponent, and swing-and-miss, so the arms worth watching rise to the top.";
 const differentiatorCards = [
   {
     title: "Context, not just the line.",
@@ -332,7 +332,10 @@ assert(
     homePage.includes('data-home-gs-plus-freeze-proof') &&
     homePage.includes('data-home-gs-plus-lock') &&
     homePage.includes('data-home-gs-plus-breakdown-link') &&
-    homePage.includes("Proof packet:") &&
+    homePage.includes("Real comparison, updated daily") &&
+    homePage.includes("Real comparison, frozen examples") &&
+    !homePage.includes("Proof packet:") &&
+    !homePage.includes("documented fallback") &&
     homePage.includes("readHomeGsPlusProofs()") &&
     homePage.includes('data-home-gs-plus-methodology-link') &&
     homePage.includes('href="/methodology"') &&
@@ -353,7 +356,7 @@ assert(
 );
 
 assert(
-  homeGsPlusProofService.includes('readRuntimeState') &&
+  homeGsPlusProofService.includes('readCachedRuntimeState') &&
     homeGsPlusProofService.includes('writeRuntimeState') &&
     homeGsPlusProofService.includes('export async function readHomeGsPlusProofs') &&
     homeGsPlusProofService.includes('export async function generateHomeGsPlusProofs') &&
@@ -369,7 +372,7 @@ assert(
     homeGsPlusProofService.includes('2026-06-14-hou-kc-681293') &&
     homeGsPlusProofService.includes('2026-06-02-stl-tex-669160') &&
     homeGsPlusProofService.includes('2026-06-30-wsh-bos-676917') &&
-    homeGsPlusProofService.includes('Documented real fallback, sourced from frozen canonical start records') &&
+    homeGsPlusProofService.includes('FALLBACK_HOME_GS_PLUS_PROOFS') &&
     homeGsPlusProofCron.includes('export const dynamic = "force-dynamic";') &&
     homeGsPlusProofCron.includes('generateHomeGsPlusProofs(date)') &&
     homeGsPlusProofCron.includes('CRON_SECRET') &&

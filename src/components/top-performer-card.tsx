@@ -19,6 +19,7 @@ type TopPerformerCardProps = {
   dateLabel: string;
   score: number;
   line: StartLine;
+  recap?: string | null;
   rank: number;
   slateCount: number;
   image: TopPerformerImage | null;
@@ -40,6 +41,7 @@ export function TopPerformerCard({
   dateLabel,
   score,
   line,
+  recap = null,
   rank,
   slateCount,
   image,
@@ -63,7 +65,7 @@ export function TopPerformerCard({
   const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
   const isLiveLeader = status === "live";
   const context = `#${rank} of ${slateCount} · league avg 50`;
-  const matchupLabel = startMatchupLabel({ pitcher: { team }, opponent, side });
+  const matchupLabel = startMatchupLabel({ pitcher: { team }, opponent, side }).toUpperCase();
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 
   useEffect(() => {
@@ -173,6 +175,11 @@ export function TopPerformerCard({
             <p className="font-mono text-xs leading-5 text-[#F5F2EA] lg:hidden">
               <StartLineText line={line} />
             </p>
+            {recap ? (
+              <p className="text-sm leading-6 text-[#D7D3C8]" data-home-top-performer-recap>
+                {recap}
+              </p>
+            ) : null}
 
             {hasVeloData ? (
               <div className="hidden rounded border border-white/10 bg-black/25 p-3 lg:block">

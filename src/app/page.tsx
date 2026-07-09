@@ -20,7 +20,7 @@ export const revalidate = 60;
 
 const homeTitle = "Toe the Slab: Every MLB start, ranked.";
 const homeDescription = "Every MLB start ranked by GS+. Daily starting-pitcher rankings, rolling form, probable matchups, and the night's best pitching lines.";
-const GS_PLUS_HERO_WHY_LINE = "Game Score, adjusted for park, opponent, and swing-and-miss, so the best matchups rise to the top.";
+const GS_PLUS_HERO_WHY_LINE = "Game Score, adjusted for park, opponent, and swing-and-miss, so the arms worth watching rise to the top.";
 const GS_PLUS_DIFFERENTIATORS = [
   {
     title: "Context, not just the line.",
@@ -193,7 +193,7 @@ function WhyGsPlusBand({ proof }: { proof: HomeGsPlusProofs }) {
             <h2 className="section-title mt-2 font-serif text-4xl font-bold text-zinc-50">Why GS+ is different</h2>
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" data-home-gs-plus-proof-source={proof.source}>
-            Proof packet: {proof.source === "cron" ? "fresh settled starts" : "documented fallback"}
+            {proof.source === "cron" ? "Real comparison, updated daily" : "Real comparison, frozen examples"}
           </p>
         </div>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]" data-home-gs-plus-differentiator-cards data-home-gs-plus-proof-panels>

@@ -95,6 +95,18 @@ assert(
 );
 
 assert(
+  homeDeferredSections.includes("StartNarrativeNotables") &&
+    homeDeferredSections.includes("recap: homeTopPerformerRecap(topPerformer.start.pitcher.name, topPerformer.start.narrativeNotables, topPerformer.start.line)") &&
+    homeDeferredSections.includes("recap: homeTopPerformerRecap(row.pitcherName, row.narrativeNotables, row.line)") &&
+    homeDeferredSections.includes("function homeTopPerformerRecap") &&
+    homeDeferredSections.includes("carried a no-hitter into the ${ordinal(noHit.firstHitInning)}") &&
+    topPerformerCard.includes("recap?: string | null;") &&
+    topPerformerCard.includes("data-home-top-performer-recap") &&
+    topPerformerCard.includes("startMatchupLabel({ pitcher: { team }, opponent, side }).toUpperCase()"),
+  "home Start of the Day hero must render narrative-notable recap copy inline and uppercase the shared orientation label",
+);
+
+assert(
   rankedService.includes("topPerformer: TopPerformerPayload | null;") &&
     rankedService.includes("liveLeaderboard: LiveLeaderboardEntry[] | null;") &&
     rankedService.includes("export type LiveLeaderboardEntry =") &&

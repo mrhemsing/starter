@@ -26,14 +26,14 @@ const TOP_BANDS: HeatBandKey[] = ["onfire", "hot"];
 const LOW_BANDS: HeatBandKey[] = ["cooling", "ice"];
 const PROHIBITED_SMALL_GAP_CLAIMS = /\b(separation|towers|clear|runs away)\b/i;
 const NARRATIVE_VERBS = /\b(unhittable|dominant stretch|has been|since|revenge|owns him)\b/i;
-const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge)\b/i;
+const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge|two-hot-starter matchup|[a-z]+-[a-z]+-starter matchup)\b/i;
 const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|board leans|model|algorithm)\b/i;
 
 const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
   ACE_DUEL: [
     "{leader} and {trailer} are both hot, with {leader} slightly higher at {leadForm}.",
     "Two hot arms meet, and {leader}'s {leadForm} gives the small lean.",
-    "{leader}'s {leadForm} edges {trailer} in a two-hot-starter matchup.",
+    "{leader}'s {leadForm} edges {trailer} while both starters bring heat.",
     "Both starters are rolling, with {leader} a tick ahead at {leadForm}.",
   ],
   CLEAR_EDGE: [

@@ -24,7 +24,7 @@ import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboa
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { formatStartLine } from "@/lib/format";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
-import type { FeaturedStartHighlight, FormHomeResponse, FormTier, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, FormTier, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 
@@ -223,6 +223,8 @@ type HomeTopPerformerView = {
   dateLabel: string;
   score: number;
   line: HomeTopPerformer["start"]["line"];
+  narrativeNotables?: StartNarrativeNotables;
+  recap: string | null;
   rank: number;
   slateCount: number;
   image: HomeTopPerformer["image"];
@@ -276,6 +278,7 @@ function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerform
           dateLabel={view.dateLabel}
           score={view.score}
           line={view.line}
+          recap={view.recap}
           rank={view.rank}
           slateCount={view.slateCount}
           image={view.image}
@@ -308,6 +311,8 @@ function homeTopPerformerViewFromPayload(topPerformer: HomeTopPerformer): HomeTo
     dateLabel: topPerformer.dateLabel,
     score: topPerformer.start.gameScorePlus,
     line: topPerformer.start.line,
+    narrativeNotables: topPerformer.start.narrativeNotables,
+    recap: homeTopPerformerRecap(topPerformer.start.pitcher.name, topPerformer.start.narrativeNotables, topPerformer.start.line),
     rank: 1,
     slateCount: topPerformer.slateCount,
     image: topPerformer.image,
@@ -335,6 +340,8 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     dateLabel,
     score: row.gsPlus ?? current.score,
     line: row.line,
+    narrativeNotables: row.narrativeNotables,
+    recap: homeTopPerformerRecap(row.pitcherName, row.narrativeNotables, row.line),
     rank: 1,
     slateCount: board.totalStarts,
     image: sameStart ? rankedView?.image ?? current.image : rankedView?.image ?? homeTopPerformerImageFromLiveRow(),
@@ -345,6 +352,26 @@ function homeTopPerformerViewFromLiveRow(current: HomeTopPerformerView, row: Liv
     topVelo: sameStart ? rankedView?.topVelo ?? current.topVelo : rankedView?.topVelo ?? null,
     veloSparkline: sameStart ? rankedView?.veloSparkline ?? current.veloSparkline : rankedView?.veloSparkline ?? [],
   };
+}
+
+function homeTopPerformerRecap(pitcherName: string, notables: StartNarrativeNotables | undefined, line: StartSummary["line"]) {
+  const noHit = notables?.noHitDepth;
+  if (noHit?.firstHitInning && noHit.innings >= 8) {
+    return `${pitcherName} carried a no-hitter into the ${ordinal(noHit.firstHitInning)}.`;
+  }
+  if (noHit?.hitlessStintComplete && noHit.innings >= 5) {
+    return `${pitcherName} worked ${noHit.innings}.0 hitless innings.`;
+  }
+  if (notables?.strikeouts?.doubleDigit) {
+    return `${pitcherName} reached double digits with ${line.strikeouts} strikeouts.`;
+  }
+  return null;
+}
+
+function ordinal(value: number) {
+  if (value === 8) return "eighth";
+  if (value === 9) return "ninth";
+  return `${value}th`;
 }
 
 function isPlaceholderTopPerformerImage(image: HomeTopPerformer["image"]) {

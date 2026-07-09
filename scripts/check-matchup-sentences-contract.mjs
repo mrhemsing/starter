@@ -20,6 +20,7 @@ const bannedPhrases = [
   "leads the read",
   "anchors the read",
   "keeps the trust edge",
+  "two-hot-starter matchup",
 ];
 
 for (const phrase of bannedPhrases) {
@@ -39,7 +40,7 @@ for (const phrase of bannedPhrases) {
 
 assert(context.includes("MODEL_JARGON") && writeups.includes("MODEL_JARGON"), "Both fallback and LLM validators must ban model-about-model jargon.");
 const phraseBankSource = context.slice(context.indexOf("const ARCHETYPE_BANK"), context.indexOf("export function upcomingSimpleContextSentence"));
-assert(!phraseBankSource.includes("has the better number") && !phraseBankSource.includes("adding shape to the grade"), "Removed live-board cliches must not remain in fallback banks.");
+assert(!phraseBankSource.includes("has the better number") && !phraseBankSource.includes("adding shape to the grade") && !phraseBankSource.includes("two-hot-starter matchup"), "Removed live-board cliches must not remain in fallback banks.");
 
 assert(
   context.includes("function hasConcreteSpecific") &&
