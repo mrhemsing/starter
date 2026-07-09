@@ -1,5 +1,5 @@
 import { demoProbableStarts } from "@/lib/data/demo";
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readRuntimeStates, writeRuntimeStates } from "@/lib/data/runtime-state-store";
 import { inningsFromIP } from "@/lib/innings";
 import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine } from "@/lib/types";
 
@@ -19,6 +19,7 @@ export const PROBABLES_REPOLL_URGENT_SECONDS = 5 * 60;
 const PROBABLES_NEAR_FIRST_PITCH_MS = 4 * 60 * 60 * 1000;
 const PROBABLES_URGENT_FIRST_PITCH_MS = 60 * 60 * 1000;
 const PROBABLE_CONFIDENCE_TRANSITION_HORIZON_DAYS = 7;
+const PROBABLE_CONFIDENCE_RUNTIME_STATE_SLOT_WARN = 50;
 const NEXT_PRODUCTION_BUILD_PHASE = "phase-production-build";
 
 type MlbScheduleClientOptions = {
@@ -1092,36 +1093,79 @@ function mergeReportedProbablePitchers(schedule: MlbSchedule, reported: Map<stri
 async function logProbableConfidenceTransitions(schedule: MlbSchedule) {
   if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return;
 
-  for (const game of schedule.games) {
-    if (isBeyondProbableConfidenceTransitionHorizon(game.gameDate)) continue;
-    const slots = [
-      { side: "away" as const, team: game.awayTeam.abbreviation, opponent: game.homeTeam.abbreviation, probable: game.probableAwayPitcher },
-      { side: "home" as const, team: game.homeTeam.abbreviation, opponent: game.awayTeam.abbreviation, probable: game.probableHomePitcher },
-    ];
+  const slots = schedule.games
+    .filter((game) => !isBeyondProbableConfidenceTransitionHorizon(game.gameDate))
+    .flatMap((game) => [
+      { game, side: "away" as const, team: game.awayTeam.abbreviation, opponent: game.homeTeam.abbreviation, probable: game.probableAwayPitcher },
+      { game, side: "home" as const, team: game.homeTeam.abbreviation, opponent: game.awayTeam.abbreviation, probable: game.probableHomePitcher },
+    ]);
+  const stateKeys = slots.map((slot) => probableConfidenceStateKey(slot.game.gamePk, slot.side));
+  const previousStates = await readRuntimeStates<ProbableConfidenceState>(stateKeys);
+  const changedRows: Array<{ key: string; value: ProbableConfidenceState }> = [];
+  const transitions: Array<{
+    date: string;
+    gamePk: number;
+    side: "home" | "away";
+    team: string;
+    opponent: string;
+    from: ProbableConfidenceState["confidence"];
+    to: ProbableConfidenceState["confidence"];
+    pitcherId: number | null;
+    pitcherName: string | null;
+    source: MlbProbablePitcher["source"] | "none";
+  }> = [];
+  const updatedAt = new Date().toISOString();
 
-    for (const slot of slots) {
-      const key = reportedProbableKey(game.awayTeam.abbreviation, game.homeTeam.abbreviation, slot.side, game.gameDate);
-      const nextConfidence = slot.probable?.confidence ?? "TBD";
-      const stateKey = probableConfidenceStateKey(game.gamePk, slot.side);
-      const previousConfidence = probableConfidenceBySlot.get(key) ?? (await readProbableConfidenceState(stateKey))?.confidence;
-      probableConfidenceBySlot.set(key, nextConfidence);
-      await writeProbableConfidenceState(stateKey, nextConfidence);
+  for (const slot of slots) {
+    const key = reportedProbableKey(slot.game.awayTeam.abbreviation, slot.game.homeTeam.abbreviation, slot.side, slot.game.gameDate);
+    const nextConfidence = slot.probable?.confidence ?? "TBD";
+    const stateKey = probableConfidenceStateKey(slot.game.gamePk, slot.side);
+    const previousConfidence = probableConfidenceBySlot.get(key) ?? previousStates.get(stateKey)?.confidence;
+    probableConfidenceBySlot.set(key, nextConfidence);
+    if (previousConfidence === nextConfidence) continue;
 
-      if (!previousConfidence || previousConfidence === nextConfidence) continue;
+    changedRows.push({
+      key: stateKey,
+      value: {
+        confidence: nextConfidence,
+        updatedAt,
+      },
+    });
+    if (!previousConfidence) continue;
 
-      console.info("probable starter confidence transition", {
-        date: schedule.date,
-        gamePk: game.gamePk,
-        side: slot.side,
-        team: slot.team,
-        opponent: slot.opponent,
-        from: previousConfidence,
-        to: nextConfidence,
-        pitcherId: slot.probable?.id ?? null,
-        pitcherName: slot.probable?.fullName ?? null,
-        source: slot.probable?.source ?? "none",
-      });
-    }
+    transitions.push({
+      date: schedule.date,
+      gamePk: slot.game.gamePk,
+      side: slot.side,
+      team: slot.team,
+      opponent: slot.opponent,
+      from: previousConfidence,
+      to: nextConfidence,
+      pitcherId: slot.probable?.id ?? null,
+      pitcherName: slot.probable?.fullName ?? null,
+      source: slot.probable?.source ?? "none",
+    });
+  }
+
+  await writeRuntimeStates(changedRows);
+  console.info("[probable-confidence] runtime-state batch", {
+    date: schedule.date,
+    slots: slots.length,
+    readRequests: stateKeys.length > 0 ? 1 : 0,
+    writeRequests: changedRows.length > 0 ? 1 : 0,
+    rowsRead: stateKeys.length,
+    rowsWritten: changedRows.length,
+    unchangedRows: Math.max(0, slots.length - changedRows.length),
+  });
+  if (slots.length > PROBABLE_CONFIDENCE_RUNTIME_STATE_SLOT_WARN) {
+    console.warn("[probable-confidence] runtime-state slot count exceeded guardrail", {
+      date: schedule.date,
+      slots: slots.length,
+      warnAt: PROBABLE_CONFIDENCE_RUNTIME_STATE_SLOT_WARN,
+    });
+  }
+  for (const transition of transitions) {
+    console.info("probable starter confidence transition", transition);
   }
 }
 
@@ -1138,17 +1182,6 @@ function gameDateMinuteKey(gameDate?: string) {
 
 function probableConfidenceStateKey(gamePk: number, side: "home" | "away") {
   return `probable-confidence:${gamePk}:${side}`;
-}
-
-async function readProbableConfidenceState(key: string) {
-  return readRuntimeState<ProbableConfidenceState>(key);
-}
-
-async function writeProbableConfidenceState(key: string, confidence: ProbableConfidenceState["confidence"]) {
-  await writeRuntimeState(key, {
-    confidence,
-    updatedAt: new Date().toISOString(),
-  });
 }
 
 function isBeyondProbableConfidenceTransitionHorizon(gameDate: string) {
