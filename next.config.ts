@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    staticGenerationMaxConcurrency: 2,
+    staticGenerationMinPagesPerWorker: 16,
+  },
   allowedDevOrigins: [
     "lindy.b-average.com",
     "soma.b-average.com",

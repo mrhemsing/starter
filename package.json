@@ -17,6 +17,7 @@
     "check:form-staleness": "node scripts/check-form-staleness-contract.mjs",
     "check:settled-start-integrity": "node scripts/check-settled-start-integrity-contract.mjs",
     "check:archive-gap-closeout": "node scripts/check-archive-gap-closeout-contract.mjs",
+    "check:build-memory": "node scripts/check-build-memory-guard.mjs",
     "check:supabase-egress": "node scripts/check-supabase-egress-contract.mjs",
     "check:read-path-cache": "node scripts/check-read-path-cache-contract.mjs",
     "check:innings": "node --experimental-strip-types scripts/check-innings-helper.mjs",
