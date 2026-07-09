@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 function assert(condition, message) {
   if (!condition) {
@@ -26,6 +26,8 @@ const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
+const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-mlb-action-v4.json", "utf8"));
+const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg");
 
 assert(
   rankedRoute.includes('import { getRankedHome, HOME_RANKED_REVALIDATE_SECONDS } from "@/lib/data/home-ranked-service";') &&
@@ -671,6 +673,19 @@ assert(
     !imageService.includes('source: "highlight"') &&
     !imageService.includes("highlight.thumbnailUrl"),
   "home top performer image resolver must render only curator-clean action metadata, otherwise the slab placeholder; no provider, preferred, highlight, or headshot bypasses",
+);
+
+assert(
+  gavinWilliamsLiveLeaderImageAsset.size > 0 &&
+    gavinWilliamsLiveLeaderImageMetadata.startId === "2026-07-09-cle-min-668909" &&
+    gavinWilliamsLiveLeaderImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg" &&
+    gavinWilliamsLiveLeaderImageMetadata.clean === true &&
+    gavinWilliamsLiveLeaderImageMetadata.storage === "local-static" &&
+    gavinWilliamsLiveLeaderImageMetadata.playUrl === "https://www.mlb.com/video/trevor-larnach-called-out-on-strikes-kzrenn" &&
+    typeof gavinWilliamsLiveLeaderImageMetadata.focalX === "number" &&
+    typeof gavinWilliamsLiveLeaderImageMetadata.focalY === "number" &&
+    gavinWilliamsLiveLeaderImageMetadata.alt.includes("Gavin Williams"),
+  "Gavin Williams July 9 live leader must keep a curator-clean local action photo with focal metadata",
 );
 
 assert(
