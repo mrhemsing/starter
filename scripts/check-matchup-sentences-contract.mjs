@@ -21,6 +21,10 @@ const bannedPhrases = [
   "anchors the read",
   "keeps the trust edge",
   "two-hot-starter matchup",
+  "needs the tiebreaker",
+  "one real factor must decide it",
+  "firm angle",
+  "cleaner starter side",
 ];
 
 for (const phrase of bannedPhrases) {
@@ -40,7 +44,16 @@ for (const phrase of bannedPhrases) {
 
 assert(context.includes("MODEL_JARGON") && writeups.includes("MODEL_JARGON"), "Both fallback and LLM validators must ban model-about-model jargon.");
 const phraseBankSource = context.slice(context.indexOf("const ARCHETYPE_BANK"), context.indexOf("export function upcomingSimpleContextSentence"));
-assert(!phraseBankSource.includes("has the better number") && !phraseBankSource.includes("adding shape to the grade") && !phraseBankSource.includes("two-hot-starter matchup"), "Removed live-board cliches must not remain in fallback banks.");
+assert(
+  !phraseBankSource.includes("has the better number") &&
+    !phraseBankSource.includes("adding shape to the grade") &&
+    !phraseBankSource.includes("two-hot-starter matchup") &&
+    !phraseBankSource.includes("needs the tiebreaker") &&
+    !phraseBankSource.includes("one real factor must decide it") &&
+    !phraseBankSource.includes("only firm angle") &&
+    !phraseBankSource.includes("cleaner starter side"),
+  "Removed live-board cliches must not remain in fallback banks.",
+);
 
 assert(
   context.includes("function hasConcreteSpecific") &&
@@ -50,6 +63,14 @@ assert(
     context.includes("toward bats") &&
     context.includes("toward arms"),
   "Simple fallback validator must reject contentless context gestures unless a concrete specific is present.",
+);
+
+assert(
+  context.includes("function hasCoinFlipTiebreaker") &&
+    context.includes('input.archetype === "COIN_FLIP" && !hasCoinFlipTiebreaker(sentence)') &&
+    writeups.includes("function hasCoinFlipTiebreaker") &&
+    writeups.includes('input.archetype === "COIN_FLIP" && !hasCoinFlipTiebreaker(clean, input)'),
+  "COIN FLIP sentences must name the actual tiebreaker factor instead of vague context.",
 );
 
 assert(
@@ -96,18 +117,21 @@ assert(
 );
 
 assert(
-  writeups.includes("edge < 0.5") &&
-    writeups.includes("prior.k < 6 && prior.gsPlus < 55") &&
-    writeups.includes("best.gsPlus < 62") &&
-    writeups.includes("hotCount < 2"),
+  writeups.includes("edge < 0.4") &&
+    writeups.includes("projection < 5.8") &&
+    writeups.includes("prior.k < 5 && prior.gsPlus < 52") &&
+    writeups.includes("best.gsPlus < 58") &&
+    writeups.includes("GS+ 52 plus"),
   "Fact-packet gates must be calibrated so genuine K-line, venue, season-best, and streak hooks can surface.",
 );
 
 assert(
-  writeups.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
-    writeups.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;") &&
-    simpleContract.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
-    simpleContract.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;"),
+  writeups.includes("const UPCOMING_WRITEUPS_VERSION = 7;") &&
+    writeups.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 14;") &&
+    writeups.includes("UPCOMING_WRITEUPS_REGENERATION_EPOCH") &&
+    writeups.includes("generatedAtByGame") &&
+    simpleContract.includes("const UPCOMING_WRITEUPS_VERSION = 7;") &&
+    simpleContract.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 14;"),
   "Writeup version and prompt version must force current-slate regeneration under the tightened rules.",
 );
 

@@ -11,12 +11,13 @@ import {
 import type { FormStartPoint, TonightGame, TonightStarter } from "@/lib/types";
 
 type UpcomingWriteupsState = {
-  version: 6;
+  version: 7;
   date: string;
   inputHash: string;
   inputHashes?: Record<string, string>;
   promptVersion: number;
   generatedAt: string;
+  generatedAtByGame?: Record<string, string>;
   model: string;
   writeups: Record<string, string>;
   sources: Record<string, "llm" | "fallback">;
@@ -78,16 +79,17 @@ type GenerateUpcomingWriteupsResult = {
   stored: boolean;
 };
 
-const UPCOMING_WRITEUPS_VERSION = 6;
-const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;
+const UPCOMING_WRITEUPS_VERSION = 7;
+const UPCOMING_WRITEUPS_PROMPT_VERSION = 14;
+const UPCOMING_WRITEUPS_REGENERATION_EPOCH = "p2-26-15-production-verify-2026-07-09";
 const UPCOMING_WRITEUPS_MODEL = process.env.OPENAI_MODEL_UPCOMING_WRITEUPS ?? "gpt-4.1-mini";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_GENERATION_MS = 5500;
 const MAX_GENERATION_ATTEMPTS = 7;
 const MAX_FACTS_PER_MATCHUP = 2;
 const UPCOMING_WRITEUPS_REVALIDATE_SECONDS = 60;
-const PROHIBITED_MATCHUP_PHRASES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge|two-hot-starter matchup|[a-z]+-[a-z]+-starter matchup)\b/i;
-const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|the board leans|model|algorithm)\b/i;
+const PROHIBITED_MATCHUP_PHRASES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|needs the tiebreaker|one real factor must decide it|firm angle|cleaner starter side|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge|two-hot-starter matchup|[a-z]+-[a-z]+-starter matchup)\b/i;
+const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|firm angle|cleaner starter side|the board leans|model|algorithm)\b/i;
 
 export async function readUpcomingWriteups(date: string) {
   const state = await readCachedRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(date), UPCOMING_WRITEUPS_REVALIDATE_SECONDS);
@@ -100,8 +102,8 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   const factPackets = await buildUpcomingFactPackets(slate.games);
   const deterministicFallbacks = upcomingSimpleContextSentencesForSlate(slate.games, slate.leagueMeanGS);
   const inputs = slate.games.map((game, index) => upcomingWriteupInput(game, slate.leagueMeanGS, factPackets.get(game.gamePk) ?? { facts: [] }, deterministicFallbacks[game.gamePk] ?? upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)));
-  const inputHashes = Object.fromEntries(inputs.map((input) => [input.gamePk, hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, input })]));
-  const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, inputs });
+  const inputHashes = Object.fromEntries(inputs.map((input) => [input.gamePk, hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, regenerationEpoch: UPCOMING_WRITEUPS_REGENERATION_EPOCH, input })]));
+  const inputHash = hashStableJson({ promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION, regenerationEpoch: UPCOMING_WRITEUPS_REGENERATION_EPOCH, inputs });
   const previous = await readRuntimeState<UpcomingWriteupsState>(upcomingWriteupsKey(slate.date));
   if (previous?.version === UPCOMING_WRITEUPS_VERSION && previous.inputHash === inputHash && hasUsableWriteupsForGames(previous, slate.games)) {
     return { date: slate.date, generated: 0, reused: slate.games.length, fallbackCount: previous.fallbackCount, model: previous.model, stored: true };
@@ -113,15 +115,19 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
   let generatedCount = 0;
   const writeups: Record<string, string> = {};
   const sources: UpcomingWriteupsState["sources"] = {};
+  const generatedAtByGame: Record<string, string> = {};
   const acceptedSlateSentences: string[] = [];
+  const generatedAt = new Date().toISOString();
   for (const [index, game] of slate.games.entries()) {
     const input = inputs[index];
     const fallback = input.deterministicFallback;
     const inputUnchanged = previous?.inputHashes ? previous.inputHashes[game.gamePk] === inputHashes[game.gamePk] : previous?.inputHash === inputHash;
     if (
       previous?.version === UPCOMING_WRITEUPS_VERSION &&
+      previous.promptVersion === UPCOMING_WRITEUPS_PROMPT_VERSION &&
       inputUnchanged &&
       previous.sources?.[game.gamePk] === "llm" &&
+      previous.generatedAtByGame?.[game.gamePk] &&
       previous.writeups[game.gamePk]?.trim() &&
       validateGeneratedUpcomingText(previous.writeups[game.gamePk], input, game, slate.leagueMeanGS) &&
       !hasSlateNgramCollision(previous.writeups[game.gamePk], input, acceptedSlateSentences) &&
@@ -130,6 +136,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
       const reused = normalizeGeneratedSentence(previous.writeups[game.gamePk]);
       writeups[game.gamePk] = reused;
       sources[game.gamePk] = "llm";
+      generatedAtByGame[game.gamePk] = previous.generatedAtByGame[game.gamePk] ?? previous.generatedAt;
       acceptedSlateSentences.push(reused);
       reusedCount += 1;
       continue;
@@ -139,6 +146,7 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     const acceptedGenerated = Boolean(generated);
     if (!acceptedGenerated) fallbackCount += 1;
     sources[game.gamePk] = acceptedGenerated ? "llm" : "fallback";
+    generatedAtByGame[game.gamePk] = generatedAt;
     if (acceptedGenerated) generatedCount += 1;
     writeups[game.gamePk] = validateGeneratedUpcomingText(sentence, input, game, slate.leagueMeanGS) ? sentence : slateUniqueFallback(fallback, input, acceptedSlateSentences, game, slate.leagueMeanGS);
     if (writeups[game.gamePk] !== sentence && acceptedGenerated) {
@@ -164,7 +172,8 @@ export async function generateUpcomingWriteupsForDate(date: string): Promise<Gen
     inputHash,
     inputHashes,
     promptVersion: UPCOMING_WRITEUPS_PROMPT_VERSION,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
+    generatedAtByGame,
     model: UPCOMING_WRITEUPS_MODEL,
     writeups,
     sources,
@@ -201,7 +210,7 @@ async function generateOneUpcomingWriteup(apiKey: string, input: UpcomingWriteup
       input: [
         {
           role: "system",
-          content: "Write one high-energy matchup sentence from provided baseball data only. Under 24 words. No em dash. No phrase 'this one'. Make a fan want to watch or feel fine skipping this game. Lead with the most electric true thing: a supplied factPacket hook, hot arm, no-hit notable, K line, streak, park/weather chaos, or real tiebreaker. Use one supplied factPacket fact when genuinely interesting. Prefer one sharp claim plus one vivid supporting specific; do not write a short caption unless the archetype is QUIET SHARP/TBD. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks, venue history, no-hit bids, or hitless innings only when supplied as factPacket facts. Respect the archetype frame. For ACE_DUEL, start with Both or Two and acknowledge both starters are hot. For COIN_FLIP, name the actual tiebreaker factor, never vague context. For PROVISIONAL, lead with limited sample or thin data only for the starter whose limitedSample is true or whose band is not ok. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, owned, better number, making the context do the work, adding shape to the grade, contextual lean, the board leans on, matchup details, run stress, sit close, the starter read, the trust edge, sets the tone, leads the read, anchors the read, keeps the trust edge, two-hot-starter matchup, and hyphenated matchup-type labels.",
+          content: "Write one high-energy matchup sentence from provided baseball data only. Under 24 words. No em dash. No phrase 'this one'. Make a fan want to watch or feel fine skipping this game. Lead with the most electric true thing: a supplied factPacket hook, hot arm, no-hit notable, K line, streak, park/weather chaos, or real tiebreaker. Use one supplied factPacket fact when genuinely interesting. Prefer one sharp claim plus one vivid supporting specific; do not write a short caption unless the archetype is QUIET SHARP/TBD. Every number must appear exactly in the input. Do not invent history, health, results, ranks, or numbers. Mention streaks, venue history, no-hit bids, or hitless innings only when supplied as factPacket facts. Respect the archetype frame. For ACE_DUEL, start with Both or Two and acknowledge both starters are hot. For COIN_FLIP, name the actual tiebreaker factor and direction, never vague context or 'needs the tiebreaker'. For PROVISIONAL, lead with limited sample or thin data only for the starter whose limitedSample is true or whose band is not ok. For TBD, do not compare form with the unnamed side. Avoid towers, clear separation, form points, has been, since, owned, better number, making the context do the work, adding shape to the grade, contextual lean, the board leans on, matchup details, run stress, sit close, needs the tiebreaker, one real factor must decide it, firm angle, cleaner starter side, the starter read, the trust edge, sets the tone, leads the read, anchors the read, keeps the trust edge, two-hot-starter matchup, and hyphenated matchup-type labels.",
         },
         {
           role: "user",
@@ -264,6 +273,7 @@ function validateGeneratedUpcomingText(sentence: string, input: UpcomingWriteupI
   if (!validateUpcomingSimpleContextSentence(clean, game, leagueMeanGS, factAllowedNumberTokens(input))) return false;
   if (/\b(unhittable|dominant stretch|has been|since|revenge|owns him|owned)\b/i.test(clean)) return false;
   if (PROHIBITED_MATCHUP_PHRASES.test(clean) || MODEL_JARGON.test(clean)) return false;
+  if (input.archetype === "COIN_FLIP" && !hasCoinFlipTiebreaker(clean, input)) return false;
   if (hasCommaChain(clean) || hasDuplicateConclusion(clean, input)) return false;
   if (!hasConcreteSpecific(clean, input)) return false;
   if (!validateFactTrace(clean, input)) return false;
@@ -370,7 +380,7 @@ function factHookFallback(input: UpcomingWriteupInput) {
   if (fact.key === "narrative_notable") return normalizeGeneratedSentence(`${fact.text}; ${owner} brings the night's loudest hook.`);
   if (fact.key === "k_line") return normalizeGeneratedSentence(`${fact.text}, putting strikeout chase at the center of ${input.matchup}.`);
   if (fact.key === "venue_history") return normalizeGeneratedSentence(`${fact.text}, giving ${owner} real ballpark history for ${input.matchup}.`);
-  if (fact.key === "season_best") return normalizeGeneratedSentence(`${fact.text}, so ${input.matchup} has ceiling baked in.`);
+  if (fact.key === "season_best") return normalizeGeneratedSentence(`${fact.text}, giving ${input.matchup} a real upside marker.`);
   if (fact.key === "streak") return normalizeGeneratedSentence(`${fact.text}, making the form arrow worth watching in ${input.matchup}.`);
   return null;
 }
@@ -386,6 +396,12 @@ function hasDuplicateConclusion(sentence: string, input: UpcomingWriteupInput) {
   if (new Set(mentioned).size < 2) return false;
   const comparativeClaims = lower.match(/\b(ahead|leads?|edges?|lean|higher|stronger|trusted side|puts .* ahead|clears)\b/g) ?? [];
   return comparativeClaims.length > 1;
+}
+
+function hasCoinFlipTiebreaker(sentence: string, input: UpcomingWriteupInput) {
+  const lower = sentence.toLowerCase();
+  if (input.factPacket.facts.some((fact) => fact.trace.some((trace) => trace.length > 3 && lower.includes(trace.toLowerCase())))) return true;
+  return /\b(wind|weather|hitter-friendly|suppresses|toward bats|toward arms|rest edge|days|K line|strikeout|opponent total|implied total|vs LHP|vs RHP)\b/i.test(sentence);
 }
 
 function hasConcreteSpecific(sentence: string, input: UpcomingWriteupInput) {
@@ -504,31 +520,36 @@ function starterNarrativeNotableFact(starter: TonightStarter, series: FormStartP
 
 function starterStrikeoutLineFact(starter: TonightStarter, slateHighKLine: number | null): MatchupFact | null {
   const line = starter.marketContext?.strikeoutPropLine;
-  if (!starter.name || typeof line !== "number") return null;
+  if (!starter.name) return null;
   const projection = starter.marketContext?.projectedStrikeouts;
+  if (typeof line !== "number" && (typeof projection !== "number" || projection < 5.8)) return null;
+  const factLine = typeof line === "number" ? line : projection;
+  if (typeof factLine !== "number") return null;
   const isSlateHigh = typeof slateHighKLine === "number" && line === slateHighKLine;
-  const edge = typeof projection === "number" ? Math.abs(line - projection) : 0;
-  if (!isSlateHigh && edge < 0.5) return null;
+  const edge = typeof line === "number" && typeof projection === "number" ? Math.abs(line - projection) : 0;
+  if (!isSlateHigh && typeof line === "number" && edge < 0.4 && factLine < 6.2) return null;
 
-  const lineText = formatNumber(line);
+  const lineText = formatNumber(factLine);
   const projectionText = typeof projection === "number" ? formatNumber(projection) : null;
-  const text = isSlateHigh
+  const text = typeof line === "number" && isSlateHigh
     ? `${starter.name}'s K line is ${lineText}, highest on the slate`
-    : `${starter.name}'s K line is ${lineText}, ${formatNumber(edge)} away from his ${projectionText} projection`;
+    : typeof line === "number" && projectionText
+      ? `${starter.name}'s K line is ${lineText}, ${formatNumber(edge)} away from his ${projectionText} projection`
+      : `${starter.name}'s strikeout projection sits at ${lineText}`;
   return {
     key: "k_line",
     owner: starter.name,
     text,
     source: "odds-feed",
-    score: isSlateHigh ? 95 : 58 + edge,
-    trace: [starter.name, lineText, ...(projectionText ? [projectionText] : []), "K line", "highest on the slate"],
+    score: isSlateHigh ? 95 : typeof line === "number" ? 58 + edge : 60 + factLine,
+    trace: [starter.name, lineText, ...(projectionText ? [projectionText] : []), typeof line === "number" ? "K line" : "strikeout projection", "highest on the slate"],
   };
 }
 
 function starterVenueHistoryFact(game: TonightGame, starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
   if (!starter.name) return null;
   const prior = [...series].reverse().find((start) => start.park === game.park && start.gamePk !== game.gamePk);
-  if (!prior || (prior.k < 6 && prior.gsPlus < 55)) return null;
+  if (!prior || (prior.k < 5 && prior.gsPlus < 52)) return null;
   const text = `${starter.name}'s last ${game.park} start: ${prior.k} K, ${formatNumber(prior.ip)} IP`;
   return {
     key: "venue_history",
@@ -543,7 +564,7 @@ function starterVenueHistoryFact(game: TonightGame, starter: TonightStarter, ser
 function starterSeasonBestFact(starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
   if (!starter.name || series.length === 0) return null;
   const best = series.reduce((leader, start) => start.gsPlus > leader.gsPlus ? start : leader, series[0]);
-  if (best.gsPlus < 62) return null;
+  if (best.gsPlus < 58) return null;
   const gsPlus = formatNumber(best.gsPlus);
   const text = `${starter.name}'s season best is ${gsPlus} GS+ with ${best.k} K`;
   return {
@@ -558,16 +579,16 @@ function starterSeasonBestFact(starter: TonightStarter, series: FormStartPoint[]
 
 function starterStreakFact(starter: TonightStarter, series: FormStartPoint[]): MatchupFact | null {
   if (!starter.name) return null;
-  const hotCount = countWhile([...series].reverse(), (start) => start.gsPlus >= 55);
+  const hotCount = countWhile([...series].reverse(), (start) => start.gsPlus >= 52);
   if (hotCount < 2) return null;
-  const text = `${starter.name} has ${hotCount} straight starts at GS+ 55 plus`;
+  const text = `${starter.name} has ${hotCount} straight starts at GS+ 52 plus`;
   return {
     key: "streak",
     owner: starter.name,
     text,
     source: "form-service",
     score: 66 + hotCount,
-    trace: [starter.name, String(hotCount), "straight starts", "GS+", "55 plus"],
+    trace: [starter.name, String(hotCount), "straight starts", "GS+", "52 plus"],
   };
 }
 
@@ -584,7 +605,7 @@ function validateFactTrace(sentence: string, input: UpcomingWriteupInput) {
   if (/\b(last at|last .* start|venue|park|ballpark)\b/i.test(lower) && !hasFact("venue_history")) return false;
   if (/\b(season best|best start)\b/i.test(lower) && !hasFact("season_best")) return false;
   if (/\b(straight starts|streak)\b/i.test(lower) && !hasFact("streak")) return false;
-  if (/\b(k line|strikeout line|highest on the slate)\b/i.test(lower) && !hasFact("k_line")) return false;
+  if (/\b(k line|strikeout line|strikeout projection|highest on the slate)\b/i.test(lower) && !hasFact("k_line")) return false;
   if (/\b(no-hitter|hitless innings)\b/i.test(lower) && !hasFact("narrative_notable")) return false;
   for (const fact of facts) {
     for (const trace of fact.trace) {

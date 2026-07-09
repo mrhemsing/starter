@@ -26,8 +26,8 @@ const TOP_BANDS: HeatBandKey[] = ["onfire", "hot"];
 const LOW_BANDS: HeatBandKey[] = ["cooling", "ice"];
 const PROHIBITED_SMALL_GAP_CLAIMS = /\b(separation|towers|clear|runs away)\b/i;
 const NARRATIVE_VERBS = /\b(unhittable|dominant stretch|has been|since|revenge|owns him)\b/i;
-const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge|two-hot-starter matchup|[a-z]+-[a-z]+-starter matchup)\b/i;
-const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|board leans|model|algorithm)\b/i;
+const PROHIBITED_CLICHES = /\b(better number|making the context do the work|adding shape to the grade|contextual lean|the board leans on|matchup details|run stress|sit close|needs the tiebreaker|one real factor must decide it|firm angle|cleaner starter side|the starter read|the trust edge|sets the tone|leads the read|anchors the read|keeps the trust edge|two-hot-starter matchup|[a-z]+-[a-z]+-starter matchup)\b/i;
+const MODEL_JARGON = /\b(contextual|grade|grading system|starter read|trust edge|firm angle|cleaner starter side|board leans|model|algorithm)\b/i;
 
 const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
   ACE_DUEL: [
@@ -40,7 +40,7 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "{leader} brings {leadForm} form into a matchup {trailer} has to answer.",
     "{leader}'s {leadForm} makes {trailer} chase the stronger recent arm.",
     "{leader}'s {leadForm} is the loudest starter signal against {trailer}.",
-    "{leader} walks in with {leadForm} form and the cleaner starter side over {trailer}.",
+    "{leader} walks in with {leadForm} form while {trailer} has to chase.",
   ],
   MISMATCH_DOWN: [
     "{leader}'s {leadForm} runs into cold {trailer}, making the gap hard to ignore.",
@@ -49,10 +49,10 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "{leader} has the steadier arm with {trailer} stuck low.",
   ],
   COIN_FLIP: [
-    "Only {gap} points separate the starters, so {leader}'s side needs the tiebreaker.",
-    "{leader}'s form edge is just {gap} points, keeping the matchup close.",
-    "Dead even on form, with {leader}'s {leadForm} only {gap} points clear.",
-    "{leader}'s {leadForm} barely clears {trailer}, so one real factor must decide it.",
+    "Only {gap} points separate the starters.",
+    "{leader}'s form edge is just {gap} points.",
+    "{leader}'s {leadForm} is only {gap} points clear.",
+    "{leader}'s {leadForm} barely clears {trailer} by {gap} points.",
   ],
   BOTH_COLD: [
     "Two cold arms meet, with {leader}'s {leadForm} still the higher side.",
@@ -67,7 +67,7 @@ const ARCHETYPE_BANK: Record<MatchupArchetype, readonly string[]> = {
     "Small-sample flags make {name}'s side less settled.",
   ],
   TBD: [
-    "{team} has not named a starter; {name}'s side carries the only firm angle.",
+    "{team} has not named a starter; {name}'s side is the known arm.",
     "{team}'s starter is still open, leaving {name} as the anchor.",
     "A pending {team} arm keeps the matchup provisional around {name}.",
     "{team} remains TBD, so {name}'s side carries the card.",
@@ -150,11 +150,16 @@ function slateUniqueContextSentence(game: TonightGame, input: ContextInput, rank
 
 function buildContextSentence(game: TonightGame, input: ContextInput, seed: string, rank: number) {
   const primary = archetypeSentence(input, seed);
-  const secondary = contextSignals(game, input, rank)
+  const signals = contextSignals(game, input, rank);
+  const secondary = signals
     .sort((a, b) => b.score - a.score || a.type.localeCompare(b.type))
-    .find((signal) => signal.score >= 82);
+    .find((signal) => signal.score >= (input.archetype === "COIN_FLIP" ? 60 : 82));
+  if (input.archetype === "COIN_FLIP" && !secondary) {
+    return matchupSpecificFallback(game, input);
+  }
   const candidate = fitSentence(primary, secondary ? pickPhrase(secondary, `${seed}:${input.archetype}`) : null);
-  return validateSentence(candidate, input) ? candidate : archetypeSentence(input, `${seed}:fallback`);
+  if (validateSentence(candidate, input)) return candidate;
+  return input.archetype === "COIN_FLIP" ? matchupSpecificFallback(game, input) : archetypeSentence(input, `${seed}:fallback`);
 }
 
 export function validateUpcomingSimpleContextSentence(sentence: string, game: TonightGame, leagueMeanGS: number, extraAllowedNumbers: string[] = []) {
@@ -335,6 +340,7 @@ function validateSentence(sentence: string, input: ContextInput, extraAllowedNum
   if (sentenceCount(sentence) !== 1) return false;
   if (NARRATIVE_VERBS.test(sentence)) return false;
   if (PROHIBITED_CLICHES.test(sentence) || MODEL_JARGON.test(sentence)) return false;
+  if (input.archetype === "COIN_FLIP" && !hasCoinFlipTiebreaker(sentence)) return false;
   if (hasCommaChain(sentence) || hasDuplicateComparativeConclusion(sentence, input)) return false;
   if (input.gap < CLEAR_EDGE_GAP && PROHIBITED_SMALL_GAP_CLAIMS.test(sentence)) return false;
   if (input.archetype !== "CLEAR_EDGE" && /\b(separation|owns the form gap)\b/i.test(sentence)) return false;
@@ -369,6 +375,10 @@ function hasDuplicateComparativeConclusion(sentence: string, input: ContextInput
   if (!containsNameToken(lower, leader) || !containsNameToken(lower, trailer)) return false;
   const comparativeClaims = lower.match(/\b(ahead|leads?|edges?|lean|higher|stronger|trusted side|puts .* ahead|clears)\b/g) ?? [];
   return comparativeClaims.length > 1;
+}
+
+function hasCoinFlipTiebreaker(sentence: string) {
+  return /\b(wind|weather|hitter-friendly|suppresses|toward bats|toward arms|rest edge|days|K line|strikeout|opponent total|implied total|vs LHP|vs RHP|Top-three|watch score)\b/i.test(sentence);
 }
 
 function hasSlateNgramCollision(sentence: string, input: ContextInput, accepted: string[]) {
@@ -432,7 +442,19 @@ function normalizeSlateSentence(sentence: string, input: ContextInput) {
 }
 
 function matchupSpecificFallback(game: TonightGame, input: ContextInput) {
-  return `${game.away} at ${game.home}: ${shortName(input.leader)} brings ${formatScore(starterValue(input.leader, input))} form into the cleaner starter side.`;
+  const strikeoutSignal = strikeoutSignalFor(game.starters);
+  if (strikeoutSignal) {
+    return fitSentence(`${shortName(input.leader)} and ${shortName(input.trailer)} sit ${formatGap(input.gap)} points apart.`, pickPhrase(strikeoutSignal, `${game.gamePk}:coin-fallback`));
+  }
+  const restSignal = restEdgeSignal(game.starters);
+  if (restSignal) {
+    return fitSentence(`${shortName(input.leader)} and ${shortName(input.trailer)} sit ${formatGap(input.gap)} points apart.`, pickPhrase(restSignal, `${game.gamePk}:coin-fallback`));
+  }
+  const park = parkSignal(game);
+  if (park) {
+    return fitSentence(`${shortName(input.leader)} and ${shortName(input.trailer)} sit ${formatGap(input.gap)} points apart.`, pickPhrase(park, `${game.gamePk}:coin-fallback`));
+  }
+  return `${game.away} at ${game.home}: ${shortName(input.leader)} sits ${formatScore(starterValue(input.leader, input))} with the watch score still ${watchBandLabel(game.gameWatchScore)}.`;
 }
 
 function validateAttributedClaims(sentence: string, input: ContextInput) {

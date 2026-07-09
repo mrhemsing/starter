@@ -227,8 +227,10 @@ assert(
     writeupsService.includes("upcomingSimpleContextSentencesForSlate(slate.games, slate.leagueMeanGS)") &&
     writeupsService.includes("upcomingSimpleContextSentence(game, index + 1, slate.leagueMeanGS)") &&
     writeupsService.includes("AbortSignal.timeout") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 6;") &&
-    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 13;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_VERSION = 7;") &&
+    writeupsService.includes("const UPCOMING_WRITEUPS_PROMPT_VERSION = 14;") &&
+    writeupsService.includes("generatedAtByGame") &&
+    writeupsService.includes("UPCOMING_WRITEUPS_REGENERATION_EPOCH") &&
     writeupsService.includes("limitedSample: starter.flags?.limitedSample === true") &&
     writeupsService.includes("limitedSample is true") &&
     !simpleBoard.includes("OPENAI_API_KEY"),
