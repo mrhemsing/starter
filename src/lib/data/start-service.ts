@@ -297,23 +297,31 @@ export async function getRankedSlateCompletionState(date: string, today = getHom
 
 export async function getRankedSlateContextForStarts(date: string, today: string, slateStarts: StartSummary[]) {
   const settled = date < today;
-  const [liveSchedule, archivedSchedule, canonicalSlateState] = settled
-    ? await Promise.all([
-        Promise.resolve(null),
-        readArchivedSchedule(date),
-        readCanonicalSlateState(date),
-      ])
-    : await Promise.all([
-        fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
-        readArchivedSchedule(date),
-        readCanonicalSlateState(date),
-      ]);
+  let liveSchedule: MlbSchedule | null;
+  let archivedSchedule: MlbSchedule | null;
+  let canonicalSlateState: CanonicalSlateStateSnapshot | null;
+  if (settled) {
+    [archivedSchedule, canonicalSlateState] = await Promise.all([
+      readArchivedSchedule(date),
+      readCanonicalSlateState(date),
+    ]);
+    liveSchedule = shouldFetchSettledScheduleFallback(date, archivedSchedule, canonicalSlateState)
+      ? await fetchMlbSchedule(date, { fetchLive: true })
+      : null;
+  } else {
+    [liveSchedule, archivedSchedule, canonicalSlateState] = await Promise.all([
+      fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) }),
+      readArchivedSchedule(date),
+      readCanonicalSlateState(date),
+    ]);
+  }
   if (settled) {
     console.info("[ranked-archive] file shard availability", {
       date,
       archivedScheduleGames: archivedSchedule?.games.length ?? 0,
       canonicalSlateState: canonicalSlateState?.state ?? null,
       canonicalTotalStarts: canonicalSlateState?.counts.totalStarts ?? null,
+      settledLiveFallbackGames: liveSchedule?.games.length ?? 0,
     });
   }
   const scheduleFallback = emptySchedule(date);
@@ -333,6 +341,14 @@ export async function getRankedSlateContextForStarts(date: string, today: string
     completionState,
     slateProgress,
   };
+}
+
+function shouldFetchSettledScheduleFallback(date: string, archivedSchedule: MlbSchedule | null, canonicalSlateState: CanonicalSlateStateSnapshot | null) {
+  if (!shouldFetchLiveSchedule(date)) return false;
+  if ((archivedSchedule?.games.length ?? 0) === 0) return true;
+  if (!canonicalSlateState) return true;
+  if (canonicalSlateState.state !== "complete") return true;
+  return canonicalSlateState.counts.totalStarts <= 0 || canonicalSlateState.counts.finalStarts < canonicalSlateState.counts.totalStarts;
 }
 
 export function getRankedSlateCompletionStateFromInputs(
