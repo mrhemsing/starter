@@ -1263,14 +1263,27 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       {...starterDriverData(starter)}
     >
       <StarterHeadshot starter={starter} size="small" />
-      <div className="min-w-0">
+      <div className="min-w-0" data-starter-compact-mobile-identity>
+        <p className="mb-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 sm:hidden" data-starter-compact-mobile-team="above-name">
+          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
+          {starter.team}
+        </p>
         <p className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100">
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
+        <div className="mt-1 sm:hidden" data-starter-compact-mobile-form-line="under-name">
+          {starter.formStatus === "ok" ? (
+            <StarterFormScoreLine starter={starter} separator="hyphen" />
+          ) : (
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
+              {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
+            </p>
+          )}
+        </div>
         <ProbableConfidenceChip starter={starter} compact />
         <LikelyOpenerBadge starter={starter} compact />
         <StarterRoleContextLine starter={starter} compact />
-        <p className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+        <p className="mt-0.5 hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 sm:inline-flex">
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
           {starter.team}
         </p>
@@ -1284,20 +1297,24 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Form pending</p>
         ) : null}
       </div>
-      <div className="ml-auto text-right">
+      <div className="ml-auto text-right" data-starter-compact-mobile-trend-slot="top-right">
         {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
           <>
-            <StarterFormScoreLine starter={starter} />
+            <div className="hidden sm:block">
+              <StarterFormScoreLine starter={starter} />
+            </div>
             {starter.trend && starter.deltaForm !== undefined ? (
-              <span className="mt-2 inline-flex" data-starter-trend-chip-spacer="true">
+              <span className="inline-flex sm:mt-2" data-starter-trend-chip-spacer="true">
                 <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
               </span>
             ) : null}
           </>
         ) : starter.formStatus === "ok" ? (
-          <StarterFormScoreLine starter={starter} />
+          <div className="hidden sm:block">
+            <StarterFormScoreLine starter={starter} />
+          </div>
         ) : (
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
+          <p className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 sm:block" aria-label={starterFallbackAriaLabel(starter)}>
             {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
           </p>
         )}
@@ -1638,11 +1655,11 @@ function formatMarketCapturedAt(value: string) {
   }).format(parsed);
 }
 
-function StarterFormScoreLine({ starter }: { starter: TonightStarter }) {
+function StarterFormScoreLine({ starter, separator = "dot" }: { starter: TonightStarter; separator?: "dot" | "hyphen" }) {
   const qualifiedSample = hasQualifiedStarterFormSample(starter);
   return (
     <p className={`leading-none ${qualifiedSample && starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`} data-starter-form-context-line="value-whisper-era">
-      <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} />
+      <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} separator={separator} />
     </p>
   );
 }

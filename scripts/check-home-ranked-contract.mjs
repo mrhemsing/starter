@@ -14,6 +14,7 @@ const topPerformerCard = await readFile("src/components/top-performer-card.tsx",
 const heatHighlightModal = await readFile("src/components/heat-highlight-modal.tsx", "utf8");
 const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
 const mustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
+const limitedSampleChip = await readFile("src/components/limited-sample-form-chip.tsx", "utf8");
 const pitchingDuels = await readFile("src/components/pitching-duels.tsx", "utf8");
 const rankedRecap = await readFile("src/components/ranked-starts-recap.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
@@ -261,6 +262,19 @@ assert(
     mustWatch.includes('"lg:self-end"') &&
     mustWatch.includes('"self-start"'),
   "home must-watch RISING/FALLING chips must stay compact, with the home form text after workload labels and right-aligned trend chip",
+);
+
+assert(
+  mustWatch.includes("data-starter-compact-mobile-identity") &&
+    mustWatch.includes('data-starter-compact-mobile-team="above-name"') &&
+    mustWatch.includes('data-starter-compact-mobile-form-line="under-name"') &&
+    mustWatch.includes('<StarterFormScoreLine starter={starter} separator="hyphen" />') &&
+    mustWatch.includes('data-starter-compact-mobile-trend-slot="top-right"') &&
+    mustWatch.indexOf('data-starter-compact-mobile-team="above-name"') < mustWatch.indexOf('className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100"') &&
+    mustWatch.indexOf('className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100"') < mustWatch.indexOf('data-starter-compact-mobile-form-line="under-name"') &&
+    limitedSampleChip.includes('separator?: "dot" | "hyphen";') &&
+    limitedSampleChip.includes('const separatorText = separator === "hyphen" ? " - " : "· ";'),
+  "compact detailed matchup starter cards must stack team, name, and hyphenated form line on mobile while keeping the trend chip in the top-right slot",
 );
 
 assert(

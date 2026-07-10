@@ -46,6 +46,7 @@ export function FormValueWhisperLine({
   whisperClassName = "",
   compact = false,
   stacked = false,
+  separator = "dot",
 }: {
   value?: number | null;
   tier?: FormTier | null;
@@ -57,9 +58,11 @@ export function FormValueWhisperLine({
   whisperClassName?: string;
   compact?: boolean;
   stacked?: boolean;
+  separator?: "dot" | "hyphen";
 }) {
   const valueColor = formBandValueColor(tier, qualifiedSample);
   const whisper = formBandWhisperLabel(tier, qualifiedSample);
+  const separatorText = separator === "hyphen" ? " - " : "· ";
   if (stacked) {
     return (
       <span
@@ -98,7 +101,7 @@ export function FormValueWhisperLine({
         {whisper}
       </span>
       <span className="text-zinc-500" data-form-line-era>
-        · {formLineEraText(era, window)}
+        {separatorText}{formLineEraText(era, window)}
       </span>
     </span>
   );
