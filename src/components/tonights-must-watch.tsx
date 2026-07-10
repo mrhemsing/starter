@@ -901,6 +901,11 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
           <StarterRoleContextLine starter={starter} align={side} />
         </div>
       </div>
+      {starter.formStatus === "ok" ? (
+        <div className="mt-3 sm:hidden" data-starter-duel-mobile-form-line="under-headshot">
+          <StarterFormScoreLine starter={starter} />
+        </div>
+      ) : null}
       <div className={`mt-3 grid grid-rows-[auto_auto_auto_auto_auto_minmax(36px,auto)] gap-1.5 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid data-starter-empty-space-policy="content-height">
         <div data-starter-baseline-row="form">
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
@@ -909,12 +914,16 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
                 {isHome ? (
                   <>
                     <StarterStatusChips starter={starter} />
-                    <StarterFormScoreLine starter={starter} />
+                    <div className="hidden sm:block" data-starter-duel-desktop-form-line>
+                      <StarterFormScoreLine starter={starter} />
+                    </div>
                     <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop className="lg:justify-end" />
                   </>
                 ) : (
                   <>
-                    <StarterFormScoreLine starter={starter} />
+                    <div className="hidden sm:block" data-starter-duel-desktop-form-line>
+                      <StarterFormScoreLine starter={starter} />
+                    </div>
                     <StarterStatusChips starter={starter} />
                     <FormDriverChips chips={starter.driverChips} limit={3} compact flushTop />
                   </>

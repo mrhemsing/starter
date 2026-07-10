@@ -292,6 +292,10 @@ assert(
     mustWatch.includes("data-starter-mirror-side={side}") &&
     mustWatch.includes('data-starter-identity-unit') &&
     mustWatch.includes("data-starter-identity-direction={isHome ? \"row-reverse\" : \"row\"}") &&
+    mustWatch.includes('data-starter-duel-mobile-form-line="under-headshot"') &&
+    mustWatch.includes("mt-3 sm:hidden") &&
+    mustWatch.includes('data-starter-duel-desktop-form-line') &&
+    mustWatch.includes('className="hidden sm:block" data-starter-duel-desktop-form-line') &&
     mustWatch.includes('data-starter-stat-baseline-grid') &&
     mustWatch.includes('data-starter-height-policy="content"') &&
     mustWatch.includes('data-starter-empty-space-policy="content-height"') &&
