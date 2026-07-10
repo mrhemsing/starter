@@ -262,7 +262,7 @@ export function TonightsMustWatch({
                 ))}
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid gap-3" data-detailed-mobile-starter-header-scope="rows-after-headliner">
                 {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
               </div>
             )}

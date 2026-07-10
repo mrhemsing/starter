@@ -265,16 +265,19 @@ assert(
 );
 
 assert(
-  mustWatch.includes("data-starter-compact-mobile-identity") &&
+  mustWatch.includes('data-detailed-mobile-starter-header-scope="rows-after-headliner"') &&
+    mustWatch.includes("data-starter-compact-mobile-identity") &&
     mustWatch.includes('data-starter-compact-mobile-team="above-name"') &&
     mustWatch.includes('data-starter-compact-mobile-form-line="under-name"') &&
     mustWatch.includes('<StarterFormScoreLine starter={starter} separator="hyphen" />') &&
     mustWatch.includes('data-starter-compact-mobile-trend-slot="top-right"') &&
+    mustWatch.indexOf('data-detailed-mobile-starter-header-scope="rows-after-headliner"') < mustWatch.indexOf("data-starter-compact-mobile-identity") &&
+    mustWatch.indexOf("<MustWatchHeadliner") < mustWatch.indexOf('data-detailed-mobile-starter-header-scope="rows-after-headliner"') &&
     mustWatch.indexOf('data-starter-compact-mobile-team="above-name"') < mustWatch.indexOf('className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100"') &&
     mustWatch.indexOf('className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100"') < mustWatch.indexOf('data-starter-compact-mobile-form-line="under-name"') &&
     limitedSampleChip.includes('separator?: "dot" | "hyphen";') &&
     limitedSampleChip.includes('const separatorText = separator === "hyphen" ? " - " : "· ";'),
-  "compact detailed matchup starter cards must stack team, name, and hyphenated form line on mobile while keeping the trend chip in the top-right slot",
+  "compact detailed matchup starter cards after the headliner must stack team, name, and hyphenated form line on mobile while keeping the trend chip in the top-right slot",
 );
 
 assert(
