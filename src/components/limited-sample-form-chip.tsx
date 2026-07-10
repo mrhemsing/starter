@@ -47,6 +47,7 @@ export function FormValueWhisperLine({
   compact = false,
   stacked = false,
   separator = "dot",
+  noWrap = false,
 }: {
   value?: number | null;
   tier?: FormTier | null;
@@ -59,6 +60,7 @@ export function FormValueWhisperLine({
   compact?: boolean;
   stacked?: boolean;
   separator?: "dot" | "hyphen";
+  noWrap?: boolean;
 }) {
   const valueColor = formBandValueColor(tier, qualifiedSample);
   const whisper = formBandWhisperLabel(tier, qualifiedSample);
@@ -88,8 +90,9 @@ export function FormValueWhisperLine({
 
   return (
     <span
-      className={`inline-flex flex-wrap items-baseline gap-x-1.5 font-mono uppercase tracking-[0.12em] ${compact ? "text-[9px]" : "text-[11px]"} ${className}`}
+      className={`inline-flex ${noWrap ? "flex-nowrap whitespace-nowrap" : "flex-wrap"} items-baseline gap-x-1.5 font-mono uppercase tracking-[0.12em] ${compact ? "text-[9px]" : "text-[11px]"} ${className}`}
       data-form-value-whisper-line
+      data-form-value-whisper-wrap={noWrap ? "nowrap" : "wrap"}
       data-form-value-color={valueColor}
       data-form-whisper={whisper}
       data-form-window={window}

@@ -135,10 +135,13 @@ assert(limitedSampleChip.includes("export function FormValueWhisperLine") && lim
 assert(simpleBoard.includes("hasQualifiedStarterFormSample(starter) ? starter.tier ?? null : null") && simpleBoard.includes('data-simple-form-line-source={formBand ? "heat-band" : starter.formStatus === "ok" ? "limited-sample" : starter.formStatus}'), "Simple cards must render limited-sample arms as neutral LTD whisper lines, not FORM pseudo-bands.");
 assert(!simpleBoard.includes('const label = formBand ? heatBandLabel(formBand) : "Form";'), "Simple limited-sample chips must not fall back to the old FORM label.");
 assert(
-  detailedBoard.includes("hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier") &&
+    detailedBoard.includes("hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier") &&
     detailedBoard.includes("<FormValueWhisperLine value={starter.rgs}") &&
     detailedBoard.includes('data-starter-duel-mobile-form-line="under-headshot"') &&
+    detailedBoard.includes('data-starter-duel-mobile-form-wrap="nowrap"') &&
+    detailedBoard.includes("<StarterFormScoreLine starter={starter} noWrap />") &&
     detailedBoard.includes('className="hidden sm:block" data-starter-duel-desktop-form-line') &&
+    limitedSampleChip.includes('data-form-value-whisper-wrap={noWrap ? "nowrap" : "wrap"}') &&
     detailedBoard.includes("return hasQualifiedStarterFormSample(starter) && Boolean(starter.spark?.length && starter.tier);"),
   "Detailed Upcoming cards must gate band lines, sparklines, and limited labels through the shared whisper treatment, with the expanded mobile form line under each headshot.",
 );

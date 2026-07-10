@@ -293,7 +293,10 @@ assert(
     mustWatch.includes('data-starter-identity-unit') &&
     mustWatch.includes("data-starter-identity-direction={isHome ? \"row-reverse\" : \"row\"}") &&
     mustWatch.includes('data-starter-duel-mobile-form-line="under-headshot"') &&
-    mustWatch.includes("mt-3 sm:hidden") &&
+    mustWatch.includes('data-starter-duel-mobile-form-wrap="nowrap"') &&
+    mustWatch.includes("mt-3 w-full overflow-hidden sm:hidden") &&
+    mustWatch.includes("<StarterFormScoreLine starter={starter} noWrap />") &&
+    mustWatch.includes('noWrap?: boolean') &&
     mustWatch.includes('data-starter-duel-desktop-form-line') &&
     mustWatch.includes('className="hidden sm:block" data-starter-duel-desktop-form-line') &&
     mustWatch.includes('data-starter-stat-baseline-grid') &&

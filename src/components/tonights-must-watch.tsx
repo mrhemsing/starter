@@ -902,8 +902,8 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
         </div>
       </div>
       {starter.formStatus === "ok" ? (
-        <div className="mt-3 sm:hidden" data-starter-duel-mobile-form-line="under-headshot">
-          <StarterFormScoreLine starter={starter} />
+        <div className="mt-3 w-full overflow-hidden sm:hidden" data-starter-duel-mobile-form-line="under-headshot" data-starter-duel-mobile-form-wrap="nowrap">
+          <StarterFormScoreLine starter={starter} noWrap />
         </div>
       ) : null}
       <div className={`mt-3 grid grid-rows-[auto_auto_auto_auto_auto_minmax(36px,auto)] gap-1.5 ${isHome ? "lg:text-right" : ""}`} data-starter-stat-baseline-grid data-starter-empty-space-policy="content-height">
@@ -1664,11 +1664,11 @@ function formatMarketCapturedAt(value: string) {
   }).format(parsed);
 }
 
-function StarterFormScoreLine({ starter, separator = "dot" }: { starter: TonightStarter; separator?: "dot" | "hyphen" }) {
+function StarterFormScoreLine({ starter, separator = "dot", noWrap = false }: { starter: TonightStarter; separator?: "dot" | "hyphen"; noWrap?: boolean }) {
   const qualifiedSample = hasQualifiedStarterFormSample(starter);
   return (
-    <p className={`leading-none ${qualifiedSample && starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`} data-starter-form-context-line="value-whisper-era">
-      <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} separator={separator} />
+    <p className={`leading-none ${noWrap ? "max-w-full overflow-hidden" : ""} ${qualifiedSample && starter.tier ? tierTextClass(starter.tier) : "text-zinc-400"}`} data-starter-form-context-line="value-whisper-era">
+      <FormValueWhisperLine value={starter.rgs} tier={starter.tier} qualifiedSample={qualifiedSample} era={starter.seasonStats?.era} separator={separator} noWrap={noWrap} />
     </p>
   );
 }
