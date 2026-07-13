@@ -135,6 +135,7 @@ export default async function Home() {
         <HomeDeferredSections
           today={today}
           tomorrow={tomorrow}
+          slateStatus={slateStatus}
           slatePhase={homeSlatePhase}
           slatePhaseExperiment={homeSlatePhaseExperiment}
           whyGsPlusBand={<WhyGsPlusBand proof={gsPlusProofs} />}

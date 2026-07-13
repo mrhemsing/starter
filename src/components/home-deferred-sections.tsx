@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "@vercel/analytics";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -14,7 +15,7 @@ import { RankedStartsRecap } from "@/components/ranked-starts-recap";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
-import { pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
+import { liveDateHref, pitcherHref, sourceParams, startHref, upcomingDateHref } from "@/lib/routes";
 import { getHomeModuleOrder, type HomeModuleKey, type HomeSlatePhase, type HomeSlatePhaseVariant } from "@/lib/home-slate-phase";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
@@ -24,6 +25,7 @@ import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboa
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { formatStartLine } from "@/lib/format";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
+import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormHomeResponse, FormTier, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
@@ -39,6 +41,7 @@ export type HomeDeferredInitialData = {
 export function HomeDeferredSections({
   today,
   tomorrow,
+  slateStatus,
   slatePhase,
   slatePhaseExperiment = false,
   whyGsPlusBand = null,
@@ -46,6 +49,7 @@ export function HomeDeferredSections({
 }: {
   today: string;
   tomorrow: string;
+  slateStatus: SlateProgressState;
   slatePhase: HomeSlatePhase;
   slatePhaseExperiment?: boolean;
   whyGsPlusBand?: ReactNode;
@@ -129,6 +133,8 @@ export function HomeDeferredSections({
           null
         ) : ranked.topPerformer ? (
           <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
+        ) : shouldShowHomeAllStarBreakSpotlight(slateStatus) ? (
+          <HomeAllStarBreakIsland date={slateStatus.date} />
         ) : null,
       watch: watch ? (
           <TonightsMustWatch
@@ -176,6 +182,8 @@ export function HomeDeferredSections({
         null
       ) : ranked.topPerformer ? (
         <HomeTopPerformerIsland key={`${ranked.topPerformer.start.id}:${ranked.topPerformer.status}`} topPerformer={ranked.topPerformer} />
+      ) : shouldShowHomeAllStarBreakSpotlight(slateStatus) ? (
+        <HomeAllStarBreakIsland date={slateStatus.date} />
       ) : null}
 
       {watch ? (
@@ -294,6 +302,57 @@ function HomeTopPerformerIsland({ topPerformer }: { topPerformer: HomeTopPerform
   );
 }
 
+function HomeAllStarBreakIsland({ date }: { date: string }) {
+  return (
+    <section className="bg-[#08080a] px-4 pb-6 sm:px-6 lg:px-8" data-home-all-star-break-island="true">
+      <div className="mx-auto max-w-7xl">
+        <article className="relative overflow-hidden rounded border border-[#173B8F]/70 bg-[#050506] text-[#F5F2EA] shadow-[0_18px_44px_rgba(0,0,0,0.22)]" data-responsive-check="home-all-star-break-spotlight" data-home-all-star-break-date={date}>
+          <div className="grid lg:min-h-[500px] lg:grid-cols-[42%_58%]">
+            <div className="relative z-10 order-2 flex flex-col justify-between gap-5 border-t border-[#173B8F]/70 bg-[#08080a] p-4 sm:p-5 lg:order-1 lg:border-r lg:border-t-0 lg:p-7">
+              <div>
+                <p className="font-mono text-[10px] uppercase leading-[1.25] tracking-[0.22em] text-[#F04A4D]">All-Star break</p>
+                <h2 className="mt-3 max-w-[12ch] font-serif text-4xl font-black leading-[0.92] text-zinc-50 sm:text-5xl lg:text-6xl">
+                  No games today.
+                </h2>
+                <p className="mt-4 max-w-md text-sm leading-6 text-zinc-300">
+                  League is on the All-Star break. The live GS+ leader slot will return when regular-season starters are back on the slab.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 rounded border border-white/10 bg-black/25 p-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                <div>
+                  <p className="text-zinc-500">Live</p>
+                  <p className="mt-1 text-2xl font-black text-zinc-50">0</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500">Scheduled</p>
+                  <p className="mt-1 text-2xl font-black text-zinc-50">0</p>
+                </div>
+              </div>
+              <Link
+                href={liveDateHref(date)}
+                className="inline-flex min-h-11 w-fit items-center justify-center rounded border border-[#F04A4D]/50 px-3 font-mono text-xs uppercase tracking-[0.16em] text-[#FFB5B7] transition hover:border-[#F04A4D] hover:text-zinc-50"
+              >
+                Live board
+              </Link>
+            </div>
+            <div className="relative order-1 min-h-[390px] overflow-hidden bg-black lg:order-2 lg:min-h-[500px]">
+              <Image
+                src="/images/all-star-game-philadelphia-2026.jpg"
+                alt="2026 MLB All-Star Game Philadelphia logo"
+                fill
+                sizes="(min-width: 1024px) 58vw, 100vw"
+                className="object-contain p-5 sm:p-8 lg:p-10"
+                priority
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0)_45%,rgba(8,8,10,0.74)_100%)] lg:bg-[linear-gradient(90deg,rgba(8,8,10,0.24)_0%,rgba(8,8,10,0)_42%,rgba(8,8,10,0.32)_100%)]" aria-hidden="true" />
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 async function resolveRankedHomeTopPerformer(startId: string) {
   const ranked = await fetchJson<RankedHomeResponse>("/api/home/ranked").catch(() => null);
   return ranked?.topPerformer?.start.id === startId ? ranked.topPerformer : null;
@@ -403,6 +462,10 @@ function shouldShowHomeRankedRecap(ranked: RankedHomeResponse | null): ranked is
 
 function shouldShowHomeHookSpine(ranked: RankedHomeResponse | null, watchDate: string) {
   return ranked?.areTodayStartsComplete === true && ranked.date === watchDate;
+}
+
+function shouldShowHomeAllStarBreakSpotlight(slateStatus: SlateProgressState) {
+  return slateStatus.state === "no-games" && slateStatus.date >= "2026-07-13" && slateStatus.date <= "2026-07-15";
 }
 
 function filterHomeMustWatchGames(watch: TonightResponse | null) {

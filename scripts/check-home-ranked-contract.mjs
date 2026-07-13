@@ -29,6 +29,7 @@ const featuredHighlightService = await readFile("src/lib/data/featured-highlight
 const globals = await readFile("src/app/globals.css", "utf8");
 const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-mlb-action-v4.json", "utf8"));
 const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg");
+const allStarBreakImageAsset = await stat("public/images/all-star-game-philadelphia-2026.jpg");
 
 assert(
   rankedRoute.includes('import { getRankedHome, HOME_RANKED_REVALIDATE_SECONDS } from "@/lib/data/home-ranked-service";') &&
@@ -208,6 +209,24 @@ assert(
   homeDeferredSections.includes("image={view.image}") &&
     homeDeferredSections.includes("image: topPerformer.image,"),
   "home deferred top performer card must pass through the ranked API image",
+);
+
+assert(
+  allStarBreakImageAsset.size > 0 &&
+    homePage.includes("slateStatus={slateStatus}") &&
+    homeDeferredSections.includes('import Image from "next/image";') &&
+    homeDeferredSections.includes("slateStatus: SlateProgressState;") &&
+    homeDeferredSections.includes("shouldShowHomeAllStarBreakSpotlight(slateStatus)") &&
+    homeDeferredSections.includes('function HomeAllStarBreakIsland({ date }: { date: string })') &&
+    homeDeferredSections.includes('data-home-all-star-break-island="true"') &&
+    homeDeferredSections.includes('data-responsive-check="home-all-star-break-spotlight"') &&
+    homeDeferredSections.includes('src="/images/all-star-game-philadelphia-2026.jpg"') &&
+    homeDeferredSections.includes('alt="2026 MLB All-Star Game Philadelphia logo"') &&
+    homeDeferredSections.includes("League is on the All-Star break.") &&
+    homeDeferredSections.includes('slateStatus.state === "no-games"') &&
+    homeDeferredSections.includes('slateStatus.date >= "2026-07-13" && slateStatus.date <= "2026-07-15"') &&
+    homeDeferredSections.includes("href={liveDateHref(date)}"),
+  "home no-games All-Star break state must intentionally replace the live leader slot with the supplied 2026 Philadelphia image",
 );
 
 assert(
