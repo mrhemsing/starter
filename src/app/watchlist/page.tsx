@@ -393,6 +393,7 @@ function WatchlistRow({ entry, today }: { entry: WatchlistEntry; today?: string 
             era={entry.seasonStats?.era}
             className={qualifiedSample ? tierTextClass(entry.tier) : "text-zinc-300"}
             valueClassName="font-serif text-5xl font-bold leading-none tracking-normal"
+            whisperClassName="mt-2"
             stacked
           />
         </div>

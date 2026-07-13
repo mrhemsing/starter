@@ -52,6 +52,7 @@ assert(
 );
 assert(
   watchlistPageSource.includes("valueClassName=\"font-serif text-5xl font-bold leading-none tracking-normal\"") &&
+    watchlistPageSource.includes('whisperClassName="mt-2"') &&
     watchlistPageSource.includes("stacked") &&
     limitedSampleFormChipSource.includes('data-form-value-whisper-layout="stacked"') &&
     limitedSampleFormChipSource.includes("inline-flex flex-col items-start") &&
