@@ -450,6 +450,7 @@ export async function fetchMlbCompletedScheduleDates(startDate: string, endDate:
 async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbSchedule> {
   const params = new URLSearchParams({
     sportId: "1",
+    gameTypes: "R",
     date,
     hydrate: "probablePitcher,team",
   });

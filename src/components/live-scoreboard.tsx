@@ -11,6 +11,7 @@ import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreb
 import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
+import { LIVE_EMPTY_REFRESH_INTERVAL_MS } from "@/lib/live-board-config";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus, formatWatchScore } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
@@ -76,6 +77,32 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   }, [board.hasActiveStarts, initialBoard.date, pregame]);
 
   useEffect(() => {
+    if (board.mode !== "empty") return;
+    let cancelled = false;
+
+    const refresh = async () => {
+      try {
+        const response = await fetch(`/api/live/${encodeURIComponent(initialBoard.date)}`, { cache: "no-store" });
+        if (!response.ok) return;
+        const nextBoard = (await response.json()) as LiveScoreboardData;
+        if (!cancelled) {
+          latestRowsRef.current = nextBoard.rows;
+          setBoard(nextBoard);
+          setSlateProgress(nextBoard.slateProgress);
+        }
+      } catch {
+        // Empty slate polling is intentionally slow and quiet.
+      }
+    };
+
+    const interval = window.setInterval(refresh, LIVE_EMPTY_REFRESH_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [board.mode, initialBoard.date]);
+
+  useEffect(() => {
     if (!pregame || !pregameFirstPitchAt) return;
     const firstPitchMs = new Date(pregameFirstPitchAt).getTime();
     if (!Number.isFinite(firstPitchMs)) return;
@@ -124,12 +151,27 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
 
   const updatedLabel = useMemo(() => formatUpdatedLabel(board.generatedAt), [board.generatedAt]);
 
-  if (!board.hasGames && !board.pregameSlate) {
+  if (board.mode === "error") {
     return (
-      <section className="rounded border border-white/10 bg-[#101014] p-6 text-zinc-300">
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">No games today.</p>
+      <section className="rounded border border-white/10 bg-[#101014] p-6 text-zinc-300" data-live-board-date={board.date} data-live-board-mode="error">
+        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">Could not load today&apos;s slate. Retrying.</p>
       </section>
     );
+  }
+
+  if (board.mode === "empty") {
+    return (
+      <section className="space-y-4" data-live-board-date={board.date} data-live-starts={board.liveStarts} data-final-starts={board.finalStarts} data-scheduled-starts={board.scheduledStarts} data-live-board-mode="empty" data-live-empty-refresh-interval-ms={LIVE_EMPTY_REFRESH_INTERVAL_MS}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
+          <p>{scoreboardSummaryLabel(board)}</p>
+        </div>
+        <LiveEmptyState board={board} />
+      </section>
+    );
+  }
+
+  if (!board.hasGames && !board.pregameSlate) {
+    return <LiveEmptyState board={board} />;
   }
 
   const scoredRows = board.rows.filter(isScoredRow);
@@ -187,7 +229,7 @@ export function LiveScoreboardLoading({ board }: { board: LiveScoreboardData }) 
   if (!board.hasGames) {
     return (
       <section className="rounded border border-white/10 bg-[#101014] p-6 text-zinc-300" data-live-loading-mode="empty">
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">No games today.</p>
+        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">NO GAMES TODAY</p>
       </section>
     );
   }
@@ -273,10 +315,12 @@ function LiveGemAlertStack({ alerts, onDismiss }: { alerts: LiveGemAlertEvent[];
 }
 
 function scoreboardSummaryLabel(board: LiveScoreboardData) {
-  const optionalBuckets = [
-    board.warmingStarts > 0 ? `${board.warmingStarts} warming` : null,
-    board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null,
-  ].filter((bucket): bucket is string => Boolean(bucket));
+  const optionalBuckets = board.mode === "empty"
+    ? [`${board.scheduledStarts} scheduled`]
+    : [
+        board.warmingStarts > 0 ? `${board.warmingStarts} warming` : null,
+        board.scheduledStarts > 0 ? `${board.scheduledStarts} scheduled` : null,
+      ].filter((bucket): bucket is string => Boolean(bucket));
 
   return (
     <>
@@ -287,6 +331,37 @@ function scoreboardSummaryLabel(board: LiveScoreboardData) {
       ))}
     </>
   );
+}
+
+function LiveEmptyState({ board }: { board: LiveScoreboardData }) {
+  const nextSlate = board.nextSlateDate ? formatNextSlateEmptyLine(board.nextSlateDate) : null;
+
+  return (
+    <section className="rounded border border-white/10 bg-[#101014] p-5 text-zinc-300 sm:p-6" data-live-empty-state="true">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">NO GAMES TODAY</p>
+      <p className="mt-3 text-sm leading-6 text-zinc-300">{emptyStateCopy(board)}</p>
+      {nextSlate ? <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" data-live-empty-next-slate>{nextSlate}</p> : null}
+    </section>
+  );
+}
+
+function emptyStateCopy(board: LiveScoreboardData) {
+  if (!board.nextSlateDate) return "The season is over. See you in the spring.";
+  const daysAway = daysBetweenPacificDates(board.date, board.nextSlateDate);
+  if (board.date.slice(5, 7) === "07" && daysAway >= 2 && daysAway <= 7) return "League is on the All-Star break.";
+  return "No starts scheduled today.";
+}
+
+function formatNextSlateEmptyLine(date: string) {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  const label = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
+  return `Next slate: ${label}`;
 }
 
 function SlateCompleteHandoff({ board, rows }: { board: LiveScoreboardData; rows: LiveScoreboardRow[] }) {

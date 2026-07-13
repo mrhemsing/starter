@@ -40,7 +40,7 @@ assert(
 
 assert(
   startService.includes("export function scoreCompletedLine(line: StartLine, context?: StartContext)") &&
-    liveService.includes('import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";') &&
+    liveService.includes('import { addDays, getBoardDate, getDailySlate, scoreCompletedLine } from "@/lib/data/start-service";') &&
     liveService.includes('import { getTonightMustWatch } from "@/lib/data/tonight-service";') &&
     liveService.includes("const projectedGsPlus = projectionsByStart.get(lineKey(start.gamePk, start.pitcher.mlbId)) ?? null;") &&
     liveService.includes("const hasRealLine = Boolean(liveLine && status !== \"warming\" && hasNonEmptyLine(line));") &&
@@ -62,16 +62,16 @@ assert(
 assert(
   liveService.includes("fetchMlbLivePitchingLines") &&
     liveService.includes("LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30") &&
-    liveService.includes('["live-scoreboard", "v11"]') &&
+    liveService.includes('["live-scoreboard", "v12"]') &&
     liveService.includes('if (game && normalizeScheduleStatus(game) === "ppd") return [];') &&
     liveService.includes("const status = refinePregameStatus(rawStatus, firstPitch, now, Boolean(liveLine));") &&
     liveService.includes("const buildRows = (projectionsByStart: Map<string, number | null>) => slate.flatMap((start) =>") &&
-    liveService.includes("let rows = buildRows(new Map());") &&
+    liveService.includes("let rows = guardLiveRowsForBoardDate(buildRows(new Map()), date);") &&
     liveService.includes("startCounts.warmingStarts === 0") &&
     liveService.includes("const slateComplete = rows.length > 0 && startCounts.totalStarts > 0 && startCounts.finalStarts === startCounts.totalStarts;") &&
     liveService.includes('if (((!pregame && !slateComplete) || slateComplete) && rows.some((row) => row.scoreLabel === "PROJ" || row.projectedGsPlus === null))') &&
     liveService.includes("const upcoming = await getTonightMustWatch({ date, window: 5 });") &&
-    liveService.includes("rows = buildRows(getUpcomingProjectionMap(upcoming));") &&
+    liveService.includes("rows = guardLiveRowsForBoardDate(buildRows(getUpcomingProjectionMap(upcoming)), date);") &&
     liveService.includes("starter.projection?.projectedGsPlus ?? null") &&
     liveService.includes('scoreLabel: "PROJ" | "PROV" | "FINAL";') &&
     liveService.includes('const scoreLabel = !hasRealLine ? "PROJ" : status === "final" ? "FINAL" : "PROV";') &&
@@ -108,14 +108,14 @@ assert(
     liveService.includes("pregameSlate,") &&
     liveService.includes("slateProgress,") &&
     liveService.includes("async function resolveNextSlate(date: string)") &&
-    liveService.includes("for (let offset = 1; offset <= 7; offset += 1)") &&
+    liveService.includes("for (let offset = 1; offset <= LIVE_LOOKAHEAD_DAYS; offset += 1)") &&
     liveService.includes("const nextDate = addDays(date, offset);") &&
-    liveService.includes('fetchMlbSchedule(nextDate, { fetchLive: false })') &&
+    liveService.includes('fetchMlbSchedule(nextDate, { fetchLive: true })') &&
     liveService.includes("getTonightMustWatch({ date: nextDate, window: 5 }).catch(() => null)") &&
     liveService.includes('normalizeScheduleStatus(game) !== "ppd"') &&
     liveService.includes("Number.isFinite(game.ms)") &&
     !liveService.includes("game.ms > afterMs") &&
-    liveService.includes("if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch };") &&
+    liveService.includes("if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch, daysScanned: offset };") &&
     liveService.includes("function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate[\"headerLabel\"])") &&
     liveService.includes("const pregameGames = watch.games") &&
     liveService.includes(".sort((a, b) => a.firstPitchMs - b.firstPitchMs);") &&
@@ -174,7 +174,8 @@ assert(
     !livePage.includes("live-non-live-page") &&
     livePage.includes('className="mx-auto flex max-w-7xl flex-col gap-8"') &&
     !livePage.includes("max-w-7xl flex-col gap-8 px-4 py-6") &&
-    livePage.includes('import { getHomeSlateDate } from "@/lib/data/start-service";') &&
+    livePage.includes('import { getBoardDate, getLiveScoreboard } from "@/lib/data/live-scoreboard-service";') &&
+    livePage.includes("const today = getBoardDate();") &&
     livePage.includes("const board = await getLiveScoreboard({ date });") &&
     !livePage.includes("getSlateStartProgress") &&
     !livePage.includes("Promise.all([") &&

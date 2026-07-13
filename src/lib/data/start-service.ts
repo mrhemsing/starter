@@ -133,6 +133,7 @@ function round2(value: number) {
 
 type DailySlateParams = Partial<SlateRouteParams> & {
   persistCanonical?: boolean;
+  allowDemoFallback?: boolean;
 };
 
 export async function getDailySlate(params?: DailySlateParams): Promise<StartSummary[]> {
@@ -153,7 +154,8 @@ export async function getDailySlate(params?: DailySlateParams): Promise<StartSum
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = rankStarts(await buildScheduledStarts(schedule, completedLines, teamQualityContexts));
 
-  return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);
+  const allowDemoFallback = params.allowDemoFallback !== false;
+  return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 || !allowDemoFallback ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);
 }
 
 export async function getCanonicalStartReconciliationReport(date = getHomeSlateDate()): Promise<CanonicalReconciliationReport> {
@@ -540,6 +542,10 @@ async function fetchRequestTimeSavantPitchDetails(date: string, gamePk: number, 
 
 export function getHomeSlateDate(now = new Date()) {
   return toTimeZoneIsoDate(now, SITE_TIME_ZONE);
+}
+
+export function getBoardDate(now = new Date()) {
+  return toTimeZoneIsoDate(now, "America/Vancouver");
 }
 
 function toTimeZoneIsoDate(date: Date, timeZone: string) {

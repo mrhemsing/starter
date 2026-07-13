@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { LiveScoreboard } from "@/components/live-scoreboard";
 import { SiteHeader } from "@/components/site-header";
-import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
-import { getHomeSlateDate } from "@/lib/data/start-service";
+import { getBoardDate, getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 
 type LivePageProps = {
@@ -23,7 +22,7 @@ export async function generateMetadata({ params }: LivePageProps): Promise<Metad
 export default async function LivePage({ params }: LivePageProps) {
   const { date } = await params;
   assertValidDateRouteParam(date);
-  const today = getHomeSlateDate();
+  const today = getBoardDate();
   const board = await getLiveScoreboard({ date });
   const slateComplete = board.hasGames && board.totalStarts > 0 && board.finalStarts === board.totalStarts;
   const pregame = Boolean(board.pregameSlate?.marqueeGame) && board.finalStarts === 0 && board.liveStarts === 0 && board.warmingStarts === 0 && board.delayStarts === 0;

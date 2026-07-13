@@ -48,6 +48,7 @@
     "check:watch-confidence": "node scripts/check-watch-score-confidence-contract.mjs",
     "check:slate-sync": "node scripts/check-slate-sync.mjs",
     "check:live-scoreboard": "node scripts/check-live-scoreboard-contract.mjs",
+    "check:live-board-slate-scoping": "node scripts/check-live-board-slate-scoping.mjs",
     "check:slate-story": "node scripts/check-slate-story-contract.mjs",
     "check:no-hitter-alert": "node scripts/check-no-hitter-alert-contract.mjs",
     "check:skeleton-parity": "node scripts/check-skeleton-parity-contract.mjs",

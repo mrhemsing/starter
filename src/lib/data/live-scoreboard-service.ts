@@ -3,17 +3,19 @@ import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { readNoHitterBidAlerts, type NoHitterBidAlert } from "@/lib/data/no-hitter-alert-service";
 import { readCachedRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
-import { addDays, getDailySlate, getHomeSlateDate, scoreCompletedLine } from "@/lib/data/start-service";
+import { addDays, getBoardDate, getDailySlate, scoreCompletedLine } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { PREGAME_FIRST_UP_PROXIMITY_WINDOW_MS } from "@/lib/live-pregame";
 import { inningsFromIP } from "@/lib/innings";
 import { liveDateHref, pitcherHref, sourceParams, startHref } from "@/lib/routes";
 import { formatFirstPitchCountdown, getSlateProgressState, normalizeScheduleStatus, summarizeSlateStartBuckets, type SlateProgressState, type SlateStartBucketCounts } from "@/lib/slate-state";
 import { RANKED_START_IP_FLOOR } from "@/lib/start-classification";
-import type { MlbLivePitchingLine, MlbScheduleGame, StartLine, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
+import type { MlbLivePitchingLine, MlbSchedule, MlbScheduleGame, StartLine, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
 
 export const LIVE_SCOREBOARD_REVALIDATE_SECONDS = 30;
 const LIVE_WARMING_LEAD_MS = 30 * 60 * 1000;
+const LIVE_BOARD_TIME_ZONE = "America/Vancouver";
+const LIVE_LOOKAHEAD_DAYS = 10;
 
 export type LiveScoreboardStatus = "live" | "final" | "warming" | "scheduled" | "delay";
 
@@ -48,6 +50,7 @@ export type LiveScoreboardRow = {
 
 export type LiveScoreboard = SlateStartBucketCounts & {
   date: string;
+  mode: "slate" | "empty" | "error";
   generatedAt: string;
   hasGames: boolean;
   hasActiveStarts: boolean;
@@ -84,19 +87,33 @@ export type LivePregameSlate = {
 
 const getCachedLiveScoreboard = unstable_cache(
   async (date: string) => buildLiveScoreboard(date),
-  ["live-scoreboard", "v11"],
+  ["live-scoreboard", "v12"],
   { revalidate: LIVE_SCOREBOARD_REVALIDATE_SECONDS, tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
-export async function getLiveScoreboard({ date = getHomeSlateDate() }: { date?: string } = {}): Promise<LiveScoreboard> {
+const getCachedLiveLookahead = unstable_cache(
+  async (date: string) => resolveNextSlateUncached(date),
+  ["live-scoreboard-lookahead", "v1"],
+  { revalidate: 24 * 60 * 60, tags: [LIVE_CACHE_TAG, SLATE_CACHE_TAG] },
+);
+
+export { getBoardDate };
+
+export async function getLiveScoreboard({ date = getBoardDate() }: { date?: string } = {}): Promise<LiveScoreboard> {
   return normalizeCachedLiveScoreboard(await getCachedLiveScoreboard(date), date);
 }
 
 async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
-  const [slate, schedule] = await Promise.all([
-    getDailySlate({ window: "today", date }),
+  console.info(`[live-board] boardDate=${date} tz=${LIVE_BOARD_TIME_ZONE}`);
+  const [rawSlate, rawSchedule] = await Promise.all([
+    getDailySlate({ window: "today", date, allowDemoFallback: false }),
     fetchMlbSchedule(date, { fetchLive: true, gamefeedRevalidateSeconds: LIVE_SCOREBOARD_REVALIDATE_SECONDS }),
   ]);
+  console.info(`[live-board] fetch date=${date} upstream=https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameTypes=R&date=${date}&hydrate=probablePitcher%2Cteam status=${rawSchedule.source === "live" ? 200 : "fallback"} rawGames=${rawSchedule.games.length}`);
+
+  const schedule = filterLiveBoardSchedule(rawSchedule, date);
+  const validGamePks = new Set(schedule.games.map((game) => game.gamePk));
+  const slate = rawSlate.filter((start) => validGamePks.has(start.gamePk));
 
   const liveLinesByStart = await getLiveLinesByStart(schedule.games);
   const gamesByPk = new Map(schedule.games.map((game) => [game.gamePk, game]));
@@ -110,7 +127,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     })
     .sort(compareLiveRows);
 
-  let rows = buildRows(new Map());
+  let rows = guardLiveRowsForBoardDate(buildRows(new Map()), date);
   let scoredRows = rows.filter(isScoredRow);
   let startCounts = summarizeSlateStartBuckets(rows);
   const pregame =
@@ -123,7 +140,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
 
   if (((!pregame && !slateComplete) || slateComplete) && rows.some((row) => row.scoreLabel === "PROJ" || row.projectedGsPlus === null)) {
     const upcoming = await getTonightMustWatch({ date, window: 5 });
-    rows = buildRows(getUpcomingProjectionMap(upcoming));
+    rows = guardLiveRowsForBoardDate(buildRows(getUpcomingProjectionMap(upcoming)), date);
     scoredRows = rows.filter(isScoredRow);
     startCounts = summarizeSlateStartBuckets(rows);
   }
@@ -133,16 +150,20 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
   const slateStory = slateComplete ? await readSlateStory(date, rows, startCounts.totalStarts, generatedAt) : null;
   const currentPregameWatch = pregame ? await getTonightMustWatch({ date, window: 5 }).catch(() => null) : null;
   const nextSlate = slateComplete || rows.length === 0 ? await resolveNextSlate(date) : null;
+  const mode = rawSchedule.source !== "live" ? "error" : rows.length === 0 ? "empty" : "slate";
+  console.info(`[live-board] cache write date=${date} rows=${rows.length}`);
+  console.info(`[live-board] render mode=${mode} rows=${rows.length}`);
   const pregameSlate = currentPregameWatch
     ? buildLivePregameSlate(date, currentPregameWatch, "FIRST UP")
-    : rows.length === 0 && nextSlate?.watch
+    : mode === "slate" && rows.length === 0 && nextSlate?.watch
       ? buildLivePregameSlate(nextSlate.date, nextSlate.watch, "NEXT SLATE")
       : null;
 
   return {
     date,
+    mode,
     generatedAt: generatedAt.toISOString(),
-    hasGames: rows.length > 0,
+    hasGames: mode === "slate" && rows.length > 0,
     hasActiveStarts: startCounts.liveStarts > 0 || startCounts.warmingStarts > 0 || startCounts.delayStarts > 0,
     slateProgress,
     pregameSlate,
@@ -183,22 +204,76 @@ function slateStoryKey(date: string) {
 }
 
 async function resolveNextSlate(date: string) {
-  for (let offset = 1; offset <= 7; offset += 1) {
+  const nextSlate = await getCachedLiveLookahead(date);
+  console.info(`[live-board] lookahead nextSlate=${nextSlate?.date ?? "none"} daysScanned=${nextSlate?.daysScanned ?? LIVE_LOOKAHEAD_DAYS}`);
+  return nextSlate;
+}
+
+async function resolveNextSlateUncached(date: string) {
+  for (let offset = 1; offset <= LIVE_LOOKAHEAD_DAYS; offset += 1) {
     const nextDate = addDays(date, offset);
     const [schedule, watch] = await Promise.all([
-      fetchMlbSchedule(nextDate, { fetchLive: false }),
+      fetchMlbSchedule(nextDate, { fetchLive: true }),
       getTonightMustWatch({ date: nextDate, window: 5 }).catch(() => null),
     ]);
-    const firstPitchAt = schedule.games
+    const scopedSchedule = filterLiveBoardSchedule(schedule, nextDate, { log: false });
+    const firstPitchAt = scopedSchedule.games
       .filter((game) => normalizeScheduleStatus(game) !== "ppd")
       .map((game) => ({ iso: game.gameDate, ms: new Date(game.gameDate).getTime() }))
       .filter((game) => Number.isFinite(game.ms))
       .sort((a, b) => a.ms - b.ms)[0]?.iso ?? null;
 
-    if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch };
+    if (firstPitchAt) return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch, daysScanned: offset };
   }
 
   return null;
+}
+
+function filterLiveBoardSchedule(schedule: MlbSchedule, boardDate: string, options: { log?: boolean } = {}) {
+  const log = options.log !== false;
+  const regularGames = schedule.games.filter((game) => game.gameType === "R");
+  const dateMatchedGames = regularGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) === boardDate);
+  const droppedPks = regularGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) !== boardDate).map((game) => game.gamePk);
+
+  if (log) {
+    console.info(`[live-board] filter gameType=R kept=${regularGames.length} dropped=${schedule.games.length - regularGames.length}`);
+    console.info(`[live-board] filter ptDateMatch kept=${dateMatchedGames.length} dropped=${regularGames.length - dateMatchedGames.length} droppedPks=[${droppedPks.join(",")}]`);
+  }
+
+  return { ...schedule, date: boardDate, games: dateMatchedGames };
+}
+
+export function guardLiveRowsForBoardDate(rows: LiveScoreboardRow[], boardDate: string) {
+  const kept: LiveScoreboardRow[] = [];
+  const dropped: LiveScoreboardRow[] = [];
+
+  for (const row of rows) {
+    const rowDate = gameDateInBoardTimeZone(row.firstPitch);
+    if (rowDate === boardDate) {
+      kept.push(row);
+    } else {
+      dropped.push(row);
+      console.warn(`[live-board] drop ptDateMatch gamePk=${row.gamePk} pitcher=${row.pitcherName} gameDate=${rowDate ?? "invalid"}`);
+    }
+  }
+
+  console.info(`[live-board] filter ptDateMatch kept=${kept.length} dropped=${dropped.length} droppedPks=[${dropped.map((row) => row.gamePk).join(",")}]`);
+  return kept;
+}
+
+function gameDateInBoardTimeZone(iso: string) {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.valueOf())) return null;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: LIVE_BOARD_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(parsed);
+  const year = parts.find((part) => part.type === "year")?.value ?? String(parsed.getUTCFullYear());
+  const month = parts.find((part) => part.type === "month")?.value ?? String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = parts.find((part) => part.type === "day")?.value ?? String(parsed.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function buildLivePregameSlate(date: string, watch: TonightResponse, headerLabel: LivePregameSlate["headerLabel"]): LivePregameSlate {
@@ -484,11 +559,17 @@ function qualityLabel(gsPlus: number): LiveScoreboardRow["qualityLabel"] {
 }
 
 function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScoreboard, "slateProgress"> & { slateProgress?: SlateProgressState }), date: string): LiveScoreboard {
+  if (board.date !== date) {
+    console.warn(`[live-board] cache miss reason=dateMismatch cached=${board.date}`);
+    return fallbackErrorBoard(date);
+  }
+
   if (board.slateProgress) {
     const cachedBoard = board as LiveScoreboard;
     const rows = cachedBoard.rows.map(normalizeCachedLiveRow);
     return {
       ...cachedBoard,
+      mode: cachedBoard.mode ?? (rows.length === 0 ? "empty" : "slate"),
       rows,
       leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
       noHitterAlerts: cachedBoard.noHitterAlerts ?? [],
@@ -503,6 +584,7 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
 
   return {
     ...board,
+    mode: board.rows.length === 0 ? "empty" : "slate",
     rows,
     leader: rows.filter(isLiveLeaderEligibleRow)[0] ?? null,
     noHitterAlerts: [],
@@ -512,6 +594,43 @@ function normalizeCachedLiveScoreboard(board: LiveScoreboard | (Omit<LiveScorebo
     nextSlateDate: null,
     nextSlateFirstPitchAt: null,
     nextSlateTopGame: null,
+  };
+}
+
+function fallbackErrorBoard(date: string): LiveScoreboard {
+  const generatedAt = new Date().toISOString();
+  return {
+    date,
+    mode: "error",
+    generatedAt,
+    hasGames: false,
+    hasActiveStarts: false,
+    slateProgress: {
+      date,
+      state: "no-games",
+      totalGames: 0,
+      liveGames: 0,
+      finalGames: 0,
+      totalStarts: 0,
+      completedStarts: 0,
+      liveStarts: 0,
+      firstPitchAt: null,
+      countdownLabel: null,
+    },
+    pregameSlate: null,
+    nextSlateDate: null,
+    nextSlateFirstPitchAt: null,
+    nextSlateTopGame: null,
+    totalStarts: 0,
+    liveStarts: 0,
+    finalStarts: 0,
+    warmingStarts: 0,
+    scheduledStarts: 0,
+    delayStarts: 0,
+    rows: [],
+    leader: null,
+    noHitterAlerts: [],
+    slateStory: null,
   };
 }
 

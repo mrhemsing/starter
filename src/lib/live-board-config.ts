@@ -1,0 +1,1 @@
+export const LIVE_EMPTY_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
