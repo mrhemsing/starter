@@ -20,6 +20,7 @@ const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-07-05-min-nyy-657746": "tMUgTt5EwLQ",
   "2026-07-07-phi-cin-554430": "dq9meO_64Fk",
   "2026-07-08-tor-sf-656302": "0AmJgvdkVbk",
+  "2026-07-10-cin-chc-668881": "pNxl8o2NWNw",
 };
 
 type CachedResolution = {
