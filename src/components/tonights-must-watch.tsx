@@ -67,7 +67,11 @@ export function TonightsMustWatch({
       data-slate-date={tonight.date}
       data-generated-at={tonight.generatedAt}
       data-game-count={shownGames.length}
+      data-watch-section-eyebrow={eyebrowLabel}
+      data-watch-section-title={title}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
+      data-visible-headliner-game-pk={headliner?.gamePk ?? "none"}
+      data-visible-row-game-pks={rows.length ? rows.map((game) => game.gamePk).join(",") : "none"}
       data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
       data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join("|") : "none"}
       data-visible-team-matchups={shownGames.length ? shownGames.map((game) => `${game.away}@${game.home}`).join(",") : "none"}
@@ -81,6 +85,7 @@ export function TonightsMustWatch({
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
       data-visible-summary-ids={shownGames.length ? shownGames.map(watchCardSummaryIdValue).join(",") : "none"}
       data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabelValue(game, showGameStatus)).join("|") : "none"}
+      data-visible-summary-copies={shownGames.length ? shownGames.map((game, index) => watchCardSummaryCopyValue(game, showGameStatus, index === 0 ? undefined : index + 1, index === 0 ? undefined : shownGames.length)).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-limited-reasons={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.limitedReason ?? "none").join("/")).join(",") : "none"}
@@ -127,7 +132,7 @@ export function TonightsMustWatch({
       data-visible-starter-accent-colors={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterFormAccent(starter).color).join("/")).join(",") : "none"}
       data-visible-starter-market-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-market-sources={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.marketContext?.source ?? "none").join("/")).join(",") : "none"}
-      data-visible-starter-market-labels={shownGames.length ? shownGames.map((game) => game.starters.map(starterMarketLabelDataValue).join("|")).join(",") : "none"}
+      data-visible-starter-market-labels={shownGames.length ? shownGames.map((game) => game.starters.map(starterMarketLabelDataValue).join("|")).join("||") : "none"}
       data-visible-starter-projection-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.status ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-confidences={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.projection?.confidence ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-projection-gs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => projectionDisplayValue(starter.projection?.projectedGsPlus)).join("/")).join(",") : "none"}
@@ -149,10 +154,12 @@ export function TonightsMustWatch({
       data-visible-starter-status-chip-counts={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starterStatusChipCount(starter))).join("/")).join(",") : "none"}
       data-visible-park-run-factors={shownGames.length ? shownGames.map((game) => game.parkContext.runFactor.toFixed(2)).join(",") : "none"}
       data-visible-park-run-values={shownGames.length ? shownGames.map((game) => game.parkContext.runValue.toFixed(1)).join(",") : "none"}
+      data-visible-park-chip-labels={shownGames.length ? shownGames.map(parkChipLabel).join("|") : "none"}
       data-visible-park-labels={shownGames.length ? shownGames.map((game) => game.parkContext.label).join("|") : "none"}
       data-visible-park-tones={shownGames.length ? shownGames.map((game) => parkContextTone(game)).join(",") : "none"}
       data-visible-weather-sources={shownGames.length ? shownGames.map((game) => game.weatherContext.source).join(",") : "none"}
       data-visible-weather-run-values={shownGames.length ? shownGames.map((game) => game.weatherContext.runValue.toFixed(1)).join(",") : "none"}
+      data-visible-weather-chip-labels={shownGames.length ? shownGames.map(weatherChipLabel).join("|") : "none"}
       data-visible-weather-labels={shownGames.length ? shownGames.map((game) => game.weatherContext.label).join("|") : "none"}
       data-visible-weather-temp-f={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.tempF, 0)).join(",") : "none"}
       data-visible-weather-wind-mph={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") : "none"}
@@ -164,7 +171,7 @@ export function TonightsMustWatch({
       data-visible-watch-scores={shownGames.length ? shownGames.map(watchScoreValue).join(",") : "none"}
       data-visible-watch-score-labels={shownGames.length ? shownGames.map((game) => watchScoreLabel(game)).join("|") : "none"}
       data-visible-watch-score-confidences={shownGames.length ? shownGames.map((game) => game.watchScoreConfidence).join(",") : "none"}
-      data-visible-watch-score-confidence-labels={shownGames.length ? shownGames.map((game) => watchScoreConfidenceLabel(game.watchScoreConfidence) || "none").join("|") : "none"}
+      data-visible-watch-score-confidence-labels={shownGames.length ? shownGames.map((game) => watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd) || "none").join("|") : "none"}
       data-visible-watch-score-qualified-counts={shownGames.length ? shownGames.map((game) => `${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`).join(",") : "none"}
       data-visible-watch-tiers={shownGames.length ? shownGames.map((game) => game.watchTier).join(",") : "none"}
       data-visible-watch-tier-labels={shownGames.length ? shownGames.map(watchTierLabel).join("|") : "none"}
@@ -173,6 +180,7 @@ export function TonightsMustWatch({
       data-visible-watch-sort-group-labels={shownGames.length ? shownGames.map(watchSortGroupLabelValue).join("|") : "none"}
       data-visible-watch-flag-keys={shownGames.length ? shownGames.map(watchFlagNoteKeysValue).join(",") : "none"}
       data-visible-watch-flag-labels={shownGames.length ? shownGames.map(watchFlagNoteLabelValue).join("|") : "none"}
+      data-visible-watch-flag-copies={shownGames.length ? shownGames.map(watchFlagNoteCopyValue).join("|") : "none"}
       data-visible-component-counts={shownGames.length ? shownGames.map(watchComponentCountValue).join(",") : "none"}
       data-visible-component-keys={shownGames.length ? shownGames.map(watchComponentKeysValue).join(",") : "none"}
       data-visible-component-layouts={shownGames.length ? shownGames.map((_, index) => watchComponentSectionLayout(index)).join(",") : "none"}
@@ -182,6 +190,7 @@ export function TonightsMustWatch({
       data-visible-component-pairings={shownGames.length ? shownGames.map((game) => game.watchComponents.pairing.toFixed(1)).join(",") : "none"}
       data-visible-component-matchups={shownGames.length ? shownGames.map((game) => game.matchupScore.toFixed(1)).join(",") : "none"}
       data-visible-component-details={shownGames.length ? shownGames.map((game) => watchComponentDetailsValue(game, rankLabel)).join(",") : "none"}
+      data-visible-component-copies={shownGames.length ? shownGames.map((game) => watchComponentCopiesValue(game, rankLabel)).join("|") : "none"}
       data-visible-component-item-aria-labels={shownGames.length ? shownGames.map((game) => watchComponentItemAriaLabelsValue(game, rankLabel)).join("|") : "none"}
       data-visible-component-aria-labels={shownGames.length ? shownGames.map(watchComponentsAriaLabelValue).join("|") : "none"}
       data-visible-matchup-ranks={shownGames.length ? shownGames.map((game) => game.matchupRankTonight).join(",") : "none"}
@@ -231,6 +240,9 @@ export function TonightsMustWatch({
             href={fullSlateHref}
             className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300"
             aria-label={fullSlateAriaLabel ?? fullSlateLabel}
+            data-primary-slate-cta-href={fullSlateHref}
+            data-primary-slate-cta-label={fullSlateLabel}
+            data-primary-slate-cta-aria-label={fullSlateAriaLabel ?? fullSlateLabel}
           >
             {fullSlateLabel}
           </Link>
@@ -277,6 +289,7 @@ export function TonightsMustWatch({
 function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
+  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus);
   const awayStarter = game.starters[0];
   const homeStarter = game.starters[1];
   const awayAccent = starterFormAccent(awayStarter);
@@ -322,12 +335,14 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-confidence={game.watchScoreConfidence}
-      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
+      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd) || "none"}
       data-watch-score-qualified-starts={`${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
+      data-watch-hook-reason={watchHookReasonValue(game, rankLabel)}
+      data-watch-hook-reason-key={watchHookReasonKeyValue(game, rankLabel)}
       data-watch-summary-id={summaryId}
       data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
       data-away-accent-source={awayAccent.source}
@@ -349,6 +364,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
               id={summaryId}
               className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500"
               data-summary-status-label={gameStatusLabel(game.status)}
+              data-summary-copy={summaryCopy}
               data-first-pitch={game.firstPitch}
               data-venue={gameVenueLabel(game)}
               aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
@@ -358,7 +374,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
             <GameEnvironmentChips game={game} />
           </div>
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200" data-matchup-quality-tag={statusLabel}>{statusLabel}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200" data-matchup-quality-tag={statusLabel} data-matchup-quality-copy={statusLabel}>{statusLabel}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
               <p className="font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
               <WatchScoreConfidenceChip game={game} compact />
@@ -470,7 +486,7 @@ function watchScoreLabel(game: TonightGame) {
 }
 
 function WatchScoreConfidenceChip({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
-  const label = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  const label = watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd);
   if (!label) return null;
 
   return (
@@ -478,6 +494,7 @@ function WatchScoreConfidenceChip({ game, compact = false }: { game: TonightGame
       className={`inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 font-mono uppercase tracking-[0.12em] text-amber-100 ${compact ? "px-1.5 py-0.5 text-[8px]" : "px-2 py-1 text-[10px]"}`}
       data-watch-score-confidence-chip={game.watchScoreConfidence}
       data-watch-score-confidence-chip-label={label}
+      data-watch-score-confidence-chip-copy={label}
     >
       {label}
     </span>
@@ -504,14 +521,14 @@ function topWatchScoreGamePk(games: TonightGame[]) {
 
 function matchupStatusLabel(game: TonightGame, isTopWatchScore: boolean) {
   if (isTopWatchScore) return "TOP WATCH SCORE";
-  const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd);
   if (confidenceLabel) return confidenceLabel;
   return watchMatchupQualityBand(game.gameWatchScore).label;
 }
 
 function matchupStatusColor(game: TonightGame, isTopWatchScore: boolean) {
   if (isTopWatchScore) return "#FBBF24";
-  if (watchScoreConfidenceLabel(game.watchScoreConfidence)) return "#FBBF24";
+  if (watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd)) return "#FBBF24";
   return watchMatchupQualityBand(game.gameWatchScore).color;
 }
 
@@ -532,6 +549,7 @@ function watchSortGroupLabelValue(game: TonightGame) {
 function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
+  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus, rank, slateSize);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
   const homeAccent = starterFormAccent(game.starters[1]);
@@ -577,12 +595,14 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
       data-watch-score={watchScoreValue(game)}
       data-watch-score-label={watchScoreLabel(game)}
       data-watch-score-confidence={game.watchScoreConfidence}
-      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
+      data-watch-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd) || "none"}
       data-watch-score-qualified-starts={`${game.watchScoreQualifiedStartCounts.away}/${game.watchScoreQualifiedStartCounts.home}`}
       data-watch-score-tier={game.watchTier}
       data-watch-tier={watchTierLabel(game)}
       data-watch-flag-keys={watchFlagNoteKeysValue(game)}
       data-watch-flag-label={watchFlagNoteLabelValue(game)}
+      data-watch-hook-reason={watchHookReasonValue(game, rankLabel)}
+      data-watch-hook-reason-key={watchHookReasonKeyValue(game, rankLabel)}
       data-watch-summary-id={summaryId}
       data-watch-summary-aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
       data-away-accent-source={awayAccent.source}
@@ -611,6 +631,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
                 id={summaryId}
                 className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500"
                 data-summary-status-label={gameStatusLabel(game.status)}
+                data-summary-copy={summaryCopy}
                 data-first-pitch={game.firstPitch}
                 data-venue={gameVenueLabel(game)}
                 aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
@@ -623,6 +644,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
               className="inline-flex w-fit shrink-0 rounded border bg-black/30 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] md:ml-auto"
               style={{ borderColor: `${statusColor}66`, color: statusColor }}
               data-matchup-quality-tag={statusLabel}
+              data-matchup-quality-copy={statusLabel}
             >
               {statusLabel}
             </p>
@@ -666,6 +688,7 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
       data-watch-component-labels={watchComponentLabelsValue()}
       data-watch-component-values={watchComponentValuesValue(game)}
       data-watch-component-details={watchComponentDetailsValue(game, rankLabel)}
+      data-watch-component-copies={watchComponentCopiesValue(game, rankLabel)}
       data-watch-component-item-aria-labels={watchComponentItemAriaLabelsValue(game, rankLabel)}
       data-watch-component-aria-label={watchComponentsAriaLabelValue(game)}
       data-matchup-rank={game.matchupRankTonight}
@@ -682,6 +705,7 @@ function WatchComponentReadout({ game, compact = false, featured = false, rankLa
           data-watch-label={item.label}
           data-watch-value={item.value.toFixed(1)}
           data-watch-detail={item.detail}
+          data-watch-copy={watchComponentCopy(item.label, item.value, item.detail)}
           data-watch-item-aria-label={item.ariaLabel}
           role={item.ariaLabel === "none" ? undefined : "img"}
           aria-label={item.ariaLabel === "none" ? undefined : item.ariaLabel}
@@ -743,6 +767,16 @@ function watchComponentDetailsValue(game: TonightGame, rankLabel: string) {
   return watchComponentDetails(game, rankLabel).join("/");
 }
 
+function watchComponentCopy(label: string, value: number, detail: string) {
+  return `${label} ${value.toFixed(WATCH_SCORE_PRECISION)}${detail !== "none" ? ` ${detail}` : ""}`;
+}
+
+function watchComponentCopiesValue(game: TonightGame, rankLabel: string) {
+  const details = watchComponentDetails(game, rankLabel);
+  const values = [game.watchComponents.topArm, game.watchComponents.pairing, game.matchupScore];
+  return WATCH_COMPONENT_LABELS.map((label, index) => watchComponentCopy(label, values[index], details[index])).join("/");
+}
+
 function watchComponentItemAriaLabels(game: TonightGame, rankLabel: string) {
   const [, , matchupDetail] = watchComponentDetails(game, rankLabel);
   return [
@@ -762,6 +796,7 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
   const [awayStarter, homeStarter] = game.starters;
   const reason = watchHookReasonValue(game, rankLabel);
   const reasonKey = watchHookReasonKeyValue(game, rankLabel);
+  const scoreLabel = watchScoreLabel(game);
 
   return (
     <div
@@ -769,8 +804,9 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
       data-responsive-check="watch-hook"
       data-hook-score={watchScoreValue(game)}
       data-hook-score-label="score"
+      data-hook-score-copy={scoreLabel}
       data-hook-score-confidence={game.watchScoreConfidence}
-      data-hook-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence) || "none"}
+      data-hook-score-confidence-label={watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd) || "none"}
       data-hook-reason-key={reasonKey}
       data-hook-reason={reason}
     >
@@ -779,8 +815,8 @@ function MatchupSpine({ game, leagueMeanGS, rankLabel }: { game: TonightGame; le
         <div className="mt-1 flex items-end justify-center">
           <p className="font-serif text-5xl font-black leading-none text-amber-100">{watchScoreValue(game)}</p>
         </div>
-        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>
-        <p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" data-hook-score-copy={scoreLabel}>score</p>
+        <p className="mt-3 text-sm leading-5 text-zinc-300" data-hook-reason-copy={reason}>{reason}</p>
         <div className="mt-3 flex justify-center" data-hook-confidence-chip-placement="below-reason">
           <WatchScoreConfidenceChip game={game} />
         </div>
@@ -1091,6 +1127,7 @@ function componentBarColor(value: number) {
 function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?: boolean }) {
   if (!game.flags?.tbd && !game.flags?.limitedForm && !game.flags?.mlbDebut && !game.flags?.likelyOpener) return null;
   const flagKeys = watchFlagNoteKeys(game);
+  const copy = watchFlagNoteCopyValue(game);
 
   return (
     <p
@@ -1099,8 +1136,9 @@ function WatchFlagNote({ game, compact = false }: { game: TonightGame; compact?:
       data-watch-flag-count={flagKeys.length}
       data-watch-flag-keys={flagKeys.join(",")}
       data-watch-flag-label={watchFlagNoteDataLabel(game)}
+      data-watch-flag-copy={copy}
     >
-      {watchFlagNoteText(game)}
+      {copy}
     </p>
   );
 }
@@ -1121,6 +1159,10 @@ function watchFlagNoteKeysValue(game: TonightGame) {
 
 function watchFlagNoteLabelValue(game: TonightGame) {
   return watchFlagNoteDataLabel(game);
+}
+
+function watchFlagNoteCopyValue(game: TonightGame) {
+  return watchFlagNoteText(game) || "clear";
 }
 
 function watchFlagNoteDataLabel(game: TonightGame) {
@@ -1163,7 +1205,7 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
   const chips = [
     game.parkContext.available ? {
       key: "park",
-      label: `Park ${game.parkContext.runFactor.toFixed(2)}`,
+      label: parkChipLabel(game),
       detail: game.parkContext.label,
       source: "shared-venue-run-factors",
       value: game.parkContext.runValue.toFixed(1),
@@ -1196,6 +1238,7 @@ function GameEnvironmentChips({ game, compact = false }: { game: TonightGame; co
           data-context-chip={chip.key}
           data-context-source={chip.source}
           data-context-run-value={chip.value}
+          data-context-chip-label={chip.label}
           data-context-label={chip.detail}
           data-context-tone={chip.tone}
           {...chip.metadata}
@@ -1628,12 +1671,22 @@ function MarketContextLine({ starter, compact = false, align }: { starter: Tonig
 type MarketAttributionSource = "the-odds-api" | "prop-line" | "odds-deferred";
 
 function MarketAttributionLine({ attribution }: { attribution: { capturedAt: string | null; source: MarketAttributionSource } }) {
-  const label = attribution.source === "prop-line" ? "PropLine" : "The Odds API";
+  const copy = marketAttributionCopyValue(attribution);
   return (
-    <p className="mt-4 px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600" data-market-attribution={attribution.source}>
-      Lines {label}{attribution.capturedAt ? ` · captured ${formatMarketCapturedAt(attribution.capturedAt)}` : ""} · 21+ only. For help call 1-800-GAMBLER
+    <p
+      className="mt-4 px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600"
+      data-market-attribution={attribution.source}
+      data-market-attribution-captured-at={attribution.capturedAt ?? "pending"}
+      data-market-attribution-copy={copy}
+    >
+      {copy}
     </p>
   );
+}
+
+function marketAttributionCopyValue(attribution: { capturedAt: string | null; source: MarketAttributionSource }) {
+  const label = attribution.source === "prop-line" ? "PropLine" : "The Odds API";
+  return `Lines ${label}${attribution.capturedAt ? ` · captured ${formatMarketCapturedAt(attribution.capturedAt)}` : ""} · 21+ only. For help call 1-800-GAMBLER`;
 }
 
 function marketAttributionForGames(games: TonightGame[]) {
@@ -1859,6 +1912,10 @@ function gameVenueLabel(game: TonightGame) {
   return game.park || "Venue TBD";
 }
 
+function parkChipLabel(game: TonightGame) {
+  return `Park ${game.parkContext.runFactor.toFixed(2)}`;
+}
+
 function weatherChipLabel(game: TonightGame) {
   if (game.weatherContext.source === "indoor") return "Indoor";
   if (game.weatherContext.source === "unavailable") return "Weather neutral";
@@ -1890,6 +1947,14 @@ function watchCardSummaryAriaLabel(game: TonightGame, showGameStatus = true) {
 
 function watchCardSummaryAriaLabelValue(game: TonightGame, showGameStatus = true) {
   return watchCardSummaryAriaLabel(game, showGameStatus);
+}
+
+function watchCardSummaryCopyValue(game: TonightGame, showGameStatus = true, rank?: number, slateSize?: number) {
+  const segments = [];
+  if (showGameStatus) segments.push(gameStatusLabel(game.status));
+  segments.push(formatFirstPitch(game.firstPitch), gameVenueLabel(game));
+  if (rank !== undefined && slateSize !== undefined) segments.push(`#${rank} of ${slateSize} watch rank`);
+  return segments.join(" / ");
 }
 
 function watchComponentsAriaLabel(game: TonightGame) {

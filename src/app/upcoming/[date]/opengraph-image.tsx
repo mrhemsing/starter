@@ -28,7 +28,7 @@ export default async function Image({ params }: UpcomingImageProps) {
   );
   const topGame = games[0];
   const topTier = topGame ? watchTierOf(topGame.gameWatchScore) : null;
-  const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.watchScoreConfidence) : "";
+  const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.watchScoreConfidence, topGame.flags?.tbd) : "";
   const starters = topGame?.starters.filter((starter) => starter.name) ?? [];
 
   return new ImageResponse(

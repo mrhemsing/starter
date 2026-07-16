@@ -17,7 +17,8 @@ export function isFallbackWatchScoreSide(qualifiedStarts: number) {
   return qualifiedStarts < WATCH_SCORE_CONFIDENCE_MIN_QUALIFIED;
 }
 
-export function watchScoreConfidenceLabel(confidence: WatchScoreConfidence) {
+export function watchScoreConfidenceLabel(confidence: WatchScoreConfidence, hasUnnamedStarter = false) {
+  if (hasUnnamedStarter) return "PENDING";
   if (confidence === "LOW") return "LOW CONFIDENCE";
   if (confidence === "MEDIUM") return "LIMITED";
   return "";

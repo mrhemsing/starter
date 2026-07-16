@@ -33,7 +33,7 @@ export default async function Image({ params }: UpcomingWeekImageProps) {
     );
   const topGame = games[0];
   const topTier = topGame ? watchTierOf(topGame.game.gameWatchScore) : null;
-  const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.game.watchScoreConfidence) : "";
+  const confidenceLabel = topGame ? watchScoreConfidenceLabel(topGame.game.watchScoreConfidence, topGame.game.flags?.tbd) : "";
 
   return new ImageResponse(
     (

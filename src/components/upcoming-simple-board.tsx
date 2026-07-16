@@ -120,7 +120,7 @@ export function UpcomingSimpleCard({
   cardClassName?: string;
 }) {
   const sentence = contextWriteup ?? fallbackContextSentence ?? upcomingSimpleContextSentence(game, rank, leagueMeanGS);
-  const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence);
+  const confidenceLabel = watchScoreConfidenceLabel(game.watchScoreConfidence, game.flags?.tbd);
   const hasNamedStarterMatchup = hasNamedStarters(game);
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
