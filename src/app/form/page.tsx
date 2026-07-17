@@ -806,9 +806,7 @@ function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: 
     const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
     return (
       <p className="font-mono text-xs uppercase tracking-[0.12em] text-teal-300">
-        <span>Starts {gameTimeWord(start)} {matchup}</span>
-        <span className="hidden sm:inline"> · </span>
-        <span className="block sm:inline">{formatPacificTime(start.firstPitch)}</span>
+        Starts {gameTimeWord(start)} {matchup}
       </p>
     );
   }
@@ -1944,17 +1942,6 @@ function heatCheckHref(values: Record<string, string | undefined>) {
 
 function formatSignedDelta(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
-}
-
-function formatPacificTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.valueOf())) return "time TBD";
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Los_Angeles",
-    timeZoneName: "short",
-  }).format(date).replace("PDT", "PT").replace("PST", "PT");
 }
 
 function formatMonthDay(value: string) {
