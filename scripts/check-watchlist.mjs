@@ -222,9 +222,9 @@ assert(
   "watchlist next-start cards should use the shared two-row block, omit missing parks, and suppress numeric baseline-looking projected GS+ values",
 );
 assert(
-  watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} />") &&
+  watchlistPageSource.includes("<NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} showCount={sectionCountsReconcile} />") &&
     watchlistPageSource.includes('import { getHomeSlateDate } from "@/lib/data/start-service";') &&
-    watchlistPageSource.includes('function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; today: string })') &&
+    watchlistPageSource.includes('function NextOnTheSlabModule({ entries, today, showCount }: { entries: WatchlistEntry[]; today: string; showCount: boolean })') &&
     watchlistPageSource.includes("Next on the slab") &&
     watchlistPageSource.includes("Your followed arms' next scheduled starts.") &&
     watchlistPageSource.includes("entry.nextStart?.date === today") &&
@@ -240,6 +240,27 @@ assert(
     !watchlistPageSource.includes(`Daily ${"decision"} strip`) &&
     !watchlistPageSource.includes("<WatchlistGroup title=\"Pitching today / soon\""),
   "watchlist next-on-the-slab module must use Option A label honesty and Heat Check-style STARTS TODAY/STARTS WEEKDAY badges",
+);
+assert(
+  watchlistServiceSource.includes("const pitchingSoon = entries.filter((entry) => entry.nextStart !== null);") &&
+    watchlistServiceSource.includes("const bench = entries.filter((entry) => entry.nextStart === null);") &&
+    watchlistPageSource.includes('title="No start scheduled"') &&
+    watchlistPageSource.includes('detail="Followed arms without a confirmed or projected next start."') &&
+    watchlistPageSource.includes('state="unscheduled"') &&
+    watchlistPageSource.includes("omitWhenEmpty") &&
+    watchlistPageSource.includes("function WatchlistNoStartState") &&
+    watchlistPageSource.includes("function watchlistNoStartStatus") &&
+    watchlistPageSource.includes('return "REHAB";') &&
+    watchlistPageSource.includes('return "IL-15";') &&
+    watchlistPageSource.includes('return "IL-60";') &&
+    watchlistPageSource.includes("NEXT: TBD") &&
+    watchlistPageSource.includes("function formatArmCount") &&
+    watchlistPageSource.includes('count === 1 ? "ARM" : "ARMS"') &&
+    watchlistPageSource.includes("Watchlist roster counts do not reconcile; hiding section counts") &&
+    watchlistPageSource.includes("{formatArmCount(entries.length)} with scheduled starts") &&
+    !watchlistPageSource.includes("Sorted by Form descending") &&
+    !watchlistPageSource.includes("{entries.length} arms"),
+  "watchlist must present one reconciled followed-arm roster split by next-start state with shared cards, reason pills, and correct count grammar",
 );
 assert(
   watchlistPageSource.includes("WatchlistSuggestedFollows") &&
@@ -351,9 +372,9 @@ try {
   assert(html.includes("Sort"), "watchlist should render sort controls");
   assert(html.includes("Search pitchers"), "watchlist should render inline add-pitcher search");
   assert(html.includes('data-responsive-check="watchlist-pitching-soon"'), "watchlist should render the merged next-on-the-slab module");
-  assert(html.includes("Following") || html.includes("No followed arms are scheduled"), "watchlist should render grouped default list with respectful following copy");
+  assert(html.includes("No start scheduled") || !html.includes('data-watchlist-roster-state="unscheduled"'), "watchlist should label or omit the no-start roster section");
   assert(!html.includes("Everyone else"), "watchlist should not render the old Everyone else header");
-  assert(html.includes("Following"), "watchlist should render following control");
+  assert(!html.includes("Sorted by Form descending") && !html.includes("1 ARMS"), "watchlist should hide sort mechanics and use correct singular arm grammar");
   assert(html.includes('aria-pressed="true"'), "followed watchlist rows should render filled/following star state");
   assert(html.includes(pitcherId) || html.includes("Misiorowski"), "watchlist should render followed pitcher");
 

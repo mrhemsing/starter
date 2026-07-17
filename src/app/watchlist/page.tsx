@@ -62,6 +62,14 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
   ]);
   const followedIds = new Set(watchlist.pitcherIds);
   const searchResults = buildSearchResults(leaderboard.pitchers, followedIds, query);
+  const sectionCountsReconcile = watchlist.pitchingSoon.length + watchlist.bench.length === watchlist.entries.length;
+  if (!sectionCountsReconcile) {
+    console.warn("Watchlist roster counts do not reconcile; hiding section counts", {
+      followed: watchlist.entries.length,
+      scheduled: watchlist.pitchingSoon.length,
+      unscheduled: watchlist.bench.length,
+    });
+  }
 
   return (
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
@@ -85,7 +93,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <div>
             {watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
-            <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} />
+            <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} showCount={sectionCountsReconcile} />
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
@@ -120,13 +128,15 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               </div>
             ) : (
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
-                {watchlist.sort === "default" ? (
-                  <>
-                    <WatchlistGroup title="Following" detail="Sorted by Form descending" entries={watchlist.bench} today={today} />
-                  </>
-                ) : (
-                  <WatchlistGroup title={sortOptions.find((option) => option.key === watchlist.sort)?.label ?? "Watchlist"} detail={`${watchlist.entries.length} followed pitchers`} entries={watchlist.entries} today={today} />
-                )}
+                <WatchlistGroup
+                  title="No start scheduled"
+                  detail="Followed arms without a confirmed or projected next start."
+                  entries={watchlist.bench}
+                  today={today}
+                  showCount={sectionCountsReconcile}
+                  omitWhenEmpty
+                  state="unscheduled"
+                />
               </div>
             )}
           </div>
@@ -236,7 +246,7 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
   );
 }
 
-function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; today: string }) {
+function NextOnTheSlabModule({ entries, today, showCount }: { entries: WatchlistEntry[]; today: string; showCount: boolean }) {
   const title = entries.length > 0 ? "Next on the slab" : "No followed arms scheduled";
   const subtitle = entries.length > 0
     ? "Your followed arms' next scheduled starts."
@@ -249,23 +259,11 @@ function NextOnTheSlabModule({ entries, today }: { entries: WatchlistEntry[]; to
           <h2 className="mt-1 font-serif text-3xl font-bold text-zinc-50">{title}</h2>
           <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
         </div>
-        {entries.length > 0 ? <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{entries.length} followed arms</p> : null}
+        {entries.length > 0 && showCount ? <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">{formatArmCount(entries.length)} with scheduled starts</p> : null}
       </div>
       {entries.length === 0 ? null : (
       <div className="mt-4 grid gap-2">
-        {entries.map((entry) => (
-          <Link key={entry.pitcherId} href={pitcherHref(entry, sourceParams("watchlist"))} className="grid gap-3 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:items-center">
-            <div className="min-w-0">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
-                <WatchlistStartStatusBadge entry={entry} today={today} />
-              </div>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{entry.team}</p>
-              <FormValueWhisperLine value={entry.rgs} tier={entry.tier} qualifiedSample={hasQualifiedFormSummarySample(entry)} era={entry.seasonStats?.era} compact className="mt-1" />
-            </div>
-            <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
-          </Link>
-        ))}
+        {entries.map((entry) => <WatchlistRow key={entry.pitcherId} entry={entry} today={today} state="scheduled" />)}
       </div>
       )}
     </section>
@@ -297,15 +295,8 @@ function watchlistStartStatusLabel(entry: WatchlistEntry, today: string) {
   return `STARTS ${formatMonthDay(entry.nextStart.date)}`;
 }
 
-function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = false, today }: { title: string; detail: string; entries: WatchlistEntry[]; empty?: string; collapsibleWhenEmpty?: boolean; today?: string }) {
-  if (entries.length === 0 && collapsibleWhenEmpty) {
-    return (
-      <section className="rounded border border-white/10 bg-[#101014] p-3">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">{title}</p>
-        <p className="mt-1 text-sm text-zinc-500">{empty ?? "No followed pitchers in this group."}</p>
-      </section>
-    );
-  }
+function WatchlistGroup({ title, detail, entries, today, showCount = true, omitWhenEmpty = false, state = "scheduled" }: { title: string; detail: string; entries: WatchlistEntry[]; today?: string; showCount?: boolean; omitWhenEmpty?: boolean; state?: "scheduled" | "unscheduled" }) {
+  if (entries.length === 0 && omitWhenEmpty) return null;
 
   return (
     <section>
@@ -314,13 +305,13 @@ function WatchlistGroup({ title, detail, entries, empty, collapsibleWhenEmpty = 
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{title}</p>
           <p className="mt-1 text-xs text-zinc-500">{detail}</p>
         </div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{entries.length} arms</p>
+        {showCount ? <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{formatArmCount(entries.length)}</p> : null}
       </div>
       {entries.length === 0 ? (
-        <div className="rounded border border-white/10 bg-[#101014] p-4 text-sm text-zinc-500">{empty ?? "No followed pitchers in this group."}</div>
+        <div className="rounded border border-white/10 bg-[#101014] p-4 text-sm text-zinc-500">No followed pitchers in this group.</div>
       ) : (
         <div className="grid gap-3">
-          {entries.map((entry) => <WatchlistRow key={entry.pitcherId} entry={entry} today={today} />)}
+          {entries.map((entry) => <WatchlistRow key={entry.pitcherId} entry={entry} today={today} state={state} />)}
         </div>
       )}
     </section>
@@ -357,7 +348,7 @@ export function WatchlistRowSkeleton({ index = 0 }: { index?: number }) {
   );
 }
 
-function WatchlistRow({ entry, today }: { entry: WatchlistEntry; today?: string }) {
+function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistEntry; today?: string; state?: "scheduled" | "unscheduled" }) {
   const lastLine = entry.lastStart
     ? `Last GS+ ${entry.lastStart.gsPlus} vs ${entry.lastStart.opp} / ${formatStartLine({ inningsPitched: entry.lastStart.ip, hits: entry.lastStart.h, earnedRuns: entry.lastStart.er, walks: entry.lastStart.bb, strikeouts: entry.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
@@ -374,11 +365,17 @@ function WatchlistRow({ entry, today }: { entry: WatchlistEntry; today?: string 
             <h2 className="truncate font-serif text-2xl font-bold leading-tight text-zinc-50">{entry.name}</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {qualifiedSample ? tierLabel(entry.tier) : LIMITED_SAMPLE_FORM_LABEL} · {entry.windowCount} starts</p>
           </Link>
-          <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p>
-          <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" />
+          {state === "scheduled" ? <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p> : null}
+          {state === "scheduled" ? <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" /> : null}
           <div className="mt-3">
-            {today ? <WatchlistStartStatusBadge entry={entry} today={today} className="mb-2" /> : null}
-            <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
+            {state === "scheduled" ? (
+              <>
+                {today ? <WatchlistStartStatusBadge entry={entry} today={today} className="mb-2" /> : null}
+                <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
+              </>
+            ) : (
+              <WatchlistNoStartState entry={entry} />
+            )}
           </div>
           <SignalsRow events={entry.signalEvents} />
         </div>
@@ -414,6 +411,36 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-[8px] uppercase leading-4 tracking-[0.12em] text-zinc-500 sm:text-[10px] sm:tracking-[0.16em]">{label}</p>
     </div>
   );
+}
+
+function WatchlistNoStartState({ entry }: { entry: WatchlistEntry }) {
+  const status = watchlistNoStartStatus(entry);
+  return (
+    <div className="grid gap-2" data-watchlist-roster-state="unscheduled">
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">NEXT: TBD</p>
+      {status ? (
+        <span className="inline-flex min-h-8 w-fit items-center rounded border border-rose-300/35 bg-rose-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-rose-200" data-watchlist-no-start-status={status}>
+          {status}
+        </span>
+      ) : null}
+      <p className="text-xs text-zinc-500">{entry.lastStart ? `Last GS+ ${entry.lastStart.gsPlus} vs ${entry.lastStart.opp}` : "Last start unavailable"}</p>
+    </div>
+  );
+}
+
+function watchlistNoStartStatus(entry: WatchlistEntry): "REHAB" | "IL-15" | "IL-60" | "TBD" | null {
+  const availability = entry.availability;
+  if (!availability) return null;
+  const context = `${availability.code} ${availability.label} ${availability.blurb} ${availability.transactionDescription ?? ""}`.toUpperCase();
+  if (context.includes("REHAB")) return "REHAB";
+  if (/\b(?:60|IL-60|60-DAY)\b/.test(context)) return "IL-60";
+  if (/\b(?:15|IL-15|15-DAY)\b/.test(context)) return "IL-15";
+  if (context.includes("TBD")) return "TBD";
+  return null;
+}
+
+function formatArmCount(count: number) {
+  return `${count} ${count === 1 ? "ARM" : "ARMS"}`;
 }
 
 function addDays(date: string, days: number) {

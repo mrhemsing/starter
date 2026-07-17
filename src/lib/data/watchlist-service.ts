@@ -208,8 +208,8 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
       },
     }];
   });
-  const pitchingSoon = entries.filter(isPitchingSoon);
-  const bench = entries.filter((entry) => !isPitchingSoon(entry));
+  const pitchingSoon = entries.filter((entry) => entry.nextStart !== null);
+  const bench = entries.filter((entry) => entry.nextStart === null);
   const wireEvents = entries
     .flatMap((entry) => entry.headlineEvents.map((event) => ({ ...event, pitcherId: entry.pitcherId, pitcherName: entry.name })))
     .sort((a, b) => watchlistWireEventSortTime(b) - watchlistWireEventSortTime(a) || b.priority - a.priority || a.pitcherName.localeCompare(b.pitcherName));
