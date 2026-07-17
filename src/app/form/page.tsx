@@ -806,7 +806,9 @@ function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: 
     const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
     return (
       <p className="font-mono text-xs uppercase tracking-[0.12em] text-teal-300">
-        Starts {gameTimeWord(start)} {matchup} · {formatPacificTime(start.firstPitch)}
+        <span>Starts {gameTimeWord(start)} {matchup}</span>
+        <span className="hidden sm:inline"> · </span>
+        <span className="block sm:inline">{formatPacificTime(start.firstPitch)}</span>
       </p>
     );
   }
