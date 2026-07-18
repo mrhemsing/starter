@@ -227,7 +227,7 @@ type HomeTopPerformerView = {
   pitcherName: string;
   team: string;
   opponent: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
   dateLabel: string;
   score: number;
   line: HomeTopPerformer["start"]["line"];

@@ -1461,6 +1461,7 @@ function readPitcherGameLogStart(split: MlbPersonStatSplit, pitcherMlbId: number
     id: `${date}-${teamAbbreviation.toLowerCase()}-${opponentAbbreviation.toLowerCase()}-${pitcherMlbId}`,
     date,
     opponent: opponentAbbreviation,
+    side: null,
     result: split.isWin ? "W" : stats.losses && stats.losses > 0 ? "L" : "ND",
     line,
     gameScorePlus: scorePitcherGameLogStart(line),

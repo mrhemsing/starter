@@ -730,7 +730,7 @@ function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanoni
       headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${record.pitcherMlbId}/headshot/67/current`,
     },
     opponent: record.opponent,
-    side: record.side,
+    side: record.side ?? null,
     result: record.result,
     line: record.line,
     gameScorePlus: record.gameScorePlus,

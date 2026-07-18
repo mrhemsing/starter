@@ -26,7 +26,7 @@ export type CanonicalStartRecord = {
   pitcherName: string;
   team: string;
   opponent: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
   venue?: string;
   status: CanonicalStartStatus;
   line: StartLine;

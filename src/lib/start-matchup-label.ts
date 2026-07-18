@@ -5,7 +5,7 @@ export type StartMatchupLabelInput = {
     team: string;
   };
   opponent: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
 };
 
 export function startMatchupLabel(start: StartMatchupLabelInput) {

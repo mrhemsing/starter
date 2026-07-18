@@ -16,6 +16,7 @@ const files = {
   socialPost: "src/lib/data/daily-social-post-service.ts",
   formService: "src/lib/data/form-service.ts",
   mlbArchive: "src/lib/data/mlb-archive.ts",
+  startService: "src/lib/data/start-service.ts",
   types: "src/lib/types.ts",
 };
 
@@ -34,7 +35,7 @@ assert.match(helper, /formatMatchup\(start\.pitcher\.team, homeTeam, awayTeam, "
 assert.match(helper, /export function startVenueLine/, "Venue lines must share the matchup formatter.");
 
 for (const [name, path] of Object.entries(files)) {
-  if (name === "formatter" || name === "helper" || name === "types" || name === "formService" || name === "mlbArchive") continue;
+  if (name === "formatter" || name === "helper" || name === "types" || name === "formService" || name === "mlbArchive" || name === "startService") continue;
   const source = read(path);
   assert.match(source, /startMatchupLabel/, `${path} must use the shared matchup formatter.`);
 }
@@ -54,8 +55,11 @@ const mlbArchive = read(files.mlbArchive);
 assert.match(mlbArchive, /opponent: start\.opponent,\s+side: start\.side,\s+result: start\.result,/m, "Archived pitcher season profiles must preserve side for pitcher page game-log orientation.");
 
 const types = read(files.types);
-assert.match(types, /team: string;[\s\S]*opp: string;[\s\S]*side\?: "home" \| "away";/, "FormStartPoint must expose team and side.");
+assert.match(types, /team: string;[\s\S]*opp: string;[\s\S]*side\?: "home" \| "away" \| null;/, "FormStartPoint must expose team and nullable side.");
+assert.match(types, /export type StartSummary[\s\S]*side: "home" \| "away" \| null;/, "StartSummary must require an explicit side value.");
 assert.match(types, /Pick<StartSummary, "id" \| "date" \| "opponent" \| "side" \| "result"/, "PitcherStartLogEntry must carry side from the schedule source.");
+assert.match(read(files.startService), /function archivedCompletedStartToSummary[\s\S]*const side = start\.side \?\?[\s\S]*opponent: start\.opponent,\s+side,/m, "Archived completed starts must preserve or canonically derive side.");
+assert.doesNotMatch(formatter, /Opponent TBD/, "The shared formatter must not fabricate an Opponent TBD label.");
 
 const forbidden = [
   "src/app/starts/[id]/page.tsx",

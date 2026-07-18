@@ -8,7 +8,7 @@ export type HomeGsPlusProofStart = {
   pitcherName: string;
   team: string;
   opponent: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
   date: string;
   line: string;
   gsPlus: number;

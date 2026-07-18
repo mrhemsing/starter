@@ -2022,6 +2022,7 @@ function scheduledGameToStarts(
           headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${pitcher.id}/headshot/67/current`,
         },
         opponent,
+        side: pitcher.side,
         result: completedLine?.result ?? fallback.result,
         line,
         gameScorePlus,
@@ -2128,6 +2129,13 @@ function missingArchivedPitchers(expected: Awaited<ReturnType<typeof readArchive
 function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): StartSummary {
   const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
   const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
+  const side = start.side ?? (
+    start.team === start.homeTeam.abbreviation
+      ? "home"
+      : start.team === start.awayTeam.abbreviation
+        ? "away"
+        : null
+  );
   const context = {
     label: `${formatMatchup(null, start.homeTeam.abbreviation, start.awayTeam.abbreviation, "slate")}, ${start.venue}`,
     whiffDeltaPct: fallback.context.whiffDeltaPct,
@@ -2154,6 +2162,7 @@ function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): 
       headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${start.pitcherMlbId}/headshot/67/current`,
     },
     opponent: start.opponent,
+    side,
     result: start.result,
     line: start.line,
     gameScorePlus: scoreCompletedLine(start.line, context),

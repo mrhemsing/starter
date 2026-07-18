@@ -15,7 +15,7 @@ type TopPerformerCardProps = {
   pitcherName: string;
   team: string;
   opponent: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
   dateLabel: string;
   score: number;
   line: StartLine;

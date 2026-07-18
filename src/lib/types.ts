@@ -153,7 +153,7 @@ export type StartSummary = {
   rank: number;
   pitcher: PitcherSummary;
   opponent: string;
-  side?: "home" | "away";
+  side: "home" | "away" | null;
   result: "W" | "L" | "ND";
   line: StartLine;
   gameScorePlus: number;
@@ -206,7 +206,7 @@ export type FormStartPoint = {
   gamePk: string;
   team: string;
   opp: string;
-  side?: "home" | "away";
+  side?: "home" | "away" | null;
   park: string;
   ip: number;
   h: number;

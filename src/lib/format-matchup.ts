@@ -31,14 +31,14 @@ export function formatMatchup(
   if (mode === "slate") {
     if (canonicalTeamsAreValid) return `${away} @ ${home}`;
     warnInvalidMatchup(perspective, home, away, mode);
-    return away ?? home ?? perspective ?? "Opponent TBD";
+    return away ?? home ?? perspective ?? "";
   }
 
   if (canonicalTeamsAreValid && perspective === home) return `${perspective} vs ${away}`;
   if (canonicalTeamsAreValid && perspective === away) return `${perspective} @ ${home}`;
 
   warnInvalidMatchup(perspective, home, away, mode);
-  if (perspective === home) return away ?? "Opponent TBD";
-  if (perspective === away) return home ?? "Opponent TBD";
-  return [home, away].find((team) => team && team !== perspective) ?? "Opponent TBD";
+  if (perspective === home) return away ?? "";
+  if (perspective === away) return home ?? "";
+  return [home, away].find((team) => team && team !== perspective) ?? "";
 }
