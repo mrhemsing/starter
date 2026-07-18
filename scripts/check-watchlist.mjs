@@ -207,7 +207,7 @@ assert(
 );
 assert(
   watchlistPageSource.includes('import { WatchlistNextStartBlock } from "@/components/watchlist-next-start-block";') &&
-    watchlistPageSource.includes("<WatchlistNextStartBlock nextStart={entry.nextStart} compact />") &&
+    watchlistPageSource.includes("<WatchlistNextStartBlock nextStart={entry.nextStart} team={entry.team} compact />") &&
     nextStartBlockSource.includes('data-watchlist-next-start-row="matchup"') &&
     nextStartBlockSource.includes('data-watchlist-next-start-row="context"') &&
     nextStartBlockSource.includes('import { isValidParkRunFactor } from "@/lib/data/run-environment";') &&

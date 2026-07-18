@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const files = {
+  formatter: "src/lib/format-matchup.ts",
   helper: "src/lib/start-matchup-label.ts",
   rankedStarts: "src/app/starts/[id]/page.tsx",
   startRecap: "src/app/starts/[id]/[slug]/page.tsx",
@@ -23,12 +24,17 @@ function read(path) {
 }
 
 const helper = read(files.helper);
-assert.match(helper, /start\.side === "away"[\s\S]*\$\{start\.pitcher\.team\} @ \$\{start\.opponent\}/, "Away starts must render TEAM @ OPP.");
-assert.match(helper, /\$\{start\.pitcher\.team\} vs \$\{start\.opponent\}/, "Home or unknown starts must render TEAM vs OPP.");
+const formatter = read(files.formatter);
+assert.match(formatter, /mode === "slate"[\s\S]*`\$\{away\} @ \$\{home\}`/, "Slate mode must render AWAY @ HOME.");
+assert.match(formatter, /perspective === home[\s\S]*`\$\{perspective\} vs \$\{away\}`/, "Perspective home games must render TEAM vs OPP.");
+assert.match(formatter, /perspective === away[\s\S]*`\$\{perspective\} @ \$\{home\}`/, "Perspective road games must render TEAM @ OPP.");
+assert.match(formatter, /\[matchup-integrity\]/, "Invalid canonical matchup data must log an integrity warning.");
+assert.match(formatter, /warnInvalidMatchup\(perspective, home, away, mode\);[\s\S]*return \[home, away\]/, "Invalid perspective data must warn and return opponent-only context.");
+assert.match(helper, /formatMatchup\(start\.pitcher\.team, homeTeam, awayTeam, "perspective"\)/, "Start labels must route through the canonical formatter.");
 assert.match(helper, /export function startVenueLine/, "Venue lines must share the matchup formatter.");
 
 for (const [name, path] of Object.entries(files)) {
-  if (name === "helper" || name === "types" || name === "formService" || name === "mlbArchive") continue;
+  if (name === "formatter" || name === "helper" || name === "types" || name === "formService" || name === "mlbArchive") continue;
   const source = read(path);
   assert.match(source, /startMatchupLabel/, `${path} must use the shared matchup formatter.`);
 }

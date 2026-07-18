@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FORM_CHART_COLORS, FORM_CONFIG, GS_TIERS } from "@/lib/form-tokens";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FormStartPoint } from "@/lib/types";
 
 type FormWindow = typeof FORM_CONFIG.windows[number];
@@ -88,7 +89,7 @@ function FormTrendChart({ series, leagueMeanGS }: { series: FormStartPoint[]; le
           return (
             <a key={point.id} href={point.startHref}>
               <circle cx={xFor(index)} cy={yFor(point.gsPlus)} r={radius} fill={tier.color}>
-                <title>{`${point.gameDate} vs ${point.opp}: GS+ ${point.gsPlus}, ${point.ip.toFixed(1)} IP`}</title>
+                <title>{`${point.gameDate} ${startMatchupLabel({ pitcher: { team: point.team }, opponent: point.opp, side: point.side })}: GS+ ${point.gsPlus}, ${point.ip.toFixed(1)} IP`}</title>
               </circle>
             </a>
           );

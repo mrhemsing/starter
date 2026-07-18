@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getDailySocialPostDraft } from "@/lib/data/daily-social-post-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { noIndexFollow } from "@/lib/seo";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
 type DailyPostAdminPageProps = {
   searchParams?: Promise<{
@@ -62,7 +63,7 @@ export default async function DailyPostAdminPage({ searchParams }: DailyPostAdmi
                 <dl className="mt-5 grid grid-cols-2 gap-3 font-mono text-xs uppercase tracking-[0.12em]">
                   <Metric label="Date" value={draft.start.date} />
                   <Metric label="GS+" value={String(draft.start.gsPlus)} accent />
-                  <Metric label="Matchup" value={`${draft.start.team} vs ${draft.start.opponent}`} />
+                  <Metric label="Matchup" value={startMatchupLabel({ pitcher: { team: draft.start.team }, opponent: draft.start.opponent, side: draft.start.homeAway })} />
                   <Metric label="Result" value={draft.start.result} />
                 </dl>
               </div>

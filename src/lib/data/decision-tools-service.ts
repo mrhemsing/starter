@@ -2,6 +2,7 @@ import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbSchedule, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getHomeSlateDate } from "@/lib/data/start-service";
+import { formatMatchup } from "@/lib/format-matchup";
 import type { DecisionOpponentContext, DecisionToolsFoundationResponse, DecisionToolsGame, DecisionToolsStarter, FormSummary, MlbProbablePitcher, MlbScheduleGame, TonightGameStatus } from "@/lib/types";
 
 type DecisionToolsOptions = {
@@ -85,7 +86,7 @@ async function buildDecisionGame(
     date,
     status: normalizeGameStatus(game),
     firstPitch: game.gameDate,
-    label: `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`,
+    label: formatMatchup(null, game.homeTeam.abbreviation, game.awayTeam.abbreviation, "slate"),
     away: game.awayTeam.abbreviation,
     home: game.homeTeam.abbreviation,
     park: game.venue,

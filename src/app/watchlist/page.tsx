@@ -18,6 +18,7 @@ import { HEAT_BANDS } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { heatCheckPath, pitcherHref, sourceParams, upcomingDateHref } from "@/lib/routes";
 import { slateTimeWordTitle } from "@/lib/time-words";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { FormSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -174,7 +175,7 @@ function WatchlistMorningBrief({ entries, pitchingSoon }: { entries: WatchlistEn
   const sentences: string[] = [];
 
   if (nearest?.nextStart) {
-    sentences.push(`${nearest.name} is next up ${nearest.nextStart.side === "away" ? "at" : "vs"} ${nearest.nextStart.opponent} on ${formatShortDate(nearest.nextStart.date)} with ${nearest.nextStart.probableStatus} status.`);
+    sentences.push(`${nearest.name} is next up ${startMatchupLabel({ pitcher: { team: nearest.team }, opponent: nearest.nextStart.opponent, side: nearest.nextStart.side }).replace(" @ ", " at ")} on ${formatShortDate(nearest.nextStart.date)} with ${nearest.nextStart.probableStatus} status.`);
   }
   if (biggestMover) {
     const direction = biggestMover.deltaForm >= 0 ? "up" : "down";
@@ -231,7 +232,7 @@ function PitchingNowStrip({ entries }: { entries: WatchlistLiveEntry[] }) {
             <div className="min-w-0">
               <p className="truncate font-serif text-xl font-bold text-zinc-50">{entry.name}</p>
               <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
-                {entry.team} vs {entry.liveStart.opponent} · {entry.liveStart.inningLabel ?? "Live"} · {entry.liveStart.pitchCount ?? "--"} pitches
+                {startMatchupLabel({ pitcher: { team: entry.team }, opponent: entry.liveStart.opponent, side: entry.liveStart.side })} · {entry.liveStart.inningLabel ?? "Live"} · {entry.liveStart.pitchCount ?? "--"} pitches
               </p>
               <p className="mt-1 text-xs text-zinc-500">{formatStartLine(entry.liveStart.line)}</p>
             </div>
@@ -371,7 +372,7 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
             {state === "scheduled" ? (
               <>
                 {today ? <WatchlistStartStatusBadge entry={entry} today={today} className="mb-2" /> : null}
-                <WatchlistNextStartBlock nextStart={entry.nextStart} compact />
+                <WatchlistNextStartBlock nextStart={entry.nextStart} team={entry.team} compact />
               </>
             ) : (
               <WatchlistNoStartState entry={entry} />

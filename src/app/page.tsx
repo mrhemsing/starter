@@ -13,6 +13,7 @@ import { getHomeSlateDate, getSlateStartProgress } from "@/lib/data/start-servic
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { getHomeSlatePhase, isHomeSlatePhaseExperimentEnabled } from "@/lib/home-slate-phase";
 import { liveDateHref } from "@/lib/routes";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { jsonLdScript, websiteOpenGraph, largeImageTwitter } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
 
@@ -262,7 +263,7 @@ function ContextProofStart({ start, emphasis = false }: { start: HomeGsPlusProof
   return (
     <a href={start.href} className={`block rounded border p-3 transition hover:border-amber-300/50 ${emphasis ? "border-amber-300/35 bg-amber-300/[0.08]" : "border-white/10 bg-black/20"}`} data-home-gs-plus-context-start={start.id}>
       <p className="truncate font-semibold text-zinc-50">{start.pitcherName}</p>
-      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{start.team} vs {start.opponent}</p>
+      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{startMatchupLabel({ pitcher: { team: start.team }, opponent: start.opponent, side: start.side })}</p>
       <p className="mt-2 text-sm text-zinc-300">{start.line}</p>
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>

@@ -1,7 +1,8 @@
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { FORM_CONFIG } from "@/lib/form-tokens";
-import { pitcherHref, upcomingDateHref } from "@/lib/routes";
+import { upcomingDateHref } from "@/lib/routes";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { roundToScorePrecision } from "@/lib/score-display";
 import type { TonightGame, TonightStarter, UpcomingResponse } from "@/lib/types";
 
@@ -11,6 +12,7 @@ export type StreamerMatchup = {
   label: string;
   opponent: string;
   opponentName: string;
+  side: "home" | "away";
   firstPitch: string;
   park: string;
   parkLabel: string;
@@ -171,7 +173,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     pitcherId: starter.pitcherId,
     pitcherName: starter.name,
     team: starter.team,
-    pitcherHref: pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, { from: "upcoming" }),
+    pitcherHref: streamerPitcherFormHref(starter.pitcherId),
     heatBand,
     heatLabel: heatBand === "onfire" ? "On Fire" : heatBand === "hot" ? "Heating Up" : "Streamer",
     trendDelta: roundToScorePrecision(starter.deltaForm ?? 0, 1),
@@ -192,6 +194,10 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
   };
 }
 
+function streamerPitcherFormHref(pitcherId: string) {
+  return `/pitchers/${pitcherId}/form`;
+}
+
 function buildStreamerMatchup(date: string, game: TonightGame, starter: TonightStarter): StreamerMatchup {
   const opponent = starter.side === "away" ? game.home : game.away;
   const opponentName = starter.side === "away" ? game.homeName : game.awayName;
@@ -199,9 +205,10 @@ function buildStreamerMatchup(date: string, game: TonightGame, starter: TonightS
   return {
     date,
     gamePk: game.gamePk,
-    label: game.label,
+    label: startMatchupLabel({ pitcher: { team: starter.team }, opponent, side: starter.side }),
     opponent,
     opponentName,
+    side: starter.side,
     firstPitch: game.firstPitch,
     park: game.park,
     parkLabel: game.parkContext.label,

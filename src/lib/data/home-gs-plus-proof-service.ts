@@ -8,6 +8,7 @@ export type HomeGsPlusProofStart = {
   pitcherName: string;
   team: string;
   opponent: string;
+  side?: "home" | "away";
   date: string;
   line: string;
   gsPlus: number;
@@ -127,6 +128,7 @@ function proofStart(start: StartSummary): HomeGsPlusProofStart {
     pitcherName: start.pitcher.name,
     team: start.pitcher.team,
     opponent: start.opponent,
+    side: start.side,
     date: start.date,
     line: formatStartLineShort(start),
     gsPlus: start.gameScorePlus,

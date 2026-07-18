@@ -23,6 +23,7 @@ export type LiveGemAlertEvent = {
   pitcherName: string;
   team: string;
   opponent: string;
+  side: "home" | "away";
   gsPlus: number | null;
   href: string;
   message: string;
@@ -93,6 +94,7 @@ function buildAlertEvent(row: LiveScoreboardRow, type: LiveGemAlertType): LiveGe
     pitcherName: row.pitcherName,
     team: row.team,
     opponent: row.opponent,
+    side: row.side,
     gsPlus: row.gsPlus,
     href: row.startHref,
     message: liveGemAlertMessage(row, type),

@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getDecisionToolsFoundation } from "@/lib/data/decision-tools-service";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { formatUpcomingDate, upcomingDateHref } from "@/lib/routes";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
 type ToolsPageProps = {
   searchParams?: Promise<{
@@ -80,7 +81,7 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
                 <div className="mt-4 grid gap-2 md:grid-cols-2">
                   {game.starters.map((starter) => (
                     <div key={`${game.gamePk}-${starter.side}`} className="rounded border border-white/10 bg-black/20 p-3">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{starter.team} vs {starter.opponent}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel({ pitcher: { team: starter.team }, opponent: starter.opponent, side: starter.side })}</p>
                       <p className="mt-1 text-sm font-medium text-zinc-100">{starter.name ?? "Starter TBD"}</p>
                       <p className="mt-2 text-xs leading-5 text-zinc-400">{starter.opponentContext.offenseLabel}</p>
                     </div>

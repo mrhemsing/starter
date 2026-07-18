@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getDailySlate } from "@/lib/data/start-service";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { pitcherHref, sourceParams, startHref } from "@/lib/routes";
+import { formatMatchup } from "@/lib/format-matchup";
 import type { PitchingDuel, PitchingDuelsResponse, StartSummary, TonightGame } from "@/lib/types";
 
 const BEST_DUEL_MAX_GAP = 10;
@@ -99,7 +100,9 @@ function upcomingGameToDuel(game: TonightGame): PitchingDuel {
 }
 
 function settledStartsToDuel(date: string, starts: StartSummary[]): PitchingDuel {
-  const [a, b] = starts;
+  const [a] = starts;
+  const homeTeam = starts.find((start) => start.side === "home")?.pitcher.team;
+  const awayTeam = starts.find((start) => start.side === "away")?.pitcher.team;
   const starters = starts.map((start) => ({
     pitcherId: String(start.pitcher.mlbId),
     name: start.pitcher.name,
@@ -112,7 +115,7 @@ function settledStartsToDuel(date: string, starts: StartSummary[]): PitchingDuel
   return buildDuel({
     gamePk: String(a.gamePk),
     date,
-    label: `${a.pitcher.team} vs ${b.pitcher.team}`,
+    label: formatMatchup(null, homeTeam, awayTeam, "slate"),
     status: "settled",
     park: a.context.parkLabel,
     starters,

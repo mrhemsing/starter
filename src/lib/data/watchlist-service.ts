@@ -9,6 +9,7 @@ import { getParkContext } from "@/lib/data/run-environment";
 import { getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { readWatchlistHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import type { FormNextStart, FormSummary, ProbableStart, StartLine } from "@/lib/types";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
 export const WATCHLIST_COOKIE = "the_bump_watchlist_id";
 export const WATCHLIST_SOON_DAYS = 3;
@@ -48,6 +49,7 @@ export type WatchlistLiveStart = {
   inningLabel: string | null;
   pitchCount: number | null;
   opponent: string;
+  side: "home" | "away";
   line: StartLine;
   liveHref: string;
 };
@@ -203,6 +205,7 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
         inningLabel: row.inningLabel,
         pitchCount: row.pitchCount,
         opponent: row.opponent,
+        side: row.side,
         line: row.line,
         liveHref: row.liveHref,
       },
@@ -287,7 +290,7 @@ function wireEventsForPitcher(
     events.push({
       key: "rest-anomaly",
       label: "REST ANOMALY",
-      sentence: `${pitcher.name} lines up on ${nextStart.daysRest} days of rest ${nextStart.side === "away" ? "at" : "vs"} ${nextStart.opponent}.`,
+      sentence: `${pitcher.name} lines up on ${nextStart.daysRest} days of rest ${startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: nextStart.opponent, side: nextStart.side }).replace(" @ ", " at ")}.`,
       detectedAt,
       priority: 70,
       payloadValues: [String(nextStart.daysRest), nextStart.opponent],
@@ -299,7 +302,7 @@ function wireEventsForPitcher(
     events.push({
       key: "two-start-week",
       label: "TWO-START WEEK",
-      sentence: `${pitcher.name} has two probable starts this week: ${formatShortDate(twoStartWeek[0].date)} ${twoStartWeek[0].side === "away" ? "at" : "vs"} ${twoStartWeek[0].opponent} and ${formatShortDate(twoStartWeek[1].date)} ${twoStartWeek[1].side === "away" ? "at" : "vs"} ${twoStartWeek[1].opponent}.`,
+      sentence: `${pitcher.name} has two probable starts this week: ${formatShortDate(twoStartWeek[0].date)} ${startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: twoStartWeek[0].opponent, side: twoStartWeek[0].side }).replace(" @ ", " at ")} and ${formatShortDate(twoStartWeek[1].date)} ${startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: twoStartWeek[1].opponent, side: twoStartWeek[1].side }).replace(" @ ", " at ")}.`,
       detectedAt,
       priority: 60,
       payloadValues: [formatShortDate(twoStartWeek[0].date), twoStartWeek[0].opponent, formatShortDate(twoStartWeek[1].date), twoStartWeek[1].opponent],

@@ -742,7 +742,7 @@ function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanoni
     teamColor,
     accentColor,
     context: {
-      label: `${record.team} vs ${record.opponent}`,
+      label: startMatchupLabel({ pitcher: { team: record.team }, opponent: record.opponent, side: record.side }),
       whiffDeltaPct: 0,
       velocityDeltaMph: 0,
       parkRunFactor: 1,

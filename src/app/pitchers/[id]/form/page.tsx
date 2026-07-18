@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { formatMatchup } from "@/lib/format-matchup";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { DecisionChip } from "@/components/decision-chip";
@@ -556,7 +557,7 @@ function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {
         {rows.map((start) => (
           <Link key={start.id} href={start.startHref} className="grid gap-2 rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40 sm:grid-cols-[minmax(0,1fr)_120px] sm:items-center">
             <div className="min-w-0">
-              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · {formatMatchup(null, null, start.opponent, "perspective")}</p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
                 <span className={`block h-full rounded-full ${start.belowSeasonMedian ? "bg-cyan-300" : "bg-amber-300"}`} style={{ width: `${Math.max(12, (start.avgVelocityMph / maxVelocity) * 100)}%` }} />
               </div>
@@ -591,7 +592,7 @@ function PitchMixByStartPanel({ starts }: { starts: PitcherPitchMixStart[] }) {
         {rows.map((start) => (
           <Link key={start.id} href={start.startHref} className="block rounded border border-white/10 bg-black/20 p-3 transition hover:border-amber-300/40">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · vs {start.opponent}</p>
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{start.date} · {formatMatchup(null, null, start.opponent, "perspective")}</p>
               <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">{start.pitches} pitches</p>
             </div>
             {start.newPitchTypes.length > 0 ? (

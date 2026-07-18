@@ -1,3 +1,5 @@
+import { formatMatchup } from "@/lib/format-matchup";
+
 export type StartMatchupLabelInput = {
   pitcher: {
     team: string;
@@ -7,9 +9,9 @@ export type StartMatchupLabelInput = {
 };
 
 export function startMatchupLabel(start: StartMatchupLabelInput) {
-  return start.side === "away"
-    ? `${start.pitcher.team} @ ${start.opponent}`
-    : `${start.pitcher.team} vs ${start.opponent}`;
+  const homeTeam = start.side === "home" ? start.pitcher.team : start.side === "away" ? start.opponent : null;
+  const awayTeam = start.side === "away" ? start.pitcher.team : start.side === "home" ? start.opponent : null;
+  return formatMatchup(start.pitcher.team, homeTeam, awayTeam, "perspective");
 }
 
 export function startVenueLine(start: StartMatchupLabelInput, venue: string | null | undefined) {

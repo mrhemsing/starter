@@ -9,6 +9,7 @@ import { getHomeSlateDate } from "@/lib/data/start-service";
 import { readFantasyCoach, type FantasyCoachContent } from "@/lib/data/streamers-read-service";
 import { getUpcomingStreamers, type StreamerCandidate, type UpcomingStreamersResponse } from "@/lib/data/streamers-service";
 import { formatUpcomingDate } from "@/lib/routes";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { absoluteUrl, jsonLdScript, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = 900;
@@ -271,7 +272,7 @@ function StreamerCard({ candidate, rank, range }: { candidate: StreamerCandidate
         {candidate.matchups.map((matchup) => (
           <Link key={`${matchup.date}-${matchup.gamePk}`} href={matchup.dayHref} className="flex items-center justify-between gap-3 rounded border border-white/10 px-3 py-2 text-sm text-zinc-300 hover:border-amber-300/40 hover:text-zinc-50">
             <span className="min-w-0 truncate">
-              {formatUpcomingDate(matchup.date)} · vs {matchup.opponent} · <span className={matchupTierClass(matchup.opponentLineupTier)}>{matchup.opponentLineupTier}</span> lineup{formatLineupRank(matchup)} · Park {matchup.parkFactor.toFixed(2)}
+              {formatUpcomingDate(matchup.date)} · {streamerMatchupLabel(candidate, matchup)} · <span className={matchupTierClass(matchup.opponentLineupTier)}>{matchup.opponentLineupTier}</span> lineup{formatLineupRank(matchup)} · Park {matchup.parkFactor.toFixed(2)}
             </span>
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
               <LocalTime value={matchup.firstPitch} fallback="First pitch" />
@@ -343,6 +344,10 @@ function StreamerWeekStrip({ candidate, range }: { candidate: StreamerCandidate;
       })}
     </div>
   );
+}
+
+function streamerMatchupLabel(candidate: StreamerCandidate, matchup: StreamerCandidate["matchups"][number]) {
+  return startMatchupLabel({ pitcher: { team: candidate.team }, opponent: matchup.opponent, side: matchup.side });
 }
 
 function matchupTierClass(tier: StreamerCandidate["matchups"][number]["opponentLineupTier"]) {

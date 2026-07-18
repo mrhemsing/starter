@@ -17,6 +17,7 @@ import { HeatTeamDrawer } from "@/components/heat-team-drawer";
 import { HeatTeamJumpMenu } from "@/components/heat-team-jump-menu";
 import { MobileCardShell } from "@/components/mobile-card-shell";
 import { PageContextStrip } from "@/components/page-context-strip";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { PendingRegion } from "@/components/route-control-pending";
 import { SiteHeader } from "@/components/site-header";
@@ -610,7 +611,7 @@ function TeamRotationSnapshot({
                 <ProbableConfidenceChip confidence={slot.confidence} />
               </div>
               <p className="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-zinc-400">
-                {slot.side && slot.opponent ? `${slot.side === "away" ? "@" : "vs"} ${slot.opponent}` : "Opponent TBD"}
+                {slot.side && slot.opponent ? startMatchupLabel({ pitcher: { team }, opponent: slot.opponent, side: slot.side }) : "Opponent TBD"}
               </p>
               {slot.pitcherHref && slot.pitcherName ? (
                 <Link href={slot.pitcherHref} className="mt-1 block font-serif text-lg font-black leading-tight text-zinc-50 hover:text-amber-200">
@@ -803,7 +804,7 @@ function MomentumPanelSkeleton({ role }: { role: "riser" | "faller" }) {
 
 function MomentumContextLine({ pitcher, start }: { pitcher: FormSummary; start: TodayStartContext | null }) {
   if (start) {
-    const matchup = start.side === "away" ? `@ ${start.opponent}` : `vs ${start.opponent}`;
+    const matchup = startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: start.opponent, side: start.side });
     return (
       <p className="font-mono text-xs uppercase tracking-[0.12em] text-teal-300">
         Starts {gameTimeWord(start)} {matchup}
@@ -1956,7 +1957,7 @@ function formatMonthDay(value: string) {
 
 function nextStartDetails(pitcher: FormSummary) {
   if (!pitcher.nextStart?.opponent || !pitcher.nextStart.date) return " TBD";
-  const matchup = pitcher.nextStart.side === "away" ? `@ ${pitcher.nextStart.opponent}` : `vs ${pitcher.nextStart.opponent}`;
+  const matchup = startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: pitcher.nextStart.opponent, side: pitcher.nextStart.side });
   return ` ${matchup} ${formatMonthDay(pitcher.nextStart.date)}`;
 }
 

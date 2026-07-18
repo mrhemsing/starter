@@ -7,6 +7,7 @@ import { HEAT_CHECK_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMIN
 import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
+import { formatMatchup } from "@/lib/format-matchup";
 import { getVenueRunFactor as sharedVenueRunFactor } from "@/lib/data/run-environment";
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
@@ -482,7 +483,7 @@ export function getProbablesFromSchedule(slateDate: string, probableSchedule: Ml
     opponent: probable.opponentAbbreviation,
     side: probable.side,
     venue: probable.venue,
-    gameLabel: `${probable.awayTeam.abbreviation} @ ${probable.homeTeam.abbreviation}`,
+    gameLabel: formatMatchup(null, probable.homeTeam.abbreviation, probable.awayTeam.abbreviation, "slate"),
     status: probable.gameStatus,
     matchupScore: 50,
     parkAdjustment: 0,
@@ -635,7 +636,7 @@ export async function getSlateApiResponse(params: SlateRouteParams): Promise<Sla
       gamePk: game.gamePk,
       status: gameApiStatus(game),
       venue: game.venue,
-      label: `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`,
+      label: formatMatchup(null, game.homeTeam.abbreviation, game.awayTeam.abbreviation, "slate"),
       probablePitcherIds: [game.probableAwayPitcher?.id, game.probableHomePitcher?.id].filter((id): id is number => Boolean(id)),
     })),
     probables: slateProbables.map((probable) => ({
@@ -763,7 +764,7 @@ async function getArchivedStartDetailByRouteId(date: string, startId: string) {
   const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
   const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
   const context = {
-    label: `${fallback.context.label} / ${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}, ${game.venue}`,
+    label: `${fallback.context.label} / ${formatMatchup(null, game.homeTeam.abbreviation, game.awayTeam.abbreviation, "slate")}, ${game.venue}`,
     whiffDeltaPct: fallback.context.whiffDeltaPct,
     velocityDeltaMph: fallback.context.velocityDeltaMph,
     parkRunFactor: getVenueRunFactor(game.venue),
@@ -865,7 +866,7 @@ async function getArchivedCompletedStartDetailByRouteId(date: string, startId: s
   const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
   const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
   const context = {
-    label: `${start.awayTeam.abbreviation} @ ${start.homeTeam.abbreviation}, ${start.venue}`,
+    label: `${formatMatchup(null, start.homeTeam.abbreviation, start.awayTeam.abbreviation, "slate")}, ${start.venue}`,
     whiffDeltaPct: fallback.context.whiffDeltaPct,
     velocityDeltaMph: fallback.context.velocityDeltaMph,
     parkRunFactor: getVenueRunFactor(start.venue),
@@ -1994,7 +1995,7 @@ function scheduledGameToStarts(
       const rankSeed = game.gamePk + pitcher.id;
       const opponentQualityContext = teamQualityContexts.get(opponent);
       const context = {
-        label: `${fallback.context.label} / ${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}, ${game.venue}`,
+        label: `${fallback.context.label} / ${formatMatchup(null, game.homeTeam.abbreviation, game.awayTeam.abbreviation, "slate")}, ${game.venue}`,
         whiffDeltaPct: fallback.context.whiffDeltaPct,
         velocityDeltaMph: fallback.context.velocityDeltaMph,
         parkRunFactor: getVenueRunFactor(game.venue),
@@ -2128,7 +2129,7 @@ function archivedCompletedStartToSummary(start: ArchivedCompletedStartSummary): 
   const fallback = demoSlateStarts[(start.gamePk + start.pitcherMlbId) % demoSlateStarts.length];
   const colors = teamColors[start.team] ?? { color: fallback.teamColor ?? FALLBACK_TEAM_COLOR, accent: fallback.accentColor ?? FALLBACK_ACCENT_COLOR };
   const context = {
-    label: `${start.awayTeam.abbreviation} @ ${start.homeTeam.abbreviation}, ${start.venue}`,
+    label: `${formatMatchup(null, start.homeTeam.abbreviation, start.awayTeam.abbreviation, "slate")}, ${start.venue}`,
     whiffDeltaPct: fallback.context.whiffDeltaPct,
     velocityDeltaMph: fallback.context.velocityDeltaMph,
     parkRunFactor: getVenueRunFactor(start.venue),

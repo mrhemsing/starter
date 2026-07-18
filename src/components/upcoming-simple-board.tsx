@@ -4,6 +4,7 @@ import { formBandValueColor, formBandWhisperLabel, formLineEraText, hasQualified
 import { LocalTime } from "@/components/local-time";
 import { UpcomingSimpleCardFrame } from "@/components/upcoming-view-mode";
 import { HEAT_BANDS, watchTierOf } from "@/lib/form-tokens";
+import { formatMatchup } from "@/lib/format-matchup";
 import { formatUpcomingDate, pitcherHref, sourceParams } from "@/lib/routes";
 import { upcomingSimpleContextSentence, upcomingSimpleContextSentencesForSlate } from "@/lib/upcoming-simple-context";
 import type { FormTier, TonightGame, TonightResponse, TonightStarter } from "@/lib/types";
@@ -196,8 +197,8 @@ export function UpcomingSimpleCard({
         <SimplePortraitPanel starter={game.starters[1]} align="home" />
       </div>
       <div className="grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 bg-[#07070a]" data-simple-form-strip>
-        <SimpleIdentityStrip starter={game.starters[0]} orientation={`${game.away} @ ${game.home}`} align="away" />
-        <SimpleIdentityStrip starter={game.starters[1]} orientation={`${game.home} vs ${game.away}`} align="home" />
+        <SimpleIdentityStrip starter={game.starters[0]} orientation={formatMatchup(game.away, game.home, game.away, "perspective")} align="away" />
+        <SimpleIdentityStrip starter={game.starters[1]} orientation={formatMatchup(game.home, game.home, game.away, "perspective")} align="home" />
       </div>
       <p
         className="px-4 py-5 text-left text-base leading-6 text-zinc-200 sm:px-6"

@@ -7,6 +7,7 @@ import { readOddsSnapshotMarketContexts } from "@/lib/data/odds-snapshot-service
 import { getGameTimeWeather, getParkContext } from "@/lib/data/run-environment";
 import { getDefaultUpcomingDate, getProbablesFromSchedule, getSlateSchedule } from "@/lib/data/start-service";
 import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
+import { formatMatchup } from "@/lib/format-matchup";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import { classifyStarterRoleContext } from "@/lib/spot-start-role";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
@@ -226,7 +227,7 @@ function isRequestTimeEnrichmentEnabled() {
 }
 
 function matchupLabel(game: MlbScheduleGame) {
-  const base = `${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}`;
+  const base = formatMatchup(null, game.homeTeam.abbreviation, game.awayTeam.abbreviation, "slate");
   if (!isDoubleheaderGame(game) || !game.gameNumber) return base;
   return `${base}, Gm ${game.gameNumber}`;
 }

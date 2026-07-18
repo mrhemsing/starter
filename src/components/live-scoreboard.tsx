@@ -15,6 +15,7 @@ import { LIVE_EMPTY_REFRESH_INTERVAL_MS } from "@/lib/live-board-config";
 import { rankedStartsPath, upcomingDateHref } from "@/lib/routes";
 import { formatGameScorePlus, formatWatchScore } from "@/lib/score-display";
 import { formatFirstPitchCountdown, type SlateProgressState } from "@/lib/slate-state";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import type { TonightGame, TonightStarter } from "@/lib/types";
 
 type LiveScoreboardProps = {
@@ -297,7 +298,7 @@ function LiveGemAlertStack({ alerts, onDismiss }: { alerts: LiveGemAlertEvent[];
               {alert.message}
             </Link>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-              {alert.team} vs {alert.opponent}
+              {startMatchupLabel({ pitcher: { team: alert.team }, opponent: alert.opponent, side: alert.side })}
             </p>
           </div>
           <button
@@ -928,7 +929,7 @@ function LiveScoreboardRow({ row, muted = false }: { row: LiveScoreboardRow; mut
           <StatusChip status={row.status} />
           {shortOuting ? <ShortOutingChip /> : null}
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-            {row.team} vs {row.opponent}
+            {startMatchupLabel({ pitcher: { team: row.team }, opponent: row.opponent, side: row.side })}
           </p>
         </div>
         <Link href={row.pitcherHref} className="pitcher-name mt-1 block break-words font-serif text-2xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 [overflow-wrap:anywhere]">

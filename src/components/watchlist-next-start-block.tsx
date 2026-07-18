@@ -1,7 +1,8 @@
 import { isValidParkRunFactor } from "@/lib/data/run-environment";
 import type { WatchlistNextStart } from "@/lib/data/watchlist-service";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 
-export function WatchlistNextStartBlock({ nextStart, compact = false }: { nextStart: WatchlistNextStart | null; compact?: boolean }) {
+export function WatchlistNextStartBlock({ nextStart, team, compact = false }: { nextStart: WatchlistNextStart | null; team: string; compact?: boolean }) {
   if (!nextStart) {
     return (
       <div className="font-mono text-xs uppercase tracking-[0.12em] text-zinc-500" data-responsive-check="watchlist-next-start-block">
@@ -11,7 +12,7 @@ export function WatchlistNextStartBlock({ nextStart, compact = false }: { nextSt
   }
 
   const status = nextStart.probableStatus === "confirmed" ? "CONFIRMED" : "PROJECTED";
-  const matchup = `${nextStart.side === "away" ? "@" : "vs"} ${nextStart.opponent}`;
+  const matchup = startMatchupLabel({ pitcher: { team }, opponent: nextStart.opponent, side: nextStart.side });
 
   return (
     <div className="grid gap-2 font-mono uppercase tracking-[0.12em]" data-responsive-check="watchlist-next-start-block">

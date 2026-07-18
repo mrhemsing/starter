@@ -6,6 +6,7 @@ import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { HEAT_BANDS, HOME_CONFIG, formDeltaBand, formWindowLabel } from "@/lib/form-tokens";
+import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
 
@@ -203,7 +204,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
 function nextStartDetails(pitcher: FormSummary) {
   if (!pitcher.nextStart) return "TBD";
   if (!pitcher.nextStart.opponent || !isValidDate(pitcher.nextStart.date)) return "TBD";
-  const matchup = pitcher.nextStart.side === "away" ? `@${pitcher.nextStart.opponent}` : `vs ${pitcher.nextStart.opponent}`;
+  const matchup = startMatchupLabel({ pitcher: { team: pitcher.team }, opponent: pitcher.nextStart.opponent, side: pitcher.nextStart.side });
   return `${matchup} · ${formatShortDate(pitcher.nextStart.date)}`;
 }
 
