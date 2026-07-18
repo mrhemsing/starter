@@ -233,6 +233,24 @@ function upsertCanonicalStartRecord(existing: CanonicalStartRecord | undefined, 
 
   if (!existing) return next;
 
+  if (!existing.side && next.side) {
+    const at = now.toISOString();
+    existing = {
+      ...existing,
+      side: next.side,
+      updatedAt: at,
+      audit: [
+        ...existing.audit,
+        {
+          at,
+          event: "final-correction",
+          source: next.source.line,
+          note: `Backfilled side metadata from canonical incoming summary: ${next.side}. Scoring fields unchanged.`,
+        },
+      ],
+    };
+  }
+
   assertValidCanonicalSettledRecord(next);
   try {
     assertValidCanonicalSettledRecord(existing);

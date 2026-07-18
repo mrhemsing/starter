@@ -17,6 +17,7 @@ const files = {
   formService: "src/lib/data/form-service.ts",
   mlbArchive: "src/lib/data/mlb-archive.ts",
   startService: "src/lib/data/start-service.ts",
+  canonicalStore: "src/lib/data/canonical-start-store.ts",
   types: "src/lib/types.ts",
 };
 
@@ -32,10 +33,11 @@ assert.match(formatter, /perspective === away[\s\S]*`\$\{perspective\} @ \$\{hom
 assert.match(formatter, /\[matchup-integrity\]/, "Invalid canonical matchup data must log an integrity warning.");
 assert.match(formatter, /warnInvalidMatchup\(perspective, home, away, mode\);[\s\S]*return \[home, away\]/, "Invalid perspective data must warn and return opponent-only context.");
 assert.match(helper, /formatMatchup\(start\.pitcher\.team, homeTeam, awayTeam, "perspective"\)/, "Start labels must route through the canonical formatter.");
+assert.match(helper, /return matchup \|\| start\.opponent;/, "Unknown start direction must degrade to the known opponent.");
 assert.match(helper, /export function startVenueLine/, "Venue lines must share the matchup formatter.");
 
 for (const [name, path] of Object.entries(files)) {
-  if (name === "formatter" || name === "helper" || name === "types" || name === "formService" || name === "mlbArchive" || name === "startService") continue;
+  if (name === "formatter" || name === "helper" || name === "types" || name === "formService" || name === "mlbArchive" || name === "startService" || name === "canonicalStore") continue;
   const source = read(path);
   assert.match(source, /startMatchupLabel/, `${path} must use the shared matchup formatter.`);
 }
@@ -60,6 +62,7 @@ assert.match(types, /export type StartSummary[\s\S]*side: "home" \| "away" \| nu
 assert.match(types, /Pick<StartSummary, "id" \| "date" \| "opponent" \| "side" \| "result"/, "PitcherStartLogEntry must carry side from the schedule source.");
 assert.match(read(files.startService), /function archivedCompletedStartToSummary[\s\S]*const side = start\.side \?\?[\s\S]*opponent: start\.opponent,\s+side,/m, "Archived completed starts must preserve or canonically derive side.");
 assert.doesNotMatch(formatter, /Opponent TBD/, "The shared formatter must not fabricate an Opponent TBD label.");
+assert.match(read(files.canonicalStore), /if \(!existing\.side && next\.side\)[\s\S]*side: next\.side[\s\S]*Scoring fields unchanged/, "Canonical upserts must self-heal missing side metadata without changing frozen scoring fields.");
 
 const forbidden = [
   "src/app/starts/[id]/page.tsx",

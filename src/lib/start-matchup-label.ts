@@ -11,7 +11,8 @@ export type StartMatchupLabelInput = {
 export function startMatchupLabel(start: StartMatchupLabelInput) {
   const homeTeam = start.side === "home" ? start.pitcher.team : start.side === "away" ? start.opponent : null;
   const awayTeam = start.side === "away" ? start.pitcher.team : start.side === "home" ? start.opponent : null;
-  return formatMatchup(start.pitcher.team, homeTeam, awayTeam, "perspective");
+  const matchup = formatMatchup(start.pitcher.team, homeTeam, awayTeam, "perspective");
+  return matchup || start.opponent;
 }
 
 export function startVenueLine(start: StartMatchupLabelInput, venue: string | null | undefined) {
