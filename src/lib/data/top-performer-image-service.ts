@@ -28,6 +28,7 @@ type CachedMlbGameContentActionImage = {
   alt: string;
   attribution?: string;
   autoPromoted?: boolean;
+  officialPitchingHighlight?: boolean;
   clean?: boolean;
   focalPoint?: {
     x: number;
@@ -51,6 +52,11 @@ type MlbGameContentItem = {
   blurb?: string;
   id?: string;
   slug?: string;
+  keywordsAll?: Array<{
+    type?: string;
+    value?: string;
+    displayName?: string;
+  }>;
   image?: {
     title?: string;
     cuts?: Array<{
@@ -201,8 +207,14 @@ function isPhotoCreditImageTitle(title: string) {
 }
 
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
-  void start;
-  return isPhotoCreditImageTitle(item.image?.title ?? "");
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""}`.toLowerCase();
+  const pitcherNamed = text.includes(start.pitcher.name.toLowerCase()) || text.includes(lastName(start.pitcher.name).toLowerCase());
+  return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item));
+}
+
+function isOfficialMlbPitchingHighlight(item: MlbGameContentItem) {
+  const tags = item.keywordsAll?.map((keyword) => `${keyword.value ?? ""} ${keyword.displayName ?? ""}`.toLowerCase()) ?? [];
+  return tags.some((tag) => tag.includes("highlight-reel-pitching") || tag === "pitching pitching");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
@@ -219,18 +231,19 @@ function singlePitchActionFramePattern() {
   return /\b(first k|first strikeout|called out on strikes|strikes out swinging|swinging strike)\b/i;
 }
 
-function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary): { focalPoint: { x: number; y: number } } | null {
+function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary): { focalPoint: { x: number; y: number }; officialPitchingHighlight: boolean } | null {
   const { item, score } = candidate;
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const fullName = start.pitcher.name.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   const isPitcherNamed = text.includes(fullName) || text.includes(last);
   const hasTrustedPhotoCredit = isPhotoCreditImageTitle(item.image?.title ?? "");
+  const officialPitchingHighlight = isOfficialMlbPitchingHighlight(item);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
-  if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;
+  if (!isPitcherNamed || (!hasTrustedPhotoCredit && !officialPitchingHighlight)) return null;
   if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;
   if (score < 125 && !hasPitchingActionCopy) return null;
-  return { focalPoint: { x: 62, y: 50 } };
+  return { focalPoint: { x: officialPitchingHighlight ? 50 : 62, y: 50 }, officialPitchingHighlight };
 }
 
 function selectMlbImageCut(item: MlbGameContentItem | null) {
@@ -244,7 +257,7 @@ function normalizeMlbImageUrl(src: string) {
   return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/");
 }
 
-async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage, autoPromotion: { focalPoint: { x: number; y: number } } | null) {
+async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage, autoPromotion: { focalPoint: { x: number; y: number }; officialPitchingHighlight: boolean } | null) {
   await mkdir(CACHE_DIR, { recursive: true });
   const value: CachedMlbGameContentActionImage = {
     startId,
@@ -252,6 +265,7 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     alt: image.alt,
     attribution: image.attribution,
     autoPromoted: Boolean(autoPromotion),
+    officialPitchingHighlight: autoPromotion?.officialPitchingHighlight ?? false,
     clean: Boolean(autoPromotion),
     focalPoint: autoPromotion?.focalPoint,
     focalX: autoPromotion?.focalPoint.x ?? null,
@@ -272,7 +286,7 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   const value = JSON.parse(body) as CachedMlbGameContentActionImage;
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
-  if (value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "")) return null;
+  if (value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "") && value.officialPitchingHighlight !== true) return null;
   if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;
   if (value.focalX !== undefined && value.focalX !== null && !isValidFocalCoordinate(value.focalX)) return null;
   if (value.focalY !== undefined && value.focalY !== null && !isValidFocalCoordinate(value.focalY)) return null;

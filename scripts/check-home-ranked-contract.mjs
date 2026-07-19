@@ -654,13 +654,13 @@ assert(
     imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
     imageService.includes("clean: Boolean(autoPromotion),") &&
     imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
-    imageService.includes("if (!isPitcherNamed || !hasTrustedPhotoCredit) return null;") &&
+    imageService.includes("if (!isPitcherNamed || (!hasTrustedPhotoCredit && !officialPitchingHighlight)) return null;") &&
     imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
-    imageService.includes("return { focalPoint: { x: 62, y: 50 } };") &&
-    !imageService.includes("isTrustedMlbPitcherHighlightThumbnail") &&
+    imageService.includes("return { focalPoint: { x: officialPitchingHighlight ? 50 : 62, y: 50 }, officialPitchingHighlight };") &&
+    imageService.includes("function isOfficialMlbPitchingHighlight(item: MlbGameContentItem)") &&
     imageService.includes('text.includes(fullName)') &&
     imageService.includes("if (value.clean !== true) return null;") &&
-    imageService.includes('value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "")') &&
+    imageService.includes('value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "") && value.officialPitchingHighlight !== true') &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
     imageService.includes("function cachedActionFocalPoint(value: CachedMlbGameContentActionImage)") &&
     imageService.includes("focalXOverride") &&
@@ -694,7 +694,7 @@ assert(
     !imageService.includes('/ar_16:9,g_auto,q_auto:good,w_1536,c_fill,f_jpg/') &&
     imageService.includes("if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;") &&
     imageService.includes("if (!isMlbActionImageCandidate(item, start)) return 0;") &&
-    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "");') &&
+    imageService.includes('return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item));') &&
     imageService.includes("if (nonActionMlbContentPattern().test(text)) return 0;") &&
     imageService.includes("if (nonActionMlbTitlePattern().test(titleText)) return 0;") &&
     imageService.includes('if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;') &&
