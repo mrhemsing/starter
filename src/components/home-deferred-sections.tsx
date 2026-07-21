@@ -12,6 +12,7 @@ import { HeatCheckHero } from "@/components/heat-check-hero";
 import { Headshot } from "@/components/headshot";
 import { useHomeLiveBoard } from "@/components/home-live-board-provider";
 import { RankedStartsRecap } from "@/components/ranked-starts-recap";
+import { RecentGemVeloChart } from "@/components/recent-gem-velo-chart";
 import { TonightsMustWatch } from "@/components/tonights-must-watch";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { MetaLine, StartLineText } from "@/components/wrap-safe-text";
@@ -21,6 +22,7 @@ import { isRankedRegularStart } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { slateTimeWord, slateTimeWordTitle } from "@/lib/time-words";
 import type { BestStartsHomeResponse, HomeSeasonTopStart } from "@/lib/data/home-best-starts-service";
+import type { StartVeloByInning } from "@/lib/data/start-velo-by-inning";
 import type { LiveScoreboard, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
 import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { formatStartLine } from "@/lib/format";
@@ -159,6 +161,9 @@ export function HomeDeferredSections({
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
           monthlyRunnerUpHighlight={bestStarts.monthlyRunnerUpHighlight}
+          weeklyVeloByInning={bestStarts.weeklyVeloByInning}
+          monthlyVeloByInning={bestStarts.monthlyVeloByInning}
+          monthlyRunnerUpVeloByInning={bestStarts.monthlyRunnerUpVeloByInning}
           seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null,
@@ -212,6 +217,9 @@ export function HomeDeferredSections({
           weeklyHighlight={bestStarts.weeklyHighlight}
           monthlyHighlight={bestStarts.monthlyHighlight}
           monthlyRunnerUpHighlight={bestStarts.monthlyRunnerUpHighlight}
+          weeklyVeloByInning={bestStarts.weeklyVeloByInning}
+          monthlyVeloByInning={bestStarts.monthlyVeloByInning}
+          monthlyRunnerUpVeloByInning={bestStarts.monthlyRunnerUpVeloByInning}
           seasonTopStarts={bestStarts.seasonTopStarts}
         />
       ) : null}
@@ -487,6 +495,9 @@ function BestStartsLite({
   weeklyHighlight,
   monthlyHighlight,
   monthlyRunnerUpHighlight,
+  weeklyVeloByInning,
+  monthlyVeloByInning,
+  monthlyRunnerUpVeloByInning,
   seasonTopStarts,
 }: {
   weekly: StartSummary | null;
@@ -495,19 +506,22 @@ function BestStartsLite({
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
   monthlyRunnerUpHighlight?: FeaturedStartHighlight | null;
+  weeklyVeloByInning: StartVeloByInning | null;
+  monthlyVeloByInning: StartVeloByInning | null;
+  monthlyRunnerUpVeloByInning?: StartVeloByInning | null;
   seasonTopStarts?: HomeSeasonTopStart[];
 }) {
   const sameWindowWinner = Boolean(weekly && monthly && weekly.id === monthly.id);
-  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null }> = sameWindowWinner
+  const cards: Array<{ badge: string; start: StartSummary | null; highlight: FeaturedStartHighlight | null; veloByInning: StartVeloByInning | null }> = sameWindowWinner
     ? [
-        { badge: "7 AND 30-DAY BEST", start: weekly, highlight: weeklyHighlight ?? monthlyHighlight },
-        { badge: "30-DAY NEXT BEST", start: monthlyRunnerUp ?? null, highlight: monthlyRunnerUpHighlight ?? null },
+        { badge: "7 AND 30-DAY BEST", start: weekly, highlight: weeklyHighlight ?? monthlyHighlight, veloByInning: weeklyVeloByInning ?? monthlyVeloByInning },
+        { badge: "30-DAY NEXT BEST", start: monthlyRunnerUp ?? null, highlight: monthlyRunnerUpHighlight ?? null, veloByInning: monthlyRunnerUpVeloByInning ?? null },
       ]
     : [
-        { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight },
-        { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight },
+        { badge: "7-DAY BEST", start: weekly, highlight: weeklyHighlight, veloByInning: weeklyVeloByInning },
+        { badge: "30-DAY BEST", start: monthly, highlight: monthlyHighlight, veloByInning: monthlyVeloByInning },
       ];
-  const visibleCards = cards.flatMap((card) => (card.start ? [{ badge: card.badge, start: card.start, highlight: card.highlight }] : []));
+  const visibleCards = cards.flatMap((card) => (card.start ? [{ ...card, start: card.start }] : []));
   const topStarts = seasonTopStarts?.slice(0, 5) ?? [];
 
   if (visibleCards.length === 0 && topStarts.length === 0) return null;
@@ -526,9 +540,9 @@ function BestStartsLite({
           </Link>
         </div>
         <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]" data-responsive-check="home-best-starts-2026-layout">
-          <div className="grid gap-3 lg:grid-rows-2">
+          <div className="grid auto-rows-fr gap-3 lg:grid-rows-2" data-recent-gem-card-grid>
             {visibleCards.map((card) => (
-              <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} compact />
+              <BestStartCard key={`${card.badge}-${card.start.id}`} badge={card.badge} start={card.start} highlight={card.highlight} veloByInning={card.veloByInning} compact />
             ))}
           </div>
           {topStarts.length > 0 ? <SeasonTopStartsPanel starts={topStarts} /> : null}
@@ -538,9 +552,9 @@ function BestStartsLite({
   );
 }
 
-function BestStartCard({ start, badge, highlight, compact = false }: { start: StartSummary; badge: string; highlight?: FeaturedStartHighlight | null; compact?: boolean }) {
+function BestStartCard({ start, badge, highlight, veloByInning, compact = false }: { start: StartSummary; badge: string; highlight?: FeaturedStartHighlight | null; veloByInning: StartVeloByInning | null; compact?: boolean }) {
   return (
-    <article className={`group relative min-h-0 overflow-hidden rounded border border-white/10 bg-[#101014] transition hover:border-amber-300/40 ${compact ? "p-4" : "p-5"}`}>
+    <article className={`group relative min-h-0 overflow-hidden rounded border border-white/10 bg-[#101014] transition hover:border-amber-300/40 ${compact ? "p-4" : "p-5"}`} data-recent-gem-card data-recent-gem-media-state={highlight ? "highlight" : "velo-chart"}>
       <a href={startHref(start, sourceParams("home"))} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div className="relative z-10 grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-start gap-3 pointer-events-none">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" band={scoreBand(start.gameScorePlus)} decorative className="ml-1" />
@@ -565,7 +579,11 @@ function BestStartCard({ start, badge, highlight, compact = false }: { start: St
         <div className={`relative z-10 pointer-events-auto ${compact ? "mt-3" : "mt-4"}`}>
           <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
         </div>
-      ) : null}
+      ) : (
+        <div className={`relative z-10 pointer-events-none ${compact ? "mt-3" : "mt-4"}`}>
+          <RecentGemVeloChart pitcherName={start.pitcher.name} data={veloByInning} />
+        </div>
+      )}
     </article>
   );
 }

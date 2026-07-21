@@ -3,6 +3,7 @@ import { rankBestStarts } from "@/lib/best-starts-ranking";
 import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { resolveTopPerformerImage, type TopPerformerImage } from "@/lib/data/top-performer-image-service";
+import { resolveStartVeloByInning, type StartVeloByInning } from "@/lib/data/start-velo-by-inning";
 import { getArchivedSeasonStartSummaries, getDailySlate, getHomeSlateDate } from "@/lib/data/start-service";
 import { rawGameScorePlus } from "@/lib/gs-plus-raw";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
@@ -17,6 +18,9 @@ export type BestStartsHomeResponse = {
   weeklyHighlight: FeaturedStartHighlight | null;
   monthlyHighlight: FeaturedStartHighlight | null;
   monthlyRunnerUpHighlight: FeaturedStartHighlight | null;
+  weeklyVeloByInning: StartVeloByInning | null;
+  monthlyVeloByInning: StartVeloByInning | null;
+  monthlyRunnerUpVeloByInning: StartVeloByInning | null;
   seasonTopStarts: HomeSeasonTopStart[];
 };
 
@@ -41,20 +45,35 @@ const getCachedBestStartsHome = unstable_cache(
       resolveFeaturedStartHighlight(monthlyRunnerUp),
       hydrateSeasonTopStarts(seasonTopStarts, anchorDate),
     ]);
+    const resolvedMonthlyHighlight = monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight;
+    const [weeklyVeloByInning, monthlyVeloByInning, monthlyRunnerUpVeloByInning] = await Promise.all([
+      weekly && !weeklyHighlight ? resolveRecentGemVelo(weekly, "7-day") : null,
+      monthly && !resolvedMonthlyHighlight ? resolveRecentGemVelo(monthly, "30-day") : null,
+      monthlyRunnerUp && !monthlyRunnerUpHighlight ? resolveRecentGemVelo(monthlyRunnerUp, "30-day runner-up") : null,
+    ]);
 
     return {
       weekly,
       monthly,
       monthlyRunnerUp,
       weeklyHighlight,
-      monthlyHighlight: monthly?.id === weekly?.id ? weeklyHighlight : monthlyHighlight,
+      monthlyHighlight: resolvedMonthlyHighlight,
       monthlyRunnerUpHighlight,
+      weeklyVeloByInning,
+      monthlyVeloByInning,
+      monthlyRunnerUpVeloByInning,
       seasonTopStarts: seasonTopStartViews,
     };
   },
-  ["home-best-starts-v14"],
+  ["home-best-starts-v15"],
   { revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
+
+async function resolveRecentGemVelo(start: StartSummary, windowLabel: string) {
+  const velo = await resolveStartVeloByInning(start);
+  if (!velo) console.warn("recent-gems settled start missing velo-by-inning data", { startId: start.id, date: start.date, pitcher: start.pitcher.name, window: windowLabel });
+  return velo;
+}
 
 async function getBestStarts(anchorDate: string) {
   const [weeklyStarts, monthlyStarts, seasonTopStarts] = await Promise.all([

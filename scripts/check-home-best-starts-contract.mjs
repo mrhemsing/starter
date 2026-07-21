@@ -24,6 +24,8 @@ const bestStartsHubPage = await readFile("src/app/best-starts/page.tsx", "utf8")
 const monthlyBestStartsPage = await readFile("src/app/best-starts/[month]/page.tsx", "utf8");
 const startService = await readFile("src/lib/data/start-service.ts", "utf8");
 const featuredStartHighlight = await readFile("src/components/featured-start-highlight.tsx", "utf8");
+const recentGemVeloChart = await readFile("src/components/recent-gem-velo-chart.tsx", "utf8");
+const startVeloByInning = await readFile("src/lib/data/start-velo-by-inning.ts", "utf8");
 const focalHelper = await readFile("src/lib/action-photo-focal.ts", "utf8");
 const topPerformerImageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 const misiorowskiTopStartAction = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-action-v4.json", "utf8"));
@@ -43,7 +45,7 @@ assert(
     bestStartsService.includes("export const HOME_BEST_STARTS_REVALIDATE_SECONDS = 60;") &&
     bestStartsService.includes('export const HOME_BEST_STARTS_CACHE_TAG = "home-best-starts";') &&
     bestStartsService.includes("unstable_cache(") &&
-    bestStartsService.includes('["home-best-starts-v14"]') &&
+    bestStartsService.includes('["home-best-starts-v15"]') &&
     bestStartsService.includes("{ revalidate: HOME_BEST_STARTS_REVALIDATE_SECONDS, tags: [HOME_BEST_STARTS_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] }"),
   "home best-starts service must cache rolling-window winners and season top starts on a short cadence with a versioned key",
 );
@@ -337,6 +339,31 @@ for (const testCase of topStartClampCases) {
 assert(
   homeDeferredSections.includes("<FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />"),
   "home best-starts card must render the highlight embed when a highlight is present",
+);
+
+assert(
+  bestStartsService.includes('resolveRecentGemVelo(weekly, "7-day")') &&
+    bestStartsService.includes('resolveRecentGemVelo(monthly, "30-day")') &&
+    bestStartsService.includes("weekly && !weeklyHighlight") &&
+    bestStartsService.includes("recent-gems settled start missing velo-by-inning data") &&
+    startVeloByInning.includes("getStartDetail(start.id)") &&
+    startVeloByInning.includes("detail.velocityTrend ?? []") &&
+    startVeloByInning.includes("startAverage - detail.context.velocityDeltaMph"),
+  "Recent Gems must hydrate missing-highlight cards from the settled hero velocity source and log missing settled pitch data",
+);
+
+assert(
+  homeDeferredSections.includes("<RecentGemVeloChart pitcherName={start.pitcher.name} data={veloByInning} />") &&
+    homeDeferredSections.includes('data-recent-gem-media-state={highlight ? "highlight" : "velo-chart"}') &&
+    homeDeferredSections.includes("grid auto-rows-fr") &&
+    recentGemVeloChart.includes('data-recent-gem-media="velo-chart"') &&
+    recentGemVeloChart.includes("relative aspect-video") &&
+    recentGemVeloChart.includes("Velo by inning") &&
+    recentGemVeloChart.includes("data-velo-by-inning") &&
+    recentGemVeloChart.includes("data-season-average-velocity") &&
+    recentGemVeloChart.includes("#FF6B2C") &&
+    !recentGemVeloChart.includes("fetch("),
+  "Recent Gems must render a fixed-aspect ember velo chart with a season reference and production-DOM parity markers when no video exists",
 );
 
 assert(
