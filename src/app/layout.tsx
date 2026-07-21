@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Playfair_Display, Tourney } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { BAverageBadge } from "@/components/b-average-badge";
+import { GlobalNavigationFeedback } from "@/components/global-navigation-feedback";
 import { TTS_BUILD_STAMP } from "@/lib/build-stamp";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
@@ -67,6 +69,9 @@ export default function RootLayout({
         <meta name="tts-build" content={TTS_BUILD_STAMP} />
       </head>
       <body className="min-h-full flex flex-col">
+        <Suspense fallback={null}>
+          <GlobalNavigationFeedback />
+        </Suspense>
         {children}
         <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">

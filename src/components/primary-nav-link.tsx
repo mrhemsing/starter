@@ -44,7 +44,13 @@ export function PrimaryNavLink({ href, className, children }: PrimaryNavLinkProp
       onFocus={warmRoute}
       onClick={handleClick}
     >
-      {children}
+      <span className={pending ? "sr-only" : undefined}>{children}</span>
+      {pending ? (
+        <span className="inline-flex items-center gap-2" role="status" aria-live="polite">
+          <span className="h-3 w-3 animate-spin rounded-full border border-current border-r-transparent" aria-hidden="true" />
+          Loading…
+        </span>
+      ) : null}
     </Link>
   );
 }

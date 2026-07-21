@@ -30,6 +30,8 @@ const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 const types = await readFile("src/lib/types.ts", "utf8");
 const routes = await readFile("src/lib/routes.ts", "utf8");
 const siteNav = await readFile("src/components/site-nav.tsx", "utf8");
+const rootLayout = await readFile("src/app/layout.tsx", "utf8");
+const globalNavigationFeedback = await readFile("src/components/global-navigation-feedback.tsx", "utf8");
 const siteHeader = await readFile("src/components/site-header.tsx", "utf8");
 const slateDateNav = await readFile("src/components/slate-date-nav.tsx", "utf8");
 const rankedStartsArchiveLink = await readFile("src/components/ranked-starts-archive-link.tsx", "utf8");
@@ -195,9 +197,15 @@ assert(
     primaryNavLink.includes("event.preventDefault()") &&
     primaryNavLink.includes("router.push(href)") &&
     primaryNavLink.includes('data-nav-pending={pending ? "true" : undefined}') &&
+    primaryNavLink.includes('role="status"') &&
+    primaryNavLink.includes("Loading…") &&
+    rootLayout.includes("<GlobalNavigationFeedback />") &&
+    globalNavigationFeedback.includes('document.addEventListener("click", handleClick, true)') &&
+    globalNavigationFeedback.includes("destination.origin !== window.location.origin") &&
+    globalNavigationFeedback.includes('aria-label="Loading page"') &&
     !primaryNavLink.includes("dispatchRoutePending") &&
     existsSync("src/app/starts/[id]/loading.tsx"),
-  "ranked starts navigation must use client navigation, prefetch warming, and the shell-first route skeleton fallback",
+  "ranked starts navigation must use client navigation, prefetch warming, immediate pending feedback, and the shell-first route skeleton fallback",
 );
 
 assert(
