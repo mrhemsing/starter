@@ -98,7 +98,7 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
       source: "action",
       imageUrl: cachedMlbGameContentAction.imageUrl,
       alt: cachedMlbGameContentAction.alt,
-      attribution: cachedMlbGameContentAction.attribution,
+      attribution: displayPhotoAttribution(cachedMlbGameContentAction.attribution),
       objectPosition,
       mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
       focalPoint,
@@ -137,7 +137,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
     source: "action",
     imageUrl: normalizeMlbImageUrl(cut.src),
     alt: item.headline ?? item.title ?? `${start.pitcher.name} action photo`,
-    attribution: item.image?.title,
+    attribution: displayPhotoAttribution(item.image?.title),
     objectPosition,
     mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition),
     focalPoint: autoPromoted?.focalPoint ?? null,
@@ -204,6 +204,24 @@ function photoCreditImageTitlePattern() {
 
 function isPhotoCreditImageTitle(title: string) {
   return photoCreditImageTitlePattern().test(title);
+}
+
+function displayPhotoAttribution(value?: string) {
+  const attribution = value?.trim();
+  if (!attribution) return undefined;
+
+  const looksLikeInternalAssetMetadata =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(attribution) ||
+    /^ap\d{10,}$/i.test(attribution) ||
+    /^gettyimages-\d+(?:-\d+x\d+)?$/i.test(attribution) ||
+    /^\d{8}[_-]/.test(attribution) ||
+    /\.still\d+/i.test(attribution);
+  if (looksLikeInternalAssetMetadata) return undefined;
+
+  const looksLikeHumanCredit =
+    /\b(?:credit|photo|images?|photography|reuters|associated press|imagn|usa today)\b/i.test(attribution) ||
+    /\s\/\s/.test(attribution);
+  return looksLikeHumanCredit ? attribution.replace(/^credit:\s*/i, "") : undefined;
 }
 
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {

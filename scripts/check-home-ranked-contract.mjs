@@ -684,6 +684,11 @@ assert(
     imageService.includes("function nonActionMlbTitlePattern()") &&
     imageService.includes("function photoCreditImageTitlePattern()") &&
     imageService.includes("function isPhotoCreditImageTitle(title: string)") &&
+    imageService.includes("function displayPhotoAttribution(value?: string)") &&
+    imageService.includes("attribution: displayPhotoAttribution(cachedMlbGameContentAction.attribution)") &&
+    imageService.includes("attribution: displayPhotoAttribution(item.image?.title)") &&
+    imageService.includes("looksLikeInternalAssetMetadata") &&
+    imageService.includes("looksLikeHumanCredit") &&
     imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function pitcherActionHighlightPattern()") &&
