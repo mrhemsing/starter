@@ -31,6 +31,8 @@ const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/i
 const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg");
 const dylanCeaseJuly25ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-25-tor-bos-656302-mlb-action-v4.json", "utf8"));
 const dylanCeaseActionImageAsset = await stat("public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg");
+const drewRasmussenJuly26ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-26-tb-cle-656876-mlb-action-v4.json", "utf8"));
+const drewRasmussenActionImageAsset = await stat("public/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg");
 const allStarBreakImageAsset = await stat("public/images/all-star-game-philadelphia-2026.jpg");
 
 assert(
@@ -749,6 +751,17 @@ assert(
     dylanCeaseJuly25ImageMetadata.autoPromoted === false &&
     dylanCeaseJuly25ImageMetadata.alt.includes("Dylan Cease"),
   "Dylan Cease July 25 top performance must keep a manually reviewed text-free action photo",
+);
+
+assert(
+  drewRasmussenActionImageAsset.size > 0 &&
+    drewRasmussenJuly26ImageMetadata.startId === "2026-07-26-tb-cle-656876" &&
+    drewRasmussenJuly26ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg" &&
+    drewRasmussenJuly26ImageMetadata.clean === true &&
+    drewRasmussenJuly26ImageMetadata.textFreeReviewed === true &&
+    drewRasmussenJuly26ImageMetadata.autoPromoted === false &&
+    drewRasmussenJuly26ImageMetadata.alt.includes("Drew Rasmussen"),
+  "Drew Rasmussen July 26 live leader must keep a manually reviewed text-free action photo",
 );
 
 assert(
