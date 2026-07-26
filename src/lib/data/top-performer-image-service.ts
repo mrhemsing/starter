@@ -30,6 +30,7 @@ type CachedMlbGameContentActionImage = {
   autoPromoted?: boolean;
   officialPitchingHighlight?: boolean;
   clean?: boolean;
+  textFreeReviewed?: boolean;
   focalPoint?: {
     x: number;
     y: number;
@@ -145,7 +146,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
   } satisfies TopPerformerImage;
 
   await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
-  return autoPromoted ? image : null;
+  return null;
 }
 
 function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null {
@@ -284,7 +285,8 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     attribution: image.attribution,
     autoPromoted: Boolean(autoPromotion),
     officialPitchingHighlight: autoPromotion?.officialPitchingHighlight ?? false,
-    clean: Boolean(autoPromotion),
+    clean: false,
+    textFreeReviewed: false,
     focalPoint: autoPromotion?.focalPoint,
     focalX: autoPromotion?.focalPoint.x ?? null,
     focalY: autoPromotion?.focalPoint.y ?? null,
@@ -304,7 +306,7 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   const value = JSON.parse(body) as CachedMlbGameContentActionImage;
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
-  if (value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "") && value.officialPitchingHighlight !== true) return null;
+  if (value.autoPromoted === true && value.textFreeReviewed !== true) return null;
   if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;
   if (value.focalX !== undefined && value.focalX !== null && !isValidFocalCoordinate(value.focalX)) return null;
   if (value.focalY !== undefined && value.focalY !== null && !isValidFocalCoordinate(value.focalY)) return null;

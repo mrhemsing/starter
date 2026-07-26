@@ -29,6 +29,8 @@ const featuredHighlightService = await readFile("src/lib/data/featured-highlight
 const globals = await readFile("src/app/globals.css", "utf8");
 const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-mlb-action-v4.json", "utf8"));
 const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg");
+const dylanCeaseJuly25ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-25-tor-bos-656302-mlb-action-v4.json", "utf8"));
+const dylanCeaseActionImageAsset = await stat("public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg");
 const allStarBreakImageAsset = await stat("public/images/all-star-game-philadelphia-2026.jpg");
 
 assert(
@@ -52,6 +54,7 @@ assert(
     featuredHighlightService.includes('"2026-06-25-hou-det-837227": "fSu5y2kmChE"') &&
     featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
     featuredHighlightService.includes('"2026-07-08-tor-sf-656302": "0AmJgvdkVbk"') &&
+    featuredHighlightService.includes('"2026-07-25-tor-bos-656302": "HZ3S7-D0zR8"') &&
     featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes("readSupabaseFeaturedStartHighlight(start.id)") &&
@@ -650,9 +653,10 @@ assert(
     !imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const autoPromoted = isAutoPromotableMlbGameContentAction(candidate, start);") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);") &&
-    imageService.includes("return autoPromoted ? image : null;") &&
+    imageService.includes("return null;") &&
     imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
-    imageService.includes("clean: Boolean(autoPromotion),") &&
+    imageService.includes("clean: false,") &&
+    imageService.includes("textFreeReviewed: false,") &&
     imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
     imageService.includes("if (!isPitcherNamed || (!hasTrustedPhotoCredit && !officialPitchingHighlight)) return null;") &&
     imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
@@ -660,7 +664,7 @@ assert(
     imageService.includes("function isOfficialMlbPitchingHighlight(item: MlbGameContentItem)") &&
     imageService.includes('text.includes(fullName)') &&
     imageService.includes("if (value.clean !== true) return null;") &&
-    imageService.includes('value.imageUrl.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && value.autoPromoted === true && !isPhotoCreditImageTitle(value.attribution ?? "") && value.officialPitchingHighlight !== true') &&
+    imageService.includes("if (value.autoPromoted === true && value.textFreeReviewed !== true) return null;") &&
     imageService.includes("if (value.focalPoint && !isValidFocalPoint(value.focalPoint)) return null;") &&
     imageService.includes("function cachedActionFocalPoint(value: CachedMlbGameContentActionImage)") &&
     imageService.includes("focalXOverride") &&
@@ -734,6 +738,17 @@ assert(
     typeof gavinWilliamsLiveLeaderImageMetadata.focalY === "number" &&
     gavinWilliamsLiveLeaderImageMetadata.alt.includes("Gavin Williams"),
   "Gavin Williams July 9 live leader must keep a curator-clean local action photo with focal metadata",
+);
+
+assert(
+  dylanCeaseActionImageAsset.size > 0 &&
+    dylanCeaseJuly25ImageMetadata.startId === "2026-07-25-tor-bos-656302" &&
+    dylanCeaseJuly25ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg" &&
+    dylanCeaseJuly25ImageMetadata.clean === true &&
+    dylanCeaseJuly25ImageMetadata.textFreeReviewed === true &&
+    dylanCeaseJuly25ImageMetadata.autoPromoted === false &&
+    dylanCeaseJuly25ImageMetadata.alt.includes("Dylan Cease"),
+  "Dylan Cease July 25 top performance must keep a manually reviewed text-free action photo",
 );
 
 assert(

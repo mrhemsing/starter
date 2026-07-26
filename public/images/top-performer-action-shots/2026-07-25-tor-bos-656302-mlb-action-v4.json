@@ -1,0 +1,23 @@
+{
+  "startId": "2026-07-25-tor-bos-656302",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg",
+  "alt": "Dylan Cease delivers a pitch for Toronto",
+  "attribution": "Lindsey Wasson/AP Photo via Hearst",
+  "autoPromoted": false,
+  "officialPitchingHighlight": false,
+  "clean": true,
+  "textFreeReviewed": true,
+  "focalPoint": {
+    "x": 50,
+    "y": 50
+  },
+  "focalX": 50,
+  "focalY": 50,
+  "focalXOverride": null,
+  "focalYOverride": null,
+  "objectPosition": "50% 50%",
+  "mobileObjectPosition": "50% 50%",
+  "playUrl": "https://www.mlb.com/video/dylan-cease-strikes-out-12-in-complete-game-shutout",
+  "reviewNote": "Manually reviewed pitching action photo with no embedded text; replaces the MLB video title card.",
+  "expiresAt": 4102444800000
+}
