@@ -40,12 +40,16 @@ try {
   assert(watchHtml.includes('data-watch-rank-sort-mode="watch"'), "watch route must render the detailed board in watch sort mode");
   assert.deepEqual(rankMap(timeCards), rankMap(watchCards));
   assert.equal(timeCards.filter((card) => card.kind === "headliner").length, 0);
-  assert.equal(timeCards.filter((card) => card.gold).length, 1);
-  assert.equal(timeCards.find((card) => card.gold)?.rank, 1);
+  assert.equal(timeCards.filter((card) => card.gold).length, 0);
+  assert.equal(count(timeHtml, "data-watch-rank-rail-numeral"), 0);
+  assert.equal(count(timeHtml, "data-watch-rank-metadata"), 0);
+  assert(timeCards.every((card) => card.railWidth === "86px"));
   assert.equal(watchCards.filter((card) => card.kind === "headliner").length, 1);
   assert.equal(watchCards.filter((card) => card.gold).length, 1);
   assert.equal(watchCards[0]?.kind, "headliner");
   assert.equal(watchCards[0]?.rank, 1);
+  assert(count(watchHtml, "data-watch-rank-rail-numeral") >= games.length - 1);
+  assert(count(watchHtml, "data-watch-rank-metadata") >= games.length - 1);
 
   console.log(`watch rank rendered ok: ${games.length} ${date} matchups across time and watch sorts`);
 } finally {
@@ -60,6 +64,7 @@ function detailedCards(markup) {
       rank: Number(attribute(tag, "data-watch-rank")),
       kind: attribute(tag, "data-responsive-check") === "must-watch-headliner" ? "headliner" : "row",
       gold: attribute(tag, "data-watch-rank-gold") === "true",
+      railWidth: attribute(tag, "data-watch-rank-rail-width"),
     }))
     .filter((card) => card.gamePk.length > 0);
 }
@@ -70,6 +75,10 @@ function rankMap(cards) {
 
 function attribute(tag, name) {
   return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1] ?? "";
+}
+
+function count(value, needle) {
+  return value.split(needle).length - 1;
 }
 
 async function json(response) {

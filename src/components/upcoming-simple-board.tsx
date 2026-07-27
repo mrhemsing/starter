@@ -65,6 +65,7 @@ export function UpcomingSimpleBoard({
                       game={game}
                       leagueMeanGS={tonight.leagueMeanGS}
                       rankLabel={rankLabel}
+                      sortMode={sortMode}
                       contextWriteup={contextWriteups[game.gamePk]}
                       fallbackContextSentence={fallbackContextSentences[game.gamePk]}
                       showCardDate={showCardDate}
@@ -101,6 +102,7 @@ export function UpcomingSimpleCardGrid({
 export function UpcomingSimpleCard({
   game,
   leagueMeanGS,
+  sortMode = "watch",
   contextWriteup,
   fallbackContextSentence,
   showCardDate = false,
@@ -109,6 +111,7 @@ export function UpcomingSimpleCard({
   game: TonightGame;
   leagueMeanGS: number;
   rankLabel: string;
+  sortMode?: "watch" | "time";
   contextWriteup?: string;
   fallbackContextSentence?: string;
   showCardDate?: boolean;
@@ -120,7 +123,7 @@ export function UpcomingSimpleCard({
   const watchTier = watchTierOf(game.gameWatchScore);
   const accentColor = watchTier.color;
   const cardTint = simpleCardTint(game.gameWatchScore, accentColor);
-  const showRankSlot = true;
+  const showRankSlot = sortMode === "watch";
   const rankLabelText = hasNamedStarterMatchup ? `#${game.watchRank}` : "--";
   const isTopWatchRank = hasNamedStarterMatchup && game.watchRank === 1;
   const scoreLabel = hasNamedStarterMatchup ? game.gameWatchScore.toFixed(1) : "--";

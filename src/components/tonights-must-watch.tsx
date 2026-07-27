@@ -88,7 +88,7 @@ export function TonightsMustWatch({
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
       data-visible-summary-ids={shownGames.length ? shownGames.map(watchCardSummaryIdValue).join(",") : "none"}
       data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabelValue(game, showGameStatus)).join("|") : "none"}
-      data-visible-summary-copies={shownGames.length ? shownGames.map((game) => watchCardSummaryCopyValue(game, showGameStatus, headliner?.gamePk === game.gamePk ? undefined : game.watchRank, headliner?.gamePk === game.gamePk ? undefined : game.watchRankOf)).join("|") : "none"}
+      data-visible-summary-copies={shownGames.length ? shownGames.map((game) => watchCardSummaryCopyValue(game, showGameStatus, sortMode === "watch" && headliner?.gamePk !== game.gamePk ? game.watchRank : undefined, sortMode === "watch" && headliner?.gamePk !== game.gamePk ? game.watchRankOf : undefined)).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-limited-reasons={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.limitedReason ?? "none").join("/")).join(",") : "none"}
@@ -273,12 +273,12 @@ export function TonightsMustWatch({
             {isTopMatchupsLayout ? (
               <div className="grid gap-4 lg:grid-cols-2" data-home-top-matchups-simple-row data-home-top-matchups-simple-count={rows.slice(0, 2).length}>
                 {rows.slice(0, 2).map((game) => (
-                  <UpcomingSimpleCard key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} />
+                  <UpcomingSimpleCard key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode="watch" />
                 ))}
               </div>
             ) : (
               <div className="grid gap-3" data-detailed-mobile-starter-header-scope="rows-after-headliner">
-                {rows.map((game) => <MustWatchRow key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
+                {rows.map((game) => <MustWatchRow key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} showWatchRank={sortMode === "watch"} />)}
               </div>
             )}
           </div>
@@ -551,10 +551,10 @@ function watchSortGroupLabelValue(game: TonightGame) {
   return watchSortGroupLabel(game);
 }
 
-function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean }) {
+function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore, showWatchRank }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean; showWatchRank: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
-  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus, game.watchRank, game.watchRankOf);
+  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus, showWatchRank ? game.watchRank : undefined, showWatchRank ? game.watchRankOf : undefined);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
   const homeAccent = starterFormAccent(game.starters[1]);
@@ -596,7 +596,9 @@ function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatc
       data-watch-card-kind="row"
       data-watch-rank={watchCardRankValue(game)}
       data-watch-rank-of={game.watchRankOf}
-      data-watch-rank-gold={game.watchRank === 1 ? "true" : undefined}
+      data-watch-rank-gold={showWatchRank && game.watchRank === 1 ? "true" : undefined}
+      data-watch-rank-visible={String(showWatchRank)}
+      data-watch-rank-rail-width="86px"
       data-watch-rank-label={watchRankLabelValue(rankLabel)}
       data-watch-sort-group={watchSortGroupValue(game)}
       data-watch-sort-group-label={watchSortGroupLabelValue(game)}
@@ -624,9 +626,9 @@ function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatc
     >
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(var(--away-rgb)/0.11),transparent_35%,transparent_65%,rgb(var(--home-rgb)/0.11))]" />
       <div className="relative grid gap-4 lg:grid-cols-[86px_minmax(0,1fr)] lg:items-start">
-        <div>
-          <p className={`font-serif text-3xl ${game.watchRank === 1 ? "text-amber-300" : "text-zinc-500"}`}>#{game.watchRank}</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tier.color }}>{tier.label}</p>
+        <div className="w-[86px]" data-watch-rank-rail data-watch-rank-rail-width="86px">
+          {showWatchRank ? <p className={`font-serif text-3xl ${game.watchRank === 1 ? "text-amber-300" : "text-zinc-500"}`} data-watch-rank-rail-numeral>#{game.watchRank}</p> : null}
+          <p className={`${showWatchRank ? "mt-1" : ""} font-mono text-[10px] uppercase tracking-[0.14em]`} style={{ color: tier.color }} data-watch-rank-rail-tier>{tier.label}</p>
           <div className="mt-2">
             <WatchScoreConfidenceChip game={game} compact />
           </div>
@@ -644,7 +646,7 @@ function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatc
                 data-venue={gameVenueLabel(game)}
                 aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
               >
-                <MetaLine segments={[...gameSummarySegments(game, showGameStatus), `#${game.watchRank} of ${game.watchRankOf} watch rank`]} />
+                <MetaLine segments={[...gameSummarySegments(game, showGameStatus), ...(showWatchRank ? [<span key="watch-rank" data-watch-rank-metadata>#{game.watchRank} of {game.watchRankOf} watch rank</span>] : [])]} />
               </p>
               <GameEnvironmentChips game={game} compact />
             </div>
