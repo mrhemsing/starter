@@ -806,8 +806,8 @@ function PregameMarquee({ slate, game }: { slate: LivePregameSlate; game: Tonigh
       </div>
       <div className="mt-4" data-live-pregame-simple-card="true">
         <UpcomingSimpleCardGrid data-live-pregame-first-up-grid="true" data-live-pregame-first-up-count={firstUpGames.length}>
-          {firstUpGames.map((firstUpGame, index) => (
-            <UpcomingSimpleCard key={firstUpGame.gamePk} game={firstUpGame} rank={index + 1} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} sortMode="time" />
+          {firstUpGames.map((firstUpGame) => (
+            <UpcomingSimpleCard key={firstUpGame.gamePk} game={firstUpGame} leagueMeanGS={slate.leagueMeanGS} rankLabel={slate.headerLabel.toLowerCase()} />
           ))}
         </UpcomingSimpleCardGrid>
       </div>

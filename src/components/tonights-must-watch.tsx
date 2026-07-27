@@ -33,6 +33,7 @@ export function TonightsMustWatch({
   compactTopPadding = false,
   showHookSpine = true,
   layout = "default",
+  sortMode = "watch",
 }: {
   tonight: TonightResponse;
   fullSlateHref: string;
@@ -46,10 +47,11 @@ export function TonightsMustWatch({
   compactTopPadding?: boolean;
   showHookSpine?: boolean;
   layout?: "default" | "top-matchups";
+  sortMode?: "watch" | "time";
 }) {
   const shownGames = typeof previewLimit === "number" ? tonight.games.slice(0, previewLimit) : tonight.games;
-  const headliner = shownGames[0];
-  const rows = shownGames.slice(1);
+  const headliner = sortMode === "watch" ? shownGames.find((game) => game.watchRank === 1) : undefined;
+  const rows = headliner ? shownGames.filter((game) => game.gamePk !== headliner.gamePk) : shownGames;
   const headingId = `${sectionId}-heading`;
   const eyebrowLabel = eyebrow ?? slateTimeWordTitle(tonight);
   const marketAttribution = marketAttributionForGames(shownGames);
@@ -71,6 +73,7 @@ export function TonightsMustWatch({
       data-watch-section-title={title}
       data-visible-game-pks={shownGames.length ? shownGames.map((game) => game.gamePk).join(",") : "none"}
       data-visible-headliner-game-pk={headliner?.gamePk ?? "none"}
+      data-watch-rank-sort-mode={sortMode}
       data-visible-row-game-pks={rows.length ? rows.map((game) => game.gamePk).join(",") : "none"}
       data-visible-game-dates={shownGames.length ? shownGames.map((game) => game.date).join(",") : "none"}
       data-visible-matchup-labels={shownGames.length ? shownGames.map((game) => game.label).join("|") : "none"}
@@ -85,7 +88,7 @@ export function TonightsMustWatch({
       data-visible-summary-status-labels={shownGames.length ? shownGames.map((game) => gameStatusLabel(game.status)).join(",") : "none"}
       data-visible-summary-ids={shownGames.length ? shownGames.map(watchCardSummaryIdValue).join(",") : "none"}
       data-visible-summary-aria-labels={shownGames.length ? shownGames.map((game) => watchCardSummaryAriaLabelValue(game, showGameStatus)).join("|") : "none"}
-      data-visible-summary-copies={shownGames.length ? shownGames.map((game, index) => watchCardSummaryCopyValue(game, showGameStatus, index === 0 ? undefined : index + 1, index === 0 ? undefined : shownGames.length)).join("|") : "none"}
+      data-visible-summary-copies={shownGames.length ? shownGames.map((game) => watchCardSummaryCopyValue(game, showGameStatus, headliner?.gamePk === game.gamePk ? undefined : game.watchRank, headliner?.gamePk === game.gamePk ? undefined : game.watchRankOf)).join("|") : "none"}
       data-visible-starter-sides={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.side).join("/")).join(",") : "none"}
       data-visible-starter-statuses={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.status).join("/")).join(",") : "none"}
       data-visible-starter-limited-reasons={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.limitedReason ?? "none").join("/")).join(",") : "none"}
@@ -165,8 +168,8 @@ export function TonightsMustWatch({
       data-visible-weather-wind-mph={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.windMph, 0)).join(",") : "none"}
       data-visible-weather-precip-probabilities={shownGames.length ? shownGames.map((game) => weatherMetricValue(game.weatherContext.precipProbability, 0)).join(",") : "none"}
       data-visible-weather-tones={shownGames.length ? shownGames.map((game) => weatherContextTone(game)).join(",") : "none"}
-      data-visible-watch-card-kinds={shownGames.length ? shownGames.map((_, index) => watchCardKind(index)).join(",") : "none"}
-      data-visible-watch-ranks={shownGames.length ? shownGames.map((game, index) => watchCardRankValue(game, index)).join(",") : "none"}
+      data-visible-watch-card-kinds={shownGames.length ? shownGames.map((game) => watchCardKind(game, sortMode)).join(",") : "none"}
+      data-visible-watch-ranks={shownGames.length ? shownGames.map(watchCardRankValue).join(",") : "none"}
       data-visible-watch-rank-labels={shownGames.length ? shownGames.map(() => watchRankLabelValue(rankLabel)).join("|") : "none"}
       data-visible-watch-scores={shownGames.length ? shownGames.map(watchScoreValue).join(",") : "none"}
       data-visible-watch-score-labels={shownGames.length ? shownGames.map((game) => watchScoreLabel(game)).join("|") : "none"}
@@ -248,7 +251,7 @@ export function TonightsMustWatch({
           </Link>
         </div>
 
-        {!headliner ? (
+        {shownGames.length === 0 ? (
           <div
             className="rounded border border-white/10 bg-[#101014] p-6"
             role="status"
@@ -266,16 +269,16 @@ export function TonightsMustWatch({
           </div>
         ) : (
           <div className="space-y-4" data-home-top-matchups-composition={isTopMatchupsLayout ? "detailed-hero-plus-simple-cards" : undefined}>
-            <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} slateSize={tonight.scheduledGames} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} />
+            {headliner ? <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} /> : null}
             {isTopMatchupsLayout ? (
               <div className="grid gap-4 lg:grid-cols-2" data-home-top-matchups-simple-row data-home-top-matchups-simple-count={rows.slice(0, 2).length}>
-                {rows.slice(0, 2).map((game, index) => (
-                  <UpcomingSimpleCard key={game.gamePk} game={game} rank={index + 2} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} sortMode="watch" />
+                {rows.slice(0, 2).map((game) => (
+                  <UpcomingSimpleCard key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} />
                 ))}
               </div>
             ) : (
               <div className="grid gap-3" data-detailed-mobile-starter-header-scope="rows-after-headliner">
-                {rows.map((game, index) => <MustWatchRow key={game.gamePk} game={game} rank={index + 2} slateSize={tonight.scheduledGames} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
+                {rows.map((game) => <MustWatchRow key={game.gamePk} game={game} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} isTopWatchScore={game.gamePk === topWatchGamePk} />)}
               </div>
             )}
           </div>
@@ -286,7 +289,7 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; slateSize: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus);
@@ -325,10 +328,13 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
       data-matchup-status-label={statusLabel}
+      data-matchup-quality-badge-copy={statusLabel}
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="headliner"
-      data-watch-rank={watchCardRankValue(game, 0)}
+      data-watch-rank={watchCardRankValue(game)}
+      data-watch-rank-of={game.watchRankOf}
+      data-watch-rank-gold="true"
       data-watch-rank-label={watchRankLabelValue(rankLabel)}
       data-watch-sort-group={watchSortGroupValue(game)}
       data-watch-sort-group-label={watchSortGroupLabelValue(game)}
@@ -376,7 +382,7 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
           <div className="rounded border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-left md:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200" data-matchup-quality-tag={statusLabel} data-matchup-quality-copy={statusLabel}>{statusLabel}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
-              <p className="font-serif text-3xl font-black text-amber-100">#1 {rankLabel}</p>
+              <p className="font-serif text-3xl font-black text-amber-100">#{game.watchRank} {rankLabel}</p>
               <WatchScoreConfidenceChip game={game} compact />
             </div>
           </div>
@@ -396,16 +402,16 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
   );
 }
 
-function watchCardRankValue(game: TonightGame, index: number) {
-  return game.status === "ppd" && index === 0 ? "-" : String(index + 1);
+function watchCardRankValue(game: TonightGame) {
+  return String(game.watchRank);
 }
 
 function watchRankLabelValue(rankLabel: string) {
   return rankLabel;
 }
 
-function watchCardKind(index: number) {
-  return index === 0 ? "headliner" : "row";
+function watchCardKind(game: TonightGame, sortMode: "watch" | "time") {
+  return game.watchRank === 1 && sortMode === "watch" ? "headliner" : "row";
 }
 
 export function UpcomingWatchCardSkeleton({ index = 0, headliner = false }: { index?: number; headliner?: boolean }) {
@@ -492,6 +498,7 @@ function WatchScoreConfidenceChip({ game, compact = false }: { game: TonightGame
   return (
     <span
       className={`inline-flex items-center rounded border border-amber-300/30 bg-amber-300/10 font-mono uppercase tracking-[0.12em] text-amber-100 ${compact ? "px-1.5 py-0.5 text-[8px]" : "px-2 py-1 text-[10px]"}`}
+      data-watch-score-confidence-chip-game-pk={game.gamePk}
       data-watch-score-confidence-chip={game.watchScoreConfidence}
       data-watch-score-confidence-chip-label={label}
       data-watch-score-confidence-chip-copy={label}
@@ -514,9 +521,7 @@ function watchTierLabel(game: TonightGame) {
 }
 
 function topWatchScoreGamePk(games: TonightGame[]) {
-  if (games.length === 0) return null;
-  const topScore = Math.max(...games.map((game) => game.gameWatchScore));
-  return games.find((game) => game.gameWatchScore === topScore)?.gamePk ?? null;
+  return games.find((game) => game.watchRank === 1)?.gamePk ?? null;
 }
 
 function matchupStatusLabel(game: TonightGame, isTopWatchScore: boolean) {
@@ -546,10 +551,10 @@ function watchSortGroupLabelValue(game: TonightGame) {
   return watchSortGroupLabel(game);
 }
 
-function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore }: { game: TonightGame; rank: number; slateSize: number; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean }) {
+function MustWatchRow({ game, leagueMeanGS, rankLabel, showGameStatus, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; isTopWatchScore: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
-  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus, rank, slateSize);
+  const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus, game.watchRank, game.watchRankOf);
   const isStarted = game.status === "live";
   const awayAccent = starterFormAccent(game.starters[0]);
   const homeAccent = starterFormAccent(game.starters[1]);
@@ -585,10 +590,13 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
       data-matchup-context-status={game.matchupContext.status}
       data-matchup-context-label={game.matchupContext.label}
       data-matchup-status-label={statusLabel}
+      data-matchup-quality-badge-copy={statusLabel}
       data-matchup-score={game.matchupScore.toFixed(1)}
       data-matchup-rank={game.matchupRankTonight}
       data-watch-card-kind="row"
-      data-watch-rank={watchCardRankValue(game, rank - 1)}
+      data-watch-rank={watchCardRankValue(game)}
+      data-watch-rank-of={game.watchRankOf}
+      data-watch-rank-gold={game.watchRank === 1 ? "true" : undefined}
       data-watch-rank-label={watchRankLabelValue(rankLabel)}
       data-watch-sort-group={watchSortGroupValue(game)}
       data-watch-sort-group-label={watchSortGroupLabelValue(game)}
@@ -617,7 +625,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(var(--away-rgb)/0.11),transparent_35%,transparent_65%,rgb(var(--home-rgb)/0.11))]" />
       <div className="relative grid gap-4 lg:grid-cols-[86px_minmax(0,1fr)] lg:items-start">
         <div>
-          <p className="font-serif text-3xl text-zinc-500">#{rank}</p>
+          <p className={`font-serif text-3xl ${game.watchRank === 1 ? "text-amber-300" : "text-zinc-500"}`}>#{game.watchRank}</p>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tier.color }}>{tier.label}</p>
           <div className="mt-2">
             <WatchScoreConfidenceChip game={game} compact />
@@ -636,7 +644,7 @@ function MustWatchRow({ game, rank, slateSize, leagueMeanGS, rankLabel, showGame
                 data-venue={gameVenueLabel(game)}
                 aria-label={watchCardSummaryAriaLabelValue(game, showGameStatus)}
               >
-                <MetaLine segments={[...gameSummarySegments(game, showGameStatus), `#${rank} of ${slateSize} watch rank`]} />
+                <MetaLine segments={[...gameSummarySegments(game, showGameStatus), `#${game.watchRank} of ${game.watchRankOf} watch rank`]} />
               </p>
               <GameEnvironmentChips game={game} compact />
             </div>

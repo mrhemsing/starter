@@ -145,6 +145,7 @@ export default async function UpcomingWeekPage({ params, searchParams }: Upcomin
                     title="Matchup Board"
                     rankLabel={`on ${formatUpcomingDate(day.date)}`}
                     sectionId={`must-watch-${day.date}`}
+                    sortMode={controls.sort}
                   />
                 ))}
               </>

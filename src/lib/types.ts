@@ -383,7 +383,7 @@ export type FormPitcherResponse = {
 };
 
 export type WatchTierKey = "mustwatch" | "worthit" | "background";
-export type WatchSortPolicy = "status-then-watch-score";
+export type WatchSortPolicy = "watch-rank";
 export type StarterFormStatus = "ok" | "cold_start" | "mlb_debut" | "join_gap";
 export type StarterLimitedReason = Exclude<StarterFormStatus, "ok"> | null;
 export type MatchupConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";
@@ -483,6 +483,8 @@ export type TonightGame = {
   };
   starters: [TonightStarter, TonightStarter];
   gameWatchScore: number;
+  watchRank: number;
+  watchRankOf: number;
   watchScoreConfidence: WatchScoreConfidence;
   watchScoreQualifiedStartCounts: {
     away: number;

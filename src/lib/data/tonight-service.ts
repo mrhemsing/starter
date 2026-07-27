@@ -1,5 +1,3 @@
-import { unstable_cache } from "next/cache";
-import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
@@ -10,8 +8,10 @@ import { MUSTWATCH_CONFIG, watchTierOf } from "@/lib/form-tokens";
 import { formatMatchup } from "@/lib/format-matchup";
 import { SCORE_DISPLAY_PRECISION, WATCH_SCORE_RANGE, roundProjectedGameScorePlus, roundToScorePrecision, roundWatchScore } from "@/lib/score-display";
 import { classifyStarterRoleContext } from "@/lib/spot-start-role";
+import { teamDisplayName } from "@/lib/team-metadata";
 import type { DecisionParkContext, DecisionWeatherContext, FormSummary, MlbProbablePitcher, MlbScheduleGame, MlbTeamHandednessSplitContext, StarterFormStatus, TonightGame, TonightGameStatus, TonightResponse, TonightStarter, UpcomingCardStatus, UpcomingResponse, WatchSortPolicy, WatchTierKey } from "@/lib/types";
 import { WATCH_SCORE_FALLBACK_FORM_HAIRCUT, isFallbackWatchScoreSide, watchScoreConfidenceForSideCounts } from "@/lib/watch-score-confidence";
+import { assignWatchRanks } from "@/lib/watch-rank";
 
 type TonightOptions = {
   date?: string;
@@ -26,11 +26,12 @@ type CachedTonight = {
 
 type ScheduleStatusInput = Pick<MlbScheduleGame, "gameDate" | "status" | "detailedState">;
 
-const TONIGHT_CACHE_TTL_MS = 60 * 1000;
 export const TONIGHT_REVALIDATE_SECONDS = 60;
-export const UPCOMING_REVALIDATE_SECONDS = 60;
+export const UPCOMING_REVALIDATE_SECONDS = TONIGHT_REVALIDATE_SECONDS;
+export const UPCOMING_STALE_WHILE_REVALIDATE_SECONDS = UPCOMING_REVALIDATE_SECONDS * 5;
+const TONIGHT_CACHE_TTL_MS = TONIGHT_REVALIDATE_SECONDS * 1000;
 const ACTIVE_UPCOMING_CARD_STATUSES: UpcomingCardStatus[] = ["pregame", "delay"];
-const WATCH_SORT_POLICY: WatchSortPolicy = "status-then-watch-score";
+const WATCH_SORT_POLICY: WatchSortPolicy = "watch-rank";
 const WATCH_SCORE_PRECISION = SCORE_DISPLAY_PRECISION.watchScore;
 const FORM_COMPLETENESS = MUSTWATCH_CONFIG.formCompleteness;
 const LIKELY_OPENER_MAX_CAREER_STARTS = 4;
@@ -38,25 +39,29 @@ const LIKELY_OPENER_RECENT_APPEARANCE_FLOOR = 3;
 const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";
 const tonightCache = new Map<string, CachedTonight>();
 
-const getCachedTonightMustWatch = unstable_cache(
-  async (date: string, window: 3 | 5 | 10, forceOpponentSplits = false) => buildTonightMustWatch(date, window, forceOpponentSplits),
-  ["tonight-must-watch", "v15"],
-  { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
-);
-
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
   const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();
   const window = options.window ?? MUSTWATCH_CONFIG.windowDefault;
   const forceOpponentSplits = options.forceOpponentSplits === true;
   const cacheKey = `${date}:${window}:${forceOpponentSplits ? "splits" : "default"}`;
+  const now = Date.now();
+  for (const [key, entry] of tonightCache) {
+    if (entry.expiresAt <= now) tonightCache.delete(key);
+  }
   const cached = tonightCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  if (cached) return cached.promise;
 
-  const promise = getCachedTonightMustWatch(date, window, forceOpponentSplits);
-  tonightCache.set(cacheKey, {
-    expiresAt: Date.now() + TONIGHT_CACHE_TTL_MS,
-    promise,
-  });
+  const promise = buildTonightMustWatch(date, window, forceOpponentSplits);
+  const entry: CachedTonight = { expiresAt: Number.POSITIVE_INFINITY, promise };
+  tonightCache.set(cacheKey, entry);
+  void promise.then(
+    () => {
+      if (tonightCache.get(cacheKey) === entry) entry.expiresAt = Date.now() + TONIGHT_CACHE_TTL_MS;
+    },
+    () => {
+      if (tonightCache.get(cacheKey) === entry) tonightCache.delete(cacheKey);
+    },
+  );
 
   return promise;
 }
@@ -93,12 +98,13 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
   );
   const candidates = builtGames.filter(isUpcomingGame);
   const matchupRanks = rankMatchups(candidates);
-  const games = sortUpcomingWatchGames(candidates
+  const rankedGames = assignWatchRanks(candidates
     .map((game) => ({
       ...game,
       matchupRankTonight: matchupRanks.get(game.gamePk) ?? game.matchupRankTonight,
       watchSortGroup: watchSortGroup(game.status),
     })));
+  const games = sortUpcomingWatchGames(rankedGames);
 
   return {
     date,
@@ -187,9 +193,9 @@ async function buildTonightGame(
     parkContext,
     weatherContext,
     away: game.awayTeam.abbreviation,
-    awayName: game.awayTeam.name,
+    awayName: normalizedTeamDisplayName(game.awayTeam.name, game.awayTeam.abbreviation),
     home: game.homeTeam.abbreviation,
-    homeName: game.homeTeam.name,
+    homeName: normalizedTeamDisplayName(game.homeTeam.name, game.homeTeam.abbreviation),
     label: matchupLabel(game),
     gameNumber: game.gameNumber ?? null,
     doubleHeader: game.doubleHeader ?? null,
@@ -201,6 +207,8 @@ async function buildTonightGame(
     },
     starters: [awayStarter, homeStarter],
     gameWatchScore,
+    watchRank: 1,
+    watchRankOf: 1,
     watchScoreConfidence,
     watchScoreQualifiedStartCounts,
     watchTier,
@@ -220,6 +228,10 @@ async function buildTonightGame(
       likelyOpener,
     },
   };
+}
+
+function normalizedTeamDisplayName(name: string, abbreviation: string) {
+  return name.trim().toUpperCase() === abbreviation.trim().toUpperCase() ? teamDisplayName(abbreviation) : name;
 }
 
 function isRequestTimeEnrichmentEnabled() {
@@ -252,22 +264,7 @@ function isUpcomingGame(game: TonightGame) {
 }
 
 function sortUpcomingWatchGames(games: TonightGame[]) {
-  const sorted = [...games].sort(compareUpcomingWatchGames);
-  const topRankLimit = MUSTWATCH_CONFIG.tbdStarter.maxRankWhenAlternativesExist - 1;
-  const trusted = sorted.filter((game) => !game.flags?.tbd);
-  const provisional = sorted.filter((game) => game.flags?.tbd);
-  if (trusted.length < topRankLimit || provisional.length === 0) return sorted;
-
-  const protectedTrusted = trusted.slice(0, topRankLimit);
-  const protectedIds = new Set(protectedTrusted.map((game) => game.gamePk));
-  const rest = sorted.filter((game) => !protectedIds.has(game.gamePk));
-  return [...protectedTrusted, ...rest];
-}
-
-function compareUpcomingWatchGames(a: TonightGame, b: TonightGame) {
-  if (isStartedStatus(a.status) && !isStartedStatus(b.status)) return 1;
-  if (!isStartedStatus(a.status) && isStartedStatus(b.status)) return -1;
-  return b.gameWatchScore - a.gameWatchScore;
+  return [...games].sort((a, b) => a.watchRank - b.watchRank);
 }
 
 function watchSortGroup(status: TonightGameStatus) {

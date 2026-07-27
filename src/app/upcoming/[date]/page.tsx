@@ -27,7 +27,7 @@ type UpcomingDatePageProps = {
   }>;
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params, searchParams }: UpcomingDatePageProps): Promise<Metadata> {
   const { date } = await params;
@@ -132,6 +132,7 @@ export default async function UpcomingDatePage({ params, searchParams }: Upcomin
                   title="Matchup Board"
                   rankLabel={`on ${formatUpcomingDate(resolvedDate)}`}
                   compactTopPadding
+                  sortMode={controls.sort}
                 />
               )}
               simple={(
@@ -209,12 +210,12 @@ export function normalizeUpcomingControls(params?: { pregame?: string; sort?: st
   };
 }
 
-export function filterAndSortGames<T extends { firstPitch: string; gameWatchScore: number }>(games: T[], controls: UpcomingControlsState) {
+export function filterAndSortGames<T extends { firstPitch: string; watchRank: number }>(games: T[], controls: UpcomingControlsState) {
   const visibleGames = games;
   if (controls.sort === "time") {
-    return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || b.gameWatchScore - a.gameWatchScore);
+    return [...visibleGames].sort((a, b) => a.firstPitch.localeCompare(b.firstPitch) || a.watchRank - b.watchRank);
   }
-  return visibleGames;
+  return [...visibleGames].sort((a, b) => a.watchRank - b.watchRank);
 }
 
 export function UpcomingControls({
@@ -239,6 +240,12 @@ export function UpcomingControls({
   const controlsEmpty = visibleGameCount === 0;
   const hiddenGameCount = Math.max(0, scheduledGameCount - visibleGameCount);
   const activeControlCount = 1;
+  const sortOptionKeys = ["sort-time", "sort-watch"];
+  const sortOptionLabels = ["Start time", "Watch rank"];
+  const sortOptionHrefs = [
+    upcomingControlHref(basePath, { ...controls, sort: "time" }),
+    upcomingControlHref(basePath, { ...controls, sort: "watch" }),
+  ];
 
   return (
     <div
@@ -257,6 +264,10 @@ export function UpcomingControls({
       data-control-scheduled-games={scheduledGameCount}
       data-control-hidden-games={hiddenGameCount}
       data-control-active-count={activeControlCount}
+      data-control-sort-option-count={sortOptionKeys.length}
+      data-control-sort-option-keys={sortOptionKeys.join("|")}
+      data-control-sort-option-labels={sortOptionLabels.join("|")}
+      data-control-sort-option-hrefs={sortOptionHrefs.join("|")}
       aria-label={controlsLabel}
     >
       <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto py-1" data-upcoming-control-row style={{ marginLeft: "-4px" }}>
