@@ -360,7 +360,12 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
   return (
     <article className="grid gap-3 rounded border border-l-4 border-white/10 bg-[#101014] p-4 sm:grid-cols-[minmax(0,1fr)_140px] lg:grid-cols-[minmax(0,1fr)_150px_170px]" style={{ borderLeftColor: bandColor }}>
       <div className="grid min-w-0 grid-cols-[52px_minmax(0,1fr)] gap-3">
-        <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok" && qualifiedSample} decorative className="ml-1" />
+        <div className="flex min-w-0 flex-col items-center gap-3">
+          <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok" && qualifiedSample} decorative />
+          <div className="sm:hidden" data-watchlist-mobile-favorite>
+            <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
+          </div>
+        </div>
         <div className="min-w-0">
           <Link href={pitcherHref(entry, sourceParams("watchlist"))} className="block min-w-0">
             <h2 className="truncate font-serif text-2xl font-bold leading-tight text-zinc-50">{entry.name}</h2>
@@ -399,7 +404,9 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
       </div>
       <div className="space-y-3">
         <FormSparkline values={entry.spark} tier={entry.tier} leagueMeanGS={entry.bgs} label={`${entry.name} recent form GS+: ${entry.spark.join(", ")}`} />
-        <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
+        <div className="hidden sm:block">
+          <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
+        </div>
       </div>
     </article>
   );
