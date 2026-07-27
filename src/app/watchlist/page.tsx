@@ -362,7 +362,7 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
       <div className="grid min-w-0 grid-cols-[52px_minmax(0,1fr)] gap-3">
         <div className="flex min-w-0 flex-col items-center gap-3">
           <Headshot playerId={entry.pitcherId} name={entry.name} team={entry.team} size="lg" band={entry.tier} sampleSufficient={entry.status === "ok" && qualifiedSample} decorative />
-          <div className="sm:hidden" data-watchlist-mobile-favorite>
+          <div className="[&_svg]:h-4 [&_svg]:w-4" data-watchlist-headshot-favorite>
             <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
           </div>
         </div>
@@ -404,9 +404,6 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
       </div>
       <div className="space-y-3">
         <FormSparkline values={entry.spark} tier={entry.tier} leagueMeanGS={entry.bgs} label={`${entry.name} recent form GS+: ${entry.spark.join(", ")}`} />
-        <div className="hidden sm:block">
-          <FollowPitcherButton pitcherId={entry.pitcherId} pitcherName={entry.name} initialFollowing compact refreshOnChange />
-        </div>
       </div>
     </article>
   );
