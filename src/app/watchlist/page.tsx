@@ -73,7 +73,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
   }
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#08080a] px-4 pb-16 pt-6 text-zinc-100 sm:px-6 sm:pb-20 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="pb-6">
           <SiteHeader active="watchlist" today={today} rankedDate={rankedDate} />
