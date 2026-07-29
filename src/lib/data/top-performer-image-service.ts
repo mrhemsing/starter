@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { clampActionPhotoObjectPosition, type ActionPhotoFocalPoint } from "@/lib/action-photo-focal";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
@@ -107,6 +107,11 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
     };
   }
 
+  const latestApprovedPitcherAction = await readLatestApprovedPitcherActionImage(start);
+  if (latestApprovedPitcherAction) {
+    return topPerformerImageFromCachedAction(start.id, latestApprovedPitcherAction);
+  }
+
   const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);
   if (mlbGameContentAction) return mlbGameContentAction;
 
@@ -114,6 +119,21 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
     source: "placeholder",
     imageUrl: PLACEHOLDER_IMAGE_URL,
     alt: "Pitcher's mound and rubber on a baseball field",
+  };
+}
+
+function topPerformerImageFromCachedAction(startId: string, cachedAction: CachedMlbGameContentActionImage): TopPerformerImage {
+  const focalPoint = cachedActionFocalPoint(cachedAction);
+  const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });
+  return {
+    source: "action",
+    imageUrl: cachedAction.imageUrl,
+    alt: cachedAction.alt,
+    attribution: displayPhotoAttribution(cachedAction.attribution),
+    objectPosition,
+    mobileObjectPosition: mobileTopPerformerObjectPosition(startId, objectPosition),
+    focalPoint,
+    playUrl: cachedAction.playUrl,
   };
 }
 
@@ -313,6 +333,23 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   if (value.focalXOverride !== undefined && value.focalXOverride !== null && !isValidFocalCoordinate(value.focalXOverride)) return null;
   if (value.focalYOverride !== undefined && value.focalYOverride !== null && !isValidFocalCoordinate(value.focalYOverride)) return null;
   return value.imageUrl && value.alt && value.objectPosition ? value : null;
+}
+
+async function readLatestApprovedPitcherActionImage(start: StartSummary): Promise<CachedMlbGameContentActionImage | null> {
+  const pitcherId = String(start.pitcher.mlbId);
+  const suffix = `-${pitcherId}-mlb-action-v4.json`;
+  const filenames = await readdir(CACHE_DIR).catch(() => []);
+  const candidateStartIds = filenames
+    .filter((filename) => filename.endsWith(suffix))
+    .map((filename) => filename.slice(0, -"-mlb-action-v4.json".length))
+    .filter((startId) => startId !== start.id)
+    .sort((a, b) => b.localeCompare(a));
+
+  for (const startId of candidateStartIds) {
+    const candidate = await readCachedMlbGameContentActionImage(startId);
+    if (candidate && candidate.expiresAt > Date.now()) return candidate;
+  }
+  return null;
 }
 
 function isAllowedCuratedActionImageUrl(url: string) {
