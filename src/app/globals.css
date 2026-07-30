@@ -10,6 +10,8 @@
   --level-cooling: #85B7EB;
   --level-ice: #378ADD;
   --form-steady: #a1a1aa;
+  --warming-gold-dim: #9c8530;
+  --warming-ivory: #eae6dc;
 }
 
 @theme inline {
@@ -19,6 +21,36 @@
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-playfair);
   --font-logo: var(--font-tourney);
+  --color-warming-gold-dim: var(--warming-gold-dim);
+  --color-warming-ivory: var(--warming-ivory);
+}
+
+.warming-reduced-label { display: none; }
+
+.warming-cursor {
+  animation: warming-cursor-blink 1s steps(1) infinite;
+}
+
+.warming-shimmer {
+  animation: warming-shimmer 1.6s linear infinite;
+  animation-delay: var(--warming-delay);
+  background-image: linear-gradient(100deg, rgb(255 255 255 / 0.035) 40%, rgb(255 255 255 / 0.085) 50%, rgb(255 255 255 / 0.035) 60%);
+  background-size: 200% 100%;
+}
+
+@keyframes warming-cursor-blink {
+  50% { opacity: 0; }
+}
+
+@keyframes warming-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warming-cursor,
+  .warming-shimmer { animation: none; }
+  .warming-motion { display: none; }
+  .warming-reduced-label { display: block; }
 }
 
 body {
