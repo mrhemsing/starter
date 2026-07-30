@@ -16,7 +16,10 @@ export async function GET(request: Request) {
   const date = new URL(request.url).searchParams.get("date") ?? undefined;
   const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });
   const settledSlateGaps = await logRecentSettledSlateGaps();
-  const deployment = process.env.VERCEL_URL ?? "local";
+  const deployment = process.env.VERCEL_DEPLOYMENT_ID
+    ?? process.env.VERCEL_GIT_COMMIT_SHA
+    ?? process.env.VERCEL_URL
+    ?? "local";
   const deploymentStateKey = "production-prewarm:last-deployment";
   const deploymentState = await readRuntimeState<{ deployment?: string; finalizedSignature?: string }>(deploymentStateKey);
   const reconciliationPlan = await reconciliationPrewarmPlan(result.date);

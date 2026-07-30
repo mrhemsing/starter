@@ -2,7 +2,7 @@
 
 ## Warm coverage
 
-The minute reconciliation cron derives its warm set from the ranked page data it just reconciled. It warms the homepage and dated Ranked Starts page every cycle. When the finalized-start signature changes, it also warms every finalized recap slug, Heat Check, Best Starts, every affected pitcher page, and the season leaderboard. It warms the current Upcoming, week, Live, and Duels paths each cycle. The deployment URL and finalized signature are stored in durable runtime state, so the first cron invocation after a deployment performs the full finalized reconciliation warm once. This also provides the daily rollover warm without separate date arithmetic.
+The minute reconciliation cron derives its warm set from the ranked page data it just reconciled. It warms the homepage and dated Ranked Starts page every cycle. When the finalized-start signature changes, it also warms every finalized recap slug, Heat Check, Best Starts, every affected pitcher page, and the season leaderboard. It warms the current Upcoming, week, Live, and Duels paths each cycle. The deployment id or Git commit SHA and finalized signature are stored in durable runtime state, so the first cron invocation after a deployment performs the full finalized reconciliation warm once. This also provides the daily rollover warm without separate date arithmetic.
 
 The slate-sync and upcoming-writeups cycles warm the exact date they read or write. All warm HTTP requests carry `User-Agent: ToeTheSlab-ISR-Prewarmer/1.0` and `x-toe-the-slab-prewarm: 1`. Requests run at concurrency three, time out after 15 seconds, retry once, and log failures without failing the writer.
 

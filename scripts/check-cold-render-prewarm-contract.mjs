@@ -19,6 +19,7 @@ for (const requiredPath of ['"/"', '`/starts/${date}`', '"/heat-check"', '"/best
   assert(prewarmer.includes(requiredPath), `prewarmer must derive ${requiredPath}`);
 }
 assert(reconciliationCron.includes("reconciliationPrewarmPlan") && reconciliationCron.includes("production-prewarm:last-deployment"), "reconciliation must warm changed paths and run once after deploy");
+assert(reconciliationCron.includes("VERCEL_GIT_COMMIT_SHA"), "post-deploy warm identity must change with the deployed commit");
 assert(prewarmer.includes('lineStatus === "final"') && reconciliationCron.includes("hasNewFinalizedStarts"), "recap and pitcher families must warm only when finalized starts change");
 assert(slateCron.includes("slatePrewarmPaths") && upcomingCron.includes("slatePrewarmPaths"), "slate and upcoming writers must warm their dated paths");
 
