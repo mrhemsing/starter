@@ -345,7 +345,6 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                           pairedStart={pairs.get(start.id)}
                           formSummary={formByPitcher.get(String(start.pitcher.mlbId))}
                           highlight={highlights.get(start.id) ?? null}
-                          provisionalLeader={visibleStarts[0]?.id === start.id && completionState.isPartialToday && band === "all" && sort === "rank"}
                           grouped={Boolean(group.label)}
                         />
                       ))}
@@ -644,7 +643,7 @@ export function RankedStartCardSkeleton({ index = 0, band = "Solid", grouped = f
   );
 }
 
-function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlight, provisionalLeader, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; formSummary?: FormSummary; highlight?: FeaturedStartHighlight | null; provisionalLeader?: boolean; grouped?: boolean }) {
+function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlight, grouped }: { start: StartSummary; displayRank: number; pairedStart?: StartSummary; formSummary?: FormSummary; highlight?: FeaturedStartHighlight | null; grouped?: boolean }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const profile = rankedBandProfile(tier.label);
   const tierTextColor = profile.scoreColor;
@@ -682,7 +681,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <div className="min-w-0 row-start-1">
               <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
               <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
-              {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
             </div>
             <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate row-start-1 ${profile.plateClass}`} />
             <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
@@ -724,7 +722,6 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
           <div className="min-w-0 row-start-1">
             <p className={`${profile.rankClass} font-serif font-bold leading-none text-zinc-500`}>#{displayRank}</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: tierTextColor }}>{tier.label}</p>
-            {provisionalLeader ? <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-300">Leader so far</p> : null}
           </div>
           <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size={profile.headshotSize} band={thermalBand} decorative className={`ranked-start-plate row-start-1 ${profile.plateClass}`} />
           <div className="row-start-1 grid min-w-0 overflow-hidden gap-1">
