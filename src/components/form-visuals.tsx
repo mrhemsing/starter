@@ -12,14 +12,14 @@ export function tierTextClass(tier: FormTier) {
   return tierStyles[tier].textClass;
 }
 
-export function TrendChip({ summary }: { summary: Pick<FormSummary, "trend" | "deltaForm">; compact?: boolean }) {
+export function TrendChip({ summary, hideLabelOnMobile = false }: { summary: Pick<FormSummary, "trend" | "deltaForm">; compact?: boolean; hideLabelOnMobile?: boolean }) {
   const trend = formDeltaBand(summary.deltaForm);
   const value = `${summary.deltaForm >= 0 ? "+" : ""}${summary.deltaForm.toFixed(1)}`;
 
   return (
     <span className="inline-flex min-h-8 items-center gap-2 rounded border px-2.5 py-1 font-mono text-xs uppercase tracking-[0.12em]" style={{ borderColor: `color-mix(in srgb, ${trend.color} 35%, transparent)`, color: trend.color }} aria-label={`${trend.label} ${value}`}>
       <span>{trend.marker}</span>
-      <span>{`${trend.label} ${value}`}</span>
+      <span><span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{trend.label} </span>{value}</span>
     </span>
   );
 }

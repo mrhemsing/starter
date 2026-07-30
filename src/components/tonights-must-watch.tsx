@@ -1358,7 +1358,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
             </div>
             {starter.trend && starter.deltaForm !== undefined ? (
               <span className="inline-flex sm:mt-2" data-starter-trend-chip-spacer="true">
-                <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
+                <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact hideLabelOnMobile />
               </span>
             ) : null}
           </>
@@ -1372,7 +1372,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           </p>
         )}
       </div>
-      <div className="col-start-2 col-end-4 -mt-1 min-w-0 sm:hidden" data-starter-compact-mobile-form-line="under-name">
+      <div className="col-span-full -mt-1 min-w-0 sm:hidden" data-starter-compact-mobile-form-line="under-name">
         {starter.formStatus === "ok" ? (
           <StarterFormScoreLine starter={starter} separator="hyphen" noWrap />
         ) : (
