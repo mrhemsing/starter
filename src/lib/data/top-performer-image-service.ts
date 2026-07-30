@@ -323,7 +323,12 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
 async function readCachedMlbGameContentActionImage(startId: string): Promise<CachedMlbGameContentActionImage | null> {
   const body = await readFile(mlbGameContentActionImageCachePath(startId), "utf8").catch(() => readDeployedActionImageMetadata(startId));
   if (!body) return null;
-  const value = JSON.parse(body) as CachedMlbGameContentActionImage;
+  let value: CachedMlbGameContentActionImage;
+  try {
+    value = JSON.parse(body) as CachedMlbGameContentActionImage;
+  } catch {
+    return null;
+  }
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
   if (value.clean !== true) return null;
   if (value.autoPromoted === true && value.textFreeReviewed !== true) return null;
