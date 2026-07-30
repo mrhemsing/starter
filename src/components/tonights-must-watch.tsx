@@ -1333,15 +1333,6 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
         <p className="pitcher-name min-w-0 text-sm font-medium leading-tight text-zinc-100">
           {formHref ? <Link href={formHref} className="transition hover:text-amber-200" aria-label={`View ${name} form`}>{name}</Link> : name}
         </p>
-        <div className="mt-1 sm:hidden" data-starter-compact-mobile-form-line="under-name">
-          {starter.formStatus === "ok" ? (
-            <StarterFormScoreLine starter={starter} separator="hyphen" />
-          ) : (
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
-              {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
-            </p>
-          )}
-        </div>
         <ProbableConfidenceChip starter={starter} compact />
         <LikelyOpenerBadge starter={starter} compact />
         <StarterRoleContextLine starter={starter} compact />
@@ -1377,6 +1368,15 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
           </div>
         ) : (
           <p className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 sm:block" aria-label={starterFallbackAriaLabel(starter)}>
+            {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
+          </p>
+        )}
+      </div>
+      <div className="col-start-2 col-end-4 -mt-1 min-w-0 sm:hidden" data-starter-compact-mobile-form-line="under-name">
+        {starter.formStatus === "ok" ? (
+          <StarterFormScoreLine starter={starter} separator="hyphen" noWrap />
+        ) : (
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500" aria-label={starterFallbackAriaLabel(starter)}>
             {starter.status === "tbd" ? "TBD" : starter.formStatus === "mlb_debut" ? "MLB debut" : starter.formStatus === "join_gap" ? "Form pending" : "Limited"}
           </p>
         )}
