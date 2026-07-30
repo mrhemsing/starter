@@ -14,7 +14,7 @@ import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/ro
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import type { SlateProgressState } from "@/lib/slate-state";
-import { jsonLdForUpcomingDay, upcomingDayDescription, upcomingDayTitle } from "@/lib/upcoming-metadata";
+import { jsonLdForUpcomingDay, upcomingDayTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingDatePageProps = {
   params: Promise<{
@@ -33,11 +33,9 @@ export async function generateMetadata({ params, searchParams }: UpcomingDatePag
   const { date } = await params;
   assertValidDateRouteParam(date);
   const query = await searchParams;
-  const upcoming = await getTonightMustWatch({ date, window: 5 });
-  const resolvedDate = upcoming.date;
-  const title = upcomingDayTitle(resolvedDate);
-  const description = upcomingDayDescription(upcoming);
-  const url = upcomingDateHref(resolvedDate);
+  const title = upcomingDayTitle(date);
+  const description = `Probable starting pitchers and pitching matchups for ${formatUpcomingDate(date)}, ranked with starter form and matchup context.`;
+  const url = upcomingDateHref(date);
   const image = `${url}/opengraph-image`;
 
   return {

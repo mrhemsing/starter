@@ -3,7 +3,6 @@ import { notFound, permanentRedirect } from "next/navigation";
 import PitcherFormPage from "./form/page";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
 import { FORM_CONFIG } from "@/lib/form-tokens";
-import { pitcherFormDescription } from "@/lib/form-metadata";
 import { parsePitcherRouteParam, pitcherHref } from "@/lib/routes";
 
 type PitcherPageProps = {
@@ -21,14 +20,12 @@ export async function generateMetadata({ params, searchParams }: PitcherPageProp
   const id = parsePitcherRouteParam(routeParams.id);
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
-  const form = await getPitcherForm(id, { window });
-  if (!form) return {};
-
   const isDefaultWindow = window === FORM_CONFIG.windowDefault;
-  const url = pitcherHref(form.summary, isDefaultWindow ? undefined : { window });
+  const pitcherName = routeParams.id.replace(/-\d+$/, "").split("-").filter(Boolean).map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join(" ") || "MLB Pitcher";
+  const url = pitcherHref({ pitcherId: id, name: pitcherName }, isDefaultWindow ? undefined : { window });
   const image = `/pitchers/${id}/form/opengraph-image${isDefaultWindow ? "" : `?window=${window}`}`;
-  const title = `${form.summary.name} - GS+, Form & Heat Check · Toe the Slab`;
-  const description = pitcherFormDescription(form);
+  const title = `${pitcherName} - GS+, Form & Heat Check · Toe the Slab`;
+  const description = `${pitcherName} game log, GS+, rolling form, pitch mix, and upcoming-start context.`;
 
   return {
     title,

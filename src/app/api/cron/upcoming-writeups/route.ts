@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDefaultUpcomingDate } from "@/lib/data/start-service";
 import { generateUpcomingWriteupsForDate } from "@/lib/data/upcoming-writeups-service";
+import { prewarmProductionPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -13,7 +14,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const date = normalizeDateKey(url.searchParams.get("date")) ?? await getDefaultUpcomingDate();
   const result = await generateUpcomingWriteupsForDate(date);
-  return NextResponse.json({ ok: true, result });
+  const prewarm = await prewarmProductionPaths(slatePrewarmPaths(date));
+  return NextResponse.json({ ok: true, result, prewarm });
 }
 
 function isAuthorizedCronRequest(request: Request) {

@@ -25,24 +25,10 @@ type StartRecapPageProps = {
 export async function generateMetadata({ params }: StartRecapPageProps): Promise<Metadata> {
   const { id: date, slug } = await params;
   if (isIsoDateRouteParam(date)) assertValidDateRouteParam(date);
-  const resolved = await resolveStartRecap(date, slug);
-
-  if (!resolved) {
-    return {
-      title: "Start Recap",
-      description: "Single-start MLB pitching recap from Toe the Slab.",
-    };
-  }
-
-  const { start, canonicalPath } = resolved;
-  const title = `${start.pitcher.name} start recap - ${formatShortDate(start.date)} GS+ ${start.gameScorePlus}`;
-  const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
-  const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
-  const description = [
-    `${start.pitcher.name} ${startMatchupLabel(start)}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, GSv2 ${start.gameScoreV2 ?? "pending"}, decision ${formatDecision(start.result)}.`,
-    arsenalSentence,
-    qualitySentence,
-  ].filter(Boolean).join(" ");
+  const pitcherLabel = slug.replace(/-\d+$/, "").split("-").filter(Boolean).map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join(" ");
+  const title = `${pitcherLabel || "MLB"} start recap - ${formatShortDate(date)}`;
+  const description = `Single-start MLB pitching recap for ${pitcherLabel || "this starter"} on ${formatLongDate(date)}.`;
+  const canonicalPath = `/starts/${date}/${slug}`;
 
   return {
     title,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prewarmProductionPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
       date: slateState.date,
       status: compactProgress(slateState),
     });
-    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState) });
+    const prewarm = await prewarmProductionPaths(slatePrewarmPaths(slateState.date));
+    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState), prewarm });
   } catch (error) {
     console.error("[slate-sync] probe failed", {
       date: dateOverride,

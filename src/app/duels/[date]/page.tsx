@@ -18,12 +18,8 @@ export async function generateMetadata({ params, searchParams }: DuelsPageProps)
   assertValidDateRouteParam(date);
   const query = await searchParams;
   const mode = query?.mode === "settled" ? "settled" : "upcoming";
-  const duels = await getPitchingDuels(date, mode);
-  const top = duels.bestDuels[0] ?? duels.mismatches[0];
   const title = `Best MLB Pitching Duels - ${formatUpcomingDate(date)}`;
-  const description = top
-    ? `The best pitching duels and biggest mismatches for ${formatUpcomingDate(date)}. ${top.label} leads with ${top.combinedQuality} combined ${mode === "settled" ? "GS+" : "Form"}.`
-    : `The best pitching duels and biggest mismatches for ${formatUpcomingDate(date)}, scored from both starters' form.`;
+  const description = `The best pitching duels and biggest mismatches for ${formatUpcomingDate(date)}, scored from both starters' ${mode === "settled" ? "GS+" : "form"}.`;
   const queryString = mode === "settled" ? "?mode=settled" : "";
 
   return {

@@ -12,7 +12,7 @@ import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
 import { formatUpcomingDate, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
-import { jsonLdForUpcomingWeek, upcomingWeekDescription, upcomingWeekTitle } from "@/lib/upcoming-metadata";
+import { jsonLdForUpcomingWeek, upcomingWeekTitle } from "@/lib/upcoming-metadata";
 
 type UpcomingWeekPageProps = {
   params: Promise<{
@@ -31,11 +31,9 @@ export async function generateMetadata({ params, searchParams }: UpcomingWeekPag
   const { startDate } = await params;
   assertValidDateRouteParam(startDate);
   const query = await searchParams;
-  const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
-  const resolvedStartDate = upcoming.range.start;
-  const title = upcomingWeekTitle(resolvedStartDate);
-  const description = upcomingWeekDescription(upcoming);
-  const url = upcomingWeekHref(resolvedStartDate);
+  const title = upcomingWeekTitle(startDate);
+  const description = `Probable starting pitchers and pitching matchups for the week beginning ${formatUpcomingDate(startDate)}, ranked with starter form and matchup context.`;
+  const url = upcomingWeekHref(startDate);
   const image = `${url}/opengraph-image`;
 
   return {

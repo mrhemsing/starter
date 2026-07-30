@@ -70,22 +70,10 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
     };
   }
 
-  const start = await getStartDetail(id);
-  if (!start) {
-    return {
-      title: "Start Log",
-      description: "Single-start pitch log and GS+ breakdown from Toe the Slab.",
-    };
-  }
-
-  const matchupLabel = startMatchupLabel(start);
-  const title = `${start.pitcher.name} ${matchupLabel} - ${formatShortDate(start.date)} (GS+ ${start.gameScorePlus})`;
-  const hasPitchDetails = start.pitchDetailSource !== "fixture" && start.pitchEvents.length > 0;
-  const description = hasPitchDetails
-    ? `${start.pitcher.name}'s ${formatLongDate(start.date)} start, ${matchupLabel}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus}, whiff, velo, pitch mix, and ranking breakdown.`
-    : `${start.pitcher.name}'s ${formatLongDate(start.date)} start, ${matchupLabel}: ${formatStartLine(start.line)}. GS+ ${start.gameScorePlus} and ranking breakdown.`;
-  const url = startPath(start.id);
-  const image = startShareImagePath(start.id);
+  const title = `MLB Start Log - ${id}`;
+  const description = "Single-start pitch log and GS+ breakdown from Toe the Slab.";
+  const url = startPath(id);
+  const image = startShareImagePath(id);
 
   return {
     title,
@@ -96,7 +84,7 @@ export async function generateMetadata({ params, searchParams }: StartPageProps)
       description,
       url,
       type: "article",
-      images: [{ url: image, width: 1200, height: 630, alt: `${start.pitcher.name} start card` }],
+      images: [{ url: image, width: 1200, height: 630, alt: "MLB start card" }],
     },
     twitter: {
       card: "summary_large_image",

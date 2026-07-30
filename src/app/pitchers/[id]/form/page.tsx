@@ -20,7 +20,7 @@ import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbab
 import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import { sortPitcherWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
 import { FORM_CONFIG, qualityTierOf } from "@/lib/form-tokens";
-import { jsonLdForPitcherForm, pitcherFormDescription, pitcherFormTitle } from "@/lib/form-metadata";
+import { jsonLdForPitcherForm } from "@/lib/form-metadata";
 import { formatStartLine } from "@/lib/format";
 import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
@@ -46,13 +46,11 @@ export async function generateMetadata({ params, searchParams }: PitcherFormPage
   const id = parsePitcherRouteParam(routeParams.id);
   const query = await searchParams;
   const window = parseFormWindow(query?.window);
-  const form = await getPitcherForm(id, { window });
-  if (!form) return {};
-
-  const title = pitcherFormTitle(form);
-  const description = pitcherFormDescription(form);
+  const pitcherName = routeParams.id.replace(/-\d+$/, "").split("-").filter(Boolean).map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join(" ") || "MLB Pitcher";
+  const title = `${pitcherName} pitching form and GS+`;
+  const description = `${pitcherName} rolling form over the last ${window} starts, with GS+ trends and pitch-level context.`;
   const isDefaultWindow = window === FORM_CONFIG.windowDefault;
-  const url = pitcherHref(form.summary, isDefaultWindow ? undefined : { window });
+  const url = pitcherHref({ pitcherId: id, name: pitcherName }, isDefaultWindow ? undefined : { window });
   const image = `/pitchers/${id}/form/opengraph-image${isDefaultWindow ? "" : `?window=${window}`}`;
 
   return {
