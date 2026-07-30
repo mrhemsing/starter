@@ -38,6 +38,11 @@
   background-size: 200% 100%;
 }
 
+[data-home-warming-up]:not(.warming-hydrated) .warming-ball {
+  animation: warming-first-pitch 490ms linear infinite alternate;
+  opacity: 1;
+}
+
 @keyframes warming-cursor-blink {
   50% { opacity: 0; }
 }
@@ -46,9 +51,15 @@
   to { background-position: -200% 0; }
 }
 
+@keyframes warming-first-pitch {
+  from { transform: translate(96px, 108px); }
+  to { transform: translate(886px, 96px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .warming-cursor,
-  .warming-shimmer { animation: none; }
+  .warming-shimmer,
+  [data-home-warming-up]:not(.warming-hydrated) .warming-ball { animation: none; }
   .warming-motion { display: none; }
   .warming-reduced-label { display: block; }
 }

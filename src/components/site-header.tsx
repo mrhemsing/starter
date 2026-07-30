@@ -10,12 +10,16 @@ export async function SiteHeader({
   rankedDate,
   className = "",
   responsiveCheck,
+  liveSnapshot,
+  showNoHitterAlerts = true,
 }: {
   active: NavKey | null;
   today: string;
   rankedDate?: string;
   className?: string;
   responsiveCheck?: string;
+  liveSnapshot?: { liveStarts: number; warmingStarts: number };
+  showNoHitterAlerts?: boolean;
 }) {
   const currentSeason = currentSeasonFromDate(today);
 
@@ -28,9 +32,9 @@ export async function SiteHeader({
           </Link>
           <MlbSeasonKicker season={currentSeason} />
         </div>
-        <SiteNav active={active} today={today} rankedDate={rankedDate} />
+        <SiteNav active={active} today={today} rankedDate={rankedDate} liveSnapshot={liveSnapshot} />
       </header>
-      <NoHitterAlertBars today={today} />
+      {showNoHitterAlerts ? <NoHitterAlertBars today={today} /> : null}
     </>
   );
 }

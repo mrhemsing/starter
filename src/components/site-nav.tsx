@@ -6,10 +6,11 @@ import { heatCheckPath, liveHref, rankedStartsLatestPath, watchlistPath } from "
 type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";
 export type { NavKey };
 
-export async function SiteNav({ active, today, rankedDate }: { active: NavKey | null; today: string; rankedDate?: string }) {
+export async function SiteNav({ active, today, rankedDate, liveSnapshot }: { active: NavKey | null; today: string; rankedDate?: string; liveSnapshot?: { liveStarts: number; warmingStarts: number } }) {
   void rankedDate;
-  const liveBoard = await getLiveScoreboard({ date: today });
-  const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={{ liveStarts: liveBoard.liveStarts, warmingStarts: liveBoard.warmingStarts }} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveHref() }];
+  const liveBoard = liveSnapshot ? null : await getLiveScoreboard({ date: today });
+  const initialSnapshot = liveSnapshot ?? { liveStarts: liveBoard?.liveStarts ?? 0, warmingStarts: liveBoard?.warmingStarts ?? 0 };
+  const liveItem = [{ key: "live" as const, label: <LiveNavLabel initialSnapshot={initialSnapshot} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveHref() }];
   const upcomingItem = [{ key: "upcoming" as const, label: "Upcoming", href: "/upcoming" }];
   const items = [
     { key: "home" as const, label: "Home", href: "/" },

@@ -24,6 +24,7 @@ export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    root.classList.add("warming-hydrated");
     const trail = root.querySelector<SVGPathElement>("[data-warming-trail]");
     const ball = root.querySelector<SVGGElement>("[data-warming-ball]");
     const spin = root.querySelector<SVGGElement>("[data-warming-spin]");
@@ -106,29 +107,27 @@ export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
   }, [statuses]);
 
   return (
-    <main ref={rootRef} className="min-h-screen bg-background px-4 py-8 text-zinc-300 sm:px-6 lg:px-8" data-home-warming-up>
+    <div ref={rootRef} className="text-zinc-300" data-home-warming-up>
       <span className="sr-only" role="status">Loading the board</span>
-      <div className="mx-auto max-w-7xl">
-        <h1 className="font-serif text-[2.4rem] font-bold leading-none text-warming-ivory sm:text-6xl">Warming up</h1>
-        <p className="mt-2 h-[18px] font-mono text-xs tracking-[0.12em] text-zinc-500">
-          <span data-warming-status>{statuses[0]}</span>
-          <span className="warming-cursor ml-1 inline-block h-3 w-[7px] translate-y-px bg-warming-gold-dim" aria-hidden="true" />
-        </p>
-        <Tunnel />
-        <section className="mt-8 grid gap-3" aria-hidden="true">
-          {Array.from({ length: 4 }, (_, index) => <WarmingRow key={index} index={index} />)}
-        </section>
-      </div>
-    </main>
+      <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">Warming up</h1>
+      <p className="mt-3 h-[18px] font-mono text-xs tracking-[0.12em] text-zinc-500" data-warming-status-line>
+        <span data-warming-status>{statuses[0]}</span>
+        <span className="warming-cursor ml-1 inline-block h-3 w-[7px] translate-y-px bg-warming-gold-dim" aria-hidden="true" />
+      </p>
+      <Tunnel />
+      <section className="mt-8 grid gap-3" aria-hidden="true">
+        {Array.from({ length: 4 }, (_, index) => <WarmingRow key={index} index={index} />)}
+      </section>
+    </div>
   );
 }
 
 function Tunnel() {
   return (
-    <section className="mt-7 overflow-hidden rounded-md border border-white/10 bg-[#101014] px-4 pb-2 pt-4 sm:px-6" aria-hidden="true">
+    <section className="mt-8 overflow-hidden rounded-md border border-white/10 bg-[#101014] px-4 pb-2 pt-4 sm:px-6" aria-hidden="true" data-warming-tunnel>
       <div className="flex items-end justify-between px-1">
         <div className="flex items-baseline gap-2">
-          <span className="warming-motion font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-5xl" data-warming-radar>0.0</span>
+          <span className="warming-motion font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-5xl" data-warming-radar>83.8</span>
           <span className="font-mono text-[10px] tracking-[0.22em] text-zinc-500">MPH</span>
         </div>
         <div className="text-right font-mono">
@@ -150,7 +149,7 @@ function Tunnel() {
         <g>{Array.from({ length: 9 }, (_, cell) => <rect key={cell} className="zone-cell fill-transparent data-[hit=true]:fill-amber-300/30" data-zone-cell={cell} x={856 + (cell % 3) * 20} y={84 + Math.floor(cell / 3) * 30} width="20" height="30" />)}</g>
         <path data-warming-trail d="" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-300" />
         <circle data-warming-pop cx="886" cy="129" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-300 opacity-0" />
-        <g data-warming-ball className="warming-motion opacity-0">
+        <g data-warming-ball className="warming-motion warming-ball opacity-0">
           <g data-warming-spin>
             <circle r="7" className="fill-warming-ivory" />
             <path d="M -4.5 -5 Q 0 -1.5 -4.5 5M 4.5 -5 Q 0 -1.5 4.5 5" fill="none" stroke="currentColor" strokeWidth="1.1" className="text-warming-gold-dim" />
