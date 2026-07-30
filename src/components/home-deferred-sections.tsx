@@ -574,7 +574,7 @@ function BestStartCard({ start, badge, highlight, veloByInning, compact = false 
           <RawGsPlusLine score={start.gameScorePlus} breakdown={start.gameScorePlusBreakdown} className="mt-1 text-zinc-800" />
         </div>
       </div>
-      <p className="relative z-10 mt-4 text-sm leading-6 text-zinc-400 pointer-events-none"><StartLineText line={start.line} /></p>
+      <p className="relative z-10 ml-[78px] mt-4 text-sm leading-6 text-zinc-400 pointer-events-none sm:ml-0"><StartLineText line={start.line} /></p>
       {highlight ? (
         <div className={`relative z-10 pointer-events-auto ${compact ? "mt-3" : "mt-4"}`}>
           <FeaturedStartHighlightEmbed highlight={highlight} pitcherName={start.pitcher.name} />
