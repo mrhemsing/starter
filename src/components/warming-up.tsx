@@ -20,11 +20,13 @@ const PITCHES = [
 export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const statuses = STATUS_COPY[slateState] ?? STATUS_COPY.post;
+  const statusesRef = useRef(statuses);
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!root || root.dataset.warmingBooted === "true" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     root.classList.add("warming-hydrated");
+    const statuses = statusesRef.current;
     const trail = root.querySelector<SVGPathElement>("[data-warming-trail]");
     const ball = root.querySelector<SVGGElement>("[data-warming-ball]");
     const spin = root.querySelector<SVGGElement>("[data-warming-spin]");
@@ -104,7 +106,7 @@ export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
       timers.forEach(clearTimeout);
       timers.clear();
     };
-  }, [statuses]);
+  }, []);
 
   return (
     <div ref={rootRef} className="text-zinc-300" data-home-warming-up>
@@ -118,6 +120,7 @@ export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
       <section className="mt-8 grid gap-3" aria-hidden="true">
         {Array.from({ length: 4 }, (_, index) => <WarmingRow key={index} index={index} />)}
       </section>
+      <script dangerouslySetInnerHTML={{ __html: warmingBootstrapScript(statuses) }} />
     </div>
   );
 }
@@ -127,12 +130,12 @@ function Tunnel() {
     <section className="mt-8 overflow-hidden rounded-md border border-white/10 bg-[#101014] px-4 pb-2 pt-4 sm:px-6" aria-hidden="true" data-warming-tunnel>
       <div className="flex items-end justify-between px-1">
         <div className="flex items-baseline gap-2">
-          <span className="warming-motion font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-5xl" data-warming-radar>83.8</span>
+          <span suppressHydrationWarning className="warming-motion font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-5xl" data-warming-radar>83.8</span>
           <span className="font-mono text-[10px] tracking-[0.22em] text-zinc-500">MPH</span>
         </div>
         <div className="text-right font-mono">
-          <span className="warming-motion text-xs tracking-[0.28em] text-warming-ivory" data-warming-pitch-name>FOUR-SEAM</span>
-          <span className="warming-motion mt-1 block text-[10px] tracking-[0.22em] text-zinc-500" data-warming-pitch-count>PITCH 1</span>
+          <span suppressHydrationWarning className="warming-motion text-xs tracking-[0.28em] text-warming-ivory" data-warming-pitch-name>FOUR-SEAM</span>
+          <span suppressHydrationWarning className="warming-motion mt-1 block text-[10px] tracking-[0.22em] text-zinc-500" data-warming-pitch-count>PITCH 1</span>
           <span className="warming-reduced-label text-[10px] tracking-[0.2em] text-zinc-500">LOADING THE BOARD</span>
         </div>
       </div>
@@ -158,6 +161,10 @@ function Tunnel() {
       </svg>
     </section>
   );
+}
+
+function warmingBootstrapScript(statuses: readonly string[]) {
+  return `(()=>{const r=document.currentScript?.parentElement;if(!r||r.dataset.warmingBooted==="true"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;r.dataset.warmingBooted="true";const q=s=>r.querySelector(s),t=q("[data-warming-trail]"),b=q("[data-warming-ball]"),s=q("[data-warming-spin]"),o=q("[data-warming-pop]"),v=q("[data-warming-radar]"),n=q("[data-warming-pitch-name]"),c=q("[data-warming-pitch-count]"),u=q("[data-warming-status]"),z=[...r.querySelectorAll("[data-zone-cell]")],p=${JSON.stringify(PITCHES)},a=${JSON.stringify(statuses)};if(!t||!b||!s||!o||!v||!n||!c||!u)return;let x=0,y=0,f=0,d=false;const timers=new Set,after=(fn,ms)=>{const id=setTimeout(()=>{timers.delete(id);if(!d)fn()},ms);timers.add(id)},statusTimer=setInterval(()=>{y=(y+1)%a.length;u.textContent=a[y]},2600),throwPitch=()=>{const e=p[x%p.length];x++;t.setAttribute("d",e.path);const l=t.getTotalLength();t.style.strokeDasharray=l;t.style.strokeDashoffset=l;t.style.opacity=".35";t.style.transition="none";n.textContent=e.name;c.textContent="PITCH "+x;z.forEach(e=>e.removeAttribute("data-hit"));b.style.opacity="1";const start=performance.now(),low=e.velocity-12,step=now=>{if(d)return;const k=Math.min(1,(now-start)/e.duration),pt=t.getPointAtLength(l*k);b.setAttribute("transform","translate("+pt.x+","+pt.y+")");s.setAttribute("transform","rotate("+(k*900)+")");t.style.strokeDashoffset=l*(1-k);v.textContent=(low+(e.velocity-low)*Math.min(1,k*1.6)).toFixed(1);if(k<1){f=requestAnimationFrame(step);return}v.textContent=e.velocity.toFixed(1);z[e.cell]?.setAttribute("data-hit","true");b.style.opacity="0";o.setAttribute("cx",pt.x);o.setAttribute("cy",pt.y);o.animate([{opacity:.8,r:5},{opacity:0,r:22}],{duration:420,easing:"ease-out"});after(()=>{t.style.transition="opacity 400ms linear";t.style.opacity="0";after(throwPitch,450)},700)};f=requestAnimationFrame(step)};throwPitch();const stop=()=>{if(d)return;d=true;cancelAnimationFrame(f);clearInterval(statusTimer);timers.forEach(clearTimeout);observer.disconnect()},observer=new MutationObserver(()=>{if(!r.isConnected)stop()});observer.observe(document.documentElement,{childList:true,subtree:true})})();`;
 }
 
 function WarmingRow({ index }: { index: number }) {
