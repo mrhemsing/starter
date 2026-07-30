@@ -17,9 +17,17 @@ const PITCHES = [
   { path: "M 96 108 C 390 102, 710 122, 866 160", duration: 680, velocity: 85.6, name: "CHANGEUP", cell: 6 },
 ] as const;
 
-export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
+type WarmingUpProps =
+  | { variant: "full"; slateState: WarmingUpSlateState; statusLines?: never }
+  | { variant: "compact"; slateState?: never; statusLines?: readonly string[] };
+
+const DEFAULT_COMPACT_STATUS = ["Setting the board", "Pulling the latest data"] as const;
+
+export function WarmingUp({ variant, slateState, statusLines }: WarmingUpProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const statuses = STATUS_COPY[slateState] ?? STATUS_COPY.post;
+  const statuses = variant === "full"
+    ? STATUS_COPY[slateState] ?? STATUS_COPY.post
+    : statusLines?.length ? statusLines : DEFAULT_COMPACT_STATUS;
   const statusesRef = useRef(statuses);
 
   useEffect(() => {
@@ -109,28 +117,31 @@ export function WarmingUp({ slateState }: { slateState: WarmingUpSlateState }) {
   }, []);
 
   return (
-    <div ref={rootRef} className="text-zinc-300" data-home-warming-up>
+    <div ref={rootRef} className="text-zinc-300" data-warming-up={variant}>
       <span className="sr-only" role="status">Loading the board</span>
-      <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">Warming up</h1>
+      {variant === "full" ? <h1 className="section-title font-serif text-[2.4rem] font-black leading-none text-zinc-50 sm:text-6xl">Warming up</h1> : null}
       <p className="mt-3 h-[18px] font-mono text-xs tracking-[0.12em] text-zinc-500" data-warming-status-line>
         <span data-warming-status>{statuses[0]}</span>
         <span className="warming-cursor ml-1 inline-block h-3 w-[7px] translate-y-px bg-warming-gold-dim" aria-hidden="true" />
       </p>
-      <Tunnel />
-      <section className="mt-8 grid gap-3" aria-hidden="true">
-        {Array.from({ length: 4 }, (_, index) => <WarmingRow key={index} index={index} />)}
-      </section>
+      <Tunnel variant={variant} />
+      {variant === "full" ? (
+        <section className="mt-8 grid gap-3" aria-hidden="true">
+          {Array.from({ length: 4 }, (_, index) => <WarmingRow key={index} index={index} />)}
+        </section>
+      ) : null}
       <script dangerouslySetInnerHTML={{ __html: warmingBootstrapScript(statuses) }} />
     </div>
   );
 }
 
-function Tunnel() {
+function Tunnel({ variant }: { variant: "full" | "compact" }) {
+  const compact = variant === "compact";
   return (
-    <section className="mt-8 overflow-hidden rounded-md border border-white/10 bg-[#101014] px-4 pb-2 pt-4 sm:px-6" aria-hidden="true" data-warming-tunnel>
+    <section className={`${compact ? "mt-5 px-3 pb-1 pt-3 sm:px-4" : "mt-8 px-4 pb-2 pt-4 sm:px-6"} overflow-hidden rounded-md border border-white/10 bg-[#101014]`} aria-hidden="true" data-warming-tunnel data-warming-tunnel-variant={variant}>
       <div className="flex items-end justify-between px-1">
         <div className="flex items-baseline gap-2">
-          <span suppressHydrationWarning className="warming-motion font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-5xl" data-warming-radar>83.8</span>
+          <span suppressHydrationWarning className={`warming-motion font-mono font-black tabular-nums text-amber-300 ${compact ? "text-2xl sm:text-3xl" : "text-3xl sm:text-5xl"}`} data-warming-radar>83.8</span>
           <span className="font-mono text-[10px] tracking-[0.22em] text-zinc-500">MPH</span>
         </div>
         <div className="text-right font-mono">
@@ -139,7 +150,7 @@ function Tunnel() {
           <span className="warming-reduced-label text-[10px] tracking-[0.2em] text-zinc-500">LOADING THE BOARD</span>
         </div>
       </div>
-      <svg className="block h-auto w-full" viewBox="0 0 1000 230" aria-hidden="true">
+      <svg className={`block w-full ${compact ? "h-[138px]" : "h-auto"}`} preserveAspectRatio={compact ? "xMidYMid meet" : undefined} viewBox="0 0 1000 230" aria-hidden="true">
         <line x1="20" y1="200" x2="980" y2="200" stroke="currentColor" className="text-white/10" />
         <path d="M 40 200 Q 95 168 150 200 Z" className="fill-white/[0.03]" />
         <rect x="84" y="176" width="24" height="4" rx="1" className="fill-zinc-600" />

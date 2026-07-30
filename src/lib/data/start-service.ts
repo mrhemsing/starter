@@ -2044,7 +2044,7 @@ function scheduledGameToStarts(
 
 const getCachedArchivedSlateStarts = unstable_cache(
   async (date: string) => buildArchivedSlateStarts(date),
-  ["archived-slate-starts", "v2"],
+  ["archived-slate-starts", "v3-canonical-gap-recovery"],
   { revalidate: ARCHIVED_SLATE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 

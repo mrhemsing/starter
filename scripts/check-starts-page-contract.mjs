@@ -81,7 +81,7 @@ const archivedStartOfDayActionFixtures = [
     date: "2026-07-05",
     pitcher: "Joe Ryan",
     metadataPath: "public/images/top-performer-action-shots/2026-07-05-min-nyy-657746-mlb-action-v4.json",
-    expectedImageUrl: "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
+    expectedImageUrl: "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.webp",
     expectedSourceFragment: "2026-05-26-min-cws-657746-action.jpg",
   },
   {
@@ -94,7 +94,7 @@ const archivedStartOfDayActionFixtures = [
     pitcher: "Bryce Miller",
     metadataPath: "public/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-action-v4.json",
     expectedImageUrl:
-      "/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-api-action-v2.jpg",
+      "/images/top-performer-action-shots/2026-07-02-sea-laa-682243-mlb-api-action-v2.webp",
     expectedSourceFragment: "w_2608,c_fill,f_jpg/v1783055412/mlb/zov71ghom4xyl7uc5tmj.jpg",
   },
   {
@@ -210,7 +210,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v17";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v18-canonical-gap-recovery";') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
@@ -741,7 +741,7 @@ assert(
 
 assert(
   startsPage.includes('data-responsive-check="ranked-starts-empty-state"') &&
-    startsPage.includes("type RankedStartsEmptyCause = \"live-none-settled\" | \"filter-zero\" | \"off-day\" | \"settled-zero-rankable\";") &&
+    startsPage.includes("type RankedStartsEmptyCause = \"live-none-settled\" | \"filter-zero\" | \"off-day\" | \"settled-zero-rankable\" | \"data-gap\";") &&
     startsPage.includes("function resolveRankedStartsEmptyCause") &&
     startsPage.includes("function RankedStartsEmptyState") &&
     startsPage.includes("function rankedStartsEmptyStateCopy") &&

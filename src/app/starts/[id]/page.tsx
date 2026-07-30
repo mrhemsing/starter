@@ -234,6 +234,8 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
   const statusLabel = completionStatusLabel(completionState, slateProgress);
   const emptyStateCause = resolveRankedStartsEmptyCause({
+    date,
+    today,
     completionState,
     slateProgress,
     qualifiedStartsCount: qualifiedStarts.length,
@@ -322,6 +324,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
               date={date}
               clearFilterHref={rankedStartsHref(date, { sort, showOpeners })}
               previousRankedDate={previousRankedDate}
+              nextRankedDate={archiveNavigation.nextDate}
             />
           ) : null}
           {starts.length > 0 ? (
@@ -386,14 +389,18 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   );
 }
 
-type RankedStartsEmptyCause = "live-none-settled" | "filter-zero" | "off-day" | "settled-zero-rankable";
+type RankedStartsEmptyCause = "live-none-settled" | "filter-zero" | "off-day" | "settled-zero-rankable" | "data-gap";
 
 function resolveRankedStartsEmptyCause({
+  date,
+  today,
   completionState,
   slateProgress,
   qualifiedStartsCount,
   visibleStartsCount,
 }: {
+  date: string;
+  today: string;
   completionState: {
     completedStarts: number;
     totalStarts: number;
@@ -408,6 +415,7 @@ function resolveRankedStartsEmptyCause({
 }): RankedStartsEmptyCause | null {
   if (slateProgress.state === "no-games") return "off-day";
   if (completionState.totalGames === 0 && completionState.totalStarts === 0) return "off-day";
+  if (date < today && completionState.totalGames > 0 && completionState.completedStarts === 0) return "data-gap";
   if (qualifiedStartsCount === 0 && (completionState.isFinal || slateProgress.state === "all-starts-complete")) return "settled-zero-rankable";
   if (qualifiedStartsCount === 0 && completionState.totalStarts > 0) return "live-none-settled";
   if (qualifiedStartsCount > 0 && visibleStartsCount === 0) return "filter-zero";
@@ -422,6 +430,7 @@ function RankedStartsEmptyState({
   date,
   clearFilterHref,
   previousRankedDate,
+  nextRankedDate,
 }: {
   cause: RankedStartsEmptyCause;
   completionState: {
@@ -437,6 +446,7 @@ function RankedStartsEmptyState({
   date: string;
   clearFilterHref: string;
   previousRankedDate: string | null;
+  nextRankedDate: string | null;
 }) {
   const copy = rankedStartsEmptyStateCopy(cause, { ...completionState, firstPitchAt }, settledStartsCount);
 
@@ -476,6 +486,16 @@ function RankedStartsEmptyState({
             Previous slate
           </CtaArrow>
         ) : null}
+        {cause === "data-gap" && previousRankedDate ? (
+          <CtaArrow href={rankedStartsPath(previousRankedDate)} direction="back" tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+            Previous slate
+          </CtaArrow>
+        ) : null}
+        {cause === "data-gap" && nextRankedDate ? (
+          <CtaArrow href={rankedStartsPath(nextRankedDate)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
+            Next slate
+          </CtaArrow>
+        ) : null}
       </div>
     </section>
   );
@@ -513,6 +533,13 @@ function rankedStartsEmptyStateCopy(
     return {
       title: `No starts scheduled for ${formatShortDate(state.date)}.`,
       detail: "Check upcoming matchups.",
+    };
+  }
+
+  if (cause === "data-gap") {
+    return {
+      title: "No reconciled starts for this date.",
+      detail: "The scheduled slate has not reached the ranked archive yet.",
     };
   }
 

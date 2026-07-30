@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { logRecentSettledSlateGaps } from "@/lib/data/settled-slate-integrity";
 import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,8 @@ export async function GET(request: Request) {
 
   const date = new URL(request.url).searchParams.get("date") ?? undefined;
   const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });
-  return NextResponse.json(result);
+  const settledSlateGaps = await logRecentSettledSlateGaps();
+  return NextResponse.json({ ...result, settledSlateGaps });
 }
 
 function isAuthorizedCronRequest(request: Request) {

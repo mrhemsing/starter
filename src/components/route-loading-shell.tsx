@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
+import { WarmingUp } from "@/components/warming-up";
 import type { NavKey } from "@/components/site-nav";
 import { logNavigationSkeletonShown } from "@/lib/navigation-skeleton-log";
 
@@ -44,18 +45,30 @@ export function RouteLoadingShell({
           {description ? <div className={descriptionClassName}>{description}</div> : null}
           <LoadingControls kind={controls} />
         </header>
+        <WarmingUp variant="compact" statusLines={loadingStatusLines(route)} />
         {children && childrenMode === "content" ? (
-          children
+          <div className="mt-5">{children}</div>
         ) : children ? (
-          <section className="grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
+          <section className="mt-5 grid gap-3" aria-label={`${title} data loading`} data-navigation-skeleton-route={route} data-navigation-skeleton-layout={layout}>
             {children}
           </section>
         ) : (
-          <LoadingRegion title={title} route={route} layout={layout} rows={rows} />
+          <div className="mt-5"><LoadingRegion title={title} route={route} layout={layout} rows={rows} /></div>
         )}
       </div>
     </main>
   );
+}
+
+function loadingStatusLines(route: string) {
+  if (route === "ranked-starts") return ["Ranking completed starts", "Applying park and opponent context"];
+  if (route.startsWith("heat-check")) return ["Reading rolling form", "Sorting the movers"];
+  if (route === "live") return ["Tracking live starts", "Scoring in progress"];
+  if (route.startsWith("upcoming")) return ["Reading the slate", "Projecting matchups"];
+  if (route === "watchlist") return ["Loading your arms", "Checking recent form"];
+  if (route.startsWith("pitcher") || route === "start-log") return ["Pulling the game log", "Reading recent form"];
+  if (route.startsWith("best-starts")) return ["Ranking completed starts", "Reading the archive"];
+  return ["Setting the board", "Pulling the latest data"];
 }
 
 function InstantShellHeader({ active, today }: { active: NavKey | null; today: string }) {
