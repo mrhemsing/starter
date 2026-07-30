@@ -321,7 +321,7 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
 }
 
 async function readCachedMlbGameContentActionImage(startId: string): Promise<CachedMlbGameContentActionImage | null> {
-  const body = await readFile(mlbGameContentActionImageCachePath(startId), "utf8").catch(() => null);
+  const body = await readFile(mlbGameContentActionImageCachePath(startId), "utf8").catch(() => readDeployedActionImageMetadata(startId));
   if (!body) return null;
   const value = JSON.parse(body) as CachedMlbGameContentActionImage;
   if (!isAllowedCuratedActionImageUrl(value.imageUrl)) return null;
@@ -333,6 +333,18 @@ async function readCachedMlbGameContentActionImage(startId: string): Promise<Cac
   if (value.focalXOverride !== undefined && value.focalXOverride !== null && !isValidFocalCoordinate(value.focalXOverride)) return null;
   if (value.focalYOverride !== undefined && value.focalYOverride !== null && !isValidFocalCoordinate(value.focalYOverride)) return null;
   return value.imageUrl && value.alt && value.objectPosition ? value : null;
+}
+
+async function readDeployedActionImageMetadata(startId: string) {
+  const deploymentHost = process.env.VERCEL_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (!deploymentHost) return null;
+  const baseUrl = /^https?:\/\//.test(deploymentHost) ? deploymentHost : `https://${deploymentHost}`;
+  const filename = `${safeFilePart(startId)}-mlb-action-v4.json`;
+  const response = await fetch(`${baseUrl}/images/top-performer-action-shots/${filename}`, {
+    next: { revalidate: MLB_CONTENT_REVALIDATE_SECONDS },
+  }).catch(() => null);
+  if (!response?.ok) return null;
+  return response.text();
 }
 
 async function readLatestApprovedPitcherActionImage(start: StartSummary): Promise<CachedMlbGameContentActionImage | null> {
