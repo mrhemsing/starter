@@ -13,13 +13,18 @@ export type PrewarmResult = {
   durationMs: number;
 };
 
-export async function reconciliationPrewarmPaths(date: string) {
+export async function reconciliationPrewarmPlan(date: string) {
   const pageData = await getRankedStartsPageData(date, getHomeSlateDate());
-  const starts = pageData.slateStarts;
+  const starts = pageData.slateStarts.filter((start) => start.source?.lineStatus === "final");
   const pitcherPaths = starts.map((start) => pitcherHref(start.pitcher));
   const recapPaths = starts.map((start) => startRecapPath(start, starts));
 
-  return uniquePaths([
+  return {
+    finalizedSignature: starts
+      .map((start) => `${start.id}:${start.gameScorePlus}`)
+      .sort()
+      .join("|"),
+    paths: uniquePaths([
     "/",
     `/starts/${date}`,
     ...recapPaths,
@@ -27,7 +32,8 @@ export async function reconciliationPrewarmPaths(date: string) {
     "/best-starts",
     ...pitcherPaths,
     `/leaderboard/${date.slice(0, 4)}`,
-  ]);
+    ]),
+  };
 }
 
 export function slatePrewarmPaths(date: string, weekStartDate = date) {

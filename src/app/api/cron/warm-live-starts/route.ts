@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { logRecentSettledSlateGaps } from "@/lib/data/settled-slate-integrity";
-import { prewarmProductionPaths, reconciliationPrewarmPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
+import { prewarmProductionPaths, reconciliationPrewarmPlan, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";
 
@@ -18,15 +18,21 @@ export async function GET(request: Request) {
   const settledSlateGaps = await logRecentSettledSlateGaps();
   const deployment = process.env.VERCEL_URL ?? "local";
   const deploymentStateKey = "production-prewarm:last-deployment";
-  const deploymentState = await readRuntimeState<{ deployment?: string }>(deploymentStateKey);
+  const deploymentState = await readRuntimeState<{ deployment?: string; finalizedSignature?: string }>(deploymentStateKey);
+  const reconciliationPlan = await reconciliationPrewarmPlan(result.date);
   const needsPostDeployWarm = deploymentState?.deployment !== deployment;
+  const hasNewFinalizedStarts = deploymentState?.finalizedSignature !== reconciliationPlan.finalizedSignature;
   const paths = [
-    ...(result.completedStarts || needsPostDeployWarm ? await reconciliationPrewarmPaths(result.date) : [`/starts/${result.date}`]),
+    ...(needsPostDeployWarm || hasNewFinalizedStarts ? reconciliationPlan.paths : ["/", `/starts/${result.date}`]),
     ...slatePrewarmPaths(result.date),
   ];
   const prewarm = await prewarmProductionPaths(paths);
-  if (needsPostDeployWarm && prewarm.failed.length === 0) {
-    await writeRuntimeState(deploymentStateKey, { deployment, warmedAt: new Date().toISOString() });
+  if ((needsPostDeployWarm || hasNewFinalizedStarts) && prewarm.failed.length === 0) {
+    await writeRuntimeState(deploymentStateKey, {
+      deployment,
+      finalizedSignature: reconciliationPlan.finalizedSignature,
+      warmedAt: new Date().toISOString(),
+    });
   }
   return NextResponse.json({ ...result, settledSlateGaps, prewarm });
 }
