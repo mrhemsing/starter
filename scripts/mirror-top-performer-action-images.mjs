@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 
 const imageDir = path.join(process.cwd(), "public", "images", "top-performer-action-shots");
 const dryRun = process.argv.includes("--dry-run");
@@ -40,7 +41,7 @@ for (const file of files) {
     continue;
   }
 
-  const localFilename = `${safeFilePart(startId)}-action.jpg`;
+  const localFilename = `${safeFilePart(startId)}-action.webp`;
   const localPath = path.join(imageDir, localFilename);
   const localUrl = `/images/top-performer-action-shots/${localFilename}`;
 
@@ -65,7 +66,11 @@ for (const file of files) {
       failures.push({ file, reason: `image-too-small-${buffer.byteLength}`, imageUrl: metadata.imageUrl });
       continue;
     }
-    await writeFile(localPath, buffer);
+    await sharp(buffer)
+      .rotate()
+      .resize({ width: 800, withoutEnlargement: true })
+      .webp({ quality: 78, effort: 6, smartSubsample: true })
+      .toFile(localPath);
   }
 
   if (!dryRun) {

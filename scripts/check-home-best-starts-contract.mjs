@@ -15,7 +15,7 @@ const packageJson = await readFile("package.json", "utf8");
 const vercelJson = JSON.parse(await readFile("vercel.json", "utf8"));
 const readme = await readFile("README.md", "utf8");
 const startClassification = await readFile("src/lib/start-classification.ts", "utf8");
-const homePage = await readFile("src/app/page.tsx", "utf8");
+const homePage = await readFile("src/app/(home)/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const rawScoreHelper = await readFile("src/lib/gs-plus-raw.ts", "utf8");
 const rawScoreComponent = await readFile("src/components/gs-plus-score.tsx", "utf8");
@@ -307,16 +307,16 @@ assert(
 );
 
 assert(
-  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v5.jpg" &&
+  misiorowskiTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-07-02-mil-cin-694819-mlb-api-action-v5.webp" &&
     misiorowskiTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/yg6pvlidztrtt29nun9j.jpg" &&
     misiorowskiTopStartAction.playUrl === "https://www.mlb.com/video/jj-bleday-strikes-out-swinging-azc6rq" &&
-    misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.png" &&
-    misiorowskiVisibleTopStartAction.sourceImageUrl === misiorowskiVisibleTopStartAction.imageUrl &&
-    cavalliTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-api-action-v2.jpg" &&
+    misiorowskiVisibleTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.webp" &&
+    misiorowskiVisibleTopStartAction.sourceImageUrl === "/images/top-performer-action-shots/2026-06-12-mil-phi-694819-generated-action-v3.png" &&
+    cavalliTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-06-30-wsh-bos-676917-mlb-api-action-v2.webp" &&
     cavalliTopStartAction.sourceImageUrl === "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/rhkvtlkawsigrek3ke1u.jpg" &&
     cavalliTopStartAction.playUrl === "https://www.mlb.com/video/cade-cavalli-fans-13-over-seven-scoreless" &&
-    detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.png" &&
-    detmersTopStartAction.sourceImageUrl === detmersTopStartAction.imageUrl,
+    detmersTopStartAction.imageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.webp" &&
+    detmersTopStartAction.sourceImageUrl === "/images/top-performer-action-shots/2026-05-24-laa-tex-672282-generated-action-v2.png",
   "home Top Starts #1 and screenshot-visible #3 must use generated replacement action photos",
 );
 

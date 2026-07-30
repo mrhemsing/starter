@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-22-nyy-bos-608331",
-  "imageUrl": "/images/top-performer-action-shots/2026-04-22-nyy-bos-608331-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-22-nyy-bos-608331-action.webp",
   "alt": "Max Fried pitching action photo for 2026-04-22",
   "attribution": "GettyImages-2272654261",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Max Fried fans three in a row to escape the jam",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/xo8oizkvjqbij6vjf6ie.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

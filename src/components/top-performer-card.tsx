@@ -230,7 +230,6 @@ export function TopPerformerCard({
                   "--top-performer-mobile-image-position": imageMobileObjectPosition,
                 } as CSSProperties
               }
-              priority
             />
           ) : (
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#15181C_0%,#0A0B0D_100%)]" />

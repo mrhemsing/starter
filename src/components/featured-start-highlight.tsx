@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { FeaturedStartHighlight } from "@/lib/types";
 
 type FeaturedStartHighlightEmbedProps = {
@@ -37,11 +38,12 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
             aria-label={`Play ${pitcherName} highlight via MLB on YouTube`}
             onClick={() => setIsLoaded(true)}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={highlight.thumbnailUrl}
+            <Image
+              src={highlight.thumbnailUrl.replace("maxresdefault.jpg", "hqdefault.jpg")}
               alt=""
-              className="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
+              fill
+              sizes={highlight.isShort ? "(min-width: 640px) 320px, 280px" : "(min-width: 1024px) 44vw, 100vw"}
+              className="object-cover opacity-90 transition group-hover:opacity-100"
               onError={() => setIsHidden(true)}
             />
             <span className="absolute inset-0 bg-black/20" />

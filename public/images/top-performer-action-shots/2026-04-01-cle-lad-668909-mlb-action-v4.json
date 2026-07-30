@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-01-cle-lad-668909",
-  "imageUrl": "/images/top-performer-action-shots/2026-04-01-cle-lad-668909-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-01-cle-lad-668909-action.webp",
   "alt": "Gavin Williams pitching action photo",
   "clean": true,
   "objectPosition": "50% 45%",
@@ -13,5 +13,5 @@
   },
   "reviewNote": "Curated rendered Start of the Day action image: Gavin Williams, 2026-04-01",
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/do2y0fgfzhpnoirkweyn.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

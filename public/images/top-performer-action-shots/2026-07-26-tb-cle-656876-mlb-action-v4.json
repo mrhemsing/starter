@@ -1,6 +1,6 @@
 {
   "startId": "2026-07-26-tb-cle-656876",
-  "imageUrl": "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.webp",
   "alt": "Drew Rasmussen delivers a pitch for Tampa Bay",
   "autoPromoted": false,
   "officialPitchingHighlight": false,
@@ -18,5 +18,7 @@
   "mobileObjectPosition": "50% 50%",
   "playUrl": "https://www.mlb.com/gameday/822950",
   "reviewNote": "Manually reviewed clean pitching action photo with no embedded overlay text.",
-  "expiresAt": 4102444800000
+  "expiresAt": 4102444800000,
+  "sourceImageUrl": "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg",
+  "storage": "local-static-optimized"
 }

@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-28-bos-nyy-543243",
-  "imageUrl": "/images/top-performer-action-shots/2026-06-28-bos-nyy-543243-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-28-bos-nyy-543243-action.webp",
   "alt": "Sonny Gray pitching action photo",
   "clean": true,
   "objectPosition": "50% 45%",
@@ -13,5 +13,5 @@
   },
   "reviewNote": "Curated rendered Start of the Day action image: Sonny Gray, 2026-06-28",
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/otmr2k5izo86vcbfsnlb.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

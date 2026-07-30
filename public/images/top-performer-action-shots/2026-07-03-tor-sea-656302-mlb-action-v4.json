@@ -1,6 +1,6 @@
 {
   "startId": "2026-07-03-tor-sea-656302",
-  "imageUrl": "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.webp",
   "alt": "Dylan Cease delivers a pitch against the Mariners",
   "attribution": "Lindsey Wasson/AP Photo via Hearst",
   "clean": true,
@@ -11,5 +11,7 @@
   "objectPosition": "42% 43%",
   "mobileObjectPosition": "42% 43%",
   "playUrl": "https://www.sfchronicle.com/sports/article/dylan-cease-strikes-out-9-in-7-innings-as-blue-22332256.php",
-  "expiresAt": 4102444800000
+  "expiresAt": 4102444800000,
+  "sourceImageUrl": "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg",
+  "storage": "local-static-optimized"
 }

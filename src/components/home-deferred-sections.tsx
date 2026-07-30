@@ -628,8 +628,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
     >
       {fullBleed ? (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
+          <Image src={imageUrl} alt={`${start.pitcher.name} pitching`} fill sizes="(min-width: 1024px) 30vw, 100vw" className="pointer-events-none absolute inset-0 z-0 object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
           <span className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 100%)" }} aria-hidden="true" data-home-top-start-scrim="true" />
         </>
       ) : null}
@@ -658,8 +657,7 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
       </div>
       {!fullBleed ? (
         <div className="relative z-10 min-h-[112px] overflow-hidden border-b border-white/10 sm:border-b-0 sm:border-r" data-home-top-start-framed-photo="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imageUrl} alt={`${start.pitcher.name} pitching`} className="h-full w-full object-cover" style={{ objectPosition: imagePosition }} />
+          <Image src={imageUrl} alt={`${start.pitcher.name} pitching`} fill sizes="72px" className="object-cover" style={{ objectPosition: imagePosition }} />
           <span className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-[#101014]/70" aria-hidden="true" />
         </div>
       ) : null}

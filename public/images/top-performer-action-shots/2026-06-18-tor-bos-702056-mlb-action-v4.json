@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-18-tor-bos-702056",
-  "imageUrl": "/images/top-performer-action-shots/2026-06-18-tor-bos-702056-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-18-tor-bos-702056-action.webp",
   "alt": "Trey Yesavage pitching action photo for 2026-06-18",
   "attribution": "GettyImages-2282245939",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Trey Yesavage fans six vs. Red Sox",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/vqgfliamqxmdngv2nnh0.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

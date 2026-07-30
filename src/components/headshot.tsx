@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { FormTier } from "@/lib/types";
 
 export type HeadshotSize = "hero" | "marquee" | "simple" | "xl" | "lg" | "md" | "sm" | "xs";
@@ -68,13 +69,13 @@ export function Headshot({
       aria-hidden={decorative ? true : undefined}
     >
       {hasImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={mlbHeadshotUrl(String(playerId), width)}
           alt={decorative ? "" : label}
           width={width}
           height={width}
           loading={loading}
+          sizes={headshotSizes(size)}
           onError={() => setFailed(true)}
           className="headshot__img relative z-10"
         />
@@ -116,6 +117,17 @@ function thermalBorderColor(band: FormTier | null) {
   if (band === "cooling") return "#8FCBFF";
   if (band === "ice") return "#5BA8FF";
   return "#888780";
+}
+
+function headshotSizes(size: HeadshotSize) {
+  if (size === "hero") return "(min-width: 1024px) 99px, (min-width: 640px) 88px, 75px";
+  if (size === "marquee") return "64px";
+  if (size === "simple") return "(min-width: 640px) 90px, 66px";
+  if (size === "xl") return "59px";
+  if (size === "lg") return "43px";
+  if (size === "md") return "35px";
+  if (size === "sm") return "29px";
+  return "24px";
 }
 
 function thermalBackground(band: FormTier | null) {

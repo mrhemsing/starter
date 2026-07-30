@@ -1,6 +1,6 @@
 {
   "startId": "2026-06-20-cle-hou-676282",
-  "imageUrl": "/images/top-performer-action-shots/2026-06-20-cle-hou-676282-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-06-20-cle-hou-676282-action.webp",
   "alt": "Joey Cantillo pitching action photo for 2026-06-20",
   "attribution": "MLB image feed",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Joey Cantillo strikes out Brice Matthews",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/bkiuxkushubnbngbpkie.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

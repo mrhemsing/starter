@@ -1,6 +1,6 @@
 {
   "startId": "2026-07-05-min-nyy-657746",
-  "imageUrl": "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.webp",
   "alt": "Joe Ryan pitching action photo for 2026-07-05",
   "attribution": "20260526_MIN_Ryan_K_B1",
   "clean": true,
@@ -14,5 +14,5 @@
   "reviewNote": "Keep the clean stored Joe Ryan action photo as the hero image; render the YouTube highlight separately.",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "/images/top-performer-action-shots/2026-05-26-min-cws-657746-action.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

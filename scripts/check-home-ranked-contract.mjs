@@ -7,7 +7,7 @@ function assert(condition, message) {
 }
 
 const rankedRoute = await readFile("src/app/api/home/ranked/route.ts", "utf8");
-const homePage = await readFile("src/app/page.tsx", "utf8");
+const homePage = await readFile("src/app/(home)/page.tsx", "utf8");
 const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 const homeLiveBoardProvider = await readFile("src/components/home-live-board-provider.tsx", "utf8");
 const topPerformerCard = await readFile("src/components/top-performer-card.tsx", "utf8");
@@ -28,11 +28,11 @@ const imageService = await readFile("src/lib/data/top-performer-image-service.ts
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-mlb-action-v4.json", "utf8"));
-const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg");
+const gavinWilliamsLiveLeaderImageAsset = await stat("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.webp");
 const dylanCeaseJuly25ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-25-tor-bos-656302-mlb-action-v4.json", "utf8"));
-const dylanCeaseActionImageAsset = await stat("public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg");
+const dylanCeaseActionImageAsset = await stat("public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.webp");
 const drewRasmussenJuly26ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-26-tb-cle-656876-mlb-action-v4.json", "utf8"));
-const drewRasmussenActionImageAsset = await stat("public/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg");
+const drewRasmussenActionImageAsset = await stat("public/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.webp");
 const allStarBreakImageAsset = await stat("public/images/all-star-game-philadelphia-2026.jpg");
 
 assert(
@@ -732,7 +732,7 @@ assert(
 assert(
   gavinWilliamsLiveLeaderImageAsset.size > 0 &&
     gavinWilliamsLiveLeaderImageMetadata.startId === "2026-07-09-cle-min-668909" &&
-    gavinWilliamsLiveLeaderImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.jpg" &&
+    gavinWilliamsLiveLeaderImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.webp" &&
     gavinWilliamsLiveLeaderImageMetadata.clean === true &&
     gavinWilliamsLiveLeaderImageMetadata.storage === "local-static" &&
     gavinWilliamsLiveLeaderImageMetadata.playUrl === "https://www.mlb.com/video/trevor-larnach-called-out-on-strikes-kzrenn" &&
@@ -745,7 +745,7 @@ assert(
 assert(
   dylanCeaseActionImageAsset.size > 0 &&
     dylanCeaseJuly25ImageMetadata.startId === "2026-07-25-tor-bos-656302" &&
-    dylanCeaseJuly25ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.jpg" &&
+    dylanCeaseJuly25ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.webp" &&
     dylanCeaseJuly25ImageMetadata.clean === true &&
     dylanCeaseJuly25ImageMetadata.textFreeReviewed === true &&
     dylanCeaseJuly25ImageMetadata.autoPromoted === false &&
@@ -756,7 +756,7 @@ assert(
 assert(
   drewRasmussenActionImageAsset.size > 0 &&
     drewRasmussenJuly26ImageMetadata.startId === "2026-07-26-tb-cle-656876" &&
-    drewRasmussenJuly26ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.jpg" &&
+    drewRasmussenJuly26ImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.webp" &&
     drewRasmussenJuly26ImageMetadata.clean === true &&
     drewRasmussenJuly26ImageMetadata.textFreeReviewed === true &&
     drewRasmussenJuly26ImageMetadata.autoPromoted === false &&

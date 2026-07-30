@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-26-mil-pit-690986",
-  "imageUrl": "/images/top-performer-action-shots/2026-04-26-mil-pit-690986-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-26-mil-pit-690986-action.webp",
   "alt": "Kyle Harrison pitching action photo",
   "clean": true,
   "objectPosition": "50% 45%",
@@ -13,5 +13,5 @@
   },
   "reviewNote": "Curated rendered Start of the Day action image: Kyle Harrison, 2026-04-26",
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/dvkk2hhv9tx8z3ftf9fm.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

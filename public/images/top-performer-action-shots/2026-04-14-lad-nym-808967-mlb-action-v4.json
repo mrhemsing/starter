@@ -1,6 +1,6 @@
 {
   "startId": "2026-04-14-lad-nym-808967",
-  "imageUrl": "/images/top-performer-action-shots/2026-04-14-lad-nym-808967-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-04-14-lad-nym-808967-action.webp",
   "alt": "Yoshinobu Yamamoto pitching action photo for 2026-04-14",
   "attribution": "AP26105093591825",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Yoshinobu Yamamoto strikes out Brett Baty",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/kbpl2gewp85kjetki3jq.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

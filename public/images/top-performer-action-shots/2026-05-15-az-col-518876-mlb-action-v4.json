@@ -1,6 +1,6 @@
 {
   "startId": "2026-05-15-az-col-518876",
-  "imageUrl": "/images/top-performer-action-shots/2026-05-15-az-col-518876-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-05-15-az-col-518876-action.webp",
   "alt": "Merrill Kelly pitching action photo for 2026-05-15",
   "attribution": "MLB image feed",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Merrill Kelly strikes out Troy Johnston",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/mlb/yczuqhq5ipwwmpipdfyd.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }

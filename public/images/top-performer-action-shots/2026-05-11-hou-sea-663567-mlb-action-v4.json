@@ -1,6 +1,6 @@
 {
   "startId": "2026-05-11-hou-sea-663567",
-  "imageUrl": "/images/top-performer-action-shots/2026-05-11-hou-sea-663567-action.jpg",
+  "imageUrl": "/images/top-performer-action-shots/2026-05-11-hou-sea-663567-action.webp",
   "alt": "Peter Lambert pitching action photo for 2026-05-11",
   "attribution": "GettyImages-2275188556",
   "clean": true,
@@ -15,5 +15,5 @@
   "reviewNote": "Curated Start of the Day action image: Peter Lambert's six strikeouts",
   "expiresAt": 1814725749571,
   "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:good,w_1304,c_fill,f_jpg/mlb/rop7wr1kn3vawdebvvle.jpg",
-  "storage": "local-static"
+  "storage": "local-static-optimized"
 }
