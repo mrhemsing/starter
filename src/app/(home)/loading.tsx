@@ -1,9 +1,13 @@
 import { HomeWarmingUpLoader } from "@/components/home-warming-up-loader";
 import { SiteHeader } from "@/components/site-header";
-import { getHomeSlateDate } from "@/lib/data/start-service";
 
 export default function HomeLoading() {
-  const today = getHomeSlateDate();
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
   return (
     <main className="min-h-screen bg-[#08080a] text-zinc-100">
       <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
