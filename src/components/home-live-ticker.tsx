@@ -41,7 +41,7 @@ export function HomeLiveTicker() {
 
   return (
     <section
-      className="mt-4 overflow-hidden rounded border border-white/10 bg-[#101014]/95"
+      className="mt-2 overflow-hidden rounded border border-white/10 bg-[#101014]/95 sm:mt-4"
       aria-label="Live GS+ ticker"
       data-responsive-check="home-live-gs-ticker"
       data-home-live-ticker-phase={phase}
