@@ -6,7 +6,7 @@ export function PitchingNinjaBadge() {
       href="https://www.instagram.com/pitchingninja"
       target="_blank"
       rel="noreferrer"
-      className="inline-flex h-[41px] w-[120px] items-center overflow-hidden bg-black transition-opacity duration-150 hover:opacity-75 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+      className="inline-flex h-[29px] w-[84px] items-center overflow-hidden bg-black transition-opacity duration-150 hover:opacity-75 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
       aria-label="Pitching Ninja on Instagram"
     >
       <Image
