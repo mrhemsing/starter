@@ -75,9 +75,9 @@ export default function RootLayout({
         </Suspense>
         {children}
         <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl items-center gap-2">
-            <BAverageBadge />
+          <div className="mx-auto flex max-w-7xl flex-col items-start gap-1">
             <PitchingNinjaBadge />
+            <BAverageBadge />
           </div>
         </footer>
         <Analytics />
