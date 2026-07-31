@@ -1290,7 +1290,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
 
   return (
     <div
-      className="grid min-w-0 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-3 rounded border border-white/10 bg-black/25 p-3"
+      className="grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-start gap-3 rounded border border-white/10 bg-black/25 p-3"
       style={{
         borderColor: `${accent.color}${accent.source === "form-band" ? "44" : "2E"}`,
         boxShadow: `inset 3px 0 0 ${accent.color}`,
@@ -1324,7 +1324,7 @@ function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagu
       {...starterWorkloadData(starter)}
       {...starterDriverData(starter)}
     >
-      <StarterHeadshot starter={starter} size="small" />
+      <StarterHeadshot starter={starter} size="duel" />
       <div className="min-w-0" data-starter-compact-mobile-identity>
         <p className="mb-0.5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500 sm:hidden" data-starter-compact-mobile-team="above-name">
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: teamAccentColor(starter.team) }} aria-hidden="true" />
