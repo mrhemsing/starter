@@ -91,7 +91,7 @@ export default async function Home() {
       <HomeLiveBoardProvider initialBoard={homeTickerBoard} today={today}>
         <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
           <div className="absolute inset-0 bg-[#08080a]" />
-          <div className="absolute inset-x-0 top-0 h-[755px] overflow-hidden opacity-80 saturate-[0.92] sm:h-[647px] lg:h-[590px]" aria-hidden="true" data-responsive-check="home-header-background">
+          <div className="absolute inset-x-0 top-0 h-[755px] overflow-hidden opacity-90 saturate-[0.92] sm:h-[647px] sm:opacity-80 lg:h-[590px]" aria-hidden="true" data-responsive-check="home-header-background">
             <Image
               src="/images/header-baseball-bg-mobile.jpg"
               alt=""
