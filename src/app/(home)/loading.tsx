@@ -13,7 +13,7 @@ export default function HomeLoading() {
       <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[#08080a]" />
         <div
-          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-[0.58] saturate-[0.92] sm:h-[440px] sm:opacity-[0.44] lg:hidden"
+          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-70 saturate-[0.92] sm:h-[440px] sm:opacity-[0.44] lg:hidden"
           style={{
             backgroundImage: "url('/images/header-baseball-bg.jpg')",
             backgroundPosition: "right -54px top 82px",
