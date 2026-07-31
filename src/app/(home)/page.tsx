@@ -91,14 +91,14 @@ export default async function Home() {
       <HomeLiveBoardProvider initialBoard={homeTickerBoard} today={today}>
         <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
           <div className="absolute inset-0 bg-[#08080a]" />
-          <div className="absolute inset-x-0 top-0 h-[520px] overflow-hidden opacity-70 saturate-[0.92] sm:h-[440px] sm:opacity-[0.44] lg:h-[380px] lg:opacity-100" aria-hidden="true" data-responsive-check="home-header-background">
+          <div className="absolute inset-x-0 top-0 h-[520px] overflow-hidden opacity-100 saturate-[0.92] sm:h-[440px] lg:h-[380px]" aria-hidden="true" data-responsive-check="home-header-background">
             <Image
               src="/images/header-baseball-bg-mobile.jpg"
               alt=""
               fill
               priority
               sizes="(max-width: 639px) 100vw, 0px"
-              className="object-cover object-center sm:hidden"
+              className="translate-x-[8%] object-cover object-center sm:hidden"
             />
             <Image
               src="/images/header-baseball-bg-desktop.jpg"
