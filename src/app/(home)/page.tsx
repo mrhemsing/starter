@@ -93,12 +93,20 @@ export default async function Home() {
           <div className="absolute inset-0 bg-[#08080a]" />
           <div className="absolute inset-x-0 top-0 h-[520px] overflow-hidden opacity-70 saturate-[0.92] sm:h-[440px] sm:opacity-[0.44] lg:h-[380px] lg:opacity-100" aria-hidden="true" data-responsive-check="home-header-background">
             <Image
-              src="/images/header-baseball-bg.webp"
+              src="/images/header-baseball-bg-mobile.jpg"
               alt=""
               fill
               priority
-              sizes="(min-width: 1024px) 720px, 100vw"
-              className="object-cover object-[72%_52%] sm:object-[76%_62%] lg:object-[76%_74%]"
+              sizes="(max-width: 639px) 100vw, 0px"
+              className="object-cover object-center sm:hidden"
+            />
+            <Image
+              src="/images/header-baseball-bg-desktop.jpg"
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 640px) 676px, 0px"
+              className="hidden object-contain object-right sm:block"
             />
           </div>
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />

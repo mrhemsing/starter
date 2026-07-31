@@ -13,20 +13,20 @@ export default function HomeLoading() {
       <section className="relative overflow-hidden px-4 pb-6 pt-6 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[#08080a]" />
         <div
-          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-70 saturate-[0.92] sm:h-[440px] sm:opacity-[0.44] lg:hidden"
+          className="absolute inset-x-0 top-0 h-[520px] bg-no-repeat opacity-70 saturate-[0.92] sm:hidden"
           style={{
-            backgroundImage: "url('/images/header-baseball-bg.jpg')",
-            backgroundPosition: "right -54px top 82px",
-            backgroundSize: "clamp(360px, 108vw, 520px) auto",
+            backgroundImage: "url('/images/header-baseball-bg-mobile.jpg')",
+            backgroundPosition: "center",
+            backgroundSize: "cover",
           }}
           aria-hidden="true"
         />
         <div
-          className="absolute inset-x-0 top-0 hidden h-[380px] bg-no-repeat opacity-100 saturate-[0.92] lg:block"
+          className="absolute inset-x-0 top-0 hidden h-[440px] bg-no-repeat opacity-[0.44] saturate-[0.92] sm:block lg:h-[380px] lg:opacity-100"
           style={{
-            backgroundImage: "url('/images/header-baseball-bg.jpg')",
-            backgroundPosition: "76% 74%",
-            backgroundSize: "min(720px, 115vw) auto",
+            backgroundImage: "url('/images/header-baseball-bg-desktop.jpg')",
+            backgroundPosition: "right center",
+            backgroundSize: "contain",
           }}
           aria-hidden="true"
         />
