@@ -98,8 +98,8 @@ export function TonightsMustWatch({
       data-visible-starter-pitcher-ids={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ?? "tbd").join("/")).join(",") : "none"}
       data-visible-starter-names={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.name ?? "TBD").join("/")).join(",") : "none"}
       data-visible-starter-teams={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.team).join("/")).join(",") : "none"}
-      data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : "none").join("|")).join(",") : "none"}
-      data-visible-starter-name-linkeds={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(Boolean(starter.pitcherId))).join("/")).join(",") : "none"}
+      data-visible-starter-form-hrefs={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starterProfileHref(starter) ?? "none").join("|")).join(",") : "none"}
+      data-visible-starter-name-linkeds={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => String(starterProfileHref(starter) !== null)).join("/")).join(",") : "none"}
       data-visible-starter-form-tiers={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.tier ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-trends={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.trend ?? "none").join("/")).join(",") : "none"}
       data-visible-starter-form-scores={shownGames.length ? shownGames.map((game) => game.starters.map((starter) => starter.rgs === null || starter.rgs === undefined ? "pending" : starter.rgs.toFixed(1)).join("/")).join(",") : "none"}
@@ -880,7 +880,7 @@ function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
 
 function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightStarter; leagueMeanGS: number; side: "away" | "home" }) {
   const name = starter.name ?? "TBD";
-  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : null;
+  const formHref = starterProfileHref(starter);
   const accent = starterFormAccent(starter);
   const teamColor = teamAccentColor(starter.team);
   const isHome = side === "home";
@@ -1285,7 +1285,7 @@ function weatherContextTone(game: TonightGame) {
 
 function StarterMini({ starter, leagueMeanGS }: { starter: TonightStarter; leagueMeanGS: number }) {
   const name = starter.name ?? "TBD";
-  const formHref = starter.pitcherId ? pitcherFormHref(starter.pitcherId, starter.name) : null;
+  const formHref = starterProfileHref(starter);
   const accent = starterFormAccent(starter);
 
   return (
@@ -1880,6 +1880,11 @@ function StarterHeadshot({ starter, size }: { starter: TonightStarter; size: "sm
 
 function pitcherFormHref(pitcherId: string, name?: string | null) {
   return pitcherHref({ pitcherId, name }, sourceParams("upcoming"));
+}
+
+function starterProfileHref(starter: TonightStarter) {
+  if (!starter.pitcherId || !hasQualifiedStarterFormSample(starter)) return null;
+  return pitcherFormHref(starter.pitcherId, starter.name);
 }
 
 function gameStatusLabel(status: TonightGame["status"]) {

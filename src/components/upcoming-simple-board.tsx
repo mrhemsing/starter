@@ -258,7 +258,7 @@ function SimpleIdentityStrip({
   const qualifiedSample = Boolean(formBand);
   const valueColor = formBandValueColor(formBand, qualifiedSample);
   const formValue = typeof starter.rgs === "number" ? starter.rgs.toFixed(1) : "--";
-  const href = starter.pitcherId && starter.name ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")) : null;
+  const href = qualifiedSample && starter.pitcherId && starter.name ? pitcherHref({ pitcherId: starter.pitcherId, name: starter.name }, sourceParams("upcoming")) : null;
   const nameNode = (
     <div className={`${align === "home" ? "text-right" : "text-left"}`} data-simple-starter-name-block>
       {href ? (
