@@ -54,7 +54,7 @@ function MobileBandJumper({ bands, active }: { bands: BandWithCount[]; active: B
         const selected = active?.key === band.key;
         return (
           <a key={band.key} href={`#band-${band.key}`} className={`shrink-0 rounded border px-2 py-2 ${selected ? "text-zinc-50" : "border-white/10 text-zinc-200"}`} style={{ borderColor: selected ? band.color : `${band.color}66` }} aria-current={selected ? "location" : undefined}>
-            {band.label}
+            <span style={{ color: band.color }}>{band.label}</span>
           </a>
         );
       })}

@@ -137,7 +137,7 @@ function BandSummary({ counts }: { counts: Record<string, number> }) {
   return (
     <div className="flex flex-wrap gap-1.5" data-rotation-band-summary>
       {visibleBands.map((band) => (
-        <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+        <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: band.color }}>
           <span className="size-2 rounded-full" style={{ backgroundColor: band.color }} aria-hidden="true" />
           {counts[band.key]} {band.label.toLowerCase()}
         </span>

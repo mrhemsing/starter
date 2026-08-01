@@ -54,7 +54,7 @@ export default async function Image({ params, searchParams }: PitcherFormImagePr
             <div style={{ alignItems: "center", display: "flex", gap: 28 }}>
               <div style={{ color: band.color, display: "flex", fontSize: 112, fontWeight: 800 }}>{Math.round(summary.rgs)}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ color: "#fafafa", display: "flex", fontSize: 38, fontWeight: 700 }}>{band.label}</div>
+                <div style={{ color: band.color, display: "flex", fontSize: 38, fontWeight: 700 }}>{band.label}</div>
                 <div style={{ color: "#a1a1aa", display: "flex", fontSize: 26 }}>{trend.label} / Heat {summary.heatIndex ?? 0} / {summary.windowCount} starts</div>
               </div>
             </div>

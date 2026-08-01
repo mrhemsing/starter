@@ -483,7 +483,7 @@ function BandDistribution({ bands, total, activeBand, params, scopeLabel }: { ba
           <FastFilterLink key={band.key} href={heatCheckHref({ ...params, band: activeBand === band.key ? "" : band.key, limited: "" })} className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${activeBand === band.key ? "border-white/60 text-zinc-100" : "border-white/10"}`} ariaCurrent={activeBand === band.key ? "page" : undefined} scroll={false}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
-              {band.label}
+              <span style={{ color: band.color }}>{band.label}</span>
             </span>
             <span className="text-zinc-300">{band.count}</span>
           </FastFilterLink>
@@ -588,7 +588,7 @@ function TeamRotationSnapshot({
           {populatedBands.length > 0 ? (
             <div className="flex flex-wrap gap-2 sm:justify-end" data-responsive-check="heat-team-band-dots">
               {populatedBands.map((band) => (
-                <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400">
+                <span key={band.key} className="inline-flex items-center gap-1.5 rounded border border-white/10 bg-black/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: band.color }}>
                   <span className="size-2 rounded-full" style={{ backgroundColor: band.color }} aria-hidden="true" />
                   {band.count} {band.label.toLowerCase()}
                 </span>
@@ -1294,7 +1294,7 @@ function SeasonBandMiniBar({ stats, showLabels = false }: { stats: FormSummary["
       {showLabels ? (
         <span className="flex flex-wrap gap-x-2 gap-y-1 text-[9px] text-zinc-500">
           {stats.bandDistribution.filter((band) => band.count > 0).map((band) => (
-            <span key={band.key}>{band.label} {band.count}</span>
+            <span key={band.key} style={{ color: band.color }}>{band.label} {band.count}</span>
           ))}
         </span>
       ) : null}

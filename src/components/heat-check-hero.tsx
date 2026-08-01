@@ -78,7 +78,7 @@ function LeagueTempStrip({ home }: { home: FormHomeResponse }) {
           <Link key={band.key} href={`/heat-check?band=${band.key}`} className="flex items-center justify-between gap-2 rounded border border-white/10 px-2 py-1" aria-label={`${band.label}: ${home.bands[band.key]} of ${home.totalQualified} qualified starters`}>
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: band.color }} />
-              {band.label}
+              <span style={{ color: band.color }}>{band.label}</span>
             </span>
             <span className="whitespace-nowrap text-zinc-300">{home.bands[band.key]}</span>
           </Link>
