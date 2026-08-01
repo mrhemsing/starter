@@ -78,7 +78,7 @@ export function FormValueWhisperLine({
         <span className={`font-semibold tabular-nums ${valueClassName}`} style={{ color: valueColor }} data-form-colored-value>
           {typeof value === "number" ? value.toFixed(1) : "--"}
         </span>
-        <span className={`mt-0.5 text-zinc-500 ${whisperClassName}`} data-form-band-whisper>
+        <span className={`mt-0.5 ${whisperClassName}`} style={{ color: valueColor }} data-form-band-whisper>
           {whisper}
         </span>
         <span className="mt-0.5 text-zinc-500" data-form-line-era>
@@ -100,7 +100,7 @@ export function FormValueWhisperLine({
       <span className={`font-semibold tabular-nums ${valueClassName}`} style={{ color: valueColor }} data-form-colored-value>
         {typeof value === "number" ? value.toFixed(1) : "--"}
       </span>
-      <span className={`text-zinc-500 ${whisperClassName}`} data-form-band-whisper>
+      <span className={whisperClassName} style={{ color: valueColor }} data-form-band-whisper>
         {whisper}
       </span>
       <span className="text-zinc-500" data-form-line-era>
