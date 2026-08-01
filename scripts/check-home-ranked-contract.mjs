@@ -278,6 +278,8 @@ assert(
 
 assert(
   mustWatch.includes('data-starter-trend-chip-spacer="compact"') &&
+    mustWatch.includes('data-home-headliner-trend-spacing={addTrendSpacing ? "true" : "false"}') &&
+    mustWatch.includes('addTrendSpacing={isTopMatchupsLayout}') &&
     mustWatch.includes("data-starter-form-workload-row={isHome") &&
     mustWatch.includes("flex max-h-8 flex-wrap items-center gap-2 overflow-hidden") &&
     mustWatch.includes('"workload-before-form"') &&

@@ -20,6 +20,14 @@ assert.equal(expectedRanks.get("3"), 1);
 assert.equal(expectedRanks.get("2"), 2);
 assert.equal(expectedRanks.get("1"), 3);
 
+const trustAware = assignWatchRanks([
+  { gamePk: "limited", away: "CWS", firstPitch: "2026-08-01T17:10:00Z", gameWatchScore: 60.8, limited: true },
+  { gamePk: "qualified", away: "MIN", firstPitch: "2026-08-01T22:10:00Z", gameWatchScore: 57.0, limited: false },
+  { gamePk: "third", away: "MIA", firstPitch: "2026-08-01T20:10:00Z", gameWatchScore: 50.8, limited: false },
+], { canRankFirst: (game) => !game.limited });
+assert.equal(trustAware.find((game) => game.gamePk === "qualified")?.watchRank, 1);
+assert.equal(trustAware.find((game) => game.gamePk === "limited")?.watchRank, 2);
+
 let displayed = builds[0];
 const originalRankMap = new Map(displayed.map((game) => [game.gamePk, game.watchRank]));
 for (const sortMode of ["time", "watch", "time"]) {

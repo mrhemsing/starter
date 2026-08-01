@@ -103,7 +103,7 @@ async function buildTonightMustWatch(date: string, window: 3 | 5 | 10, forceOppo
       ...game,
       matchupRankTonight: matchupRanks.get(game.gamePk) ?? game.matchupRankTonight,
       watchSortGroup: watchSortGroup(game.status),
-    })));
+    })), { canRankFirst: (game) => game.flags?.limitedForm !== true });
   const games = sortUpcomingWatchGames(rankedGames);
 
   return {

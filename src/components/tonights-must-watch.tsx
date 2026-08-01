@@ -269,7 +269,7 @@ export function TonightsMustWatch({
           </div>
         ) : (
           <div className="space-y-4" data-home-top-matchups-composition={isTopMatchupsLayout ? "detailed-hero-plus-simple-cards" : undefined}>
-            {headliner ? <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} /> : null}
+            {headliner ? <MustWatchHeadliner game={headliner} leagueMeanGS={tonight.leagueMeanGS} rankLabel={rankLabel} showGameStatus={showGameStatus} showHookSpine={showHookSpine} isTopWatchScore={headliner.gamePk === topWatchGamePk} addTrendSpacing={isTopMatchupsLayout} /> : null}
             {isTopMatchupsLayout ? (
               <div className="grid gap-4 lg:grid-cols-2" data-home-top-matchups-simple-row data-home-top-matchups-simple-count={rows.slice(0, 2).length}>
                 {rows.slice(0, 2).map((game) => (
@@ -289,7 +289,7 @@ export function TonightsMustWatch({
   );
 }
 
-function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean }) {
+function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, showHookSpine, isTopWatchScore, addTrendSpacing }: { game: TonightGame; leagueMeanGS: number; rankLabel: string; showGameStatus: boolean; showHookSpine: boolean; isTopWatchScore: boolean; addTrendSpacing: boolean }) {
   const tier = watchTierForGame(game);
   const summaryId = watchCardSummaryIdValue(game);
   const summaryCopy = watchCardSummaryCopyValue(game, showGameStatus);
@@ -389,9 +389,9 @@ function MustWatchHeadliner({ game, leagueMeanGS, rankLabel, showGameStatus, sho
         </div>
 
         <div className={`mt-5 grid gap-4 ${showHookSpine ? "lg:grid-cols-[minmax(0,1fr)_minmax(230px,0.78fr)_minmax(0,1fr)]" : "lg:grid-cols-2"} lg:items-stretch`} data-watch-hook-visible={showHookSpine ? "true" : "false"}>
-          <DuelStarterPanel starter={awayStarter} leagueMeanGS={leagueMeanGS} side="away" />
+          <DuelStarterPanel starter={awayStarter} leagueMeanGS={leagueMeanGS} side="away" addTrendSpacing={addTrendSpacing} />
           {showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}
-          <DuelStarterPanel starter={homeStarter} leagueMeanGS={leagueMeanGS} side="home" />
+          <DuelStarterPanel starter={homeStarter} leagueMeanGS={leagueMeanGS} side="home" addTrendSpacing={addTrendSpacing} />
         </div>
 
         <WatchComponentReadout game={game} rankLabel={rankLabel} featured />
@@ -878,7 +878,7 @@ function combinedProjectedStrikeouts(starters: TonightGame["starters"]) {
   }, 0);
 }
 
-function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightStarter; leagueMeanGS: number; side: "away" | "home" }) {
+function DuelStarterPanel({ starter, leagueMeanGS, side, addTrendSpacing = false }: { starter: TonightStarter; leagueMeanGS: number; side: "away" | "home"; addTrendSpacing?: boolean }) {
   const name = starter.name ?? "TBD";
   const formHref = starterProfileHref(starter);
   const accent = starterFormAccent(starter);
@@ -976,7 +976,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
                 )}
               </div>
               {starter.trend && starter.deltaForm !== undefined ? (
-                <span className={`inline-flex ${isHome ? "lg:self-end" : "self-start"}`} data-starter-trend-chip-spacer="compact">
+                <span className={`inline-flex ${addTrendSpacing ? "mt-2" : ""} ${isHome ? "lg:self-end" : "self-start"}`} data-starter-trend-chip-spacer="compact" data-home-headliner-trend-spacing={addTrendSpacing ? "true" : "false"}>
                   <TrendChip summary={{ trend: starter.trend, deltaForm: starter.deltaForm }} compact />
                 </span>
               ) : null}
