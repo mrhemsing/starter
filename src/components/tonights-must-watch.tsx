@@ -956,7 +956,7 @@ function DuelStarterPanel({ starter, leagueMeanGS, side }: { starter: TonightSta
         <div data-starter-baseline-row="form">
           {hasQualifiedStarterFormSample(starter) && starter.rgs !== undefined && starter.tier ? (
             <div className={`flex flex-col gap-1 overflow-hidden ${isHome ? "lg:items-end" : "items-start"}`} data-starter-chip-wrap-row>
-              <div className={`flex max-h-8 flex-wrap items-center gap-2 overflow-hidden sm:max-h-6 ${isHome ? "lg:justify-end" : ""}`} data-starter-form-workload-row={isHome ? "workload-before-form" : "form-before-workload"}>
+              <div className={`flex max-h-8 flex-wrap items-center gap-2 overflow-hidden ${isHome ? "lg:justify-end" : ""}`} data-starter-form-workload-row={isHome ? "workload-before-form" : "form-before-workload"}>
                 {isHome ? (
                   <>
                     <StarterStatusChips starter={starter} />

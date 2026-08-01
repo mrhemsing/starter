@@ -279,13 +279,13 @@ assert(
 assert(
   mustWatch.includes('data-starter-trend-chip-spacer="compact"') &&
     mustWatch.includes("data-starter-form-workload-row={isHome") &&
-    mustWatch.includes("flex max-h-6 flex-wrap items-center gap-2 overflow-hidden") &&
+    mustWatch.includes("flex max-h-8 flex-wrap items-center gap-2 overflow-hidden") &&
     mustWatch.includes('"workload-before-form"') &&
     mustWatch.includes('"form-before-workload"') &&
     mustWatch.includes('className={`inline-flex ${isHome') &&
     mustWatch.includes('"lg:self-end"') &&
     mustWatch.includes('"self-start"'),
-  "home must-watch RISING/FALLING chips must stay compact, with the home form text after workload labels and right-aligned trend chip",
+  "home must-watch workload and form labels must allow full-height chips, with the home form text after workload labels and right-aligned trend chip",
 );
 
 assert(
