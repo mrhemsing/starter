@@ -741,7 +741,7 @@ function GameLogRow({
           <span className="block text-zinc-50">{formStartMatchupLabel(start)} / {start.park}</span>
           <span className="mt-1 block text-zinc-400">{formatStartLine({ inningsPitched: start.ip, hits: start.h, earnedRuns: start.er, walks: start.bb, strikeouts: start.k, pitches: 0 })}</span>
         </Link>
-        <Link href={href} className={`text-left hover:underline md:text-right ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
+        <Link href={href} className={`text-left hover:underline ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
         <span className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">
           <DecisionPill result={start.result} />
           <span>{depth ? "Depth" : "Summary"}</span>
