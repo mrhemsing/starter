@@ -735,7 +735,7 @@ function GameLogRow({
   const href = startHref(start.id, sourceParams(source));
   return (
     <details className="group border-b border-white/10 bg-[#101014] p-4 font-mono text-sm transition hover:bg-white/[0.04] last:border-b-0" data-responsive-check="pitcher-game-log-row">
-      <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[120px_minmax(0,1fr)_90px_auto] md:items-center">
+      <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[120px_minmax(0,1fr)_90px_124px] md:items-center">
         <Link href={href} className="text-zinc-500 hover:text-amber-300">{start.gameDate}</Link>
         <Link href={href} className="min-w-0 text-zinc-200 hover:text-amber-300">
           <span className="block text-zinc-50">{formStartMatchupLabel(start)} / {start.park}</span>
