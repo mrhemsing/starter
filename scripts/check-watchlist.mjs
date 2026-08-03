@@ -137,6 +137,7 @@ assert(
     headlineServiceSource.includes("when:7d") &&
     headlineServiceSource.includes("const HEADLINE_DEDUPE_WINDOW_MS = 96 * 60 * 60 * 1000;") &&
     headlineServiceSource.includes("HEADLINE_SOURCE_SUFFIX_PATTERN") &&
+    headlineServiceSource.includes("fantasypros(?:\\.com)?") &&
     headlineServiceSource.includes("stripSourceSuffix(headline.headline, headline.source)") &&
     headlineServiceSource.includes("BETTING_FORWARD_HEADLINE_PATTERN") &&
     headlineServiceSource.includes("moneyline|odds?|picks?|spread|prediction|predictions|parlay|bets?|betting") &&

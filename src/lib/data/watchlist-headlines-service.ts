@@ -750,7 +750,7 @@ const HEADLINE_TOPIC_STOP_WORDS = new Set([
   "with",
 ]);
 
-const HEADLINE_SOURCE_SUFFIX_PATTERN = /\s+-\s+(?:espn|fantasypros|google news|jays journal|mlb(?:\.com)?|mlb news|mlb trade rumors|msn|newsweek|rotoballer|roundtable\.io|si(?:\.com)?|sports illustrated|sportsnet(?:\.ca)?|the athletic|toronto star|yahoo sports)\s*$/i;
+const HEADLINE_SOURCE_SUFFIX_PATTERN = /\s+-\s+(?:espn|fantasypros(?:\.com)?|google news|jays journal|mlb(?:\.com)?|mlb news|mlb trade rumors|msn|newsweek|rotoballer|roundtable\.io|si(?:\.com)?|sports illustrated|sportsnet(?:\.ca)?|the athletic|toronto star|yahoo sports)\s*$/i;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
