@@ -152,6 +152,7 @@ html[data-upcoming-view-mode-init="detailed"] [data-upcoming-view-storage-key="t
   display: inline-block;
   margin-bottom: 8px;
   text-align: center;
+  text-decoration: none;
 }
 
 .site-logo-season-kicker {

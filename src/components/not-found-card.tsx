@@ -6,12 +6,10 @@ export function NotFoundCard() {
     <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl pt-2">
         <header className="site-header-nav flex flex-wrap items-center justify-between gap-4 pb-5">
-          <div className="site-logo-lockup">
-            <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
-              Toe the Slab
-            </Link>
+          <Link href="/" className="site-logo-lockup" aria-label="Toe the Slab home">
+            <span className="site-logo-wordmark">Toe the Slab</span>
             <MlbSeasonKicker />
-          </div>
+          </Link>
         </header>
         <section className="mt-8 max-w-2xl rounded border border-white/10 bg-white/[0.03] p-5 sm:p-6" data-responsive-check="not-found-card">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">404</p>

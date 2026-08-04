@@ -83,12 +83,10 @@ function InstantShellHeader({ active, today }: { active: NavKey | null; today: s
 
   return (
     <header className="site-header-nav flex flex-wrap items-center justify-between gap-4 pb-5">
-      <div className="site-logo-lockup">
-        <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
-          Toe the Slab
-        </Link>
+      <Link href="/" className="site-logo-lockup" aria-label="Toe the Slab home">
+        <span className="site-logo-wordmark">Toe the Slab</span>
         <MlbSeasonKicker season={today.slice(0, 4)} />
-      </div>
+      </Link>
       <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:flex md:w-auto md:items-center md:gap-6 md:p-0 md:text-xs md:tracking-[0.18em]" aria-label="Primary">
         {items.map((item) => (
           <Link

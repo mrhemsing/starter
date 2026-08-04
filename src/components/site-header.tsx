@@ -26,12 +26,10 @@ export async function SiteHeader({
   return (
     <>
       <header className={`site-header-nav flex flex-wrap items-center justify-between gap-4 pb-5 ${className}`} data-responsive-check={responsiveCheck}>
-        <div className="site-logo-lockup">
-          <Link href="/" className="site-logo-wordmark" aria-label="Toe the Slab home">
-            Toe the Slab
-          </Link>
+        <Link href="/" className="site-logo-lockup" aria-label="Toe the Slab home">
+          <span className="site-logo-wordmark">Toe the Slab</span>
           <MlbSeasonKicker season={currentSeason} />
-        </div>
+        </Link>
         <SiteNav active={active} today={today} rankedDate={rankedDate} liveSnapshot={liveSnapshot} />
       </header>
       {showNoHitterAlerts ? <NoHitterAlertBars today={today} /> : null}
