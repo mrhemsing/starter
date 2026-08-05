@@ -33,6 +33,8 @@ const dylanCeaseJuly25ImageMetadata = JSON.parse(await readFile("public/images/t
 const dylanCeaseActionImageAsset = await stat("public/images/top-performer-action-shots/2026-07-03-tor-sea-656302-ap-clean.webp");
 const drewRasmussenJuly26ImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-26-tb-cle-656876-mlb-action-v4.json", "utf8"));
 const drewRasmussenActionImageAsset = await stat("public/images/top-performer-action-shots/2026-06-10-tb-bos-656876-action.webp");
+const shotaImanagaImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-04-15-chc-phi-684007-mlb-action-v4.json", "utf8"));
+const shotaImanagaActionImageAsset = await stat("public/images/top-performer-action-shots/2026-04-15-chc-phi-684007-action.webp");
 const allStarBreakImageAsset = await stat("public/images/all-star-game-philadelphia-2026.jpg");
 
 assert(
@@ -764,6 +766,15 @@ assert(
     drewRasmussenJuly26ImageMetadata.autoPromoted === false &&
     drewRasmussenJuly26ImageMetadata.alt.includes("Drew Rasmussen"),
   "Drew Rasmussen July 26 live leader must keep a manually reviewed text-free action photo",
+);
+
+assert(
+  shotaImanagaActionImageAsset.size > 0 &&
+    shotaImanagaImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-04-15-chc-phi-684007-action.webp" &&
+    shotaImanagaImageMetadata.alt === "Shota Imanaga pitching action photo" &&
+    shotaImanagaImageMetadata.clean === true &&
+    shotaImanagaImageMetadata.expiresAt > Date.now(),
+  "Shota Imanaga must keep a current curator-clean action photo for homepage reuse",
 );
 
 assert(
