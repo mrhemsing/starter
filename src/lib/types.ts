@@ -318,7 +318,10 @@ export type FormSummary = {
   deltaForm: number;
   trend: FormTrend;
   trendDelta: number;
+  /** Direction tier derived only from deltaForm for the active window. */
   tier: FormTier;
+  /** Absolute form level used only for score color/intensity. */
+  levelTier?: FormTier;
   heatIndex?: number;
   spark: number[];
   formSpark: number[];

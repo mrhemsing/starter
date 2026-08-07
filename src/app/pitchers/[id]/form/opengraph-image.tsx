@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
-import { bandOf, TREND_STYLES } from "@/lib/form-tokens";
+import { HEAT_BANDS, TREND_STYLES } from "@/lib/form-tokens";
 
 type PitcherFormImageProps = {
   params: Promise<{
@@ -28,7 +28,7 @@ export default async function Image({ params, searchParams }: PitcherFormImagePr
   if (!form) notFound();
 
   const { summary } = form;
-  const band = bandOf(summary.heatIndex ?? 0);
+  const band = HEAT_BANDS.find((candidate) => candidate.key === summary.tier) ?? HEAT_BANDS[2];
   const trend = TREND_STYLES[summary.trend];
 
   return new ImageResponse(

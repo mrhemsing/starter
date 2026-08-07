@@ -1,4 +1,3 @@
-import { FORM_CONFIG, formHeatBandOf } from "@/lib/form-tokens";
 import type { HeatBandKey, TonightGame, TonightStarter } from "@/lib/types";
 
 type MatchupArchetype = "ACE_DUEL" | "CLEAR_EDGE" | "MISMATCH_DOWN" | "COIN_FLIP" | "BOTH_COLD" | "PROVISIONAL" | "TBD";
@@ -536,9 +535,8 @@ function starterValue(starter: TonightStarter, input: ContextInput) {
   return input.values[starter.side === "away" ? 0 : 1];
 }
 
-function starterBand(starter: TonightStarter, leagueMeanGS: number): HeatBandKey {
-  if (starter.tier) return starter.tier;
-  return formHeatBandOf(starterFormValue(starter, leagueMeanGS), FORM_CONFIG.windowDefault).key;
+function starterBand(starter: TonightStarter, _leagueMeanGS: number): HeatBandKey {
+  return starter.tier ?? "even";
 }
 
 function trendDirection(starter: TonightStarter) {

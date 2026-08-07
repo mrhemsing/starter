@@ -1011,7 +1011,7 @@ function FormLeaderboardRow({
   const seasonView = view === "season";
   const qualityTier = qualityTierOf(pitcher.bgs);
   const limitedSampleRow = unranked && !seasonView;
-  const bandColor = limitedSampleRow ? "#71717a" : seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === pitcher.tier)?.color ?? "#888780";
+  const bandColor = limitedSampleRow ? "#71717a" : seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === (pitcher.levelTier ?? pitcher.tier))?.color ?? "#888780";
   const treatment = seasonView ? seasonRowTreatment() : rowTreatment(pitcher);
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
@@ -1022,7 +1022,7 @@ function FormLeaderboardRow({
   const seasonMetaLine = `Season: ${seasonLine(pitcher)}`;
   const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;
   const fullWindow = pitcher.windowCount >= window;
-  const thermalBand = seasonView ? qualityTier.key : fullWindow && !limitedSampleRow ? pitcher.tier : null;
+  const thermalBand = seasonView ? qualityTier.key : fullWindow && !limitedSampleRow ? pitcher.levelTier ?? pitcher.tier : null;
   const rankDetailLabel = limitedSampleRow ? LIMITED_SAMPLE_FORM_LABEL : seasonView ? qualityTier.label : tierLabel(pitcher.tier);
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
   const score = seasonView ? Math.round(pitcher.bgs) : Math.round(pitcher.rgs);

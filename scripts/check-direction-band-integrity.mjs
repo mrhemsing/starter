@@ -13,6 +13,33 @@ const heatLoadingShell = await readFile("src/components/heat-check-loading-shell
 const tonightsMustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
 
+const directionThresholds = {
+  3: { heating: 0.75, cooling: -0.75, onFire: 8, iceCold: -8 },
+  5: { heating: 0.75, cooling: -0.75, onFire: 5.5, iceCold: -8 },
+  10: { heating: 0.75, cooling: -0.75, onFire: 3.5, iceCold: -3.5 },
+};
+
+function directionTier(delta, window) {
+  const thresholds = directionThresholds[window];
+  if (delta >= thresholds.onFire) return "onfire";
+  if (delta >= thresholds.heating) return "hot";
+  if (delta <= thresholds.iceCold) return "ice";
+  if (delta <= thresholds.cooling) return "cooling";
+  return "even";
+}
+
+for (const [form, delta, window, expected] of [
+  [50, -13.2, 5, "ice"],
+  [44, 6, 5, "onfire"],
+  [57, -4.6, 5, "cooling"],
+  [60, 0.3, 5, "even"],
+]) {
+  assert(directionTier(delta, window) === expected, `form ${form}, delta ${delta}, window ${window} must be ${expected}`);
+}
+assert(directionTier(4, 5) === "hot" && directionTier(4, 10) === "onfire", "window thresholds must select different tiers");
+assert(directionTier(0.75, 5) === "hot" && directionTier(5.5, 5) === "onfire", "positive threshold edges must be inclusive");
+assert(directionTier(-0.75, 5) === "cooling" && directionTier(-8, 5) === "ice", "negative threshold edges must be inclusive");
+
 const threshold = 1.0;
 function expectedBand(delta) {
   const marker = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
@@ -43,7 +70,9 @@ assert(
 );
 
 assert(
-  formService.includes("import { formHeatBandOf, formTrendFromDelta, FORM_CONFIG") &&
+  formService.includes("import { directionBandOf, formLevelBandOf, formTrendFromDelta, FORM_CONFIG") &&
+    formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
+    formService.includes("const levelTier = formLevelBandOf(rgs, window).key;") &&
     formService.includes("const trend = classifyTrend(deltaForm);") &&
     formService.includes("return formTrendFromDelta(deltaForm);") &&
     !formService.includes("if (deltaForm >= thresholds.heatingDelta) return \"heating\";") &&

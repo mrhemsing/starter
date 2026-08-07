@@ -22,6 +22,8 @@ export const FORM_CONFIG = {
     5: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 5.5, iceColdDelta: -8 },
     10: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 3.5, iceColdDelta: -3.5 },
   },
+  // Level bands are visual intensity only. Direction words must come from
+  // directionBandOf(deltaForm, window), never from these RGS thresholds.
   formBandThresholds: {
     3: { onFireMin: 55, heatingMin: 49, coolingMax: 39, iceColdMax: 34 },
     5: { onFireMin: 53, heatingMin: 49, coolingMax: 41, iceColdMax: 36 },
@@ -205,7 +207,7 @@ export function formThresholdsForWindow(window: number = FORM_CONFIG.windowDefau
   return FORM_CONFIG.formBandThresholds[window as keyof typeof FORM_CONFIG.formBandThresholds] ?? FORM_CONFIG.formBandThresholds[FORM_CONFIG.windowDefault];
 }
 
-export function formHeatBandOf(rgs: number, window: number = FORM_CONFIG.windowDefault) {
+export function formLevelBandOf(rgs: number, window: number = FORM_CONFIG.windowDefault) {
   const thresholds = formThresholdsForWindow(window);
   if (rgs >= thresholds.onFireMin) return LEVEL_BANDS[0];
   if (rgs >= thresholds.heatingMin) return LEVEL_BANDS[1];
@@ -215,7 +217,7 @@ export function formHeatBandOf(rgs: number, window: number = FORM_CONFIG.windowD
 }
 
 export function formBandOf(rgs: number, window: number = FORM_CONFIG.windowDefault) {
-  return formHeatBandOf(rgs, window);
+  return formLevelBandOf(rgs, window);
 }
 
 export function qualityTierOf(gs: number) {

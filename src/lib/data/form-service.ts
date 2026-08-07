@@ -4,7 +4,7 @@ import { readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
-import { formHeatBandOf, formTrendFromDelta, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
+import { directionBandOf, formLevelBandOf, formTrendFromDelta, FORM_CONFIG, HEAT_BANDS, HOME_CONFIG, QUALITY_BANDS, qualityTierOf, seasonQualificationMinStarts, tierOf } from "@/lib/form-tokens";
 import { startPath } from "@/lib/routes";
 import { isScoredStarterSample } from "@/lib/start-classification";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
@@ -810,7 +810,8 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
   const seasonStats = buildSeasonStats(starts);
   const seasonDepthStats = buildSeasonDepthStats(starts);
   const seasonDecisionRecord = buildSeasonDecisionRecord(starts);
-  const tier = formHeatBandOf(rgs, window).key;
+  const tier = directionBandOf(deltaForm, window).key;
+  const levelTier = formLevelBandOf(rgs, window).key;
   const driverChips = buildDriverChips(starts, window, tier, leagueContext);
   const workload = buildWorkload(starts, window);
   const fallbackSeasonMinStarts = seasonQualificationMinStarts(starts.length);
@@ -829,6 +830,7 @@ function summarizePitcherBucket(bucket: PitcherBucket, window: FormWindow, leagu
     trend,
     trendDelta: round1(trendDelta),
     tier,
+    levelTier,
     heatIndex: calculateHeatIndex(rgs, leagueMeanGS, trendDelta),
     spark: windowStarts.map((start) => start.gameScorePlus),
     formSpark,

@@ -181,7 +181,7 @@ export default async function MethodologyPage() {
             {GS_PLUS_SCALE_SENTENCE} It starts with the pitcher&apos;s line, then adjusts for workload, traffic, runs, strikeouts, walks, park, opponent, and slate context. Daily boards rank qualified starts of at least 2.0 IP; openers and short outings are listed separately.
           </MethodCard>
           <MethodCard title="Form" id="form">
-            Form is a rolling view of recent GS+ across a pitcher&apos;s qualified starts. Heat Check bands highlight starters who are running above, near, or below their recent baseline.
+            Form is a rolling view of recent GS+ across a pitcher&apos;s qualified starts. Heat Check direction bands describe how that rolling form is moving. The Form number&apos;s color reflects its current level.
           </MethodCard>
           <MethodCard title="Season qualification" id="season-qualification">
             Heat Check season rankings require roughly one start per 16 team games played. Arms below that bar remain visible below the leaderboard but do not receive ranked positions.
@@ -257,7 +257,7 @@ function faqJsonLd() {
     },
     {
       name: "What does Heat Check measure?",
-      acceptedAnswer: "Heat Check ranks qualified starters by recent rolling GS+ form and separates them into bands from on fire to ice.",
+      acceptedAnswer: "Heat Check ranks qualified starters by recent rolling GS+ form. Direction bands describe movement in that form, while the Form number color describes its current level.",
     },
     {
       name: "How are probable matchups ranked?",

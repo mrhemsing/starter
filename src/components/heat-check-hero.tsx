@@ -327,7 +327,7 @@ function heatTone(band: HeatBand) {
 }
 
 function levelBandFor(pitcher: FormSummary) {
-  return HEAT_BANDS.find((band) => band.key === pitcher.tier) ?? HEAT_BANDS[HEAT_BANDS.length - 1];
+  return HEAT_BANDS.find((band) => band.key === (pitcher.levelTier ?? pitcher.tier)) ?? HEAT_BANDS[HEAT_BANDS.length - 1];
 }
 
 function HeatMeter({ heatIndex, band, deltaForm }: { heatIndex: number; band: HeatBand; deltaForm: number }) {
