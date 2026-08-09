@@ -1,0 +1,26 @@
+{
+  "startId": "2026-08-08-nyy-atl-543037",
+  "imageUrl": "/images/top-performer-action-shots/2026-08-08-nyy-atl-543037-action.webp",
+  "alt": "Gerrit Cole pitching in game action against the Braves on August 8, 2026",
+  "attribution": "MLB image feed",
+  "autoPromoted": false,
+  "officialPitchingHighlight": true,
+  "clean": true,
+  "textFreeReviewed": true,
+  "focalPoint": {
+    "x": 50,
+    "y": 44
+  },
+  "focalX": 50,
+  "focalY": 44,
+  "focalXOverride": null,
+  "focalYOverride": null,
+  "objectPosition": "50% 44%",
+  "mobileObjectPosition": "50% 44%",
+  "playUrl": "https://www.mlb.com/video/gerrit-cole-strikes-out-matt-olson-in-the-1st",
+  "reviewedAt": "2026-08-09T02:50:00.000Z",
+  "reviewNote": "Manually reviewed clean, text-free pitching action photo from Cole's Start of the Day outing",
+  "expiresAt": 1817794200000,
+  "sourceImageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/mhyulrspcwhb9dzp050w.jpg",
+  "storage": "local-static-optimized"
+}
