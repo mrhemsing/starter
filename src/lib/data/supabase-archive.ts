@@ -297,6 +297,14 @@ async function fetchSupabaseRows<T>(table: string, filters: SupabaseRowFilters, 
       next: { revalidate: SUPABASE_ARCHIVE_REVALIDATE_SECONDS },
     });
 
+    console.info("[supabase-egress] archive fetch cache observation", {
+      table,
+      range: `${from}-${to}`,
+      cacheStatus: response.headers.get("x-vercel-cache") ?? response.headers.get("cf-cache-status") ?? "not-reported",
+      age: response.headers.get("age"),
+      contentLength: response.headers.get("content-length"),
+    });
+
     if (!response.ok) return [];
     return await response.json() as T[];
   } catch {

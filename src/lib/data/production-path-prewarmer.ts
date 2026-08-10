@@ -13,6 +13,10 @@ export type PrewarmResult = {
   durationMs: number;
 };
 
+export function finalizedStartSignature(startIds: string[]) {
+  return [...new Set(startIds)].sort().join("|");
+}
+
 export async function reconciliationPrewarmPlan(date: string) {
   const pageData = await getRankedStartsPageData(date, getHomeSlateDate());
   const starts = pageData.slateStarts.filter((start) => start.source?.lineStatus === "final");
@@ -20,10 +24,7 @@ export async function reconciliationPrewarmPlan(date: string) {
   const recapPaths = starts.map((start) => startRecapPath(start, starts));
 
   return {
-    finalizedSignature: starts
-      .map((start) => `${start.id}:${start.gameScorePlus}`)
-      .sort()
-      .join("|"),
+    finalizedSignature: finalizedStartSignature(starts.map((start) => start.id)),
     paths: uniquePaths([
     "/",
     `/starts/${date}`,

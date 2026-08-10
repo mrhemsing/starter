@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prewarmProductionPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
+import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -51,8 +53,11 @@ export async function GET(request: Request) {
       date: slateState.date,
       status: compactProgress(slateState),
     });
+    const archiveStatus = await getSupabaseArchiveStatus(slateState.date.slice(0, 4), {
+      expectedLastCompletedDate: addDays(getHomeSlateDate(), -1),
+    });
     const prewarm = await prewarmProductionPaths(slatePrewarmPaths(slateState.date));
-    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState), prewarm });
+    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState), archiveStatus, prewarm });
   } catch (error) {
     console.error("[slate-sync] probe failed", {
       date: dateOverride,

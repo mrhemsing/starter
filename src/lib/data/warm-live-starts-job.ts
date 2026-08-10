@@ -7,7 +7,6 @@ import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ra
 import { revalidateRankedStartsDate } from "@/lib/data/ranked-starts-revalidation";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
-import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { homeLiveLeaderSignature, resolveHomeLiveLeaderRow, type HomeLiveLeaderSignature } from "@/lib/home-live-leader";
@@ -32,6 +31,7 @@ export type WarmLiveStartsJobResult = {
   finalGames: number;
   totalGames: number;
   completedStarts?: number;
+  finalizedStartIds?: string[];
   affectedPitchers?: number;
   warmedTeams?: number;
   deferredTeams?: number;
@@ -74,16 +74,6 @@ export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {
   const date = warmLiveStartsDate(options.date);
   const startedAt = new Date();
   console.log("warm-live-starts start", { date, batchSize: WARM_LIVE_STARTS_BATCH_SIZE, startedAt: startedAt.toISOString() });
-  const archiveStatus = await getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) });
-  if (archiveStatus.freshness?.stale) {
-    console.error("warm-live-starts archive gap detected; continuing canonical settle/revalidation path", {
-      date,
-      lastDate: archiveStatus.lastDate,
-      expectedLastCompletedDate: archiveStatus.freshness.expectedLastCompletedDate,
-      lagDays: archiveStatus.freshness.lagDays,
-    });
-  }
-
   const lockKey = warmLiveStartsLockKey(date);
   const lock = await acquireWarmLiveStartsLock(lockKey);
   if (!lock.acquired) {
@@ -242,6 +232,7 @@ async function runWarmLiveStartsJobUnlocked(options: WarmLiveStartsJobOptions, d
     date,
     warmed: true,
     completedStarts: completedStarts.length,
+    finalizedStartIds: completedStarts.map((start) => start.id).sort(),
     teams: slateTeams.length,
     durationMs,
     pitcherBatches,

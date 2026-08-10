@@ -15,6 +15,9 @@ const [
   startService,
   vercelConfig,
   packageJson,
+  warmLiveStartsCron,
+  productionPrewarmer,
+  slateSyncCron,
 ] = await Promise.all([
   read("src/lib/data/runtime-state-store.ts"),
   read("src/lib/data/mlb-stats-client.ts"),
@@ -22,7 +25,22 @@ const [
   read("src/lib/data/start-service.ts"),
   read("vercel.json"),
   read("package.json"),
+  read("src/app/api/cron/warm-live-starts/route.ts"),
+  read("src/lib/data/production-path-prewarmer.ts"),
+  read("src/app/api/cron/slate-sync/route.ts"),
 ]);
+
+assert(
+  warmLiveStartsCron.includes('if (result.reason === "no-live-or-final-games")') &&
+    warmLiveStartsCron.indexOf('if (result.reason === "no-live-or-final-games")') < warmLiveStartsCron.indexOf("logRecentSettledSlateGaps()") &&
+    warmLiveStartsCron.includes("RECONCILIATION_PREWARM_MIN_INTERVAL_MS") &&
+    warmLiveStartsCron.includes("INCREMENTAL_PREWARM_MIN_INTERVAL_MS") &&
+    productionPrewarmer.includes("finalizedStartSignature(starts.map((start) => start.id))") &&
+    !productionPrewarmer.includes("`${start.id}:${start.gameScorePlus}`") &&
+    slateSyncCron.includes("getSupabaseArchiveStatus") &&
+    !warmLiveStartsCron.includes("getSupabaseArchiveStatus"),
+  "minute reconciliation must skip its tail while idle, debounce prewarming by finalized IDs, and leave archive freshness to hourly slate-sync",
+);
 
 assert(
   runtimeStateStore.includes("export async function readRuntimeStates") &&
@@ -56,6 +74,7 @@ assert(
     supabaseArchive.includes("date: `eq.${date}`") &&
     supabaseArchive.includes("date: [`gte.${startDate}`, `lte.${endDate}`]") &&
     supabaseArchive.includes("SUPABASE_ARCHIVE_REVALIDATE_SECONDS = 15 * 60") &&
+    supabaseArchive.includes('[supabase-egress] archive fetch cache observation') &&
     !supabaseArchive.includes('String(filters.select ?? "*")') &&
     !supabaseArchive.includes('select", "*"'),
   "mlb_completed_starts reads must be column-scoped, date/range-filtered, and cached",

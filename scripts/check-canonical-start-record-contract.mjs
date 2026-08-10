@@ -190,13 +190,13 @@ assert(
     warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
     warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
     warmLiveStartsJob.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
-    warmLiveStartsJob.includes('import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";') &&
+    warmLiveStartsCron.includes('if (result.reason === "no-live-or-final-games")') &&
+    warmLiveStartsCron.includes("tailSkipped: true") &&
     warmLiveStartsJob.includes('import { getRankedStartsPageData, rankedStartsDateCacheTag } from "@/lib/data/ranked-starts-page-service";') &&
     warmLiveStartsJob.includes("export const WARM_LIVE_STARTS_BATCH_SIZE = 8;") &&
     warmLiveStartsJob.includes('const WARM_TEAM_FORM_ON_CRON_FLAG = "THE_BUMP_WARM_TEAM_FORM_ON_CRON";') &&
     warmLiveStartsJob.includes('reason?: "no-live-or-final-games" | "archive-gap" | "already-running";') &&
-    warmLiveStartsJob.includes("getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) })") &&
-    warmLiveStartsJob.includes('console.error("warm-live-starts archive gap detected; continuing canonical settle/revalidation path"') &&
+    !warmLiveStartsJob.includes("getSupabaseArchiveStatus") &&
     warmLiveStartsJob.includes("const lockKey = warmLiveStartsLockKey(date);") &&
     warmLiveStartsJob.includes("const lock = await acquireWarmLiveStartsLock(lockKey);") &&
     warmLiveStartsJob.includes('console.warn("warm-live-starts overlap lock active; exiting"') &&
