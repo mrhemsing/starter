@@ -460,7 +460,7 @@ function validateAttributedClaims(sentence: string, input: ContextInput) {
   const subject = namedStarterInSentence(sentence, input.namedStarters);
   if (!subject) return true;
   if (/\b(thin sample|limited data|sample is light|small-sample|small sample|provisional|less settled)\b/i.test(sentence) && !isProvisionalStarter(subject)) return false;
-  if (/\b(on fire|both hot|bring heat|rolling|hot arms?)\b/i.test(sentence) && !isStarterInTopBand(subject)) return false;
+  if (/\b(surging|climbing|both rising|rolling|rising arms?)\b/i.test(sentence) && !isStarterInTopBand(subject)) return false;
   if (/\b(cold|scuffling|stuck low|drag)\b/i.test(sentence) && !isStarterInLowBand(subject)) return false;
   if (/\brising\b|\barrow points up\b|\bmomentum\b/i.test(sentence) && trendDirection(subject) !== "rising") return false;
   if (/\btrends down\b|\bform slips\b|\bslides\b/i.test(sentence) && trendDirection(subject) !== "falling") return false;

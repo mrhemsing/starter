@@ -168,9 +168,9 @@ assert(
   formPage.includes('data-responsive-check="heat-band-distribution"') &&
     formPage.includes('data-temperature-job="filter"') &&
     formPage.includes('className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{scopeLabel}</p>') &&
-    formPage.includes('<p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>') &&
+    formPage.includes('<p className="font-serif text-3xl font-bold text-zinc-50">{onFire} surging · {ice} in freefall</p>') &&
     formPage.includes('<details className="mt-4">') &&
-    !formPage.includes("{onFire} on fire · {ice} ice cold · {total} qualified") &&
+    !formPage.includes("{onFire} surging · {ice} in freefall · {total} qualified") &&
     formPage.includes("Click a segment to filter") &&
     formPage.includes('>All</span>') &&
     formPage.includes('ariaCurrent={!activeBand ? "page" : undefined}') &&
@@ -216,7 +216,7 @@ assert(
     formPage.includes('FORM cold band unavailable - check FORM data.') &&
     !formPage.includes('Scheduled starter') &&
     !formPage.includes('SCHEDULED STARTER') &&
-    !formPage.includes("Nobody's on fire today.") &&
+    !formPage.includes("Nobody is surging today.") &&
     !formPage.includes("Nobody's in free fall today.") &&
     !formPage.includes(">Starting today<") &&
     !formPage.includes('{team} starters by recent form · {pitchers.length} shown.'),

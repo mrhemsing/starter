@@ -2442,7 +2442,7 @@ function assertRenderedUpcomingStreamersPage(html, route, homeSlateDate) {
       if (visibleCount === 0) {
         assert(
           emptyCopy === "No form risers with soft matchups are visible yet." ||
-            emptyCopy === "No Heating Up or On Fire arms are in the current Form pool." ||
+            emptyCopy === "No Climbing or Surging arms are in the current Form pool." ||
             /^\d+ risers this week, none have a confirmed start in the target week yet\.$/.test(emptyCopy) ||
             /^\d+ risers this week, none draw a bottom-third lineup\.$/.test(emptyCopy),
           `${route} Form Risers section should preserve a known funnel empty-state explanation`,
@@ -2532,7 +2532,7 @@ function assertRenderedUpcomingStreamersPage(html, route, homeSlateDate) {
       `${route} streamer card ${index + 1} pitcher href should point to its Form page`,
     );
     assertNonEmptyString(team, `${route} streamer card ${index + 1} team`);
-    assert(["On Fire", "Heating Up", "Streamer"].includes(heatLabel ?? ""), `${route} streamer card ${index + 1} heat label should stay in the Streamers vocabulary`);
+    assert(["Surging", "Climbing", "Streamer"].includes(heatLabel ?? ""), `${route} streamer card ${index + 1} heat label should stay in the Streamers vocabulary`);
     assert(["onfire", "hot", "streamer"].includes(heatBand ?? ""), `${route} streamer card ${index + 1} heat band should stay in the Streamers display set`);
     assert(Number.isInteger(rank) && rank > 0, `${route} streamer card ${index + 1} rank should be a positive integer`);
     assert(Number.isFinite(streamScore), `${route} streamer card ${index + 1} stream score should be numeric`);

@@ -436,7 +436,7 @@ function BandDistribution({ bands, total, activeBand, params, scopeLabel }: { ba
       <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="mb-[5px] font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">{scopeLabel}</p>
-          <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} on fire · {ice} ice cold</p>
+          <p className="font-serif text-3xl font-bold text-zinc-50">{onFire} surging · {ice} in freefall</p>
         </div>
         <p className="font-mono text-xs text-zinc-500">{activeBand ? "Click the active segment again to show all" : "Click a segment to filter"}</p>
       </div>
@@ -1546,10 +1546,10 @@ function bandExpansionParam(bandKey: HeatBand["key"]) {
 }
 
 function bandExpansionLabel(bandKey: HeatBand["key"]) {
-  if (bandKey === "onfire") return "on fire";
-  if (bandKey === "hot") return "heating up";
-  if (bandKey === "cooling") return "cooling down";
-  return "ice cold";
+  if (bandKey === "onfire") return "surging";
+  if (bandKey === "hot") return "climbing";
+  if (bandKey === "cooling") return "slipping";
+  return "freefall";
 }
 
 function visibleSeasonPitchers(pitchers: FormSummary[], team: string, show: string | undefined) {

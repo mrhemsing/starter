@@ -39,8 +39,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <>
             <LeagueTempStrip home={home} />
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <HeatRail title="On fire & heating up" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
-              <HeatRail title="Cooling down & ice cold" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="Surging & climbing" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="Slipping & freefall" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
             </div>
             {home.totalQualified < HOME_CONFIG.railSize * 4 ? (
               <p className="mt-4 font-mono text-xs text-zinc-500">Form stabilizes after a few starts. Sample is still small.</p>
@@ -209,7 +209,7 @@ function nextStartDetails(pitcher: FormSummary) {
 }
 
 function statusLabel(band: HeatBand) {
-  if (band.key === "onfire") return "🔥 ON FIRE";
+  if (band.key === "onfire") return "🔥 SURGING";
   return band.label;
 }
 

@@ -30,7 +30,7 @@ export type StreamerCandidate = {
   team: string;
   pitcherHref: string;
   heatBand: "onfire" | "hot" | null;
-  heatLabel: "On Fire" | "Heating Up" | "Streamer";
+  heatLabel: "Surging" | "Climbing" | "Streamer";
   trendDelta: number;
   spark: number[];
   formTier: NonNullable<TonightStarter["tier"]>;
@@ -175,7 +175,7 @@ function buildStreamerCandidate(starter: TonightStarter, matchups: StreamerMatch
     team: starter.team,
     pitcherHref: streamerPitcherFormHref(starter.pitcherId),
     heatBand,
-    heatLabel: heatBand === "onfire" ? "On Fire" : heatBand === "hot" ? "Heating Up" : "Streamer",
+    heatLabel: heatBand === "onfire" ? "Surging" : heatBand === "hot" ? "Climbing" : "Streamer",
     trendDelta: roundToScorePrecision(starter.deltaForm ?? 0, 1),
     spark: starter.spark ?? [],
     formTier: starter.tier ?? "even",
@@ -361,7 +361,7 @@ function buildCoverage(upcoming: UpcomingResponse): UpcomingStreamersResponse["c
 
 function streamerFunnelEmptyReason(risers: number, withNextStart: number, withSoftMatchup: number) {
   if (withSoftMatchup > 0) return null;
-  if (risers === 0) return "No Heating Up or On Fire arms are in the current Form pool.";
+  if (risers === 0) return "No Climbing or Surging arms are in the current Form pool.";
   if (withNextStart === 0) return `${risers} risers this week, none have a confirmed start in the target week yet.`;
   return `${withNextStart} risers this week, none draw a bottom-third lineup.`;
 }

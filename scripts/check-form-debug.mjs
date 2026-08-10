@@ -108,7 +108,7 @@ function assertCalibrationPage(html, calibration, label) {
   assert(normalizedPageHtml.includes("Config snapshot"), `${label} should render the config snapshot`);
   assert(pageWindow === calibration.window, `${label} should render window ${calibration.window}, got ${pageWindow}`);
   assert(pageQualified > 0, `${label} should render a positive qualified pitcher count, got ${pageQualified}`);
-  assert(normalizedPageHtml.includes("On Fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Off") && normalizedPageHtml.includes("Ice Cold"), `${label} should render FORM band labels`);
+  assert(normalizedPageHtml.includes("Surging") && normalizedPageHtml.includes("Climbing") && normalizedPageHtml.includes("Slipping") && normalizedPageHtml.includes("Freefall"), `${label} should render trajectory band labels`);
   assert(normalizedPageHtml.includes("Misiorowski") && normalizedPageHtml.includes("Top FORM") && normalizedPageHtml.includes("Bottom FORM"), `${label} should render FORM diagnostic leaderboards`);
 }
 
@@ -145,8 +145,8 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
   }
   assert(calibration.trendDelta.p25 < 0 && calibration.trendDelta.p75 > 0, `${label} trendDelta should span both cooling and heating sides`);
   if (calibration.counts.qualified >= 40) {
-    assert(calibration.counts.bands.onfire > 0, `${label} On Fire band should be reachable for a full league window`);
-    assert(calibration.counts.bands.ice > 0, `${label} Ice Cold band should be reachable for a full league window`);
+    assert(calibration.counts.bands.onfire > 0, `${label} Surging band should be reachable for a full league window`);
+    assert(calibration.counts.bands.ice > 0, `${label} Freefall band should be reachable for a full league window`);
     assert(
       calibration.counts.bands.even / calibration.counts.qualified < 0.65,
       `${label} Even band should not absorb a collapsed majority, got ${calibration.counts.bands.even}/${calibration.counts.qualified}`,
