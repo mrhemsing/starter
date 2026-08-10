@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/warm-live-starts",
-      "schedule": "* * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/daily-social",
