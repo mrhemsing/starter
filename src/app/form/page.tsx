@@ -76,6 +76,7 @@ const seasonSortOptions = [
 ] as const;
 
 const HEAT_BAND_INITIAL_LIMIT = 12;
+const HEAT_TREND_INITIAL_LIMIT = 25;
 const SEASON_UNRANKED_INITIAL_LIMIT = 25;
 
 function parseHeatCheckView(value: string | undefined): HeatCheckView {
@@ -142,6 +143,9 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const params = { ...(rawParams ?? {}), view };
   const trendView = view === "trend";
   const seasonView = view === "season";
+  if (trendView && (params.fire || params.hot || params.cooling || params.ice || params.even)) {
+    redirect(heatCheckHref({ ...params, fire: "", hot: "", cooling: "", ice: "", even: "" }));
+  }
   if (seasonView && (params.sort === "season-gs" || params.qualified)) {
     redirect(heatCheckHref({ ...params, sort: "", qualified: "" }));
   }
@@ -157,11 +161,6 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const band = teamView ? "" : rawBand;
   const motion = teamView ? "" : rawMotion;
   const limitedFilter = trendView && !teamView && params?.limited === "true";
-  const evenExpanded = Boolean(team) || params?.even === "show" || band === "even" || sort !== "form";
-  const fireExpanded = Boolean(team) || params?.fire === "show" || band === "onfire" || sort !== "form";
-  const heatingExpanded = Boolean(team) || params?.hot === "show" || band === "hot" || sort !== "form";
-  const coolingExpanded = Boolean(team) || params?.cooling === "show" || band === "cooling" || sort !== "form";
-  const iceExpanded = Boolean(team) || params?.ice === "show" || band === "ice" || sort !== "form";
   const today = getHomeSlateDate();
   const rotationDates = Array.from({ length: 5 }, (_, index) => addDays(today, index));
   const [leaderboard, rotationLeaderboard, teamRotationLeaderboard, followedIds, rotationSchedules, liveBoard] = await Promise.all([
@@ -242,14 +241,8 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const leagueView = allTeamsView && trendView;
   const boardPitchers = pitchers;
   const seasonVisiblePitchers = visibleSeasonPitchers(seasonQualifiedPitchers, team, params?.show);
-  const groupedBoard = groupPitchersByBand(trendQualifiedBoardPitchers);
-  const visibleGroupedPitchers = groupedBoard.flatMap((group) => (
-    group.band.key === "even" && !evenExpanded
-      ? []
-      : visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })
-  ));
-  const groupedDisplayRankByPitcherId = buildDisplayRankMap(visibleGroupedPitchers);
-  const showBandHeaders = leagueView && sort === "form";
+  const trendExpanded = Boolean(team || query || band || motion || params.show === "all");
+  const visibleTrendPitchers = trendExpanded ? trendQualifiedBoardPitchers : trendQualifiedBoardPitchers.slice(0, HEAT_TREND_INITIAL_LIMIT);
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const activeFilterLabel = buildActiveFilterLabel({ band, motion, team, query, limited: limitedFilter });
@@ -407,29 +400,15 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                   <SeasonExpandControls visible={seasonVisiblePitchers.length} total={seasonQualifiedPitchers.length} params={params} team={team} />
                   <SeasonQualificationDisclosure pitchers={seasonUnrankedPitchers} threshold={leaderboard.seasonQualificationThreshold} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} sort={sort} params={params} />
                 </>
-              ) : showBandHeaders ? (
-                <>
-                  {groupedBoard.map((group) => (
-                    <section key={group.band.key} id={`band-${group.band.key}`} className="grid scroll-mt-24 gap-2" data-heat-band-section={group.band.key}>
-                      <BandHeader band={group.band} count={group.pitchers.length} />
-                      {group.band.key === "even" && !evenExpanded ? (
-                        <EvenBandCollapsed count={group.pitchers.length} href={heatCheckHref({ ...params, even: "show" })} />
-                      ) : (
-                        <>
-                          {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
-                          {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
-                          {visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).map((pitcher, index) => (
-                            <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0} formRank={formRankByPitcherId.get(pitcher.pitcherId) ?? groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
-                          ))}
-                          {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
-                        </>
-                      )}
-                    </section>
-                  ))}
-                  <LimitedSampleSection pitchers={trendLimitedPitchers} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} startContext={startContext} />
-                </>
               ) : (
-                <TrendBoardSections pitchers={boardPitchers} limitedPitchers={trendLimitedPitchers} limitedOnly={limitedFilter} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} formRankByPitcherId={formRankByPitcherId} startContext={startContext} />
+                <>
+                  <TrendBoardSections pitchers={limitedFilter ? boardPitchers : visibleTrendPitchers} limitedPitchers={trendExpanded || limitedFilter ? trendLimitedPitchers : []} limitedOnly={limitedFilter} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followedIds={followedIds} formRankByPitcherId={formRankByPitcherId} startContext={startContext} />
+                  {!limitedFilter && !trendExpanded && trendQualifiedBoardPitchers.length > visibleTrendPitchers.length ? (
+                    <div className="mt-3 flex justify-end" data-heat-trend-expand>
+                      <ControlLink active={false} href={heatCheckHref({ ...params, show: "all" })}>Show {trendQualifiedBoardPitchers.length - visibleTrendPitchers.length} more</ControlLink>
+                    </div>
+                  ) : null}
+                </>
               )}
             </section>
             </div>
@@ -1082,6 +1061,7 @@ function FormLeaderboardRow({
         )}
         chips={(
           <>
+            {!seasonView ? <span className="rounded border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
             <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
             <MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />
             <PitcherAvailabilityNote availability={pitcher.availability} compact />
@@ -1145,6 +1125,7 @@ function FormLeaderboardRow({
           </p>
         </HeatPitcherProfileLink>
         <div className="grid gap-1">
+          {!seasonView ? <span className="w-fit rounded border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
           <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
           <TodayStartFreshnessChip pitcher={pitcher} />
           {seasonView ? null : (
