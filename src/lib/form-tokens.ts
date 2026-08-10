@@ -89,7 +89,7 @@ export const LEVEL_BANDS: LevelBandToken[] = [
   { key: "onfire", label: "On Fire", min: 69, color: "#D85A30", cssVar: "--level-onfire", textClass: "text-[var(--level-onfire)]" },
   { key: "hot", label: "Heating Up", min: 57, color: "#EF9F27", cssVar: "--level-hot", textClass: "text-[var(--level-hot)]" },
   { key: "even", label: "Even", min: 43, color: "#888780", cssVar: "--level-even", textCssVar: "--level-even-text", textClass: "text-[var(--level-even-text)]" },
-  { key: "cooling", label: "Cooling Down", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
+  { key: "cooling", label: "Cooling Off", min: 30, color: "#85B7EB", cssVar: "--level-cooling", textClass: "text-[var(--level-cooling)]" },
   { key: "ice", label: "Ice Cold", min: 0, color: "#378ADD", cssVar: "--level-ice", textClass: "text-[var(--level-ice)]" },
 ];
 

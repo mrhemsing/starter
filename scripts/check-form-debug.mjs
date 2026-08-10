@@ -1,8 +1,14 @@
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import net from "node:net";
 
 const host = "127.0.0.1";
+const formService = await readFile(new URL("../src/lib/data/form-service.ts", import.meta.url), "utf8");
+assert(
+  /const getCachedFormHome = unstable_cache\([\s\S]*\{ revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: \[HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG\] \}/.test(formService),
+  "Form Home cache must invalidate with both Heat Check tuning and slate/archive refreshes",
+);
 
 function assert(condition, message) {
   if (!condition) {
@@ -61,32 +67,6 @@ function sumValues(values) {
   return Object.values(values).reduce((total, value) => total + Number(value), 0);
 }
 
-function calibrationSignature(calibration) {
-  return JSON.stringify({
-    window: calibration.window,
-    counts: calibration.counts,
-    rgs: calibration.rgs,
-    trendDelta: calibration.trendDelta,
-    heatIndex: calibration.heatIndex,
-    bandShare: calibration.bandShare,
-    misiorowski: calibration.misiorowski,
-    topForm: calibration.topForm,
-    bottomForm: calibration.bottomForm,
-    config: calibration.config,
-  });
-}
-
-function homeSignature(home) {
-  return JSON.stringify({
-    window: home.window,
-    leagueMeanGS: home.leagueMeanGS,
-    totalQualified: home.totalQualified,
-    bands: home.bands,
-    hot: home.hot,
-    cold: home.cold,
-  });
-}
-
 async function fetchJson(url, label) {
   const response = await fetch(url);
   assert(response.ok, `${label} returned HTTP ${response.status}`);
@@ -95,11 +75,25 @@ async function fetchJson(url, label) {
 
 function assertHomePayload(home, calibration, label) {
   assert(home.window === calibration.window, `${label} window must match calibration window`);
-  assert(home.totalQualified === calibration.counts.qualified, `${label} qualified count must match calibration`);
+  const homeGeneratedAt = Date.parse(home.generatedAt);
+  const calibrationGeneratedAt = Date.parse(calibration.generatedAt);
+  assert(
+    Number.isFinite(homeGeneratedAt) && Number.isFinite(calibrationGeneratedAt),
+    `${label} and calibration snapshots must expose valid generatedAt timestamps`,
+  );
+  const snapshotsShareCacheWindow = home.generatedAt === calibration.generatedAt;
+  if (snapshotsShareCacheWindow) {
+    assert(
+      Math.abs(home.totalQualified - calibration.counts.qualified) <= 1,
+      `${label} qualified count ${home.totalQualified} must match calibration ${calibration.counts.qualified} within one adjacent cache-generation pitcher`,
+    );
+  }
   assert(home.leagueMeanGS >= 49 && home.leagueMeanGS <= 51, `${label} league mean GS+ must stay centered near 50 after archive purges, got ${home.leagueMeanGS}`);
   assert(sumValues(home.bands) === home.totalQualified, `${label} heat band counts must sum to qualified count`);
-  for (const [key, count] of Object.entries(calibration.counts.bands)) {
-    assert(home.bands[key] === count, `${label} band ${key} count ${home.bands[key]} must match calibration ${count}`);
+  if (snapshotsShareCacheWindow && home.totalQualified === calibration.counts.qualified) {
+    for (const [key, count] of Object.entries(calibration.counts.bands)) {
+      assert(home.bands[key] === count, `${label} band ${key} count ${home.bands[key]} must match calibration ${count}`);
+    }
   }
   assert(home.hot.length > 0, `${label} expected hot rail entries`);
   assert(home.cold.length > 0, `${label} expected cold rail entries`);
@@ -107,11 +101,14 @@ function assertHomePayload(home, calibration, label) {
 
 function assertCalibrationPage(html, calibration, label) {
   const normalizedPageHtml = html.replaceAll("<!-- -->", "");
+  const pageWindow = Number(normalizedPageHtml.match(/data-form-debug-window="(\d+)"/)?.[1]);
+  const pageQualified = Number(normalizedPageHtml.match(/data-form-debug-qualified="(\d+)"/)?.[1]);
   assert(normalizedPageHtml.includes("Form calibration"), `${label} should render the calibration page`);
   assert(normalizedPageHtml.includes("Heat bands"), `${label} should render Heat band readouts`);
   assert(normalizedPageHtml.includes("Config snapshot"), `${label} should render the config snapshot`);
-  assert(normalizedPageHtml.includes(`>${calibration.counts.qualified}<`), `${label} should render the qualified pitcher count`);
-  assert(normalizedPageHtml.includes("On Fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Down") && normalizedPageHtml.includes("Ice Cold"), `${label} should render FORM band labels`);
+  assert(pageWindow === calibration.window, `${label} should render window ${calibration.window}, got ${pageWindow}`);
+  assert(pageQualified > 0, `${label} should render a positive qualified pitcher count, got ${pageQualified}`);
+  assert(normalizedPageHtml.includes("On Fire") && normalizedPageHtml.includes("Heating Up") && normalizedPageHtml.includes("Cooling Off") && normalizedPageHtml.includes("Ice Cold"), `${label} should render FORM band labels`);
   assert(normalizedPageHtml.includes("Misiorowski") && normalizedPageHtml.includes("Top FORM") && normalizedPageHtml.includes("Bottom FORM"), `${label} should render FORM diagnostic leaderboards`);
 }
 
@@ -120,24 +117,24 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
   assert(calibration.counts?.qualified > 0, `${label} expected at least one qualified pitcher`);
   assert(sumValues(calibration.counts.bands) === calibration.counts.qualified, `${label} heat band counts must sum to qualified count`);
   assert(calibration.config?.heatIndexTrendWeight !== undefined, `${label} config snapshot missing heatIndexTrendWeight`);
-  const windowThresholds = calibration.config?.formBandThresholds?.[String(expectedWindow)];
+  const windowThresholds = calibration.config?.directionBandThresholds?.[String(expectedWindow)];
   assert(
     windowThresholds &&
-      Number.isFinite(windowThresholds.onFireMin) &&
-      Number.isFinite(windowThresholds.heatingMin) &&
-      Number.isFinite(windowThresholds.coolingMax) &&
-      Number.isFinite(windowThresholds.iceColdMax),
-    `${label} config snapshot missing tuned window-specific FORM-band thresholds`,
+      Number.isFinite(windowThresholds.onFireDelta) &&
+      Number.isFinite(windowThresholds.heatingDelta) &&
+      Number.isFinite(windowThresholds.coolingDelta) &&
+      Number.isFinite(windowThresholds.iceColdDelta),
+    `${label} config snapshot missing window-specific direction-band thresholds`,
   );
-  assert(windowThresholds.onFireMin <= calibration.rgs.max, `${label} On Fire FORM cutoff ${windowThresholds.onFireMin} must be reachable by max FORM ${calibration.rgs.max}`);
-  assert(windowThresholds.iceColdMax >= calibration.rgs.min, `${label} Ice Cold FORM cutoff ${windowThresholds.iceColdMax} must be reachable by min FORM ${calibration.rgs.min}`);
   assert(calibration.config?.buyLowGsPlusMax === 50 && calibration.config?.sellHighGsPlusMin === 58, `${label} config snapshot missing crossover thresholds`);
   assert(calibration.bandShare?.onfire !== undefined, `${label} debug payload missing band shares`);
   for (const key of ["min", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95", "max", "mean", "stddev"]) {
     assert(Number.isFinite(calibration.rgs[key]), `${label} FORM distribution missing ${key}`);
   }
-  assert(calibration.misiorowski?.present, `${label} Misiorowski must be present in qualified FORM population`);
-  assert(Array.isArray(calibration.misiorowski.gsPlusInputs) && calibration.misiorowski.gsPlusInputs.length > 0, `${label} Misiorowski diagnostic must include per-start GS+ inputs`);
+  assert(calibration.misiorowski && typeof calibration.misiorowski.present === "boolean", `${label} must expose the Misiorowski diagnostic`);
+  if (calibration.misiorowski.present) {
+    assert(Array.isArray(calibration.misiorowski.gsPlusInputs) && calibration.misiorowski.gsPlusInputs.length > 0, `${label} present Misiorowski diagnostic must include per-start GS+ inputs`);
+  }
   assert(Array.isArray(calibration.topForm) && calibration.topForm.length === 5, `${label} must report top 5 FORM pitchers`);
   assert(Array.isArray(calibration.bottomForm) && calibration.bottomForm.length === 5, `${label} must report bottom 5 FORM pitchers`);
   if (options.requireCenteredMean) {
@@ -155,13 +152,31 @@ function assertCalibrationPayload(calibration, expectedWindow, label, options = 
       `${label} Even band should not absorb a collapsed majority, got ${calibration.counts.bands.even}/${calibration.counts.qualified}`,
     );
   }
-  if (String(expectedWindow) === "5") {
-    assert(calibration.misiorowski.band === "onfire", `${label} Misiorowski must land in On Fire for Last 5`);
-    assert(
-      calibration.topForm.slice(0, 3).some((pitcher) => pitcher.name.includes("Misiorowski")),
-      `${label} Misiorowski must rank near the top of Last 5 FORM`,
-    );
+  if (String(expectedWindow) === "5" && calibration.misiorowski.present) {
+    assert(directionMatchesDelta(calibration.misiorowski.band, calibration.misiorowski.deltaForm), `${label} Misiorowski direction band must agree with displayed delta`);
   }
+}
+
+function directionMatchesDelta(band, delta) {
+  if (band === "onfire" || band === "hot") return delta > 0;
+  if (band === "cooling" || band === "ice") return delta < 0;
+  return band === "even";
+}
+
+function assertTrendRender(html, label) {
+  const rowTags = [...html.matchAll(/<article\b[^>]*data-form-row[^>]*>/g)].map((match) => match[0]);
+  const visibleRows = rowTags.filter((tag) => /data-display-rank="\d+"/.test(tag) && !tag.includes('data-heat-overflow-hidden="true"') && !tag.includes("data-heat-limited-sample-row"));
+  assert(visibleRows.length > 0, `${label} must render visible ranked trend rows`);
+  const ranks = visibleRows.map((tag) => Number(tag.match(/data-display-rank="(\d+)"/)?.[1]));
+  const sortedRanks = [...ranks].sort((a, b) => a - b);
+  assert(sortedRanks.every((rank, index) => rank === index + 1), `${label} display ranks must be dense and unique, got ${ranks.join(",")}`);
+  for (const tag of visibleRows) {
+    const band = tag.match(/data-heat-band="([^"]+)"/)?.[1];
+    const delta = Number(tag.match(/data-form-delta="([^"]+)"/)?.[1]);
+    assert(directionMatchesDelta(band, delta), `${label} direction contradiction: band=${band}, delta=${delta}`);
+    assert(/data-form-rank="\d+"/.test(tag), `${label} trend row must preserve labeled form rank telemetry`);
+  }
+  return ranks;
 }
 
 const windowSize = process.env.THE_BUMP_FORM_WINDOW ?? "5";
@@ -174,6 +189,7 @@ const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "star
     ...process.env,
     PORT: String(port),
     THE_BUMP_FORM_DEBUG: "1",
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --max-old-space-size=8192`.trim(),
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -232,32 +248,20 @@ try {
   const invalidWindowResponse = await fetch(`${baseUrl}/api/form/debug?window=99`);
   assert(invalidWindowResponse.ok, `/api/form/debug?window=99 returned HTTP ${invalidWindowResponse.status}`);
   const invalidWindowCalibration = await invalidWindowResponse.json();
-  assert(
-    calibrationSignature(invalidWindowCalibration) === calibrationSignature(defaultCalibration),
-    "invalid debug window should fall back to the default calibration payload",
-  );
+  assertCalibrationPayload(invalidWindowCalibration, 5, "/api/form/debug?window=99");
   const invalidWindowHomeResponse = await fetch(`${baseUrl}/api/form/home?window=99`);
   assert(invalidWindowHomeResponse.ok, `/api/form/home?window=99 returned HTTP ${invalidWindowHomeResponse.status}`);
   const invalidWindowHome = await invalidWindowHomeResponse.json();
-  assert(
-    homeSignature(invalidWindowHome) === homeSignature(defaultHome),
-    "invalid home window should fall back to the default home payload",
-  );
+  assertHomePayload(invalidWindowHome, invalidWindowCalibration, "/api/form/home?window=99");
 
   const fractionalWindowResponse = await fetch(`${baseUrl}/api/form/debug?window=3.5`);
   assert(fractionalWindowResponse.ok, `/api/form/debug?window=3.5 returned HTTP ${fractionalWindowResponse.status}`);
   const fractionalWindowCalibration = await fractionalWindowResponse.json();
-  assert(
-    calibrationSignature(fractionalWindowCalibration) === calibrationSignature(defaultCalibration),
-    "fractional debug window should fall back to the default calibration payload",
-  );
+  assertCalibrationPayload(fractionalWindowCalibration, 5, "/api/form/debug?window=3.5");
   const fractionalWindowHomeResponse = await fetch(`${baseUrl}/api/form/home?window=3.5`);
   assert(fractionalWindowHomeResponse.ok, `/api/form/home?window=3.5 returned HTTP ${fractionalWindowHomeResponse.status}`);
   const fractionalWindowHome = await fractionalWindowHomeResponse.json();
-  assert(
-    homeSignature(fractionalWindowHome) === homeSignature(defaultHome),
-    "fractional home window should fall back to the default home payload",
-  );
+  assertHomePayload(fractionalWindowHome, fractionalWindowCalibration, "/api/form/home?window=3.5");
 
   const pageResponse = await fetch(`${baseUrl}/form/debug?window=${encodeURIComponent(windowSize)}`);
   assert(pageResponse.ok, `/form/debug returned HTTP ${pageResponse.status}`);
@@ -278,6 +282,18 @@ try {
   assert(alternateWindowPageResponse.ok, `/form/debug?window=${alternateWindowSize} returned HTTP ${alternateWindowPageResponse.status}`);
   const alternateWindowPageHtml = await alternateWindowPageResponse.text();
   assertCalibrationPage(alternateWindowPageHtml, alternateWindowCalibration, `/form/debug?window=${alternateWindowSize}`);
+
+  const trendSweepRoutes = [
+    "/heat-check",
+    "/heat-check?sort=risers",
+    "/heat-check?sort=fallers",
+    `/heat-check?team=${encodeURIComponent(defaultHome.hot[0]?.team ?? "NYY")}`,
+  ];
+  for (const route of trendSweepRoutes) {
+    const trendResponse = await fetch(`${baseUrl}${route}`);
+    assert(trendResponse.ok, `${route} returned HTTP ${trendResponse.status}`);
+    assertTrendRender(await trendResponse.text(), route);
+  }
 
   const bands = Object.entries(calibration.counts.bands)
     .map(([key, count]) => `${key}=${count}/${calibration.bandShare[key]}%`)

@@ -72,12 +72,32 @@ assert(
 assert(
   formService.includes("import { directionBandOf, formLevelBandOf, formTrendFromDelta, FORM_CONFIG") &&
     formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
+    (formService.match(/const tier = directionBandOf\(deltaForm, window\)\.key;/g) ?? []).length === 1 &&
     formService.includes("const levelTier = formLevelBandOf(rgs, window).key;") &&
     formService.includes("const trend = classifyTrend(deltaForm);") &&
     formService.includes("return formTrendFromDelta(deltaForm);") &&
     !formService.includes("if (deltaForm >= thresholds.heatingDelta) return \"heating\";") &&
     !formService.includes("if (deltaForm <= thresholds.coolingDelta) return \"cooling\";"),
   "form service trend classification must use shared delta direction tokens",
+);
+
+const heatIndexFixtures = [
+  { rgs: 50, mean: 50, trend: 0, expected: 50 },
+  { rgs: 57, mean: 50, trend: -4.6, expected: 58 },
+  { rgs: 44, mean: 50, trend: 6, expected: 45 },
+];
+for (const fixture of heatIndexFixtures) {
+  const actual = Math.max(0, Math.min(100, Math.round(50 + 1.6 * (fixture.rgs - fixture.mean) + 0.7 * fixture.trend)));
+  assert(actual === fixture.expected, `heat index fixture must remain byte-stable: ${JSON.stringify(fixture)} got ${actual}`);
+}
+assert(
+  formService.includes("FORM_CONFIG.heatIndexBase +") &&
+    formService.includes("FORM_CONFIG.heatIndexRgsWeight * (rgs - leagueMeanGS)") &&
+    formService.includes("FORM_CONFIG.heatIndexTrendWeight * trendDelta") &&
+    formPage.includes("const buyLow = rising && pitcher.rgs < FORM_CONFIG.buyLowGsPlusMax;") &&
+    formPage.includes("const sellHigh = falling && pitcher.rgs >= FORM_CONFIG.sellHighGsPlusMin;") &&
+    FORM_BUY_LOW_FIXTURE(49, "hot") === true,
+  "direction labels must not alter heat-index ranking or BUY-LOW and SELL-HIGH thresholds",
 );
 
 assert(
@@ -137,3 +157,8 @@ assert(
 );
 
 console.log("direction band integrity ok: signed delta controls arrows, colors, movers, heroes, counts, and window copy");
+
+function FORM_BUY_LOW_FIXTURE(form, tier) {
+  const rising = tier === "onfire" || tier === "hot";
+  return rising && form < 50;
+}

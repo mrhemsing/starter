@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormCalibration, parseFormWindow } from "@/lib/data/form-service";
-import { formThresholdsForWindow, HEAT_BANDS } from "@/lib/form-tokens";
+import { directionThresholdsForWindow, HEAT_BANDS } from "@/lib/form-tokens";
 
 type FormDebugPageProps = {
   searchParams?: Promise<{
@@ -19,7 +19,11 @@ export default async function FormDebugPage({ searchParams }: FormDebugPageProps
   const calibration = await getFormCalibration({ window });
 
   return (
-    <main className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8">
+    <main
+      className="min-h-screen bg-[#08080a] px-4 pb-8 pt-6 text-zinc-100 sm:px-6 lg:px-8"
+      data-form-debug-window={calibration.window}
+      data-form-debug-qualified={calibration.counts.qualified}
+    >
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-white/10 pb-6">
           <Link href="/heat-check" className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">Heat Check</Link>
@@ -86,12 +90,12 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function formThresholdLabel(key: string, window: number) {
-  const thresholds = formThresholdsForWindow(window);
-  if (key === "onfire") return `>= ${thresholds.onFireMin}`;
-  if (key === "hot") return `>= ${thresholds.heatingMin}`;
-  if (key === "even") return "middle FORM";
-  if (key === "cooling") return `<= ${thresholds.coolingMax}`;
-  if (key === "ice") return `<= ${thresholds.iceColdMax}`;
+  const thresholds = directionThresholdsForWindow(window);
+  if (key === "onfire") return `>= ${thresholds.onFireDelta}`;
+  if (key === "hot") return `>= ${thresholds.heatingDelta}`;
+  if (key === "even") return "steady movement";
+  if (key === "cooling") return `<= ${thresholds.coolingDelta}`;
+  if (key === "ice") return `<= ${thresholds.iceColdDelta}`;
   return "";
 }
 

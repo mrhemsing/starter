@@ -103,7 +103,11 @@ assert(
     formService.includes("function compareRollingFormLevelAsc") &&
     formService.includes("if (a.rgs !== b.rgs) return a.rgs - b.rgs;") &&
     formPage.includes("const formRankByPitcherId = buildGlobalFormRankMap(qualifiedPitchers);") &&
-    formPage.includes("rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0}") &&
+    formPage.includes("rank={index + 1} formRank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1}") &&
+    formPage.includes("const groupedDisplayRankByPitcherId = buildDisplayRankMap(visibleGroupedPitchers);") &&
+    formPage.includes("rank={groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0} formRank={formRankByPitcherId.get(pitcher.pitcherId) ?? groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0}") &&
+    formPage.includes("FORM RANK #{formRank}") &&
+    formPage.includes("The big number always agrees with the ordering the user is looking at.") &&
     formPage.includes("function sortPitchersByGlobalFormRank") &&
     formPage.includes("function compareRollingFormLevelRank") &&
     formPage.includes("if (b.rgs !== a.rgs) return b.rgs - a.rgs;") &&
@@ -123,7 +127,15 @@ assert(
     !formService.includes("sort(compareHeatAsc)") &&
     !formService.includes("function compareHeatDesc") &&
     !formService.includes("function compareHeatAsc"),
-  "Heat Check must band and rank by rolling FORM level while keeping movement separate for Movers",
+  "Heat Check must use sequential display ranks, preserve labeled global FORM rank, and keep movement separate for Movers",
+);
+
+assert(
+  formPage.indexOf("visibleBandPitchers(group.band.key, group.pitchers") <
+    formPage.indexOf("{bandExpandableControl(group.band.key, group.pitchers.length") &&
+    formPage.includes("function buildDisplayRankMap(pitchers: FormSummary[])") &&
+    formPage.includes("new Map(pitchers.map((pitcher, index) => [pitcher.pitcherId, index + 1]))"),
+  "trend display badges must be dense in rendered order and band expansion controls must follow preview rows",
 );
 
 assert(

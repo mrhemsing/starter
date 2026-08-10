@@ -243,6 +243,12 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const boardPitchers = pitchers;
   const seasonVisiblePitchers = visibleSeasonPitchers(seasonQualifiedPitchers, team, params?.show);
   const groupedBoard = groupPitchersByBand(trendQualifiedBoardPitchers);
+  const visibleGroupedPitchers = groupedBoard.flatMap((group) => (
+    group.band.key === "even" && !evenExpanded
+      ? []
+      : visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })
+  ));
+  const groupedDisplayRankByPitcherId = buildDisplayRankMap(visibleGroupedPitchers);
   const showBandHeaders = leagueView && sort === "form";
   const risers = riserCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
   const fallers = fallerCandidates.filter((pitcher) => !heroIds.has(pitcher.pitcherId)).slice(0, 3);
@@ -412,10 +418,10 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
                         <>
                           {group.band.key === "even" ? <EvenBandExpanded count={group.pitchers.length} href={heatCheckHref({ ...params, even: "" })} /> : null}
                           {bandEmptyMessage(group.band, group.pitchers.length) ? <BandEmptyState message={bandEmptyMessage(group.band, group.pitchers.length) ?? ""} /> : null}
-                          {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
-                          {group.pitchers.map((pitcher, index) => (
-                            <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} overflowHidden={!visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).includes(pitcher)} />
+                          {visibleBandPitchers(group.band.key, group.pitchers, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded }).map((pitcher, index) => (
+                            <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0} formRank={formRankByPitcherId.get(pitcher.pitcherId) ?? groupedDisplayRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leaderboard.leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={group.band.key === "onfire" && index === 0 ? "heat-fire" : group.band.key === "ice" && index === 0 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
                           ))}
+                          {bandExpandableControl(group.band.key, group.pitchers.length, params ?? {}, { fireExpanded, heatingExpanded, coolingExpanded, iceExpanded })}
                         </>
                       )}
                     </section>
@@ -988,6 +994,7 @@ export function FormLeaderboardRowSkeleton({ view = "trend", index = 0 }: { view
 function FormLeaderboardRow({
   pitcher,
   rank,
+  formRank,
   window,
   leagueMeanGS,
   followed,
@@ -999,6 +1006,7 @@ function FormLeaderboardRow({
 }: {
   pitcher: FormSummary;
   rank: number;
+  formRank?: number;
   window: number;
   leagueMeanGS: number;
   followed: boolean;
@@ -1034,6 +1042,9 @@ function FormLeaderboardRow({
       className={`heat-check-row scroll-mt-24 block rounded border border-l-4 bg-[#101014] px-4 transition hover:bg-white/[0.04] sm:grid sm:items-start sm:gap-x-3 sm:gap-y-2 sm:px-5 ${treatment.gridClass} ${treatment.padding} ${treatment.borderClass} ${unranked ? "opacity-70" : treatment.opacity} ${isPoleTier(pitcher) && fullWindow && !unranked ? "heat-glow-card" : ""}`}
       style={{ ...RANK_GUTTER_STYLE, ...(isPoleTier(pitcher) && fullWindow && !unranked ? heatGlowStyle(pitcher) : {}), borderLeftColor: bandColor } as React.CSSProperties}
       data-form-row
+      data-display-rank={!unranked ? rank : undefined}
+      data-form-rank={!seasonView && formRank ? formRank : undefined}
+      data-form-delta={pitcher.deltaForm}
       data-heat-team={pitcher.team}
       data-heat-overflow-hidden={overflowHidden ? "true" : undefined}
       data-heat-band={pitcher.tier}
@@ -1044,6 +1055,7 @@ function FormLeaderboardRow({
         left={(
           <div className={`grid min-w-0 ${HEAT_MOBILE_RANK_CLUSTER_GRID_CLASS} items-start gap-x-3`}>
             <div className="min-w-0" data-heat-mobile-rank>
+              {/* The big number always agrees with the ordering the user is looking at. */}
               <RankSlot rank={rank} unranked={unranked} seasonView={seasonView} className={treatment.rankClass} />
               <p className={`${RANK_GUTTER_WIDTH_CLASS} mt-1 text-right font-mono text-[10px] uppercase leading-tight tracking-[0.14em]`} style={{ color: bandColor }} data-rank-gutter-label>{rankDetailLabel}</p>
             </div>
@@ -1064,6 +1076,7 @@ function FormLeaderboardRow({
           <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={seasonView ? `${pitcher.name} season GS+ ${score}, ${pitcher.seasonStartCount} starts` : `${pitcher.name} Form ${score}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
             <p className="font-mono text-4xl font-black leading-none tabular-nums" style={{ color: bandColor }}>{score}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-500">{seasonView ? "GS+" : "FORM"}</span>
+            {!seasonView && formRank ? <span className="mt-1 block whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500" data-form-level-rank={formRank}>FORM RANK #{formRank}</span> : null}
             {seasonView ? <span className="mt-1 block whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-500">{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} compact /> : null}
           </HeatPitcherProfileLink>
         )}
@@ -1169,6 +1182,7 @@ function FormLeaderboardRow({
           <HeatPitcherProfileLink href={profileHref} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" ariaLabel={seasonView ? `${pitcher.name} season GS+ ${score}, ${pitcher.seasonStartCount} starts` : `${pitcher.name} Form ${score}${fullWindow ? `, ${deltaAriaLabel(pitcher)}` : ""}`}>
             <p className={`${treatment.scoreClass} font-mono font-black leading-none tabular-nums`} style={{ color: bandColor }}>{score}</p>
             <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">{seasonView ? "Season GS+" : "Form"}</span>
+            {!seasonView && formRank ? <span className="mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500" data-form-level-rank={formRank}>FORM RANK #{formRank}</span> : null}
             {seasonView ? <span className={`mt-1 block whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${unranked ? "rounded border border-white/10 px-1.5 py-1 text-zinc-400" : "text-zinc-500"}`}>{pitcher.seasonStartCount} GS</span> : fullWindow ? <FormDeltaLabel summary={pitcher} /> : null}
           </HeatPitcherProfileLink>
         </div>
@@ -1462,7 +1476,7 @@ function TrendBoardSections({
   return (
     <>
       {pitchers.map((pitcher, index) => (
-        <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={formRankByPitcherId.get(pitcher.pitcherId) ?? 0} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === pitchers.length - 1 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
+        <FormLeaderboardRow key={pitcher.pitcherId} pitcher={pitcher} rank={index + 1} formRank={formRankByPitcherId.get(pitcher.pitcherId) ?? index + 1} window={window} leagueMeanGS={leagueMeanGS} followed={followedIds.includes(pitcher.pitcherId)} poleId={index === 0 ? "heat-fire" : index === pitchers.length - 1 ? "heat-ice" : undefined} view="trend" startContext={startContext} />
       ))}
       <LimitedSampleSection pitchers={limitedPitchers} window={window} leagueMeanGS={leagueMeanGS} followedIds={followedIds} startContext={startContext} />
     </>
@@ -1677,6 +1691,10 @@ function sortBandPitchers(_bandKey: HeatBand["key"], pitchers: FormSummary[]) {
 
 function buildGlobalFormRankMap(pitchers: FormSummary[]) {
   return new Map(sortPitchersByGlobalFormRank(pitchers).map((pitcher, index) => [pitcher.pitcherId, index + 1]));
+}
+
+function buildDisplayRankMap(pitchers: FormSummary[]) {
+  return new Map(pitchers.map((pitcher, index) => [pitcher.pitcherId, index + 1]));
 }
 
 function buildGlobalSeasonRankMap(pitchers: FormSummary[]) {
