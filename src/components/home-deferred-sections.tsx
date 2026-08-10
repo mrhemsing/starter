@@ -28,7 +28,7 @@ import type { RankedHomeResponse } from "@/lib/data/home-ranked-service";
 import { formatStartLine } from "@/lib/format";
 import { resolveHomeLiveLeaderRow } from "@/lib/home-live-leader";
 import type { SlateProgressState } from "@/lib/slate-state";
-import type { FeaturedStartHighlight, FormHomeResponse, FormTier, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
+import type { FeaturedStartHighlight, FormHomeResponse, StartNarrativeNotables, StartSummary, TonightResponse } from "@/lib/types";
 
 const HOME_SCROLL_DEPTH_THRESHOLDS = [25, 50, 75, 100] as const;
 
@@ -557,7 +557,7 @@ function BestStartCard({ start, badge, highlight, veloByInning, compact = false 
     <article className={`group relative min-h-0 overflow-hidden rounded border border-white/10 bg-[#101014] transition hover:border-amber-300/40 ${compact ? "p-4" : "p-5"}`} data-recent-gem-card data-recent-gem-media-state={highlight ? "highlight" : "velo-chart"}>
       <a href={startHref(start, sourceParams("home"))} className="absolute inset-0 z-0" aria-label={`Open ${start.pitcher.name} start deep dive`} />
       <div className="relative z-10 grid min-w-0 grid-cols-[66px_minmax(0,1fr)_auto] items-start gap-3 pointer-events-none">
-        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" band={scoreBand(start.gameScorePlus)} decorative className="ml-1" />
+        <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="xl" accentColor={scoreColorBand(start.gameScorePlus)} decorative className="ml-1" />
         <div className="min-w-0">
           <p className="inline-flex max-w-full whitespace-nowrap rounded border border-amber-300/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-200">{badge}</p>
           <a href={pitcherHref(start.pitcher, sourceParams("home"))} className="pitcher-name pointer-events-auto mt-2 block font-serif text-3xl font-bold leading-tight text-zinc-50 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
@@ -611,7 +611,7 @@ function SeasonTopStartsPanel({ starts }: { starts: HomeSeasonTopStart[] }) {
 
 function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: number }) {
   const { start } = entry;
-  const color = scoreBandColor(start.gameScorePlus);
+  const color = scoreColorBand(start.gameScorePlus);
   const actionImage = entry.image?.source === "action" ? entry.image : null;
   const imageUrl = actionImage?.imageUrl ?? start.pitcher.headshotUrl;
   const imagePosition = "50% 4%";
@@ -707,15 +707,7 @@ function resolveHomeMustWatchDate(watch: TonightResponse | null | undefined, fal
   return watch?.games.find((game) => game.date)?.date ?? watch?.date ?? fallbackDate;
 }
 
-function scoreBand(score: number): FormTier {
-  if (score >= 69) return "onfire";
-  if (score >= 58) return "hot";
-  if (score >= 46) return "even";
-  if (score >= 30) return "cooling";
-  return "ice";
-}
-
-function scoreBandColor(score: number) {
+function scoreColorBand(score: number): string {
   if (score >= 69) return "var(--level-onfire)";
   if (score >= 58) return "var(--level-hot)";
   if (score >= 46) return "var(--level-even-text)";

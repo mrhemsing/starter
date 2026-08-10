@@ -38,7 +38,7 @@ import type { SlateProgressState } from "@/lib/slate-state";
 import { isRankedRegularStart } from "@/lib/start-classification";
 import { startMatchupLabel, startVenueLine } from "@/lib/start-matchup-label";
 import { rankStarts, validateRankedStartOrder } from "@/lib/start-ranking";
-import type { FeaturedStartHighlight, FormSummary, FormTier, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
+import type { FeaturedStartHighlight, FormSummary, StartApiGameScorePlusBreakdown, StartSummary } from "@/lib/types";
 
 type StartPageProps = {
   params: Promise<{
@@ -665,7 +665,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
   const contextLabel = rankedStartVenueLine(start);
   const gas = isGasStart(start, tier.label);
   const topReason = topInlineReason(start);
-  const thermalBand = thermalBandForForm(formSummary);
+  const thermalBand = formSummary?.status === "ok" && formSummary.windowCount >= FORM_CONFIG.minStartsToQualify ? formSummary.tier : null;
 
   return (
     <article
@@ -804,7 +804,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
 }
 
 function ShortStartCard({ start, formSummary }: { start: StartSummary; formSummary?: FormSummary }) {
-  const thermalBand = thermalBandForForm(formSummary);
+  const thermalBand = formSummary?.status === "ok" && formSummary.windowCount >= FORM_CONFIG.minStartsToQualify ? formSummary.tier : null;
   const badge = shortStartBadge(start);
   return (
     <article
@@ -1149,11 +1149,6 @@ function isQualifiedRankedStart(start: StartSummary) {
 
 function shortStartBadge(start: StartSummary): "OPENER" | "SHORT" {
   return inningsFromIP(start.line.inningsPitched) < 2 ? "OPENER" : "SHORT";
-}
-
-function thermalBandForForm(summary: FormSummary | undefined): FormTier | null {
-  if (!summary || summary.status !== "ok" || summary.windowCount < FORM_CONFIG.minStartsToQualify) return null;
-  return summary.tier;
 }
 
 function jsonLdForRankedStarts(date: string, starts: StartSummary[]) {

@@ -1,0 +1,11 @@
+AC 4 FormTier grep and sign sweep
+Generated: 2026-08-10
+
+fixture Misiorowski: FORM 61.2, delta -9.6 => FREEFALL / Slipping & freefall
+fixture Javier: FORM 44, delta +5.8 => SURGING / Surging & climbing
+fixture Waldron: FORM 46, delta +5.3 => SURGING / Surging & climbing
+grep FormTier-returning functions: 0 local matches
+sign sweep ok: 342 source/script files; homepage, heat check, pitcher, upcoming, streamers, social, and prompt surfaces covered
+
+Command:
+node scripts/check-form-tier-sign-sweep.mjs

@@ -496,9 +496,14 @@ async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeRe
     bands[pitcher.tier] += 1;
   }
 
-  const hot = [...qualified].sort(compareRollingFormLevelDesc).slice(0, HOME_CONFIG.railSize);
-  const hotIds = new Set(hot.map((pitcher) => pitcher.pitcherId));
-  const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareRollingFormLevelAsc).slice(0, HOME_CONFIG.railSize);
+  const hot = qualified
+    .filter((pitcher) => pitcher.tier === "onfire" || pitcher.tier === "hot")
+    .sort((a, b) => b.deltaForm - a.deltaForm || compareRollingFormLevelDesc(a, b))
+    .slice(0, HOME_CONFIG.railSize);
+  const cold = qualified
+    .filter((pitcher) => pitcher.tier === "ice" || pitcher.tier === "cooling")
+    .sort((a, b) => a.deltaForm - b.deltaForm || compareRollingFormLevelAsc(a, b))
+    .slice(0, HOME_CONFIG.railSize);
   const nextStarts = await getNextStartMap([...hot, ...cold].map((pitcher) => pitcher.pitcherId));
 
   return {

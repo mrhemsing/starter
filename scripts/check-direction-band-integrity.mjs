@@ -12,10 +12,11 @@ const heatHero = await readFile("src/components/heat-check-hero.tsx", "utf8");
 const heatLoadingShell = await readFile("src/components/heat-check-loading-shell.tsx", "utf8");
 const tonightsMustWatch = await readFile("src/components/tonights-must-watch.tsx", "utf8");
 const watchlistPage = await readFile("src/app/watchlist/page.tsx", "utf8");
+const homeDeferredSections = await readFile("src/components/home-deferred-sections.tsx", "utf8");
 
 const directionThresholds = {
   3: { heating: 0.75, cooling: -0.75, onFire: 8, iceCold: -8 },
-  5: { heating: 0.75, cooling: -0.75, onFire: 5.5, iceCold: -8 },
+  5: { heating: 0.75, cooling: -0.75, onFire: 5, iceCold: -8 },
   10: { heating: 0.75, cooling: -0.75, onFire: 3.5, iceCold: -3.5 },
 };
 
@@ -37,8 +38,18 @@ for (const [form, delta, window, expected] of [
   assert(directionTier(delta, window) === expected, `form ${form}, delta ${delta}, window ${window} must be ${expected}`);
 }
 assert(directionTier(4, 5) === "hot" && directionTier(4, 10) === "onfire", "window thresholds must select different tiers");
-assert(directionTier(0.75, 5) === "hot" && directionTier(5.5, 5) === "onfire", "positive threshold edges must be inclusive");
+assert(directionTier(0.75, 5) === "hot" && directionTier(5, 5) === "onfire", "positive threshold edges must be inclusive");
 assert(directionTier(-0.75, 5) === "cooling" && directionTier(-8, 5) === "ice", "negative threshold edges must be inclusive");
+
+for (const fixture of [
+  { name: "Jacob Misiorowski", form: 61.2, delta: -9.6, rail: "cold", tier: "ice", label: "Freefall" },
+  { name: "Cristian Javier", form: 44, delta: 5.8, rail: "hot", tier: "onfire", label: "Surging" },
+  { name: "Matt Waldron", form: 46, delta: 5.3, rail: "hot", tier: "onfire", label: "Surging" },
+]) {
+  const tier = directionTier(fixture.delta, 5);
+  const rail = fixture.delta > 0 ? "hot" : fixture.delta < 0 ? "cold" : "steady";
+  assert(tier === fixture.tier && rail === fixture.rail, `${fixture.name} form ${fixture.form}, delta ${fixture.delta} must render ${fixture.label} on the ${fixture.rail} rail`);
+}
 
 const threshold = 1.0;
 function expectedBand(delta) {
@@ -48,7 +59,7 @@ function expectedBand(delta) {
   return { marker, color, direction };
 }
 
-const fixtureDeltas = [-12, -7.2, -1, -0.9, -0, 0, 0.9, 1, 5.5, 13];
+const fixtureDeltas = [-12, -7.2, -1, -0.9, -0, 0, 0.9, 1, 5, 13];
 for (let index = 0; index < 1000; index += 1) {
   const delta = index < fixtureDeltas.length ? fixtureDeltas[index] : Number(((index * 37) % 501 / 10 - 25).toFixed(1));
   const band = expectedBand(delta);
@@ -129,6 +140,20 @@ assert(
     !formPage.includes('const color = direction === "up" ? "#FF7A3D" : "#8FCBFF";') &&
     !formPage.includes('motion: direction === "up" ? "rising" : "falling"'),
   "Heat Check heroes, movers, and counts must derive direction from signed delta only",
+);
+
+assert(
+  formService.includes('.filter((pitcher) => pitcher.tier === "onfire" || pitcher.tier === "hot")') &&
+    formService.includes('.filter((pitcher) => pitcher.tier === "ice" || pitcher.tier === "cooling")') &&
+    formService.includes("b.deltaForm - a.deltaForm") &&
+    formService.includes("a.deltaForm - b.deltaForm") &&
+    heatHero.includes("directionBandOf(pitcher.deltaForm, window)") &&
+    !heatHero.includes("levelBandFor(") &&
+    homeDeferredSections.includes("accentColor={scoreColorBand(start.gameScorePlus)}") &&
+    homeDeferredSections.includes("function scoreColorBand(score: number): string") &&
+    !homeDeferredSections.includes("function scoreBand(") &&
+    !homeDeferredSections.includes("FormTier"),
+  "homepage movers must use delta tiers while single-start GS+ decoration remains color-only",
 );
 
 assert(

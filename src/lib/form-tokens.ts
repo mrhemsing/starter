@@ -15,11 +15,11 @@ export const FORM_CONFIG = {
   ipFloor: 2.0,
   heatingDelta: 0.75,
   coolingDelta: -0.75,
-  onFireDelta: 5.5,
+  onFireDelta: 5,
   iceColdDelta: -8,
   directionBandThresholds: {
     3: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 8, iceColdDelta: -8 },
-    5: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 5.5, iceColdDelta: -8 },
+    5: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 5, iceColdDelta: -8 },
     10: { heatingDelta: 0.75, coolingDelta: -0.75, onFireDelta: 3.5, iceColdDelta: -3.5 },
   },
   // Level bands are visual intensity only. Direction words must come from

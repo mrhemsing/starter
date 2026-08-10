@@ -94,8 +94,10 @@ assert(
 );
 
 assert(
-  formService.includes("const hot = [...qualified].sort(compareRollingFormLevelDesc).slice(0, HOME_CONFIG.railSize);") &&
-    formService.includes("const cold = [...qualified].filter((pitcher) => !hotIds.has(pitcher.pitcherId)).sort(compareRollingFormLevelAsc).slice(0, HOME_CONFIG.railSize);") &&
+  formService.includes('.filter((pitcher) => pitcher.tier === "onfire" || pitcher.tier === "hot")') &&
+    formService.includes('.filter((pitcher) => pitcher.tier === "ice" || pitcher.tier === "cooling")') &&
+    formService.includes("b.deltaForm - a.deltaForm") &&
+    formService.includes("a.deltaForm - b.deltaForm") &&
     formService.includes("const tier = directionBandOf(deltaForm, window).key;") &&
     formService.includes("const levelTier = formLevelBandOf(rgs, window).key;") &&
     formService.includes("function compareRollingFormLevelDesc") &&

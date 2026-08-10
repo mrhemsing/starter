@@ -29,7 +29,7 @@ assert.equal(labels.get("hot"), "Climbing");
 assert.equal(labels.get("even"), "Steady");
 
 function bandForLastFive(delta) {
-  if (delta >= 5.5) return "onfire";
+  if (delta >= 5) return "onfire";
   if (delta >= 0.75) return "hot";
   if (delta <= -8) return "ice";
   if (delta <= -0.75) return "cooling";

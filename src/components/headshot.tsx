@@ -12,6 +12,7 @@ type HeadshotProps = {
   team?: string | null;
   size?: HeadshotSize;
   band?: FormTier | null;
+  accentColor?: string;
   sampleSufficient?: boolean;
   decorative?: boolean;
   alt?: string;
@@ -38,6 +39,7 @@ export function Headshot({
   team,
   size = "md",
   band = null,
+  accentColor,
   sampleSufficient = true,
   decorative = false,
   alt,
@@ -58,7 +60,7 @@ export function Headshot({
     <span
       className={`headshot thermal-headshot ${thermalHeadshotClass(resolvedBand)} ${sizeClasses[size]} relative grid shrink-0 place-items-center overflow-hidden rounded-xl border bg-[#15181C] ${className}`}
       style={{
-        borderColor: shouldSuppressThermalBackground ? "transparent" : thermalBorderColor(resolvedBand),
+        borderColor: shouldSuppressThermalBackground ? "transparent" : accentColor ?? thermalBorderColor(resolvedBand),
         background: shouldSuppressThermalBackground ? "transparent" : thermalBackground(resolvedBand),
       }}
       data-form-band={resolvedBand ?? "neutral"}

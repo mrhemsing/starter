@@ -5,7 +5,7 @@ import { FormSparkline } from "@/components/form-visuals";
 import { Headshot } from "@/components/headshot";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
-import { HEAT_BANDS, HOME_CONFIG, formDeltaBand, formWindowLabel } from "@/lib/form-tokens";
+import { HEAT_BANDS, HOME_CONFIG, directionBandOf, formDeltaBand, formWindowLabel } from "@/lib/form-tokens";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
@@ -93,7 +93,7 @@ function HeatRail({ title, tone, pitchers, window, leagueMeanGS }: { title: stri
   const railMarker = tone === "hot" ? "▲" : "▼";
   const railIntensity = Math.max(
     0,
-    ...pitchers.map((pitcher) => heatIntensity(pitcher.heatIndex ?? 0, levelBandFor(pitcher)).value),
+    ...pitchers.map((pitcher) => heatIntensity(pitcher.heatIndex ?? 0, directionBandOf(pitcher.deltaForm, window)).value),
   );
   const railStyle = tone === "hot"
     ? ({ "--rail-burn": railIntensity } as CSSProperties)
@@ -113,7 +113,7 @@ function HeatRail({ title, tone, pitchers, window, leagueMeanGS }: { title: stri
 }
 
 function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; window: number; leagueMeanGS: number }) {
-  const band = levelBandFor(pitcher);
+  const band = directionBandOf(pitcher.deltaForm, window);
   const nextStart = nextStartDetails(pitcher);
   const tone = heatTone(band);
   const deltaBand = formDeltaBand(pitcher.deltaForm);
@@ -324,10 +324,6 @@ function heatTone(band: HeatBand) {
     fillTo: "#888780",
     scoreColor: "#f3f3f5",
   };
-}
-
-function levelBandFor(pitcher: FormSummary) {
-  return HEAT_BANDS.find((band) => band.key === (pitcher.levelTier ?? pitcher.tier)) ?? HEAT_BANDS[HEAT_BANDS.length - 1];
 }
 
 function HeatMeter({ heatIndex, band, deltaForm }: { heatIndex: number; band: HeatBand; deltaForm: number }) {
