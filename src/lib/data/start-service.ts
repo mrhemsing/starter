@@ -113,17 +113,6 @@ function daysBetween(olderDate: string, newerDate: string) {
   return Math.round((new Date(`${newerDate}T00:00:00.000Z`).getTime() - new Date(`${olderDate}T00:00:00.000Z`).getTime()) / ONE_DAY_MS);
 }
 
-function seasonHalfMonthRanges(season: string) {
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = String(index + 1).padStart(2, "0");
-    const monthEnd = toIsoDate(new Date(Date.UTC(Number(season), index + 1, 0)));
-    return [
-      { startDate: `${season}-${month}-01`, endDate: `${season}-${month}-15` },
-      { startDate: `${season}-${month}-16`, endDate: monthEnd },
-    ];
-  }).flat();
-}
-
 function round1(value: number) {
   return Math.round(value * 10) / 10;
 }
@@ -2048,9 +2037,9 @@ const getCachedArchivedSlateStarts = unstable_cache(
   { revalidate: ARCHIVED_SLATE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
-const getCachedArchivedSeasonRangeStartSummaries = unstable_cache(
-  async (startDate: string, endDate: string) => buildArchivedSeasonRangeStartSummaries(startDate, endDate),
-  ["archived-season-range-start-summaries", "v1"],
+const getCachedArchivedSeasonStartSummaries = unstable_cache(
+  async (season: string) => buildArchivedSeasonRangeStartSummaries(`${season}-01-01`, `${season}-12-31`),
+  ["archived-season-start-summaries", "v2-single-range"],
   { revalidate: ARCHIVED_SEASON_RANGE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, HEAT_CHECK_CACHE_TAG] },
 );
 
@@ -2072,9 +2061,7 @@ function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], pers
 }
 
 export async function getArchivedSeasonStartSummaries(season = getHomeSlateDate().slice(0, 4)): Promise<StartSummary[]> {
-  const ranges = seasonHalfMonthRanges(season);
-  const rangeStarts = await Promise.all(ranges.map((range) => getCachedArchivedSeasonRangeStartSummaries(range.startDate, range.endDate)));
-  return rangeStarts.flat().sort((a, b) => a.date.localeCompare(b.date) || a.rank - b.rank);
+  return getCachedArchivedSeasonStartSummaries(season);
 }
 
 async function buildArchivedSeasonRangeStartSummaries(startDate: string, endDate: string): Promise<StartSummary[]> {

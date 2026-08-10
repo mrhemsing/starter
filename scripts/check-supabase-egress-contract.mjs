@@ -37,8 +37,14 @@ const [
 assert(
   warmLiveStartsCron.includes("const cheapState = await readCheapSlateState(date);") &&
     warmLiveStartsCron.indexOf('prewarmMode: "debounced"') < warmLiveStartsCron.indexOf("const result = await runWarmLiveStartsJob") &&
-    warmLiveStartsCron.includes("shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, observedSignature)") &&
+    warmLiveStartsCron.includes("shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, finalizedObservation?.finalizedGameSignature)") &&
     warmLiveStartsCron.includes("return liveGames === 0 && finalizedGameSignature === observedSignature") &&
+    warmLiveStartsCron.includes("const finalizedObservationKey = `warm-live-starts:finalized:${date}`") &&
+    warmLiveStartsCron.includes("if (!finalizedObservation?.finalizedGameSignature)") &&
+    warmLiveStartsCron.includes("finalizedGameObservedAt: new Date().toISOString()") &&
+    warmLiveStartsCron.indexOf("if (cheapState.liveGames === 0)") < warmLiveStartsCron.indexOf("const deploymentStateKey") &&
+    !warmLiveStartsCron.includes("observedFinalizedGameSignatures") &&
+    warmLiveStartsCron.includes("buildFinalizedGameSignature(date, finalizedGameIds)") &&
     warmLiveStartsCron.includes("supabaseReads: 0") &&
     !warmLiveStartsCron.includes("logRecentSettledSlateGaps") &&
     warmLiveStartsCron.includes("RECONCILIATION_PREWARM_MIN_INTERVAL_MS") &&
@@ -57,16 +63,23 @@ assert(
   "minute reconciliation must debounce before heavy work, warm only on live/new-final activity, and leave count-only integrity checks to hourly slate-sync",
 );
 
-let supabaseReads = 0;
-const storedFinalizedSignature = "2026-08-09:823500|823501";
+let durableState = null;
+let heavySupabaseReads = 0;
 for (let invocation = 0; invocation < 10; invocation += 1) {
+  const freshModuleState = new Map();
   const liveGames = 0;
   const currentFinalizedSignature = "2026-08-09:823500|823501";
-  const debounced = liveGames === 0 && currentFinalizedSignature === storedFinalizedSignature;
-  if (!debounced) supabaseReads += 1;
+  let debounced = liveGames === 0 && currentFinalizedSignature === durableState?.finalizedGameSignature;
+  if (!debounced && liveGames === 0) {
+    durableState = { finalizedGameSignature: currentFinalizedSignature, finalizedGameObservedAt: new Date().toISOString() };
+    debounced = true;
+  }
+  if (!debounced) heavySupabaseReads += 1;
+  assert(freshModuleState.size === 0, "cold-start fixture must not share process-local observations");
   assert(debounced, `quiet final-slate invocation ${invocation + 1} must debounce`);
 }
-assert(supabaseReads === 0, "ten quiet final-slate invocations must trigger zero Supabase reads after stored state is warm");
+assert(durableState?.finalizedGameSignature === "2026-08-09:823500|823501", "first cold invocation must durably pin the finalized signature");
+assert(heavySupabaseReads === 0, "ten cold quiet invocations must trigger zero heavy Supabase reads");
 
 assert(
   runtimeStateStore.includes("export async function readRuntimeStates") &&
@@ -108,12 +121,13 @@ assert(
 
 assert(
   startService.includes("const getCachedArchivedSlateStarts = unstable_cache(") &&
-    startService.includes("const getCachedArchivedSeasonRangeStartSummaries = unstable_cache(") &&
-    startService.includes("const ranges = seasonHalfMonthRanges(season);") &&
-    startService.includes("Promise.all(ranges.map((range) => getCachedArchivedSeasonRangeStartSummaries(range.startDate, range.endDate)))") &&
+    startService.includes("const getCachedArchivedSeasonStartSummaries = unstable_cache(") &&
+    startService.includes("buildArchivedSeasonRangeStartSummaries(`${season}-01-01`, `${season}-12-31`)") &&
+    startService.includes("return getCachedArchivedSeasonStartSummaries(season)") &&
     startService.includes("readSupabaseArchivedCompletedStartsRange(startDate, endDate)") &&
-    startService.includes("function seasonHalfMonthRanges(season: string)"),
-  "completed-starts archive working sets must be read once per cached slate/range pass and reused",
+    !startService.includes("seasonHalfMonthRanges") &&
+    !startService.includes("Promise.all(ranges.map"),
+  "completed-starts archive season working set must use one cached range query",
 );
 
 assert(

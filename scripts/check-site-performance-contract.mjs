@@ -200,13 +200,12 @@ assert(
   startService.includes("const ARCHIVED_SLATE_REVALIDATE_SECONDS = 15 * 60;") &&
     startService.includes("const ARCHIVED_SEASON_RANGE_REVALIDATE_SECONDS = 15 * 60;") &&
     startService.includes("const getCachedArchivedSlateStarts = unstable_cache(") &&
-    startService.includes("const getCachedArchivedSeasonRangeStartSummaries = unstable_cache(") &&
+    startService.includes("const getCachedArchivedSeasonStartSummaries = unstable_cache(") &&
     startService.includes("tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, HEAT_CHECK_CACHE_TAG]") &&
-    startService.includes("const ranges = seasonHalfMonthRanges(season);") &&
-    startService.includes("Promise.all(ranges.map((range) => getCachedArchivedSeasonRangeStartSummaries(range.startDate, range.endDate)))") &&
+    startService.includes("return getCachedArchivedSeasonStartSummaries(season)") &&
     startService.includes("readSupabaseArchivedCompletedStartsRange(startDate, endDate)") &&
-    startService.includes("function seasonHalfMonthRanges(season: string)"),
-  "Archive-derived slate and half-month season summaries must be cached to absorb crawler bursts without oversized PostgREST cache entries",
+    !startService.includes("seasonHalfMonthRanges"),
+  "Archive-derived slate and single-range season summaries must be cached to absorb crawler bursts without repeated PostgREST reads",
 );
 
 const seededMissingYesterdayArchiveGap = {

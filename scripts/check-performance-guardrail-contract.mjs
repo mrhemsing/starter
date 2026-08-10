@@ -118,7 +118,7 @@ assert(
     files["src/lib/data/tonight-service.ts"].includes("const getCachedTonightMustWatch = unstable_cache(") &&
     files["src/lib/data/ranked-starts-page-service.ts"].includes("unstable_cache(") &&
     files["src/lib/data/start-service.ts"].includes("getCachedArchivedSlateStarts") &&
-    files["src/lib/data/start-service.ts"].includes("getCachedArchivedSeasonRangeStartSummaries"),
+    files["src/lib/data/start-service.ts"].includes("getCachedArchivedSeasonStartSummaries"),
   "Form, Upcoming, Ranked Starts, and archive reads must remain cached/stored instead of recomputed per visit",
 );
 

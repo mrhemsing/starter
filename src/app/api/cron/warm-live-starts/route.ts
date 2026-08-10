@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 const RECONCILIATION_PREWARM_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const INCREMENTAL_PREWARM_MIN_INTERVAL_MS = 5 * 60 * 1000;
-const observedFinalizedGameSignatures = new Map<string, string>();
 
 export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
@@ -19,6 +18,23 @@ export async function GET(request: Request) {
 
   const date = new URL(request.url).searchParams.get("date") ?? getHomeSlateDate();
   const cheapState = await readCheapSlateState(date);
+  const finalizedObservationKey = `warm-live-starts:finalized:${date}`;
+  const finalizedObservation = await readCachedRuntimeState<{
+    finalizedGameSignature?: string;
+    finalizedGameObservedAt?: string;
+  }>(finalizedObservationKey, 5 * 60);
+  if (shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, finalizedObservation?.finalizedGameSignature)) {
+    return NextResponse.json({ ok: true, date, liveGames: 0, finalizedGameSignature: cheapState.finalizedGameSignature, prewarmMode: "debounced", supabaseReads: 0 });
+  }
+  if (cheapState.liveGames === 0) {
+    await writeRuntimeState(finalizedObservationKey, {
+      finalizedGameSignature: cheapState.finalizedGameSignature,
+      finalizedGameObservedAt: new Date().toISOString(),
+    });
+    if (!finalizedObservation?.finalizedGameSignature) {
+      return NextResponse.json({ ok: true, date, liveGames: 0, finalizedGameSignature: cheapState.finalizedGameSignature, prewarmMode: "debounced", supabaseReads: 0 });
+    }
+  }
   const deploymentStateKey = "production-prewarm:last-deployment";
   const deploymentState = await readCachedRuntimeState<{
     deployment?: string;
@@ -27,13 +43,7 @@ export async function GET(request: Request) {
     fullWarmedAt?: string;
     incrementalWarmedAt?: string;
   }>(deploymentStateKey, 5 * 60);
-  const observedSignature = observedFinalizedGameSignatures.get(date) ?? deploymentState?.finalizedGameSignature;
-  if (shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, observedSignature)) {
-    observedFinalizedGameSignatures.set(date, cheapState.finalizedGameSignature);
-    return NextResponse.json({ ok: true, date, liveGames: 0, finalizedGameSignature: cheapState.finalizedGameSignature, prewarmMode: "debounced", supabaseReads: 0 });
-  }
   const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });
-  observedFinalizedGameSignatures.set(date, cheapState.finalizedGameSignature);
   if (result.reason === "no-live-or-final-games") {
     await writeRuntimeState(deploymentStateKey, {
       ...deploymentState,
@@ -82,7 +92,11 @@ export async function readCheapSlateState(date: string) {
   const finalizedGameIds = schedule.games
     .filter((game) => isFinalStatus(game.status, game.detailedState))
     .map((game) => String(game.gamePk));
-  return { liveGames, finalizedGameSignature: `${date}:${finalizedStartSignature(finalizedGameIds)}` };
+  return { liveGames, finalizedGameSignature: buildFinalizedGameSignature(date, finalizedGameIds) };
+}
+
+export function buildFinalizedGameSignature(date: string, finalizedGameIds: Array<string | number>) {
+  return `${date}:${finalizedStartSignature(finalizedGameIds.map(String))}`;
 }
 
 function isLiveStatus(status: string, detail: string) {
