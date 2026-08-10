@@ -1,10 +1,12 @@
-import { addDays, getHomeSlateDate, getRankedSlateCompletionState } from "@/lib/data/start-service";
+import { readCanonicalSlateCounts } from "@/lib/data/canonical-start-store";
+import { fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
+import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
 
-type CompletionState = Awaited<ReturnType<typeof getRankedSlateCompletionState>>;
+type CompletionState = { date: string; totalGames: number; completedStarts: number };
 
 export async function detectRecentSettledSlateGaps(
   today = getHomeSlateDate(),
-  readState: (date: string, today: string) => Promise<CompletionState> = getRankedSlateCompletionState,
+  readState: (date: string, today: string) => Promise<CompletionState> = readCountOnlySettledState,
 ) {
   const dates = Array.from({ length: 7 }, (_, index) => addDays(today, -(index + 1)));
   const states = await Promise.all(dates.map((date) => readState(date, today)));
@@ -16,6 +18,18 @@ export async function detectRecentSettledSlateGaps(
       scheduledGames: state.totalGames,
       storedStarts: state.completedStarts,
     }));
+}
+
+async function readCountOnlySettledState(date: string): Promise<CompletionState> {
+  const [schedule, canonicalState] = await Promise.all([
+    fetchMlbSchedule(date, { fetchLive: true }),
+    readCanonicalSlateCounts(date),
+  ]);
+  return {
+    date,
+    totalGames: schedule.games.length,
+    completedStarts: canonicalState?.finalStarts ?? 0,
+  };
 }
 
 export async function logRecentSettledSlateGaps() {

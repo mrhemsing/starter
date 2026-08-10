@@ -14,6 +14,7 @@ const archiveStatusRoute = await readFile("src/app/api/archive/status/route.ts",
 const supabaseSchema = await readFile("docs/supabase-mlb-archive.sql", "utf8");
 const warmLiveStartsCron = await readFile("src/app/api/cron/warm-live-starts/route.ts", "utf8");
 const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts", "utf8");
+const slateSyncCron = await readFile("src/app/api/cron/slate-sync/route.ts", "utf8");
 const runtimeStateStore = await readFile("src/lib/data/runtime-state-store.ts", "utf8");
 const formService = await readFile("src/lib/data/form-service.ts", "utf8");
 
@@ -29,6 +30,14 @@ assert(
     canonicalRecord.includes('event: "created" | "live-updated" | "final-reconciled" | "final-correction" | "context-freeze-sweep";') &&
     canonicalRecord.includes("export type CanonicalStartLineDiff = {"),
   "canonical start record must carry line, score, source, frozen state, and audit fields",
+);
+
+assert(
+  slateSyncCron.includes('runWarmLiveStartsJob({ date: slateState.date, revalidatePath, revalidateTag })') &&
+    slateSyncCron.includes("official post-final stat corrections reach frozen canonical rows") &&
+    warmLiveStartsJob.includes('getDailySlate({ window: "today", date, persistCanonical: true })') &&
+    canonicalStore.includes('event: "final-correction"'),
+  "hourly slate-sync must reconcile unchanged finalized-game sets through the canonical final-correction path",
 );
 
 assert(
@@ -187,7 +196,7 @@ assert(
 assert(
     warmLiveStartsCron.includes("export const maxDuration = 60;") &&
     warmLiveStartsCron.includes('import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";') &&
-    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
+    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? getHomeSlateDate();') &&
     warmLiveStartsCron.includes("const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });") &&
     warmLiveStartsJob.includes('import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";') &&
     warmLiveStartsCron.includes('if (result.reason === "no-live-or-final-games")') &&
@@ -242,7 +251,7 @@ assert(
     startService.includes("return canonicalizeStartSummaries(demoSlateStarts);") &&
     startService.includes("if (archivedStarts.length > 0 && shouldUseArchivedSlateForDate(params.date)) return archivedStarts;") &&
     startService.includes("persistCanonical?: boolean;") &&
-    startService.includes("return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);") &&
+    startService.includes("return canonicalizeDailySlateStarts(params.date, scheduledStarts.length > 0 || !allowDemoFallback ? scheduledStarts : demoSlateStarts, params.persistCanonical === true);") &&
     startService.includes("const slateStarts = rankStarts(await readCanonicalizedStartSummaries(params.date, starts.length > 0 ? starts : demoSlateStarts));") &&
     startService.includes("function canonicalizeDailySlateStarts(date: string, starts: StartSummary[], persistCanonical: boolean)") &&
     startService.includes("return rankStarts(await readCanonicalizedStartSummaries(date, starts));") &&

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prewarmProductionPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
 import { getSupabaseArchiveStatus } from "@/lib/data/supabase-archive";
+import { logRecentSettledSlateGaps } from "@/lib/data/settled-slate-integrity";
 import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
+import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 type SlateProgress = {
   date: string;
@@ -56,8 +59,12 @@ export async function GET(request: Request) {
     const archiveStatus = await getSupabaseArchiveStatus(slateState.date.slice(0, 4), {
       expectedLastCompletedDate: addDays(getHomeSlateDate(), -1),
     });
+    const settledSlateGaps = await logRecentSettledSlateGaps();
+    // Hourly reconciliation intentionally ignores the minute cron's finalized-game
+    // debounce so official post-final stat corrections reach frozen canonical rows.
+    const reconciliation = await runWarmLiveStartsJob({ date: slateState.date, revalidatePath, revalidateTag });
     const prewarm = await prewarmProductionPaths(slatePrewarmPaths(slateState.date));
-    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState), archiveStatus, prewarm });
+    return NextResponse.json({ ok: true, date: slateState.date, status: compactProgress(slateState), archiveStatus, settledSlateGaps, reconciliation, prewarm });
   } catch (error) {
     console.error("[slate-sync] probe failed", {
       date: dateOverride,

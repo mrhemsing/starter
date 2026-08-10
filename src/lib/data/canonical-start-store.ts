@@ -189,6 +189,27 @@ export async function readCanonicalSlateState(date: string): Promise<CanonicalSl
   }
 }
 
+export async function readCanonicalSlateCounts(date: string): Promise<CanonicalSlateStateRow["counts"] | null> {
+  assertCanonicalStartStoreDate(date);
+  if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return null;
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) return null;
+
+  const url = new URL(`/rest/v1/${CANONICAL_SLATE_STATES_TABLE}`, baseUrl);
+  url.searchParams.set("select", "date,counts");
+  url.searchParams.set("date", `eq.${date}`);
+  url.searchParams.set("limit", "1");
+  const response = await timedCanonicalStoreFetch("canonical-slate-state.counts", url, {
+    headers: canonicalStoreSupabaseHeaders(serviceKey),
+    next: { revalidate: CANONICAL_STORE_READ_REVALIDATE_SECONDS },
+  }, CANONICAL_STORE_READ_TIMEOUT_MS);
+  if (!response.ok) return null;
+  const rows = await response.json() as Array<Pick<CanonicalSlateStateRow, "date" | "counts">>;
+  recordCanonicalStoreRead(rows.length);
+  return rows[0]?.counts ?? null;
+}
+
 export async function writeCanonicalSlateStateSnapshot(snapshot: Omit<CanonicalSlateStateSnapshot, "updatedAt"> & { updatedAt?: string }): Promise<boolean> {
   assertCanonicalStartStoreDate(snapshot.date);
   if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return false;

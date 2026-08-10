@@ -1,48 +1,61 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { logRecentSettledSlateGaps } from "@/lib/data/settled-slate-integrity";
+import { fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { finalizedStartSignature, prewarmProductionPaths, reconciliationPrewarmPlan, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readCachedRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { getHomeSlateDate } from "@/lib/data/start-service";
 import { runWarmLiveStartsJob } from "@/lib/data/warm-live-starts-job";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 const RECONCILIATION_PREWARM_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const INCREMENTAL_PREWARM_MIN_INTERVAL_MS = 5 * 60 * 1000;
+const observedFinalizedGameSignatures = new Map<string, string>();
 
 export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const date = new URL(request.url).searchParams.get("date") ?? undefined;
+  const date = new URL(request.url).searchParams.get("date") ?? getHomeSlateDate();
+  const cheapState = await readCheapSlateState(date);
+  const deploymentStateKey = "production-prewarm:last-deployment";
+  const deploymentState = await readCachedRuntimeState<{
+    deployment?: string;
+    finalizedSignature?: string;
+    finalizedGameSignature?: string;
+    fullWarmedAt?: string;
+    incrementalWarmedAt?: string;
+  }>(deploymentStateKey, 5 * 60);
+  const observedSignature = observedFinalizedGameSignatures.get(date) ?? deploymentState?.finalizedGameSignature;
+  if (shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, observedSignature)) {
+    observedFinalizedGameSignatures.set(date, cheapState.finalizedGameSignature);
+    return NextResponse.json({ ok: true, date, liveGames: 0, finalizedGameSignature: cheapState.finalizedGameSignature, prewarmMode: "debounced", supabaseReads: 0 });
+  }
   const result = await runWarmLiveStartsJob({ date, revalidatePath, revalidateTag });
+  observedFinalizedGameSignatures.set(date, cheapState.finalizedGameSignature);
   if (result.reason === "no-live-or-final-games") {
+    await writeRuntimeState(deploymentStateKey, {
+      ...deploymentState,
+      finalizedGameSignature: cheapState.finalizedGameSignature,
+    });
     return NextResponse.json({ ...result, tailSkipped: true });
   }
-  const settledSlateGaps = await logRecentSettledSlateGaps();
   const deployment = process.env.VERCEL_DEPLOYMENT_ID
     ?? process.env.VERCEL_GIT_COMMIT_SHA
     ?? process.env.VERCEL_URL
     ?? "local";
-  const deploymentStateKey = "production-prewarm:last-deployment";
-  const deploymentState = await readRuntimeState<{
-    deployment?: string;
-    finalizedSignature?: string;
-    fullWarmedAt?: string;
-    incrementalWarmedAt?: string;
-  }>(deploymentStateKey);
   const now = Date.now();
   const finalizedSignature = finalizedStartSignature(result.finalizedStartIds ?? []);
   const needsPostDeployWarm = deploymentState?.deployment !== deployment;
-  const hasNewFinalizedStarts = deploymentState?.finalizedSignature !== finalizedSignature;
+  const hasNewFinalizedStarts = deploymentState?.finalizedGameSignature !== cheapState.finalizedGameSignature;
   const fullIntervalElapsed = intervalElapsed(deploymentState?.fullWarmedAt, now, RECONCILIATION_PREWARM_MIN_INTERVAL_MS);
   const incrementalIntervalElapsed = intervalElapsed(deploymentState?.incrementalWarmedAt, now, INCREMENTAL_PREWARM_MIN_INTERVAL_MS);
   const shouldRunFullPrewarm = needsPostDeployWarm || (hasNewFinalizedStarts && fullIntervalElapsed);
   const reconciliationPlan = shouldRunFullPrewarm ? await reconciliationPrewarmPlan(result.date) : null;
   const paths = shouldRunFullPrewarm
     ? [...(reconciliationPlan?.paths ?? []), ...slatePrewarmPaths(result.date)]
-    : incrementalIntervalElapsed
+    : incrementalIntervalElapsed && (cheapState.liveGames > 0 || hasNewFinalizedStarts)
       ? ["/", `/starts/${result.date}`, ...slatePrewarmPaths(result.date)]
       : [];
   const prewarm = await prewarmProductionPaths(paths);
@@ -51,11 +64,33 @@ export async function GET(request: Request) {
       ...deploymentState,
       deployment: shouldRunFullPrewarm ? deployment : deploymentState?.deployment,
       finalizedSignature: shouldRunFullPrewarm ? finalizedSignature : deploymentState?.finalizedSignature,
+      finalizedGameSignature: cheapState.finalizedGameSignature,
       fullWarmedAt: shouldRunFullPrewarm ? new Date(now).toISOString() : deploymentState?.fullWarmedAt,
       incrementalWarmedAt: new Date(now).toISOString(),
     });
   }
-  return NextResponse.json({ ...result, settledSlateGaps, prewarm, prewarmMode: shouldRunFullPrewarm ? "full" : paths.length > 0 ? "incremental" : "debounced" });
+  return NextResponse.json({ ...result, prewarm, prewarmMode: shouldRunFullPrewarm ? "full" : paths.length > 0 ? "incremental" : "debounced" });
+}
+
+export function shouldDebounceWarmLiveStarts(liveGames: number, finalizedGameSignature: string, observedSignature?: string) {
+  return liveGames === 0 && finalizedGameSignature === observedSignature;
+}
+
+export async function readCheapSlateState(date: string) {
+  const schedule = await fetchMlbSchedule(date, { fetchLive: true });
+  const liveGames = schedule.games.filter((game) => isLiveStatus(game.status, game.detailedState)).length;
+  const finalizedGameIds = schedule.games
+    .filter((game) => isFinalStatus(game.status, game.detailedState))
+    .map((game) => String(game.gamePk));
+  return { liveGames, finalizedGameSignature: `${date}:${finalizedStartSignature(finalizedGameIds)}` };
+}
+
+function isLiveStatus(status: string, detail: string) {
+  return /live|in progress|warmup|delayed/i.test(`${status} ${detail}`);
+}
+
+function isFinalStatus(status: string, detail: string) {
+  return /final|completed early/i.test(`${status} ${detail}`);
 }
 
 function intervalElapsed(previous: string | undefined, now: number, minimumMs: number) {

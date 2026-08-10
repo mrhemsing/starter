@@ -18,6 +18,8 @@ const [
   warmLiveStartsCron,
   productionPrewarmer,
   slateSyncCron,
+  settledSlateIntegrity,
+  canonicalStartStore,
 ] = await Promise.all([
   read("src/lib/data/runtime-state-store.ts"),
   read("src/lib/data/mlb-stats-client.ts"),
@@ -28,19 +30,43 @@ const [
   read("src/app/api/cron/warm-live-starts/route.ts"),
   read("src/lib/data/production-path-prewarmer.ts"),
   read("src/app/api/cron/slate-sync/route.ts"),
+  read("src/lib/data/settled-slate-integrity.ts"),
+  read("src/lib/data/canonical-start-store.ts"),
 ]);
 
 assert(
-  warmLiveStartsCron.includes('if (result.reason === "no-live-or-final-games")') &&
-    warmLiveStartsCron.indexOf('if (result.reason === "no-live-or-final-games")') < warmLiveStartsCron.indexOf("logRecentSettledSlateGaps()") &&
+  warmLiveStartsCron.includes("const cheapState = await readCheapSlateState(date);") &&
+    warmLiveStartsCron.indexOf('prewarmMode: "debounced"') < warmLiveStartsCron.indexOf("const result = await runWarmLiveStartsJob") &&
+    warmLiveStartsCron.includes("shouldDebounceWarmLiveStarts(cheapState.liveGames, cheapState.finalizedGameSignature, observedSignature)") &&
+    warmLiveStartsCron.includes("return liveGames === 0 && finalizedGameSignature === observedSignature") &&
+    warmLiveStartsCron.includes("supabaseReads: 0") &&
+    !warmLiveStartsCron.includes("logRecentSettledSlateGaps") &&
     warmLiveStartsCron.includes("RECONCILIATION_PREWARM_MIN_INTERVAL_MS") &&
     warmLiveStartsCron.includes("INCREMENTAL_PREWARM_MIN_INTERVAL_MS") &&
+    warmLiveStartsCron.includes("incrementalIntervalElapsed && (cheapState.liveGames > 0 || hasNewFinalizedStarts)") &&
     productionPrewarmer.includes("finalizedStartSignature(starts.map((start) => start.id))") &&
     !productionPrewarmer.includes("`${start.id}:${start.gameScorePlus}`") &&
     slateSyncCron.includes("getSupabaseArchiveStatus") &&
+    slateSyncCron.includes("logRecentSettledSlateGaps") &&
+    settledSlateIntegrity.includes("readCanonicalSlateCounts(date)") &&
+    settledSlateIntegrity.includes("canonicalState?.finalStarts ?? 0") &&
+    canonicalStartStore.includes('url.searchParams.set("select", "date,counts")') &&
+    !settledSlateIntegrity.includes("getRankedSlateCompletionState") &&
+    !settledSlateIntegrity.includes("readCanonicalStartRecords") &&
     !warmLiveStartsCron.includes("getSupabaseArchiveStatus"),
-  "minute reconciliation must skip its tail while idle, debounce prewarming by finalized IDs, and leave archive freshness to hourly slate-sync",
+  "minute reconciliation must debounce before heavy work, warm only on live/new-final activity, and leave count-only integrity checks to hourly slate-sync",
 );
+
+let supabaseReads = 0;
+const storedFinalizedSignature = "2026-08-09:823500|823501";
+for (let invocation = 0; invocation < 10; invocation += 1) {
+  const liveGames = 0;
+  const currentFinalizedSignature = "2026-08-09:823500|823501";
+  const debounced = liveGames === 0 && currentFinalizedSignature === storedFinalizedSignature;
+  if (!debounced) supabaseReads += 1;
+  assert(debounced, `quiet final-slate invocation ${invocation + 1} must debounce`);
+}
+assert(supabaseReads === 0, "ten quiet final-slate invocations must trigger zero Supabase reads after stored state is warm");
 
 assert(
   runtimeStateStore.includes("export async function readRuntimeStates") &&
