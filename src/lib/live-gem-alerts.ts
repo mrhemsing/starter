@@ -46,12 +46,10 @@ export function evaluateLiveGemAlerts(
       }
     }
 
-    if (isNoHitterCandidate(row)) {
-      events.push(buildAlertEvent(row, "NO_HITTER_THROUGH_5"));
-    }
-
     if (isPerfectGameCandidate(row)) {
       events.push(buildAlertEvent(row, "PERFECT_GAME_THROUGH_5"));
+    } else if (isNoHitterCandidate(row)) {
+      events.push(buildAlertEvent(row, "NO_HITTER_THROUGH_5"));
     }
 
     if (row.line.strikeouts >= LIVE_GEM_ALERT_STRIKEOUT_MILESTONE) {
@@ -60,6 +58,14 @@ export function evaluateLiveGemAlerts(
   }
 
   return events;
+}
+
+export function evaluateActiveLiveGemAlerts(rows: LiveScoreboardRow[]): LiveGemAlertEvent[] {
+  return evaluateLiveGemAlerts(rows, rows).filter((event) =>
+    event.type === "NO_HITTER_THROUGH_5" ||
+    event.type === "PERFECT_GAME_THROUGH_5" ||
+    event.type === "TEN_STRIKEOUTS"
+  );
 }
 
 export function liveGemAlertDedupeKey(row: Pick<LiveScoreboardRow, "startId" | "gamePk" | "pitcherMlbId">, type: LiveGemAlertType) {

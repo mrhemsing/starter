@@ -8,7 +8,7 @@ import { Headshot } from "@/components/headshot";
 import { LIVE_NAV_STATE_EVENT } from "@/components/live-nav-label";
 import { UpcomingSimpleCard, UpcomingSimpleCardGrid } from "@/components/upcoming-simple-board";
 import type { LivePregameSlate, LiveScoreboard as LiveScoreboardData, LiveScoreboardRow } from "@/lib/data/live-scoreboard-service";
-import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
+import { evaluateActiveLiveGemAlerts, evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";
 import { qualityTierOf, watchTierOf } from "@/lib/form-tokens";
 import { formatStartLine } from "@/lib/format";
 import { LIVE_EMPTY_REFRESH_INTERVAL_MS } from "@/lib/live-board-config";
@@ -33,9 +33,10 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
   const [board, setBoard] = useState(initialBoard);
   const [slateProgress, setSlateProgress] = useState(initialSlateProgress);
   const [pregameNowMs, setPregameNowMs] = useState<number | null>(null);
-  const [liveGemAlerts, setLiveGemAlerts] = useState<LiveGemAlertEvent[]>([]);
+  const [liveGemAlerts, setLiveGemAlerts] = useState<LiveGemAlertEvent[]>(() => evaluateActiveLiveGemAlerts(initialBoard.rows));
   const latestRowsRef = useRef(initialBoard.rows);
   const seenLiveGemAlertKeysRef = useRef<Set<string>>(new Set());
+  const dismissedLiveGemAlertKeysRef = useRef<Set<string>>(new Set());
   const pregame = isPregame(board);
   const pregameFirstPitchAt = board.pregameSlate?.firstPitchAt ?? slateProgress.firstPitchAt;
 
@@ -59,9 +60,8 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         if (!cancelled) {
           const newAlerts = takeUnseenLiveGemAlerts(evaluateLiveGemAlerts(nextBoard.rows, latestRowsRef.current), initialBoard.date, seenLiveGemAlertKeysRef.current);
           latestRowsRef.current = nextBoard.rows;
-          if (newAlerts.length > 0) {
-            setLiveGemAlerts((current) => [...newAlerts, ...current].slice(0, LIVE_GEM_ALERT_MAX_VISIBLE));
-          }
+          const activeAlerts = evaluateActiveLiveGemAlerts(nextBoard.rows).filter((alert) => !dismissedLiveGemAlertKeysRef.current.has(alert.id));
+          setLiveGemAlerts((current) => mergeLiveGemAlerts(activeAlerts, newAlerts, current));
           setBoard(nextBoard);
           setSlateProgress(nextBoard.slateProgress);
         }
@@ -209,7 +209,10 @@ export function LiveScoreboard({ initialBoard, initialSlateProgress }: LiveScore
         <p suppressHydrationWarning>{updatedLabel}</p>
       </div>
 
-      <LiveGemAlertStack alerts={liveGemAlerts} onDismiss={(id) => setLiveGemAlerts((current) => current.filter((alert) => alert.id !== id))} />
+      <LiveGemAlertStack alerts={liveGemAlerts} onDismiss={(id) => {
+        dismissedLiveGemAlertKeysRef.current.add(id);
+        setLiveGemAlerts((current) => current.filter((alert) => alert.id !== id));
+      }} />
 
       <div className="overflow-hidden rounded border border-white/10 bg-[#0B0C0F]">
         {scoredRows.length > 0 ? (
@@ -313,6 +316,16 @@ function LiveGemAlertStack({ alerts, onDismiss }: { alerts: LiveGemAlertEvent[];
       ))}
     </div>
   );
+}
+
+function mergeLiveGemAlerts(active: LiveGemAlertEvent[], incoming: LiveGemAlertEvent[], current: LiveGemAlertEvent[]) {
+  const activeIds = new Set(active.map((alert) => alert.id));
+  const transient = [...incoming, ...current].filter((alert) =>
+    alert.type.startsWith("GS_PLUS_") && !activeIds.has(alert.id)
+  );
+  return [...active, ...transient]
+    .filter((alert, index, alerts) => alerts.findIndex((candidate) => candidate.id === alert.id) === index)
+    .slice(0, LIVE_GEM_ALERT_MAX_VISIBLE);
 }
 
 function scoreboardSummaryLabel(board: LiveScoreboardData) {

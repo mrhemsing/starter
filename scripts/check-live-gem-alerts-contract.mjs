@@ -6,9 +6,11 @@ function assert(condition, message) {
   }
 }
 
-const [alerts, liveComponent] = await Promise.all([
+const [alerts, liveComponent, homeAlerts, homePage] = await Promise.all([
   readFile("src/lib/live-gem-alerts.ts", "utf8"),
   readFile("src/components/live-scoreboard.tsx", "utf8"),
+  readFile("src/components/home-live-gem-alerts.tsx", "utf8"),
+  readFile("src/app/(home)/page.tsx", "utf8"),
 ]);
 
 assert(
@@ -41,6 +43,7 @@ assert(
   alerts.includes('return row.scoreLabel === "PROV" && row.status === "live";') &&
     alerts.includes("inningsFromIP(row.line.inningsPitched) >= LIVE_GEM_ALERT_MIN_NO_HIT_INNINGS && row.line.hits === 0") &&
     alerts.includes("isNoHitterCandidate(row) && row.line.walks === 0") &&
+    alerts.includes("else if (isNoHitterCandidate(row))") &&
     alerts.includes("row.line.strikeouts >= LIVE_GEM_ALERT_STRIKEOUT_MILESTONE"),
   "live gem alerts must only inspect live provisional rows and must gate no-hit, perfect candidate, and strikeout alerts from the line",
 );
@@ -59,7 +62,7 @@ assert(
 );
 
 assert(
-  liveComponent.includes('import { evaluateLiveGemAlerts, type LiveGemAlertEvent } from "@/lib/live-gem-alerts";') &&
+  liveComponent.includes('evaluateActiveLiveGemAlerts, evaluateLiveGemAlerts, type LiveGemAlertEvent') &&
     liveComponent.includes('const LIVE_GEM_ALERT_STORAGE_PREFIX = "tts-live-gem-alerts:";') &&
     liveComponent.includes("const LIVE_GEM_ALERT_MAX_VISIBLE = 3;") &&
     liveComponent.includes("const latestRowsRef = useRef(initialBoard.rows);") &&
@@ -71,8 +74,17 @@ assert(
   liveComponent.includes("evaluateLiveGemAlerts(nextBoard.rows, latestRowsRef.current)") &&
     liveComponent.includes("takeUnseenLiveGemAlerts(") &&
     liveComponent.includes("latestRowsRef.current = nextBoard.rows;") &&
-    liveComponent.includes("setLiveGemAlerts((current) => [...newAlerts, ...current].slice(0, LIVE_GEM_ALERT_MAX_VISIBLE));"),
-  "live scoreboard refresh must compare each poll to the previous rows and cap visible live gem alerts",
+    liveComponent.includes("mergeLiveGemAlerts(activeAlerts, newAlerts, current)") &&
+    liveComponent.includes("dismissedLiveGemAlertKeysRef.current.add(id)"),
+  "live scoreboard refresh must compare each poll to the previous rows, keep qualifying alerts visible, and honor dismissal",
+);
+
+assert(
+  alerts.includes("export function evaluateActiveLiveGemAlerts") &&
+    homeAlerts.includes("evaluateActiveLiveGemAlerts(board.rows)") &&
+    homeAlerts.includes('data-home-live-gem-alert-count={alerts.length}') &&
+    homePage.includes("<HomeLiveGemAlerts />"),
+  "active no-hit and strikeout gem alerts must remain visible and render from the homepage live-board context",
 );
 
 assert(

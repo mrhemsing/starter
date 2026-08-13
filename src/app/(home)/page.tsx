@@ -1,6 +1,7 @@
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { HomeLiveBoardProvider } from "@/components/home-live-board-provider";
 import { HomeLiveTicker } from "@/components/home-live-ticker";
+import { HomeLiveGemAlerts } from "@/components/home-live-gem-alerts";
 import { SlateCounts } from "@/components/slate-counts";
 import { SiteHeader } from "@/components/site-header";
 import type { Metadata } from "next";
@@ -112,6 +113,7 @@ export default async function Home() {
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,8,10,0.98)_0%,rgba(8,8,10,0.82)_42%,rgba(8,8,10,0.42)_74%,rgba(8,8,10,0.58)_100%),linear-gradient(180deg,rgba(8,8,10,0.78)_0%,rgba(8,8,10,0.26)_44%,#08080a_100%)]" aria-hidden="true" />
           <div className="relative z-10 mx-auto max-w-7xl">
             <SiteHeader active="home" today={today} rankedDate={rankedDate} />
+            <HomeLiveGemAlerts />
             <HomeLiveTicker />
 
             <div className="grid gap-5 py-4 lg:pb-0 lg:pt-5" data-responsive-check="home-masthead">
