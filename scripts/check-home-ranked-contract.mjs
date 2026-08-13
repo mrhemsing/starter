@@ -659,13 +659,13 @@ assert(
     !imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
     imageService.includes("const autoPromoted = isAutoPromotableMlbGameContentAction(candidate, start);") &&
     imageService.includes("await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);") &&
-    imageService.includes("return null;") &&
+    imageService.includes("return autoPromoted ? image : null;") &&
     imageService.includes("autoPromoted: Boolean(autoPromotion),") &&
-    imageService.includes("clean: false,") &&
-    imageService.includes("textFreeReviewed: false,") &&
+    imageService.includes("clean: Boolean(autoPromotion),") &&
+    imageService.includes("textFreeReviewed: Boolean(autoPromotion),") &&
     imageService.includes("function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary)") &&
-    imageService.includes("if (!isPitcherNamed || (!hasTrustedPhotoCredit && !officialPitchingHighlight)) return null;") &&
-    imageService.includes("if (score < 125 && !hasPitchingActionCopy) return null;") &&
+    imageService.includes("if (!isPitcherNamed || !officialPitchingHighlight || !hasPitchingActionCopy) return null;") &&
+    imageService.includes("if (score < 125) return null;") &&
     imageService.includes("return { focalPoint: { x: officialPitchingHighlight ? 50 : 62, y: 50 }, officialPitchingHighlight };") &&
     imageService.includes("function isOfficialMlbPitchingHighlight(item: MlbGameContentItem)") &&
     imageService.includes('text.includes(fullName)') &&
@@ -730,7 +730,7 @@ assert(
     !imageService.includes("resolveMlbGameContentImage") &&
     !imageService.includes('source: "highlight"') &&
     !imageService.includes("highlight.thumbnailUrl"),
-  "home top performer image resolver must render only curator-clean action metadata, otherwise the slab placeholder; no provider, preferred, highlight, or headshot bypasses",
+  "home top performer image resolver must immediately render trusted pitcher-matched official MLB pitching highlights while retaining curator gates for all other imagery",
 );
 
 assert(

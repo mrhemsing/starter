@@ -166,7 +166,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
   } satisfies TopPerformerImage;
 
   await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
-  return null;
+  return autoPromoted ? image : null;
 }
 
 function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null {
@@ -276,12 +276,11 @@ function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCan
   const fullName = start.pitcher.name.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   const isPitcherNamed = text.includes(fullName) || text.includes(last);
-  const hasTrustedPhotoCredit = isPhotoCreditImageTitle(item.image?.title ?? "");
   const officialPitchingHighlight = isOfficialMlbPitchingHighlight(item);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
-  if (!isPitcherNamed || (!hasTrustedPhotoCredit && !officialPitchingHighlight)) return null;
+  if (!isPitcherNamed || !officialPitchingHighlight || !hasPitchingActionCopy) return null;
   if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;
-  if (score < 125 && !hasPitchingActionCopy) return null;
+  if (score < 125) return null;
   return { focalPoint: { x: officialPitchingHighlight ? 50 : 62, y: 50 }, officialPitchingHighlight };
 }
 
@@ -305,8 +304,8 @@ async function writeCachedMlbGameContentActionImage(startId: string, image: TopP
     attribution: image.attribution,
     autoPromoted: Boolean(autoPromotion),
     officialPitchingHighlight: autoPromotion?.officialPitchingHighlight ?? false,
-    clean: false,
-    textFreeReviewed: false,
+    clean: Boolean(autoPromotion),
+    textFreeReviewed: Boolean(autoPromotion),
     focalPoint: autoPromotion?.focalPoint,
     focalX: autoPromotion?.focalPoint.x ?? null,
     focalY: autoPromotion?.focalPoint.y ?? null,
