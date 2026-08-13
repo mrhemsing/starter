@@ -702,6 +702,8 @@ assert(
     imageService.includes("function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function pitcherActionHighlightPattern()") &&
+    imageService.includes("strikeouts?") &&
+    imageService.includes("scoreless start") &&
     imageService.includes("function singlePitchActionFramePattern()") &&
     imageService.includes("function selectMlbImageCut(item: MlbGameContentItem | null)") &&
     imageService.includes("function normalizeMlbImageUrl(src: string)") &&

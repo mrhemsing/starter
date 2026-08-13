@@ -263,7 +263,7 @@ function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary)
 }
 
 function pitcherActionHighlightPattern() {
-  return /\b(k'?s|fans?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|outing)\b/i;
+  return /\b(k'?s|fans?|strikeouts?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|scoreless start|outing)\b/i;
 }
 
 function singlePitchActionFramePattern() {
