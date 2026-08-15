@@ -83,6 +83,7 @@ const KNOWN_MLB_VENUES = new Set([
   "Dodger Stadium",
   "Estadio Alfredo Harp Helu",
   "Fenway Park",
+  "Field of Dreams",
   "George M. Steinbrenner Field",
   "Globe Life Field",
   "Great American Ball Park",
