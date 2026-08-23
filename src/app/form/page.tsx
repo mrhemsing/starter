@@ -1061,7 +1061,7 @@ function FormLeaderboardRow({
         )}
         chips={(
           <>
-            {!seasonView ? <span className="rounded border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
+            {!seasonView ? <span className="inline-flex min-h-8 items-center justify-center rounded border px-2 py-1 font-mono text-[9px] uppercase leading-none tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
             <StartStatusChip pitcher={pitcher} todayStart={todayStart} />
             <MobileStartStatusRowBreak pitcher={pitcher} todayStart={todayStart} />
             <PitcherAvailabilityNote availability={pitcher.availability} compact />
@@ -1125,7 +1125,7 @@ function FormLeaderboardRow({
           </p>
         </HeatPitcherProfileLink>
         <div className="grid gap-1">
-          {!seasonView ? <span className="w-fit rounded border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
+          {!seasonView ? <span className="inline-flex min-h-8 w-fit items-center justify-center rounded border px-2 py-1 font-mono text-[9px] uppercase leading-none tracking-[0.12em]" style={{ borderColor: `${bandColor}66`, color: bandColor }} data-form-tier-chip>{tierLabel(pitcher.tier)}</span> : null}
           <PitcherAvailabilityNote availability={pitcher.availability} compact className="mt-1" />
           <TodayStartFreshnessChip pitcher={pitcher} />
           {seasonView ? null : (
