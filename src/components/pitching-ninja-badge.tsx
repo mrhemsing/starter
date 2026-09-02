@@ -10,10 +10,10 @@ export function PitchingNinjaBadge() {
       aria-label="Pitching Ninja on Instagram"
     >
       <Image
-        src="/images/pitching-ninja.jpg"
+        src="/images/pitching-ninja-desktop.png"
         alt=""
-        width={1280}
-        height={640}
+        width={1536}
+        height={1024}
         unoptimized
         className="h-full w-full object-contain"
       />
