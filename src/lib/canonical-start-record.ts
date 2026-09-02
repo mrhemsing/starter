@@ -89,6 +89,7 @@ const KNOWN_MLB_VENUES = new Set([
   "Great American Ball Park",
   "Guaranteed Rate Field",
   "Kauffman Stadium",
+  "Journey Bank Ballpark",
   "Las Vegas Ballpark",
   "loanDepot park",
   "Minute Maid Park",
