@@ -12,8 +12,8 @@ export function PitchingNinjaBadge() {
       <Image
         src="/images/pitching-ninja-desktop.png"
         alt=""
-        width={1536}
-        height={1024}
+        width={1386}
+        height={466}
         unoptimized
         className="h-full w-full object-contain"
       />
