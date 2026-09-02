@@ -74,7 +74,7 @@ export default function RootLayout({
           <GlobalNavigationFeedback />
         </Suspense>
         {children}
-        <footer className="mt-auto px-4 pb-4 sm:px-6 lg:px-8">
+        <footer className="mt-auto px-4 pb-4 pt-5 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-7xl flex-col items-start gap-3">
             <PitchingNinjaBadge />
             <BAverageBadge />
