@@ -222,7 +222,7 @@ export function TopPerformerCard({
               alt={image?.alt ?? ""}
               fill
               sizes="(min-width: 1024px) 55vw, 100vw"
-              quality={isPlaceholderImage ? 82 : 86}
+              quality={isPlaceholderImage ? 82 : 95}
               className="top-performer-image object-cover"
               style={
                 {

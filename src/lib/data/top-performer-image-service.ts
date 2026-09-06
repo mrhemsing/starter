@@ -97,7 +97,7 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
     const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });
     return {
       source: "action",
-      imageUrl: cachedMlbGameContentAction.imageUrl,
+      imageUrl: preferHighQualityMlbImage(cachedMlbGameContentAction.imageUrl),
       alt: cachedMlbGameContentAction.alt,
       attribution: displayPhotoAttribution(cachedMlbGameContentAction.attribution),
       objectPosition,
@@ -127,7 +127,7 @@ function topPerformerImageFromCachedAction(startId: string, cachedAction: Cached
   const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });
   return {
     source: "action",
-    imageUrl: cachedAction.imageUrl,
+    imageUrl: preferHighQualityMlbImage(cachedAction.imageUrl),
     alt: cachedAction.alt,
     attribution: displayPhotoAttribution(cachedAction.attribution),
     objectPosition,
@@ -292,7 +292,12 @@ function selectMlbImageCut(item: MlbGameContentItem | null) {
 }
 
 function normalizeMlbImageUrl(src: string) {
-  return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:good,w_2608,c_fill,f_jpg/");
+  return src.replace(/\/w_\d+,h_\d+,f_jpg,c_fill,g_auto\//, "/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/");
+}
+
+function preferHighQualityMlbImage(src: string) {
+  if (!src.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/")) return src;
+  return src.replace("q_auto:good", "q_auto:best");
 }
 
 async function writeCachedMlbGameContentActionImage(startId: string, image: TopPerformerImage, autoPromotion: { focalPoint: { x: number; y: number }; officialPitchingHighlight: boolean } | null) {

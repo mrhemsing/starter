@@ -628,8 +628,8 @@ function SeasonTopStartRow({ entry, rank }: { entry: HomeSeasonTopStart; rank: n
     >
       {fullBleed ? (
         <>
-          <Image src={imageUrl} alt={`${start.pitcher.name} pitching`} fill sizes="(min-width: 1024px) 30vw, 100vw" className="pointer-events-none absolute inset-0 z-0 object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
-          <span className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 100%)" }} aria-hidden="true" data-home-top-start-scrim="true" />
+          <Image src={imageUrl} alt={`${start.pitcher.name} pitching`} fill sizes="(min-width: 1280px) 700px, (min-width: 1024px) 58vw, 100vw" quality={95} className="pointer-events-none absolute inset-0 z-0 object-cover" style={{ objectPosition: imagePosition }} data-home-top-start-bg="true" />
+          <span className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.47) 55%, rgba(0,0,0,0.08) 100%)" }} aria-hidden="true" data-home-top-start-scrim="true" />
         </>
       ) : null}
       <a href={rowHref} className="absolute inset-0 z-[2]" aria-label={`Open ${start.pitcher.name} start deep dive`} />
