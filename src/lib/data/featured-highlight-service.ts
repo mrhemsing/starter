@@ -11,7 +11,7 @@ const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";
 const ALL_GAME_HIGHLIGHTS_TITLE_PATTERN = /\ball\s+games(?:\s+highlights?)?\b/i;
 const MANUAL_HIGHLIGHT_VIDEO_IDS_BY_START_ID: Record<string, string> = {
   "2026-08-27-atl-lad-519242": "bJ2zfIE18fk",
-  "2026-09-01-cle-tor-668909": "B1JG6gqcxuQ",
+  "2026-09-01-cle-tor-668909": "yltnsbobT5Q",
   "2026-06-12-mil-phi-694819": "MaAOy8pY36c",
   "2026-06-14-sf-chc-657277": "WfT4TJqUs_E",
   "2026-06-19-nyy-cin-693645": "JkWrVSnrgB4",
