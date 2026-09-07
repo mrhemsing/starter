@@ -78,6 +78,7 @@ const seasonSortOptions = [
 const HEAT_BAND_INITIAL_LIMIT = 12;
 const HEAT_TREND_INITIAL_LIMIT = 25;
 const SEASON_UNRANKED_INITIAL_LIMIT = 25;
+const HEAT_CHECK_DEFAULT_WINDOW = 3;
 
 function parseHeatCheckView(value: string | undefined): HeatCheckView {
   return value === "season" ? "season" : "trend";
@@ -93,13 +94,13 @@ export async function generateSeasonHeatCheckMetadata({ searchParams }: FormPage
 
 export async function generateHeatCheckMetadata({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }): Promise<Metadata> {
   const params = await searchParams;
-  const window = parseFormWindow(params?.window);
+  const window = parseFormWindow(params?.window ?? HEAT_CHECK_DEFAULT_WINDOW);
   const view = viewOverride ?? parseHeatCheckView(params?.view);
   const title = view === "season" ? `${getHomeSlateDate().slice(0, 4)} MLB Season GS+ Leaderboard` : formPageTitle(window);
   const description = view === "season"
     ? "Every qualified MLB starter ranked by season-average GS+, with the season view inside Heat Check."
     : `Starting-pitcher FORM over the last ${window} starts, with rising and falling arms tracked daily.`;
-  const hasIndexableWindow = params?.window && window !== 5 && Object.keys(params).every((key) => key === "window");
+  const hasIndexableWindow = params?.window && window !== HEAT_CHECK_DEFAULT_WINDOW && Object.keys(params).every((key) => key === "window");
   const hasNonCanonicalFilters = Boolean(params && Object.keys(params).some((key) => !(view === "trend" && key === "window" && hasIndexableWindow)));
   const url = view === "season" ? "/heat-check/season" : hasIndexableWindow ? `/heat-check?window=${window}` : "/heat-check";
   const image = `/form/opengraph-image?window=${window}`;
@@ -138,7 +139,7 @@ export async function HeatCheckSeasonPage({ searchParams }: FormPageProps) {
 
 export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }) {
   const rawParams = await searchParams;
-  const window = parseFormWindow(rawParams?.window);
+  const window = parseFormWindow(rawParams?.window ?? HEAT_CHECK_DEFAULT_WINDOW);
   const view = viewOverride ?? parseHeatCheckView(rawParams?.view);
   const params = { ...(rawParams ?? {}), view };
   const trendView = view === "trend";
@@ -1934,7 +1935,7 @@ function heatCheckHref(values: Record<string, string | undefined>) {
     if (key === "view") continue;
     if (path === "/heat-check/season" && key === "sort" && value === "season-gs") continue;
     if (path === "/heat-check/season" && key === "qualified") continue;
-    if (value && !(key === "window" && value === "5")) params.set(key, value);
+    if (value && !(key === "window" && value === String(HEAT_CHECK_DEFAULT_WINDOW))) params.set(key, value);
   }
   const query = params.toString();
   return `${path}${query ? `?${query}` : ""}`;
