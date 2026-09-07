@@ -69,6 +69,8 @@ assert(
 
 assert(
   featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
+    featuredHighlightService.includes('"2026-08-27-atl-lad-519242": "bJ2zfIE18fk"') &&
+    featuredHighlightService.includes('"2026-09-01-cle-tor-668909": "B1JG6gqcxuQ"') &&
     featuredHighlightService.includes('"2026-06-19-nyy-cin-693645": "JkWrVSnrgB4"') &&
     featuredHighlightService.includes('"2026-06-22-mil-cin-605540": "oHw4ASegTcI"') &&
     featuredHighlightService.includes('"2026-06-30-wsh-bos-676917": "C-uwf39UDjw"') &&
