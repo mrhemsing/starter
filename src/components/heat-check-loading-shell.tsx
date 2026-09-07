@@ -184,7 +184,7 @@ function readParams(searchParams: URLSearchParams, view: "trend" | "season") {
 
 function readWindow(searchParams: URLSearchParams) {
   const value = Number(searchParams.get("window"));
-  return WINDOW_OPTIONS.includes(value as (typeof WINDOW_OPTIONS)[number]) ? value : 3;
+  return WINDOW_OPTIONS.includes(value as (typeof WINDOW_OPTIONS)[number]) ? value : 5;
 }
 
 function heatHref(values: Record<string, string | undefined>) {
@@ -194,7 +194,7 @@ function heatHref(values: Record<string, string | undefined>) {
     if (key === "view") continue;
     if (path === "/heat-check/season" && key === "sort" && value === "season-gs") continue;
     if (path === "/heat-check/season" && key === "qualified") continue;
-    if (value && !(key === "window" && value === "3")) params.set(key, value);
+    if (value && !(key === "window" && value === "5")) params.set(key, value);
   }
   const query = params.toString();
   return `${path}${query ? `?${query}` : ""}`;
