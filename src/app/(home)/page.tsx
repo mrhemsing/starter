@@ -161,13 +161,13 @@ function HomeHeroStateBanner({ slateStatus, liveLeaderboard }: { slateStatus: Sl
 
   return (
     <div
-      className="mt-4 max-w-2xl rounded border border-white/10 bg-black/25 px-3 py-3 shadow-[0_16px_34px_rgba(0,0,0,0.2)] backdrop-blur-sm"
+      className="mt-4 max-w-2xl rounded border border-white/10 bg-black/25 px-3 py-3 shadow-[0_16px_34px_rgba(0,0,0,0.2)] backdrop-blur-sm lg:max-w-none"
       data-responsive-check="home-hero-state-banner"
       data-home-hero-state-banner={slateStatus.state}
     >
       <SlateCounts initialState={slateStatus} variant="home" className="mb-0" />
       {hasLiveLeaders ? (
-        <div className="mt-3 flex max-w-full items-center gap-2 overflow-x-auto border-t border-white/10 pt-3" data-home-hero-live-leaders-strip>
+        <div className="mt-3 flex max-w-full items-center gap-2 overflow-x-auto border-t border-white/10 pt-3 lg:flex-wrap lg:overflow-x-visible" data-home-hero-live-leaders-strip>
           <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-300">Live leaders</p>
           {liveLeaderboard?.slice(0, 3).map((entry) => (
             <a key={entry.id} href={entry.href} className="flex shrink-0 items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-zinc-300 transition hover:border-amber-300/35 hover:text-amber-200">
