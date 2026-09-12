@@ -186,7 +186,7 @@ function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; wind
           baselineValue={formSparkBaseline(pitcher)}
           deltaForm={pitcher.deltaForm}
           window={window}
-          label={`Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}`}
+          label={`GS+ scores for last ${Math.min(window, pitcher.windowCount)} starts: ${formSparkValues(pitcher).join(", ")}`}
           trend={pitcher.trend}
           variant="mini"
         />
@@ -246,14 +246,8 @@ function formatSignedDecimal(value: number) {
   return rounded;
 }
 
-function deltaAriaLabel(pitcher: FormSummary) {
-  const band = formDeltaBand(pitcher.deltaForm);
-  if (band.key === "steady") return "steady";
-  return `${band.directionLabel} ${formatSignedDecimal(pitcher.deltaForm)}`;
-}
-
 function formSparkValues(pitcher: FormSummary) {
-  return pitcher.formSpark.length > 0 ? pitcher.formSpark : [pitcher.rgs];
+  return pitcher.spark.length > 0 ? pitcher.spark : [pitcher.lastStart?.gsPlus ?? pitcher.rgs];
 }
 
 function formSparkBaseline(pitcher: FormSummary) {

@@ -708,7 +708,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
         <div className="col-start-2 row-start-1 min-w-0 sm:col-start-auto sm:row-start-auto">
           <div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.2em]" style={{ color: accent }}>{isRiser ? "Biggest riser" : "Biggest faller"}</p>
-            <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{tierLabel(pitcher.tier)}</span>
+            <span className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ borderColor: `${bandColor}66`, color: bandColor }}>{recentStartStatusLabel(pitcher)}</span>
           </div>
           <HeatPitcherProfileLink href={profileHref} className="mt-2 block min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:mt-3">
             <h2 className="truncate font-serif text-xl font-bold leading-none text-zinc-50 sm:text-3xl">{pitcher.name}</h2>
@@ -718,7 +718,7 @@ function MomentumPanel({ role, pitcher, window, leagueMeanGS, followed, start }:
           <div className="mt-2 grid gap-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-x-3 sm:gap-y-1">
             <p className="font-mono text-[34px] font-black leading-none tabular-nums sm:text-5xl" style={{ color: accent }}>{marker} {formatSignedDelta(pitcher.deltaForm)}</p>
             <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-400 sm:pb-1 sm:text-xs sm:tracking-[0.14em]">
-              now Form {Math.round(pitcher.rgs)} · {tierLabel(pitcher.tier)}
+              now Form {Math.round(pitcher.rgs)} · {recentStartStatusLabel(pitcher)}
             </p>
           </div>
         </div>
@@ -1010,7 +1010,7 @@ function FormLeaderboardRow({
   const mobileMetaLine = seasonView ? `${pitcher.team} · ${pitcher.seasonStartCount} GS` : `${pitcher.team} · ${pitcher.windowCount} GS`;
   const fullWindow = pitcher.windowCount >= window;
   const thermalBand = seasonView ? qualityTier.key : fullWindow && !limitedSampleRow ? pitcher.levelTier ?? pitcher.tier : null;
-  const rankDetailLabel = limitedSampleRow ? LIMITED_SAMPLE_FORM_LABEL : seasonView ? qualityTier.label : tierLabel(pitcher.tier);
+  const rankDetailLabel = limitedSampleRow ? LIMITED_SAMPLE_FORM_LABEL : seasonView ? qualityTier.label : recentStartStatusLabel(pitcher);
   const profileHref = pitcherHref(pitcher, sourceParams("heat", { window, view }));
   const score = seasonView ? Math.round(pitcher.bgs) : Math.round(pitcher.rgs);
   const todayStart = startContext?.get(pitcher.pitcherId) ?? null;
@@ -1813,7 +1813,7 @@ function deltaAriaLabel(summary: Pick<FormSummary, "deltaForm">) {
 }
 
 function formSparkValues(pitcher: FormSummary) {
-  return pitcher.formSpark.length > 0 ? pitcher.formSpark : [pitcher.rgs];
+  return pitcher.spark.length > 0 ? pitcher.spark : [pitcher.lastStart?.gsPlus ?? pitcher.rgs];
 }
 
 function formSparkBaseline(pitcher: FormSummary) {
@@ -1821,7 +1821,17 @@ function formSparkBaseline(pitcher: FormSummary) {
 }
 
 function formSparklineLabel(pitcher: FormSummary, window: number) {
-  return `Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}`;
+  return `GS+ scores for last ${Math.min(window, pitcher.windowCount)} starts: ${formSparkValues(pitcher).join(", ")}`;
+}
+
+function recentStartStatusLabel(pitcher: FormSummary) {
+  const scores = pitcher.spark;
+  const prior = scores.at(-2);
+  const latest = scores.at(-1);
+  const coldBand = pitcher.tier === "cooling" || pitcher.tier === "ice";
+
+  if (coldBand && prior !== undefined && latest !== undefined && latest > prior) return "Rebounding";
+  return tierLabel(pitcher.tier);
 }
 
 function lastName(name: string) {

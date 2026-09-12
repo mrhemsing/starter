@@ -735,12 +735,14 @@ assert(
     formPage.includes('const label = band.key === "steady" ? `${band.marker} steady` : `${band.marker} ${formatSignedDelta(summary.deltaForm)}`;') &&
     formPage.includes("style={{ color: band.color }}") &&
     formPage.includes("function formSparklineLabel(pitcher: FormSummary, window: number)") &&
-    formPage.includes("Form trend, last ${Math.min(window, pitcher.windowCount)} starts, ${deltaAriaLabel(pitcher)}") &&
+    formPage.includes('return pitcher.spark.length > 0 ? pitcher.spark : [pitcher.lastStart?.gsPlus ?? pitcher.rgs];') &&
+    formPage.includes('GS+ scores for last ${Math.min(window, pitcher.windowCount)} starts') &&
+    formPage.includes('return "Rebounding";') &&
     formPage.includes("values={formSparkValues(pitcher)}") &&
     formPage.includes("baselineValue={formSparkBaseline(pitcher)}") &&
     formPage.includes("deltaForm={pitcher.deltaForm}") &&
     !formPage.includes("<TrendChip summary={pitcher} compact />"),
-  "Heat Check row delta and sparkline must use shared form-delta banding, form-series values, and accessible form trend labels",
+  "Heat Check rows must plot raw start scores, describe them accessibly, and avoid a cold label after a rebound",
 );
 
 assert(
@@ -787,7 +789,7 @@ assert(
     heatHero.includes("formDeltaBand(pitcher.deltaForm)") &&
     heatHero.includes("values={formSparkValues(pitcher)}") &&
     heatHero.includes("baselineValue={formSparkBaseline(pitcher)}"),
-  "Heat Check sparkline stroke, endpoint, fill, and homepage Heat Check hero must follow shared form-delta coloring and baseline",
+  "Heat Check sparkline styling must remain shared while both Heat Check surfaces plot raw GS+ starts",
 );
 
 assert(
@@ -804,6 +806,8 @@ assert(
     heatLoadingShell.includes("How starting pitchers are trending. {formWindowLabel(window)}") &&
     heatLoadingShell.includes('data-navigation-shell-controls="heat-real"') &&
     formPage.includes("export function MomentumHeroSkeleton()") &&
+    heatHero.includes('return pitcher.spark.length > 0 ? pitcher.spark : [pitcher.lastStart?.gsPlus ?? pitcher.rgs];') &&
+    heatHero.includes('GS+ scores for last ${Math.min(window, pitcher.windowCount)} starts') &&
     formPage.includes('data-skeleton-row="heat-momentum-hero"'),
   "Heat Check loading must render URL-derived filter/subtitle chrome as real shell and reserve skeletons for hero/list data regions",
 );
