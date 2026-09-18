@@ -801,7 +801,7 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
 
 function StrikeoutHistoryChip({ result }: { result: StrikeoutLineResult }) {
   const tone = result.result === "over" ? "text-emerald-300" : result.result === "under" ? "text-sky-300" : "text-zinc-300";
-  return <span className={tone} data-strikeout-line-result={result.result}>K {result.line.toFixed(1)} · {result.result}</span>;
+  return <span className={tone} data-strikeout-line-result={result.result}>{result.result} {result.line.toFixed(1)} K</span>;
 }
 
 function DecisionPill({ result, className = "" }: { result: FormStartPoint["result"]; className?: string }) {

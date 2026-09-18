@@ -843,7 +843,7 @@ function StrikeoutLineResultChip({ start }: { start: StartSummary }) {
   const market = start.strikeoutLineResult;
   if (!market) return null;
   const tone = market.result === "over" ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-300" : market.result === "under" ? "border-sky-400/35 bg-sky-400/10 text-sky-300" : "border-zinc-400/35 bg-zinc-400/10 text-zinc-300";
-  return <span className={`inline-flex min-h-7 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`} data-strikeout-line-result={market.result}>K {market.line.toFixed(1)} · {market.result}</span>;
+  return <span className={`inline-flex min-h-7 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`} data-strikeout-line-result={market.result}>{market.result} {market.line.toFixed(1)} K</span>;
 }
 
 function rankedStartVenueLine(start: StartSummary) {
