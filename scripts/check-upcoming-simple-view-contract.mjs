@@ -160,7 +160,7 @@ assert(!simpleBoard.includes("data-simple-heat-accent"), "Simple starter panels 
 assert(!simpleBoard.includes("data-simple-starter-team-color") && simpleBoard.includes("data-simple-orientation"), "Simple starter panels must retain team identity through visible orientation microcopy without team-color telemetry.");
 assert(!simpleBoard.includes("FormSparkline"), "Simple cards must not render sparklines.");
 assert(!simpleBoard.includes("FormDriverChips"), "Simple cards must not render pitch-mix or driver chip rows.");
-assert(!simpleBoard.includes("projectedStrikeouts") && !simpleBoard.includes("K line"), "Simple cards must not render K-line elements.");
+assert(simpleBoard.includes("starter.marketContext?.strikeoutPropLine != null") && simpleBoard.includes("K line {starter.marketContext.strikeoutPropLine.toFixed(1)}") && simpleBoard.includes("data-simple-strikeout-line"), "Simple cards must render a captured K line for each priced starter without inventing a fallback line.");
 assert(simpleBoard.includes("starter.projection?.projectedGsPlus") && simpleBoard.includes("PROJ"), "Simple baseball-card backs may surface a compact projected GS+ stat.");
 assert(!/text-\[(?:8|9|10|11)px\]/.test(simpleBoard), "Simple fight-card text utilities must keep a 12px floor.");
 

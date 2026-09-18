@@ -294,6 +294,11 @@ function SimpleIdentityStrip({
       <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.1em] text-zinc-500" data-simple-mini-stat-line data-simple-form-microline data-simple-form-microline-text={formMicroLine(starter)} data-simple-form-line-color={heatColor}>
         <SimpleFormMicroLine starter={starter} />
       </p>
+      {starter.marketContext?.strikeoutPropLine != null ? (
+        <p className="mt-2 font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-amber-200" data-simple-strikeout-line={starter.marketContext.strikeoutPropLine.toFixed(1)}>
+          K line {starter.marketContext.strikeoutPropLine.toFixed(1)}
+        </p>
+      ) : null}
     </div>
   );
 }

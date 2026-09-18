@@ -24,6 +24,7 @@ import { SlateCounts } from "@/components/slate-counts";
 import { TopPerformerCard } from "@/components/top-performer-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
+import { attachHistoricalStrikeoutLineResults } from "@/lib/data/odds-snapshot-service";
 import { getHomeSlateDate, getStartDetail, summarizeSlateScoreScale } from "@/lib/data/start-service";
 import { resolveTopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { resolveTopPerformerMetrics } from "@/lib/data/top-performer-metrics";
@@ -195,7 +196,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const today = getHomeSlateDate();
   const pageData = await getRankedStartsPageData(date, today);
   const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;
-  const starts = slateStarts.filter((start) => start.source?.line !== "fixture");
+  const starts = await attachHistoricalStrikeoutLineResults(slateStarts.filter((start) => start.source?.line !== "fixture"));
   const qualifiedStarts = rankStarts(starts.filter(isQualifiedRankedStart));
   validateRankedStartOrder(qualifiedStarts);
   const shortStarts = starts.filter((start) => !isQualifiedRankedStart(start));
@@ -714,6 +715,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
         chips={(
           <>
             <DecisionChip result={start.result} compact />
+            <StrikeoutLineResultChip start={start} />
             {gas ? <span className="inline-flex min-h-8 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
             {topReason && profile.showReason ? <span className="inline-flex min-h-8 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
             <PitcherAvailabilityNote availability={formSummary?.availability} compact />
@@ -744,6 +746,7 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{startMatchupLabel(start)}</p>
             <div className="mt-1 flex max-sm:!hidden min-w-0 flex-wrap gap-1.5" data-ranked-desktop-chip-row>
               {gas ? <span className="inline-flex min-h-7 items-center rounded border border-[#FF7A3D]/40 bg-[#FF7A3D]/15 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#F6C445]">GAS</span> : null}
+              <StrikeoutLineResultChip start={start} />
               {topReason && profile.showReason ? <span className="inline-flex min-h-7 items-center rounded border border-white/10 bg-black/25 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-300">{topReason}</span> : null}
               <PitcherAvailabilityNote availability={formSummary?.availability} compact />
             </div>
@@ -834,6 +837,13 @@ function ShortStartCard({ start, formSummary }: { start: StartSummary; formSumma
       </div>
     </article>
   );
+}
+
+function StrikeoutLineResultChip({ start }: { start: StartSummary }) {
+  const market = start.strikeoutLineResult;
+  if (!market) return null;
+  const tone = market.result === "over" ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-300" : market.result === "under" ? "border-sky-400/35 bg-sky-400/10 text-sky-300" : "border-zinc-400/35 bg-zinc-400/10 text-zinc-300";
+  return <span className={`inline-flex min-h-7 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`} data-strikeout-line-result={market.result}>K {market.line.toFixed(1)} · {market.result}</span>;
 }
 
 function rankedStartVenueLine(start: StartSummary) {

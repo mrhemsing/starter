@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 
 const [
+  packageSource,
   oddsClient,
   oddsSnapshot,
   tonightService,
@@ -9,7 +10,12 @@ const [
   methodology,
   oddsCron,
   vercelConfig,
+  simpleBoard,
+  rankedStarts,
+  pitcherProfile,
+  sharedTypes,
 ] = await Promise.all([
+  readFile("package.json", "utf8"),
   readFile("src/lib/data/odds-client.ts", "utf8"),
   readFile("src/lib/data/odds-snapshot-service.ts", "utf8"),
   readFile("src/lib/data/tonight-service.ts", "utf8"),
@@ -17,7 +23,28 @@ const [
   readFile("src/app/methodology/page.tsx", "utf8"),
   readFile("src/app/api/cron/odds-sync/route.ts", "utf8"),
   readFile("vercel.json", "utf8"),
+  readFile("src/components/upcoming-simple-board.tsx", "utf8"),
+  readFile("src/app/starts/[id]/page.tsx", "utf8"),
+  readFile("src/app/pitchers/[id]/form/page.tsx", "utf8"),
+  readFile("src/lib/types.ts", "utf8"),
 ]);
+
+const packageJson = JSON.parse(packageSource);
+assert.equal(packageJson.scripts["check:odds-surface"], "node scripts/check-odds-surface-contract.mjs");
+assert(
+  oddsSnapshot.includes("attachHistoricalStrikeoutLineResults") &&
+    oddsSnapshot.includes("readPitcherStrikeoutLineResults") &&
+    oddsSnapshot.includes('result: strikeouts > line ? "over" : strikeouts < line ? "under" : "push"') &&
+    sharedTypes.includes('result: "over" | "under" | "push"') &&
+    simpleBoard.includes("data-simple-strikeout-line") &&
+    rankedStarts.includes("<StrikeoutLineResultChip start={start} />") &&
+    pitcherProfile.includes("<StrikeoutHistoryChip result={strikeoutResult} />"),
+  "captured K lines must appear in both Upcoming views and settle as over, under, or push on ranked starts and pitcher game logs",
+);
+assert(
+  packageJson.scripts["check:upcoming-primary"]?.includes("npm run check:odds-surface"),
+  "the primary Upcoming guard must retain odds-surface coverage",
+);
 
 assert(
   oddsClient.includes("fetchMlbOddsMarketContextsWithDiagnostics") &&

@@ -16,6 +16,7 @@ import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { WireEventCard } from "@/components/wire-event-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
+import { readPitcherStrikeoutLineResults } from "@/lib/data/odds-snapshot-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
 import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
 import { sortPitcherWireEvents, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
@@ -26,7 +27,7 @@ import { pitchTypes } from "@/lib/pitch-taxonomy";
 import { entitySourceHref, entitySources, formatUpcomingDate, parseEntitySource, parsePitcherRouteParam, pitcherHref, sourceParams, startHref, type EntitySource } from "@/lib/routes";
 import { jsonLdScript, noIndexFollow } from "@/lib/seo";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
-import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, PitcherApiResponse, PitcherApiSplitGroup, PitcherPitchMixStart, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail } from "@/lib/types";
+import type { ArsenalPitchSummary, FeaturedStartHighlight, FormPitcherResponse, FormStartPoint, FormSummary, FormVenueSplitLabel, PitcherApiResponse, PitcherApiSplitGroup, PitcherPitchMixStart, PitcherSkillSnapshot, PitcherVelocityStart, StartDetail, StrikeoutLineResult } from "@/lib/types";
 
 type PitcherFormPageProps = {
   params: Promise<{
@@ -93,6 +94,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   const { summary, series } = form;
   const recentStartIds = series.slice(-3).reverse().map((start) => start.id);
   const pitcherPromise = getPitcherApiResponse(id);
+  const strikeoutResultsPromise = readPitcherStrikeoutLineResults(series, Number(summary.pitcherId));
   const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);
   const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);
   const wireEventsPromise = readOrFetchPitcherHeadlineEvents([summary]);
@@ -180,6 +182,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
           <PitcherProfileBody
             pitcherPromise={pitcherPromise}
             series={series}
+            strikeoutResultsPromise={strikeoutResultsPromise}
             recentDepthBundlePromise={recentDepthBundlePromise}
             nextStartPromise={nextStartPromise}
             wireEventsPromise={wireEventsPromise}
@@ -260,6 +263,7 @@ async function ProfileNextStartPill({
 async function PitcherProfileBody({
   pitcherPromise,
   series,
+  strikeoutResultsPromise,
   recentDepthBundlePromise,
   nextStartPromise,
   wireEventsPromise,
@@ -271,6 +275,7 @@ async function PitcherProfileBody({
 }: {
   pitcherPromise: Promise<PitcherApiResponse | null>;
   series: FormStartPoint[];
+  strikeoutResultsPromise: Promise<Map<string, StrikeoutLineResult>>;
   recentDepthBundlePromise: Promise<Awaited<ReturnType<typeof getRecentStartDepthWithHighlights>>>;
   nextStartPromise: Promise<ProfileNextStart | null>;
   wireEventsPromise: Promise<Map<string, WatchlistWireEvent[]>>;
@@ -280,7 +285,7 @@ async function PitcherProfileBody({
   worst: FormStartPoint;
   streak: number;
 }) {
-  const [pitcher, recentDepthBundle, nextStart, wireEventsByPitcher] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise, wireEventsPromise]);
+  const [pitcher, recentDepthBundle, nextStart, wireEventsByPitcher, strikeoutResults] = await Promise.all([pitcherPromise, recentDepthBundlePromise, nextStartPromise, wireEventsPromise, strikeoutResultsPromise]);
   const { recentDepth, recentHighlights } = recentDepthBundle;
   const venueSplitContext = nextStart && summary.venueSplit ? venueSplitContextForNextStart(summary.venueSplit, nextStart.side) : null;
   const wireEvents = sortPitcherWireEvents(wireEventsByPitcher.get(summary.pitcherId) ?? [], summary.name);
@@ -298,6 +303,7 @@ async function PitcherProfileBody({
         ) : null}
         <GameLogPanel
           series={series}
+          strikeoutResults={strikeoutResults}
           recentDepth={recentDepth}
           recentHighlights={recentHighlights}
           pitcherName={summary.name}
@@ -356,12 +362,14 @@ function PitcherWirePanel({ events }: { events: WatchlistWireEvent[] }) {
 
 function GameLogPanel({
   series,
+  strikeoutResults,
   recentDepth,
   recentHighlights,
   pitcherName,
   source,
 }: {
   series: FormStartPoint[];
+  strikeoutResults: Map<string, StrikeoutLineResult>;
   recentDepth: StartDetail[];
   recentHighlights: Map<string, FeaturedStartHighlight | null>;
   pitcherName: string;
@@ -375,6 +383,7 @@ function GameLogPanel({
           <GameLogRow
             key={start.id}
             start={start}
+            strikeoutResult={strikeoutResults.get(start.gamePk) ?? null}
             depth={recentDepth.find((detail) => detail.id === start.id) ?? null}
             highlight={recentHighlights.get(start.id) ?? null}
             pitcherName={pitcherName}
@@ -721,12 +730,14 @@ function hasRealSplitValues(split: PitcherApiSplitGroup) {
 
 function GameLogRow({
   start,
+  strikeoutResult,
   depth,
   highlight,
   pitcherName,
   source,
 }: {
   start: FormStartPoint;
+  strikeoutResult: StrikeoutLineResult | null;
   depth: StartDetail | null;
   highlight: FeaturedStartHighlight | null;
   pitcherName: string;
@@ -744,6 +755,7 @@ function GameLogRow({
         <Link href={href} className={`text-left hover:underline ${tierTextClass(start.tier)}`}>GS+ {start.gsPlus}</Link>
         <span className="flex flex-wrap items-center gap-[11px] text-[10px] uppercase tracking-[0.14em] text-zinc-500 group-open:text-amber-200">
           <DecisionPill result={start.result} />
+          {strikeoutResult ? <StrikeoutHistoryChip result={strikeoutResult} /> : null}
           <span>{depth ? "Depth" : "Summary"}</span>
         </span>
       </summary>
@@ -785,6 +797,11 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
       </div>
     </article>
   );
+}
+
+function StrikeoutHistoryChip({ result }: { result: StrikeoutLineResult }) {
+  const tone = result.result === "over" ? "text-emerald-300" : result.result === "under" ? "text-sky-300" : "text-zinc-300";
+  return <span className={tone} data-strikeout-line-result={result.result}>K {result.line.toFixed(1)} · {result.result}</span>;
 }
 
 function DecisionPill({ result, className = "" }: { result: FormStartPoint["result"]; className?: string }) {

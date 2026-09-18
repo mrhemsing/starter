@@ -1,7 +1,7 @@
-import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
+import { readRuntimeState, readRuntimeStates, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { configuredOddsProviderSource, fetchMlbOddsMarketContextsWithDiagnostics, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
 import { getDefaultUpcomingDate, getHomeSlateDate, getSlateSchedule } from "@/lib/data/start-service";
-import type { MlbScheduleGame } from "@/lib/types";
+import type { MlbScheduleGame, StartSummary, StrikeoutLineResult } from "@/lib/types";
 
 export const ODDS_SYNC_CADENCE_LABEL = "daily-pre-first-pitch-free-tier";
 const ODDS_SNAPSHOT_VERSION = 1;
@@ -71,6 +71,51 @@ export async function readOddsSnapshotMarketContexts(date: string): Promise<Map<
   const snapshot = await readRuntimeState<OddsSnapshotState>(oddsSnapshotStateKey(date));
   if (!isOddsSnapshotState(snapshot)) return new Map();
   return storedSnapshotToContexts(snapshot);
+}
+
+export async function attachHistoricalStrikeoutLineResults<T extends StartSummary>(starts: T[]): Promise<T[]> {
+  const dates = [...new Set(starts.map((start) => start.date))];
+  const snapshots = await readRuntimeStates<OddsSnapshotState>(dates.map(oddsSnapshotStateKey));
+  return starts.map((start) => {
+    const snapshot = snapshots.get(oddsSnapshotStateKey(start.date));
+    const result = snapshot ? strikeoutLineResultFor(snapshot, start.gamePk, start.pitcher.mlbId, start.line.strikeouts) : null;
+    return result ? { ...start, strikeoutLineResult: result } : start;
+  });
+}
+
+export async function readPitcherStrikeoutLineResults(starts: Array<{ gameDate: string; gamePk: string; k: number }>, pitcherMlbId: number) {
+  const dates = [...new Set(starts.map((start) => start.gameDate))];
+  const snapshots = await readRuntimeStates<OddsSnapshotState>(dates.map(oddsSnapshotStateKey));
+  const results = new Map<string, StrikeoutLineResult>();
+  for (const start of starts) {
+    const snapshot = snapshots.get(oddsSnapshotStateKey(start.gameDate));
+    const game = snapshot?.games.find((candidate) => candidate.gamePk === String(start.gamePk));
+    const storedStarter = game?.starters.find((candidate) => candidate.pitcherId === pitcherMlbId);
+    if (!game || storedStarter?.strikeoutPropLine == null) continue;
+    const line = storedStarter.strikeoutPropLine;
+    results.set(start.gamePk, {
+      line,
+      strikeouts: start.k,
+      result: start.k > line ? "over" : start.k < line ? "under" : "push",
+      source: game.source,
+      capturedAt: game.capturedAt,
+    });
+  }
+  return results;
+}
+
+function strikeoutLineResultFor(snapshot: OddsSnapshotState, gamePk: number, pitcherMlbId: number, strikeouts: number): StrikeoutLineResult | null {
+  const game = snapshot.games.find((candidate) => candidate.gamePk === String(gamePk));
+  const starter = game?.starters.find((candidate) => candidate.pitcherId === pitcherMlbId);
+  if (!game || starter?.strikeoutPropLine == null) return null;
+  const line = starter.strikeoutPropLine;
+  return {
+    line,
+    strikeouts,
+    result: strikeouts > line ? "over" : strikeouts < line ? "under" : "push",
+    source: game.source,
+    capturedAt: game.capturedAt,
+  };
 }
 
 export async function syncOddsSnapshotsForDefaultDates() {

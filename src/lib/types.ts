@@ -146,6 +146,14 @@ export type StartDataSource = {
   ranking: "schedule-derived-fixture-line" | "schedule-derived-archive-line" | "schedule-derived-gamefeed-line";
 };
 
+export type StrikeoutLineResult = {
+  line: number;
+  strikeouts: number;
+  result: "over" | "under" | "push";
+  source: "the-odds-api" | "prop-line";
+  capturedAt: string;
+};
+
 export type StartSummary = {
   id: string;
   gamePk: number;
@@ -168,6 +176,7 @@ export type StartSummary = {
   context: StartContext;
   source?: StartDataSource;
   highlightVideoId?: string;
+  strikeoutLineResult?: StrikeoutLineResult;
 };
 
 export type ProbableStart = {
