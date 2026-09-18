@@ -800,8 +800,17 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
 }
 
 function StrikeoutHistoryChip({ result }: { result: StrikeoutLineResult }) {
-  const tone = result.result === "over" ? "text-emerald-300" : result.result === "under" ? "text-sky-300" : "text-zinc-300";
-  return <span className={tone} data-strikeout-line-result={result.result}>{result.result} {result.line.toFixed(1)} K</span>;
+  const tone = result.result === "over" ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-300" : result.result === "under" ? "border-sky-400/35 bg-sky-400/10 text-sky-300" : "border-zinc-400/35 bg-zinc-400/10 text-zinc-300";
+  return (
+    <span
+      className={`inline-flex min-h-10 flex-col items-center justify-center rounded border px-2.5 py-1 ${tone}`}
+      data-strikeout-line-result={result.result}
+      aria-label={`${result.strikeouts} strikeouts, ${result.result} the ${result.line.toFixed(1)} strikeout line`}
+    >
+      <span className="text-xs font-bold leading-none">{result.strikeouts} K</span>
+      <span className="mt-1 text-[9px] leading-none tracking-[0.12em] opacity-75">Line {result.line.toFixed(1)}</span>
+    </span>
+  );
 }
 
 function DecisionPill({ result, className = "" }: { result: FormStartPoint["result"]; className?: string }) {

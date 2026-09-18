@@ -38,7 +38,9 @@ assert(
     sharedTypes.includes('result: "over" | "under" | "push"') &&
     simpleBoard.includes("data-simple-strikeout-line") &&
     rankedStarts.includes("<StrikeoutLineResultChip start={start} />") &&
-    rankedStarts.includes("{market.result} {market.line.toFixed(1)} K") &&
+    rankedStarts.includes("{market.strikeouts} K") &&
+    rankedStarts.includes("Line {market.line.toFixed(1)}") &&
+    rankedStarts.includes('data-strikeout-line-result={market.result}') &&
     pitcherProfile.includes("<StrikeoutHistoryChip result={strikeoutResult} />"),
   "captured K lines must appear in both Upcoming views and settle as over, under, or push on ranked starts and pitcher game logs",
 );

@@ -843,7 +843,16 @@ function StrikeoutLineResultChip({ start }: { start: StartSummary }) {
   const market = start.strikeoutLineResult;
   if (!market) return null;
   const tone = market.result === "over" ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-300" : market.result === "under" ? "border-sky-400/35 bg-sky-400/10 text-sky-300" : "border-zinc-400/35 bg-zinc-400/10 text-zinc-300";
-  return <span className={`inline-flex min-h-7 items-center rounded border px-2 font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`} data-strikeout-line-result={market.result}>{market.result} {market.line.toFixed(1)} K</span>;
+  return (
+    <span
+      className={`inline-flex min-h-10 flex-col items-center justify-center rounded border px-2.5 py-1 font-mono uppercase ${tone}`}
+      data-strikeout-line-result={market.result}
+      aria-label={`${market.strikeouts} strikeouts, ${market.result} the ${market.line.toFixed(1)} strikeout line`}
+    >
+      <span className="text-xs font-bold leading-none">{market.strikeouts} K</span>
+      <span className="mt-1 text-[9px] leading-none tracking-[0.12em] opacity-75">Line {market.line.toFixed(1)}</span>
+    </span>
+  );
 }
 
 function rankedStartVenueLine(start: StartSummary) {
