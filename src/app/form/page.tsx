@@ -929,7 +929,7 @@ function CrossoverPill({ pitcher }: { pitcher: FormSummary }) {
 
 export function FormLeaderboardRowSkeleton({ view = "trend", index = 0 }: { view?: HeatCheckView; index?: number }) {
   const seasonView = view === "season";
-  const treatment = seasonView ? seasonRowTreatment() : rowTreatmentSkeleton(index);
+  const treatment = rowTreatment();
   const bandColor = seasonView ? "#F6C445" : index % 5 === 0 ? "#FF5A1F" : index % 5 === 1 ? "#FF7A3D" : index % 5 === 3 ? "#8FCBFF" : "#888780";
 
   return (
@@ -999,7 +999,7 @@ function FormLeaderboardRow({
   const qualityTier = qualityTierOf(pitcher.bgs);
   const limitedSampleRow = unranked && !seasonView;
   const bandColor = limitedSampleRow ? "#71717a" : seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === (pitcher.levelTier ?? pitcher.tier))?.color ?? "#888780";
-  const treatment = seasonView ? seasonRowTreatment() : rowTreatment(pitcher);
+  const treatment = rowTreatment();
   const lastLine = pitcher.lastStart
     ? `Last GS+ ${pitcher.lastStart.gsPlus} vs ${pitcher.lastStart.opp} / ${formatStartLine({ inningsPitched: pitcher.lastStart.ip, hits: pitcher.lastStart.h, earnedRuns: pitcher.lastStart.er, walks: pitcher.lastStart.bb, strikeouts: pitcher.lastStart.k, pitches: 0 })}`
     : "Last start unavailable";
@@ -1186,13 +1186,6 @@ function FormLeaderboardRow({
       {seasonView ? <SeasonDepthMobileDetails pitcher={pitcher} /> : null}
     </article>
   );
-}
-
-function rowTreatmentSkeleton(index: number) {
-  if (index % 5 === 0 || index % 5 === 4) {
-    return { padding: "py-4 sm:py-[18px]", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg" as const, borderClass: "border-white/10" };
-  }
-  return { padding: "py-3 sm:py-3.5", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none" };
 }
 
 function headshotSkeletonSize(size: "xl" | "lg" | "md" | "sm" | "xs") {
@@ -1738,33 +1731,8 @@ function buildActiveFilterLabel({ band, motion, team, query, limited }: { band: 
   return labels.length > 0 ? labels.join(" / ") : "All arms";
 }
 
-function rowTreatment(pitcher: FormSummary): {
-  padding: string;
-  opacity: string;
-  rankClass: string;
-  gridClass: string;
-  headshotSize: "xl" | "lg" | "md" | "sm" | "xs";
-  borderClass: string;
-  nameClass: string;
-  scoreClass: string;
-  metaClass: string;
-} {
-  if (pitcher.tier === "onfire") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "", rankClass: "text-3xl", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
-  }
-  if (pitcher.tier === "hot") {
-    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
-  }
-  if (pitcher.tier === "cooling") {
-    return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
-  }
-  if (pitcher.tier === "ice") {
-    return { padding: "py-4 sm:py-[18px]", opacity: "opacity-95", rankClass: "text-3xl", gridClass: "grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_50px_minmax(0,1fr)_150px_auto]", headshotSize: "lg", borderClass: "border-white/10", nameClass: "text-xl sm:text-2xl", scoreClass: "text-4xl sm:text-[44px]", metaClass: "text-zinc-400" };
-  }
-  return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md", borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
-}
-
-function seasonRowTreatment() {
+// Keep every leaderboard row equally weighted; badges and colors convey trend.
+function rowTreatment() {
   return { padding: "py-3 sm:py-3.5", opacity: "", rankClass: "text-2xl", gridClass: "grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_auto] sm:grid-cols-[var(--rank-gutter-width)_42px_minmax(0,1fr)_140px_auto]", headshotSize: "md" as const, borderClass: "border-white/10 sm:border-x-0 sm:border-t-0 sm:rounded-none", nameClass: "text-xl", scoreClass: "text-[36px]", metaClass: "text-zinc-500" };
 }
 
