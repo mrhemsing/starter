@@ -1,3 +1,4 @@
+import { MLB_BOARD_GAME_TYPES, isMlbBoardGameType } from "@/lib/mlb-game-types";
 import { demoProbableStarts } from "@/lib/data/demo";
 import { readRuntimeStates, writeRuntimeStates } from "@/lib/data/runtime-state-store";
 import { inningsFromIP } from "@/lib/innings";
@@ -450,7 +451,7 @@ export async function fetchMlbCompletedScheduleDates(startDate: string, endDate:
 async function fetchLiveMlbSchedule(date: string, options: MlbScheduleClientOptions = {}): Promise<MlbSchedule> {
   const params = new URLSearchParams({
     sportId: "1",
-    gameTypes: "R",
+    gameTypes: MLB_BOARD_GAME_TYPES,
     date,
     hydrate: "probablePitcher,team",
   });
@@ -1822,7 +1823,7 @@ function parseGame(game: MlbApiGame): MlbScheduleGame[] {
   const homeTeam = game.teams?.home?.team;
   const awayTeam = game.teams?.away?.team;
 
-  if (gameType !== "R") return [];
+  if (!isMlbBoardGameType(gameType)) return [];
   if (!gamePk || !gameDate || !homeTeam?.name || !awayTeam?.name) return [];
 
   const homeAbbreviation = homeTeam.abbreviation ?? homeTeam.name;

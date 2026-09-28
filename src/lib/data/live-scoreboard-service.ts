@@ -1,3 +1,4 @@
+import { MLB_BOARD_GAME_TYPES, isMlbBoardGameType } from "@/lib/mlb-game-types";
 import { unstable_cache } from "next/cache";
 import { LIVE_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { fetchMlbLivePitchingLines, fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
@@ -109,7 +110,7 @@ async function buildLiveScoreboard(date: string): Promise<LiveScoreboard> {
     getDailySlate({ window: "today", date, allowDemoFallback: false }),
     fetchMlbSchedule(date, { fetchLive: true, gamefeedRevalidateSeconds: LIVE_SCOREBOARD_REVALIDATE_SECONDS }),
   ]);
-  console.info(`[live-board] fetch date=${date} upstream=https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameTypes=R&date=${date}&hydrate=probablePitcher%2Cteam status=${rawSchedule.source === "live" ? 200 : "fallback"} rawGames=${rawSchedule.games.length}`);
+  console.info(`[live-board] fetch date=${date} upstream=https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameTypes=${MLB_BOARD_GAME_TYPES}&date=${date}&hydrate=probablePitcher%2Cteam status=${rawSchedule.source === "live" ? 200 : "fallback"} rawGames=${rawSchedule.games.length}`);
 
   const schedule = filterLiveBoardSchedule(rawSchedule, date);
   const validGamePks = new Set(schedule.games.map((game) => game.gamePk));
@@ -231,13 +232,13 @@ async function resolveNextSlateUncached(date: string) {
 
 function filterLiveBoardSchedule(schedule: MlbSchedule, boardDate: string, options: { log?: boolean } = {}) {
   const log = options.log !== false;
-  const regularGames = schedule.games.filter((game) => game.gameType === "R");
-  const dateMatchedGames = regularGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) === boardDate);
-  const droppedPks = regularGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) !== boardDate).map((game) => game.gamePk);
+  const boardGames = schedule.games.filter((game) => isMlbBoardGameType(game.gameType));
+  const dateMatchedGames = boardGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) === boardDate);
+  const droppedPks = boardGames.filter((game) => gameDateInBoardTimeZone(game.gameDate) !== boardDate).map((game) => game.gamePk);
 
   if (log) {
-    console.info(`[live-board] filter gameType=R kept=${regularGames.length} dropped=${schedule.games.length - regularGames.length}`);
-    console.info(`[live-board] filter ptDateMatch kept=${dateMatchedGames.length} dropped=${regularGames.length - dateMatchedGames.length} droppedPks=[${droppedPks.join(",")}]`);
+    console.info(`[live-board] filter gameTypes=${MLB_BOARD_GAME_TYPES} kept=${boardGames.length} dropped=${schedule.games.length - boardGames.length}`);
+    console.info(`[live-board] filter ptDateMatch kept=${dateMatchedGames.length} dropped=${boardGames.length - dateMatchedGames.length} droppedPks=[${droppedPks.join(",")}]`);
   }
 
   return { ...schedule, date: boardDate, games: dateMatchedGames };

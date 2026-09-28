@@ -29,10 +29,10 @@ assert(
 );
 
 assert(
-  mlbClient.includes('gameTypes: "R"') &&
+  mlbClient.includes("gameTypes: MLB_BOARD_GAME_TYPES") &&
     mlbClient.includes('date,') &&
     mlbClient.includes('hydrate: "probablePitcher,team"'),
-  "MLB schedule fetch must request regular-season games for the exact date with probable pitcher hydration",
+  "MLB schedule fetch must request regular-season and postseason games for the exact date with probable pitcher hydration",
 );
 
 assert(
@@ -50,18 +50,18 @@ assert(
     liveService.includes("const validGamePks = new Set(schedule.games.map((game) => game.gamePk));") &&
     liveService.includes("const slate = rawSlate.filter((start) => validGamePks.has(start.gamePk));") &&
     liveService.includes("filterLiveBoardSchedule(rawSchedule, date)") &&
-    liveService.includes('const regularGames = schedule.games.filter((game) => game.gameType === "R");') &&
+    liveService.includes('const boardGames = schedule.games.filter((game) => isMlbBoardGameType(game.gameType));') &&
     liveService.includes("gameDateInBoardTimeZone(game.gameDate) === boardDate") &&
     liveService.includes("guardLiveRowsForBoardDate(buildRows(new Map()), date)") &&
     liveService.includes("droppedPks=[${dropped.map((row) => row.gamePk).join(\",\")}]") &&
     liveService.includes("[live-board] drop ptDateMatch gamePk=${row.gamePk} pitcher=${row.pitcherName} gameDate="),
-  "live board service must derive rows only from same-date regular-season schedule games and keep a render-layer date guard with dropped row attribution",
+  "live board service must derive rows only from same-date regular-season and postseason schedule games and keep a render-layer date guard with dropped row attribution",
 );
 
 assert(
   liveService.includes('console.info(`[live-board] boardDate=${date} tz=${LIVE_BOARD_TIME_ZONE}`);') &&
-    liveService.includes("gameTypes=R&date=${date}&hydrate=probablePitcher%2Cteam") &&
-    liveService.includes("[live-board] filter gameType=R kept=") &&
+    liveService.includes("gameTypes=${MLB_BOARD_GAME_TYPES}&date=${date}&hydrate=probablePitcher%2Cteam") &&
+    liveService.includes("[live-board] filter gameTypes=${MLB_BOARD_GAME_TYPES} kept=") &&
     liveService.includes("[live-board] filter ptDateMatch kept=") &&
     liveService.includes("[live-board] cache write date=${date} rows=${rows.length}") &&
     liveService.includes("[live-board] cache miss reason=dateMismatch cached=${board.date}") &&
@@ -76,7 +76,7 @@ assert(
     liveService.includes("fetchMlbSchedule(nextDate, { fetchLive: true })") &&
     liveService.includes("filterLiveBoardSchedule(schedule, nextDate, { log: false })") &&
     liveService.includes("return { date: nextDate, firstPitchAt, topGame: watch?.games[0] ?? null, watch, daysScanned: offset };"),
-  "empty-day lookahead must scan live regular-season schedules up to 10 days and cache by board date",
+  "empty-day lookahead must scan live regular-season and postseason schedules up to 10 days and cache by board date",
 );
 
 assert(
