@@ -13,8 +13,8 @@ type RuntimeStateRow = {
   updated_at: string;
 };
 
-export async function readRuntimeState<T extends RuntimeStateValue>(key: string): Promise<T | null> {
-  return readRuntimeStateInternal<T>(key, { cache: "no-store" });
+export async function readRuntimeState<T extends RuntimeStateValue>(key: string, strict = false): Promise<T | null> {
+  return readRuntimeStateInternal<T>(key, { cache: "no-store" }, strict);
 }
 
 export function readCachedRuntimeState<T extends RuntimeStateValue>(key: string, revalidateSeconds: number): Promise<T | null> {
@@ -29,11 +29,15 @@ export function readCachedRuntimeState<T extends RuntimeStateValue>(key: string,
 async function readRuntimeStateInternal<T extends RuntimeStateValue>(
   key: string,
   cacheOptions: { cache: "no-store" } | { next: { revalidate: number } },
+  strict = false,
 ): Promise<T | null> {
   assertRuntimeStateKey(key);
   const baseUrl = runtimeStateSupabaseUrl();
   const serviceKey = runtimeStateSupabaseServiceKey();
-  if (!baseUrl || !serviceKey) return runtimeStateFallback.get(key) as T | undefined ?? null;
+  if (!baseUrl || !serviceKey) {
+    if (strict) throw new Error("Durable runtime state unavailable");
+    return runtimeStateFallback.get(key) as T | undefined ?? null;
+  }
 
   const url = new URL(`/rest/v1/${RUNTIME_STATE_TABLE}`, baseUrl);
   url.searchParams.set("select", "value");
@@ -48,12 +52,14 @@ async function readRuntimeStateInternal<T extends RuntimeStateValue>(
     });
     if (!response.ok) {
       reportRuntimeStateFailure("read", response.status);
+      if (strict) throw new Error(`Durable runtime state HTTP ${response.status}`);
       return runtimeStateFallback.get(key) as T | undefined ?? null;
     }
     const rows = await response.json() as Array<Pick<RuntimeStateRow, "value">>;
-    return (rows[0]?.value as T | undefined) ?? (runtimeStateFallback.get(key) as T | undefined) ?? null;
+    return (rows[0]?.value as T | undefined) ?? (strict ? null : runtimeStateFallback.get(key) as T | undefined) ?? null;
   } catch (error) {
     reportRuntimeStateFailure("read", error instanceof Error ? error.message : "unknown");
+    if (strict) throw error;
     return runtimeStateFallback.get(key) as T | undefined ?? null;
   }
 }
@@ -95,9 +101,9 @@ export async function readRuntimeStates<T extends RuntimeStateValue>(keys: strin
   }
 }
 
-export async function writeRuntimeState(key: string, value: RuntimeStateValue) {
+export async function writeRuntimeState(key: string, value: RuntimeStateValue, durableOnly = false) {
   assertRuntimeStateKey(key);
-  runtimeStateFallback.set(key, value);
+  if (!durableOnly) runtimeStateFallback.set(key, value);
   const baseUrl = runtimeStateSupabaseUrl();
   const serviceKey = runtimeStateSupabaseServiceKey();
   if (!baseUrl || !serviceKey) return false;
@@ -121,6 +127,7 @@ export async function writeRuntimeState(key: string, value: RuntimeStateValue) {
       signal: AbortSignal.timeout(RUNTIME_STATE_TIMEOUT_MS),
     });
     if (!response.ok) reportRuntimeStateFailure("write", response.status);
+    if (response.ok && durableOnly) runtimeStateFallback.set(key, value);
     return response.ok;
   } catch (error) {
     reportRuntimeStateFailure("write", error instanceof Error ? error.message : "unknown");

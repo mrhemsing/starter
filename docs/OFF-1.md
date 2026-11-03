@@ -92,3 +92,34 @@ links, cache HIT and byte identity. Source evidence is retained separately from
 the production snapshot. The build-memory guard remains 2 concurrent static
 generations per worker, 16-page minimum grouping and no more than 40 candidates;
 Phase 1 has 22 static candidates and builds under the default Node heap.
+
+## Phase 2: current team is not historical team
+
+The separate pitcher-current-teams runtime key stores current MLB affiliations,
+checked timestamps, and an append-only transaction log. Weekly Monday 12:00 UTC
+cron is authenticated, runs only under season_complete, and reads the minimal
+canonical pitcher registry across all stored seasons (379 pitchers on first run).
+MLB currentTeam parentOrgId resolves affiliated minor/winter clubs; MLB org 11
+is free agency. Missing assignments are logged, not guessed. All batches must
+complete before the single state write. Strict reads and durable-only writes
+prevent failures from replacing persisted history or publishing an unsaved map.
+
+Only current-team presentation is overlaid: Watchlist cards, suggestions, pitcher
+headers/Person JSON-LD, directory, and Wire relevance inputs. Historical start
+records, Form calculations, rotation standings, and frozen /2026 are unchanged.
+The overlay stops with the shared in-season flag so it cannot shadow subsequent
+in-season data. Wire relevance rules remain unchanged. Assignment changes use
+neutral Team updated to wording because the assignments endpoint alone cannot
+prove whether a player was traded or signed. No transaction type is invented.
+
+Headshot branding receives the current team; photo regeneration is not supported
+by this pipeline, so every change logs spring-refresh-pending. Initial sync
+checked 379/379, saved 25 differences, and had zero unresolved assignments.
+
+Phase 2 checks exercise seeded changes, real Watchlist hydration, transaction
+rendering, suggested follows, actual pitcher header tree, historical byte
+freeze, repeat idempotency, API/write failure, weekly gating, affiliate/free
+agent resolution, and unchanged Wire relevance. DOM checks at 1440 and 390
+cover real current-team data in suggestions, followed cards and pitcher header.
+The cron rejects unauthenticated requests; its live scheduled invocation is
+not claimed until Vercel runs it. Phase 3 remains unimplemented.

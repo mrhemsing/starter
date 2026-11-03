@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/home-gs-plus-proofs",
       "schedule": "45 10 * * *"
+    },
+    {
+      "path": "/api/cron/offseason-teams",
+      "schedule": "0 12 * * 1"
     }
   ]
 }

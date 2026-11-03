@@ -18,6 +18,10 @@ export const DEFAULT_SEASON_STATE: SeasonState = {
 
 export async function getSeasonState(): Promise<SeasonState> {
   const stored = await readCachedRuntimeState<Record<string, unknown>>("season-state", 300);
+  return resolveSeasonState(stored);
+}
+
+export function resolveSeasonState(stored: Record<string, unknown> | null): SeasonState {
   if (!stored) return DEFAULT_SEASON_STATE;
   if ((stored.status !== "in_season" && stored.status !== "season_complete") ||
       !Number.isInteger(stored.year) || typeof stored.finalSlateDate !== "string" ||

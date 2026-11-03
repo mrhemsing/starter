@@ -639,6 +639,30 @@ function canonicalStoreSupabaseHeaders(serviceKey: string) {
   };
 }
 
+// Weekly offseason job only: minimal projection across all stored seasons.
+// This is intentionally not a Form leaderboard read and never writes history.
+export async function readCanonicalPitcherRegistry(): Promise<Array<{ pitcherId: string; team: string }>> {
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) throw new Error("Pitcher registry requires durable canonical storage");
+  const registry = new Map<string, { pitcherId: string; team: string }>();
+  for (let offset = 0; ; offset += 1000) {
+    const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
+    url.searchParams.set("select", "pitcher_mlb_id,date,team:record->>team");
+    url.searchParams.set("order", "date.asc,game_pk.asc,pitcher_mlb_id.asc");
+    url.searchParams.set("limit", "1000");
+    url.searchParams.set("offset", String(offset));
+    const response = await timedCanonicalStoreFetch("canonical-pitcher-registry.read", url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey), cache: "no-store",
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Pitcher registry HTTP ${response.status}`);
+    const rows = await response.json() as Array<{ pitcher_mlb_id: number; team: string }>;
+    for (const row of rows) if (row.pitcher_mlb_id && row.team) registry.set(String(row.pitcher_mlb_id), { pitcherId: String(row.pitcher_mlb_id), team: row.team });
+    if (rows.length < 1000) break;
+  }
+  return [...registry.values()];
+}
+
 function canonicalStoreSupabaseUrl() {
   return process.env.THE_BUMP_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 }

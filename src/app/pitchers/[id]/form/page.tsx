@@ -1,3 +1,4 @@
+import { readCurrentTeams, withCurrentTeam } from "@/lib/data/current-team-service";
 import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -93,14 +94,15 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   if (!form) notFound();
 
   const { summary, series } = form;
+  const currentPitcher = withCurrentTeam(summary, await readCurrentTeams());
   const recentStartIds = series.slice(-3).reverse().map((start) => start.id);
   const pitcherPromise = getPitcherApiResponse(id);
   const strikeoutResultsPromise = readPitcherStrikeoutLineResults(series, Number(summary.pitcherId));
   const recentDepthBundlePromise = getRecentStartDepthWithHighlights(recentStartIds);
   const nextStartPromise = getProfileNextStart(summary.pitcherId, summary.rgs);
-  const wireEventsPromise = readOrFetchPitcherHeadlineEvents([summary]);
+  const wireEventsPromise = readOrFetchPitcherHeadlineEvents([currentPitcher]);
   const followedIds = await followedIdsPromise;
-  const jsonLd = jsonLdForPitcherForm(form);
+  const jsonLd = jsonLdForPitcherForm({ ...form, summary: currentPitcher });
   const best = series.reduce((winner, point) => point.gsPlus > winner.gsPlus ? point : winner, series[0]);
   const worst = series.reduce((winner, point) => point.gsPlus < winner.gsPlus ? point : winner, series[0]);
   const streak = countCurrentPlusStreak(series);
@@ -125,7 +127,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
             <Headshot
               playerId={summary.pitcherId}
               name={summary.name}
-              team={summary.team}
+              team={currentPitcher.team}
               size="hero"
               band={thermalBand}
               sampleSufficient={summary.windowCount >= window}
@@ -134,7 +136,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
               className="mt-1"
             />
             <div className="min-w-0 flex-1">
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{summary.team} / Last {window} qualified starts</p>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">{currentPitcher.team} / Last {window} qualified starts</p>
               <h1 className="mt-3 break-words font-serif text-5xl font-black leading-none text-zinc-50 sm:text-6xl lg:text-7xl">{summary.name}</h1>
               <p className={`mt-3 font-mono text-xs uppercase tracking-[0.16em] ${form.stale ? "text-amber-300" : "text-zinc-500"}`}>
                 {form.formThroughDate

@@ -1,3 +1,4 @@
+import { readCurrentTeams, withCurrentTeam } from "@/lib/data/current-team-service";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getKnownWatchlistPitcherIds, type WatchlistWireEvent } from "@/lib/data/watchlist-service";
@@ -93,7 +94,8 @@ export async function readOrFetchPitcherHeadlineEvents(pitchers: FormSummary[]):
   if (missingPitchers.length === 0) return events;
 
   const leaderboard = await getFormLeaderboard({ qualifiedOnly: false });
-  const allPitchers = leaderboard.pitchers;
+  const currentTeams = await readCurrentTeams();
+  const allPitchers = leaderboard.pitchers.map((pitcher) => withCurrentTeam(pitcher, currentTeams));
   const adapters = await activeAdapters();
 
   await Promise.all(missingPitchers.map(async (pitcher) => {
@@ -130,10 +132,11 @@ export async function ingestWatchlistHeadlines(): Promise<WatchlistHeadlineInges
   }
 
   const leaderboard = await getFormLeaderboard({ qualifiedOnly: false });
+  const currentTeams = await readCurrentTeams();
+  const allPitchers = leaderboard.pitchers.map((pitcher) => withCurrentTeam(pitcher, currentTeams));
   const pitchers = pitcherIds
-    .map((pitcherId) => leaderboard.pitchers.find((pitcher) => pitcher.pitcherId === pitcherId))
+    .map((pitcherId) => allPitchers.find((pitcher) => pitcher.pitcherId === pitcherId))
     .filter((pitcher): pitcher is FormSummary => Boolean(pitcher));
-  const allPitchers = leaderboard.pitchers;
   const adapters = await activeAdapters();
   const result: WatchlistHeadlineIngestResult = {
     attempted: true,
@@ -250,7 +253,7 @@ async function fetchEspnHeadlines(pitcher: FormSummary): Promise<HeadlineCandida
   });
 }
 
-function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSummary, allPitchers: FormSummary[]) {
+export function filterHeadlineCandidate(candidate: HeadlineCandidate, pitcher: FormSummary, allPitchers: FormSummary[]) {
   const source = truncateHeadline(decodeHtml(stripTags(candidate.source)).trim());
   const headline = truncateHeadline(stripSourceSuffix(decodeHtml(stripTags(candidate.headline)).trim(), source));
   const url = canonicalUrl(candidate.url);

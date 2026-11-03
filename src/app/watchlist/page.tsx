@@ -1,3 +1,4 @@
+import { readCurrentTeams, withCurrentTeam } from "@/lib/data/current-team-service";
 import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -64,8 +65,9 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
     getWatchlistView(accountId, { sort: params?.sort }),
     getFormLeaderboard({ qualifiedOnly: false }),
   ]);
+  const currentTeams = await readCurrentTeams();
   const followedIds = new Set(watchlist.pitcherIds);
-  const searchResults = buildSearchResults(leaderboard.pitchers, followedIds, query);
+  const searchResults = buildSearchResults(leaderboard.pitchers.map((pitcher) => withCurrentTeam(pitcher, currentTeams)), followedIds, query);
   const sectionCountsReconcile = watchlist.pitchingSoon.length + watchlist.bench.length === watchlist.entries.length;
   if (!sectionCountsReconcile) {
     console.warn("Watchlist roster counts do not reconcile; hiding section counts", {
@@ -83,7 +85,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">{seasonComplete ? "Offseason" : "Daily ritual"}</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Watchlist</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            <span className="block">Follow starters from Heat Check or pitcher pages.</span>
+            <span className="block">{seasonComplete ? "Track your arms through the offseason" : "Follow starters from Heat Check or pitcher pages."}</span>
             <span className="block lg:whitespace-nowrap">{seasonComplete ? `Final ${state.year} form and Wire news for your followed arms.` : "This view joins your followed arms to current Form, next scheduled start, and event-driven Wire notes."}</span>
           </p>
           <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-xs sm:gap-3" data-responsive-check="watchlist-summary-stats">
@@ -95,7 +97,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
 
         <section className="grid gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
-            {watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
+            {!seasonComplete && watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
             {seasonComplete ? <p className="mb-4 text-zinc-400">Next start: {state.year + 1} season. The morning brief is paused for the offseason.</p> : <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} showCount={sectionCountsReconcile} />}
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
@@ -374,6 +376,7 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
             <h2 className="truncate font-serif text-2xl font-bold leading-tight text-zinc-50">{entry.name}</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: bandColor }}>{entry.team} · {qualifiedSample ? tierLabel(entry.tier) : LIMITED_SAMPLE_FORM_LABEL} · {entry.windowCount} starts</p>
           </Link>
+          {entry.teamChangeNote ? <p data-team-change className="mt-2 text-xs text-amber-200">{entry.teamChangeNote}</p> : null}
           {state === "scheduled" ? <p className="mt-2 truncate text-xs text-zinc-500">{lastLine}</p> : null}
           {state === "scheduled" ? <PitcherAvailabilityNote availability={entry.availability} compact className="mt-2" /> : null}
           <div className="mt-3">
@@ -390,7 +393,7 @@ function WatchlistRow({ entry, today, state = "scheduled" }: { entry: WatchlistE
         </div>
       </div>
       <div className="min-w-0">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">Form</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{entry.offseasonYear ? `Final ${entry.offseasonYear} form` : "Form"}</p>
         <div className="mt-1">
           <FormValueWhisperLine
             value={entry.rgs}
@@ -425,7 +428,7 @@ function WatchlistNoStartState({ entry }: { entry: WatchlistEntry }) {
   const status = watchlistNoStartStatus(entry);
   return (
     <div className="grid gap-2" data-watchlist-roster-state="unscheduled">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">NEXT: TBD</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">{entry.offseasonYear ? `Next start: ${entry.offseasonYear + 1} season` : "NEXT: TBD"}</p>
       {status ? (
         <span className="inline-flex min-h-8 w-fit items-center rounded border border-rose-300/35 bg-rose-300/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-rose-200" data-watchlist-no-start-status={status}>
           {status}

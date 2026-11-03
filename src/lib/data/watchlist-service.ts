@@ -1,3 +1,4 @@
+import { readCurrentTeams, withCurrentTeam } from "@/lib/data/current-team-service";
 import { getSeasonState } from "@/lib/season-state";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -42,6 +43,8 @@ export type WatchlistEntry = FormSummary & {
   wireEvents: WatchlistWireEvent[];
   headlineEvents: WatchlistWireEvent[];
   signalEvents: WatchlistWireEvent[];
+  teamChangeNote?: string;
+  offseasonYear?: number;
 };
 
 export type WatchlistLiveStart = {
@@ -163,7 +166,8 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   }
   await rememberWatchlistPitcherIds(pitcherIds);
 
-  const seasonComplete = (await getSeasonState()).status === "season_complete";
+  const seasonState = await getSeasonState();
+  const seasonComplete = seasonState.status === "season_complete";
   const today = getHomeSlateDate();
   const [leaderboard, nextStarts, upcomingStarts, headlineEventsByPitcher, liveBoard, noHitterEventsByPitcher] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
@@ -176,6 +180,7 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   const lastStartPercentiles = buildLastStartPercentiles(leaderboard.pitchers);
   const liveRowsByPitcherId = new Map((liveBoard?.rows ?? []).filter(isWatchlistLiveRow).map((row) => [row.pitcherId, row]));
   const byId = new Map(leaderboard.pitchers.map((pitcher) => [pitcher.pitcherId, pitcher]));
+  const currentTeams = await readCurrentTeams();
   const hydratedEntries = pitcherIds
     .map((pitcherId) => byId.get(pitcherId))
     .filter((pitcher): pitcher is FormSummary => Boolean(pitcher))
@@ -188,7 +193,8 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
         ...capWireEventsPerPitcherDay(headlineEventsByPitcher.get(pitcher.pitcherId) ?? [], pitcher.name),
       ];
       return {
-        ...pitcher,
+        ...withCurrentTeam(pitcher, currentTeams),
+        ...(seasonComplete ? { offseasonYear: seasonState.year } : {}),
         nextStart,
         signalEvents,
         headlineEvents,

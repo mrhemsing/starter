@@ -1,3 +1,4 @@
+import { readCurrentTeams, withCurrentTeam } from "@/lib/data/current-team-service";
 import Link from "next/link";
 import { PitcherAvailabilityNote } from "@/components/pitcher-availability";
 import { SiteHeader } from "@/components/site-header";
@@ -14,7 +15,8 @@ export default async function PitchersIndexPage() {
   const today = getHomeSlateDate();
   const rankedDate = addDays(today, -1);
   const leaderboard = await getFormLeaderboard({ window: 5, qualifiedOnly: true });
-  const pitchers = [...leaderboard.pitchers].sort((a, b) => a.name.localeCompare(b.name));
+  const currentTeams = await readCurrentTeams();
+  const pitchers = leaderboard.pitchers.map((pitcher) => withCurrentTeam(pitcher, currentTeams)).sort((a, b) => a.name.localeCompare(b.name));
   const teams = [...new Set(pitchers.map((pitcher) => pitcher.team).filter(Boolean))].sort();
 
   return (
