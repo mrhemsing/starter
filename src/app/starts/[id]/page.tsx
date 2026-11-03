@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type React from "react";
@@ -194,6 +195,7 @@ export default async function StartPage({ params, searchParams }: StartPageProps
 async function RankedStartsDate({ date, searchParams }: { date: string; searchParams?: StartPageProps["searchParams"] }) {
   const params = await searchParams;
   const today = getHomeSlateDate();
+  const seasonComplete = (await getSeasonState()).status === "season_complete";
   const pageData = await getRankedStartsPageData(date, today);
   const { slateStarts, completionState, slateProgress, archiveNavigation } = pageData;
   const starts = await attachHistoricalStrikeoutLineResults(slateStarts.filter((start) => start.source?.line !== "fixture"));
@@ -203,7 +205,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
   const scoreScale = summarizeSlateScoreScale(qualifiedStarts);
   const sort = isRankedStartSort(params?.sort) ? params?.sort ?? "rank" : "rank";
   const band = parseQualityBand(params?.band);
-  const showOpeners = params?.openers === "1";
+  const showOpeners = seasonComplete || params?.openers === "1";
   const qualityBandCounts = countQualityBands(qualifiedStarts);
   const pairs = pairedStarts(starts);
   const highlights = new Map(pageData.highlights);
@@ -221,7 +223,9 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
     });
   const groupedStarts = rankedStartGroups(visibleStarts, sort, band, qualityBandCounts);
   const previousRankedDate = archiveNavigation.previousDate ?? (archiveNavigation.latestDate !== date ? archiveNavigation.latestDate : null);
-  const statusLabel = completionStatusLabel(completionState, slateProgress);
+  const statusLabel = seasonComplete && !completionState.isFinal && starts.length > 0
+    ? `ARCHIVED SLATE · ${starts.length} STARTS · ${completionState.completedStarts} FINAL`
+    : completionStatusLabel(completionState, slateProgress);
   const emptyStateCause = resolveRankedStartsEmptyCause({
     date,
     today,
@@ -242,7 +246,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           <SiteHeader active="starts" today={today} />
           <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Ranked Starts</h1>
           <p className="mt-2 max-w-2xl truncate text-sm leading-6 text-zinc-400">Completed starts ranked by GS+.</p>
-          <section className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls">
+          <section className="mt-4 grid min-w-0 gap-2" data-responsive-check="ranked-starts-compact-controls" data-slate-row-count={starts.length}>
             <div className="grid min-w-0 justify-items-start gap-3">
               <RankedStartsArchiveNav
                 activeDate={archiveNavigation.activeDate}
@@ -255,6 +259,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                   initialLabel={statusLabel}
                   initialState={slateProgress}
                   variant="ranked"
+                  frozen={seasonComplete}
                 />
               ) : null}
             </div>
@@ -307,6 +312,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
           {emptyStateCause ? (
             <RankedStartsEmptyState
               cause={emptyStateCause}
+              seasonComplete={seasonComplete}
               completionState={completionState}
               firstPitchAt={slateProgress.firstPitchAt}
               settledStartsCount={starts.length}
@@ -343,7 +349,7 @@ async function RankedStartsDate({ date, searchParams }: { date: string; searchPa
                     </div>
                   </div>
                 ))}
-                {completionState.liveStarts > 0 ? (
+                {!seasonComplete && completionState.liveStarts > 0 ? (
                   <p className="pt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500" data-ranked-starts-live-footer>
                     {completionState.liveStarts} {completionState.liveStarts === 1 ? "start is" : "starts are"} still live. Board updates as starts settle.
                   </p>
@@ -412,6 +418,7 @@ function resolveRankedStartsEmptyCause({
 }
 
 function RankedStartsEmptyState({
+  seasonComplete = false,
   cause,
   completionState,
   firstPitchAt,
@@ -421,6 +428,7 @@ function RankedStartsEmptyState({
   previousRankedDate,
   nextRankedDate,
 }: {
+  seasonComplete?: boolean;
   cause: RankedStartsEmptyCause;
   completionState: {
     date: string;
@@ -437,7 +445,9 @@ function RankedStartsEmptyState({
   previousRankedDate: string | null;
   nextRankedDate: string | null;
 }) {
-  const copy = rankedStartsEmptyStateCopy(cause, { ...completionState, firstPitchAt }, settledStartsCount);
+  const copy = seasonComplete && cause === "off-day"
+    ? { title: `Off day · ${formatShortDate(date)}`, detail: `${date.slice(0, 4)} season archive. No starts were recorded on this date.` }
+    : rankedStartsEmptyStateCopy(cause, { ...completionState, firstPitchAt }, settledStartsCount);
 
   return (
     <section
@@ -450,12 +460,12 @@ function RankedStartsEmptyState({
       <p className="mt-3 font-serif text-2xl font-bold text-zinc-50">{copy.title}</p>
       <p className="mt-2 text-sm text-zinc-400">{copy.detail}</p>
       <div className="mt-5 flex flex-wrap gap-3">
-        {cause === "live-none-settled" && completionState.liveStarts > 0 ? (
+        {!seasonComplete && cause === "live-none-settled" && completionState.liveStarts > 0 ? (
           <CtaArrow href={liveDateHref(date)} tone="orange" className="bg-orange-300/10 hover:bg-orange-300 hover:text-zinc-950">
             Live scoreboard
           </CtaArrow>
         ) : null}
-        {cause === "live-none-settled" && completionState.liveStarts === 0 ? (
+        {!seasonComplete && cause === "live-none-settled" && completionState.liveStarts === 0 ? (
           <CtaArrow href={upcomingDateHref(date)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
             Today&apos;s probables
           </CtaArrow>
@@ -465,7 +475,7 @@ function RankedStartsEmptyState({
             Clear filter
           </FastFilterLink>
         ) : null}
-        {cause === "off-day" ? (
+        {!seasonComplete && cause === "off-day" ? (
           <CtaArrow href={upcomingDateHref(date)} tone="amber" className="bg-amber-300/10 hover:bg-amber-300 hover:text-zinc-950">
             Upcoming
           </CtaArrow>
@@ -552,7 +562,7 @@ function BandHeader({ label, count, color }: { label: string; count: number; col
 async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: number) {
   const [highlight, resolvedImage, metrics] = await Promise.all([
     resolveFeaturedStartHighlight(start),
-    resolveTopPerformerImage(start, null),
+    resolveTopPerformerImage(start, null, { exactGameOnly: true }),
     resolveTopPerformerMetrics(start),
   ]);
   const image = resolvedImage?.source === "action" ? resolvedImage : null;
@@ -568,6 +578,7 @@ async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: nu
     rank: start.rank,
     slateCount,
     image,
+    fallbackPitcherId: start.pitcher.mlbId,
     highlight,
     status: "archived" as const,
     scoreStatusLabel: null,
@@ -1302,7 +1313,7 @@ function completionStatusLabel(
   slateProgress: SlateProgressState,
 ) {
   if (state.totalGames === 0 && state.totalStarts === 0) return null;
-  if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;
+  if (state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;
   if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;
   if (state.liveStarts > 0 || slateProgress.state === "starts-in-progress") return inProgressStartsLabel(state);
 

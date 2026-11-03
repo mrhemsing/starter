@@ -72,6 +72,18 @@ try {
         assert.equal(await row.locator("[data-review-gem]").count(), media.highlights[start.id] ? 1 : 0);
         if (media.highlights[start.id]) assert.equal(await row.getByRole("button", { name: /^Play .* highlight/ }).count(), 1);
       }
+      for (const [offset, start] of review.topStarts.slice(3, route === "/" ? 5 : 25).entries()) {
+        const row = rows.nth(offset + 3);
+        assert.equal(await row.locator("[data-review-gem]").count(), 0);
+        const button = row.getByRole("button", { name: `Open ${start.pitcher.name} MLB highlight` });
+        assert.equal(await button.count(), media.highlights[start.id] ? 1 : 0);
+        if (media.highlights[start.id]) {
+          await button.click();
+          const modal = page.getByRole("dialog");
+          assert.equal(await modal.locator("iframe").getAttribute("src"), media.highlights[start.id].embedUrl);
+          await modal.getByRole("button", { name: "Close highlight" }).click();
+        }
+      }
       if (route === "/") {
         const cards = page.locator('[data-responsive-check="heat-row"]');
         assert.equal(await cards.count(), review.home.hot.length + review.home.cold.length);

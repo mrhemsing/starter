@@ -13,14 +13,16 @@ type SlateCountsProps = {
   initialLabel?: string;
   variant: "home" | "ranked";
   className?: string;
+  frozen?: boolean;
 };
 
-export function SlateCounts({ initialState, initialLabel, variant, className = "" }: SlateCountsProps) {
+export function SlateCounts({ initialState, initialLabel, variant, className = "", frozen = false }: SlateCountsProps) {
   const router = useRouter();
   const [slateState, setSlateState] = useState(initialState);
   const [label, setLabel] = useState(initialLabel ?? slateCountsLabel(variant, initialState));
 
   useEffect(() => {
+    if (frozen) return;
     let cancelled = false;
     let timeout: number | undefined;
     let refreshedStaleShell = false;
@@ -62,7 +64,7 @@ export function SlateCounts({ initialState, initialLabel, variant, className = "
       cancelled = true;
       if (timeout) window.clearTimeout(timeout);
     };
-  }, [initialState.completedStarts, initialState.date, initialState.liveStarts, router, variant]);
+  }, [initialState.completedStarts, initialState.date, initialState.liveStarts, router, variant, frozen]);
 
   useEffect(() => {
     if (variant !== "home" || slateState.state !== "pre-first-pitch" || !slateState.firstPitchAt) return;

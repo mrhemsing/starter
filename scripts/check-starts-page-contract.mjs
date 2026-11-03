@@ -210,7 +210,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v18-canonical-gap-recovery";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v19-canonical-record-first";') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&
@@ -262,7 +262,7 @@ assert(
     rankedStartsRevalidation.includes("rankedStartsDateCacheTag(date)") &&
     rankedStartsRevalidation.includes("rankedStartsPath(date)") &&
     rankedStartsRevalidation.includes('console.log("[ranked-starts-revalidation]"') &&
-    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? undefined;') &&
+    warmLiveStartsCron.includes('const date = new URL(request.url).searchParams.get("date") ?? getHomeSlateDate();') &&
     warmLiveStartsJob.includes("if (dateOverride && /^\\d{4}-\\d{2}-\\d{2}$/.test(dateOverride)) return dateOverride;") &&
     warmLiveStartsJob.includes('revalidateRankedStartsDate(date, options, completion.isFinal ? "slate-complete" : "settle-progress");') &&
     archiveRevalidationRoute.includes('revalidateRankedStartsDate(date, { revalidatePath, revalidateTag }, "archive-backstop")') &&
@@ -690,10 +690,10 @@ assert(
 
 assert(
     !startsPage.includes("function RankedSlateStatus") &&
-    startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
+    startsPage.includes("completionStatusLabel(completionState, slateProgress);") &&
     startsPage.includes("<SlateCounts") &&
     slateCounts.includes('className="ranked-live-dot h-2 w-2 rounded-full bg-[#FF5A1F]"') &&
-    startsPage.includes('if (state.isPast || state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
+    startsPage.includes('if (state.isFinal || slateProgress.state === "all-starts-complete") return `SLATE COMPLETE · ${state.totalStarts} STARTS`;') &&
     startsPage.includes('if (!state.isToday) return `PROBABLES · ${state.totalGames} GAMES`;') &&
     startsPage.includes("return inProgressStartsLabel(state);") &&
     startsPage.includes("function inProgressStartsLabel(state: { completedStarts: number; liveStarts: number; totalStarts: number })") &&
@@ -860,12 +860,12 @@ assert(
     startsPage.includes("veloSparkline: metrics?.veloSparkline ?? [],") &&
     startsPage.includes('resolvedImage?.source === "action" ? resolvedImage : null') &&
     topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
-    topPerformerCard.includes('const noPhoto = status === "archived" && !imageUrl;') &&
+    topPerformerCard.includes('const noPhoto = status === "archived" && !imageUrl && !fallbackPitcherId;') &&
     globals.includes(".top-performer-card {\n  opacity: 1;\n  transform: none;\n}") &&
     !globals.includes(".top-performer-card {\n  opacity: 0;") &&
     !globals.includes(".top-performer-card.is-visible {\n  opacity: 1;\n  transform: translateY(0);\n}") &&
     topPerformerCard.includes('eyebrow: `START OF THE DAY · ${dateLabel.toUpperCase()}`,') &&
-    topPerformerCard.includes('data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}') &&
+    topPerformerCard.includes('data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : fallbackPitcherId ? "headshot" : "empty"}') &&
     startRanking.includes("const { rank: _staleRank, ...rest } = start;") &&
     startRanking.includes("export function validateRankedStartOrder"),
   "settled ranked pages must derive rank after canonical score overlay and render the shared archived Start of the Day hero with a no-photo variant",
@@ -931,7 +931,7 @@ for (const leader of await readArchivedStartOfDayLeaders()) {
 
 assert(
   startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&
-    startsPage.includes("const statusLabel = completionStatusLabel(completionState, slateProgress);") &&
+    startsPage.includes("completionStatusLabel(completionState, slateProgress);") &&
     startsPage.includes("<SlateCounts") &&
     startsPage.includes("initialLabel={statusLabel}") &&
     startsPage.includes("initialState={slateProgress}") &&

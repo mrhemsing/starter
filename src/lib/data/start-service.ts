@@ -1,3 +1,6 @@
+import { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
+import { getSeasonArchive } from "@/lib/data/season-archive-service";
+import { getSeasonState } from "@/lib/season-state";
 import { unstable_cache } from "next/cache";
 import { canonicalizeStartSummaries, canonicalStartRecordFromSummary, deriveStartEventFlags, summarizeCanonicalReconciliation } from "@/lib/canonical-start-record";
 import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record";
@@ -210,6 +213,8 @@ const getCachedRankedScheduleRegistryDates = unstable_cache(
 );
 
 export async function getRankedStartsDefaultDate(today = getHomeSlateDate()) {
+  const season = await getSeasonState();
+  if (season.status === "season_complete") return (await getSeasonArchive(season.year)).finalSlateDate;
   const recentDates = Array.from({ length: 4 }, (_, index) => addDays(today, -index));
   const activityStates = await Promise.all(recentDates.map((date) => getRankedSlateCompletionState(date, today)));
   const activeState = activityStates.find(hasRankedSlateActivity);
@@ -250,6 +255,8 @@ export async function getDefaultSlateDates(today = getHomeSlateDate(), _now = ne
 }
 
 async function getRankedStartsCompletedSlateDates(activeDate: string, today: string) {
+  const season = await getSeasonState();
+  if (season.status === "season_complete") return (await getSeasonArchive(season.year)).dates;
   const seasons = Array.from(new Set([activeDate.slice(0, 4), today.slice(0, 4)]));
   const [seasonDates, todayCompletion, activeCompletion] = await Promise.all([
     Promise.all(seasons.map((season) => getCachedRankedScheduleRegistryDates(season))),
@@ -279,11 +286,8 @@ function isUpcomingDefaultActiveGame(game: MlbScheduleGame) {
 }
 
 export async function getRankedSlateCompletionState(date: string, today = getHomeSlateDate()): Promise<RankedSlateCompletionState> {
-  const [slateStarts, slateContext] = await Promise.all([
-    getDailySlate({ window: date === today ? "today" : "yesterday", date }),
-    getRankedSlateContextForStarts(date, today, []),
-  ]);
-  const completionState = getRankedSlateCompletionStateFromInputs(date, today, slateStarts, slateContext.liveSchedule, slateContext.archivedSchedule);
+  const slateStarts = await getDailySlate({ window: date === today ? "today" : "yesterday", date, allowDemoFallback: false });
+  const completionState = (await getRankedSlateContextForStarts(date, today, slateStarts)).completionState;
   return completionState;
 }
 
@@ -319,12 +323,22 @@ export async function getRankedSlateContextForStarts(date: string, today: string
   const scheduleFallback = emptySchedule(date);
   const liveScheduleInput = liveSchedule ?? archivedSchedule ?? scheduleFallback;
   const schedule = liveScheduleInput.source === "live" ? liveScheduleInput : archivedSchedule ?? liveScheduleInput;
-  const completionState = slateStarts.length > 0
-    ? getRankedSlateCompletionStateFromInputs(date, today, slateStarts, liveScheduleInput, archivedSchedule, canonicalSlateState)
-    : null;
-  const slateProgress = slateStarts.length > 0
-    ? getSlateProgressState(schedule, summarizeCanonicalStartBuckets(slateStarts).finalStarts)
-    : null;
+  const realStarts = slateStarts.filter((start) => start.source?.line !== "fixture");
+  const completionState = getRankedSlateCompletionStateFromInputs(date, today, realStarts, liveScheduleInput, archivedSchedule, canonicalSlateState);
+  let slateProgress = getSlateProgressState(schedule, summarizeCanonicalStartBuckets(realStarts).finalStarts);
+  if (settled && realStarts.length > 0) {
+    const counts = summarizeCanonicalStartBuckets(realStarts);
+    const games = new Set(realStarts.map((start) => start.gamePk)).size;
+    Object.assign(completionState, {
+      totalStarts: counts.totalStarts, completedStarts: counts.finalStarts,
+      totalGames: games, liveStarts: counts.liveStarts,
+      isFinal: counts.finalStarts === counts.totalStarts,
+      remainingStarts: counts.totalStarts - counts.finalStarts,
+    });
+    slateProgress = { ...slateProgress, totalGames: games, totalStarts: counts.totalStarts,
+      completedStarts: counts.finalStarts, liveStarts: counts.liveStarts,
+      state: completionState.isFinal ? "all-starts-complete" : "reconciling" };
+  }
 
   return {
     liveSchedule: liveScheduleInput,
@@ -2033,7 +2047,7 @@ function scheduledGameToStarts(
 
 const getCachedArchivedSlateStarts = unstable_cache(
   async (date: string) => buildArchivedSlateStarts(date),
-  ["archived-slate-starts", "v3-canonical-gap-recovery"],
+  ["archived-slate-starts", "v4-canonical-record-first"],
   { revalidate: ARCHIVED_SLATE_REVALIDATE_SECONDS, tags: [RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG] },
 );
 
@@ -2048,6 +2062,12 @@ export async function getArchivedSlateStarts(date: string): Promise<StartSummary
 }
 
 async function buildArchivedSlateStarts(date: string): Promise<StartSummary[]> {
+  // Canonical rows remain readable regardless of ingestion/season state.
+  const records = await readCanonicalStartRecords(date);
+  if (records.some((record) => record.status === "final")) {
+    return rankStarts(records.filter((record) => record.status === "final" || record.status === "live").map(canonicalRecordToFormStart));
+  }
+
   const archivedStarts = await readCompletedStarts(date);
 
   const starts = canonicalizeStartSummaries(rankStarts(archivedStarts.map((start) => archivedCompletedStartToSummary(start))));

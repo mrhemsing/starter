@@ -38,7 +38,7 @@ assert(!/placeholder|generated-action|unapproved/.test(fallback));
 const { SeasonReviewTopStarts, SeasonReviewFinalForm, SeasonReviewAwards } = loadProjectTs("src/components/season-review.tsx");
 const rows = renderToStaticMarkup(createElement(SeasonReviewTopStarts, { review, limit: 5 }));
 assert.equal((rows.match(/data-headshot-size=/g) ?? []).length, 5);
-assert.equal((rows.match(/data-review-gem=/g) ?? []).length, Object.values(media.highlights).filter(Boolean).length);
+assert.equal((rows.match(/data-review-gem=/g) ?? []).length, review.topStarts.slice(0, 3).filter(start => media.highlights[start.id]).length);
 const missingId = Object.entries(media.highlights).find(([, value]) => !value)[0];
 assert(!rows.split(`data-review-start-id="${missingId}"`)[1].split("</li>")[0].includes("data-review-gem"));
 const form = renderToStaticMarkup(createElement(SeasonReviewFinalForm, { review }));

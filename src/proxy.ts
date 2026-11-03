@@ -1,7 +1,9 @@
+import { readRuntimeState } from "@/lib/data/runtime-state-store";
+import { resolveSeasonState } from "@/lib/season-state";
 import { NextResponse, type NextRequest } from "next/server";
 import { isIsoDateRouteParam, isValidDateRouteParam } from "@/lib/route-date-validation";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const invalidPathDate = hasInvalidPathDate(request.nextUrl.pathname);
   if (invalidPathDate || hasInvalidQueryDate(request.nextUrl)) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
@@ -9,6 +11,13 @@ export function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.rewrite(new URL("/404", request.url), { status: 404 });
+  }
+  const path = request.nextUrl.pathname;
+  if ((path === "/live" || path.startsWith("/live/") || path === "/upcoming" || path.startsWith("/upcoming/")) && !path.startsWith("/upcoming/streamers")) {
+    // Proxy has no Next data-cache context. Read the same runtime key directly.
+    if (resolveSeasonState(await readRuntimeState("season-state")).status === "season_complete") {
+      return NextResponse.redirect(new URL("/", request.url), 302);
+    }
   }
   return NextResponse.next();
 }

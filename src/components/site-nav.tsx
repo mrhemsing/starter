@@ -18,13 +18,13 @@ export async function SiteNav({ active, today, rankedDate, liveSnapshot, seasonS
     { key: "home" as const, label: "Home", href: "/" },
     { key: "starts" as const, label: "Ranked Starts", href: rankedStartsLatestPath() },
     { key: "heat" as const, label: "Heat Check", href: heatCheckPath() },
-    ...liveItem,
-    ...upcomingItem,
+    ...(seasonComplete ? [] : liveItem),
+    ...(seasonComplete ? [] : upcomingItem),
     { key: "watchlist" as const, label: "Watchlist", href: watchlistPath() },
   ];
 
   return (
-    <nav className="grid w-full grid-cols-3 gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:flex md:w-auto md:items-center md:gap-6 md:p-0 md:text-xs md:tracking-[0.18em]" aria-label="Primary" data-responsive-check="home-mobile-nav">
+    <nav className={`grid w-full ${seasonComplete ? "grid-cols-2" : "grid-cols-3"} gap-2 pb-4 pt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 md:flex md:w-auto md:items-center md:gap-6 md:p-0 md:text-xs md:tracking-[0.18em]`} aria-label="Primary" data-responsive-check="home-mobile-nav">
       {items.map((item) => (
         <PrimaryNavLink
           key={item.key}

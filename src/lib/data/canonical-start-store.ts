@@ -107,6 +107,34 @@ export async function readCanonicalStartRecords(date: string): Promise<Canonical
   return (await readCanonicalStartStore(date)).records;
 }
 
+// Read dates from actual settled records, not schedule game types or stale slate summaries.
+export async function readCanonicalSettledSlateDates(season: string): Promise<string[]> {
+  if (!/^\d{4}$/.test(season)) throw new Error("invalid canonical season");
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) throw new Error("Canonical archive unavailable");
+  const dates = new Set<string>();
+  for (let offset = 0; ; offset += 1000) {
+    const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
+    url.searchParams.set("select", "date");
+    url.searchParams.set("date", `gte.${season}-01-01`);
+    url.searchParams.append("date", `lte.${season}-12-31`);
+    url.searchParams.set("status", "eq.final");
+    url.searchParams.set("order", "date.asc,start_id.asc");
+    url.searchParams.set("offset", String(offset));
+    url.searchParams.set("limit", "1000");
+    const response = await timedCanonicalStoreFetch("canonical-settled-dates", url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey), next: { revalidate: 300 },
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Canonical archive dates HTTP ${response.status}`);
+    const rows = await response.json() as Array<{ date: string }>;
+    recordCanonicalStoreRead(rows.length);
+    rows.forEach((row) => dates.add(row.date));
+    if (rows.length < 1000) break;
+  }
+  return [...dates].sort();
+}
+
 export async function readCompleteCanonicalSlateStateDates(season: string): Promise<string[]> {
   if (!/^\d{4}$/.test(season)) throw new Error("invalid canonical slate state season");
 

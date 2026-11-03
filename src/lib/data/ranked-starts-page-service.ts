@@ -6,7 +6,7 @@ import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRank
 import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v18-canonical-gap-recovery";
+const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v19-canonical-record-first";
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 
 export type RankedStartsPageData = {
@@ -112,7 +112,7 @@ async function buildRankedStartsPageData(date: string, today: string): Promise<R
   const timings: Array<{ name: string; durationMs: number }> = [];
   const { result, diagnostics } = await withCanonicalStoreDiagnostics(async () => {
     const [slateStarts, archiveNavigation] = await Promise.all([
-      measureRankedStartsSpan(timings, "daily-slate", () => getDailySlate({ window: "yesterday", date })),
+      measureRankedStartsSpan(timings, "daily-slate", () => getDailySlate({ window: "yesterday", date, allowDemoFallback: false })),
       measureRankedStartsSpan(timings, "archive-navigation", () => getRankedStartsArchiveNavigation(date, today)),
     ]);
     const slateContext = await measureRankedStartsSpan(timings, "slate-context", () => getRankedSlateContextForStarts(date, today, slateStarts));

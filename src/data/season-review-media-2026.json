@@ -32,6 +32,63 @@
       "embedUrl": "https://www.youtube-nocookie.com/embed/1vnqtnNjMyc?rel=0",
       "thumbnailUrl": "https://img.youtube.com/vi/1vnqtnNjMyc/maxresdefault.jpg",
       "watchUrl": "https://www.youtube.com/watch?v=1vnqtnNjMyc"
-    }
+    },
+    "2026-07-25-tor-bos-656302": {
+      "videoId": "HZ3S7-D0zR8",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/HZ3S7-D0zR8?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/HZ3S7-D0zR8/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=HZ3S7-D0zR8"
+    },
+    "2026-08-27-atl-lad-519242": {
+      "videoId": "bJ2zfIE18fk",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/bJ2zfIE18fk?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/bJ2zfIE18fk/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=bJ2zfIE18fk"
+    },
+    "2026-05-22-cle-phi-668909": null,
+    "2026-05-12-pit-col-694973": null,
+    "2026-04-27-bos-tor-624133": null,
+    "2026-05-24-laa-tex-672282": null,
+    "2026-06-10-tb-bos-656876": null,
+    "2026-05-12-min-mia-641927": null,
+    "2026-05-05-phi-ath-650911": null,
+    "2026-04-23-lad-sf-607192": null,
+    "2026-07-24-nyy-phi-693645": {
+      "videoId": "6_lnzZ-p6SU",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/6_lnzZ-p6SU?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/6_lnzZ-p6SU/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=6_lnzZ-p6SU"
+    },
+    "2026-04-10-kc-cws-663460": null,
+    "2026-05-20-mil-chc-690986": null,
+    "2026-04-26-mil-pit-690986": null,
+    "2026-04-01-mia-cws-645261": null,
+    "2026-08-13-wsh-chc-676917": null,
+    "2026-07-10-cin-chc-668881": {
+      "videoId": "pNxl8o2NWNw",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/pNxl8o2NWNw?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/pNxl8o2NWNw/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=pNxl8o2NWNw"
+    },
+    "2026-05-10-tex-chc-594798": null,
+    "2026-06-05-tb-mia-656876": null,
+    "2026-10-03-tb-nyy-656876": null,
+    "2026-09-01-cle-tor-668909": {
+      "videoId": "yltnsbobT5Q",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/yltnsbobT5Q?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/yltnsbobT5Q/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=yltnsbobT5Q"
+    },
+    "2026-04-14-min-bos-690953": null
   }
 }

@@ -35,7 +35,7 @@ export function SeasonReviewTopStarts({ review, limit = 25 }: { review: FrozenSe
   return <ReviewSection title={`Top ${limit === 25 ? 25 : "Starts"} ${limit === 25 ? "Starts " : ""}of ${review.year}`} id="top-starts" intro={review.copy.top.text}>
     <ol className="divide-y divide-white/10" data-review-top-starts>
       {review.topStarts.slice(0, limit).map((start, index) => <li key={start.id} className="py-3" data-review-start-id={start.id}>
-        <TopStartRow start={{ ...start, rank: index + 1 }} href={startRecapPath(start)} showDate />
+        <TopStartRow start={{ ...start, rank: index + 1 }} href={startRecapPath(start)} highlight={index >= 3 ? media.highlights[start.id] : null} showDate />
         {index < 3 && media.highlights[start.id] ? <div className="mt-3 max-w-xl" data-review-gem><FeaturedStartHighlightEmbed highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} /></div> : null}
       </li>)}
     </ol>

@@ -1,3 +1,5 @@
+import { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
+export { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
 import { getSeasonState, skipSeasonJob } from "@/lib/season-state";
 import { unstable_cache } from "next/cache";
 import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
@@ -683,48 +685,6 @@ export function evaluateFormFreshness(freshness: { formThroughDate: string | nul
   };
 }
 
-export function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanonicalStartRecords>>[number], rank: number): StartSummary {
-  const teamColor = "#27272a";
-  const accentColor = "#fbbf24";
-  return {
-    id: record.id,
-    gamePk: record.gamePk,
-    date: record.date,
-    rank,
-    pitcher: {
-      id: String(record.pitcherMlbId),
-      mlbId: record.pitcherMlbId,
-      name: record.pitcherName,
-      team: record.team,
-      throws: "R",
-      headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${record.pitcherMlbId}/headshot/67/current`,
-    },
-    opponent: record.opponent,
-    side: record.side ?? null,
-    result: record.result,
-    line: record.line,
-    gameScorePlus: record.gameScorePlus,
-    gameScoreV2: record.gameScoreV2,
-    eventFlags: record.eventFlags,
-    narrativeNotables: record.narrativeNotables,
-    gameScorePlusBreakdown: record.gameScorePlusBreakdown,
-    plannedStarter: true,
-    teamColor,
-    accentColor,
-    context: {
-      label: startMatchupLabel({ pitcher: { team: record.team }, opponent: record.opponent, side: record.side }),
-      whiffDeltaPct: 0,
-      velocityDeltaMph: 0,
-      parkRunFactor: 1,
-      parkLabel: record.venue ?? "MLB venue",
-      opponentQualityRunValue: 0,
-      opponentQualityLabel: `${record.opponent} opponent quality pending archive refresh.`,
-      opponentOffenseRunValue: 0,
-      opponentOffenseLabel: `${record.opponent} offense quality pending archive refresh.`,
-    },
-    source: record.source,
-  };
-}
 
 function filterQualifiedStarts(starts: StartSummary[]) {
   return starts.filter((start) => start.source?.line !== "fixture" && isScoredStarterSample(start, FORM_CONFIG.ipFloor));
