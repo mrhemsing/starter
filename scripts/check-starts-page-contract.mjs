@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 
 function assert(condition, message) {
@@ -125,32 +125,20 @@ function compareArchivedStartOfDay(a, b) {
   );
 }
 
-async function readArchivedStartOfDayLeaders() {
-  const archiveDir = "data/mlb-archive/2026/dates";
-  const files = (await readdir(archiveDir)).filter((file) => file.endsWith(".json")).sort();
-  const leaders = [];
-
-  for (const file of files) {
-    const date = file.replace(/\.json$/, "");
-    const archive = JSON.parse(await readFile(`${archiveDir}/${file}`, "utf8"));
-    const starts = [];
-    for (const game of archive.games ?? []) {
-      for (const start of game.starts ?? []) {
-        if (archivedStartInnings(start.line?.inningsPitched) < 2) continue;
-        starts.push({
-          ...start,
-          date,
-          gamePk: game.gamePk,
-          startId: `${date}-${start.team.toLowerCase()}-${start.opponent.toLowerCase()}-${start.pitcherMlbId}`,
-        });
-      }
-    }
-    if (starts.length === 0) continue;
-    starts.sort(compareArchivedStartOfDay);
-    leaders.push(starts[0]);
+// P1-14 Option B: ignored file shards are optional enrichment, not slate authority.
+// The tracked frozen canonical fixture makes these checks portable to a clean clone.
+async function readCanonicalStartOfDayLeaders() {
+  const records = JSON.parse(await readFile("data/season-reviews/2026-canonical.json", "utf8"));
+  assert(records.length === 4425, "canonical season fixture must remain complete");
+  const byDate = new Map();
+  for (const record of records) {
+    assert(record.status === "final" && record.frozen, "season fixture must contain settled canonical records");
+    if (archivedStartInnings(record.line.inningsPitched) < 2) continue;
+    const starts = byDate.get(record.date) ?? [];
+    starts.push({ ...record, startId: record.id });
+    byDate.set(record.date, starts);
   }
-
-  return leaders;
+  return [...byDate.values()].map(starts => starts.sort(compareArchivedStartOfDay)[0]);
 }
 
 const visibleTieBreakerOrder = [
@@ -900,34 +888,20 @@ for (const fixture of archivedStartOfDayActionFixtures) {
   }
 }
 
-for (const leader of await readArchivedStartOfDayLeaders()) {
-  const metadataPath = `public/images/top-performer-action-shots/${leader.startId}-mlb-action-v4.json`;
-  assert(
-    existsSync(metadataPath),
-    `every archived 2026 Start of the Day leader must have stored action-photo metadata: ${leader.date} ${leader.pitcherName}`,
-  );
-
-  const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
-  const hasStoredActionUrl =
-    typeof metadata.imageUrl === "string" &&
-    metadata.imageUrl.startsWith("/images/top-performer-action-shots/") &&
-    existsSync(`public${metadata.imageUrl}`);
-
-  assert(
-    metadata.clean === true &&
-      metadata.startId === leader.startId &&
-      typeof metadata.alt === "string" &&
-      metadata.alt.toLowerCase().includes("pitching action") &&
-      Number.isFinite(metadata.focalPoint?.x) &&
-      Number.isFinite(metadata.focalPoint?.y) &&
-      metadata.focalPoint.x >= 0 &&
-      metadata.focalPoint.x <= 100 &&
-      metadata.focalPoint.y >= 0 &&
-      metadata.focalPoint.y <= 100 &&
-      hasStoredActionUrl,
-    `archived 2026 Start of the Day action photo must stay stored locally, curator-clean, and mobile-croppable: ${leader.date} ${leader.pitcherName}`,
-  );
-}
+// Not every canonical leader has an eligible exact-game photo. OFF-1.1/1.2
+// explicitly requires headshot fallback instead of generated/other-game imagery.
+// Keep ranking and fixture image checks above; validate the current read/fallback
+// contract below rather than requiring optional local files for every slate.
+const canonicalLeaders = await readCanonicalStartOfDayLeaders();
+assert(canonicalLeaders.length > 150, "canonical leader coverage must span the season");
+assert(canonicalLeaders.at(-1).date === "2026-10-28", "postseason final slate must remain covered");
+assert(startsPage.includes('resolveTopPerformerImage(start, null, { exactGameOnly: true })') &&
+  startsPage.includes('fallbackPitcherId: start.pitcher.mlbId') &&
+  startService.includes('records.filter((record) => record.status === "final" || record.status === "live").map(canonicalRecordToFormStart)'),
+  "ranked archives must read canonical records directly and retain exact-game/headshot fallback");
+// Executable regression: missing archive with real canonical rows, stale count,
+// cancelled placeholders, and identical settled reads under BOTH season states.
+await import("./check-offseason-fixes.mjs");
 
 assert(
   startsPage.includes('import { SlateCounts } from "@/components/slate-counts";') &&

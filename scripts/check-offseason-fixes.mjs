@@ -32,6 +32,13 @@ records[28].status='scheduled'; records[28].source={line:'fixture',schedule:'liv
 records[29].status='scheduled'; records[29].source={line:'fixture',schedule:'live',ranking:'schedule-derived-fixture-line'};
 const cancelled=await service.getDailySlate({date:'2026-09-27',allowDemoFallback:false});assert.equal(cancelled.length,28);
 const cancelledContext=await service.getRankedSlateContextForStarts('2026-09-27','2026-11-03',cancelled);assert.equal(cancelledContext.completionState.totalStarts,28);assert.equal(cancelledContext.completionState.isFinal,true);
+// Permanent settled-read parity guard: every row final, absent archive, both flags.
+for (const record of records) { record.status='final'; record.frozen=true; record.source={line:'live-gamefeed',lineStatus:'final',schedule:'live',ranking:'schedule-derived-gamefeed-line'}; }
+const frozenInput=JSON.stringify(records);
+status='season_complete';const settledWinter=await service.getDailySlate({date:'2026-09-27',allowDemoFallback:false});
+status='in_season';const settledSummer=await service.getDailySlate({date:'2026-09-27',allowDemoFallback:false});
+assert.deepEqual(settledWinter,settledSummer);assert.equal(settledWinter.length,30);
+assert.equal(JSON.stringify(records),frozenInput,'reads must not mutate frozen canonical input');
 status='season_complete';assert.equal(await service.getRankedStartsDefaultDate('2026-11-03'),'2026-10-28');assert.deepEqual((await service.getRankedStartsArchiveNavigation('2026-09-27','2026-11-03')).availableDates,dates);
 const proxy=load('src/proxy.ts',{'@/lib/data/runtime-state-store':{readRuntimeState:async()=>({status,year:2026,finalSlateDate:'2026-10-28'})}});
 for(const path of ['/live','/upcoming','/live/2026-10-28']) {

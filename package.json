@@ -62,6 +62,7 @@
     "check:direction-band": "node scripts/check-direction-band-integrity.mjs",
     "check:mobile-card-layout": "node scripts/check-mobile-card-layout.mjs",
     "check:pitcher-pages": "node scripts/check-pitcher-page-contract.mjs",
+    "check:offseason-fixes": "node scripts/check-offseason-fixes.mjs",
     "check:starts-page": "node scripts/check-starts-page-contract.mjs",
     "check:starts-rendered-photos": "node scripts/check-starts-rendered-photos.mjs",
     "mirror:top-performer-images": "node scripts/mirror-top-performer-action-images.mjs",

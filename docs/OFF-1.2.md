@@ -70,3 +70,43 @@ were updated for the new cache/status behavior and existing OFF-1.1 headshot
 fallback, but this supplemental check then reaches missing ignored archive fixture
 files (`data/mlb-archive/2026/dates`). Baseline and current logs are retained.
 No frozen expectations were weakened to manufacture a green result.
+
+
+## Owner-authorized release and legacy-check repair (2026-11-03, 12109)
+
+Owner explicitly authorized pushing 8fae831 with the two inherited failures,
+conditional on an immediate follow-up after production verification. 8fae831
+was verified on Production deployment 7533558020 and independently in the live
+HTML build marker. Both production DOM scripts passed at 1440 and 390, including
+true final slate, Sep27 cancellation count, off-day, redirects, four nav links,
+and all five compact highlight dialogs plus the original top-three cards.
+
+Neither legacy check was retired. This follow-up changes tests/docs only:
+
+- `check:starts-page`: confirmed P1-14 Option B conflict. The deleted assumption
+  was that ignored `data/mlb-archive/2026/dates` shards and local action photos
+  exist for every historical leader. Those shards are optional enrichment, not
+  slate authority. The check now derives leaders from the tracked 4,425-record
+  frozen canonical fixture, requires settled/frozen records and postseason
+  coverage, and preserves the curated image fixture/focal-point checks. It
+  asserts the current exact-game/headshot fallback contract instead of requiring
+  images where no eligible asset exists. The executable OFF-1.2 regression is
+  imported into this check, so the ordinary check command exercises the actual
+  daily read with missing archives, 30-row and cancelled-placeholder controls,
+  matching status/counts, and the season flag flipped both ways. All-final
+  canonical inputs are unchanged by either read. No production history is edited.
+- `check:home-ranked`: not an archive retirement issue. Nine assertion groups
+  were stale after existing UI/asset changes: copy data attributes, added trend
+  spacing argument, noWrap on mobile form, removal of an unused map index,
+  custom season hero heading, exact-game image resolver option, and optimized
+  local image storage marker. Only obsolete literals/signatures were updated.
+  Live status, ranking, shared components, layout, curator/provenance gates,
+  image assets and focal-point coverage remain enforced.
+- Permanent command: `npm run check:offseason-fixes`. It also runs through
+  `check:starts-page` and therefore `test:contracts`. Neither failing command
+  is suppressed or removed from package scripts.
+
+Post-repair checks: both named checks, all five standing release regressions,
+form-staleness, build-memory, OFF-1 gates, OFF-1.1 imagery fixtures, and frozen
+season review checks pass. The earlier failure logs remain historical evidence,
+not the current status. Production runtime files are unchanged by this follow-up.

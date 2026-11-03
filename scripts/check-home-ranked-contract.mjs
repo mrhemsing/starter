@@ -167,7 +167,7 @@ assert(
     mustWatch.includes("showHookSpine?: boolean;") &&
     mustWatch.includes('data-watch-hook-visible={showHookSpine ? "true" : "false"}') &&
     mustWatch.includes("{showHookSpine ? <MatchupSpine game={game} leagueMeanGS={leagueMeanGS} rankLabel={rankLabel} /> : null}") &&
-    mustWatch.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">score</p>'),
+    mustWatch.includes('<p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400" data-hook-score-copy={scoreLabel}>score</p>'),
   "homepage must hide the Must-Watch Hook spine until today's slate is fully final while preserving the default Hook on non-home surfaces",
 );
 
@@ -286,7 +286,7 @@ assert(
     mustWatch.includes("flex max-h-8 flex-wrap items-center gap-2 overflow-hidden") &&
     mustWatch.includes('"workload-before-form"') &&
     mustWatch.includes('"form-before-workload"') &&
-    mustWatch.includes('className={`inline-flex ${isHome') &&
+    mustWatch.includes('className={`inline-flex ${addTrendSpacing') &&
     mustWatch.includes('"lg:self-end"') &&
     mustWatch.includes('"self-start"'),
   "home must-watch workload and form labels must allow full-height chips, with the home form text after workload labels and right-aligned trend chip",
@@ -297,7 +297,7 @@ assert(
     mustWatch.includes("data-starter-compact-mobile-identity") &&
     mustWatch.includes('data-starter-compact-mobile-team="above-name"') &&
     mustWatch.includes('data-starter-compact-mobile-form-line="under-name"') &&
-    mustWatch.includes('<StarterFormScoreLine starter={starter} separator="hyphen" />') &&
+    mustWatch.includes('<StarterFormScoreLine starter={starter} separator="hyphen" noWrap />') &&
     mustWatch.includes('data-starter-compact-mobile-trend-slot="top-right"') &&
     mustWatch.indexOf('data-detailed-mobile-starter-header-scope="rows-after-headliner"') < mustWatch.indexOf("data-starter-compact-mobile-identity") &&
     mustWatch.indexOf("<MustWatchHeadliner") < mustWatch.indexOf('data-detailed-mobile-starter-header-scope="rows-after-headliner"') &&
@@ -315,7 +315,7 @@ assert(
 );
 
 assert(
-  mustWatch.includes("function DuelStarterPanel({ starter, leagueMeanGS, side }") &&
+  mustWatch.includes("function DuelStarterPanel({ starter, leagueMeanGS, side, addTrendSpacing = false }") &&
     mustWatch.includes('data-starter-mirrored-component="DuelStarterPanel"') &&
     mustWatch.includes("data-starter-mirror-side={side}") &&
     mustWatch.includes('data-starter-identity-unit') &&
@@ -346,7 +346,7 @@ assert(
     mustWatch.includes('data-home-matchups-layout={layout}') &&
     mustWatch.includes('data-home-top-matchups-composition={isTopMatchupsLayout ? "detailed-hero-plus-simple-cards" : undefined}') &&
     mustWatch.includes('data-home-top-matchups-simple-row') &&
-    mustWatch.includes("rows.slice(0, 2).map((game, index) => (") &&
+    mustWatch.includes("rows.slice(0, 2).map((game) => (") &&
     mustWatch.includes("<UpcomingSimpleCard") &&
     mustWatch.includes('sortMode="watch"') &&
     mustWatch.includes('"Ranked by starter form and matchup context."'),
@@ -355,7 +355,7 @@ assert(
 
 assert(
   mustWatch.includes('data-hook-confidence-chip-placement="below-reason"') &&
-    mustWatch.includes('<p className="mt-3 text-sm leading-5 text-zinc-300">{reason}</p>') &&
+    mustWatch.includes('<p className="mt-3 text-sm leading-5 text-zinc-300" data-hook-reason-copy={reason}>{reason}</p>') &&
     mustWatch.includes('<div className="mt-3 flex justify-center" data-hook-confidence-chip-placement="below-reason">') &&
     !mustWatch.includes('<div className="mt-1 flex flex-wrap items-end justify-center gap-2">'),
   "home and upcoming hook confidence chip must sit centered below the hook reason, not beside the score",
@@ -417,7 +417,7 @@ assert(
 assert(
   topPerformerCard.includes('status: "final" | "live" | "previous" | "archived";') &&
     topPerformerCard.includes('scoreStatusLabel?: "PROV" | null;') &&
-    topPerformerCard.includes("const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);") &&
+    topPerformerCard.includes("const statusLabel = headingLabel ? { eyebrow: headingLabel, detail: dateLabel } : formatTopPerformerStatusLabel(status, dateLabel);") &&
     topPerformerCard.includes('const isLiveLeader = status === "live";') &&
     !topPerformerCard.includes('const scoreStatusLabel = isLiveLeader ? "PROV" : null;') &&
     topPerformerCard.includes('eyebrow: "Live GS+ leader"') &&
@@ -647,13 +647,13 @@ assert(
 
 assert(
   imageService.includes("const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);") &&
-    imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now())") &&
+    imageService.includes("if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now() && (!options.exactGameOnly || isExactMlbGameAsset(cachedMlbGameContentAction, start.id)))") &&
     imageService.includes("const focalPoint = cachedActionFocalPoint(cachedMlbGameContentAction);") &&
     imageService.includes("const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });") &&
     imageService.includes("mobileObjectPosition: mobileTopPerformerObjectPosition(start.id, objectPosition)") &&
     !imageService.includes("const actionShot = await resolveSportradarActionShot(start).catch(() => null);") &&
     !imageService.includes("if (actionShot) return actionShot;") &&
-    imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);") &&
+    imageService.includes("const mlbGameContentAction = await resolveMlbGameContentActionImage(start, !options.exactGameOnly).catch(() => null);") &&
     imageService.includes("if (mlbGameContentAction) return mlbGameContentAction;") &&
     !imageService.includes("const preferredPitcherImage = resolvePreferredPitcherImage(start);") &&
     !imageService.includes("if (preferredPitcherImage) return preferredPitcherImage;") &&
@@ -740,7 +740,7 @@ assert(
     gavinWilliamsLiveLeaderImageMetadata.startId === "2026-07-09-cle-min-668909" &&
     gavinWilliamsLiveLeaderImageMetadata.imageUrl === "/images/top-performer-action-shots/2026-07-09-cle-min-668909-action.webp" &&
     gavinWilliamsLiveLeaderImageMetadata.clean === true &&
-    gavinWilliamsLiveLeaderImageMetadata.storage === "local-static" &&
+    gavinWilliamsLiveLeaderImageMetadata.storage === "local-static-optimized" &&
     gavinWilliamsLiveLeaderImageMetadata.playUrl === "https://www.mlb.com/video/trevor-larnach-called-out-on-strikes-kzrenn" &&
     typeof gavinWilliamsLiveLeaderImageMetadata.focalX === "number" &&
     typeof gavinWilliamsLiveLeaderImageMetadata.focalY === "number" &&
