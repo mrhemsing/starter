@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { Headshot } from "@/components/headshot";
 import { StartLineText } from "@/components/wrap-safe-text";
 import type { TopPerformerImage } from "@/lib/data/top-performer-image-service";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
@@ -13,6 +14,8 @@ type TopPerformerCardProps = {
   href: string;
   pitcherHref?: string;
   pitcherName: string;
+  fallbackPitcherId?: number;
+  priority?: boolean;
   team: string;
   opponent: string;
   side?: "home" | "away" | null;
@@ -37,6 +40,8 @@ export function TopPerformerCard({
   href,
   pitcherHref,
   pitcherName,
+  fallbackPitcherId,
+  priority = false,
   team,
   opponent,
   side,
@@ -61,7 +66,7 @@ export function TopPerformerCard({
   const [displayScore, setDisplayScore] = useState(score);
   const imageUrl = image?.imageUrl;
   const isPlaceholderImage = image?.source === "placeholder";
-  const noPhoto = status === "archived" && !imageUrl;
+  const noPhoto = status === "archived" && !imageUrl && !fallbackPitcherId;
   const imageObjectPosition = image?.objectPosition ?? (isPlaceholderImage ? "50% 45%" : "50% 50%");
   const imageMobileObjectPosition = image?.mobileObjectPosition ?? imageObjectPosition;
   const scoreText = displayScore.toString().padStart(2, "0");
@@ -137,7 +142,7 @@ export function TopPerformerCard({
       data-top-performer-pitcher={pitcherName}
       data-top-performer-score={score}
       data-top-performer-rank={rank}
-      data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : "empty"}
+      data-top-performer-photo={noPhoto ? "none" : imageUrl ? "action" : fallbackPitcherId ? "headshot" : "empty"}
     >
       <div className="pointer-events-none absolute -right-5 top-16 z-0 hidden font-mono text-[18rem] font-black leading-none text-[#F6C445]/[0.045] lg:block" aria-hidden="true">
         {finalScoreText}
@@ -225,6 +230,7 @@ export function TopPerformerCard({
               src={imageUrl}
               alt={image?.alt ?? ""}
               fill
+              priority={priority}
               sizes="(min-width: 1024px) 55vw, 100vw"
               quality={isPlaceholderImage ? 82 : 95}
               className="top-performer-image object-cover"
@@ -235,6 +241,10 @@ export function TopPerformerCard({
                 } as CSSProperties
               }
             />
+          ) : fallbackPitcherId ? (
+            <div className="absolute inset-0 grid place-items-center pb-24">
+              <Headshot playerId={fallbackPitcherId} name={pitcherName} team={team} size="hero" loading={priority ? "eager" : "lazy"} className="!h-[300px] !w-[200px]" />
+            </div>
           ) : (
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#15181C_0%,#0A0B0D_100%)]" />
           )}

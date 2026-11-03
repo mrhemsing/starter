@@ -8,7 +8,7 @@ function assert(condition, message) {
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
 
 assert(
-  imageService.includes("const latestApprovedPitcherAction = await readLatestApprovedPitcherActionImage(start);") &&
+  imageService.includes("const latestApprovedPitcherAction = options.exactGameOnly ? null : await readLatestApprovedPitcherActionImage(start);") &&
     imageService.includes("return topPerformerImageFromCachedAction(start.id, latestApprovedPitcherAction);") &&
     imageService.includes("async function readLatestApprovedPitcherActionImage(start: StartSummary)") &&
     imageService.includes("if (candidate && candidate.expiresAt > Date.now()) return candidate;"),

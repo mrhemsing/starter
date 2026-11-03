@@ -61,7 +61,11 @@ assert(!page.includes("@/lib/data/"), "archive page must not import request data
 const home = await readFile("src/components/offseason-home.tsx", "utf8");
 assert(home.includes('from "@/components/season-review"'), "homepage imports shared archive components");
 const React = await import("react");
-const { renderToStaticMarkup } = await import("react-dom/server");
+const { renderToStaticMarkup: renderMarkup } = await import("react-dom/server");
+const { ImageConfigContext } = await import("next/dist/shared/lib/image-config-context.shared-runtime.js");
+const { imageConfigDefault } = await import("next/dist/shared/lib/image-config.js");
+const imageConfig = { ...imageConfigDefault, ...loadProjectTs("next.config.ts").default.images };
+const renderToStaticMarkup = node => renderMarkup(React.createElement(ImageConfigContext.Provider, { value: imageConfig }, node));
 const components = loadProjectTs("src/components/season-review.tsx");
 const fallbackReview = JSON.parse(bytes);
 for (const packet of reviewCopyPackets(review)) fallbackReview.copy[packet.key] = { text: packet.fallback, source: "template", trace: packet.trace };

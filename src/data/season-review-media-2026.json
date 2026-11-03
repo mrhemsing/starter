@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-11-03T22:01:39.249Z",
+  "startId": "2026-06-12-mil-phi-694819",
+  "gamePk": 823778,
+  "pipeline": "resolveTopPerformerImage exactGameOnly; resolveFeaturedStartHighlight with search disabled",
+  "image": {
+    "source": "action",
+    "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qx3qhrxpo9wdyltgcz4w.jpg",
+    "alt": "Jacob Misiorowski strikes out the side in the 1st",
+    "objectPosition": "50% 50%",
+    "mobileObjectPosition": "50% 50%",
+    "focalPoint": {
+      "x": 50,
+      "y": 50
+    },
+    "playUrl": "https://www.mlb.com/video/jacob-misiorowski-strikes-out-the-side-in-the-1st"
+  },
+  "highlights": {
+    "2026-06-12-mil-phi-694819": {
+      "videoId": "MaAOy8pY36c",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/MaAOy8pY36c?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/MaAOy8pY36c/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=MaAOy8pY36c"
+    },
+    "2026-05-16-phi-pit-650911": null,
+    "2026-09-07-phi-atl-666200": {
+      "videoId": "1vnqtnNjMyc",
+      "source": "manual",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/1vnqtnNjMyc?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/1vnqtnNjMyc/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=1vnqtnNjMyc"
+    }
+  }
+}

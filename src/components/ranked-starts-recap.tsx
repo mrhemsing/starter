@@ -225,7 +225,7 @@ function SlateSwarm({ starts, mean }: { starts: StartSummary[]; mean: number }) 
   );
 }
 
-function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: FeaturedStartHighlight | null }) {
+export function TopStartRow({ start, highlight, href, showDate = false }: { start: StartSummary; highlight?: FeaturedStartHighlight | null; href?: string; showDate?: boolean }) {
   const tier = qualityTierOf(start.gameScorePlus);
   const profile = recapBandProfile(tier.label);
   const color = profile.scoreColor;
@@ -239,12 +239,13 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
       data-gas={gas ? "true" : "false"}
     >
       <div className="absolute inset-y-0 left-0 w-1" style={{ background: profile.rail }} aria-hidden="true" />
-      <Link href={startHref(start, sourceParams("home"))} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
-      <Link href={startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:gap-3">
+      <Link href={href ?? startHref(start, sourceParams("home"))} className="font-serif text-2xl text-zinc-500 hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">#{start.rank}</Link>
+      <Link href={href ?? startHref(start, sourceParams("home"))} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:gap-3">
         <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="sm" decorative className="border-2" />
         <div className="min-w-0">
           <p className="pitcher-name font-serif text-lg font-bold leading-tight text-zinc-50">{start.pitcher.name}</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+          {showDate ? <p className="mt-1 text-xs text-zinc-400">{start.date} · {start.pitcher.team} vs {start.opponent}</p> : null}
+          <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 ${showDate ? "hidden" : ""}`}>
             <MetaLine segments={[start.pitcher.team, <StartLineText key="line" line={start.line} />]} />
           </p>
           <div className="mt-1 flex flex-wrap gap-1.5">
@@ -261,11 +262,12 @@ function TopStartRow({ start, highlight }: { start: StartSummary; highlight?: Fe
             className="grid h-11 w-11 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           />
         ) : null}
-        <Link href={startHref(start, sourceParams("home"))} className="text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+        <Link href={href ?? startHref(start, sourceParams("home"))} className="text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
           <span className="block font-mono text-3xl font-black tabular-nums leading-none" style={{ color }}>{start.gameScorePlus}</span>
           <span className="mt-1 block font-mono text-[9px] uppercase tracking-[0.14em] text-zinc-500">GS+</span>
         </Link>
       </div>
+      {showDate ? <p className="col-span-full border-t border-white/10 pt-2 font-mono text-[11px] leading-5 text-zinc-400" data-ranked-archive-line><StartLineText line={start.line} /></p> : null}
     </article>
   );
 }

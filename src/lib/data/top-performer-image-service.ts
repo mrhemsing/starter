@@ -42,6 +42,7 @@ type CachedMlbGameContentActionImage = {
   objectPosition: string;
   mobileObjectPosition?: string;
   playUrl?: string;
+  sourceImageUrl?: string;
   expiresAt: number;
 };
 
@@ -87,12 +88,12 @@ type MlbGameContentActionCandidate = {
   score: number;
 };
 
-export async function resolveTopPerformerImage(start: StartSummary | null, _highlight: FeaturedStartHighlight | null): Promise<TopPerformerImage | null> {
+export async function resolveTopPerformerImage(start: StartSummary | null, _highlight: FeaturedStartHighlight | null, options: { exactGameOnly?: boolean } = {}): Promise<TopPerformerImage | null> {
   void _highlight;
   if (!start) return null;
 
   const cachedMlbGameContentAction = await readCachedMlbGameContentActionImage(start.id);
-  if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now()) {
+  if (cachedMlbGameContentAction && cachedMlbGameContentAction.expiresAt > Date.now() && (!options.exactGameOnly || isExactMlbGameAsset(cachedMlbGameContentAction, start.id))) {
     const focalPoint = cachedActionFocalPoint(cachedMlbGameContentAction);
     const objectPosition = clampActionPhotoObjectPosition({ focal: focalPoint });
     return {
@@ -107,19 +108,27 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
     };
   }
 
-  const latestApprovedPitcherAction = await readLatestApprovedPitcherActionImage(start);
+  const latestApprovedPitcherAction = options.exactGameOnly ? null : await readLatestApprovedPitcherActionImage(start);
   if (latestApprovedPitcherAction) {
     return topPerformerImageFromCachedAction(start.id, latestApprovedPitcherAction);
   }
 
-  const mlbGameContentAction = await resolveMlbGameContentActionImage(start).catch(() => null);
+  const mlbGameContentAction = await resolveMlbGameContentActionImage(start, !options.exactGameOnly).catch(() => null);
   if (mlbGameContentAction) return mlbGameContentAction;
+
+  if (options.exactGameOnly) return null;
 
   return {
     source: "placeholder",
     imageUrl: PLACEHOLDER_IMAGE_URL,
     alt: "Pitcher's mound and rubber on a baseball field",
   };
+}
+
+export function isExactMlbGameAsset(asset: { startId: string; imageUrl: string; sourceImageUrl?: string; alt?: string; attribution?: string }, startId: string): boolean {
+  if (asset.startId !== startId || /generated/i.test(`${asset.imageUrl} ${asset.alt} ${asset.attribution}`)) return false;
+  const source = asset.sourceImageUrl ?? asset.imageUrl;
+  return /^https:\/\/img\.mlbstatic\.com\/mlb-(images|photos)\/image\/upload\//.test(source);
 }
 
 function topPerformerImageFromCachedAction(startId: string, cachedAction: CachedMlbGameContentActionImage): TopPerformerImage {
@@ -142,7 +151,7 @@ function mobileTopPerformerObjectPosition(startId: string, fallback: string) {
   return fallback;
 }
 
-async function resolveMlbGameContentActionImage(start: StartSummary): Promise<TopPerformerImage | null> {
+async function resolveMlbGameContentActionImage(start: StartSummary, persist = true): Promise<TopPerformerImage | null> {
   const response = await fetch(`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`, { next: { revalidate: MLB_CONTENT_REVALIDATE_SECONDS } });
   if (!response.ok) return null;
 
@@ -165,7 +174,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary): Promise<To
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
   } satisfies TopPerformerImage;
 
-  await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
+  if (persist) await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
   return autoPromoted ? image : null;
 }
 

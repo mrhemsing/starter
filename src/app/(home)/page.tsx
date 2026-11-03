@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import HomeLoading from "@/components/home-loading";
 import { getSeasonState } from "@/lib/season-state";
 import { OffseasonHome } from "@/components/offseason-home";
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
@@ -53,6 +55,10 @@ export const metadata: Metadata = {
 export default async function Home() {
   const state = await getSeasonState();
   if (state.status === "season_complete") return <OffseasonHome state={state} />;
+  return <Suspense fallback={<HomeLoading />}><InSeasonHome /></Suspense>;
+}
+
+async function InSeasonHome() {
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);
   const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);

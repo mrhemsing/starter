@@ -1,4 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 function assert(condition, message) {
@@ -24,8 +25,11 @@ for (const file of files) {
   assert(!/from\s+["']next\/headers["']/.test(source), `${file} must not read request headers or cookies`);
 }
 
-const rootLoading = await readFile("src/app/loading.tsx", "utf8");
-assert(rootLoading.includes('title="Warming up"'), "the root loading boundary must say Warming up");
-assert(!rootLoading.includes("preparing the requested page"), "the root loading boundary must not render the old description");
+// OFF-1.1: frozen routes must not be wrapped in a streaming skeleton.
+assert(!existsSync("src/app/loading.tsx") && !existsSync("src/app/(home)/loading.tsx"), "no ancestor skeleton on frozen routes");
+const home = await readFile("src/app/(home)/page.tsx", "utf8");
+assert(home.indexOf('state.status === "season_complete"') < home.indexOf('fallback={<HomeLoading />}'), "only in-season home streams its loader");
+const homeLoading = await readFile("src/components/home-loading.tsx", "utf8");
+assert(homeLoading.includes("HomeWarmingUpLoader"), "in-season loading treatment preserved");
 
 console.log("loading boundary contract passed", { loadingRoutes: files.length });

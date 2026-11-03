@@ -294,7 +294,9 @@ assert(
 );
 
 assert(
-  existsSync("src/app/loading.tsx") &&
+  !existsSync("src/app/loading.tsx") && // OFF-1.1: no skeleton ancestor for frozen routes
+    !existsSync("src/app/(home)/loading.tsx") &&
+    existsSync("src/components/home-loading.tsx") &&
     existsSync("src/app/starts/[id]/loading.tsx") &&
     existsSync("src/app/heat-check/loading.tsx") &&
     existsSync("src/app/heat-check/season/loading.tsx") &&

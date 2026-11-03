@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import type React from "react";
 import { formWindowLabel } from "@/lib/form-tokens";
 
@@ -27,7 +28,11 @@ const DEFAULT_TEAMS = [
   "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH",
 ];
 
-export function HeatCheckLoadingDescription({ view }: HeatCheckLoadingShellProps) {
+export function HeatCheckLoadingDescription(props: HeatCheckLoadingShellProps) {
+  return <Suspense fallback={null}><HeatCheckLoadingDescriptionContent {...props} /></Suspense>;
+}
+
+function HeatCheckLoadingDescriptionContent({ view }: HeatCheckLoadingShellProps) {
   const searchParams = useSearchParams();
   const window = readWindow(searchParams);
 
@@ -35,7 +40,11 @@ export function HeatCheckLoadingDescription({ view }: HeatCheckLoadingShellProps
   return <>How starting pitchers are trending. {formWindowLabel(window)}</>;
 }
 
-export function HeatCheckLoadingControls({ view }: HeatCheckLoadingShellProps) {
+export function HeatCheckLoadingControls(props: HeatCheckLoadingShellProps) {
+  return <Suspense fallback={null}><HeatCheckLoadingControlsContent {...props} /></Suspense>;
+}
+
+function HeatCheckLoadingControlsContent({ view }: HeatCheckLoadingShellProps) {
   const searchParams = useSearchParams();
   const params = readParams(searchParams, view);
   const window = readWindow(searchParams);
