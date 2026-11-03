@@ -62,8 +62,8 @@ assert(
 );
 
 assert(
-  warmJob.includes("getSupabaseArchiveStatus(date.slice(0, 4), { expectedLastCompletedDate: addDays(getHomeSlateDate(), -1) })") &&
-    warmJob.includes("warm-live-starts archive gap detected; continuing canonical settle/revalidation path") &&
+  !warmJob.includes("getSupabaseArchiveStatus(") &&
+    warmJob.includes("return await runWarmLiveStartsJobUnlocked(options, date, startedAt);") &&
     warmJob.includes("await warmFormLeaderboards();") &&
     !warmJob.includes("warm-live-starts archive gap detected; deferring to archive job"),
   "warm-live-starts must not let archive lag block canonical settle/form revalidation work",

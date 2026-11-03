@@ -1,3 +1,4 @@
+import { guardSeasonWrite } from "@/lib/season-state";
 import { assertValidCanonicalSettledRecord, canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
 import type { StartDataSource, StartSummary } from "@/lib/types";
@@ -211,6 +212,7 @@ export async function readCanonicalSlateCounts(date: string): Promise<CanonicalS
 }
 
 export async function writeCanonicalSlateStateSnapshot(snapshot: Omit<CanonicalSlateStateSnapshot, "updatedAt"> & { updatedAt?: string }): Promise<boolean> {
+  await guardSeasonWrite("slate settle");
   assertCanonicalStartStoreDate(snapshot.date);
   if (process.env.NEXT_PHASE === NEXT_PRODUCTION_BUILD_PHASE) return false;
   if (isCanonicalStoreCircuitOpen()) return false;
@@ -341,6 +343,7 @@ async function readCanonicalStartStore(date: string): Promise<CanonicalStartStor
 }
 
 async function writeCanonicalStartStore(store: CanonicalStartStoreFile) {
+  await guardSeasonWrite("canonical ingest/settle");
   assertCanonicalStartStoreDate(store.date);
   store.records.forEach(assertValidCanonicalSettledRecord);
   if (isCanonicalStoreCircuitOpen()) return;

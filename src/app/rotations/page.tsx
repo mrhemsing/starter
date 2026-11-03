@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RotationsPage() {
+  const state = await getSeasonState();
   const leaderboard = await getRotationLeaderboard({ window: FORM_CONFIG.windowDefault });
   const today = getHomeSlateDate();
   const jsonLd = {
@@ -56,7 +58,7 @@ export default async function RotationsPage() {
           </div>
           <div className="rounded border border-white/10 bg-[#101014] px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-zinc-400">
             <p data-rotation-window>{formWindowLabel(leaderboard.window)}</p>
-            <p className="mt-1 text-zinc-500">{leaderboard.formThroughDate ? `Form through ${leaderboard.formThroughDate}` : "Form data loading"}</p>
+            <p className="mt-1 text-zinc-500">{leaderboard.formThroughDate ? `${state.status === "season_complete" ? "FINAL" : "Form through"} ${leaderboard.formThroughDate}` : "Form data loading"}</p>
           </div>
         </header>
 

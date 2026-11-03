@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
 import { getFormLeaderboard } from "@/lib/data/form-service";
 import { fetchMlbPitcherStartCompleteness, fetchMlbTeamHandednessSplitContexts, type MlbPitcherStartCompleteness } from "@/lib/data/mlb-stats-client";
 import { fetchMlbOddsMarketContexts, isOddsEligibleDate, isOddsProviderConfigured, normalizeOddsName, type MlbOddsGameMarketContext, type OddsProviderSource } from "@/lib/data/odds-client";
@@ -38,6 +40,11 @@ const LIKELY_OPENER_MAX_CAREER_STARTS = 4;
 const LIKELY_OPENER_RECENT_APPEARANCE_FLOOR = 3;
 const REQUEST_TIME_ENRICHMENT_FLAG = "THE_BUMP_REQUEST_TIME_ENRICHMENT";
 const tonightCache = new Map<string, CachedTonight>();
+const getCachedTonightMustWatch = unstable_cache(
+  async (date: string, window: 3 | 5 | 10, forceOpponentSplits: boolean) => buildTonightMustWatch(date, window, forceOpponentSplits),
+  ["tonight-must-watch", "off-1-v1"],
+  { revalidate: TONIGHT_REVALIDATE_SECONDS, tags: [SLATE_CACHE_TAG, UPCOMING_CACHE_TAG] },
+);
 
 export async function getTonightMustWatch(options: TonightOptions = {}): Promise<TonightResponse> {
   const date = normalizeDateKey(options.date) ?? await getDefaultUpcomingDate();
@@ -51,7 +58,7 @@ export async function getTonightMustWatch(options: TonightOptions = {}): Promise
   const cached = tonightCache.get(cacheKey);
   if (cached) return cached.promise;
 
-  const promise = buildTonightMustWatch(date, window, forceOpponentSplits);
+  const promise = getCachedTonightMustWatch(date, window, forceOpponentSplits);
   const entry: CachedTonight = { expiresAt: Number.POSITIVE_INFINITY, promise };
   tonightCache.set(cacheKey, entry);
   void promise.then(

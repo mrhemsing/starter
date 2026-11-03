@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { SeasonComplete } from "@/components/season-complete";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PendingRegion } from "@/components/route-control-pending";
@@ -28,6 +30,8 @@ type UpcomingWeekPageProps = {
 export const revalidate = 60;
 
 export async function generateMetadata({ params, searchParams }: UpcomingWeekPageProps): Promise<Metadata> {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return { title: `${state.year} season complete`, description: `Explore the final ${state.year} season.` };
   const { startDate } = await params;
   assertValidDateRouteParam(startDate);
   const query = await searchParams;
@@ -60,6 +64,8 @@ export async function generateMetadata({ params, searchParams }: UpcomingWeekPag
 }
 
 export default async function UpcomingWeekPage({ params, searchParams }: UpcomingWeekPageProps) {
+  const seasonState = await getSeasonState();
+  if (seasonState.status === "season_complete") return <SeasonComplete state={seasonState} surface="upcoming" />;
   const { startDate } = await params;
   assertValidDateRouteParam(startDate);
   const controls = normalizeUpcomingControls(await searchParams);

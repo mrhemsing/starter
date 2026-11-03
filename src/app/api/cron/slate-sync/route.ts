@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prewarmProductionPaths, slatePrewarmPaths } from "@/lib/data/production-path-prewarmer";
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("slate-sync")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const url = new URL(request.url);
   const dateOverride = normalizeDateKey(url.searchParams.get("date"));

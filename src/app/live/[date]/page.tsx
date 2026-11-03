@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { SeasonComplete } from "@/components/season-complete";
 import type { Metadata } from "next";
 import { LiveScoreboard } from "@/components/live-scoreboard";
 import { SiteHeader } from "@/components/site-header";
@@ -11,6 +13,8 @@ type LivePageProps = {
 };
 
 export async function generateMetadata({ params }: LivePageProps): Promise<Metadata> {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return { title: `${state.year} season complete`, description: `Explore the final ${state.year} season.` };
   const { date } = await params;
   assertValidDateRouteParam(date);
   return {
@@ -20,6 +24,8 @@ export async function generateMetadata({ params }: LivePageProps): Promise<Metad
 }
 
 export default async function LivePage({ params }: LivePageProps) {
+  const seasonState = await getSeasonState();
+  if (seasonState.status === "season_complete") return <SeasonComplete state={seasonState} surface="live" />;
   const { date } = await params;
   assertValidDateRouteParam(date);
   const today = getBoardDate();

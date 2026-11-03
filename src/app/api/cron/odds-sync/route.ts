@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { syncOddsSnapshotsForDefaultDates } from "@/lib/data/odds-snapshot-service";
 
@@ -8,6 +9,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("odds-sync")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const results = await syncOddsSnapshotsForDefaultDates();
   return NextResponse.json({ ok: true, results });

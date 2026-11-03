@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { SeasonComplete } from "@/components/season-complete";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FormSparkline } from "@/components/form-visuals";
@@ -44,6 +46,8 @@ export const metadata: Metadata = {
 };
 
 export default async function UpcomingStreamersPage() {
+  const seasonState = await getSeasonState();
+  if (seasonState.status === "season_complete") return <SeasonComplete state={seasonState} surface="fantasy" />;
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);
   const rankedDate = addDays(today, -1);

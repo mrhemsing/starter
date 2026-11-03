@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { generateHomeGsPlusProofs } from "@/lib/data/home-gs-plus-proof-service";
@@ -9,6 +10,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("home-gs-plus-proofs")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const url = new URL(request.url);
   const date = normalizeDateKey(url.searchParams.get("date")) ?? getHomeSlateDate();

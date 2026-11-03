@@ -21,7 +21,7 @@ function assertRevalidate(source, path, seconds) {
 
 const files = Object.fromEntries(await Promise.all([
   "package.json",
-  "src/app/page.tsx",
+  "src/app/(home)/page.tsx",
   "src/app/heat-check/page.tsx",
   "src/app/heat-check/season/page.tsx",
   "src/app/form/page.tsx",
@@ -44,7 +44,7 @@ const files = Object.fromEntries(await Promise.all([
   "docs/read-path-caching-audit-2026-07-08.md",
 ].map(async (path) => [path, await read(path)])));
 
-assertRevalidate(files["src/app/page.tsx"], "home page", 60);
+assert(files["src/app/(home)/page.tsx"].includes('export const revalidate = false;') && files["src/app/(home)/page.tsx"].includes('export const dynamic = "force-static";'), "home must remain statically cached");
 assertRevalidate(files["src/app/upcoming/page.tsx"], "upcoming index page", 60);
 assertRevalidate(files["src/app/upcoming/[date]/page.tsx"], "upcoming date page", 60);
 assertRevalidate(files["src/app/upcoming/week/page.tsx"], "upcoming week index page", 60);

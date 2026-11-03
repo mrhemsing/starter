@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -52,6 +53,8 @@ const sortOptions: Array<{ key: WatchlistSort; label: string }> = [
 ];
 
 export default async function WatchlistPage({ searchParams }: WatchlistPageProps) {
+  const state = await getSeasonState();
+  const seasonComplete = state.status === "season_complete";
   const params = await searchParams;
   const query = (params?.q ?? "").trim();
   const today = getHomeSlateDate();
@@ -77,16 +80,16 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
       <div className="mx-auto max-w-7xl">
         <header className="pb-6">
           <SiteHeader active="watchlist" today={today} rankedDate={rankedDate} />
-          <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">Daily ritual</p>
+          <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">{seasonComplete ? "Offseason" : "Daily ritual"}</p>
           <h1 className="mt-2 font-serif text-5xl font-black text-zinc-50">Watchlist</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             <span className="block">Follow starters from Heat Check or pitcher pages.</span>
-            <span className="block lg:whitespace-nowrap">This view joins your followed arms to current Form, next scheduled start, and event-driven Wire notes.</span>
+            <span className="block lg:whitespace-nowrap">{seasonComplete ? `Final ${state.year} form and Wire news for your followed arms.` : "This view joins your followed arms to current Form, next scheduled start, and event-driven Wire notes."}</span>
           </p>
           <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-xs sm:gap-3" data-responsive-check="watchlist-summary-stats">
             <SummaryStat label="Followed" value={String(watchlist.entries.length)} />
             <SummaryStat label="Digest events" value={String(watchlist.wireEvents.length)} />
-            <SummaryStat label="Pitching now" value={String(watchlist.livePitchingNow.length)} />
+            <SummaryStat label={seasonComplete ? "Final season" : "Pitching now"} value={String(watchlist.livePitchingNow.length)} />
           </div>
         </header>
 
@@ -94,7 +97,7 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
           <div>
             {watchlist.entries.length > 0 ? <WatchlistMorningBrief entries={watchlist.entries} pitchingSoon={watchlist.pitchingSoon} /> : null}
             <PitchingNowStrip entries={watchlist.livePitchingNow} />
-            <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} showCount={sectionCountsReconcile} />
+            {seasonComplete ? <p className="mb-4 text-zinc-400">Next start: {state.year + 1} season. The morning brief is paused for the offseason.</p> : <NextOnTheSlabModule entries={watchlist.pitchingSoon} today={today} showCount={sectionCountsReconcile} />}
             <section className="mb-4 rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="watchlist-controls">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
@@ -120,18 +123,18 @@ export default async function WatchlistPage({ searchParams }: WatchlistPageProps
               <div className="rounded border border-white/10 bg-[#101014] p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300">No followed pitchers yet</p>
                 <p className="mt-3 text-sm leading-6 text-zinc-400">
-                  Follow your first starter here. The watchlist tracks form, next starts, and daily hooks without sending you away from the page.
+                  {seasonComplete ? "Follow your first starter here for final season form and offseason news." : "Follow your first starter here. The watchlist tracks form, next starts, and daily hooks without sending you away from the page."}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs uppercase tracking-[0.14em]">
                   <Link href={heatCheckPath()} className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 text-amber-300">Full Heat Check</Link>
-                  <Link href={upcomingDateHref(today)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300">{slateTimeWordTitle({ date: today }, { today })}&apos;s starters</Link>
+                  <Link href={upcomingDateHref(today)} className="inline-flex min-h-11 items-center rounded border border-white/10 px-3 text-zinc-300">{seasonComplete ? "Season complete" : `${slateTimeWordTitle({ date: today }, { today })}'s starters`}</Link>
                 </div>
               </div>
             ) : (
               <div className="grid gap-5" data-responsive-check="watchlist-rows" data-watchlist-sort={watchlist.sort}>
                 <WatchlistGroup
-                  title="No start scheduled"
-                  detail="Followed arms without a confirmed or projected next start."
+                  title={seasonComplete ? `Final ${state.year} form` : "No start scheduled"}
+                  detail={seasonComplete ? `Next start: ${state.year + 1} season` : "Followed arms without a confirmed or projected next start."}
                   entries={watchlist.bench}
                   today={today}
                   showCount={sectionCountsReconcile}

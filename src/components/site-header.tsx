@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
 import { NoHitterAlertBars } from "@/components/no-hitter-alert-bars";
@@ -21,7 +22,8 @@ export async function SiteHeader({
   liveSnapshot?: { liveStarts: number; warmingStarts: number };
   showNoHitterAlerts?: boolean;
 }) {
-  const currentSeason = currentSeasonFromDate(today);
+  const seasonState = await getSeasonState();
+  const currentSeason = seasonState.status === "season_complete" ? String(seasonState.year) : currentSeasonFromDate(today);
 
   return (
     <>
@@ -32,7 +34,7 @@ export async function SiteHeader({
         </Link>
         <SiteNav active={active} today={today} rankedDate={rankedDate} liveSnapshot={liveSnapshot} />
       </header>
-      {showNoHitterAlerts ? <NoHitterAlertBars today={today} /> : null}
+      {showNoHitterAlerts && seasonState.status !== "season_complete" ? <NoHitterAlertBars today={today} /> : null}
     </>
   );
 }

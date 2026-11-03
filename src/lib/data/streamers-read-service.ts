@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { createHash } from "node:crypto";
 import { readCachedRuntimeState, readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getHomeSlateDate } from "@/lib/data/start-service";
@@ -112,6 +113,7 @@ export async function readFantasyStreamingRead(streamers: UpcomingStreamersRespo
 }
 
 export async function generateFantasyStreamingRead(anchorDate = getHomeSlateDate()): Promise<GenerateFantasyStreamingReadResult> {
+  if (await skipSeasonJob("generateFantasyStreamingRead")) return { weekStart: anchorDate, generated: false, source: "fallback", model: FANTASY_STREAMING_READ_MODEL, stored: false };
   const streamers = await getUpcomingStreamers(anchorDate);
   const input = fantasyCoachInput(streamers);
   const inputHash = fantasyCoachInputHash(input);

@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { dailySocialImagePath, dailySocialPreviewPath, getDailySocialPostDraft } from "@/lib/data/daily-social-post-service";
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("daily-social")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const date = addDays(getHomeSlateDate(), -1);
   const draft = await getDailySocialPostDraft(date);

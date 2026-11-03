@@ -83,7 +83,8 @@ assert(
 );
 
 assert(
-  warmJob.includes("warm-live-starts archive gap detected; continuing canonical settle/revalidation path") &&
+  warmJob.includes("return await runWarmLiveStartsJobUnlocked(options, date, startedAt);") &&
+    !warmJob.includes("getSupabaseArchiveStatus(") &&
     !warmJob.includes("warm-live-starts archive gap detected; deferring to archive job"),
   "warm-live-starts must continue canonical settle/revalidation work when archive status is behind",
 );

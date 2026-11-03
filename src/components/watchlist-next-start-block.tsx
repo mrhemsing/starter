@@ -1,8 +1,11 @@
+import { getSeasonState } from "@/lib/season-state";
 import { isValidParkRunFactor } from "@/lib/data/run-environment";
 import type { WatchlistNextStart } from "@/lib/data/watchlist-service";
 import { startMatchupLabel } from "@/lib/start-matchup-label";
 
-export function WatchlistNextStartBlock({ nextStart, team, compact = false }: { nextStart: WatchlistNextStart | null; team: string; compact?: boolean }) {
+export async function WatchlistNextStartBlock({ nextStart, team, compact = false }: { nextStart: WatchlistNextStart | null; team: string; compact?: boolean }) {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return <div className="font-mono text-xs text-zinc-400" data-responsive-check="watchlist-next-start-block">Next start: {state.year + 1} season</div>;
   if (!nextStart) {
     return (
       <div className="font-mono text-xs uppercase tracking-[0.12em] text-zinc-500" data-responsive-check="watchlist-next-start-block">

@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { createHash } from "node:crypto";
 import { readCachedRuntimeState, readRuntimeState, writeRuntimeState } from "@/lib/data/runtime-state-store";
 import { getTonightMustWatch } from "@/lib/data/tonight-service";
@@ -98,6 +99,7 @@ export async function readUpcomingWriteups(date: string) {
 }
 
 export async function generateUpcomingWriteupsForDate(date: string): Promise<GenerateUpcomingWriteupsResult> {
+  if (await skipSeasonJob("generateUpcomingWriteupsForDate")) return { date, generated: 0, reused: 0, fallbackCount: 0, model: UPCOMING_WRITEUPS_MODEL, stored: false };
   const slate = await getTonightMustWatch({ date, window: 5, forceOpponentSplits: true });
   const factPackets = await buildUpcomingFactPackets(slate.games);
   const deterministicFallbacks = upcomingSimpleContextSentencesForSlate(slate.games, slate.leagueMeanGS);

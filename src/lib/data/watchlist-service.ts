@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -162,14 +163,15 @@ export async function getWatchlistView(accountId: string | null | undefined, opt
   }
   await rememberWatchlistPitcherIds(pitcherIds);
 
+  const seasonComplete = (await getSeasonState()).status === "season_complete";
   const today = getHomeSlateDate();
   const [leaderboard, nextStarts, upcomingStarts, headlineEventsByPitcher, liveBoard, noHitterEventsByPitcher] = await Promise.all([
     getFormLeaderboard({ qualifiedOnly: false }),
-    getNextStartMap(pitcherIds),
-    getUpcomingStartMap(pitcherIds),
+    seasonComplete ? new Map<string, WatchlistNextStart>() : getNextStartMap(pitcherIds),
+    seasonComplete ? new Map<string, WatchlistNextStart[]>() : getUpcomingStartMap(pitcherIds),
     readWatchlistHeadlineEvents(pitcherIds),
-    getLiveScoreboard({ date: today }).catch(() => null),
-    readWatchlistNoHitterWireEvents(pitcherIds, today),
+    seasonComplete ? null : getLiveScoreboard({ date: today }).catch(() => null),
+    seasonComplete ? new Map<string, WatchlistWireEvent[]>() : readWatchlistNoHitterWireEvents(pitcherIds, today),
   ]);
   const lastStartPercentiles = buildLastStartPercentiles(leaderboard.pitchers);
   const liveRowsByPitcherId = new Map((liveBoard?.rows ?? []).filter(isWatchlistLiveRow).map((row) => [row.pitcherId, row]));

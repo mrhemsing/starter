@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readCompleteCanonicalSlateStateDates } from "@/lib/data/canonical-start-store";
 import type { ArchivedPitcherRecentArsenal, ArsenalPitchSummary, FeaturedStartHighlight, PitchEvent, StartLine, TeamSummary } from "@/lib/types";
@@ -74,6 +75,8 @@ export function isSupabaseArchiveConfigured() {
 }
 
 export async function getSupabaseArchiveStatus(season: string, options: SupabaseArchiveStatusOptions = {}) {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") options = { ...options, expectedLastCompletedDate: state.finalSlateDate };
   const configured = isSupabaseArchiveConfigured();
   const env = {
     THE_BUMP_SUPABASE_URL: Boolean(process.env.THE_BUMP_SUPABASE_URL),

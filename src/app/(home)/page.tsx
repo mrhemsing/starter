@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { OffseasonHome } from "@/components/offseason-home";
 import { HomeDeferredSections } from "@/components/home-deferred-sections";
 import { HomeLiveBoardProvider } from "@/components/home-live-board-provider";
 import { HomeLiveTicker } from "@/components/home-live-ticker";
@@ -49,6 +51,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return <OffseasonHome state={state} />;
   const today = getHomeSlateDate();
   const tomorrow = addDays(today, 1);
   const todayWatchPromise = getTonightMustWatch({ date: today, window: 5 }).catch(() => null);

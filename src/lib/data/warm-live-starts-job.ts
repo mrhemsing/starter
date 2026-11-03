@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { DATA_CHANGE_CACHE_TAGS, HOME_RANKED_CACHE_TAG, LIVE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { warmFormLeaderboards } from "@/lib/data/form-service";
 import { getRankedHome } from "@/lib/data/home-ranked-service";
@@ -26,7 +27,7 @@ type WarmLiveStartsJobOptions = WarmLiveStartsRevalidators & {
 export type WarmLiveStartsJobResult = {
   warmed: boolean;
   date: string;
-  reason?: "no-live-or-final-games" | "archive-gap" | "already-running";
+  reason?: "season-complete" | "no-live-or-final-games" | "archive-gap" | "already-running";
   liveGames: number;
   finalGames: number;
   totalGames: number;
@@ -72,6 +73,7 @@ type WarmSlateLifecycleState = {
 
 export async function runWarmLiveStartsJob(options: WarmLiveStartsJobOptions = {}): Promise<WarmLiveStartsJobResult> {
   const date = warmLiveStartsDate(options.date);
+  if (await skipSeasonJob("warm-live-starts")) return { warmed: false, date, reason: "season-complete", liveGames: 0, finalGames: 0, totalGames: 0 };
   const startedAt = new Date();
   console.log("warm-live-starts start", { date, batchSize: WARM_LIVE_STARTS_BATCH_SIZE, startedAt: startedAt.toISOString() });
   const lockKey = warmLiveStartsLockKey(date);

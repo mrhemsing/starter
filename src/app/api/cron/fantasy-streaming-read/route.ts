@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { getHomeSlateDate } from "@/lib/data/start-service";
 import { generateFantasyStreamingRead } from "@/lib/data/streamers-read-service";
@@ -9,6 +10,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("fantasy-streaming-read")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const url = new URL(request.url);
   const date = normalizeDateKey(url.searchParams.get("date")) ?? getHomeSlateDate();

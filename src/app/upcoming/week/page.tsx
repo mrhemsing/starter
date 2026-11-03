@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { SeasonComplete } from "@/components/season-complete";
 import type { Metadata } from "next";
 import { getDefaultUpcomingDate } from "@/lib/data/start-service";
 import { getUpcomingMustWatch } from "@/lib/data/tonight-service";
@@ -16,6 +18,8 @@ type UpcomingWeekIndexPageProps = {
 };
 
 export async function generateMetadata({ searchParams }: UpcomingWeekIndexPageProps): Promise<Metadata> {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return { title: `${state.year} season complete`, description: `Explore the final ${state.year} season.` };
   const query = await searchParams;
   const startDate = await getDefaultUpcomingDate();
   const upcoming = await getUpcomingMustWatch({ start: startDate, days: 7, window: 5 });
@@ -48,6 +52,8 @@ export async function generateMetadata({ searchParams }: UpcomingWeekIndexPagePr
 }
 
 export default async function UpcomingWeekIndexPage({ searchParams }: UpcomingWeekIndexPageProps) {
+  const seasonState = await getSeasonState();
+  if (seasonState.status === "season_complete") return <SeasonComplete state={seasonState} surface="upcoming" />;
   const upcomingDate = await getDefaultUpcomingDate();
   return <UpcomingWeekPage params={Promise.resolve({ startDate: upcomingDate })} searchParams={searchParams} />;
 }

@@ -1,3 +1,4 @@
+import { getSeasonState, assertSeasonWriteAllowed } from "@/lib/season-state";
 import { readCanonicalSlateCounts } from "@/lib/data/canonical-start-store";
 import { fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
 import { addDays, getHomeSlateDate } from "@/lib/data/start-service";
@@ -8,6 +9,17 @@ export async function detectRecentSettledSlateGaps(
   today = getHomeSlateDate(),
   readState: (date: string, today: string) => Promise<CompletionState> = readCountOnlySettledState,
 ) {
+  const seasonState = await getSeasonState();
+  if (seasonState.status === "season_complete") {
+    const dates = Array.from({ length: 7 }, (_, index) => new Date(Date.parse(`${today}T00:00:00Z`) - index * 86400000).toISOString().slice(0, 10)).filter((date) => date > seasonState.finalSlateDate);
+    for (const date of dates) {
+      const completedStarts = readState === readCountOnlySettledState
+        ? (await readCanonicalSlateCounts(date))?.finalStarts ?? 0
+        : (await readState(date, today)).completedStarts;
+      if (completedStarts > 0) assertSeasonWriteAllowed(seasonState, `new settle on ${date}`);
+    }
+    return [];
+  }
   const dates = Array.from({ length: 7 }, (_, index) => addDays(today, -(index + 1)));
   const states = await Promise.all(dates.map((date) => readState(date, today)));
 

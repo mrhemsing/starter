@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { formatMatchup } from "@/lib/format-matchup";
@@ -241,6 +242,8 @@ async function ProfileNextStartPill({
   source: EntitySource;
   venueSplit: FormVenueSplitLabel | null;
 }) {
+  const state = await getSeasonState();
+  if (state.status === "season_complete") return <p className="mt-5 text-sm text-zinc-400">Next start: {state.year + 1} season</p>;
   const nextStart = await nextStartPromise;
   const venueSplitContext = nextStart && venueSplit ? venueSplitContextForNextStart(venueSplit, nextStart.side) : null;
 
@@ -432,6 +435,7 @@ type ProfileNextStart = {
 };
 
 async function getProfileNextStart(pitcherId: string, formScore: number): Promise<ProfileNextStart | null> {
+  if ((await getSeasonState()).status === "season_complete") return null;
   const today = getHomeSlateDate();
   const dates = Array.from({ length: 10 }, (_, index) => addDays(today, index));
   const slates = await Promise.all(dates.map((date) => getTodayProbables(date)));

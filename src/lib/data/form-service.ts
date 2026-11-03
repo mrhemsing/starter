@@ -1,3 +1,4 @@
+import { getSeasonState, skipSeasonJob } from "@/lib/season-state";
 import { unstable_cache } from "next/cache";
 import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
@@ -133,6 +134,7 @@ const getCachedPitcherSeasonFallbackStarts = unstable_cache(
 );
 
 export async function warmFormLeaderboards(options: { teams?: string[]; windows?: FormWindow[]; includeGlobal?: boolean } = {}) {
+  if (await skipSeasonJob("form-recompute")) return;
   const teams = [...new Set((options.teams ?? []).map((team) => team.trim().toUpperCase()).filter(Boolean))];
   const windows = options.windows ?? FORM_CONFIG.windows;
   const includeGlobal = options.includeGlobal ?? true;
@@ -151,7 +153,7 @@ export function parseFormWindow(value: number | string | undefined): FormWindow 
 }
 
 export async function getFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const qualifiedOnly = options.qualifiedOnly !== false;
   const cacheKey = JSON.stringify({
@@ -173,7 +175,7 @@ export async function getFormLeaderboard(options: FormBuildOptions = {}): Promis
 }
 
 export async function getRotationLeaderboard(options: Pick<FormBuildOptions, "window" | "season"> = {}): Promise<RotationLeaderboardResponse> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const cacheKey = JSON.stringify({ season, window });
   const cached = rotationLeaderboardCache.get(cacheKey);
@@ -189,7 +191,7 @@ export async function getRotationLeaderboard(options: Pick<FormBuildOptions, "wi
 }
 
 async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<FormLeaderboardResponse> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const startSet = await getQualifiedFormStarts(season);
   const starts = options.team ? await getTeamAugmentedFormStarts(season, window, startSet.starts, options.team) : startSet.starts;
@@ -231,7 +233,7 @@ async function buildFormLeaderboard(options: FormBuildOptions = {}): Promise<For
 }
 
 async function buildRotationLeaderboard(options: Pick<FormBuildOptions, "window" | "season"> = {}): Promise<RotationLeaderboardResponse> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const leaderboard = await getFormLeaderboard({ season, window, qualifiedOnly: false });
   const qualifiedPitchers = leaderboard.pitchers.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
@@ -330,7 +332,7 @@ async function getTeamAugmentedFormStarts(season: string, window: FormWindow, st
 }
 
 export async function getPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const cacheKey = JSON.stringify({
     pitcherId,
@@ -350,7 +352,7 @@ export async function getPitcherForm(pitcherId: string, options: FormBuildOption
 }
 
 async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {}): Promise<FormPitcherResponse | null> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const [startSet, venueSplitStartSet] = await Promise.all([
     getQualifiedFormStarts(season),
@@ -469,7 +471,7 @@ export async function getPitcherFormMap(pitcherIds: string[], options: FormBuild
 }
 
 export async function getFormHome(options: FormBuildOptions = {}): Promise<FormHomeResponse> {
-  const season = options.season ?? getHomeSlateDate().slice(0, 4);
+  const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const cacheKey = JSON.stringify({
     season,
@@ -521,6 +523,7 @@ async function buildFormHome(options: FormBuildOptions = {}): Promise<FormHomeRe
 }
 
 async function getNextStartMap(pitcherIds: string[]): Promise<Map<string, FormNextStart>> {
+  if ((await getSeasonState()).status === "season_complete") return new Map();
   const wanted = new Set(pitcherIds);
   if (wanted.size === 0) return new Map();
 
@@ -656,7 +659,8 @@ async function getStableVenueSplitStarts(season: string): Promise<FormStartSet> 
 }
 
 async function getRecentLiveFormStarts(season: string, archivedStarts: StartSummary[]) {
-  const today = getHomeSlateDate();
+  const state = await getSeasonState();
+  const today = state.status === "season_complete" ? state.finalSlateDate : getHomeSlateDate();
   const latestArchivedDate = latestStartDate(archivedStarts.filter((start) => start.source?.line !== "fixture"));
   const cacheKey = `${season}:${today}:${latestArchivedDate ?? "none"}`;
   const cached = recentLiveFormStartsCache.get(cacheKey);

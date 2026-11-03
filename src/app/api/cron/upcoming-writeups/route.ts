@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { getDefaultUpcomingDate } from "@/lib/data/start-service";
 import { generateUpcomingWriteupsForDate } from "@/lib/data/upcoming-writeups-service";
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("upcoming-writeups")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const url = new URL(request.url);
   const date = normalizeDateKey(url.searchParams.get("date")) ?? await getDefaultUpcomingDate();

@@ -1,3 +1,4 @@
+import { getSeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -92,10 +93,11 @@ export async function generateSeasonHeatCheckMetadata({ searchParams }: FormPage
 }
 
 export async function generateHeatCheckMetadata({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }): Promise<Metadata> {
+  const state = await getSeasonState();
   const params = await searchParams;
   const window = parseFormWindow(params?.window);
   const view = viewOverride ?? parseHeatCheckView(params?.view);
-  const title = view === "season" ? `${getHomeSlateDate().slice(0, 4)} MLB Season GS+ Leaderboard` : formPageTitle(window);
+  const title = state.status === "season_complete" ? `Final ${state.year} form` : view === "season" ? `${getHomeSlateDate().slice(0, 4)} MLB Season GS+ Leaderboard` : formPageTitle(window);
   const description = view === "season"
     ? "Every qualified MLB starter ranked by season-average GS+, with the season view inside Heat Check."
     : `Starting-pitcher FORM over the last ${window} starts, with rising and falling arms tracked daily.`;
@@ -137,9 +139,11 @@ export async function HeatCheckSeasonPage({ searchParams }: FormPageProps) {
 }
 
 export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPageProps & { view?: HeatCheckView }) {
+  const seasonState = await getSeasonState();
+  const seasonComplete = seasonState.status === "season_complete";
   const rawParams = await searchParams;
   const window = parseFormWindow(rawParams?.window);
-  const view = viewOverride ?? parseHeatCheckView(rawParams?.view);
+  const view = viewOverride ?? (seasonComplete && !rawParams?.view ? "season" : parseHeatCheckView(rawParams?.view));
   const params = { ...(rawParams ?? {}), view };
   const trendView = view === "trend";
   const seasonView = view === "season";
@@ -168,8 +172,8 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
     teamView ? getFormLeaderboard({ window, qualifiedOnly: false }) : Promise.resolve(null),
     teamView ? getRotationLeaderboard({ window }) : Promise.resolve(null),
     Promise.resolve([] as string[]),
-    Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date }))),
-    getLiveScoreboard({ date: today }),
+    seasonComplete ? [] : Promise.all(rotationDates.map((date) => getSlateSchedule({ window: "today", date }))),
+    seasonComplete ? { rows: [] } : getLiveScoreboard({ date: today }),
   ]);
   const rotationPitcherPool = rotationLeaderboard?.pitchers ?? leaderboard.pitchers;
   const todaySchedule = rotationSchedules[0] ?? { date: today, source: "live" as const, games: [] };
@@ -249,9 +253,9 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
   const clearFilterHref = heatCheckHref({ ...params, band: "", motion: "", team: "", q: "", limited: "", even: "", fire: "", hot: "", cooling: "", ice: "" });
   const filteredTotal = team ? leaderboard.pitchers.filter((pitcher) => pitcher.team === team).length : qualifiedPitchers.length;
   const filteredCountLabel = team && pitchers.length === filteredTotal ? `${pitchers.length} starters` : `${pitchers.length} of ${filteredTotal}`;
-  const throughPrefix = seasonView ? "Season through" : "Form through";
+  const throughPrefix = seasonComplete ? "FINAL" : seasonView ? "Season through" : "Form through";
   const formThroughLabel = leaderboard.formThroughDate
-    ? `${throughPrefix} ${leaderboard.formThroughDate}${leaderboard.stale && leaderboard.latestScoredStartDate ? ` / latest settled ${leaderboard.latestScoredStartDate} pending` : ""}`
+    ? `${throughPrefix} ${leaderboard.formThroughDate}${!seasonComplete && leaderboard.stale && leaderboard.latestScoredStartDate ? ` / latest settled ${leaderboard.latestScoredStartDate} pending` : ""}`
     : seasonView ? "Season data loading" : "Form data loading";
   const trendBoardEmpty = limitedFilter
     ? trendLimitedPitchers.length === 0
@@ -266,9 +270,9 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
       <div className="mx-auto max-w-7xl">
         <header>
           <SiteHeader active="heat" today={today} rankedDate={rankedDate} />
-          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">Heat Check</h1>
+          <h1 className="mt-4 font-serif text-5xl font-black text-zinc-50">{seasonComplete ? `Final ${seasonState.year} form` : "Heat Check"}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            {trendView ? <>How starting pitchers are trending.</> : <>Starting pitchers ranked by season GS+.</>}
+            {trendView ? <>{seasonComplete ? "Final trend" : "How starting pitchers are trending."}</> : <>Starting pitchers ranked by season GS+.</>}
           </p>
           {trendView ? (
             <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em]" data-heat-form-window-label data-form-window={window}>
@@ -281,7 +285,7 @@ export async function HeatCheckPage({ searchParams, view: viewOverride }: FormPa
         </header>
 
         <section className="relative z-40 mb-5 mt-4 rounded border border-white/10 bg-[#101014]/95 p-4 backdrop-blur" data-responsive-check="heat-primary-controls">
-          <TeamFilterControl teams={teams} activeTeam={team} params={params} window={window} view={view} formThroughLabel={formThroughLabel} stale={leaderboard.stale} />
+          <TeamFilterControl teams={teams} activeTeam={team} params={params} window={window} view={view} formThroughLabel={formThroughLabel} stale={!seasonComplete && leaderboard.stale} />
         </section>
 
         {teamView ? (
@@ -970,7 +974,7 @@ export function FormLeaderboardRowSkeleton({ view = "trend", index = 0 }: { view
   );
 }
 
-function FormLeaderboardRow({
+async function FormLeaderboardRow({
   pitcher,
   rank,
   formRank,
@@ -996,6 +1000,8 @@ function FormLeaderboardRow({
   overflowHidden?: boolean;
 }) {
   const seasonView = view === "season";
+  const seasonState = await getSeasonState();
+  const nextStartText = seasonState.status === "season_complete" ? `${seasonState.year + 1} season` : nextStartDetails(pitcher);
   const qualityTier = qualityTierOf(pitcher.bgs);
   const limitedSampleRow = unranked && !seasonView;
   const bandColor = limitedSampleRow ? "#71717a" : seasonView ? qualityTier.color : HEAT_BANDS.find((band) => band.key === (pitcher.levelTier ?? pitcher.tier))?.color ?? "#888780";
@@ -1079,7 +1085,7 @@ function FormLeaderboardRow({
         details={(
           <>
             <MobileDetailLine label={seasonView ? "Season" : "Last"} value={seasonView ? seasonLine(pitcher) : mobileLastValue} />
-            <MobileDetailLine label="Next start" value={nextStartDetails(pitcher)} muted={!pitcher.nextStart} />
+            <MobileDetailLine label="Next start" value={nextStartText} muted={!pitcher.nextStart} />
           </>
         )}
         footer={seasonView ? null : (
@@ -1121,7 +1127,7 @@ function FormLeaderboardRow({
           {seasonView ? <SeasonDepthInlineStats pitcher={pitcher} /> : null}
           <p className={`font-mono text-[10px] uppercase tracking-[0.14em] ${pitcher.nextStart ? "text-zinc-400" : "text-zinc-600"}`}>
             <span>Next start:</span>
-            <span className="block sm:inline">{nextStartDetails(pitcher)}</span>
+            <span className="block sm:inline">{nextStartText}</span>
           </p>
         </HeatPitcherProfileLink>
         <div className="grid gap-1">

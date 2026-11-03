@@ -1,3 +1,5 @@
+import { getSeasonState } from "@/lib/season-state";
+import { SeasonComplete } from "@/components/season-complete";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
@@ -34,6 +36,8 @@ export async function generateMetadata({ params, searchParams }: DuelsPageProps)
 }
 
 export default async function DuelsPage({ params, searchParams }: DuelsPageProps) {
+  const state = await getSeasonState();
+  if (state.status === "season_complete" && (await searchParams)?.mode !== "settled") return <SeasonComplete state={state} surface="upcoming" />;
   const { date } = await params;
   assertValidDateRouteParam(date);
   const query = await searchParams;

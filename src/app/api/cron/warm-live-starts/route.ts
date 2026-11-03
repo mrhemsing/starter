@@ -1,3 +1,4 @@
+import { skipSeasonJob } from "@/lib/season-state";
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { fetchMlbSchedule } from "@/lib/data/mlb-stats-client";
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (await skipSeasonJob("warm-live-starts")) return NextResponse.json({ ok: true, skipped: "season complete" });
 
   const date = new URL(request.url).searchParams.get("date") ?? getHomeSlateDate();
   const cheapState = await readCheapSlateState(date);
