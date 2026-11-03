@@ -656,3 +656,26 @@ function upcomingWriteupsKey(date: string) {
 function hashStableJson(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 24);
 }
+
+// OFF-1 publish-time use only. No route or daily cron invokes this generator.
+// Shares the existing provider, model, timeout, response parser and normalization.
+export async function generateSeasonReviewSentence(packet: { fallback: string; required: string[]; trace: string[] }, avoid: string[]) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const response = await fetch(OPENAI_RESPONSES_URL, {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({ model: UPCOMING_WRITEUPS_MODEL, temperature: 0.15, max_output_tokens: 160,
+        input: [
+          { role: "system", content: "Write a concise baseball season retrospective sentence from the supplied fallback facts only. Preserve every required fragment verbatim. No invented names, attribution, timing, facts or numbers. No em dash. No repeated four-word phrase from prior paragraphs. Return only the prose." },
+          { role: "user", content: JSON.stringify({ ...packet, avoid }) },
+        ],
+      }),
+      signal: AbortSignal.timeout(MAX_GENERATION_MS),
+    });
+    if (!response.ok) return null;
+    const text = normalizeGeneratedSentence(extractResponseText(await response.json()));
+    return text && !hasCommaChain(text) && !MODEL_JARGON.test(text) ? text : null;
+  } catch { return null; }
+}

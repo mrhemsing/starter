@@ -17,6 +17,8 @@ type TopPerformerCardProps = {
   opponent: string;
   side?: "home" | "away" | null;
   dateLabel: string;
+  headingLabel?: string;
+  leagueAverage?: number;
   score: number;
   line: StartLine;
   recap?: string | null;
@@ -39,6 +41,8 @@ export function TopPerformerCard({
   opponent,
   side,
   dateLabel,
+  headingLabel,
+  leagueAverage = 50,
   score,
   line,
   recap = null,
@@ -62,9 +66,9 @@ export function TopPerformerCard({
   const imageMobileObjectPosition = image?.mobileObjectPosition ?? imageObjectPosition;
   const scoreText = displayScore.toString().padStart(2, "0");
   const finalScoreText = score.toString().padStart(2, "0");
-  const statusLabel = formatTopPerformerStatusLabel(status, dateLabel);
+  const statusLabel = headingLabel ? { eyebrow: headingLabel, detail: dateLabel } : formatTopPerformerStatusLabel(status, dateLabel);
   const isLiveLeader = status === "live";
-  const context = `#${rank} of ${slateCount} · league avg 50`;
+  const context = `#${rank} of ${slateCount} · league avg ${leagueAverage}`;
   const matchupLabel = startMatchupLabel({ pitcher: { team }, opponent, side }).toUpperCase();
   const hasVeloData = veloSparkline.length > 1 || typeof topVelo === "number" || typeof whiffRate === "number";
 

@@ -158,6 +158,7 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
               </div>
               <Suspense fallback={null}>
                 <ProfileNextStartPill nextStartPromise={nextStartPromise} source={source} venueSplit={summary.venueSplit ?? null} />
+                <Link href="/2026" className="mt-3 inline-flex min-h-11 items-center text-sm text-amber-300 underline">2026 in review</Link>
               </Suspense>
             </div>
           </div>

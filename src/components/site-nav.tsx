@@ -1,4 +1,4 @@
-import { getSeasonState } from "@/lib/season-state";
+import { getSeasonState, type SeasonState } from "@/lib/season-state";
 import { PrimaryNavLink } from "@/components/primary-nav-link";
 import { LiveNavLabel } from "@/components/live-nav-label";
 import { getLiveScoreboard } from "@/lib/data/live-scoreboard-service";
@@ -7,9 +7,9 @@ import { heatCheckPath, liveHref, rankedStartsLatestPath, watchlistPath } from "
 type NavKey = "home" | "starts" | "heat" | "live" | "upcoming" | "watchlist";
 export type { NavKey };
 
-export async function SiteNav({ active, today, rankedDate, liveSnapshot }: { active: NavKey | null; today: string; rankedDate?: string; liveSnapshot?: { liveStarts: number; warmingStarts: number } }) {
+export async function SiteNav({ active, today, rankedDate, liveSnapshot, seasonState }: { active: NavKey | null; today: string; rankedDate?: string; liveSnapshot?: { liveStarts: number; warmingStarts: number }; seasonState?: SeasonState }) {
   void rankedDate;
-  const seasonComplete = (await getSeasonState()).status === "season_complete";
+  const seasonComplete = (seasonState ?? await getSeasonState()).status === "season_complete";
   const liveBoard = seasonComplete || liveSnapshot ? null : await getLiveScoreboard({ date: today });
   const initialSnapshot = liveSnapshot ?? { liveStarts: liveBoard?.liveStarts ?? 0, warmingStarts: liveBoard?.warmingStarts ?? 0 };
   const liveItem = [{ key: "live" as const, label: seasonComplete ? "Season complete" : <LiveNavLabel initialSnapshot={initialSnapshot} statusDate={today} routeActive={active !== null && active === "live"} />, href: liveHref() }];

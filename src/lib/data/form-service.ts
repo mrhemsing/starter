@@ -236,46 +236,7 @@ async function buildRotationLeaderboard(options: Pick<FormBuildOptions, "window"
   const season = options.season ?? String((await getSeasonState()).year);
   const window = parseFormWindow(options.window);
   const leaderboard = await getFormLeaderboard({ season, window, qualifiedOnly: false });
-  const qualifiedPitchers = leaderboard.pitchers.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
-  const pitchersByTeam = new Map<string, FormSummary[]>();
-
-  for (const team of MLB_TEAM_CODES) {
-    pitchersByTeam.set(team, []);
-  }
-  for (const pitcher of qualifiedPitchers) {
-    const team = pitcher.team.trim().toUpperCase();
-    if (!MLB_TEAM_CODES.has(team)) continue;
-    const teamPitchers = pitchersByTeam.get(team) ?? [];
-    teamPitchers.push(pitcher);
-    pitchersByTeam.set(team, teamPitchers);
-  }
-
-  const rows = [...MLB_TEAM_CODES].map((team) => {
-    const pitchers = [...(pitchersByTeam.get(team) ?? [])].sort(compareRollingFormLevelDesc);
-    const staffMeanForm = pitchers.length > 0 ? round1(mean(pitchers.map((pitcher) => pitcher.rgs))) : null;
-    const bandCounts = Object.fromEntries(HEAT_BANDS.map((band) => [band.key, pitchers.filter((pitcher) => pitcher.tier === band.key).length])) as Record<HeatBandKey, number>;
-    return {
-      rank: 0,
-      team,
-      staffMeanForm,
-      qualifiedCount: pitchers.length,
-      smallSample: pitchers.length > 0 && pitchers.length < FORM_CONFIG.minStartsToQualify,
-      bandCounts,
-      hottest: pitchers[0] ?? null,
-      coldest: pitchers.length > 0 ? [...pitchers].sort(compareRollingFormLevelAsc)[0] ?? null : null,
-      pitchers,
-    };
-  }).sort((a, b) => (b.staffMeanForm ?? Number.NEGATIVE_INFINITY) - (a.staffMeanForm ?? Number.NEGATIVE_INFINITY) || b.qualifiedCount - a.qualifiedCount || a.team.localeCompare(b.team));
-
-  return {
-    generatedAt: new Date().toISOString(),
-    formThroughDate: leaderboard.formThroughDate,
-    latestScoredStartDate: leaderboard.latestScoredStartDate,
-    stale: leaderboard.stale,
-    window,
-    totalTeams: MLB_TEAM_CODES.size,
-    rows: rows.map((row, index) => ({ ...row, rank: index + 1 })),
-  };
+  return frozenRotationLeaderboard(leaderboard.pitchers, leaderboard.formThroughDate, window, leaderboard.generatedAt, leaderboard.stale);
 }
 
 function buildTeamGamesPlayedMap(starts: StartSummary[], formThroughDate: string | null) {
@@ -722,7 +683,7 @@ export function evaluateFormFreshness(freshness: { formThroughDate: string | nul
   };
 }
 
-function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanonicalStartRecords>>[number], rank: number): StartSummary {
+export function canonicalRecordToFormStart(record: Awaited<ReturnType<typeof readCanonicalStartRecords>>[number], rank: number): StartSummary {
   const teamColor = "#27272a";
   const accentColor = "#fbbf24";
   return {
@@ -1285,4 +1246,60 @@ function outsToInnings(outs: number) {
 function daysBetween(a: string, b: string) {
   if (!a || !b) return 0;
   return Math.round((new Date(`${b}T00:00:00.000Z`).valueOf() - new Date(`${a}T00:00:00.000Z`).valueOf()) / (24 * 60 * 60 * 1000));
+}
+
+export function frozenRotationLeaderboard(pitchers: FormSummary[], formThroughDate: string | null, window: FormWindow, generatedAt: string, stale = false): RotationLeaderboardResponse {
+  const qualifiedPitchers = pitchers.filter((summary) => summary.status === "ok" && summary.windowCount >= FORM_CONFIG.minStartsToQualify);
+  const pitchersByTeam = new Map<string, FormSummary[]>();
+
+  for (const team of MLB_TEAM_CODES) {
+    pitchersByTeam.set(team, []);
+  }
+  for (const pitcher of qualifiedPitchers) {
+    const team = pitcher.team.trim().toUpperCase();
+    if (!MLB_TEAM_CODES.has(team)) continue;
+    const teamPitchers = pitchersByTeam.get(team) ?? [];
+    teamPitchers.push(pitcher);
+    pitchersByTeam.set(team, teamPitchers);
+  }
+
+  const rows = [...MLB_TEAM_CODES].map((team) => {
+    const pitchers = [...(pitchersByTeam.get(team) ?? [])].sort(compareRollingFormLevelDesc);
+    const staffMeanForm = pitchers.length > 0 ? round1(mean(pitchers.map((pitcher) => pitcher.rgs))) : null;
+    const bandCounts = Object.fromEntries(HEAT_BANDS.map((band) => [band.key, pitchers.filter((pitcher) => pitcher.tier === band.key).length])) as Record<HeatBandKey, number>;
+    return {
+      rank: 0,
+      team,
+      staffMeanForm,
+      qualifiedCount: pitchers.length,
+      smallSample: pitchers.length > 0 && pitchers.length < FORM_CONFIG.minStartsToQualify,
+      bandCounts,
+      hottest: pitchers[0] ?? null,
+      coldest: pitchers.length > 0 ? [...pitchers].sort(compareRollingFormLevelAsc)[0] ?? null : null,
+      pitchers,
+    };
+  }).sort((a, b) => (b.staffMeanForm ?? Number.NEGATIVE_INFINITY) - (a.staffMeanForm ?? Number.NEGATIVE_INFINITY) || b.qualifiedCount - a.qualifiedCount || a.team.localeCompare(b.team));
+
+  return {
+    generatedAt,
+    formThroughDate: formThroughDate,
+    latestScoredStartDate: formThroughDate,
+    stale: stale,
+    window,
+    totalTeams: MLB_TEAM_CODES.size,
+    rows: rows.map((row, index) => ({ ...row, rank: index + 1 })),
+  };
+}
+
+export function frozenSeasonForm(records: Awaited<ReturnType<typeof readCanonicalStartRecords>>, window: FormWindow = 5) {
+  const starts = filterQualifiedStarts(records.map(canonicalRecordToFormStart));
+  const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
+  const formThroughDate = latestStartDate(starts);
+  const teamGames = buildTeamGamesPlayedMap(starts, formThroughDate);
+  const context = buildLeagueContext(starts);
+  const pitchers = buildPitcherBuckets(starts)
+    .map((bucket) => summarizePitcherBucket(bucket, window, leagueMeanGS, context))
+    .map((summary) => attachSeasonQualification(summary, teamGames))
+    .sort(compareRollingFormLevelDesc);
+  return { pitchers, leagueMeanGS, formThroughDate };
 }

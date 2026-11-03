@@ -55,3 +55,40 @@ Untouched main 96f1a2a failed three required checks before implementation:
 Main has no MIN_QUALIFIED constant. The existing shared season qualification is
 `seasonQualificationMinStarts(teamGamesPlayed)` using ceil(teamGamesPlayed / 16).
 The owner has been notified; reuse this rule rather than inventing a threshold.
+
+## Phase 1
+
+Frozen source: 4,425 final canonical start records, 2026-03-25 through 2026-10-28.
+The compact source and receipt live in data/season-reviews. The page imports only
+the computed src/data/season-review-2026.json, not the source records or a data
+service. Both /2026 and /2026/rotations are force-static with revalidate=false.
+Their header receives the frozen season explicitly and does not read runtime
+state or live navigation data. No dynamic long-tail generation was introduced.
+
+The existing compareRankedStarts tiebreakers and two-inning ranking floor choose
+Start of the Year and Top 25. Season qualification uses the existing shared
+ceil(teamGamesPlayed / 16) rule, not a new threshold. Arm of the Year compares
+unrounded means. Ties use start count, then name. Gems use the requested 70-plus
+threshold; this is intentionally distinct from the existing 65-point gem-rate
+stat. Best five-start window is the arithmetic mean, matching current Form.
+The final rotation snapshot reuses the extracted existing rotation calculation.
+
+Misiorowski's June 12 recap is captured from the existing production recap page,
+unchanged. His canonical row has no stored narrative notable; none is invented.
+All 14 stored six-inning no-hit bids are included, deepest first. Highlight
+resolution reuses the existing approved mapping/service.
+
+Publish-time prose uses the existing OpenAI provider/model, timeout, parser and
+normalizer in upcoming-writeups-service, with retrospective fact-packet checks.
+Generation is manual once, not a cron path. Ten paragraphs were generated with
+gpt-4.1-mini and frozen; the publisher refuses to overwrite an existing edition.
+Every section has a deterministic fallback and record/pitcher trace references.
+
+Checks: check-season-review.mjs independently checks score lines, means, gem
+counts, exact no-hit membership, source/review hashes, shared-metric
+recomputation, negative prose controls and actual SSR fallback rendering.
+verify-season-review-dom.mjs checks desktop/mobile DOM, JSON-LD, all internal
+links, cache HIT and byte identity. Source evidence is retained separately from
+the production snapshot. The build-memory guard remains 2 concurrent static
+generations per worker, 16-page minimum grouping and no more than 40 candidates;
+Phase 1 has 22 static candidates and builds under the default Node heap.

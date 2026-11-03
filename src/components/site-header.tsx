@@ -1,4 +1,4 @@
-import { getSeasonState } from "@/lib/season-state";
+import { getSeasonState, type SeasonState } from "@/lib/season-state";
 import Link from "next/link";
 import { MlbSeasonKicker } from "@/components/mlb-season-kicker";
 import { NoHitterAlertBars } from "@/components/no-hitter-alert-bars";
@@ -13,6 +13,7 @@ export async function SiteHeader({
   responsiveCheck,
   liveSnapshot,
   showNoHitterAlerts = true,
+  frozenSeason,
 }: {
   active: NavKey | null;
   today: string;
@@ -21,8 +22,9 @@ export async function SiteHeader({
   responsiveCheck?: string;
   liveSnapshot?: { liveStarts: number; warmingStarts: number };
   showNoHitterAlerts?: boolean;
+  frozenSeason?: SeasonState;
 }) {
-  const seasonState = await getSeasonState();
+  const seasonState = frozenSeason ?? await getSeasonState();
   const currentSeason = seasonState.status === "season_complete" ? String(seasonState.year) : currentSeasonFromDate(today);
 
   return (
@@ -32,7 +34,7 @@ export async function SiteHeader({
           <span className="site-logo-wordmark">Toe the Slab</span>
           <MlbSeasonKicker season={currentSeason} />
         </Link>
-        <SiteNav active={active} today={today} rankedDate={rankedDate} liveSnapshot={liveSnapshot} />
+        <SiteNav active={active} today={today} rankedDate={rankedDate} liveSnapshot={liveSnapshot} seasonState={seasonState} />
       </header>
       {showNoHitterAlerts && seasonState.status !== "season_complete" ? <NoHitterAlertBars today={today} /> : null}
     </>

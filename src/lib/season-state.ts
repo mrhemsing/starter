@@ -13,7 +13,7 @@ export const DEFAULT_SEASON_STATE: SeasonState = {
   status: "season_complete",
   year: 2026,
   finalSlateDate: "2026-10-28",
-  recapPath: "/best-starts",
+  recapPath: "/2026",
 };
 
 export async function getSeasonState(): Promise<SeasonState> {

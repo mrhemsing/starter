@@ -10,20 +10,20 @@ import { startMatchupLabel } from "@/lib/start-matchup-label";
 import { pitcherHref, sourceParams } from "@/lib/routes";
 import type { FormHomeResponse, FormSummary, HeatBand } from "@/lib/types";
 
-export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
+export function HeatCheckHero({ home, finalYear }: { home: FormHomeResponse; finalYear?: number }) {
   return (
     <section className="px-2 py-8 sm:px-6 lg:px-8" data-responsive-check="heat-check-hero">
       <div className="mx-auto max-w-7xl rounded border border-white/10 bg-[#101014] p-2 sm:p-6">
         <div className="mb-5 flex flex-col justify-between gap-3 border-b border-white/10 pb-5 md:flex-row md:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">Rolling form trend</p>
-            <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">Who&apos;s Moving</h2>
-            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">Direction and next probable start context.</p>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300">{finalYear ? "Final form" : "Rolling form trend"}</p>
+            <h2 className="section-title mt-2 font-serif text-3xl font-bold text-zinc-50">{finalYear ? `Final ${finalYear} form` : "Who's Moving"}</h2>
+            <p className="blurb mt-2 text-sm leading-6 text-zinc-400">{finalYear ? "The last five starts, frozen at season completion." : "Direction and next probable start context."}</p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500" data-heat-form-window-label data-form-window={home.window}>
               {formWindowLabel(home.window)}
             </p>
             <p className={`mt-2 font-mono text-[10px] uppercase tracking-[0.16em] ${home.stale ? "text-amber-300" : "text-zinc-500"}`} title={home.latestScoredStartDate ? `Latest scored start date: ${home.latestScoredStartDate}` : undefined}>
-              {home.formThroughDate ? `Form through ${home.formThroughDate}` : "Form data loading"}{home.stale ? " / updating" : ""}
+              {home.formThroughDate ? `${finalYear ? "FINAL" : "Form through"} ${home.formThroughDate}` : "Form data loading"}{!finalYear && home.stale ? " / updating" : ""}
             </p>
           </div>
           <Link href="/heat-check" className="inline-flex min-h-11 items-center rounded border border-amber-300/40 px-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-300">
@@ -39,8 +39,8 @@ export function HeatCheckHero({ home }: { home: FormHomeResponse }) {
           <>
             <LeagueTempStrip home={home} />
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <HeatRail title="Surging & climbing" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} />
-              <HeatRail title="Slipping & freefall" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} />
+              <HeatRail title="Surging & climbing" tone="hot" pitchers={home.hot} window={home.window} leagueMeanGS={home.leagueMeanGS} finalYear={finalYear} />
+              <HeatRail title="Slipping & freefall" tone="cold" pitchers={home.cold} window={home.window} leagueMeanGS={home.leagueMeanGS} finalYear={finalYear} />
             </div>
             {home.totalQualified < HOME_CONFIG.railSize * 4 ? (
               <p className="mt-4 font-mono text-xs text-zinc-500">Form stabilizes after a few starts. Sample is still small.</p>
@@ -88,7 +88,7 @@ function LeagueTempStrip({ home }: { home: FormHomeResponse }) {
   );
 }
 
-function HeatRail({ title, tone, pitchers, window, leagueMeanGS }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[]; window: number; leagueMeanGS: number }) {
+function HeatRail({ title, tone, pitchers, window, leagueMeanGS, finalYear }: { title: string; tone: "hot" | "cold"; pitchers: FormSummary[]; window: number; leagueMeanGS: number; finalYear?: number }) {
   const toneColor = tone === "hot" ? HEAT_BANDS[0].color : HEAT_BANDS[HEAT_BANDS.length - 1].color;
   const railMarker = tone === "hot" ? "▲" : "▼";
   const railIntensity = Math.max(
@@ -106,15 +106,15 @@ function HeatRail({ title, tone, pitchers, window, leagueMeanGS }: { title: stri
         <h3 className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: toneColor }}>{title}</h3>
       </div>
       <div className="space-y-2">
-        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} window={window} leagueMeanGS={leagueMeanGS} />)}
+        {pitchers.map((pitcher) => <HeatRow key={pitcher.pitcherId} pitcher={pitcher} window={window} leagueMeanGS={leagueMeanGS} finalYear={finalYear} />)}
       </div>
     </section>
   );
 }
 
-function HeatRow({ pitcher, window, leagueMeanGS }: { pitcher: FormSummary; window: number; leagueMeanGS: number }) {
+function HeatRow({ pitcher, window, leagueMeanGS, finalYear }: { pitcher: FormSummary; window: number; leagueMeanGS: number; finalYear?: number }) {
   const band = directionBandOf(pitcher.deltaForm, window);
-  const nextStart = nextStartDetails(pitcher);
+  const nextStart = finalYear ? `${finalYear + 1} season` : nextStartDetails(pitcher);
   const tone = heatTone(band);
   const deltaBand = formDeltaBand(pitcher.deltaForm);
   const intensity = heatIntensity(pitcher.heatIndex ?? 0, band);
