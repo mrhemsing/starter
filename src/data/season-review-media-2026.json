@@ -24,7 +24,14 @@
       "thumbnailUrl": "https://img.youtube.com/vi/MaAOy8pY36c/maxresdefault.jpg",
       "watchUrl": "https://www.youtube.com/watch?v=MaAOy8pY36c"
     },
-    "2026-05-16-phi-pit-650911": null,
+    "2026-05-16-phi-pit-650911": {
+      "videoId": "hczzXZivkGw",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/hczzXZivkGw?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/hczzXZivkGw/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=hczzXZivkGw"
+    },
     "2026-09-07-phi-atl-666200": {
       "videoId": "1vnqtnNjMyc",
       "source": "manual",
@@ -42,21 +49,77 @@
       "watchUrl": "https://www.youtube.com/watch?v=HZ3S7-D0zR8"
     },
     "2026-08-27-atl-lad-519242": {
-      "videoId": "bJ2zfIE18fk",
-      "source": "manual",
-      "isShort": false,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/bJ2zfIE18fk?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/bJ2zfIE18fk/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=bJ2zfIE18fk"
+      "videoId": "AW4BsST4Ldk",
+      "source": "youtube-search",
+      "isShort": true,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/AW4BsST4Ldk?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/AW4BsST4Ldk/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=AW4BsST4Ldk"
     },
-    "2026-05-22-cle-phi-668909": null,
-    "2026-05-12-pit-col-694973": null,
-    "2026-04-27-bos-tor-624133": null,
-    "2026-05-24-laa-tex-672282": null,
-    "2026-06-10-tb-bos-656876": null,
-    "2026-05-12-min-mia-641927": null,
-    "2026-05-05-phi-ath-650911": null,
-    "2026-04-23-lad-sf-607192": null,
+    "2026-05-22-cle-phi-668909": {
+      "videoId": "FnGWKhcfPGg",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/FnGWKhcfPGg?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/FnGWKhcfPGg/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=FnGWKhcfPGg"
+    },
+    "2026-05-12-pit-col-694973": {
+      "videoId": "QK3cuf7yzIg",
+      "source": "youtube-search",
+      "isShort": true,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/QK3cuf7yzIg?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/QK3cuf7yzIg/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=QK3cuf7yzIg"
+    },
+    "2026-04-27-bos-tor-624133": {
+      "videoId": "t_aKT_C0VLk",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/t_aKT_C0VLk?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/t_aKT_C0VLk/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=t_aKT_C0VLk"
+    },
+    "2026-05-24-laa-tex-672282": {
+      "videoId": "7P07XZtyXiA",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/7P07XZtyXiA?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/7P07XZtyXiA/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=7P07XZtyXiA"
+    },
+    "2026-06-10-tb-bos-656876": {
+      "videoId": "rasmussen-s-career-high-13-k-s-in-scoreless-start",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-06/10/b9c31cbb-76caaa0f-65429056-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/h9h0bfafnhfz8s6upa4w.jpg",
+      "watchUrl": "https://www.mlb.com/video/rasmussen-s-career-high-13-k-s-in-scoreless-start"
+    },
+    "2026-05-12-min-mia-641927": {
+      "videoId": "bailey-ober-throws-complete-shutout-game",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/12/ec513155-5b4a49dc-e943cd80-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/em9mwmgmfxiui8dulxrk.jpg",
+      "watchUrl": "https://www.mlb.com/video/bailey-ober-throws-complete-shutout-game"
+    },
+    "2026-05-05-phi-ath-650911": {
+      "videoId": "P8qdL7QvoTA",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/P8qdL7QvoTA?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/P8qdL7QvoTA/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=P8qdL7QvoTA"
+    },
+    "2026-04-23-lad-sf-607192": {
+      "videoId": "hRqPPctYebI",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/hRqPPctYebI?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/hRqPPctYebI/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=hRqPPctYebI"
+    },
     "2026-07-24-nyy-phi-693645": {
       "videoId": "6_lnzZ-p6SU",
       "source": "manual",
@@ -65,30 +128,221 @@
       "thumbnailUrl": "https://img.youtube.com/vi/6_lnzZ-p6SU/maxresdefault.jpg",
       "watchUrl": "https://www.youtube.com/watch?v=6_lnzZ-p6SU"
     },
-    "2026-04-10-kc-cws-663460": null,
-    "2026-05-20-mil-chc-690986": null,
-    "2026-04-26-mil-pit-690986": null,
-    "2026-04-01-mia-cws-645261": null,
-    "2026-08-13-wsh-chc-676917": null,
+    "2026-04-10-kc-cws-663460": {
+      "videoId": "vzCG1uAvNoA",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/vzCG1uAvNoA?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/vzCG1uAvNoA/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=vzCG1uAvNoA"
+    },
+    "2026-05-20-mil-chc-690986": {
+      "videoId": "UryujI48pLU",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/UryujI48pLU?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/UryujI48pLU/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=UryujI48pLU"
+    },
+    "2026-04-26-mil-pit-690986": {
+      "videoId": "kyle-harrison-strikes-out-twelve-in-six-innings",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-04/26/47e1cf3b-5d7371fc-bf929b8a-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/dvkk2hhv9tx8z3ftf9fm.jpg",
+      "watchUrl": "https://www.mlb.com/video/kyle-harrison-strikes-out-twelve-in-six-innings"
+    },
+    "2026-04-01-mia-cws-645261": {
+      "videoId": "sw8_Io_gzNI",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/sw8_Io_gzNI?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/sw8_Io_gzNI/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=sw8_Io_gzNI"
+    },
+    "2026-08-13-wsh-chc-676917": {
+      "videoId": "lvh7LgyjyWQ",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/lvh7LgyjyWQ?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/lvh7LgyjyWQ/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=lvh7LgyjyWQ"
+    },
     "2026-07-10-cin-chc-668881": {
-      "videoId": "pNxl8o2NWNw",
-      "source": "manual",
+      "videoId": "ky-cwcm7BYE",
+      "source": "youtube-search",
       "isShort": false,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/pNxl8o2NWNw?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/pNxl8o2NWNw/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=pNxl8o2NWNw"
+      "embedUrl": "https://www.youtube-nocookie.com/embed/ky-cwcm7BYE?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/ky-cwcm7BYE/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=ky-cwcm7BYE"
     },
-    "2026-05-10-tex-chc-594798": null,
-    "2026-06-05-tb-mia-656876": null,
-    "2026-10-03-tb-nyy-656876": null,
+    "2026-05-10-tex-chc-594798": {
+      "videoId": "os1uq3I7YAg",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/os1uq3I7YAg?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/os1uq3I7YAg/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=os1uq3I7YAg"
+    },
+    "2026-06-05-tb-mia-656876": {
+      "videoId": "drew-rasmussen-shines-over-seven-scoreless-innings",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-06/05/0de4aa91-1e496104-b7c89e55-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/v1780715657/mlb/z0gt7kgkjhu0tgut5ghd.jpg",
+      "watchUrl": "https://www.mlb.com/video/drew-rasmussen-shines-over-seven-scoreless-innings"
+    },
+    "2026-10-03-tb-nyy-656876": {
+      "videoId": "4YAZi_1UCfo",
+      "source": "youtube-search",
+      "isShort": true,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/4YAZi_1UCfo?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/4YAZi_1UCfo/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=4YAZi_1UCfo"
+    },
     "2026-09-01-cle-tor-668909": {
-      "videoId": "yltnsbobT5Q",
-      "source": "manual",
+      "videoId": "0ILI8wVlOxI",
+      "source": "youtube-search",
       "isShort": false,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/yltnsbobT5Q?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/yltnsbobT5Q/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=yltnsbobT5Q"
+      "embedUrl": "https://www.youtube-nocookie.com/embed/0ILI8wVlOxI?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/0ILI8wVlOxI/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=0ILI8wVlOxI"
     },
-    "2026-04-14-min-bos-690953": null
+    "2026-04-14-min-bos-690953": {
+      "videoId": "mick-abel-strikes-out-ten-against-red-sox",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-04/14/d8e3d58c-d9b0977f-5584f901-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bymhss08svxauyl19bqa.jpg",
+      "watchUrl": "https://www.mlb.com/video/mick-abel-strikes-out-ten-against-red-sox"
+    },
+    "2026-07-19-kc-sd-702070": {
+      "videoId": "luis-rengifo-strikes-out-on-a-foul-tip-uvrfcr",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://bdata-producedclips.mlb.com/a676d9c7-ff8b-4a2d-9966-109115078d7e.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/q4nwqbdvsnkmrx7rjicu.jpg",
+      "watchUrl": "https://www.mlb.com/video/luis-rengifo-strikes-out-on-a-foul-tip-uvrfcr"
+    },
+    "2026-05-10-phi-col-650911": {
+      "videoId": "cristopher-sanchez-s-seven-strike-outs-quality-start",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/10/e01ae10b-1ddbf630-4d0a9745-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/tw6df6onh2ah5usk8gs8.jpg",
+      "watchUrl": "https://www.mlb.com/video/cristopher-sanchez-s-seven-strike-outs-quality-start"
+    },
+    "2026-05-22-phi-cle-650911": {
+      "videoId": "cristopher-sanchez-s-dominant-outing",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/22/b741b73a-6f434937-8afbb43f-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/hatxbyqrs1qvhi72musg.jpg",
+      "watchUrl": "https://www.mlb.com/video/cristopher-sanchez-s-dominant-outing"
+    },
+    "2026-05-27-phi-sd-650911": {
+      "videoId": "coEiMSZoBCE",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/coEiMSZoBCE?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/coEiMSZoBCE/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=coEiMSZoBCE"
+    },
+    "2026-07-08-tor-sf-656302": {
+      "videoId": "0AmJgvdkVbk",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/0AmJgvdkVbk?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/0AmJgvdkVbk/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=0AmJgvdkVbk"
+    },
+    "2026-08-16-kc-laa-702070": {
+      "videoId": "mike-trout-strikes-out-swinging-pahbbm",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/16/6bf387f8-fc131816-fe9ed2fa-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/pm1htueqsagigk0l6tnx.jpg",
+      "watchUrl": "https://www.mlb.com/video/mike-trout-strikes-out-swinging-pahbbm"
+    },
+    "2026-07-30-kc-min-702070": {
+      "videoId": "noah-cameron-fans-seven-in-eight-shutout-innings",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/30/627fac49-c05ac786-92b25b48-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/svlt4dnju3yoganhz89c.jpg",
+      "watchUrl": "https://www.mlb.com/video/noah-cameron-fans-seven-in-eight-shutout-innings"
+    },
+    "2026-09-10-pit-cws-683003": {
+      "videoId": "jared-jones-flirts-with-no-hitter-fans-eight",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/10/293cdee7-e372493a-a63a336e-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/to32ijzpbt1lwaxcnfs0.jpg",
+      "watchUrl": "https://www.mlb.com/video/jared-jones-flirts-with-no-hitter-fans-eight"
+    },
+    "2026-09-22-tb-nyy-656876": {
+      "videoId": "drew-rasmussen-k-s-11-flirts-with-no-hitter-in-win",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/22/d978663d-6aa2aaa5-1ae2211a-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/dna5fq8o4qwbb2fn7luo.jpg",
+      "watchUrl": "https://www.mlb.com/video/drew-rasmussen-k-s-11-flirts-with-no-hitter-in-win"
+    },
+    "2026-09-29-sd-chc-650633": {
+      "videoId": "_Xg12uxLtaA",
+      "source": "youtube-search",
+      "isShort": false,
+      "embedUrl": "https://www.youtube-nocookie.com/embed/_Xg12uxLtaA?rel=0",
+      "thumbnailUrl": "https://img.youtube.com/vi/_Xg12uxLtaA/maxresdefault.jpg",
+      "watchUrl": "https://www.youtube.com/watch?v=_Xg12uxLtaA"
+    },
+    "2026-08-01-atl-wsh-527048": {
+      "videoId": "martin-perez-throws-six-no-hit-innings-vs-nationals",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/01/b801e717-f69bbc5a-e2c73578-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bi9ycuexjdlyf9nbfkmf.jpg",
+      "watchUrl": "https://www.mlb.com/video/martin-perez-throws-six-no-hit-innings-vs-nationals"
+    },
+    "2026-07-18-ath-wsh-669372": {
+      "videoId": "j-t-ginn-ks-seven-over-6-1-3-scoreless-innings",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/18/ebdaf026-472503ca-a32b61da-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/aqfnyx3k5stsnpfleliz.jpg",
+      "watchUrl": "https://www.mlb.com/video/j-t-ginn-ks-seven-over-6-1-3-scoreless-innings"
+    },
+    "2026-08-22-tor-nyy-656302": {
+      "videoId": "dylan-cease-fans-eight-vs-yankees",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/22/51621786-9fa8fbe4-8f77b3a4-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/kegf19wm3w9balteruhq.jpg",
+      "watchUrl": "https://www.mlb.com/video/dylan-cease-fans-eight-vs-yankees"
+    },
+    "2026-08-20-atl-cws-656550": {
+      "videoId": "munetaka-murakami-strikes-out-swinging-knhecx",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/20/dec92f90-e093e5a7-d222c6d4-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/grpr0srryupidy88j3cq.jpg",
+      "watchUrl": "https://www.mlb.com/video/munetaka-murakami-strikes-out-swinging-knhecx"
+    },
+    "2026-07-11-bal-kc-680694": {
+      "videoId": "kyle-bradish-strikes-out-five-over-6-2-3-innings",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/11/7693fb3a-0ac3e50e-0826447e-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/tpcpe1vvcw5iboxafeiv.jpg",
+      "watchUrl": "https://www.mlb.com/video/kyle-bradish-strikes-out-five-over-6-2-3-innings"
+    },
+    "2026-09-14-tor-det-667755": {
+      "videoId": "jose-soriano-strikes-out-five-batters-in-outing-x7929",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/14/b8422066-b6f7f883-0b2ab3f1-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/lswfdetz8t2dwaw2oqbg.jpg",
+      "watchUrl": "https://www.mlb.com/video/jose-soriano-strikes-out-five-batters-in-outing-x7929"
+    }
   }
 }

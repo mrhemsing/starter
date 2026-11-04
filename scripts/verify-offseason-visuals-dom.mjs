@@ -80,7 +80,17 @@ try {
         if (media.highlights[start.id]) {
           await button.click();
           const modal = page.getByRole("dialog");
-          assert.equal(await modal.locator("iframe").getAttribute("src"), media.highlights[start.id].embedUrl);
+          const asset = media.highlights[start.id];
+          const player = modal.locator(asset.source === "mlb-game-content" ? "video" : "iframe");
+          assert.equal(await player.getAttribute("src"), asset.embedUrl);
+          if (asset.source === "mlb-game-content") {
+            await player.evaluate(video => new Promise((resolve, reject) => {
+              if (video.readyState >= 1) return resolve(true);
+              const timeout = setTimeout(() => reject(new Error("MLB video metadata timeout")), 20000);
+              video.addEventListener("loadedmetadata", () => {clearTimeout(timeout); resolve(true);}, {once:true});
+              video.addEventListener("error", () => {clearTimeout(timeout); reject(new Error("MLB video load failed"));}, {once:true});
+            }));
+          }
           await modal.getByRole("button", { name: "Close highlight" }).click();
         }
       }

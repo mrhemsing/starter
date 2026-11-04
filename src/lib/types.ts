@@ -833,7 +833,7 @@ export type StartDetail = StartSummary & {
 
 export type FeaturedStartHighlight = {
   videoId: string;
-  source: "manual" | "stored" | "youtube-search";
+  source: "manual" | "stored" | "youtube-search" | "mlb-game-content";
   isShort: boolean;
   embedUrl: string;
   thumbnailUrl: string;

@@ -73,7 +73,8 @@
     "test:pitcher-contract": "node scripts/check-pitcher-contract.mjs",
     "test:responsive": "node scripts/check-responsive-screenshots.mjs",
     "test:slate-contract": "node scripts/check-slate-contract.mjs",
-    "test:start-contract": "node scripts/check-start-contract.mjs"
+    "test:start-contract": "node scripts/check-start-contract.mjs",
+    "check:highlight-backfill": "node scripts/check-highlight-backfill.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RawGsPlusLine } from "@/components/gs-plus-score";
+import { HeatHighlightModal } from "@/components/heat-highlight-modal";
+import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { SiteHeader } from "@/components/site-header";
 import { formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
@@ -55,6 +57,7 @@ export default async function StartRecapPage({ params }: StartRecapPageProps) {
   if (!resolved) notFound();
 
   const { start, canonicalPath, pairedStart } = resolved;
+  const highlight = await resolveFeaturedStartHighlight(start);
   const today = getHomeSlateDate();
   const summary = recapSummary(start);
   const jsonLd = jsonLdForStartRecap(start, canonicalPath);
@@ -81,6 +84,10 @@ export default async function StartRecapPage({ params }: StartRecapPageProps) {
             </div>
           </div>
         </header>
+
+        {highlight ? <div className="mt-4" data-recap-highlight>
+          <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} label="VIDEO HIGHLIGHTS" eyebrow="Archived MLB highlight" className="inline-flex min-h-11 items-center gap-2 rounded border border-amber-300/35 px-3 font-mono text-xs text-amber-200" />
+        </div> : null}
 
         <dl className="grid gap-4 border-b border-white/10 py-6 md:grid-cols-3">
           <Metric label="Decision" value={formatDecision(start.result)} />

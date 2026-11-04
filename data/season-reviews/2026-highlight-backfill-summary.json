@@ -1,0 +1,17 @@
+{
+  "featured": 41,
+  "queried": 41,
+  "resolved": 41,
+  "top25Resolved": 25,
+  "frozenFiles": {
+    "src/data/season-review-2026.json": "20e7f7a42fc8d56c8dae65cf774bb606ad8c80542ea5509325953c55836fba55",
+    "data/season-reviews/2026-canonical.json": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
+    "data/season-reviews/2026-receipt.json": "a9aa8743f0d1a95edc4bb110db0ea8c7b9c0a9f2d1dffdf035e99a3a7f9fdf81"
+  },
+  "fullSeasonProposal": {
+    "starts": 4425,
+    "uniqueGamePks": 2205,
+    "maximumYouTubeSearchCalls": 8850,
+    "executed": false
+  }
+}

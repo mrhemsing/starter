@@ -25,6 +25,7 @@ const warmLiveStartsJob = await readFile("src/lib/data/warm-live-starts-job.ts",
 const cacheTags = await readFile("src/lib/data/cache-tags.ts", "utf8");
 const duelsService = await readFile("src/lib/data/duels-service.ts", "utf8");
 const imageService = await readFile("src/lib/data/top-performer-image-service.ts", "utf8");
+const sharedDiscovery = await readFile("src/lib/data/highlight-discovery.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 const globals = await readFile("src/app/globals.css", "utf8");
 const gavinWilliamsLiveLeaderImageMetadata = JSON.parse(await readFile("public/images/top-performer-action-shots/2026-07-09-cle-min-668909-mlb-action-v4.json", "utf8"));
@@ -59,7 +60,7 @@ assert(
     featuredHighlightService.includes('"2026-07-07-phi-cin-554430": "dq9meO_64Fk"') &&
     featuredHighlightService.includes('"2026-07-08-tor-sf-656302": "0AmJgvdkVbk"') &&
     featuredHighlightService.includes('"2026-07-25-tor-bos-656302": "HZ3S7-D0zR8"') &&
-    featuredHighlightService.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    sharedDiscovery.includes('const MLB_CHANNEL_HANDLE = "MLB";') && featuredHighlightService.includes('from "@/lib/data/highlight-discovery"') &&
     featuredHighlightService.includes('const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";') &&
     featuredHighlightService.includes("readSupabaseFeaturedStartHighlight(start.id)") &&
     featuredHighlightService.includes("resolveYouTubeHighlight(start)") &&
@@ -688,7 +689,7 @@ assert(
     imageService.includes('source: "placeholder"') &&
     imageService.includes("imageUrl: PLACEHOLDER_IMAGE_URL") &&
     imageService.includes("`https://statsapi.mlb.com/api/v1/game/${start.gamePk}/content`") &&
-    imageService.includes("function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null") &&
+    imageService.includes("function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary, accept: (item: MlbGameContentItem) => boolean = () => true): MlbGameContentActionCandidate | null") &&
     imageService.includes("function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary)") &&
     imageService.includes("function nonActionMlbContentPattern()") &&
     imageService.includes("function nonActionMlbTitlePattern()") &&

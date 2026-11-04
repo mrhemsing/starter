@@ -8,6 +8,7 @@ function assert(condition, message) {
 
 const bestStartsRoute = await readFile("src/app/api/home/best-starts/route.ts", "utf8");
 const bestStartsService = await readFile("src/lib/data/home-best-starts-service.ts", "utf8");
+const sharedDiscovery = await readFile("src/lib/data/highlight-discovery.ts", "utf8");
 const featuredHighlightService = await readFile("src/lib/data/featured-highlight-service.ts", "utf8");
 const featuredHighlightsCron = await readFile("src/app/api/cron/featured-highlights/route.ts", "utf8");
 const highlightIngestScript = await readFile("scripts/ingest-featured-start-highlights.mjs", "utf8");
@@ -86,14 +87,14 @@ assert(
 assert(
   packageJson.includes('"ingest:featured-highlights": "node scripts/ingest-featured-start-highlights.mjs"') &&
     highlightIngestScript.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
-    highlightIngestScript.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    sharedDiscovery.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     highlightIngestScript.includes("const DEFAULT_LOOKBACK_DAYS = 30;") &&
     highlightIngestScript.includes("const DEFAULT_CANDIDATE_LIMIT = 16;") &&
     highlightIngestScript.includes("readStoredHighlightStartIds") &&
-    highlightIngestScript.includes("searchHighlightCandidates") &&
+    highlightIngestScript.includes('loadProjectTs("src/lib/data/highlight-discovery.ts")') && sharedDiscovery.includes("searchHighlightCandidates") &&
     highlightIngestScript.includes("upsertHighlights(rows)") &&
     highlightIngestScript.includes('source: "youtube-search"') &&
-    highlightIngestScript.includes('if (ALL_GAME_HIGHLIGHTS_TITLE_PATTERN.test(title) || NON_START_TITLE_PATTERN.test(title)) return null;') &&
+    sharedDiscovery.includes('if (ALL_GAME_HIGHLIGHTS_TITLE_PATTERN.test(title) || NON_START_TITLE_PATTERN.test(title)) return null;') &&
     readme.includes("npm run ingest:featured-highlights") &&
     readme.includes("without page-render search"),
   "Recent Gems must have a quota-safe 30-day background MLB YouTube ingestion path that stores validated highlight IDs in Supabase",
@@ -102,7 +103,7 @@ assert(
 assert(
   featuredHighlightsCron.includes('import { revalidatePath, revalidateTag } from "next/cache";') &&
     featuredHighlightsCron.includes('import { HOME_BEST_STARTS_CACHE_TAG } from "@/lib/data/home-best-starts-service";') &&
-    featuredHighlightsCron.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
+    sharedDiscovery.includes('const MLB_CHANNEL_HANDLE = "MLB";') &&
     featuredHighlightsCron.includes("const DEFAULT_LOOKBACK_DAYS = 30;") &&
     featuredHighlightsCron.includes("const DEFAULT_CANDIDATE_LIMIT = 16;") &&
     featuredHighlightsCron.includes('const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";') &&
@@ -243,7 +244,7 @@ assert(
     !monthlyBestStartsPage.includes(["Monthly", "leaderboard"].join(" ")) &&
     !homeDeferredSections.includes('href={`/best-starts/${monthKey}`}') &&
     homeDeferredSections.includes('href="/best-starts"') &&
-    featuredStartHighlight.includes("Highlight · MLB on YouTube") &&
+    featuredStartHighlight.includes('const attribution = isMlbContent ? "MLB" : "MLB on YouTube";') && featuredStartHighlight.includes("Highlight · {attribution}") &&
     featuredStartHighlight.includes('target="_blank"') &&
     featuredStartHighlight.includes('rel="noopener"') &&
     !featuredStartHighlight.includes(["Highlight", "via", "MLB", "on", "YouTube"].join(" ")) &&

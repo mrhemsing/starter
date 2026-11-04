@@ -1,0 +1,1979 @@
+{
+  "channel": "UCoLrcjPV5PbUrUyXq5mjc_A",
+  "channelLog": [
+    {
+      "url": "https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=MLB",
+      "status": 200,
+      "at": "2026-11-04T01:05:24.222Z",
+      "responseFile": "outputs/off13/responses/4ae52c2caa5dc40902f2a06f1c21fa34889ae046478754a931f8ca7e3923b648.json",
+      "candidates": [
+        {
+          "id": "UCoLrcjPV5PbUrUyXq5mjc_A"
+        }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "startId": "2026-06-12-mil-phi-694819",
+      "gamePk": 823778,
+      "date": "2026-06-12",
+      "pitcher": "Jacob Misiorowski",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "MaAOy8pY36c",
+        "source": "manual",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/MaAOy8pY36c?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/MaAOy8pY36c/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=MaAOy8pY36c",
+        "title": "ALL 15 STRIKEOUTS! Jacob Misiorowski sets admirable career high! (Most Ks by ANY pitcher in 2026 🔥)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823778/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:25.338Z",
+          "responseFile": "outputs/off13/responses/3890481fc788b7ac0ef8f40ff64fdf54fb9701a44950b31c274abb959d9248f3.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=MaAOy8pY36c",
+          "status": 200,
+          "at": "2026-11-04T01:05:25.719Z",
+          "responseFile": "outputs/off13/responses/5b480d7ed85a5ae218ec826dfef97a76a8466b7821b20a0f8666ebe12b19d7db.json",
+          "candidates": [
+            {
+              "id": "MaAOy8pY36c",
+              "title": "ALL 15 STRIKEOUTS! Jacob Misiorowski sets admirable career high! (Most Ks by ANY pitcher in 2026 🔥)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-06-13T02:27:08Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-16-phi-pit-650911",
+      "gamePk": 823382,
+      "date": "2026-05-16",
+      "pitcher": "Cristopher Sánchez",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "hczzXZivkGw",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/hczzXZivkGw?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/hczzXZivkGw/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=hczzXZivkGw",
+        "title": "Cristopher Sánchez strikes out 13 BATTERS during his COMPLETE GAME SHUTOUT! 😤 (Career-high in Ks!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823382/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:26.583Z",
+          "responseFile": "outputs/off13/responses/8f28a592653ab8ab4ce12599ead842042d7469df0d6b3c2b455107978d87317c.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=hczzXZivkGw",
+          "status": 200,
+          "at": "2026-11-04T01:10:27.268Z",
+          "responseFile": "outputs/off13/responses/fd7c481f994ec7849de3ed387e692bd94be5e5f97f3185be4da8b0965060b938.json",
+          "candidates": [
+            {
+              "id": "hczzXZivkGw",
+              "title": "Cristopher Sánchez strikes out 13 BATTERS during his COMPLETE GAME SHUTOUT! 😤 (Career-high in Ks!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-17T00:26:35Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-07-phi-atl-666200",
+      "gamePk": 823415,
+      "date": "2026-09-07",
+      "pitcher": "Jesús Luzardo",
+      "rank": 3,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "1vnqtnNjMyc",
+        "source": "manual",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/1vnqtnNjMyc?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/1vnqtnNjMyc/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=1vnqtnNjMyc",
+        "title": "Jesús Luzardo tosses masterful 1-0 CG shutout! (Phillies' first since Roy Halladay) | MLB Highlights",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823415/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:29.755Z",
+          "responseFile": "outputs/off13/responses/b8dfd5dc37353f904d4584a1c6ea189435a4dfa6317dfe6afd081e9c79bdd409.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=1vnqtnNjMyc",
+          "status": 200,
+          "at": "2026-11-04T01:05:30.237Z",
+          "responseFile": "outputs/off13/responses/60882b5cd2c77bc85e953de69391081b81474bf4d736f134bf052d8087b22944.json",
+          "candidates": [
+            {
+              "id": "1vnqtnNjMyc",
+              "title": "Jesús Luzardo tosses masterful 1-0 CG shutout! (Phillies' first since Roy Halladay) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-07T20:26:16Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-25-tor-bos-656302",
+      "gamePk": 824734,
+      "date": "2026-07-25",
+      "pitcher": "Dylan Cease",
+      "rank": 4,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "HZ3S7-D0zR8",
+        "source": "manual",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/HZ3S7-D0zR8?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/HZ3S7-D0zR8/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=HZ3S7-D0zR8",
+        "title": "COMPLETE GAME SHUTOUT 🔥 Dylan Cease struck out TWELVE BATTERS in DOMINANT start for Blue Jays!",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824734/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:31.384Z",
+          "responseFile": "outputs/off13/responses/652866440bb0591c4837fc002d1d74bb699161caf626c7bb10f80e70f1b640f1.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=HZ3S7-D0zR8",
+          "status": 200,
+          "at": "2026-11-04T01:05:31.866Z",
+          "responseFile": "outputs/off13/responses/2c0652db63a54854cabab5586bf5b2be5caebb478039555a1b75298940018446.json",
+          "candidates": [
+            {
+              "id": "HZ3S7-D0zR8",
+              "title": "COMPLETE GAME SHUTOUT 🔥 Dylan Cease struck out TWELVE BATTERS in DOMINANT start for Blue Jays!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-25T23:33:57Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-27-atl-lad-519242",
+      "gamePk": 824879,
+      "date": "2026-08-27",
+      "pitcher": "Chris Sale",
+      "rank": 5,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "AW4BsST4Ldk",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/AW4BsST4Ldk?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/AW4BsST4Ldk/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=AW4BsST4Ldk",
+        "title": "COMPLETE GAME SHUTOUT FOR CHRIS SALE 👏",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824879/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:32.758Z",
+          "responseFile": "outputs/off13/responses/4e02f5f6d31814b91f133c096a9b83b3c36c2acb916267631a469e2939a86482.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=AW4BsST4Ldk",
+          "status": 200,
+          "at": "2026-11-04T01:10:27.996Z",
+          "responseFile": "outputs/off13/responses/1e08ca122de8e2d4e08d22df0987e3cba6c4e497817cd88201d103fad22561ad.json",
+          "candidates": [
+            {
+              "id": "AW4BsST4Ldk",
+              "title": "COMPLETE GAME SHUTOUT FOR CHRIS SALE 👏",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-28T02:23:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-22-cle-phi-668909",
+      "gamePk": 823461,
+      "date": "2026-05-22",
+      "pitcher": "Gavin Williams",
+      "rank": 6,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "FnGWKhcfPGg",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/FnGWKhcfPGg?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/FnGWKhcfPGg/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=FnGWKhcfPGg",
+        "title": "Top Plays in MLB from 5/22/26 (Gavin Williams' 11-K gem, Jacob Marsee's stellar defense, MORE!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823461/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:36.695Z",
+          "responseFile": "outputs/off13/responses/dc97477a083ff7821fb3ff3d3a35ae51f563f210534b7e87340c3a9998719afe.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=FnGWKhcfPGg",
+          "status": 200,
+          "at": "2026-11-04T01:10:28.732Z",
+          "responseFile": "outputs/off13/responses/ba494cccb82a01e264e3a394799dc3ab41bfc694edf57981d9a370735b136fbf.json",
+          "candidates": [
+            {
+              "id": "FnGWKhcfPGg",
+              "title": "Top Plays in MLB from 5/22/26 (Gavin Williams' 11-K gem, Jacob Marsee's stellar defense, MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-23T11:00:25Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-12-pit-col-694973",
+      "gamePk": 823385,
+      "date": "2026-05-12",
+      "pitcher": "Paul Skenes",
+      "rank": 7,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "QK3cuf7yzIg",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/QK3cuf7yzIg?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/QK3cuf7yzIg/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=QK3cuf7yzIg",
+        "title": "Paul Skenes bringing the heat! 🔥",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823385/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:39.718Z",
+          "responseFile": "outputs/off13/responses/acf894039e9f17250f59c9543c5f127b230166bf240b6f8c8677935d9db580b9.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=QK3cuf7yzIg",
+          "status": 200,
+          "at": "2026-11-04T01:10:29.435Z",
+          "responseFile": "outputs/off13/responses/3fd6a42d162e394b7c7769afa4b50ef7e6ef5209b4c68ce4ec2f9f32ca327da7.json",
+          "candidates": [
+            {
+              "id": "QK3cuf7yzIg",
+              "title": "Paul Skenes bringing the heat! 🔥",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-13T05:53:57Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-27-bos-tor-624133",
+      "gamePk": 822825,
+      "date": "2026-04-27",
+      "pitcher": "Ranger Suarez",
+      "rank": 8,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "t_aKT_C0VLk",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/t_aKT_C0VLk?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/t_aKT_C0VLk/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=t_aKT_C0VLk",
+        "title": "Top Plays in MLB from 4/27/26 (Kyle Tucker has his Dodgers moment, Ranger Suarez's 10-K gem, MORE!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/822825/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:42.629Z",
+          "responseFile": "outputs/off13/responses/f4867af40d139bc73a5b66c1116e4256954f8a99f7dc7dbb50cb51681e5e522b.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=t_aKT_C0VLk",
+          "status": 200,
+          "at": "2026-11-04T01:10:30.177Z",
+          "responseFile": "outputs/off13/responses/2adcfcb09602436f97225c8c3e4f128041baac8d0a25272e2ab2392c5b6679ac.json",
+          "candidates": [
+            {
+              "id": "t_aKT_C0VLk",
+              "title": "Top Plays in MLB from 4/27/26 (Kyle Tucker has his Dodgers moment, Ranger Suarez's 10-K gem, MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-28T11:01:37Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-24-laa-tex-672282",
+      "gamePk": 824028,
+      "date": "2026-05-24",
+      "pitcher": "Reid Detmers",
+      "rank": 9,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "7P07XZtyXiA",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/7P07XZtyXiA?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/7P07XZtyXiA/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=7P07XZtyXiA",
+        "title": "NEW SEASON HIGH! Reid Detmers' career-best 14 strikeouts on Sunday Night Baseball! | MLB Highlights",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824028/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:45.830Z",
+          "responseFile": "outputs/off13/responses/a26f5f599254960edc7be5a73818d0bd3c155075cf9de478cb914f779efadf58.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=7P07XZtyXiA",
+          "status": 200,
+          "at": "2026-11-04T01:10:30.945Z",
+          "responseFile": "outputs/off13/responses/2c04328f001206b35f3668e0aa49864f259fbd826dfb760e0c551c58fcbc69ce.json",
+          "candidates": [
+            {
+              "id": "7P07XZtyXiA",
+              "title": "NEW SEASON HIGH! Reid Detmers' career-best 14 strikeouts on Sunday Night Baseball! | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-25T02:44:31Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-06-10-tb-bos-656876",
+      "gamePk": 822970,
+      "date": "2026-06-10",
+      "pitcher": "Drew Rasmussen",
+      "rank": 10,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "rasmussen-s-career-high-13-k-s-in-scoreless-start",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-06/10/b9c31cbb-76caaa0f-65429056-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/h9h0bfafnhfz8s6upa4w.jpg",
+        "watchUrl": "https://www.mlb.com/video/rasmussen-s-career-high-13-k-s-in-scoreless-start",
+        "title": "Rasmussen's career-high 13 K's in scoreless start"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/822970/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:48.847Z",
+          "responseFile": "outputs/off13/responses/f5e805701ca73ec911aa97544424d93a1aefac2f1882a87cd8ad3d27a2476c79.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+strikeouts&publishedAfter=2026-06-09T18%3A00%3A00.000Z&publishedBefore=2026-06-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:05:49.374Z",
+          "responseFile": "outputs/off13/responses/03ed14f2146c22da9923844077141afa75edcb43190e05b14cf0073996e5963f.json",
+          "candidates": []
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+TB+highlight&publishedAfter=2026-06-09T18%3A00%3A00.000Z&publishedBefore=2026-06-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:05:50.099Z",
+          "responseFile": "outputs/off13/responses/89055442340e467f168aace5bb9ccf1de41a2d9010901ea87e82e500b2dbd61c.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-12-min-mia-641927",
+      "gamePk": 823712,
+      "date": "2026-05-12",
+      "pitcher": "Bailey Ober",
+      "rank": 11,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "bailey-ober-throws-complete-shutout-game",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/12/ec513155-5b4a49dc-e943cd80-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/em9mwmgmfxiui8dulxrk.jpg",
+        "watchUrl": "https://www.mlb.com/video/bailey-ober-throws-complete-shutout-game",
+        "title": "Bailey Ober throws first career shutout"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823712/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:50.842Z",
+          "responseFile": "outputs/off13/responses/1eaaa1e654ad641bcb67211075c8dcbc9df9ac85c573880c08b4bd777af23cc7.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Bailey+Ober+strikeouts&publishedAfter=2026-05-11T18%3A00%3A00.000Z&publishedBefore=2026-05-13T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:05:51.507Z",
+          "responseFile": "outputs/off13/responses/c06884edab8a7bb1953ff11691625896b79204387ef976da0f28d6b21ce30f7c.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "179sev9qRo0"
+              },
+              "title": "Marlins vs. Twins Game Highlights (5/12/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-13T04:27:19Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "nCqrM1oPsk4"
+              },
+              "title": "An unlikely Maddux ... and a Skenes gem! | Morning Lineup (MLB Daily Recap)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-13T13:01:24Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "Ias10ifBbJQ"
+              },
+              "title": "Highlights from ALL GAMES on 5/12 (Paul Skenes&#39; ELECTRIC start, Nationals&#39; 6-HR game, MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-13T11:15:51Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Bailey+Ober+MIN+highlight&publishedAfter=2026-05-11T18%3A00%3A00.000Z&publishedBefore=2026-05-13T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:05:52.233Z",
+          "responseFile": "outputs/off13/responses/4dba08866f4bb9bea0971779089842088d3681f161e5657bf063ee400b1b66bc.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-05-phi-ath-650911",
+      "gamePk": 823469,
+      "date": "2026-05-05",
+      "pitcher": "Cristopher Sánchez",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "P8qdL7QvoTA",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/P8qdL7QvoTA?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/P8qdL7QvoTA/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=P8qdL7QvoTA",
+        "title": "Top Plays in MLB from 5/5/26 (Shohei and Sánchez excellent on the mound, Cubs win and MORE!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823469/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:53.175Z",
+          "responseFile": "outputs/off13/responses/d84fa73fe639671b4b7a2292e4c582a7c0910596cdbed4cf38c7cb61826e2cfa.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=P8qdL7QvoTA",
+          "status": 200,
+          "at": "2026-11-04T01:10:31.690Z",
+          "responseFile": "outputs/off13/responses/74f98062bca6896ec7472160a1ca3d3700841b99078139ed11be69f138b93ca5.json",
+          "candidates": [
+            {
+              "id": "P8qdL7QvoTA",
+              "title": "Top Plays in MLB from 5/5/26 (Shohei and Sánchez excellent on the mound, Cubs win and MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-06T11:00:42Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-23-lad-sf-607192",
+      "gamePk": 823233,
+      "date": "2026-04-23",
+      "pitcher": "Tyler Glasnow",
+      "rank": 13,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "hRqPPctYebI",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/hRqPPctYebI?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/hRqPPctYebI/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=hRqPPctYebI",
+        "title": "Tyler Glasnow tosses EIGHT DOMINANT innings for the Dodgers! ⚾🔥 (9 Ks, 0 runs and just 1 HIT!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823233/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:56.244Z",
+          "responseFile": "outputs/off13/responses/001cd1f8ebb86b2da0cdcb9cac21ce2e4698320588bab46a0f1530d7fe206ca8.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=hRqPPctYebI",
+          "status": 200,
+          "at": "2026-11-04T01:10:32.509Z",
+          "responseFile": "outputs/off13/responses/4c055087511d249a57cfb37be2de676d8b0e0af54c898bab48d31b39f2f50ea7.json",
+          "candidates": [
+            {
+              "id": "hRqPPctYebI",
+              "title": "Tyler Glasnow tosses EIGHT DOMINANT innings for the Dodgers! ⚾🔥 (9 Ks, 0 runs and just 1 HIT!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-23T22:52:40Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-24-nyy-phi-693645",
+      "gamePk": 823434,
+      "date": "2026-07-24",
+      "pitcher": "Cam Schlittler",
+      "rank": 14,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "6_lnzZ-p6SU",
+        "source": "manual",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/6_lnzZ-p6SU?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/6_lnzZ-p6SU/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=6_lnzZ-p6SU",
+        "title": "Cam Schlittler SHOWS OUT for the New York Yankees against the Phillies! 😤 (7.1 IP, 0 ER, 12 Ks 🔥)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823434/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:59.083Z",
+          "responseFile": "outputs/off13/responses/0e24ee04321ae9fdfdd01202729252cda7a463621acc9f2f6d6263a5c7310c82.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=6_lnzZ-p6SU",
+          "status": 200,
+          "at": "2026-11-04T01:05:59.694Z",
+          "responseFile": "outputs/off13/responses/289423abf05eaf7cfcf7ed099077b86ce1218c91960d4b498445f6f6f9ee2cf8.json",
+          "candidates": [
+            {
+              "id": "6_lnzZ-p6SU",
+              "title": "Cam Schlittler SHOWS OUT for the New York Yankees against the Phillies! 😤 (7.1 IP, 0 ER, 12 Ks 🔥)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-25T01:38:59Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-10-kc-cws-663460",
+      "gamePk": 824128,
+      "date": "2026-04-10",
+      "pitcher": "Kris Bubic",
+      "rank": 15,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "vzCG1uAvNoA",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/vzCG1uAvNoA?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/vzCG1uAvNoA/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=vzCG1uAvNoA",
+        "title": "Kris Bubic sets a new CAREER-HIGH with 11 strikeouts in a dominant performance for the Royals! 👑",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824128/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:00.595Z",
+          "responseFile": "outputs/off13/responses/d760f6739b3674acc49007b83a09e11a065d359fdebaf88a1322867437dafdbc.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=vzCG1uAvNoA",
+          "status": 200,
+          "at": "2026-11-04T01:10:33.267Z",
+          "responseFile": "outputs/off13/responses/032a8eb79956ac542534df2c5ab170d2c72c83a384a71d6b80d4fcbf2779fe3e.json",
+          "candidates": [
+            {
+              "id": "vzCG1uAvNoA",
+              "title": "Kris Bubic sets a new CAREER-HIGH with 11 strikeouts in a dominant performance for the Royals! 👑",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-11T02:45:56Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-20-mil-chc-690986",
+      "gamePk": 824678,
+      "date": "2026-05-20",
+      "pitcher": "Kyle Harrison",
+      "rank": 16,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "UryujI48pLU",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/UryujI48pLU?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/UryujI48pLU/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=UryujI48pLU",
+        "title": "Top Plays in MLB from 5/20/26 (Shohei Ohtani's OUTSTANDING game, Kyle Harrison's 11 K's AND MORE!)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824678/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:03.801Z",
+          "responseFile": "outputs/off13/responses/a582f43c531e2b9a777f8b29e76ac1314084ff96f798e0620e3ff19a016ca47d.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=UryujI48pLU",
+          "status": 200,
+          "at": "2026-11-04T01:10:33.990Z",
+          "responseFile": "outputs/off13/responses/380b304213dace8b2a2aa78d25315460dc36c08403cb98f8e9b6f2fb589d3969.json",
+          "candidates": [
+            {
+              "id": "UryujI48pLU",
+              "title": "Top Plays in MLB from 5/20/26 (Shohei Ohtani's OUTSTANDING game, Kyle Harrison's 11 K's AND MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-21T11:00:19Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-26-mil-pit-690986",
+      "gamePk": 823797,
+      "date": "2026-04-26",
+      "pitcher": "Kyle Harrison",
+      "rank": 17,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "kyle-harrison-strikes-out-twelve-in-six-innings",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-04/26/47e1cf3b-5d7371fc-bf929b8a-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/dvkk2hhv9tx8z3ftf9fm.jpg",
+        "watchUrl": "https://www.mlb.com/video/kyle-harrison-strikes-out-twelve-in-six-innings",
+        "title": "Kyle Harrison strikes out TWELVE in six innings"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823797/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:06.708Z",
+          "responseFile": "outputs/off13/responses/64590613f7cb181cf56c7b842b70175fccfe96e60fd07712bccce4cdd61314a7.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Kyle+Harrison+strikeouts&publishedAfter=2026-04-25T18%3A00%3A00.000Z&publishedBefore=2026-04-27T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:07.369Z",
+          "responseFile": "outputs/off13/responses/322ad1da1d6d0d611309d713fd62d33a34a4d5609b3758651fe8f5c7d8843b13.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "nVjkkZqWgac"
+              },
+              "title": "Highlights from ALL GAMES on 4/26 (Chris Sale picks up his 150th win, Shohei Ohtani homers &amp; MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-27T10:01:22Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Kyle+Harrison+MIL+highlight&publishedAfter=2026-04-25T18%3A00%3A00.000Z&publishedBefore=2026-04-27T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:08.114Z",
+          "responseFile": "outputs/off13/responses/ab64f8695f032a7ce790fd6dd134f15c3b291ce4f5af594e7c67566a9c4b7adf.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "wMF18tRkO14"
+              },
+              "title": "Pirates vs. Brewers Game Highlights (4/26/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-26T22:45:59Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-01-mia-cws-645261",
+      "gamePk": 823889,
+      "date": "2026-04-01",
+      "pitcher": "Sandy Alcantara",
+      "rank": 18,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "sw8_Io_gzNI",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/sw8_Io_gzNI?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/sw8_Io_gzNI/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=sw8_Io_gzNI",
+        "title": "Sandy Alcantara DOMINATED in his THIRTEENTH career complete game 🐟 | MLB Highlights",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823889/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:09.035Z",
+          "responseFile": "outputs/off13/responses/8f48416883c5ef533a3b9700621dfb2bbae444194a0f57d46aee1476d3d29d01.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=sw8_Io_gzNI",
+          "status": 200,
+          "at": "2026-11-04T01:10:34.758Z",
+          "responseFile": "outputs/off13/responses/88ea6dc240322b296de48221654f5e16e56e757e1b8592dbac2acb3e641b8e11.json",
+          "candidates": [
+            {
+              "id": "sw8_Io_gzNI",
+              "title": "Sandy Alcantara DOMINATED in his THIRTEENTH career complete game 🐟 | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-01T20:00:33Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-13-wsh-chc-676917",
+      "gamePk": 822696,
+      "date": "2026-08-13",
+      "pitcher": "Cade Cavalli",
+      "rank": 2,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "lvh7LgyjyWQ",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/lvh7LgyjyWQ?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/lvh7LgyjyWQ/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=lvh7LgyjyWQ",
+        "title": "Baseball returns to Dyersville for the 2026 MLB at Field of Dreams Game! 🔥",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/822696/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:12.355Z",
+          "responseFile": "outputs/off13/responses/b95e46abedb4758652fd36431c6e4eaae5f5f3916519b2d5d29ca4fa2c292a79.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=lvh7LgyjyWQ",
+          "status": 200,
+          "at": "2026-11-04T01:10:35.505Z",
+          "responseFile": "outputs/off13/responses/1a87ebe27fdceb715481333f9154ba0c7f282ed7608cbbbae2550501737bdb5b.json",
+          "candidates": [
+            {
+              "id": "lvh7LgyjyWQ",
+              "title": "Baseball returns to Dyersville for the 2026 MLB at Field of Dreams Game! 🔥",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-14T13:00:25Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-10-cin-chc-668881",
+      "gamePk": 824493,
+      "date": "2026-07-10",
+      "pitcher": "Hunter Greene",
+      "rank": 20,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "ky-cwcm7BYE",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/ky-cwcm7BYE?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/ky-cwcm7BYE/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=ky-cwcm7BYE",
+        "title": "Hunter Greene strikes out 12 in a DOMINANT display and the BEST MLB Highlights from 7/10/26!",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824493/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:15.212Z",
+          "responseFile": "outputs/off13/responses/b9d876a007acb0495cfdafee1701f3d06e9274177dc57addae111dfcb93a3dd4.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=ky-cwcm7BYE",
+          "status": 200,
+          "at": "2026-11-04T01:10:36.269Z",
+          "responseFile": "outputs/off13/responses/0f0eb453aa19a9c2fce16e24f303ca42c61f451ae68d3267b7021d4f8376ad44.json",
+          "candidates": [
+            {
+              "id": "ky-cwcm7BYE",
+              "title": "Hunter Greene strikes out 12 in a DOMINANT display and the BEST MLB Highlights from 7/10/26!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-11T11:00:18Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-10-tex-chc-594798",
+      "gamePk": 822902,
+      "date": "2026-05-10",
+      "pitcher": "Jacob deGrom",
+      "rank": 21,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "os1uq3I7YAg",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/os1uq3I7YAg?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/os1uq3I7YAg/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=os1uq3I7YAg",
+        "title": "ALL 10 STRIKEOUTS from Jacob deGrom's masterful start! 🔥 | MLB Highlights",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/822902/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:18.889Z",
+          "responseFile": "outputs/off13/responses/27393f3c555b3c18a035d8d8032b695ab3beb2250cf9445eedd2eaa9cd91e647.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=os1uq3I7YAg",
+          "status": 200,
+          "at": "2026-11-04T01:10:37.076Z",
+          "responseFile": "outputs/off13/responses/bd3911ea0ae2601056e3fa1270022bedd33c6b2c8bc4121048bd68068d4747d9.json",
+          "candidates": [
+            {
+              "id": "os1uq3I7YAg",
+              "title": "ALL 10 STRIKEOUTS from Jacob deGrom's masterful start! 🔥 | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-10T21:50:12Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-06-05-tb-mia-656876",
+      "gamePk": 823860,
+      "date": "2026-06-05",
+      "pitcher": "Drew Rasmussen",
+      "rank": 22,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "drew-rasmussen-shines-over-seven-scoreless-innings",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-06/05/0de4aa91-1e496104-b7c89e55-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/v1780715657/mlb/z0gt7kgkjhu0tgut5ghd.jpg",
+        "watchUrl": "https://www.mlb.com/video/drew-rasmussen-shines-over-seven-scoreless-innings",
+        "title": "Drew Rasmussen tosses a scoreless gem"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823860/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:22.011Z",
+          "responseFile": "outputs/off13/responses/bd329be1a38a1f70dbfa27a96f4decd9997fe9b6907271bcf89659e428d802ca.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+strikeouts&publishedAfter=2026-06-04T18%3A00%3A00.000Z&publishedBefore=2026-06-06T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:22.449Z",
+          "responseFile": "outputs/off13/responses/bda81be8453be3e4b4fb2d05d86a7bf4eadc0a5ae52f91a63a6cca5d01feec8f.json",
+          "candidates": []
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+TB+highlight&publishedAfter=2026-06-04T18%3A00%3A00.000Z&publishedBefore=2026-06-06T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:23.184Z",
+          "responseFile": "outputs/off13/responses/5194125d1fd5cd9c4985280e11e7065fa7a1156865543920e435f16303503dae.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-10-03-tb-nyy-656876",
+      "gamePk": 849835,
+      "date": "2026-10-03",
+      "pitcher": "Drew Rasmussen",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "4YAZi_1UCfo",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/4YAZi_1UCfo?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/4YAZi_1UCfo/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=4YAZi_1UCfo",
+        "title": "A NASTY sinker from Drew Rasmussen freezes Trent Grisham for the strikeout!",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/849835/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:24.414Z",
+          "responseFile": "outputs/off13/responses/271c8b0cacc9cd2fc31f37065c8e5975088d2726ac95d10993c752e6b5c0c968.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=4YAZi_1UCfo",
+          "status": 200,
+          "at": "2026-11-04T01:10:37.779Z",
+          "responseFile": "outputs/off13/responses/3fd96ef20ea61fda83938708abd9664f7cd2d8ced394a12b67cfc37fe8a37f0e.json",
+          "candidates": [
+            {
+              "id": "4YAZi_1UCfo",
+              "title": "A NASTY sinker from Drew Rasmussen freezes Trent Grisham for the strikeout!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-10-04T00:07:38Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-01-cle-tor-668909",
+      "gamePk": 824391,
+      "date": "2026-09-01",
+      "pitcher": "Gavin Williams",
+      "rank": 24,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "0ILI8wVlOxI",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/0ILI8wVlOxI?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/0ILI8wVlOxI/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=0ILI8wVlOxI",
+        "title": "Gavin Williams DOMINATES with a 13-STRIKEOUT START for the Guardians! 🔥",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824391/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:27.167Z",
+          "responseFile": "outputs/off13/responses/38c565dbe7bde650dfc9528091085d3b6151c88ebde1de5bc68754f4b8b84d41.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=0ILI8wVlOxI",
+          "status": 200,
+          "at": "2026-11-04T01:10:38.567Z",
+          "responseFile": "outputs/off13/responses/fc4863aacb7b093af156e893c28bcc4b6fcc4a1863a5a754efc7238772395e21.json",
+          "candidates": [
+            {
+              "id": "0ILI8wVlOxI",
+              "title": "Gavin Williams DOMINATES with a 13-STRIKEOUT START for the Guardians! 🔥",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-02T13:00:31Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-04-14-min-bos-690953",
+      "gamePk": 823723,
+      "date": "2026-04-14",
+      "pitcher": "Mick Abel",
+      "rank": 25,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "mick-abel-strikes-out-ten-against-red-sox",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-04/14/d8e3d58c-d9b0977f-5584f901-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bymhss08svxauyl19bqa.jpg",
+        "watchUrl": "https://www.mlb.com/video/mick-abel-strikes-out-ten-against-red-sox",
+        "title": "Mick Abel strikes out ten against Red Sox"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823723/content",
+          "status": 200,
+          "at": "2026-11-04T01:06:31.055Z",
+          "responseFile": "outputs/off13/responses/1e1f8d991c970092a1bfba7d4f70fded356f4314a37d4dd592019b2d78068aa1.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Mick+Abel+strikeouts&publishedAfter=2026-04-13T18%3A00%3A00.000Z&publishedBefore=2026-04-15T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:31.510Z",
+          "responseFile": "outputs/off13/responses/c2320b23ad978e2ae095a7b89584eb32d586eaddfda3efee17425c9dc6e48f6f.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "iJeyQPm0Ab8"
+              },
+              "title": "Red Sox vs. Twins Game Highlights (4/14/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-04-15T03:37:10Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Mick+Abel+MIN+highlight&publishedAfter=2026-04-13T18%3A00%3A00.000Z&publishedBefore=2026-04-15T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:06:32.339Z",
+          "responseFile": "outputs/off13/responses/dc49708f447735a569c099202afb6d5cd9d45f8eddb917057ec644aedd7ef444.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-19-kc-sd-702070",
+      "gamePk": 824086,
+      "date": "2026-07-19",
+      "pitcher": "Noah Cameron",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "luis-rengifo-strikes-out-on-a-foul-tip-uvrfcr",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://bdata-producedclips.mlb.com/a676d9c7-ff8b-4a2d-9966-109115078d7e.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/q4nwqbdvsnkmrx7rjicu.jpg",
+        "watchUrl": "https://www.mlb.com/video/luis-rengifo-strikes-out-on-a-foul-tip-uvrfcr",
+        "title": "Noah Cameron strikes out Luis Rengifo"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824086/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:05.298Z",
+          "responseFile": "outputs/off13/responses/b6ce22127c47daa8fb01dc4e0463dc78a4ce0643c5b4a3332fb79ab31f198916.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+strikeouts&publishedAfter=2026-07-18T18%3A00%3A00.000Z&publishedBefore=2026-07-20T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:05.828Z",
+          "responseFile": "outputs/off13/responses/20cde488dc11c034d4a82113e2fd1ea8bfacd100285dca3ac9a0d75aff78ebbb.json",
+          "candidates": []
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+KC+highlight&publishedAfter=2026-07-18T18%3A00%3A00.000Z&publishedBefore=2026-07-20T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:06.517Z",
+          "responseFile": "outputs/off13/responses/7caa43c849b148ff6bdc4ba6efa197a083ced3b697f8903c04f26e4ff4278023.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "BKdmeC1NvMU"
+              },
+              "title": "PADRES vs. ROYALS: Official Full Game Highlights (July 19) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-19T22:26:07Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-10-phi-col-650911",
+      "gamePk": 823463,
+      "date": "2026-05-10",
+      "pitcher": "Cristopher Sánchez",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "cristopher-sanchez-s-seven-strike-outs-quality-start",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/10/e01ae10b-1ddbf630-4d0a9745-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/tw6df6onh2ah5usk8gs8.jpg",
+        "watchUrl": "https://www.mlb.com/video/cristopher-sanchez-s-seven-strike-outs-quality-start",
+        "title": "Cristopher Sánchez's seven strikeouts in quality start"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823463/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:07.402Z",
+          "responseFile": "outputs/off13/responses/7f8b4542ec438039b3f4eb6ce93616cfeebe07fd13a7510de0d0fb7aafcf4c18.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Cristopher+S%C3%A1nchez+strikeouts&publishedAfter=2026-05-09T18%3A00%3A00.000Z&publishedBefore=2026-05-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:08.084Z",
+          "responseFile": "outputs/off13/responses/eab32604bd48ef36c96788524a3c3a175c5e730d87a38516b0f7ea91a336fc1a.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "lNhnJDJyx_8"
+              },
+              "title": "Rockies vs. Phillies Game Highlights (5/10/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-10T21:15:59Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "7ErAEbq51kA"
+              },
+              "title": "Top Plays of the Week 🤩 (Michael Busch, Matt Olson, Paul Skenes and MORE!) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-11T15:29:29Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Cristopher+S%C3%A1nchez+PHI+highlight&publishedAfter=2026-05-09T18%3A00%3A00.000Z&publishedBefore=2026-05-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:08.738Z",
+          "responseFile": "outputs/off13/responses/2cd3b9c1effaf45190bae17af8c4c5ee69a79ef5eb25329e80b87a871290df8a.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-22-phi-cle-650911",
+      "gamePk": 823461,
+      "date": "2026-05-22",
+      "pitcher": "Cristopher Sánchez",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "cristopher-sanchez-s-dominant-outing",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/22/b741b73a-6f434937-8afbb43f-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/hatxbyqrs1qvhi72musg.jpg",
+        "watchUrl": "https://www.mlb.com/video/cristopher-sanchez-s-dominant-outing",
+        "title": "Cristopher Sánchez's dominant outing"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823461/content",
+          "status": 200,
+          "at": "2026-11-04T01:05:36.695Z",
+          "responseFile": "outputs/off13/responses/dc97477a083ff7821fb3ff3d3a35ae51f563f210534b7e87340c3a9998719afe.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Cristopher+S%C3%A1nchez+strikeouts&publishedAfter=2026-05-21T18%3A00%3A00.000Z&publishedBefore=2026-05-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:09.629Z",
+          "responseFile": "outputs/off13/responses/99d2b7a542a9d1391a2fa9c9659a96635973303ef99ea4614996bd3333ab7c9a.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "i2ea6kmVMgY"
+              },
+              "title": "Guardians vs. Phillies Game Highlights (5/22/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-23T02:52:08Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Cristopher+S%C3%A1nchez+PHI+highlight&publishedAfter=2026-05-21T18%3A00%3A00.000Z&publishedBefore=2026-05-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:10.249Z",
+          "responseFile": "outputs/off13/responses/843d6f6b20b5f6d6119f1a119cf1916ae64d948004827cc0c8a3448d65eedbe0.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "i2ea6kmVMgY"
+              },
+              "title": "Guardians vs. Phillies Game Highlights (5/22/26) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-23T02:52:08Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "4lo3nsYT7dQ"
+              },
+              "title": "First-place Guardians look like the real deal | Morning Lineup (MLB Daily Recap)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-22T13:00:32Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-05-27-phi-sd-650911",
+      "gamePk": 823295,
+      "date": "2026-05-27",
+      "pitcher": "Cristopher Sánchez",
+      "rank": 1,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "coEiMSZoBCE",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/coEiMSZoBCE?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/coEiMSZoBCE/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=coEiMSZoBCE",
+        "title": "Cristopher Sánchez breaks Phillies' scoreless innings franchise record with 7 dominant innings 🔥",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823295/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:11.098Z",
+          "responseFile": "outputs/off13/responses/2530ec84b397d2da00c1f3a2c2cf6689acfd5c69be31fccb08c8ae7ffb927b07.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=coEiMSZoBCE",
+          "status": 200,
+          "at": "2026-11-04T01:10:39.295Z",
+          "responseFile": "outputs/off13/responses/ef9892324b412cd87daeaa978c8d858c2e07f1ae458cc49c54c09413358df471.json",
+          "candidates": [
+            {
+              "id": "coEiMSZoBCE",
+              "title": "Cristopher Sánchez breaks Phillies' scoreless innings franchise record with 7 dominant innings 🔥",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-05-27T23:48:14Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-08-tor-sf-656302",
+      "gamePk": 823202,
+      "date": "2026-07-08",
+      "pitcher": "Dylan Cease",
+      "rank": 0,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "0AmJgvdkVbk",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/0AmJgvdkVbk?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/0AmJgvdkVbk/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=0AmJgvdkVbk",
+        "title": "Blue Jays’ Dylan Cease takes no-hitter to 9th in DOMINANT start! 🔥 (11 strikeouts!) | MLB Highlights",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823202/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:14.261Z",
+          "responseFile": "outputs/off13/responses/4f3b6e6086d05f25643cfae1cf253dc783da3f7b8ff5fca3b4701daee580bdbe.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=0AmJgvdkVbk",
+          "status": 200,
+          "at": "2026-11-04T01:10:40.140Z",
+          "responseFile": "outputs/off13/responses/e67b989ecc44b2ab3178bf960f83e1de878ff39b0bc97b3e83eebdc75be25e64.json",
+          "candidates": [
+            {
+              "id": "0AmJgvdkVbk",
+              "title": "Blue Jays’ Dylan Cease takes no-hitter to 9th in DOMINANT start! 🔥 (11 strikeouts!) | MLB Highlights",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-08T23:12:22Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-16-kc-laa-702070",
+      "gamePk": 823991,
+      "date": "2026-08-16",
+      "pitcher": "Noah Cameron",
+      "rank": 3,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "mike-trout-strikes-out-swinging-pahbbm",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/16/6bf387f8-fc131816-fe9ed2fa-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/pm1htueqsagigk0l6tnx.jpg",
+        "watchUrl": "https://www.mlb.com/video/mike-trout-strikes-out-swinging-pahbbm",
+        "title": "Noah Cameron seals one-hit complete-game shutout win"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823991/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:17.217Z",
+          "responseFile": "outputs/off13/responses/07a0b838ab93af8c3fe065f88463b25b5a48853b7d3a3008f32aaca0dc268526.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+strikeouts&publishedAfter=2026-08-15T18%3A00%3A00.000Z&publishedBefore=2026-08-17T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:17.919Z",
+          "responseFile": "outputs/off13/responses/2661f8eebb8c227be5646d15925f4086ba8508533c84f4a29b9766706a6fde8b.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "RcRxVG5jUb8"
+              },
+              "title": "ROYALS vs. ANGELS: Official Full Game Highlights (August 16) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-16T23:05:16Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "OU-83-2JAeo"
+              },
+              "title": "No surprise one of the GREATEST debuts in MLB history was one of the Top Moments of the Week!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-17T16:00:02Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+KC+highlight&publishedAfter=2026-08-15T18%3A00%3A00.000Z&publishedBefore=2026-08-17T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:18.659Z",
+          "responseFile": "outputs/off13/responses/fe5b6215bf668732a1a34f7be7aeba1e90ee7950a681ee2fc4528e53c303d0fd.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "0tmnIgIvQbY"
+              },
+              "title": "Highlights from ALL GAMES on 8/16 (Noah Cameron&#39;s ONE-HIT SHUTOUT, Brewers win 3/4 in L.A. &amp; MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-17T10:00:12Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "RcRxVG5jUb8"
+              },
+              "title": "ROYALS vs. ANGELS: Official Full Game Highlights (August 16) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-16T23:05:16Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "OU-83-2JAeo"
+              },
+              "title": "No surprise one of the GREATEST debuts in MLB history was one of the Top Moments of the Week!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-17T16:00:02Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-30-kc-min-702070",
+      "gamePk": 823674,
+      "date": "2026-07-30",
+      "pitcher": "Noah Cameron",
+      "rank": 4,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "noah-cameron-fans-seven-in-eight-shutout-innings",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/30/627fac49-c05ac786-92b25b48-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/svlt4dnju3yoganhz89c.jpg",
+        "watchUrl": "https://www.mlb.com/video/noah-cameron-fans-seven-in-eight-shutout-innings",
+        "title": "Noah Cameron fans seven in eight shutout innings"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823674/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:19.575Z",
+          "responseFile": "outputs/off13/responses/0049195c7532b100433a1fb60d3b680b43b0b02fe68c0056470f8b6bad1e2950.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+strikeouts&publishedAfter=2026-07-29T18%3A00%3A00.000Z&publishedBefore=2026-07-31T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:20.104Z",
+          "responseFile": "outputs/off13/responses/fc60c910b2f3ff558ccf35ecdc80d29bd75ad8ca9f53d58ccc938289dc7e52b7.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "SxoE9SK90Dk"
+              },
+              "title": "ROYALS vs. TWINS: Official Full Game Highlights (July 30) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-30T21:19:52Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Noah+Cameron+KC+highlight&publishedAfter=2026-07-29T18%3A00%3A00.000Z&publishedBefore=2026-07-31T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:20.898Z",
+          "responseFile": "outputs/off13/responses/8ccf7fb5586985e356fcaf204365569b25944275ceba79115973712ad4ae0286.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "SxoE9SK90Dk"
+              },
+              "title": "ROYALS vs. TWINS: Official Full Game Highlights (July 30) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-30T21:19:52Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-10-pit-cws-683003",
+      "gamePk": 824550,
+      "date": "2026-09-10",
+      "pitcher": "Jared Jones",
+      "rank": 5,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "jared-jones-flirts-with-no-hitter-fans-eight",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/10/293cdee7-e372493a-a63a336e-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/to32ijzpbt1lwaxcnfs0.jpg",
+        "watchUrl": "https://www.mlb.com/video/jared-jones-flirts-with-no-hitter-fans-eight",
+        "title": "Jared Jones flirts with no-hitter, fans eight"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824550/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:21.653Z",
+          "responseFile": "outputs/off13/responses/8a6d32a099d8baf9ca4085de5a5156cfedeb687f2d04aaab758656f922829d87.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Jared+Jones+strikeouts&publishedAfter=2026-09-09T18%3A00%3A00.000Z&publishedBefore=2026-09-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:22.466Z",
+          "responseFile": "outputs/off13/responses/0f2b328b9295044ba01858e2136ed821343b22f3fd7a9c27aef678a459756e72.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "oUDscIT6cMs"
+              },
+              "title": "PIRATES vs. WHITE SOX: Official Full Game Highlights (September 10) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-11T02:40:30Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "hnWyyRSeHSc"
+              },
+              "title": "Highlights from ALL GAMES on 9/10 (Anthony Volpe&#39;s 5-RBI GAME, Cam Smith&#39;s CLUTCH HR &amp; MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-11T10:00:22Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Jared+Jones+PIT+highlight&publishedAfter=2026-09-09T18%3A00%3A00.000Z&publishedBefore=2026-09-11T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:23.246Z",
+          "responseFile": "outputs/off13/responses/d9f95d0ad5a2a7923f59f97db236163c09483cb382e90ab0d091ffd0fe86c3d1.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "oUDscIT6cMs"
+              },
+              "title": "PIRATES vs. WHITE SOX: Official Full Game Highlights (September 10) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-11T02:40:30Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-22-tb-nyy-656876",
+      "gamePk": 823494,
+      "date": "2026-09-22",
+      "pitcher": "Drew Rasmussen",
+      "rank": 6,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "drew-rasmussen-k-s-11-flirts-with-no-hitter-in-win",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/22/d978663d-6aa2aaa5-1ae2211a-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/dna5fq8o4qwbb2fn7luo.jpg",
+        "watchUrl": "https://www.mlb.com/video/drew-rasmussen-k-s-11-flirts-with-no-hitter-in-win",
+        "title": "Drew Rasmussen K's 11, flirts with no-hitter in win"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823494/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:24.071Z",
+          "responseFile": "outputs/off13/responses/65b72ce83820246a9c32ab9786c2bbff6fa5e16a3413eeec0f46e5617abb0de0.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+strikeouts&publishedAfter=2026-09-21T18%3A00%3A00.000Z&publishedBefore=2026-09-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:24.682Z",
+          "responseFile": "outputs/off13/responses/9ae1d2081c1045bfaac5f41cc121a490d6e83ee813dbee03963d1a23d9fb3d08.json",
+          "candidates": []
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Drew+Rasmussen+TB+highlight&publishedAfter=2026-09-21T18%3A00%3A00.000Z&publishedBefore=2026-09-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:25.650Z",
+          "responseFile": "outputs/off13/responses/883feecad0af7808274795eb818e5c696c55789b6ab9582716eec010ac85b6ba.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "4IAqjYQFE6E"
+              },
+              "title": "The American League No. 1 seed headed into the 2026 Postseason are the TAMPA BAY RAYS!",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-23T04:05:01Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-29-sd-chc-650633",
+      "gamePk": 849843,
+      "date": "2026-09-29",
+      "pitcher": "Michael King",
+      "rank": 7,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "_Xg12uxLtaA",
+        "source": "youtube-search",
+        "isShort": false,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/_Xg12uxLtaA?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/_Xg12uxLtaA/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=_Xg12uxLtaA",
+        "title": "Michael King takes a NO-HITTER into the 7th inning for the Padres! 😮 (8 strikeouts, 1 hit allowed)",
+        "preserved": true
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/849843/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:26.446Z",
+          "responseFile": "outputs/off13/responses/5a62ca68679b44ed2a1b21215c6a45db1f55c1e14f9bbfc98d326c58d12e2249.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatus%2CcontentDetails&id=_Xg12uxLtaA",
+          "status": 200,
+          "at": "2026-11-04T01:10:40.821Z",
+          "responseFile": "outputs/off13/responses/f3991b57fd2dd281862ae64c3cdf9e8696e68fd8dfb0226ede575c6a01d31122.json",
+          "candidates": [
+            {
+              "id": "_Xg12uxLtaA",
+              "title": "Michael King takes a NO-HITTER into the 7th inning for the Padres! 😮 (8 strikeouts, 1 hit allowed)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-09-30T04:55:31Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-01-atl-wsh-527048",
+      "gamePk": 824890,
+      "date": "2026-08-01",
+      "pitcher": "Martín Pérez",
+      "rank": 8,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "martin-perez-throws-six-no-hit-innings-vs-nationals",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/01/b801e717-f69bbc5a-e2c73578-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bi9ycuexjdlyf9nbfkmf.jpg",
+        "watchUrl": "https://www.mlb.com/video/martin-perez-throws-six-no-hit-innings-vs-nationals",
+        "title": "Martín Pérez throws six no-hit innings vs. Nationals"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824890/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:29.530Z",
+          "responseFile": "outputs/off13/responses/8fecf2ee0cf1f3031bd140a42fe91610580244bca944612e5033baa6eb505a13.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Mart%C3%ADn+P%C3%A9rez+strikeouts&publishedAfter=2026-07-31T18%3A00%3A00.000Z&publishedBefore=2026-08-02T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:30.101Z",
+          "responseFile": "outputs/off13/responses/b7d3220c5b750c79a5cd52b1a5a2b30b08141cdf98abf0b0515ce646656263b8.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "2tsWcLx8S3I"
+              },
+              "title": "NATIONALS vs. BRAVES: Official Full Game Highlights (August 1) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-02T03:05:14Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "OH4R3-tHSz4"
+              },
+              "title": "Highlights from ALL GAMES on 8/1 (Mariners &amp; Padres WALK IT OFF, Ceddanne Rafaela&#39;s 2 HRs &amp; MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-02T10:00:25Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Mart%C3%ADn+P%C3%A9rez+ATL+highlight&publishedAfter=2026-07-31T18%3A00%3A00.000Z&publishedBefore=2026-08-02T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:30.791Z",
+          "responseFile": "outputs/off13/responses/8b639331deb42d95ee071730461ab36c7f2270831b47f774159dc151a7363129.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "2tsWcLx8S3I"
+              },
+              "title": "NATIONALS vs. BRAVES: Official Full Game Highlights (August 1) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-02T03:05:14Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-18-ath-wsh-669372",
+      "gamePk": 824979,
+      "date": "2026-07-18",
+      "pitcher": "J.T. Ginn",
+      "rank": 9,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "j-t-ginn-ks-seven-over-6-1-3-scoreless-innings",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/18/ebdaf026-472503ca-a32b61da-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/aqfnyx3k5stsnpfleliz.jpg",
+        "watchUrl": "https://www.mlb.com/video/j-t-ginn-ks-seven-over-6-1-3-scoreless-innings",
+        "title": "J.T. Ginn K's seven over 6 1/3 scoreless innings"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824979/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:31.745Z",
+          "responseFile": "outputs/off13/responses/82ef8e62922863d01b9c60eddbf3ec5cb16944447303be6d2d18e9772f94e411.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=J.T.+Ginn+strikeouts&publishedAfter=2026-07-17T18%3A00%3A00.000Z&publishedBefore=2026-07-19T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:32.342Z",
+          "responseFile": "outputs/off13/responses/b3813c0d231ba6d5c44ea38e3e998e7b241529754a2bde08d75599b98265b948.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "eHSCspTW4JA"
+              },
+              "title": "NATIONALS vs. ATHLETICS: Official Full Game Highlights (July 18) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-19T06:32:23Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=J.T.+Ginn+ATH+highlight&publishedAfter=2026-07-17T18%3A00%3A00.000Z&publishedBefore=2026-07-19T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:33.145Z",
+          "responseFile": "outputs/off13/responses/76adf367eb01bd33428fdb798cc8c84f5df12eac87a3183d0953c464c26f7749.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "eHSCspTW4JA"
+              },
+              "title": "NATIONALS vs. ATHLETICS: Official Full Game Highlights (July 18) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-19T06:32:23Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-22-tor-nyy-656302",
+      "gamePk": 823509,
+      "date": "2026-08-22",
+      "pitcher": "Dylan Cease",
+      "rank": 10,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "dylan-cease-fans-eight-vs-yankees",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/22/51621786-9fa8fbe4-8f77b3a4-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/kegf19wm3w9balteruhq.jpg",
+        "watchUrl": "https://www.mlb.com/video/dylan-cease-fans-eight-vs-yankees",
+        "title": "Dylan Cease fans eight, takes no-hitter into 7th"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/823509/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:34.792Z",
+          "responseFile": "outputs/off13/responses/0c714b406ce455f3f008c442356e922da54982f0c48f4fbbb717f08b03ac95ff.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Dylan+Cease+strikeouts&publishedAfter=2026-08-21T18%3A00%3A00.000Z&publishedBefore=2026-08-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:35.083Z",
+          "responseFile": "outputs/off13/responses/7a594a3d098b81911feab6f1e111ecdb3815b136ea84dc4d1f95b95094470c3a.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "GMBnpYLGIG8"
+              },
+              "title": "BLUE JAYS vs. YANKEES: Official Full Game Highlights (August 21) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-22T02:36:29Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Dylan+Cease+TOR+highlight&publishedAfter=2026-08-21T18%3A00%3A00.000Z&publishedBefore=2026-08-23T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:35.811Z",
+          "responseFile": "outputs/off13/responses/2920258813158477e8a5b8f0ebbed31bffa0e48cf5b8ee9e16595c8f5615354b.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "GMBnpYLGIG8"
+              },
+              "title": "BLUE JAYS vs. YANKEES: Official Full Game Highlights (August 21) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-22T02:36:29Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "T83Sywvs7os"
+              },
+              "title": "BLUE JAYS vs. YANKEES: Official Full Game Highlights (August 22) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-22T21:20:48Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-08-20-atl-cws-656550",
+      "gamePk": 824589,
+      "date": "2026-08-20",
+      "pitcher": "Grant Holmes",
+      "rank": 11,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "munetaka-murakami-strikes-out-swinging-knhecx",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/20/dec92f90-e093e5a7-d222c6d4-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/grpr0srryupidy88j3cq.jpg",
+        "watchUrl": "https://www.mlb.com/video/munetaka-murakami-strikes-out-swinging-knhecx",
+        "title": "Grant Holmes fans Murakami to preserve no-hitter"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824589/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:36.685Z",
+          "responseFile": "outputs/off13/responses/9f9e04a876478e9aadac826938ad2d05c80a7da5841f28711c430aa18d4ead9a.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Grant+Holmes+strikeouts&publishedAfter=2026-08-19T18%3A00%3A00.000Z&publishedBefore=2026-08-21T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:37.355Z",
+          "responseFile": "outputs/off13/responses/5d3ea535b801f804f07c73fb4939831a4931f0d732e9db1a818b2e443655828f.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "MCZs0OdhbeM"
+              },
+              "title": "BRAVES vs. WHITE SOX: Official Full Game Highlights (August 20) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-20T20:55:15Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Grant+Holmes+ATL+highlight&publishedAfter=2026-08-19T18%3A00%3A00.000Z&publishedBefore=2026-08-21T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:38.198Z",
+          "responseFile": "outputs/off13/responses/7f86a58ac828500128b5a8ffd850e05089e8e34dc377d8e120fd13732d2baf49.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "MCZs0OdhbeM"
+              },
+              "title": "BRAVES vs. WHITE SOX: Official Full Game Highlights (August 20) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-08-20T20:55:15Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startId": "2026-07-11-bal-kc-680694",
+      "gamePk": 824813,
+      "date": "2026-07-11",
+      "pitcher": "Kyle Bradish",
+      "rank": 12,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "kyle-bradish-strikes-out-five-over-6-2-3-innings",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-07/11/7693fb3a-0ac3e50e-0826447e-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/tpcpe1vvcw5iboxafeiv.jpg",
+        "watchUrl": "https://www.mlb.com/video/kyle-bradish-strikes-out-five-over-6-2-3-innings",
+        "title": "Kyle Bradish strikes out five over 6 2/3 innings"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/824813/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:39.074Z",
+          "responseFile": "outputs/off13/responses/8d2f37d2cb0d81ae56902304c651083ee3d9a4962be27e1bbbb10e50e27b3316.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Kyle+Bradish+strikeouts&publishedAfter=2026-07-10T18%3A00%3A00.000Z&publishedBefore=2026-07-12T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:39.605Z",
+          "responseFile": "outputs/off13/responses/f55c5438e58d2afc9ffaa05d26a3835ba9556c1cdb28387f8916e2c3237919d6.json",
+          "candidates": [
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "zO2wVNpRO3I"
+              },
+              "title": "ROYALS vs. ORIOLES: Official Full Game Highlights (July 11) | 2026 MLB Season",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-12T02:26:17Z"
+            },
+            {
+              "id": {
+                "kind": "youtube#video",
+                "videoId": "N5Ei-6wylUo"
+              },
+              "title": "Highlights from ALL GAMES on 7/11 (CLUTCH Yankees comeback, Pirates sweep doubleheader and MORE!)",
+              "channelId": "UCoLrcjPV5PbUrUyXq5mjc_A",
+              "publishedAt": "2026-07-12T10:00:19Z"
+            }
+          ]
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Kyle+Bradish+BAL+highlight&publishedAfter=2026-07-10T18%3A00%3A00.000Z&publishedBefore=2026-07-12T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:40.370Z",
+          "responseFile": "outputs/off13/responses/ed083b00b3bd165f1ca5558c6084929e0ece269e9146e37061ff437b31703300.json",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "startId": "2026-09-14-tor-det-667755",
+      "gamePk": 822765,
+      "date": "2026-09-14",
+      "pitcher": "José Soriano",
+      "rank": 13,
+      "outcome": "resolved",
+      "selected": {
+        "videoId": "jose-soriano-strikes-out-five-batters-in-outing-x7929",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-09/14/b8422066-b6f7f883-0b2ab3f1-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/lswfdetz8t2dwaw2oqbg.jpg",
+        "watchUrl": "https://www.mlb.com/video/jose-soriano-strikes-out-five-batters-in-outing-x7929",
+        "title": "José Soriano strikes out five, takes no-hitter into 7th"
+      },
+      "lookups": [
+        {
+          "url": "https://statsapi.mlb.com/api/v1/game/822765/content",
+          "status": 200,
+          "at": "2026-11-04T01:08:41.246Z",
+          "responseFile": "outputs/off13/responses/a80baec12d90139b645a1685c603a4f36a8d833d22940bb8c5e7904d336653d2.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Jos%C3%A9+Soriano+strikeouts&publishedAfter=2026-09-13T18%3A00%3A00.000Z&publishedBefore=2026-09-15T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:41.876Z",
+          "responseFile": "outputs/off13/responses/a12bddc89a8dab147de883aa6ec89c50f90802d042a2831fabeeb2a181759b8d.json",
+          "candidates": []
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Jos%C3%A9+Soriano+TOR+highlight&publishedAfter=2026-09-13T18%3A00%3A00.000Z&publishedBefore=2026-09-15T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:08:42.746Z",
+          "responseFile": "outputs/off13/responses/64e91f2333388f0b6c2b442c4624d6848aea731861237bcee7094bb7c90f4adf.json",
+          "candidates": []
+        }
+      ]
+    }
+  ]
+}

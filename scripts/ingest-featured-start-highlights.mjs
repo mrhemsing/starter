@@ -1,17 +1,13 @@
+import { loadProjectTs } from "./lib/load-project-ts.mjs";
+const {resolveYouTubeHighlight, resolveMlbChannelId} = loadProjectTs("src/lib/data/highlight-discovery.ts");
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
-const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
-const MLB_CHANNEL_HANDLE = "MLB";
-const MLB_CHANNEL_PREFIX = "UCoLrcjPV5";
 const HIGHLIGHTS_TABLE = "toetheslab_featured_start_highlights";
 const DEFAULT_SEASON = "2026";
 const DEFAULT_LOOKBACK_DAYS = 30;
 const DEFAULT_CANDIDATE_LIMIT = 16;
 const DEFAULT_MIN_SCORE = 58;
-const SEARCH_RESULT_LIMIT = 5;
-const ALL_GAME_HIGHLIGHTS_TITLE_PATTERN = /\ball\s+games(?:\s+highlights?)?\b/i;
-const NON_START_TITLE_PATTERN = /\b(condensed game|game recap|game highlights|all games|interview|press conference|pregame|preview)\b/i;
 
 function readArg(name, fallback) {
   const prefix = `--${name}=`;
@@ -46,7 +42,7 @@ if (!supabaseUrl || !serviceKey) {
   throw new Error("Set THE_BUMP_SUPABASE_URL and THE_BUMP_SUPABASE_SERVICE_ROLE_KEY before ingesting featured start highlights");
 }
 
-const mlbChannelId = await resolveMlbChannelId();
+const mlbChannelId = await resolveMlbChannelId(youtubeApiKey);
 if (!mlbChannelId) throw new Error("Could not resolve the official MLB YouTube channel");
 
 const starts = (await readArchivedStartsInRange())
@@ -63,7 +59,7 @@ for (const start of starts) {
     continue;
   }
 
-  const highlight = await resolveYouTubeHighlight(start);
+  const highlight = await resolveYouTubeHighlight({ start: { ...start, pitcher: { name: start.pitcherName, team: start.team } }, youtubeApiKey, mlbChannelId });
   if (!highlight) {
     misses.push(start);
     console.log(`no highlight: ${start.id} ${start.pitcherName} GS+ ${start.score}`);
@@ -194,125 +190,6 @@ function compareRankedStarts(a, b) {
   );
 }
 
-async function resolveYouTubeHighlight(start) {
-  const candidates = await searchHighlightCandidates(start);
-  if (candidates.length === 0) return null;
-
-  const durations = await fetchVideoDurations(candidates.map((candidate) => candidate.videoId));
-  return candidates
-    .map((candidate) => ({
-      ...candidate,
-      durationSeconds: durations.get(candidate.videoId) ?? null,
-    }))
-    .sort((a, b) => candidateScore(b, start) - candidateScore(a, start))[0] ?? null;
-}
-
-async function searchHighlightCandidates(start) {
-  const { publishedAfter, publishedBefore } = publishWindow(start.date);
-  const queries = [
-    `${start.pitcherName} strikeouts`,
-    `${start.pitcherName} ${start.team} highlight`,
-  ];
-  const items = [];
-
-  for (const query of queries) {
-    const params = new URLSearchParams({
-      part: "snippet",
-      type: "video",
-      channelId: mlbChannelId,
-      q: query,
-      publishedAfter,
-      publishedBefore,
-      maxResults: String(SEARCH_RESULT_LIMIT),
-      order: "relevance",
-      key: youtubeApiKey,
-    });
-    const response = await fetch(`${YOUTUBE_API_BASE}/search?${params.toString()}`);
-    if (!response.ok) {
-      console.warn(`youtube search failed for ${start.id}: HTTP ${response.status}`);
-      continue;
-    }
-
-    const body = await response.json();
-    items.push(...(body.items ?? []));
-  }
-
-  const lastNamePattern = new RegExp(`\\b${escapeRegExp(lastName(start.pitcherName))}\\b`, "i");
-  const seenVideoIds = new Set();
-
-  return items
-    .map((item) => {
-      const videoId = item.id?.videoId;
-      const title = item.snippet?.title ?? "";
-      const description = item.snippet?.description ?? "";
-      const publishedAt = item.snippet?.publishedAt ?? "";
-      const publishedTime = Date.parse(publishedAt);
-
-      if (!videoId || !Number.isFinite(publishedTime) || seenVideoIds.has(videoId)) return null;
-      if (item.snippet?.channelId !== mlbChannelId) return null;
-      if (ALL_GAME_HIGHLIGHTS_TITLE_PATTERN.test(title) || NON_START_TITLE_PATTERN.test(title)) return null;
-      if (!lastNamePattern.test(`${title} ${description}`)) return null;
-
-      seenVideoIds.add(videoId);
-      return {
-        videoId,
-        title,
-        description,
-        publishedAt,
-        hoursFromStartDateNoon: Math.abs(publishedTime - new Date(`${start.date}T12:00:00.000Z`).getTime()) / (60 * 60 * 1000),
-        lastNameInTitle: lastNamePattern.test(title),
-        strikeoutInTitle: /\b(k|ks|strikeout|strikeouts|fans?)\b/i.test(title),
-        teamInTitle: new RegExp(`\\b${escapeRegExp(start.team)}\\b`, "i").test(title),
-      };
-    })
-    .filter(Boolean);
-}
-
-async function fetchVideoDurations(videoIds) {
-  const durations = new Map();
-  if (videoIds.length === 0) return durations;
-
-  const params = new URLSearchParams({
-    part: "contentDetails",
-    id: videoIds.join(","),
-    key: youtubeApiKey,
-  });
-  const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params.toString()}`);
-  if (!response.ok) return durations;
-
-  const body = await response.json();
-  for (const item of body.items ?? []) {
-    if (!item.id || !item.contentDetails?.duration) continue;
-    durations.set(item.id, parseIsoDurationSeconds(item.contentDetails.duration));
-  }
-
-  return durations;
-}
-
-function candidateScore(candidate) {
-  let score = 0;
-  if (candidate.lastNameInTitle) score += 100;
-  if (candidate.strikeoutInTitle) score += 35;
-  if (candidate.teamInTitle) score += 10;
-  if (candidate.durationSeconds !== null && candidate.durationSeconds < 60) score += 15;
-  score -= candidate.hoursFromStartDateNoon;
-  return score;
-}
-
-async function resolveMlbChannelId() {
-  const params = new URLSearchParams({
-    part: "id",
-    forHandle: MLB_CHANNEL_HANDLE,
-    key: youtubeApiKey,
-  });
-  const response = await fetch(`${YOUTUBE_API_BASE}/channels?${params.toString()}`);
-  if (!response.ok) return null;
-
-  const body = await response.json();
-  const channelId = body.items?.[0]?.id;
-  return channelId?.startsWith(MLB_CHANNEL_PREFIX) ? channelId : null;
-}
-
 async function readStoredHighlightStartIds(startIds) {
   const stored = new Set();
   if (startIds.length === 0) return stored;
@@ -354,37 +231,13 @@ async function upsertHighlights(rows) {
   if (!response.ok) throw new Error(`${HIGHLIGHTS_TABLE} upsert failed with HTTP ${response.status}: ${await response.text()}`);
 }
 
-function publishWindow(date) {
-  const dateStart = new Date(`${date}T00:00:00.000Z`).getTime();
-  return {
-    publishedAfter: new Date(dateStart - 6 * 60 * 60 * 1000).toISOString(),
-    publishedBefore: new Date(dateStart + 42 * 60 * 60 * 1000).toISOString(),
-  };
-}
-
 function inningsFromIP(value) {
   const whole = Math.trunc(value);
   return whole + (Math.round((value - whole) * 10) / 3);
 }
 
-function parseIsoDurationSeconds(duration) {
-  const match = duration.match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
-  if (!match) return 0;
-
-  const [, days = "0", hours = "0", minutes = "0", seconds = "0"] = match;
-  return Number(days) * 86400 + Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
-}
-
 function isFinalGame(game) {
   return game.status?.abstract === "Final" || game.status?.detailed === "Final" || game.status?.detailed === "Completed Early";
-}
-
-function lastName(name) {
-  return name.trim().split(/\s+/).at(-1) ?? name;
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function assertDate(value, label) {

@@ -47,6 +47,7 @@ type CachedMlbGameContentActionImage = {
 };
 
 type MlbGameContentItem = {
+  playbacks?: Array<{ name?: string; url?: string }>;
   type?: string;
   title?: string;
   headline?: string;
@@ -178,7 +179,7 @@ async function resolveMlbGameContentActionImage(start: StartSummary, persist = t
   return autoPromoted ? image : null;
 }
 
-function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary): MlbGameContentActionCandidate | null {
+export function selectMlbGameContentActionCandidate(content: MlbGameContent, start: StartSummary, accept: (item: MlbGameContentItem) => boolean = () => true): MlbGameContentActionCandidate | null {
   const items = [
     ...(content.highlights?.highlights?.items ?? []),
     ...content.media?.epgAlternate?.flatMap((group) => group.items ?? []) ?? [],
@@ -193,7 +194,7 @@ function selectMlbGameContentActionCandidate(content: MlbGameContent, start: Sta
       return true;
     })
     .map((item) => ({ item, score: mlbGameContentActionScore(item, start) }))
-    .filter((candidate) => candidate.score > 0)
+    .filter((candidate) => candidate.score > 0 && accept(candidate.item))
     .sort((a, b) => b.score - a.score)[0] ?? null;
 }
 
@@ -260,9 +261,9 @@ function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary
   return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item));
 }
 
-function isOfficialMlbPitchingHighlight(item: MlbGameContentItem) {
+export function isOfficialMlbPitchingHighlight(item: MlbGameContentItem) {
   const tags = item.keywordsAll?.map((keyword) => `${keyword.value ?? ""} ${keyword.displayName ?? ""}`.toLowerCase()) ?? [];
-  return tags.some((tag) => tag.includes("highlight-reel-pitching") || tag === "pitching pitching");
+  return tags.some((tag) => tag.includes("highlight-reel-pitching") || tag.includes("highlight-reel-starting-pitching") || tag === "pitching pitching");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
@@ -293,7 +294,7 @@ function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCan
   return { focalPoint: { x: officialPitchingHighlight ? 50 : 62, y: 50 }, officialPitchingHighlight };
 }
 
-function selectMlbImageCut(item: MlbGameContentItem | null) {
+export function selectMlbImageCut(item: MlbGameContentItem | null) {
   const cuts = item?.image?.cuts ?? [];
   return cuts
     .filter((cut) => cut.src?.startsWith("https://img.mlbstatic.com/mlb-images/image/upload/") && cut.aspectRatio === "16:9")

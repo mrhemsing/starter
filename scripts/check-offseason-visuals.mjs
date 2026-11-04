@@ -39,8 +39,11 @@ const { SeasonReviewTopStarts, SeasonReviewFinalForm, SeasonReviewAwards } = loa
 const rows = renderToStaticMarkup(createElement(SeasonReviewTopStarts, { review, limit: 5 }));
 assert.equal((rows.match(/data-headshot-size=/g) ?? []).length, 5);
 assert.equal((rows.match(/data-review-gem=/g) ?? []).length, review.topStarts.slice(0, 3).filter(start => media.highlights[start.id]).length);
-const missingId = Object.entries(media.highlights).find(([, value]) => !value)[0];
-assert(!rows.split(`data-review-start-id="${missingId}"`)[1].split("</li>")[0].includes("data-review-gem"));
+// Negative fixture must remain meaningful even when every real start resolves.
+const missingId = "off13-no-highlight-fixture";
+const missingReview = { ...review, topStarts: review.topStarts.map((start, i) => i === 1 ? { ...start, id: missingId } : start) };
+const missingRows = renderToStaticMarkup(createElement(SeasonReviewTopStarts, { review: missingReview, limit: 5 }));
+assert(!missingRows.split(`data-review-start-id="${missingId}"`)[1].split("</li>")[0].includes("data-review-gem"));
 const form = renderToStaticMarkup(createElement(SeasonReviewFinalForm, { review }));
 assert.equal((form.match(/data-headshot-size=/g) ?? []).length, review.home.hot.length + review.home.cold.length);
 const awards = renderToStaticMarkup(createElement(SeasonReviewAwards, { review }));

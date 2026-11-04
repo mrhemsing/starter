@@ -17,13 +17,23 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
   if (isHidden) return null;
 
   const shouldLoadPlayer = loadImmediately || isLoaded;
+  const isMlbContent = highlight.source === "mlb-game-content";
+  const attribution = isMlbContent ? "MLB" : "MLB on YouTube";
   const aspectClass = highlight.isShort ? "mx-auto aspect-[9/16] w-full max-w-[280px] sm:max-w-[320px]" : "aspect-video";
 
   return (
     <div className="rounded border border-white/10 bg-black/20 p-2" data-responsive-check="featured-start-highlight">
       <div className={`relative overflow-hidden rounded bg-black ${aspectClass}`}>
         {shouldLoadPlayer ? (
-          <iframe
+          isMlbContent ? <video
+            src={highlight.embedUrl}
+            title={`${pitcherName} highlight via MLB`}
+            className="absolute inset-0 h-full w-full"
+            controls
+            playsInline
+            preload="metadata"
+            poster={highlight.thumbnailUrl}
+          /> : <iframe
             src={highlight.embedUrl}
             title={`${pitcherName} highlight via MLB on YouTube`}
             className="absolute inset-0 h-full w-full"
@@ -35,7 +45,7 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
           <button
             type="button"
             className="group absolute inset-0 block h-full w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-            aria-label={`Play ${pitcherName} highlight via MLB on YouTube`}
+            aria-label={`Play ${pitcherName} highlight via ${attribution}`}
             onClick={() => setIsLoaded(true)}
           >
             <Image
@@ -59,7 +69,7 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
         rel="noopener"
         className="mt-2 inline-flex font-mono text-[10px] tracking-[0.14em] text-zinc-500 underline-offset-4 hover:text-amber-300 hover:underline"
       >
-        Highlight · MLB on YouTube
+        Highlight · {attribution}
       </a>
     </div>
   );

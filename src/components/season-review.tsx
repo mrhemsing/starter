@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Headshot } from "@/components/headshot";
 import { TopStartRow } from "@/components/ranked-starts-recap";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
+import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { seasonReviewMedia2026 as media } from "@/lib/season-review-media";
 import { SiteHeader } from "@/components/site-header";
 import { TopPerformerCard } from "@/components/top-performer-card";
@@ -82,10 +83,10 @@ export function SeasonReviewFinalForm({ review }: { review: FrozenSeasonReview }
 }
 
 function StartRow({ start, prefix }: { start: StartSummary; prefix?: string }) {
-  return <Link href={startRecapPath(start)} className="flex items-center justify-between gap-4 py-4">
+  return <div className="flex items-center gap-3"><Link href={startRecapPath(start)} className="flex min-w-0 flex-1 items-center justify-between gap-4 py-4">
     <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="lg" /><div className="min-w-0 flex-1">{prefix ? <p className="font-mono text-xs text-amber-300">{prefix}</p> : null}<p className="font-serif text-xl font-bold">{start.pitcher.name}</p><p className="mt-1 text-xs text-zinc-400">{start.date} · {start.pitcher.team} vs {start.opponent}</p><p className="mt-1 text-xs text-zinc-300">{formatStartLine(start.line)}</p></div>
     <strong className="shrink-0 text-2xl text-amber-300">{start.gameScorePlus}<span className="block text-[10px] font-normal text-zinc-400">GS+</span></strong>
-  </Link>;
+  </Link>{media.highlights[start.id] ? <HeatHighlightModal highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} eyebrow="Archived MLB highlight" /> : null}</div>;
 }
 
 function ReviewSection({ title, id, intro, children }: { title: string; id: string; intro: string; children: ReactNode }) {
