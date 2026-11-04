@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { clampActionPhotoObjectPosition, type ActionPhotoFocalPoint } from "@/lib/action-photo-focal";
 import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
+import { seasonStartMedia2026 } from "@/lib/season-start-media";
 
 const CACHE_DIR = path.join(process.cwd(), "public", "images", "top-performer-action-shots");
 const MLB_CONTENT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -109,6 +110,11 @@ export async function resolveTopPerformerImage(start: StartSummary | null, _high
     };
   }
 
+  // Preserve existing curator crops before consulting the published exact-game
+  // lookup. Explicit null prevents substituting an unrelated game's action shot.
+  const published = seasonStartMedia2026[start.id];
+  if (published && published.gamePk === start.gamePk) return published.image;
+
   const latestApprovedPitcherAction = options.exactGameOnly ? null : await readLatestApprovedPitcherActionImage(start);
   if (latestApprovedPitcherAction) {
     return topPerformerImageFromCachedAction(start.id, latestApprovedPitcherAction);
@@ -157,7 +163,14 @@ async function resolveMlbGameContentActionImage(start: StartSummary, persist = t
   if (!response.ok) return null;
 
   const content = await response.json() as MlbGameContent;
-  const candidate = selectMlbGameContentActionCandidate(content, start);
+  const image = resolveMlbGameContentActionImageFromContent(start, content);
+  if (persist && image) await writeCachedMlbGameContentActionImage(start.id, image, { focalPoint: image.focalPoint ?? { x: 50, y: 50 }, officialPitchingHighlight: true }).catch(() => undefined);
+  return image;
+}
+
+// Shared by daily lookup and the settled-start sweep. Selection and focal policy stay identical.
+export function resolveMlbGameContentActionImageFromContent(start: StartSummary, content: MlbGameContent): TopPerformerImage | null {
+  const candidate = selectMlbGameContentActionCandidate(content, start, item => Boolean(isAutoPromotableMlbGameContentAction({ item, score: mlbGameContentActionScore(item, start) }, start)));
   const item = candidate?.item ?? null;
   const cut = selectMlbImageCut(item);
   if (!candidate || !item || !cut?.src) return null;
@@ -175,7 +188,6 @@ async function resolveMlbGameContentActionImage(start: StartSummary, persist = t
     playUrl: item.slug ? `https://www.mlb.com/video/${item.slug}` : undefined,
   } satisfies TopPerformerImage;
 
-  if (persist) await writeCachedMlbGameContentActionImage(start.id, image, autoPromoted).catch(() => undefined);
   return autoPromoted ? image : null;
 }
 
@@ -222,7 +234,7 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
 }
 
 function nonActionMlbContentPattern() {
-  return /\b(all games? highlights?|starting lineups?|fielding alignment|bench availability|bullpen availability|probable pitchers?|breaking down|challenge|overturned|preview|recap)\b/i;
+  return /\b(interviews?|press conference|discusses|talks|speaks|reacts|starting lineups?|all games? highlights?|fielding alignment|bench availability|bullpen availability|probable pitchers?|breaking down|challenge|overturned|preview|recap)\b/i;
 }
 
 function nonActionMlbTitlePattern() {
@@ -258,22 +270,30 @@ function displayPhotoAttribution(value?: string) {
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""}`.toLowerCase();
   const pitcherNamed = text.includes(start.pitcher.name.toLowerCase()) || text.includes(lastName(start.pitcher.name).toLowerCase());
-  return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item));
+  return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item, start));
 }
 
-export function isOfficialMlbPitchingHighlight(item: MlbGameContentItem) {
+export function isOfficialMlbPitchingHighlight(item: MlbGameContentItem, start?: StartSummary) {
   const tags = item.keywordsAll?.map((keyword) => `${keyword.value ?? ""} ${keyword.displayName ?? ""}`.toLowerCase()) ?? [];
+  // MLB postseason single-play clips can omit pitching taxonomy. Require exact
+  // player and game tags plus pitcher-led action copy, never a surname-only match.
+  const exactPlayer = start && item.keywordsAll?.some(k => k.value === `playerid-${start.pitcher.mlbId}`);
+  const exactGame = start && item.keywordsAll?.some(k => k.value === `gamepk-${start.gamePk}`);
+  const inGame = item.keywordsAll?.some(k => k.value === "in-game-highlight");
+  const title = `${item.title ?? ""} ${item.headline ?? ""}`;
+  const pitcherLeads = start && title.toLowerCase().startsWith(start.pitcher.name.toLowerCase());
+  if (exactPlayer && exactGame && inGame && pitcherLeads && pitcherActionHighlightPattern().test(title) && !nonActionMlbContentPattern().test(title) && !nonActionMlbTitlePattern().test(title)) return true;
   return tags.some((tag) => tag.includes("highlight-reel-pitching") || tag.includes("highlight-reel-starting-pitching") || tag === "pitching pitching");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.description ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
 }
 
 function pitcherActionHighlightPattern() {
-  return /\b(k'?s|fans?|strikeouts?|strikes? out|called out on strikes|swinging strike|throws?|pitches?|first k|dominant start|quality start|scoreless start|outing)\b/i;
+  return /\b(k(?:'?s)?|tosses|scoreless innings|escapes .+ jam|fans?|strikeouts?|strikes? out|called out on strikes|swinging strike|gets? .+ swinging|throws?|pitches?|first k|dominant start|quality start|scoreless start|outing)\b/i;
 }
 
 function singlePitchActionFramePattern() {
@@ -282,11 +302,11 @@ function singlePitchActionFramePattern() {
 
 function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCandidate, start: StartSummary): { focalPoint: { x: number; y: number }; officialPitchingHighlight: boolean } | null {
   const { item, score } = candidate;
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.description ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const fullName = start.pitcher.name.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
   const isPitcherNamed = text.includes(fullName) || text.includes(last);
-  const officialPitchingHighlight = isOfficialMlbPitchingHighlight(item);
+  const officialPitchingHighlight = isOfficialMlbPitchingHighlight(item, start);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
   if (!isPitcherNamed || !officialPitchingHighlight || !hasPitchingActionCopy) return null;
   if (nonActionMlbContentPattern().test(text) || nonActionMlbTitlePattern().test(text)) return null;

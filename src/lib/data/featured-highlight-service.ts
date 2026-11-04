@@ -2,6 +2,7 @@ import type { FeaturedStartHighlight, StartSummary } from "@/lib/types";
 import { readSupabaseFeaturedStartHighlight } from "@/lib/data/supabase-archive";
 import { resolveMlbChannelId, resolveYouTubeHighlight as discoverYouTubeHighlight } from "@/lib/data/highlight-discovery";
 import { seasonReviewMedia2026 } from "@/lib/season-review-media";
+import { seasonStartMedia2026 } from "@/lib/season-start-media";
 
 const CACHE_TTL_MS = 18 * 60 * 60 * 1000;
 const YOUTUBE_SEARCH_ENABLED = process.env.YOUTUBE_SEARCH_ENABLED === "1";
@@ -38,6 +39,8 @@ export async function resolveFeaturedStartHighlight(start: HighlightStart | null
   // Published archive references are shared by hub, homepage and start detail.
   const published = seasonReviewMedia2026.highlights[start.id];
   if (published) return published;
+  const settled = seasonStartMedia2026[start.id];
+  if (settled?.highlight) return settled.highlight;
 
   const cached = resolutionCache.get(start.id);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
@@ -53,6 +56,10 @@ export async function resolveFeaturedStartHighlight(start: HighlightStart | null
 
   const stored = await readSupabaseFeaturedStartHighlight(start.id);
   if (stored) return cacheResolution(start.id, stored);
+
+  // Keep existing attributed references, but never trigger unscoped live discovery
+  // for a start already covered by the controlled settled-season lookup.
+  if (settled) return cacheResolution(start.id, null);
 
   if (!YOUTUBE_SEARCH_ENABLED) return cacheResolution(start.id, null);
 

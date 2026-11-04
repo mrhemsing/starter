@@ -2,11 +2,12 @@ import { unstable_cache } from "next/cache";
 import { RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
 import { withCanonicalStoreDiagnostics } from "@/lib/data/canonical-start-store";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
+import { seasonStartMediaRevision } from "@/lib/season-start-media";
 import { getDailySlate, getHomeSlateDate, getRankedSlateCompletionState, getRankedSlateContextForStarts, getRankedStartsArchiveNavigation } from "@/lib/data/start-service";
 import type { SlateProgressState } from "@/lib/slate-state";
 import type { FeaturedStartHighlight, FormSummary, StartSummary } from "@/lib/types";
 
-const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v19-canonical-record-first";
+const RANKED_STARTS_PAGE_CACHE_VERSION = `ranked-starts-page-v20-media-${seasonStartMediaRevision}`;
 export const RANKED_STARTS_FINAL_REVALIDATE_SECONDS = 24 * 60 * 60;
 
 export type RankedStartsPageData = {

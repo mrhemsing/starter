@@ -198,7 +198,7 @@ assert(
 
 assert(
   rankedStartsPageService.includes('import { unstable_cache } from "next/cache";') &&
-    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = "ranked-starts-page-v19-canonical-record-first";') &&
+    rankedStartsPageService.includes('const RANKED_STARTS_PAGE_CACHE_VERSION = `ranked-starts-page-v20-media-${seasonStartMediaRevision}`;') &&
     rankedStartsPageService.includes("export function rankedStartsDateCacheTag(date: string)") &&
     rankedStartsPageService.includes("return `ranked-starts:${date}`;") &&
     rankedStartsPageService.includes('getCachedRankedStartsPageData(date, today, "current")') &&

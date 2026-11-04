@@ -4,10 +4,10 @@ import { selectMlbGameContentActionCandidate, selectMlbImageCut, isOfficialMlbPi
 // Reuse the existing exact-game MLB pitching asset selector, not a second finder.
 export function resolveMlbGameContentHighlight(start: StartSummary, content: Parameters<typeof selectMlbGameContentActionCandidate>[0]) {
   const montage = selectMlbGameContentActionCandidate(content, start, item =>
-    isOfficialMlbPitchingHighlight(item) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
+    isOfficialMlbPitchingHighlight(item, start) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
       /^https:\/\/mlb-cuts-diamond\.mlb\.com\/FORGE\/.+\.mp4$/.test(row.url ?? ""))))?.item;
   const item = montage ?? selectMlbGameContentActionCandidate(content, start, item =>
-    isOfficialMlbPitchingHighlight(item) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
+    isOfficialMlbPitchingHighlight(item, start) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
       /^https:\/\/bdata-producedclips\.mlb\.com\/[a-f0-9-]+\.mp4$/.test(row.url ?? ""))))?.item;
   const thumbnailUrl = selectMlbImageCut(item ?? null)?.src;
   const playback = item?.playbacks?.find(row => row.name === "mp4Avc" &&
