@@ -58,7 +58,7 @@ export function SeasonReviewTopStarts({ review, limit = 25 }: { review: FrozenSe
 
 export function SeasonReviewAwards({ review, landing = false }: { review: FrozenSeasonReview; landing?: boolean }) {
   return <section className="archive-awards" data-season-awards>
-    <h2 className="font-serif text-3xl font-bold tracking-wide"><ArchiveType text={`${review.year} SEASON AWARDS`} /></h2>
+    <h2 className="font-serif text-3xl font-bold tracking-wide">{`${review.year} SEASON AWARDS`}</h2>
     <div className="archive-award-grid" data-award-grid="podium-bids"><ArmOfTheYear review={review} landing={landing} /><NoHitterBids review={review} landing={landing} /></div>
     <div><RotationOfTheYear review={review} landing={landing} /></div>
     <div className="archive-award-grid" data-award-grid="gems-blowup-streak"><GemLeaders review={review} landing={landing} /><div className="archive-award-stack" data-award-stack><BiggestBlowup review={review} landing={landing} /><HottestStreak review={review} landing={landing} /></div></div>
@@ -139,7 +139,7 @@ function StartRow({ start, prefix }: { start: StartSummary; prefix?: string }) {
 }
 
 function ReviewSection({ title, id, intro, children, compact = false, linked = false, year, names = [] }: { names?: string[]; title: string; id: string; intro: string; children: ReactNode; compact?: boolean; linked?: boolean; year?: number }) {
-  return <section id={id} data-award-panel={compact || undefined} className={`${compact ? "" : "my-8 "}rounded border border-white/10 bg-[#101014] p-4 sm:p-6`}><h2 className="font-serif text-3xl font-bold">{linked ? <Link href={`/${year}#${id}`} className="hover:text-amber-300"><ArchiveType text={title} /></Link> : <ArchiveType text={title} />}</h2><p className="mb-5 mt-3 max-w-3xl text-sm leading-6 text-zinc-400"><ArchiveType text={intro} names={names} /></p>{children}</section>;
+  return <section id={id} data-award-panel={compact || undefined} className={`${compact ? "" : "my-8 "}rounded border border-white/10 bg-[#101014] p-4 sm:p-6`}><h2 className="font-serif text-3xl font-bold">{linked ? <Link href={`/${year}#${id}`} className="hover:text-amber-300">{title}</Link> : title}</h2><p className="mb-5 mt-3 max-w-3xl text-sm leading-6 text-zinc-400"><ArchiveType text={intro} names={names} /></p>{children}</section>;
 }
 
 function CombinedNoHitterTag({ startId, year }: { startId: string; year: number }) { return combinedNoHitterForStart(startId, year) ? <p className="pt-3 font-mono text-xs text-amber-300" data-combined-no-hitter>COMBINED NO-HITTER</p> : null; }
