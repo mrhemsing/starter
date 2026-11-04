@@ -170,7 +170,13 @@ async function resolveMlbGameContentActionImage(start: StartSummary, persist = t
 
 // Shared by daily lookup and the settled-start sweep. Selection and focal policy stay identical.
 export function resolveMlbGameContentActionImageFromContent(start: StartSummary, content: MlbGameContent): TopPerformerImage | null {
-  const candidate = selectMlbGameContentActionCandidate(content, start, item => Boolean(isAutoPromotableMlbGameContentAction({ item, score: mlbGameContentActionScore(item, start) }, start)));
+  const candidate = selectMlbGameContentActionCandidate(content, start, item => {
+    // Reel thumbnails commonly contain baked-in stat graphics. Individual-play
+    // photos are the action treatment; a reel needs an explicit photo credit.
+    const montage = item.keywordsAll?.some(k => k.value === "highlight-reel-pitching" || k.value === "highlight-reel-starting-pitching");
+    if (montage && !isPhotoCreditImageTitle(item.image?.title ?? "")) return false;
+    return Boolean(isAutoPromotableMlbGameContentAction({ item, score: mlbGameContentActionScore(item, start) }, start));
+  });
   const item = candidate?.item ?? null;
   const cut = selectMlbImageCut(item);
   if (!candidate || !item || !cut?.src) return null;
@@ -215,13 +221,13 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   const text = `${titleText} ${item.description ?? ""} ${item.id ?? ""} ${item.slug ?? ""}`.toLowerCase();
   if (item.type !== "video") return 0;
   if (!selectMlbImageCut(item)) return 0;
-  if (!text.includes(lastName(start.pitcher.name).toLowerCase())) return 0;
+  if (!hasPitcherIdentity(item, start, text)) return 0;
   if (!isMlbActionImageCandidate(item, start)) return 0;
   if (nonActionMlbContentPattern().test(text)) return 0;
   if (nonActionMlbTitlePattern().test(titleText)) return 0;
 
   let score = 0;
-  if (text.includes(start.pitcher.name.toLowerCase())) score += 100;
+  if (text.includes(start.pitcher.name.toLowerCase()) || hasExactTaggedPitcherSubject(item, start)) score += 100;
   if (pitcherActionHighlightPattern().test(text)) score += 75;
   if (text.includes("strikes out") || text.includes("fans")) score += 50;
   if (text.includes("outing") || text.includes("start")) score += 20;
@@ -231,6 +237,19 @@ function mlbGameContentActionScore(item: MlbGameContentItem, start: StartSummary
   if (isPhotoCreditImageTitle(item.image?.title ?? "")) score += 35;
   if (isPitcherActionHighlight(item, start)) score += 30;
   return score;
+}
+
+function hasExactTaggedPitcherSubject(item: MlbGameContentItem, start: StartSummary) {
+  const players = item.keywordsAll?.filter(k => k.type === "player").map(k => k.value) ?? [];
+  const title = (item.title ?? item.headline ?? "").toLowerCase();
+  // Official captions sometimes misspell surnames. One exact player ID plus a
+  // matching first-name subject preserves identity without a fuzzy-name finder.
+  return players.length === 1 && players[0] === `playerid-${start.pitcher.mlbId}` &&
+    title.startsWith(`${start.pitcher.name.split(/\s+/)[0].toLowerCase()} `);
+}
+
+function hasPitcherIdentity(item: MlbGameContentItem, start: StartSummary, text: string) {
+  return text.includes(lastName(start.pitcher.name).toLowerCase()) || hasExactTaggedPitcherSubject(item, start);
 }
 
 function nonActionMlbContentPattern() {
@@ -269,7 +288,7 @@ function displayPhotoAttribution(value?: string) {
 
 function isMlbActionImageCandidate(item: MlbGameContentItem, start: StartSummary) {
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""}`.toLowerCase();
-  const pitcherNamed = text.includes(start.pitcher.name.toLowerCase()) || text.includes(lastName(start.pitcher.name).toLowerCase());
+  const pitcherNamed = hasPitcherIdentity(item, start, text);
   return isPhotoCreditImageTitle(item.image?.title ?? "") || (pitcherNamed && isOfficialMlbPitchingHighlight(item, start));
 }
 
@@ -281,15 +300,15 @@ export function isOfficialMlbPitchingHighlight(item: MlbGameContentItem, start?:
   const exactGame = start && item.keywordsAll?.some(k => k.value === `gamepk-${start.gamePk}`);
   const inGame = item.keywordsAll?.some(k => k.value === "in-game-highlight");
   const title = `${item.title ?? ""} ${item.headline ?? ""}`;
-  const pitcherLeads = start && title.toLowerCase().startsWith(start.pitcher.name.toLowerCase());
+  const pitcherLeads = start && (title.toLowerCase().startsWith(start.pitcher.name.toLowerCase()) || hasExactTaggedPitcherSubject(item, start));
   if (exactPlayer && exactGame && inGame && pitcherLeads && pitcherActionHighlightPattern().test(title) && !nonActionMlbContentPattern().test(title) && !nonActionMlbTitlePattern().test(title)) return true;
   return tags.some((tag) => tag.includes("highlight-reel-pitching") || tag.includes("highlight-reel-starting-pitching") || tag === "pitching pitching");
 }
 
 function isPitcherActionHighlight(item: MlbGameContentItem, start: StartSummary) {
-  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.description ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
+  const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.description ?? ""} ${item.blurb ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
-  return text.includes(last) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
+  return (text.includes(last) || hasExactTaggedPitcherSubject(item, start)) && pitcherActionHighlightPattern().test(text) && !nonActionMlbTitlePattern().test(text);
 }
 
 function pitcherActionHighlightPattern() {
@@ -305,7 +324,7 @@ function isAutoPromotableMlbGameContentAction(candidate: MlbGameContentActionCan
   const text = `${item.title ?? ""} ${item.headline ?? ""} ${item.blurb ?? ""} ${item.description ?? ""} ${item.image?.title ?? ""} ${item.slug ?? ""}`.toLowerCase();
   const fullName = start.pitcher.name.toLowerCase();
   const last = lastName(start.pitcher.name).toLowerCase();
-  const isPitcherNamed = text.includes(fullName) || text.includes(last);
+  const isPitcherNamed = text.includes(fullName) || text.includes(last) || hasExactTaggedPitcherSubject(item, start);
   const officialPitchingHighlight = isOfficialMlbPitchingHighlight(item, start);
   const hasPitchingActionCopy = pitcherActionHighlightPattern().test(text) || singlePitchActionFramePattern().test(text);
   if (!isPitcherNamed || !officialPitchingHighlight || !hasPitchingActionCopy) return null;

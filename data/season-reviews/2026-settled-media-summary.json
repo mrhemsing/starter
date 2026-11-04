@@ -1,0 +1,41 @@
+{
+  "games": 2205,
+  "starts": 4425,
+  "tiers": {
+    "postseason": {
+      "starts": 80,
+      "games": 40,
+      "contentHighlights": 75,
+      "images": 71,
+      "youtubeFallbackLookups": 5,
+      "youtubeResolved": 1,
+      "deferredQuota": 1,
+      "highlights": 76
+    },
+    "gem": {
+      "starts": 199,
+      "games": 196,
+      "contentHighlights": 199,
+      "images": 192,
+      "youtubeFallbackLookups": 0,
+      "youtubeResolved": 0,
+      "deferredQuota": 0,
+      "highlights": 199
+    },
+    "other": {
+      "starts": 4146,
+      "games": 2162,
+      "contentHighlights": 3823,
+      "images": 3621,
+      "youtubeFallbackLookups": 0,
+      "youtubeResolved": 0,
+      "deferredQuota": 0,
+      "highlights": 3823
+    }
+  },
+  "frozenFiles": {
+    "src/data/season-review-2026.json": "20e7f7a42fc8d56c8dae65cf774bb606ad8c80542ea5509325953c55836fba55",
+    "data/season-reviews/2026-canonical.json": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
+    "data/season-reviews/2026-receipt.json": "a9aa8743f0d1a95edc4bb110db0ea8c7b9c0a9f2d1dffdf035e99a3a7f9fdf81"
+  }
+}

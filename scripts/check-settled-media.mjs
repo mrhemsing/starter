@@ -13,6 +13,9 @@ const item={id:'fixture',slug:'jacob-misiorowski-strikes-out',type:'video',title
  image:{cuts:[{src:'https://img.mlbstatic.com/mlb-images/image/upload/fixture.jpg',aspectRatio:'16:9',width:1280}]},
  playbacks:[{name:'mp4Avc',url:'https://mlb-cuts-diamond.mlb.com/FORGE/fixture.mp4'}]};
 const content=x=>({highlights:{highlights:{items:[x]}}});
+const typo={...item,slug:'jacob-missiorowski-strikes-out',title:'Jacob Missiorowski strikes out a batter',keywordsAll:[{type:'player',value:'playerid-694819'},{value:'gamepk-849799'},{value:'in-game-highlight'}]};
+assert(resolveMlbGameContentHighlight(start,content(typo)));assert(resolveMlbGameContentActionImageFromContent(start,content(typo)));
+assert.equal(resolveMlbGameContentHighlight(start,content({...typo,keywordsAll:[...typo.keywordsAll,{type:'player',value:'playerid-123'}]})),null,'Ambiguous caption identity must not match');
 for(const title of ['Jacob Misiorowski strikes out a batter','Jacob Misiorowski gets a batter swinging','Jacob Misiorowski tosses scoreless innings']){
  const c=content({...item,title});assert(resolveMlbGameContentHighlight(start,c));assert(resolveMlbGameContentActionImageFromContent(start,c));
 }
@@ -25,7 +28,8 @@ for(const bad of [
 ]) {assert.equal(resolveMlbGameContentHighlight(start,content(bad)),null);assert.equal(resolveMlbGameContentActionImageFromContent(start,content(bad)),null);}
 // Official montage pitching taxonomy plus action in description must promote the image.
 const montage={...item,title:"Jacob Misiorowski's five innings",description:'Jacob Misiorowski strikes out two batters',keywordsAll:[{value:'highlight-reel-starting-pitching'}]};
-assert(resolveMlbGameContentActionImageFromContent(start,content(montage)));
+assert.equal(resolveMlbGameContentActionImageFromContent(start,content(montage)),null,'Unreviewed reel graphic is not an action photo');
+assert(resolveMlbGameContentActionImageFromContent(start,content({...montage,image:{...montage.image,title:'GettyImages-123456'}})));
 const postseason=new Set([start.gamePk]);const record=records.find(x=>x.id===start.id);
 const row={startId:record.id,gamePk:record.gamePk,tier:'postseason',youtubeAttempted:false,selected:{image:null,highlight:null},lookups:[{url:`https://statsapi.mlb.com/api/v1/game/${record.gamePk}/content`,status:200}]};
 assertSettledMediaCoverage([record],[row],postseason);
@@ -46,3 +50,10 @@ for(const [file,hash] of Object.entries({
  'data/season-reviews/2026-receipt.json':'a9aa8743f0d1a95edc4bb110db0ea8c7b9c0a9f2d1dffdf035e99a3a7f9fdf81',
 })) assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex'),hash,`Frozen content ${file}`);
 console.log(`PASS 80/80 postseason content lookups; ${log.filter(x=>x.selected.image).length} images; ${log.filter(x=>x.selected.highlight).length} highlights; ${log.filter(x=>x.youtubeError).length} explicit quota deferrals; frozen bytes unchanged`);
+const {resolveFeaturedStartHighlight}=loadProjectTs('src/lib/data/featured-highlight-service.ts');
+const {resolveTopPerformerImage}=loadProjectTs('src/lib/data/top-performer-image-service.ts');
+const existingHighlights=JSON.parse(readFileSync('src/data/season-review-media-2026.json','utf8')).highlights;
+const oldFetch=globalThis.fetch;let requests=0;
+globalThis.fetch=async()=>{requests++;throw new Error('Published media must not rediscover');};
+try {for(const row of log){const start=canonicalRecordToFormStart(records.find(x=>x.id===row.startId),1);if(row.selected.highlight)assert.deepEqual(await resolveFeaturedStartHighlight(start),existingHighlights[start.id]??row.selected.highlight);assert.deepEqual(await resolveTopPerformerImage(start,null,{exactGameOnly:true}),row.selected.image);}}finally{globalThis.fetch=oldFetch;}
+assert.equal(requests,0);console.log('PASS all postseason exact-game image reads and resolved highlight reads reuse stored references without network');

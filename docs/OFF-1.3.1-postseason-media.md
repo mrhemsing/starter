@@ -24,12 +24,27 @@ Published exact-start references use the same FeaturedStartHighlight and TopPerf
 
 ## Postseason results
 
-All 80 starts in 40 distinct postseason games have exact-game content lookups. Shared selector repairs resolve 75 action images and 75 content highlights; an existing successful official YouTube lookup resolves one additional highlight (76 total). Three completed YouTube misses remain explicit, and Shawn Armstrong on Oct 19 has a partial fallback blocked by a documented daily search quota error. This is not a no-highlight verdict.
+All 80 starts in 40 distinct postseason games have exact-game content lookups. Shared selector repairs resolve 71 approved action photos and 75 content highlights; an existing successful official YouTube lookup resolves one additional highlight (76 total). Three completed YouTube misses remain explicit, and Shawn Armstrong on Oct 19 has a partial fallback blocked by a documented daily search quota error. This is not a no-highlight verdict.
 
-The selector defects were (1) postseason strikeout clips tagged in-game-highlight with exact player/game IDs but without the pitching taxonomy, and (2) promotion checking action wording in the title but not the description, rejecting the Oct 28 scoreless-innings montage. The shared repair requires exact player/game identity for the new taxonomy branch, rejects interview copy, and uses the same action/focal policy for daily and backfill paths. No new media source is introduced.
+The selector defects were (1) postseason strikeout clips tagged in-game-highlight with exact player/game IDs but without the pitching taxonomy, and (2) promotion checking action wording in the title but not the description, rejecting the Oct 28 scoreless-innings montage. The shared repair requires exact player/game identity for the new taxonomy branch, rejects interview copy, and uses the same action/focal policy for daily and backfill paths. No new media source is introduced. Visual QA caught a baked-in stat graphic and clipped mobile face in the Oct 28 reel thumbnail. Image selection now excludes unreviewed reel graphics and uses the clean individual-play pitching photo, while retaining the full montage as the highlight video.
 
-The five action-image misses are AJ Blubaugh Sep 29, Anthony Kay Oct 5, Walker Buehler Oct 7, Hagen Smith Oct 8, and Shawn Armstrong Oct 19. Their exact-game feeds contain no qualifying pitching-action asset. Hagen Smith has an official YouTube highlight but no approved action-image candidate. These outcomes and all source lookups are in 2026-postseason-media-log.json.
+The five initial action-image misses are AJ Blubaugh Sep 29, Anthony Kay Oct 5, Walker Buehler Oct 7, Hagen Smith Oct 8, and Shawn Armstrong Oct 19. Their exact-game feeds contain no qualifying pitching-action asset. Visual inspection additionally rejected unreviewed reel/stat graphics: Logan Henderson Oct 4, Drew Rasmussen Oct 12 and Oct 24, and Griffin Jax Oct 27 have logged no-approved-photo outcomes. Their highlight videos remain available. Hagen Smith has an official YouTube highlight but no approved action-image candidate. These outcomes and all source lookups are in 2026-postseason-media-log.json.
 
 Dated-page cache keys now include a hash of the media manifest. This invalidates cached highlight lists when published references change, while keeping the existing final-slate cache policy intact. Existing curator crops and previously attributed highlight references remain preferred where appropriate.
 
-Full-season counts and final production verification follow after the 2,205-game sweep.
+## Approved full-season sweep
+
+All 2,205 unique game-content responses succeeded and all 4,425 frozen final starts have per-start outcomes. No scheduled or fixture records were swept.
+
+| Disjoint tier | Starts | Content highlights | Final highlights | Action photos | YouTube fallback attempts | Quota deferred |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Postseason | 80 | 75 | 76 | 71 | 5 | 1 |
+| Regular-season GS+ >= 70 | 199 | 199 | 199 | 192 | 0 | 0 |
+| Other regular-season starts | 4,146 | 3,823 | 3,823 | 3,621 | 0 | 0 |
+| Total | 4,425 | 4,097 | 4,098 | 3,884 | 5 | 1 |
+
+The regular-season gem diagnostic found an official MLB caption typo (Wrobelski for Wrobleski). The shared selector now recognizes an exact sole player ID with a matching first-name subject, without fuzzy matching or a parallel finder. Ambiguous-player and wrong-game fixtures fail selection. All 199 regular-season gems now resolve through game content.
+
+`npm run check:postseason-media` passes coverage, shared selection, frozen-byte, attribution, cache and rendering contracts. `node scripts/check-season-media-sweep.mjs --require-complete` intentionally fails while the one quota-deferred fallback remains. This is an explicit incomplete discovery item, not an unavailable-highlight claim. The retry is scoped to Shawn Armstrong, gamePk 849815, Oct 19; use the stored per-game log for the canonical identifier and pending query.
+
+Final production verification is recorded in the attached DOM/network results and snapshots.

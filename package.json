@@ -74,7 +74,8 @@
     "test:responsive": "node scripts/check-responsive-screenshots.mjs",
     "test:slate-contract": "node scripts/check-slate-contract.mjs",
     "test:start-contract": "node scripts/check-start-contract.mjs",
-    "check:highlight-backfill": "node scripts/check-highlight-backfill.mjs && node scripts/check-canonical-highlight-detail.mjs"
+    "check:highlight-backfill": "node scripts/check-highlight-backfill.mjs && node scripts/check-canonical-highlight-detail.mjs",
+    "check:postseason-media": "node scripts/check-off131.mjs && node scripts/check-season-media-sweep.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

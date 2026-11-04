@@ -6,12 +6,13 @@ import {mediaTier,assertSettledMediaCoverage} from './lib/settled-media-targets.
 import {createDiscoveryFetch} from './lib/discovery-http.mjs';
 const output='outputs/off131';await mkdir(output,{recursive:true});
 let records=JSON.parse(await readFile('data/season-reviews/2026-canonical.json','utf8'));
+assert(records.every(r=>r.status==='final'&&r.frozen&&r.source?.line!=='fixture'),'Only settled canonical starts may be swept');
 const schedule=JSON.parse(await readFile(`${output}/postseason-schedule.json`,'utf8'));
 const postseason=new Set(schedule.dates.flatMap(d=>d.games).map(g=>g.gamePk));
 if(process.argv.includes('--postseason-only')) records=records.filter(r=>postseason.has(r.gamePk));
 const {canonicalRecordToFormStart}=loadProjectTs('src/lib/canonical-start-summary.ts');
 const {resolveMlbGameContentHighlight,resolveYouTubeHighlight,resolveMlbChannelId}=loadProjectTs('src/lib/data/highlight-discovery.ts');
-const {resolveMlbGameContentActionImageFromContent}=loadProjectTs('src/lib/data/top-performer-image-service.ts');
+const {resolveMlbGameContentActionImageFromContent,selectMlbGameContentActionCandidate}=loadProjectTs('src/lib/data/top-performer-image-service.ts');
 const {fetch,log}=await createDiscoveryFetch(output,{reuse:['../starter-highlight-backfill/outputs/off13'],offlineHosts:process.argv.includes('--cached-youtube')?['www.googleapis.com']:[]});globalThis.fetch=fetch;
 const frozenPaths=['src/data/season-review-2026.json','data/season-reviews/2026-canonical.json','data/season-reviews/2026-receipt.json'];
 const hashes=await Promise.all(frozenPaths.map(async p=>createHash('sha256').update(await readFile(p)).digest('hex')));
@@ -29,6 +30,8 @@ for(const [gamePk,rows] of order) {
   const start=canonicalRecordToFormStart(record,1),group=tier(record);
   const image=resolveMlbGameContentActionImageFromContent(start,content);
   const contentHighlight=resolveMlbGameContentHighlight(start,content);
+  const rejectedImage=image?null:selectMlbGameContentActionCandidate(content,start)?.item;
+  const imageDiagnostic=image?null:rejectedImage?{title:rejectedImage.title,sourceImage:rejectedImage.image?.cuts?.find(c=>c.aspectRatio==='16:9')?.src,reason:'No candidate passed action-photo promotion; reel graphics without a photo credit are excluded'}:{reason:'No matching approved pitching-action candidate in exact-game content'};
   let highlight=contentHighlight,youtubeError=null;const ytIndex=log.length;
   if(!highlight && group!=='other' && !process.argv.includes('--content-only')) {
    try {
@@ -41,7 +44,7 @@ for(const [gamePk,rows] of order) {
   if(highlight){const {title,...stored}=highlight;highlight=stored;}
   assets[start.id]={gamePk,image,highlight};
   outcomes.push({startId:start.id,gamePk,date:start.date,pitcher:start.pitcher.name,tier:group,score:start.gameScorePlus,
-   contentHighlight:Boolean(contentHighlight),imageOutcome:image?'resolved':'no_matching_approved_action',highlightOutcome:highlight?'resolved':youtubeError?'deferred_quota':process.argv.includes('--content-only')&&group!=='other'?'fallback_pending':'no_matching_official_highlight',youtubeError,
+   contentHighlight:Boolean(contentHighlight),imageDiagnostic,imageOutcome:image?'resolved':'no_matching_approved_action',highlightOutcome:highlight?'resolved':youtubeError?'deferred_quota':process.argv.includes('--content-only')&&group!=='other'?'fallback_pending':'no_matching_official_highlight',youtubeError,
    youtubeEligible:!contentHighlight&&group!=='other',youtubeAttempted:!contentHighlight&&group!=='other'&&!process.argv.includes('--content-only'),selected:assets[start.id],lookups:[...gameLookup,...log.slice(ytIndex)]});
  }
  if(outcomes.length%50<rows.length||outcomes.length===records.length){await writeFile(`${output}/sweep-log.json`,JSON.stringify({outcomes}));await writeFile(`${output}/assets.json`,JSON.stringify(assets));}

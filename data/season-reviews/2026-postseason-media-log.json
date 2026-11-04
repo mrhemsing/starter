@@ -8,6 +8,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -17,15 +18,15 @@
         "gamePk": 849845,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/dc9n5bnwfwg6dtoktrdb.jpg",
-          "alt": "Chris Sale strikes out nine in Wild Card Game 1",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/acfdf8kqr0vdi8aeguya.jpg",
+          "alt": "Chris Sale's first K against the Phillies",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/chris-sale-strikes-out-nine-in-wild-card-game-1"
+          "playUrl": "https://www.mlb.com/video/trea-turner-strikes-out-swinging-5v4gql"
         },
         "highlight": {
           "videoId": "chris-sale-strikes-out-nine-in-wild-card-game-1",
@@ -53,6 +54,7 @@
       "tier": "postseason",
       "score": 60,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -62,15 +64,15 @@
         "gamePk": 849845,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vfegjmvk7f3hyrx9uunj.jpg",
-          "alt": "Jesús Luzardo fans six against the Braves",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ura3ylckjhuvnx6nxtn8.jpg",
+          "alt": "Jesús Luzardo strikes out Matt Olson",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/jesus-luzardo-fans-six-against-the-braves"
+          "playUrl": "https://www.mlb.com/video/matt-olson-strikes-out-swinging-mxvhgf"
         },
         "highlight": {
           "videoId": "jesus-luzardo-fans-six-against-the-braves",
@@ -98,6 +100,7 @@
       "tier": "postseason",
       "score": 54,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -107,15 +110,15 @@
         "gamePk": 849851,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/fqtponn6hgrmldnts0gt.jpg",
-          "alt": "Payton Tolle fans four vs. Yankees",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/oabfpkhi2ab3i1teczx4.jpg",
+          "alt": "Payton Tolle K's Heliot Ramos",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/payton-tolle-fans-four-vs-yankees"
+          "playUrl": "https://www.mlb.com/video/heliot-ramos-strikes-out-swinging-kd42od"
         },
         "highlight": {
           "videoId": "payton-tolle-fans-four-vs-yankees",
@@ -143,6 +146,7 @@
       "tier": "postseason",
       "score": 74,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -152,15 +156,15 @@
         "gamePk": 849851,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/kpqdwa7kqutl0uycnmah.jpg",
-          "alt": "Cam Schlittler's 10-strikeout game vs. Red Sox",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/scjrvmrflyxgiz5fwwps.jpg",
+          "alt": "Cam Schlittler's first strikeout of the game",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/cam-schlittler-s-10-strikeout-game-vs-red-sox"
+          "playUrl": "https://www.mlb.com/video/cam-schlittler-swinging-strike-blocked-to-roman-anthony"
         },
         "highlight": {
           "videoId": "cam-schlittler-s-10-strikeout-game-vs-red-sox",
@@ -188,6 +192,7 @@
       "tier": "postseason",
       "score": 43,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -233,6 +238,7 @@
       "tier": "postseason",
       "score": 70,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -278,6 +284,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -323,6 +330,9 @@
       "tier": "postseason",
       "score": 43,
       "contentHighlight": false,
+      "imageDiagnostic": {
+        "reason": "No matching approved pitching-action candidate in exact-game content"
+      },
       "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "no_matching_official_highlight",
       "youtubeError": null,
@@ -368,6 +378,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -413,6 +424,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -422,15 +434,15 @@
         "gamePk": 849841,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/xreehfohbizun9gbyxrm.jpg",
-          "alt": "Cristopher Sánchez fans six in Game 2 start",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/z4lc3yf72oyyf7yhzykq.jpg",
+          "alt": "Cristopher Sánchez escapes jam",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/cristopher-sanchez-fans-six-against-the-braves"
+          "playUrl": "https://www.mlb.com/video/cristopher-sanchez-escapes-jam"
         },
         "highlight": {
           "videoId": "cristopher-sanchez-fans-six-against-the-braves",
@@ -458,6 +470,7 @@
       "tier": "postseason",
       "score": 52,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -467,15 +480,15 @@
         "gamePk": 849848,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j2is54456u0ttt85zejh.jpg",
-          "alt": "Sonny Gray K's five against Yankees",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hudd4qdnidmlokpyoldk.jpg",
+          "alt": "Sonny Gray K's Ben Rice",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/sonny-gray-k-s-five-against-yankees"
+          "playUrl": "https://www.mlb.com/video/ben-rice-strikes-out-swinging-7zl4nb"
         },
         "highlight": {
           "videoId": "sonny-gray-k-s-five-against-yankees",
@@ -503,6 +516,7 @@
       "tier": "postseason",
       "score": 63,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -512,15 +526,15 @@
         "gamePk": 849848,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/zwsl8gwajjl3yjoqsuo5.jpg",
-          "alt": "Max Fried strikes out six vs. Red Sox",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jcbflptffj7c6pfffodk.jpg",
+          "alt": "Max Fried's first strikeout of the game",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/max-fried-strikes-out-six-vs-red-sox"
+          "playUrl": "https://www.mlb.com/video/max-fried-s-first-strikeout-of-the-game"
         },
         "highlight": {
           "videoId": "max-fried-strikes-out-six-vs-red-sox",
@@ -548,6 +562,7 @@
       "tier": "postseason",
       "score": 39,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -593,6 +608,7 @@
       "tier": "postseason",
       "score": 52,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -638,6 +654,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -647,15 +664,15 @@
         "gamePk": 849846,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nvohx9ns55a4lkeva56q.jpg",
-          "alt": "Sean Burke strikes out eight over four in Game 2",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/tyai5jg8etjp2zbosi9r.jpg",
+          "alt": "Sean Burke fans Yordan Alvarez",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/sean-burke-strikes-out-eight-over-four-in-game-2"
+          "playUrl": "https://www.mlb.com/video/yordan-alvarez-strikes-out-swinging-y8q56u"
         },
         "highlight": {
           "videoId": "sean-burke-strikes-out-eight-over-four-in-game-2",
@@ -683,6 +700,7 @@
       "tier": "postseason",
       "score": 33,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -728,6 +746,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -773,6 +792,7 @@
       "tier": "postseason",
       "score": 39,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -818,6 +838,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -827,15 +848,15 @@
         "gamePk": 849828,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qlpz37we2vnnkerr1qci.jpg",
-          "alt": "Dylan Dodd strikes out four vs. Dodgers",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ul3xo2exzw9f7o6kco15.jpg",
+          "alt": "Dylan Dodd's first strikeout of the game",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/dylan-dodd-strikes-out-four-vs-dodgers"
+          "playUrl": "https://www.mlb.com/video/mookie-betts-called-out-on-strikes-uaxggb"
         },
         "highlight": {
           "videoId": "dylan-dodd-strikes-out-four-vs-dodgers",
@@ -863,6 +884,7 @@
       "tier": "postseason",
       "score": 64,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -908,6 +930,7 @@
       "tier": "postseason",
       "score": 50,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -917,15 +940,15 @@
         "gamePk": 849829,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/rurvhllcfrc2e468w0uv.jpg",
-          "alt": "Parker Messick fans six across 4 1/3 innings",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vgoyooroeneruoyvcvnj.jpg",
+          "alt": "Parker Messick escapes early jam with strikeout",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/parker-messick-fans-six-across-4-1-3-innings"
+          "playUrl": "https://www.mlb.com/video/parker-messick-escapes-jam"
         },
         "highlight": {
           "videoId": "parker-messick-fans-six-across-4-1-3-innings",
@@ -953,6 +976,7 @@
       "tier": "postseason",
       "score": 54,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -998,6 +1022,7 @@
       "tier": "postseason",
       "score": 54,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1007,15 +1032,15 @@
         "gamePk": 849830,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ni9fyz5mfxltslbu7yqx.jpg",
-          "alt": "Jacob Misiorowski strikes out six in Game 1 of NLDS",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vmnh7dx1lqjr8dt41jfv.jpg",
+          "alt": "Jacob Misiorowski strikes out Fernando Tatis Jr.",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/jacob-misorowski-strikes-out-six-in-game-1-of-nlds"
+          "playUrl": "https://www.mlb.com/video/fernando-tatis-jr-strikes-out-swinging-vakloo"
         },
         "highlight": {
           "videoId": "jacob-misorowski-strikes-out-six-in-game-1-of-nlds",
@@ -1043,6 +1068,7 @@
       "tier": "postseason",
       "score": 38,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1088,6 +1114,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1097,15 +1124,15 @@
         "gamePk": 849835,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/tr1sqaxv5zf2f6htpokk.jpg",
-          "alt": "Gerrit Cole strikes out five Rays in Game 1",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ubeurduledgjnyurrb8u.jpg",
+          "alt": "Gerrit Cole fans Victor Mesa Jr.",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/gerrit-cole-strikes-out-five-rays-in-game-1"
+          "playUrl": "https://www.mlb.com/video/victor-mesa-jr-strikes-out-swinging-vjhh14"
         },
         "highlight": {
           "videoId": "gerrit-cole-strikes-out-five-rays-in-game-1",
@@ -1133,6 +1160,7 @@
       "tier": "postseason",
       "score": 77,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1142,15 +1170,15 @@
         "gamePk": 849835,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/bjx1zc77wrfbinnxbhxt.jpg",
-          "alt": "Drew Rasmussen fans 10 in one-hit gem",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/rf2uvrlmiqqlmtxjrj3o.jpg",
+          "alt": "Drew Rasmussen's 10th K of the night",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/drew-rasmussen-fans-10-in-one-hit-gem"
+          "playUrl": "https://www.mlb.com/video/spencer-jones-strikes-out-swinging-mgfvc6"
         },
         "highlight": {
           "videoId": "drew-rasmussen-fans-10-in-one-hit-gem",
@@ -1178,6 +1206,7 @@
       "tier": "postseason",
       "score": 57,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1187,15 +1216,15 @@
         "gamePk": 849823,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jcu2brb3lk8ivhfdlmp1.jpg",
-          "alt": "Ray Kerr strikes out four in scoreless outing",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nfxj7bvkdj0ha58dc5gd.jpg",
+          "alt": "Ray Kerr fans Shohei Ohtani",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/ray-kerr-strikes-out-four-in-scoreless-outing"
+          "playUrl": "https://www.mlb.com/video/ray-kerr-swinging-strike-to-shohei-ohtani-upobmx"
         },
         "highlight": {
           "videoId": "ray-kerr-strikes-out-four-in-scoreless-outing",
@@ -1223,6 +1252,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1232,15 +1262,15 @@
         "gamePk": 849823,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ys3ln3yr8srqkdbkiett.jpg",
-          "alt": "Blake Snell fans five in NLDS Game 2",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j5rwhyezmx3im2kplqwc.jpg",
+          "alt": "Blake Snell fans Sean Murphy to end the 1st",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/blake-snell-fans-five-in-nlds-game-2"
+          "playUrl": "https://www.mlb.com/video/sean-murphy-strikes-out-swinging-zixt6s"
         },
         "highlight": {
           "videoId": "blake-snell-fans-five-in-nlds-game-2",
@@ -1268,25 +1298,19 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
-      "imageOutcome": "resolved",
+      "imageDiagnostic": {
+        "title": "Logan Henderson strikes out four vs. Padres",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/znobucp6eewwyxp6sxcv.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
+      "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "resolved",
       "youtubeError": null,
       "youtubeEligible": false,
       "youtubeAttempted": false,
       "selected": {
         "gamePk": 849825,
-        "image": {
-          "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/znobucp6eewwyxp6sxcv.jpg",
-          "alt": "Logan Henderson strikes out four vs. Padres",
-          "objectPosition": "50% 50%",
-          "mobileObjectPosition": "50% 50%",
-          "focalPoint": {
-            "x": 50,
-            "y": 50
-          },
-          "playUrl": "https://www.mlb.com/video/logan-henderson-strikes-out-four-vs-padres"
-        },
+        "image": null,
         "highlight": {
           "videoId": "logan-henderson-strikes-out-four-vs-padres",
           "source": "mlb-game-content",
@@ -1313,6 +1337,7 @@
       "tier": "postseason",
       "score": 60,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1322,15 +1347,15 @@
         "gamePk": 849825,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/fgsfe1jyognkitmnbnua.jpg",
-          "alt": "Michael King strikes out six in Game 2 start",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qpoz2muykzjit6jyrkzd.jpg",
+          "alt": "Michael King fans Christian Yelich to end inning",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/michael-king-strikes-out-six-in-game-2-start"
+          "playUrl": "https://www.mlb.com/video/christian-yelich-strikes-out-swinging-6mlcs1"
         },
         "highlight": {
           "videoId": "michael-king-strikes-out-six-in-game-2-start",
@@ -1358,6 +1383,7 @@
       "tier": "postseason",
       "score": 59,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1367,15 +1393,15 @@
         "gamePk": 849834,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/rscfmya9qbfcighsulaq.jpg",
-          "alt": "Gavin Williams strikes out 11 in strong Game 2 start",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ruwvvxbjlngfnaofeuji.jpg",
+          "alt": "Gavin Williams K's Kyle Teel to strike out the side",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/gavin-williams-strikes-out-11-in-strong-game-2-start"
+          "playUrl": "https://www.mlb.com/video/kyle-teel-strikes-out-swinging-ed0zuv"
         },
         "highlight": {
           "videoId": "gavin-williams-strikes-out-11-in-strong-game-2-start",
@@ -1403,6 +1429,9 @@
       "tier": "postseason",
       "score": 41,
       "contentHighlight": false,
+      "imageDiagnostic": {
+        "reason": "No matching approved pitching-action candidate in exact-game content"
+      },
       "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "no_matching_official_highlight",
       "youtubeError": null,
@@ -1442,6 +1471,7 @@
       "tier": "postseason",
       "score": 43,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1487,6 +1517,7 @@
       "tier": "postseason",
       "score": 57,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1532,6 +1563,7 @@
       "tier": "postseason",
       "score": 53,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1541,15 +1573,15 @@
         "gamePk": 849819,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/iwwj94ecdoy6vgocsv6y.jpg",
-          "alt": "Chris Sale fans seven vs. Dodgers in Game 3",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/wkdqtm1z3siddjhpxiwg.jpg",
+          "alt": "Chris Sale's sixth strikeout through two innings",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/chris-sale-fans-seven-vs-dodgers-in-game-3"
+          "playUrl": "https://www.mlb.com/video/enrique-hernandez-strikes-out-swinging-lwhoi9"
         },
         "highlight": {
           "videoId": "chris-sale-fans-seven-vs-dodgers-in-game-3",
@@ -1577,6 +1609,7 @@
       "tier": "postseason",
       "score": 72,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1586,15 +1619,15 @@
         "gamePk": 849819,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/efpmssugs7aza6naciw4.jpg",
-          "alt": "Yoshinobu Yamamoto fans 10 in dominant outing",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ttflhceyqufae7n6nlw9.jpg",
+          "alt": "Yoshinobu Yamamoto's 10th strikeout vs. Braves",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/yoshinobu-yamamoto-s-fans-10-in-dominant-outing"
+          "playUrl": "https://www.mlb.com/video/austin-riley-strikes-out-swinging-ecqj5l"
         },
         "highlight": {
           "videoId": "yoshinobu-yamamoto-s-fans-10-in-dominant-outing",
@@ -1622,6 +1655,7 @@
       "tier": "postseason",
       "score": 45,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1667,6 +1701,7 @@
       "tier": "postseason",
       "score": 48,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1712,6 +1747,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1721,15 +1757,15 @@
         "gamePk": 849822,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pgkl79w9wbv9lyngnls5.jpg",
-          "alt": "Tyler Mahle fans four in strong start in Game 4",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pm1gkeylbwwhwqxdqxaj.jpg",
+          "alt": "Tyler Mahle fans Teoscar Hernández",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/tyler-mahle-fans-four-in-strong-start-in-game-4"
+          "playUrl": "https://www.mlb.com/video/teoscar-hernandez-strikes-out-swinging-2qb4xe"
         },
         "highlight": {
           "videoId": "tyler-mahle-fans-four-in-strong-start-in-game-4",
@@ -1757,6 +1793,7 @@
       "tier": "postseason",
       "score": 57,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1802,6 +1839,7 @@
       "tier": "postseason",
       "score": 42,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1847,6 +1885,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1892,6 +1931,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1937,6 +1977,11 @@
       "tier": "postseason",
       "score": 44,
       "contentHighlight": false,
+      "imageDiagnostic": {
+        "title": "Garrett Mitchell's RBI single",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/tpdqwsmyt0p9waa0gxam.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
       "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "no_matching_official_highlight",
       "youtubeError": null,
@@ -1976,6 +2021,7 @@
       "tier": "postseason",
       "score": 47,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -1985,15 +2031,15 @@
         "gamePk": 849838,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vnoejjntwywiinb9q7da.jpg",
-          "alt": "Max Fried's seven strikeouts",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/kbj7hz7j2o7amembyiuo.jpg",
+          "alt": "Max Fried strikes out Junior Caminero",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/max-fried-s-seven-strikeouts-x6045"
+          "playUrl": "https://www.mlb.com/video/junior-caminero-strikes-out-swinging-6zafgf"
         },
         "highlight": {
           "videoId": "max-fried-s-seven-strikeouts-x6045",
@@ -2021,6 +2067,7 @@
       "tier": "postseason",
       "score": 48,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2066,6 +2113,7 @@
       "tier": "postseason",
       "score": 45,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2075,15 +2123,15 @@
         "gamePk": 849832,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hmo3f2w41kil73dahcmd.jpg",
-          "alt": "Parker Messick strikes out five in Game 4 start",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ubuechfafmjh9zyzv8tf.jpg",
+          "alt": "Parker Messick strikes out Braden Montgomery",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/parker-messick-strikes-out-five-x7551"
+          "playUrl": "https://www.mlb.com/video/braden-montgomery-strikes-out-swinging-x7x5pj"
         },
         "highlight": {
           "videoId": "parker-messick-strikes-out-five-x7551",
@@ -2111,6 +2159,11 @@
       "tier": "postseason",
       "score": 42,
       "contentHighlight": false,
+      "imageDiagnostic": {
+        "title": "Miguel Vargas' solo home run",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bygzenh0hynk99kgklp7.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
       "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2163,6 +2216,7 @@
       "tier": "postseason",
       "score": 73,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2208,6 +2262,7 @@
       "tier": "postseason",
       "score": 53,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2217,15 +2272,15 @@
         "gamePk": 849831,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/wv7ckpruudiymah0rrme.jpg",
-          "alt": "Sean Burke strikes out four across five innings",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/y3tksqyw2ttowd80furo.jpg",
+          "alt": "Sean Burke fans Travis Bazzana",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/sean-burke-strikes-out-four-across-five-innings"
+          "playUrl": "https://www.mlb.com/video/travis-bazzana-strikes-out-swinging-f00dbz"
         },
         "highlight": {
           "videoId": "sean-burke-strikes-out-four-across-five-innings",
@@ -2253,6 +2308,7 @@
       "tier": "postseason",
       "score": 52,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2262,15 +2318,15 @@
         "gamePk": 849809,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ekzopvtx0mfqqoq3u3lm.jpg",
-          "alt": "Tarik Skubal strikes out seven against Brewers",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/e70chwigy8sjfjp9vgqe.jpg",
+          "alt": "Tarik Skubal strikes out Jackson Chourio",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/tarik-skubal-strikes-out-seven-against-brewers"
+          "playUrl": "https://www.mlb.com/video/tarik-skubal-swinging-strike-to-jackson-chourio-4yrtdc"
         },
         "highlight": {
           "videoId": "tarik-skubal-strikes-out-seven-against-brewers",
@@ -2298,6 +2354,7 @@
       "tier": "postseason",
       "score": 56,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2343,6 +2400,7 @@
       "tier": "postseason",
       "score": 47,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2388,25 +2446,19 @@
       "tier": "postseason",
       "score": 54,
       "contentHighlight": true,
-      "imageOutcome": "resolved",
+      "imageDiagnostic": {
+        "title": "Drew Rasmussen strikes out seven in ALCS Game 1",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/gwat1nyfcsauz6ow0aes.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
+      "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "resolved",
       "youtubeError": null,
       "youtubeEligible": false,
       "youtubeAttempted": false,
       "selected": {
         "gamePk": 849820,
-        "image": {
-          "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/gwat1nyfcsauz6ow0aes.jpg",
-          "alt": "Drew Rasmussen strikes out seven in ALCS Game 1",
-          "objectPosition": "50% 50%",
-          "mobileObjectPosition": "50% 50%",
-          "focalPoint": {
-            "x": 50,
-            "y": 50
-          },
-          "playUrl": "https://www.mlb.com/video/drew-rasmussen-strikes-out-seven-in-alcs-game-1"
-        },
+        "image": null,
         "highlight": {
           "videoId": "drew-rasmussen-strikes-out-seven-in-alcs-game-1",
           "source": "mlb-game-content",
@@ -2433,6 +2485,7 @@
       "tier": "postseason",
       "score": 35,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2478,6 +2531,7 @@
       "tier": "postseason",
       "score": 49,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2523,6 +2577,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2532,15 +2587,15 @@
         "gamePk": 849813,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/w2tkzvrxwhwqaga2pp0g.jpg",
-          "alt": "Parker Messick fans three against the Rays",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qy5ub9oqqwu3awtjet5k.jpg",
+          "alt": "Parker Messick strikes out Victor Mesa Jr.",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/parker-messick-fans-three-against-the-rays"
+          "playUrl": "https://www.mlb.com/video/parker-messick-strikes-out-victor-mesa-jr"
         },
         "highlight": {
           "videoId": "parker-messick-fans-three-against-the-rays",
@@ -2568,6 +2623,7 @@
       "tier": "postseason",
       "score": 62,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2613,6 +2669,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2622,15 +2679,15 @@
         "gamePk": 849811,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/k3jswow315fnmw7hvbcy.jpg",
-          "alt": "Blake Snell strikes out nine in NLCS Game 3",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/uogwfwggj76hpk5fqhx9.jpg",
+          "alt": "Blake Snell escapes early jam with strikeout",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/blake-snell-strikes-out-nine-in-nlcs-game-3"
+          "playUrl": "https://www.mlb.com/video/joey-ortiz-strikes-out-swinging-q0ks6n"
         },
         "highlight": {
           "videoId": "blake-snell-strikes-out-nine-in-nlcs-game-3",
@@ -2658,6 +2715,7 @@
       "tier": "postseason",
       "score": 60,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2667,15 +2725,15 @@
         "gamePk": 849811,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ygw7nkw7pjvwlnwbucv0.jpg",
-          "alt": "Robert Gasser tosses five scoreless innings in Game 3",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/sjgdixtsin4rdzsmqtfz.jpg",
+          "alt": "Robert Gasser strikes out Will Smith",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/robert-gasser-tosses-five-scoreless-innings-in-game-3"
+          "playUrl": "https://www.mlb.com/video/robert-gasser-strikes-out-will-smith"
         },
         "highlight": {
           "videoId": "robert-gasser-tosses-five-scoreless-innings-in-game-3",
@@ -2703,6 +2761,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2748,6 +2807,7 @@
       "tier": "postseason",
       "score": 38,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2793,6 +2853,7 @@
       "tier": "postseason",
       "score": 45,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2838,6 +2899,7 @@
       "tier": "postseason",
       "score": 47,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2883,6 +2945,7 @@
       "tier": "postseason",
       "score": 49,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2928,6 +2991,7 @@
       "tier": "postseason",
       "score": 55,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -2973,6 +3037,7 @@
       "tier": "postseason",
       "score": 39,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3018,6 +3083,7 @@
       "tier": "postseason",
       "score": 61,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3027,15 +3093,15 @@
         "gamePk": 849817,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j9qpbcjp1jljy5xtjdho.jpg",
-          "alt": "Drew Rasmussen strikes out six in seven innings",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nk5gpztaynq4z3a27sqe.jpg",
+          "alt": "Drew Rasmussen strikes out Jo Adell to end 1st",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/drew-rasmussen-strikes-out-six-in-7-innings"
+          "playUrl": "https://www.mlb.com/video/jo-adell-strikes-out-swinging-qsa2op"
         },
         "highlight": {
           "videoId": "drew-rasmussen-strikes-out-six-in-7-innings",
@@ -3063,6 +3129,9 @@
       "tier": "postseason",
       "score": 42,
       "contentHighlight": false,
+      "imageDiagnostic": {
+        "reason": "No matching approved pitching-action candidate in exact-game content"
+      },
       "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "deferred_quota",
       "youtubeError": "YOUTUBE_QUOTA_DEFERRED",
@@ -3089,7 +3158,7 @@
         {
           "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Shawn+Armstrong+CLE+highlight&publishedAfter=2026-10-18T18%3A00%3A00.000Z&publishedBefore=2026-10-20T18%3A00%3A00.000Z&maxResults=5&order=relevance",
           "status": 0,
-          "at": "2026-11-04T01:46:43.173Z",
+          "at": "2026-11-04T01:58:09.068Z",
           "outcome": "deferred_quota",
           "error": "No successful cached response; daily YouTube search quota exhausted"
         }
@@ -3103,6 +3172,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3112,15 +3182,15 @@
         "gamePk": 849815,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nzx36fujpihnfaizuskr.jpg",
-          "alt": "Freddy Peralta strikes out three in Game 6 start",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pfay8sjowjnbjuhagkpr.jpg",
+          "alt": "Freddy Peralta K's Nathaniel Lowe",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/freddy-peralta-strikes-out-3-in-game-6-start"
+          "playUrl": "https://www.mlb.com/video/freddy-peralta-k-s-nathaniel-lowe"
         },
         "highlight": {
           "videoId": "freddy-peralta-strikes-out-3-in-game-6-start",
@@ -3148,6 +3218,7 @@
       "tier": "postseason",
       "score": 51,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3193,6 +3264,7 @@
       "tier": "postseason",
       "score": 52,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3202,15 +3274,15 @@
         "gamePk": 849805,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ebnoh5hq9bfckr4gb3pb.jpg",
-          "alt": "Nick Martinez strikes out five in World Series Game 1",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/b5evm0kxikna5b2abpom.jpg",
+          "alt": "Nick Martinez fans Brice Turang",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/nick-martinez-strikes-out-five-in-world-series-game-1"
+          "playUrl": "https://www.mlb.com/video/nick-martinez-swinging-strike-to-brice-turang-brmhdk"
         },
         "highlight": {
           "videoId": "nick-martinez-strikes-out-five-in-world-series-game-1",
@@ -3238,6 +3310,7 @@
       "tier": "postseason",
       "score": 42,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3283,25 +3356,19 @@
       "tier": "postseason",
       "score": 41,
       "contentHighlight": true,
-      "imageOutcome": "resolved",
+      "imageDiagnostic": {
+        "title": "Drew Rasmussen fans four in World Series Game 2",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/m7snjo9vl4gmh9aoe1ly.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
+      "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "resolved",
       "youtubeError": null,
       "youtubeEligible": false,
       "youtubeAttempted": false,
       "selected": {
         "gamePk": 849802,
-        "image": {
-          "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/m7snjo9vl4gmh9aoe1ly.jpg",
-          "alt": "Drew Rasmussen fans four in World Series Game 2",
-          "objectPosition": "50% 50%",
-          "mobileObjectPosition": "50% 50%",
-          "focalPoint": {
-            "x": 50,
-            "y": 50
-          },
-          "playUrl": "https://www.mlb.com/video/drew-rasmussen-fans-four-in-world-series-game-2"
-        },
+        "image": null,
         "highlight": {
           "videoId": "drew-rasmussen-fans-four-in-world-series-game-2",
           "source": "mlb-game-content",
@@ -3328,6 +3395,7 @@
       "tier": "postseason",
       "score": 62,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3337,15 +3405,15 @@
         "gamePk": 849804,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/aeg6clz8bxxsn8kzaior.jpg",
-          "alt": "Robert Gasser's six innings of one-hit ball",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/wdd2wqaoo7w2ygwl4kmj.jpg",
+          "alt": "Robert Gasser fans Taylor Walls to end the 3rd",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/robert-gasser-s-six-innings-of-one-hit-ball"
+          "playUrl": "https://www.mlb.com/video/taylor-walls-strikes-out-on-a-foul-tip-k0knnn"
         },
         "highlight": {
           "videoId": "robert-gasser-s-six-innings-of-one-hit-ball",
@@ -3373,6 +3441,7 @@
       "tier": "postseason",
       "score": 34,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3382,15 +3451,15 @@
         "gamePk": 849804,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ctu9wammw59rcggbueni.jpg",
-          "alt": "Freddy Peralta strikes out four batters in Game 3",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/eimjb0wyghoqpqqis1sc.jpg",
+          "alt": "Freddy Peralta strikes out Jake Bauers",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/freddy-peralta-strikes-out-four-batters-in-game-3"
+          "playUrl": "https://www.mlb.com/video/jake-bauers-strikes-out-on-a-foul-tip-6ibniv"
         },
         "highlight": {
           "videoId": "freddy-peralta-strikes-out-four-batters-in-game-3",
@@ -3418,6 +3487,7 @@
       "tier": "postseason",
       "score": 45,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3463,25 +3533,19 @@
       "tier": "postseason",
       "score": 52,
       "contentHighlight": true,
-      "imageOutcome": "resolved",
+      "imageDiagnostic": {
+        "title": "Griffin Jax strikes out six during Game 4 start",
+        "sourceImage": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/a3u0glwi7y3kys4xluxv.jpg",
+        "reason": "No candidate passed action-photo promotion; reel graphics without a photo credit are excluded"
+      },
+      "imageOutcome": "no_matching_approved_action",
       "highlightOutcome": "resolved",
       "youtubeError": null,
       "youtubeEligible": false,
       "youtubeAttempted": false,
       "selected": {
         "gamePk": 849803,
-        "image": {
-          "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/a3u0glwi7y3kys4xluxv.jpg",
-          "alt": "Griffin Jax strikes out six during Game 4 start",
-          "objectPosition": "50% 50%",
-          "mobileObjectPosition": "50% 50%",
-          "focalPoint": {
-            "x": 50,
-            "y": 50
-          },
-          "playUrl": "https://www.mlb.com/video/griffin-jax-strikes-out-six-during-game-4-start"
-        },
+        "image": null,
         "highlight": {
           "videoId": "griffin-jax-strikes-out-six-during-game-4-start",
           "source": "mlb-game-content",
@@ -3508,6 +3572,7 @@
       "tier": "postseason",
       "score": 58,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3517,15 +3582,15 @@
         "gamePk": 849799,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/leohutpi8xexoslo9j4h.jpg",
-          "alt": "Jacob Misiorowski tosses 5 2/3 scoreless innings",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/xzn7n5o5xbkzkxvsjisc.jpg",
+          "alt": "Jacob Misiorowski fans Jonny DeLuca ",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/jacob-misiorowski-tosses-5-2-3-scoreless-innings"
+          "playUrl": "https://www.mlb.com/video/jacob-misiorowski-fans-jonny-deluca"
         },
         "highlight": {
           "videoId": "jacob-misiorowski-tosses-5-2-3-scoreless-innings",
@@ -3553,6 +3618,7 @@
       "tier": "postseason",
       "score": 54,
       "contentHighlight": true,
+      "imageDiagnostic": null,
       "imageOutcome": "resolved",
       "highlightOutcome": "resolved",
       "youtubeError": null,
@@ -3562,15 +3628,15 @@
         "gamePk": 849799,
         "image": {
           "source": "action",
-          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/cfxb6wrlulckkpxeg4ul.jpg",
-          "alt": "Drew Rasmussen fans four over four innings",
+          "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/e5m3xu7kfi8b5lz5x3uu.jpg",
+          "alt": "Drew Rasmussen's first strikeout of the game",
           "objectPosition": "50% 50%",
           "mobileObjectPosition": "50% 50%",
           "focalPoint": {
             "x": 50,
             "y": 50
           },
-          "playUrl": "https://www.mlb.com/video/drew-rasmussen-fans-four-over-four-innings"
+          "playUrl": "https://www.mlb.com/video/jackson-chourio-called-out-on-strikes-catcher-liam-hicks-to-first-baseman"
         },
         "highlight": {
           "videoId": "drew-rasmussen-fans-four-over-four-innings",
