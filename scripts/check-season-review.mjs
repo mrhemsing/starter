@@ -72,7 +72,8 @@ for (const packet of reviewCopyPackets(review)) fallbackReview.copy[packet.key] 
 const html = renderToStaticMarkup(React.createElement(React.Fragment, null,
   ...[components.SeasonReviewHero, components.SeasonReviewTopStarts, components.SeasonReviewAwards].map((component) => React.createElement(component, { review: fallbackReview })),
 ));
-for (const packet of reviewCopyPackets(review).filter(packet => packet.key !== "bids")) assert(html.includes(packet.fallback.replaceAll("&", "&amp;").replaceAll("'", "&#x27;")), `forced failure renders ${packet.key}`);
+const visibleText = html.replace(/<[^>]*>/g, "");
+for (const packet of reviewCopyPackets(review).filter(packet => packet.key !== "bids")) assert(visibleText.includes(packet.fallback.replaceAll("&", "&amp;").replaceAll("'", "&#x27;")), `forced failure renders ${packet.key}`);
 console.log(`Season review PASS: ${records.length} source records, 25 start traces, 14 exact bids, 30 rotations, award recomputation, frozen hashes, 10 forced fallbacks and negative copy controls.`);
 
-assert(html.includes(`${loadProjectTs("src/lib/season-no-hitters.ts").seasonNoHitterBids(review).length} starts have a recorded no-hitter bid`), "computed bid count includes verified additive corrections");
+assert(visibleText.includes(`${loadProjectTs("src/lib/season-no-hitters.ts").seasonNoHitterBids(review).length} starts have a recorded no-hitter bid`), "computed bid count includes verified additive corrections");
