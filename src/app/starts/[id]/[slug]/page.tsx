@@ -1,3 +1,4 @@
+import { recapSummary, formatDecision } from "@/lib/start-recap-copy";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -5,11 +6,9 @@ import { RawGsPlusLine } from "@/components/gs-plus-score";
 import { HeatHighlightModal } from "@/components/heat-highlight-modal";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { SiteHeader } from "@/components/site-header";
-import { formatArsenalEventSentence } from "@/lib/arsenal-event-copy";
 import { getRankedStartsPageData } from "@/lib/data/ranked-starts-page-service";
 import { getHomeSlateDate, getStartDetail } from "@/lib/data/start-service";
 import { formatStartLine } from "@/lib/format";
-import { formatPitchEventQualitySentence, summarizePitchEventQuality } from "@/lib/pitch-event-quality";
 import { pitcherHref, rankedStartsPath, sourceParams, startHref, startRecapPath, startRecapSlug } from "@/lib/routes";
 import { assertValidDateRouteParam } from "@/lib/route-date-response";
 import { isIsoDateRouteParam } from "@/lib/route-date-validation";
@@ -152,43 +151,6 @@ async function resolveStartRecap(date: string, slug: string) {
     pairedStart: slateStarts.find((candidate) => candidate.gamePk === start.gamePk && candidate.id !== start.id) ?? null,
     canonicalPath: startRecapPath(start, slateStarts),
   };
-}
-
-function recapSummary(start: StartDetail) {
-  const band = start.gameScorePlusBreakdown?.gradeBand.label.toLowerCase() ?? "graded";
-  const decision = formatDecision(start.result).toLowerCase();
-  const flags = start.eventFlags ?? [];
-  const arsenalSentence = formatArsenalEventSentence(start.arsenalEventSummary);
-  const qualitySentence = formatPitchEventQualitySentence(summarizePitchEventQuality(start.pitchEvents));
-  const notableSentence = startNarrativeNotableSentence(start);
-  const flagSentence = flags.includes("HARD_LUCK")
-    ? "The hard-luck tag fits the score and decision."
-    : flags.includes("VULTURE")
-      ? "The vulture tag marks the decision as context, not ranking credit."
-      : "The ranking stays driven by the canonical GS+ line.";
-
-  return `${start.pitcher.name} posted a ${band} start against ${start.opponent}, working ${formatStartLine(start.line)} for GS+ ${start.gameScorePlus}. ${notableSentence ? `${notableSentence} ` : ""}The official decision was ${decision}. ${flagSentence}${arsenalSentence ? ` ${arsenalSentence}` : ""}${qualitySentence ? ` ${qualitySentence}` : ""}`;
-}
-
-function startNarrativeNotableSentence(start: StartDetail) {
-  const noHit = start.narrativeNotables?.noHitDepth;
-  if (noHit?.firstHitInning && noHit.innings >= 8) return `${start.pitcher.name} carried a no-hitter into the ${ordinal(noHit.firstHitInning)}.`;
-  if (noHit?.hitlessStintComplete && noHit.innings >= 5) return `${start.pitcher.name} worked ${noHit.innings}.0 hitless innings.`;
-  if (start.narrativeNotables?.strikeouts?.doubleDigit) return `${start.pitcher.name} reached double digits with ${start.line.strikeouts} strikeouts.`;
-  return null;
-}
-
-function ordinal(value: number) {
-  if (value === 8) return "eighth";
-  if (value === 9) return "ninth";
-  return `${value}th`;
-}
-
-function formatDecision(result: StartSummary["result"]) {
-  if (result === "W") return "Win";
-  if (result === "L") return "Loss";
-  if (result === "ND") return "No decision";
-  return "Pending";
 }
 
 function jsonLdForStartRecap(start: StartDetail, canonicalPath: string) {

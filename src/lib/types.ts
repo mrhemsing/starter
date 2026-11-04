@@ -79,6 +79,14 @@ export type StartLine = {
 };
 
 export type StartNarrativeNotables = {
+  combinedNoHitter?: {
+    gamePk: number;
+    team: string;
+    opponent: string;
+    teamInnings: number;
+    starterInnings: number;
+    source: string;
+  };
   noHitDepth?: {
     innings: number;
     firstHitInning: number | null;

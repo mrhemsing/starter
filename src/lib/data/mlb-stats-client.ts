@@ -1722,7 +1722,7 @@ function isBaserunnerEvent(eventType: string) {
 }
 
 function completeInningsFromLine(inningsPitched: number) {
-  return Math.trunc(inningsFromIP(inningsPitched) / 3);
+  return Math.trunc(inningsFromIP(inningsPitched));
 }
 
 function readPitchingDecision(pitcherMlbId: number, payload: MlbGameFeedResponse): MlbCompletedPitchingLine["result"] {

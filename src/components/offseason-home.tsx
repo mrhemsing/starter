@@ -1,7 +1,7 @@
 import { HomeBaseballBackground } from "@/components/home-baseball-background";
 import Link from "next/link";
 import { getSeasonArchive } from "@/lib/data/season-archive-service";
-import { SeasonReviewHeader, SeasonReviewIntro, SeasonReviewHero, SeasonReviewTopStarts, SeasonReviewFinalForm } from "@/components/season-review";
+import { SeasonReviewHeader, SeasonReviewIntro, SeasonReviewHero, SeasonReviewTopStarts, SeasonReviewFinalForm, SeasonReviewAwards } from "@/components/season-review";
 import { seasonReview2026 as review } from "@/lib/season-review-data";
 import type { SeasonState } from "@/lib/season-state";
 
@@ -16,6 +16,6 @@ export async function OffseasonHome({ state }: { state: SeasonState }) {
         <SeasonReviewIntro review={review} landing />
       </div>
     </section>
-    <div className="px-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><SeasonReviewHero review={review} landing showIntro={false} /><SeasonReviewTopStarts review={review} limit={5} /><SeasonReviewFinalForm review={review} /></div></div>
+    <div className="px-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><SeasonReviewHero review={review} landing showIntro={false} /><SeasonReviewTopStarts review={review} limit={5} /><SeasonReviewAwards review={review} landing /><SeasonReviewFinalForm review={review} /></div></div>
   </main>;
 }

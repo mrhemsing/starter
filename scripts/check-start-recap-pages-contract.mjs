@@ -17,7 +17,7 @@ assert(
     recapPage.includes("id: string;") &&
     recapPage.includes("slug: string;") &&
     recapPage.includes("async function resolveStartRecap(date: string, slug: string)") &&
-    recapPage.includes('if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;'),
+    recapPage.includes('if (!isIsoDateRouteParam(date)) return null;') && recapPage.includes('assertValidDateRouteParam(date);'),
   "start recap pages must use /starts/{yyyy-mm-dd}/{pitcher-slug} routing and reject non-date parents",
 );
 
@@ -62,7 +62,7 @@ assert(
     recapPage.includes("formatStartLine(start.line)") &&
     recapPage.includes("GSv2 {start.gameScoreV2 ?? \"pending\"}") &&
     recapPage.includes("formatDecision(start.result)") &&
-    recapPage.includes("start.eventFlags ?? []"),
+    (await readFile("src/lib/start-recap-copy.ts", "utf8")).includes("start.eventFlags ?? []") && recapPage.includes('from "@/lib/start-recap-copy"'),
   "start recap pages must render canonical line, GS+, GSv2, decision, and event-flag-aware summary context",
 );
 
@@ -75,7 +75,7 @@ assert(
 );
 
 assert(
-  sitemapRoute.includes('import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingWeekHref } from "@/lib/routes";') &&
+  sitemapRoute.includes('import { duelsPath, heatCheckPath, rankedStartsPath, startRecapPath, upcomingDateHref, upcomingStreamersHref, upcomingWeekHref } from "@/lib/routes";') &&
     sitemapRoute.includes('if (kind === "starts") {') &&
     sitemapRoute.includes('url(startRecapPath(start, starts), dateLastmod(start.date), "monthly", 0.6)') &&
     !sitemapRoute.includes("url(startPath(start.id)"),

@@ -1,3 +1,4 @@
+import { withSeasonNoHitterNotable } from "@/lib/season-no-hitters";
 import { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
 import { getSeasonArchive } from "@/lib/data/season-archive-service";
 import { getSeasonState } from "@/lib/season-state";
@@ -694,6 +695,11 @@ export async function getFeaturedStart(startId?: string) {
 }
 
 export async function getStartDetail(startId: string) {
+  const start = await getUncorrectedStartDetail(startId);
+  return start ? withSeasonNoHitterNotable(start) : null;
+}
+
+async function getUncorrectedStartDetail(startId: string) {
   if (startId === demoStartDetail.id) return withStartSummaries(demoStartDetail);
 
   const demoMatch = demoSlateStarts.find((start) => start.id === startId);

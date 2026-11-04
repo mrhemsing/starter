@@ -1,0 +1,11 @@
+{
+  "2026-05-25-hou-tex-837227": {
+    "summary": "Tatsuya Imai posted a plus start against TEX, working 6.0 IP, 0 H, 0 ER, 4 BB, 2 K for GS+ 61. Tatsuya Imai supplied 6.0 hitless innings to HOU's combined no-hitter against TEX. The official decision was win. The ranking stays driven by the canonical GS+ line.",
+    "generatedAt": "2026-11-04T05:09:55.376Z",
+    "generator": "generateStartRecap: extracted existing deterministic recap harness",
+    "generationCount": 1,
+    "inputSha256": "e07a6c5efc18080b5d909ac67782aa6cb018f7428ab978c94a00ee80c7b61fad",
+    "gamePk": 822899,
+    "source": "https://statsapi.mlb.com/api/v1/game/822899/linescore"
+  }
+}

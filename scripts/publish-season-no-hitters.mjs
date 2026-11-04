@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { loadProjectTs } from './lib/load-project-ts.mjs';
+const audit = JSON.parse(await readFile('data/season-reviews/2026-no-hitter-audit.json','utf8'));
+const records = JSON.parse(await readFile('data/season-reviews/2026-canonical.json','utf8'));
+assert.equal(audit.checkedGames,audit.expectedGames);
+const { canonicalRecordToFormStart } = loadProjectTs('src/lib/canonical-start-summary.ts');
+const starts = audit.combined.map(event=>canonicalRecordToFormStart(records.find(r=>r.id===event.startId),0));
+const { outcomes, ...summary } = audit;
+await writeFile('src/data/season-no-hitters-2026.json',JSON.stringify({...summary,starts},null,2)+'\n');
+console.log(`Published verified game notables for ${outcomes.length} games; ${starts.length} linked starts. Frozen source files untouched.`);

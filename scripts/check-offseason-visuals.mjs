@@ -47,7 +47,7 @@ assert(!missingRows.split(`data-review-start-id="${missingId}"`)[1].split("</li>
 const form = renderToStaticMarkup(createElement(SeasonReviewFinalForm, { review }));
 assert.equal((form.match(/data-headshot-size=/g) ?? []).length, review.home.hot.length + review.home.cold.length);
 const awards = renderToStaticMarkup(createElement(SeasonReviewAwards, { review }));
-assert.equal((awards.match(/data-headshot-size=/g) ?? []).length, review.arms.length + review.gemLeaders.length + review.noHitBids.length + 2);
+assert.equal((awards.match(/data-headshot-size=/g) ?? []).length, review.arms.length + review.gemLeaders.length + loadProjectTs("src/lib/season-no-hitters.ts").seasonNoHitterBids(review).length + 2);
 await mkdir("../../reports/OFF-1.1", { recursive: true });
 await writeFile("../../reports/OFF-1.1/no-asset-fixture.html", fallback);
 console.log("OFF-1.1 PASS: shared imports, exact-game provenance, generated/other-game rejection, no-asset resolver/headshot, five row headshots, all mover and award headshots, top-five asset and no-asset fixtures.");

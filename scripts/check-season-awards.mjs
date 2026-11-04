@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { loadProjectTs } from './lib/load-project-ts.mjs';
+const read = path => readFileSync(path,'utf8');
+const review = JSON.parse(read('src/data/season-review-2026.json'));
+const records = JSON.parse(read('data/season-reviews/2026-canonical.json'));
+const audit = JSON.parse(read('data/season-reviews/2026-no-hitter-audit.json'));
+const { outsFromIP } = loadProjectTs('src/lib/innings.ts');
+const { computeStartNarrativeNotables } = loadProjectTs('src/lib/data/mlb-stats-client.ts');
+for (const ip of [5,6,6.2,8.2,9]) {
+ const notables=computeStartNarrativeNotables({liveData:{plays:{allPlays:[{matchup:{pitcher:{id:1}},about:{inning:1},result:{eventType:'walk'}}]}}},1,{inningsPitched:ip,hits:0,walks:1,strikeouts:2},true);
+ assert.equal(notables.noHitDepth.innings,Math.floor(ip),'innings are not outs; never divide by three twice');
+}
+const { seasonNoHitterBids, seasonNoHitterLine, withSeasonNoHitterNotable } = loadProjectTs('src/lib/season-no-hitters.ts');
+const { SeasonReviewAwards, ArmOfTheYear, RotationOfTheYear, NoHitterBids, GemLeaders, BiggestBlowup, HottestStreak } = loadProjectTs('src/components/season-review.tsx');
+const { ImageConfigContext } = await import('next/dist/shared/lib/image-config-context.shared-runtime.js');
+const { imageConfigDefault } = await import('next/dist/shared/lib/image-config.js');
+const imageConfig={...imageConfigDefault,...loadProjectTs('next.config.ts').default.images};
+const render = component => renderToStaticMarkup(createElement(ImageConfigContext.Provider,{value:imageConfig},component));
+assert.equal(audit.checkedGames,new Set(records.map(r=>r.gamePk)).size);
+assert.equal(new Set(audit.outcomes.map(r=>r.gamePk)).size,audit.checkedGames);
+assert(audit.outcomes.every(r=>r.checked));
+assert.deepEqual(audit.individual, records.filter(r=>r.line.hits===0 && outsFromIP(r.line.inningsPitched)>=27).map(r=>({id:r.id,pitcher:r.pitcherName,date:r.date,line:r.line})));
+assert.equal(audit.individual.length,0);
+const imai=audit.combined.find(r=>r.gamePk===822899);
+assert(imai);assert.equal(imai.pitcher,'Tatsuya Imai');assert.equal(imai.starterIP,6);assert.equal(imai.starterHits,0);assert.equal(imai.outs,27);assert(imai.pitchers.length>1);
+assert.equal(audit.outcomes.find(r=>r.gamePk===822899).homeHits,0);
+assert(seasonNoHitterLine(review).includes('No individual no-hitter'));
+assert(seasonNoHitterLine(review).includes('Tatsuya Imai (6.0 IP, 0 H)'));
+assert(seasonNoHitterLine({...review,year:2027}).includes('not yet available'));
+assert(!seasonNoHitterLine({...review,year:2027}).includes('Tatsuya'));
+assert.equal(seasonNoHitterBids(review).filter(r=>r.id===imai.startId).length,1);
+const untouched=review.topStarts[0];assert.equal(withSeasonNoHitterNotable(untouched),untouched);
+assert.deepEqual(withSeasonNoHitterNotable(seasonNoHitterBids(review).find(r=>r.id===imai.startId)).line,records.find(r=>r.id===imai.startId).line);
+for(const landing of [true,false]) {
+ const html=render(createElement(SeasonReviewAwards,{review,landing}));
+ assert.equal((html.match(/data-season-rotation-row="true"/g)||[]).length,35);
+ assert.equal((html.match(/data-rank="1"/g)||[]).length,2);
+ assert(html.includes('SHOW ALL 30'));assert(!html.includes('<details open'));
+ for(const id of ['arm','rotation','no-hitter-bids','gems','blowup','streak']) if(landing)assert(html.includes(`href="/2026#${id}"`));
+ assert(html.includes('COMBINED NO-HITTER'));assert(!/Warming up|skeleton/i.test(html));
+ for(const Component of [ArmOfTheYear,RotationOfTheYear,NoHitterBids,GemLeaders,BiggestBlowup,HottestStreak])assert.equal(typeof Component,'function');
+}
+assert(read('src/components/offseason-home.tsx').includes('<SeasonReviewAwards review={review} landing />'));
+assert(read('src/app/2026/page.tsx').includes('<SeasonReviewAwards review={review} />'));
+assert(read('src/app/2026/rotations/page.tsx').includes('import { SeasonRotationRow }'));
+const frozen=JSON.parse(read('data/season-reviews/2026-highlight-backfill-summary.json')).frozenFiles;
+for(const [path,hash] of Object.entries(frozen))assert.equal(createHash('sha256').update(readFileSync(path)).digest('hex'),hash,path);
+console.log(`OFF-2 PASS: ${audit.checkedGames} game linescores queried, ${records.length} canonical starts, no individual no-hitter, ${audit.combined.length} combined, future-season degradation, six shared awards, 5+30 SSR rotations, links, isolated notable and frozen hashes.`);

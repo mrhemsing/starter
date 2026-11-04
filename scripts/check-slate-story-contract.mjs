@@ -14,9 +14,9 @@ const [types, statsClient, canonicalRecord, canonicalStore, liveService, liveCom
   readFile("src/lib/data/canonical-start-store.ts", "utf8"),
   readFile("src/lib/data/live-scoreboard-service.ts", "utf8"),
   readFile("src/components/live-scoreboard.tsx", "utf8"),
-  readFile("src/app/starts/[id]/[slug]/page.tsx", "utf8"),
+  readFile("src/lib/start-recap-copy.ts", "utf8"),
   readFile("src/lib/data/upcoming-writeups-service.ts", "utf8"),
-  readFile("src/lib/data/form-service.ts", "utf8"),
+  readFile("src/lib/canonical-start-summary.ts", "utf8"),
   readFile("package.json", "utf8"),
 ]);
 

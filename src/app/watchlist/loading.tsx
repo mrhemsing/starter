@@ -1,5 +1,5 @@
 import { RouteLoadingShell } from "@/components/route-loading-shell";
-import { WatchlistRowSkeleton } from "./page";
+import { WatchlistRowSkeleton } from "@/components/watchlist-row-skeleton";
 
 const WATCHLIST_LOADING_FALLBACK_COUNT = 6; // Historical median followed-card count when local persistence is unavailable.
 

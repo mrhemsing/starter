@@ -84,11 +84,11 @@ export async function GET(request: Request) {
   return NextResponse.json({ ...result, prewarm, prewarmMode: shouldRunFullPrewarm ? "full" : paths.length > 0 ? "incremental" : "debounced" });
 }
 
-export function shouldDebounceWarmLiveStarts(liveGames: number, finalizedGameSignature: string, observedSignature?: string) {
+function shouldDebounceWarmLiveStarts(liveGames: number, finalizedGameSignature: string, observedSignature?: string) {
   return liveGames === 0 && finalizedGameSignature === observedSignature;
 }
 
-export async function readCheapSlateState(date: string) {
+async function readCheapSlateState(date: string) {
   const schedule = await fetchMlbSchedule(date, { fetchLive: true });
   const liveGames = schedule.games.filter((game) => isLiveStatus(game.status, game.detailedState)).length;
   const finalizedGameIds = schedule.games
@@ -97,7 +97,7 @@ export async function readCheapSlateState(date: string) {
   return { liveGames, finalizedGameSignature: buildFinalizedGameSignature(date, finalizedGameIds) };
 }
 
-export function buildFinalizedGameSignature(date: string, finalizedGameIds: Array<string | number>) {
+function buildFinalizedGameSignature(date: string, finalizedGameIds: Array<string | number>) {
   return `${date}:${finalizedStartSignature(finalizedGameIds.map(String))}`;
 }
 
