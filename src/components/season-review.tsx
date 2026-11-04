@@ -58,7 +58,7 @@ export function SeasonReviewTopStarts({ review, limit = 25 }: { review: FrozenSe
 
 export function SeasonReviewAwards({ review, landing = false }: { review: FrozenSeasonReview; landing?: boolean }) {
   return <section className="archive-awards" data-season-awards>
-    <h2 className="font-serif text-3xl font-bold tracking-wide">{`${review.year} SEASON AWARDS`}</h2>
+    <h2 className="font-serif text-3xl font-bold">{`${review.year} Season Awards`}</h2>
     <div className="archive-award-grid" data-award-grid="podium-bids"><ArmOfTheYear review={review} landing={landing} /><NoHitterBids review={review} landing={landing} /></div>
     <div><RotationOfTheYear review={review} landing={landing} /></div>
     <div className="archive-award-grid" data-award-grid="gems-blowup-streak"><GemLeaders review={review} landing={landing} /><div className="archive-award-stack" data-award-stack><BiggestBlowup review={review} landing={landing} /><HottestStreak review={review} landing={landing} /></div></div>
