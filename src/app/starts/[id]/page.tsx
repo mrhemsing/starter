@@ -572,6 +572,7 @@ async function resolveArchivedStartOfDayHero(start: StartSummary, slateCount: nu
     pitcherName: start.pitcher.name,
     team: start.pitcher.team,
     opponent: start.opponent,
+    side: start.side,
     dateLabel: formatShortDate(start.date),
     score: start.gameScorePlus,
     line: start.line,
