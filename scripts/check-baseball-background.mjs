@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const sha='73bc18398917c6d9fc64d04f5065f3635b8b6860';
+const source=execFileSync('git',['show',`${sha}:src/app/page.tsx`],{encoding:'utf8'}).replace(/\r/g,'');
+const start=source.indexOf('        <div className="absolute inset-0 bg-[#08080a]" />');
+const block=source.slice(start,source.indexOf('        <div className="relative z-10 mx-auto max-w-7xl">',start));
+assert(readFileSync('src/components/home-baseball-background.tsx','utf8').includes(block),'Recovered markup/style must match June 30 verbatim');
+const asset='public/images/header-baseball-bg.jpg',hash=b=>createHash('sha256').update(b).digest('hex');
+assert.equal(hash(readFileSync(asset)),hash(execFileSync('git',['show',`${sha}:${asset}`])));
+assert(!readFileSync('src/components/season-review.tsx','utf8').includes('data-review-baseball'));
+assert(readFileSync('src/components/offseason-home.tsx','utf8').includes('relative z-10'));
+console.log(`PASS original markup/CSS and asset bytes recovered exactly from ${sha}; opaque thumbnail removed; content stacking wrapper retained.`);

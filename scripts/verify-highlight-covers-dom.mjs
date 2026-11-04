@@ -37,9 +37,11 @@ try {for(const width of [1440,390]) {
     if(i>=5)await page.getByRole('button',{name:'Close highlight'}).click();
    }
   } else {
-   const art=page.locator('[data-review-baseball]'),img=art.locator('img');await img.evaluate(im=>im.decode());assert.equal(await img.getAttribute('alt'),'');assert.equal(source(await img.getAttribute('src')).pathname,'/images/header-baseball-bg-desktop.jpg');
-   const artBox=await art.boundingBox();for(const element of [page.locator('h1'),page.locator('[data-review-heading] > p'),page.locator('[data-final-slate]')]){const box=await element.boundingBox();assert(!(artBox.x<box.x+box.width&&artBox.x+artBox.width>box.x&&artBox.y<box.y+box.height&&artBox.y+artBox.height>box.y),'baseball overlaps text');}
-   await page.evaluate(()=>scrollTo(0,0));const heading=await page.locator('[data-review-heading]').boundingBox();await page.screenshot({path:`${out}/home-header-${width}.png`,clip:{x:0,y:0,width,height:heading.y+heading.height+30}});
+   // OFF-1.5.1 supersedes the thumbnail and its no-overlap criterion.
+   assert.equal(await page.locator('[data-review-baseball]').count(),0);
+   const background=page.locator(`[data-responsive-check="home-header-background${width<1024?'-mobile':''}"]`);
+   assert((await background.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('/images/header-baseball-bg.jpg'));
+   await page.locator('[data-offseason-header]').screenshot({path:`${out}/home-header-${width}.png`});
   }
   results.push({route,width,frames:count,allFrames16by9:true,allCoversActionPhotos:true,frozenText:'identical'});
  }
