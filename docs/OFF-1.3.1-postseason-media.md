@@ -48,3 +48,8 @@ The regular-season gem diagnostic found an official MLB caption typo (Wrobelski 
 `npm run check:postseason-media` passes coverage, shared selection, frozen-byte, attribution, cache and rendering contracts. `node scripts/check-season-media-sweep.mjs --require-complete` intentionally fails while the one quota-deferred fallback remains. This is an explicit incomplete discovery item, not an unavailable-highlight claim. The retry is scoped to Shawn Armstrong, gamePk 849815, Oct 19; use the stored per-game log for the canonical identifier and pending query.
 
 Final production verification is recorded in the attached DOM/network results and snapshots.
+
+
+## Settled scope versus displayed rows
+
+The season-wide DOM check found four additional June 7 rows from gamePks 823941 and 824670. A read-only canonical-store lookup confirms they remain status live, frozen false, last updated July 18. They are not in the frozen final receipt and were correctly excluded from the explicitly approved 2,205-game sweep. No canonical data was altered to hide this discrepancy. The source verifier asserts every frozen start ID, rejects unexplained extra IDs, and separately reports these four documented nonfinal rows. Network-source checks cover those rendered rows as well. Evidence: 2026-media-scope-exclusions.json.

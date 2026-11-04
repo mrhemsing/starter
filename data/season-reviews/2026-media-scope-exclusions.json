@@ -1,0 +1,57 @@
+{
+  "liveRecords": 30,
+  "extra": [
+    {
+      "id": "2026-06-07-laa-lad-667755",
+      "gamePk": 823941,
+      "status": "live",
+      "frozen": false,
+      "createdAt": "2026-07-02T14:44:33.551Z",
+      "updatedAt": "2026-07-18T14:40:32.428+00:00",
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live"
+      }
+    },
+    {
+      "id": "2026-06-07-lad-laa-686218",
+      "gamePk": 823941,
+      "status": "live",
+      "frozen": false,
+      "createdAt": "2026-07-02T14:44:33.551Z",
+      "updatedAt": "2026-07-18T14:40:32.515+00:00",
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live"
+      }
+    },
+    {
+      "id": "2026-06-07-chc-sf-592791",
+      "gamePk": 824670,
+      "status": "live",
+      "frozen": false,
+      "createdAt": "2026-07-02T14:44:33.551Z",
+      "updatedAt": "2026-07-18T14:40:32.663+00:00",
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live"
+      }
+    },
+    {
+      "id": "2026-06-07-sf-chc-686790",
+      "gamePk": 824670,
+      "status": "live",
+      "frozen": false,
+      "createdAt": "2026-07-02T14:44:33.551Z",
+      "updatedAt": "2026-07-18T14:40:32.75+00:00",
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live"
+      }
+    }
+  ]
+}
