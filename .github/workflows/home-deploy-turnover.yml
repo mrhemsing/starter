@@ -1,0 +1,39 @@
+name: Production homepage turnover
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Full production commit SHA
+        required: true
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EXPECTED_SHA: ${{ github.event.deployment.sha || inputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard negative controls
+        run: node scripts/check-home-deploy-guard.mjs
+      - name: Invalidate only homepage on the matching deployment
+        env:
+          HOME_DEPLOY_TOKEN: ${{ secrets.HOME_DEPLOY_TOKEN }}
+        run: |
+          test -n "$HOME_DEPLOY_TOKEN"
+          curl --fail-with-body --silent --show-error --request POST https://www.toetheslab.com/api/deploy/home-turnover \
+            --header "Authorization: Bearer $HOME_DEPLOY_TOKEN" --header 'Content-Type: application/json' \
+            --data "{\"sha\":\"$EXPECTED_SHA\"}"
+      - name: Assert plain production homepage matches deployed commit
+        run: node scripts/verify-home-deploy.mjs https://www.toetheslab.com/ "$EXPECTED_SHA" outputs/home-deploy
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plain-homepage-evidence
+          path: outputs/home-deploy

@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import ts from 'typescript';
+const require = createRequire(import.meta.url);
+const sha = 'a'.repeat(40);
+const invalidated = [];
+const source = readFileSync('src/app/api/deploy/home-turnover/route.ts','utf8');
+const compiled = ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+const exports = {};
+const env = {};
+new Function('require','exports','process',compiled)((name)=>{
+  if(name==='next/cache') return {revalidatePath:path=>invalidated.push(path)};
+  if(name==='@/lib/build-stamp') return {TTS_BUILD_SHA:sha.slice(0,12)};
+  return require(name);
+},exports,{env});
+const request = (token,body={sha}) => new Request('https://example.com/api/deploy/home-turnover',{method:'POST',headers:{authorization:`Bearer ${token}`},body:JSON.stringify(body)});
+assert.equal((await exports.POST(request('undefined'))).status,401);
+env.HOME_DEPLOY_TOKEN='fixture-token';
+assert.equal((await exports.POST(request('wrong'))).status,401);
+assert.equal((await exports.POST(request('é'.repeat(13)))).status,401);
+assert.equal((await exports.POST(request('fixture-token',{sha:'b'.repeat(40)}))).status,409);
+assert.equal((await exports.POST(request('fixture-token',null))).status,409);
+assert.deepEqual(invalidated,[]);
+assert.equal((await exports.POST(request('fixture-token'))).status,200);
+assert.deepEqual(invalidated,['/']);
+console.log('PASS actual route: fail closed without secret; reject wrong/non-ASCII token, wrong build, malformed body; matching deployment invalidates only /');
