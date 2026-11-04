@@ -705,6 +705,30 @@ export async function getStartDetail(startId: string) {
   const archivedStart = await getArchivedStartDetailByRouteId(date, startId);
   if (archivedStart) return archivedStart;
 
+  // Canonical settled history is authoritative even when optional archive shards
+  // are absent. This is the same adapter used by the ranked archive read path.
+  const canonicalRows = await readCanonicalStartRecords(date);
+  const canonical = canonicalRows.find(record => record.id === startId && record.status === "final" &&
+    record.frozen && record.source.line !== "fixture");
+  if (canonical && canonical.side) {
+    const ranked = rankStarts(canonicalRows.filter(record => record.status === "final" && record.source.line !== "fixture")
+      .map(canonicalRecordToFormStart));
+    const summary = ranked.find(start => start.id === startId)!;
+    const home = canonical.side === "home" ? canonical.team : canonical.opponent;
+    const away = canonical.side === "away" ? canonical.team : canonical.opponent;
+    return withStartSummaries({
+      ...summary,
+      context: canonical.contextSnapshot ?? summary.context,
+      game: { gamePk: canonical.gamePk, date, status: "final",
+        homeTeam: teamSummaryFromArchiveTeam({ abbreviation: home, name: home }),
+        awayTeam: teamSummaryFromArchiveTeam({ abbreviation: away, name: away }),
+        venue: canonical.venue ?? summary.context.parkLabel },
+      arsenal: [], pitchEvents: [], pitchDetailSource: "fixture",
+      archivePitchDetail: { status: "not-archived", pitchEvents: 0, date },
+      archiveCompletedLine: { status: "stored", date },
+    });
+  }
+
   const schedule = await fetchMlbSchedule(date, { fetchLive: shouldFetchLiveSchedule(date) });
   const [completedLines, teamQualityContexts] = await Promise.all([getCompletedPitchingLineMap(schedule), getTeamQualityContextMap(schedule.date)]);
   const scheduledStarts = await buildScheduledStarts(schedule, completedLines, teamQualityContexts);

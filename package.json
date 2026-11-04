@@ -74,7 +74,7 @@
     "test:responsive": "node scripts/check-responsive-screenshots.mjs",
     "test:slate-contract": "node scripts/check-slate-contract.mjs",
     "test:start-contract": "node scripts/check-start-contract.mjs",
-    "check:highlight-backfill": "node scripts/check-highlight-backfill.mjs"
+    "check:highlight-backfill": "node scripts/check-highlight-backfill.mjs && node scripts/check-canonical-highlight-detail.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

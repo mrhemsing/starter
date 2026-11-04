@@ -114,3 +114,15 @@ home-ranked, home-best-starts, starts-page, P1-12, TypeScript and lint checks
 remain in force. Production checks exercise every Top 25 compact control at
 1440 and 390, including native video metadata, and retain the OFF-1.1 image
 network assertion across every rendered row.
+
+## Production-discovered detail read repair
+
+The full DOM pass found an inherited 404 for Luzardo's Sep 7 detail: ranked
+archive reads were canonical-first, but getStartDetail still required an optional
+completed-start shard before checking canonical history. The repair falls back
+to final/frozen canonical records through the existing canonicalRecordToFormStart
+adapter when archive enrichment is absent. No live schedule lookup is needed;
+pitch arrays stay empty and explicitly not archived instead of borrowing demo
+pitches. Both full start logs and date/slug recaps share this repaired read.
+A regression executes all 41 featured IDs with absent archive shards under both
+season flags and asserts immutable lines/scores, identity, and empty pitch arrays.
