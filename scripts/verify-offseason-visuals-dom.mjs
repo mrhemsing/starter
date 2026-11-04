@@ -67,15 +67,15 @@ try {
           return rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1;
         });
       })), "archive stat tokens stay inside their full-width row");
-      for (const [index, start] of review.topStarts.slice(0, 3).entries()) {
+      for (const [index, start] of review.topStarts.slice(0, 5).entries()) {
         const row = rows.nth(index);
         assert.equal(await row.locator("[data-review-gem]").count(), media.highlights[start.id] ? 1 : 0);
         if (media.highlights[start.id]) assert.equal(await row.getByRole("button", { name: /^Play .* highlight/ }).count(), 1);
       }
-      for (const [offset, start] of review.topStarts.slice(3, route === "/" ? 5 : 25).entries()) {
-        const row = rows.nth(offset + 3);
+      for (const [offset, start] of review.topStarts.slice(5, route === "/" ? 5 : 25).entries()) {
+        const row = rows.nth(offset + 5);
         assert.equal(await row.locator("[data-review-gem]").count(), 0);
-        const button = row.getByRole("button", { name: `Open ${start.pitcher.name} MLB highlight` });
+        const button = row.getByRole("button", { name: `Watch highlight: ${start.pitcher.name}, ${start.date}` });
         assert.equal(await button.count(), media.highlights[start.id] ? 1 : 0);
         if (media.highlights[start.id]) {
           await button.click();

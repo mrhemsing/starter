@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
@@ -8,27 +9,32 @@ import type { FeaturedStartHighlight } from "@/lib/types";
 type HeatHighlightModalProps = {
   highlight: FeaturedStartHighlight;
   pitcherName: string;
+  date?: string;
   label?: string;
   eyebrow?: string;
   className?: string;
 };
 
-export function HeatHighlightModal({ highlight, pitcherName, label, eyebrow = "Recent MLB highlight", className }: HeatHighlightModalProps) {
+export function HeatHighlightModal({ highlight, pitcherName, date, label, eyebrow = "Recent MLB highlight", className }: HeatHighlightModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const modalRoot = typeof document === "undefined" ? null : document.body;
   const buttonLabel = label ?? "";
+  const compact = label === undefined;
+  const attribution = highlight.source === "mlb-game-content" ? "MLB" : "MLB on YouTube";
 
   return (
     <>
       <button
         type="button"
-        className={className ?? "relative z-40 inline-grid h-8 w-8 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"}
-        aria-label={`Open ${pitcherName} MLB highlight`}
-        title="MLB highlight"
+        className={compact ? "group relative inline-grid aspect-video w-20 shrink-0 place-items-center overflow-hidden rounded border border-amber-300/35 bg-black text-amber-200 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:w-28" : className}
+        data-highlight-thumbnail={compact ? "true" : undefined}
+        aria-label={compact ? `Watch highlight: ${pitcherName}${date ? `, ${date}` : ""}` : `Open ${pitcherName} MLB highlight`}
+        title={`Highlight · ${attribution}`}
         onClick={() => setIsOpen(true)}
       >
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+        {compact ? <Image src={highlight.thumbnailUrl.replace("maxresdefault.jpg", "hqdefault.jpg")} alt="" fill sizes="(min-width: 640px) 112px, 80px" className="object-cover opacity-80 transition group-hover:opacity-100" /> : null}
+        <svg aria-hidden="true" viewBox="0 0 24 24" className={compact ? "relative z-10 h-7 w-7 rounded bg-black/70 p-1" : "h-4 w-4"} fill="currentColor">
           <path d="M8 5.8v12.4L18.2 12 8 5.8Z" />
         </svg>
         {buttonLabel ? <span>{buttonLabel}</span> : null}

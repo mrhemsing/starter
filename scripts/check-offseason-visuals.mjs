@@ -38,7 +38,7 @@ assert(!/placeholder|generated-action|unapproved/.test(fallback));
 const { SeasonReviewTopStarts, SeasonReviewFinalForm, SeasonReviewAwards } = loadProjectTs("src/components/season-review.tsx");
 const rows = renderToStaticMarkup(createElement(SeasonReviewTopStarts, { review, limit: 5 }));
 assert.equal((rows.match(/data-headshot-size=/g) ?? []).length, 5);
-assert.equal((rows.match(/data-review-gem=/g) ?? []).length, review.topStarts.slice(0, 3).filter(start => media.highlights[start.id]).length);
+assert.equal((rows.match(/data-review-gem=/g) ?? []).length, review.topStarts.slice(0, 5).filter(start => media.highlights[start.id]).length);
 // Negative fixture must remain meaningful even when every real start resolves.
 const missingId = "off13-no-highlight-fixture";
 const missingReview = { ...review, topStarts: review.topStarts.map((start, i) => i === 1 ? { ...start, id: missingId } : start) };
@@ -50,4 +50,4 @@ const awards = renderToStaticMarkup(createElement(SeasonReviewAwards, { review }
 assert.equal((awards.match(/data-headshot-size=/g) ?? []).length, review.arms.length + review.gemLeaders.length + review.noHitBids.length + 2);
 await mkdir("../../reports/OFF-1.1", { recursive: true });
 await writeFile("../../reports/OFF-1.1/no-asset-fixture.html", fallback);
-console.log("OFF-1.1 PASS: shared imports, exact-game provenance, generated/other-game rejection, no-asset resolver/headshot, five row headshots, all mover and award headshots, top-three asset and no-asset fixtures.");
+console.log("OFF-1.1 PASS: shared imports, exact-game provenance, generated/other-game rejection, no-asset resolver/headshot, five row headshots, all mover and award headshots, top-five asset and no-asset fixtures.");

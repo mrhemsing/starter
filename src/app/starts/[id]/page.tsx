@@ -779,8 +779,8 @@ function RankedStartCard({ start, displayRank, pairedStart, formSummary, highlig
             <div>
               <HeatHighlightModal
                 highlight={highlight}
-                pitcherName={start.pitcher.name}
-                className="grid h-11 w-11 place-items-center rounded-full border border-amber-300/35 bg-black/45 text-amber-200 shadow-sm transition hover:border-amber-300/70 hover:bg-amber-300/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                pitcherName={start.pitcher.name} date={start.date}
+
               />
             </div>
           ) : null}

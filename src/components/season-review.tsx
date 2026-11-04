@@ -37,8 +37,8 @@ export function SeasonReviewTopStarts({ review, limit = 25 }: { review: FrozenSe
   return <ReviewSection title={`Top ${limit === 25 ? 25 : "Starts"} ${limit === 25 ? "Starts " : ""}of ${review.year}`} id="top-starts" intro={review.copy.top.text}>
     <ol className="divide-y divide-white/10" data-review-top-starts>
       {review.topStarts.slice(0, limit).map((start, index) => <li key={start.id} className="py-3" data-review-start-id={start.id}>
-        <TopStartRow start={{ ...start, rank: index + 1 }} href={startRecapPath(start)} highlight={index >= 3 ? media.highlights[start.id] : null} showDate />
-        {index < 3 && media.highlights[start.id] ? <div className="mt-3 max-w-xl" data-review-gem><FeaturedStartHighlightEmbed highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} /></div> : null}
+        <TopStartRow start={{ ...start, rank: index + 1 }} href={startRecapPath(start)} highlight={index >= 5 ? media.highlights[start.id] : null} showDate />
+        {index < 5 && media.highlights[start.id] ? <div className="mt-3 max-w-xl" data-review-gem><FeaturedStartHighlightEmbed highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} /></div> : null}
       </li>)}
     </ol>
     {limit < 25 ? <Link href={`/${review.year}#top-starts`} className="mt-4 inline-flex min-h-11 items-center text-amber-300 underline">See all 25 starts</Link> : null}
@@ -87,7 +87,7 @@ function StartRow({ start, prefix }: { start: StartSummary; prefix?: string }) {
   return <div className="flex items-center gap-3"><Link href={startRecapPath(start)} className="flex min-w-0 flex-1 items-center justify-between gap-4 py-4">
     <Headshot playerId={start.pitcher.mlbId} name={start.pitcher.name} team={start.pitcher.team} size="lg" /><div className="min-w-0 flex-1">{prefix ? <p className="font-mono text-xs text-amber-300">{prefix}</p> : null}<p className="font-serif text-xl font-bold">{start.pitcher.name}</p><p className="mt-1 text-xs text-zinc-400">{start.date} · {startMatchupLabel(start)}</p><p className="mt-1 text-xs text-zinc-300">{formatStartLine(start.line)}</p></div>
     <strong className="shrink-0 text-2xl text-amber-300">{start.gameScorePlus}<span className="block text-[10px] font-normal text-zinc-400">GS+</span></strong>
-  </Link>{media.highlights[start.id] ? <HeatHighlightModal highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} eyebrow="Archived MLB highlight" /> : null}</div>;
+  </Link>{media.highlights[start.id] ? <HeatHighlightModal highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} date={start.date} eyebrow="Archived MLB highlight" /> : null}</div>;
 }
 
 function ReviewSection({ title, id, intro, children }: { title: string; id: string; intro: string; children: ReactNode }) {

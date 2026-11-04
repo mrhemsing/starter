@@ -787,7 +787,7 @@ function RecentStartCard({ start, highlight, pitcherName, source }: { start: Sta
         <DecisionPill result={start.result} className="mt-3" />
         {highlight ? (
           <div className="mt-3">
-            <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} />
+            <HeatHighlightModal highlight={highlight} pitcherName={start.pitcher.name} date={start.date} />
           </div>
         ) : null}
       </div>
