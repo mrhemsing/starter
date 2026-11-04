@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* OFF-2.2: house headshot row below desktop, unchanged podium above it. */
+.award-person-layout, .award-person-text, .award-person-heading { display: contents; }
+@media (max-width: 1023px) {
+  .award-podium > li { padding: 12px; }
+  .award-person-layout { display: flex; align-items: center; gap: 12px; }
+  .award-person-layout > .headshot { width: 64px; height: 80px; flex-shrink: 0; }
+  .award-person-text { display: block; min-width: 0; flex: 1; }
+  .award-person-heading { display: flex; align-items: baseline; gap: 6px; }
+  .award-person-heading > p { margin: 0; flex-shrink: 0; }
+  .award-person-heading > a { margin: 0; min-width: 0; font-size: 20px; line-height: 22px; overflow-wrap: anywhere; }
+  .award-person-text > p { margin-top: 4px; font-size: 11px; line-height: 15px; }
+}
+
 :root {
   --background: #08080a;
   --foreground: #f4f4f5;

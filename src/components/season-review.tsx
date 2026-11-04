@@ -1,4 +1,5 @@
 import { ArchiveType } from "@/components/archive-type";
+import { AwardPersonLayout } from "@/components/award-person-layout";
 import { SeasonRotationRow } from "@/components/season-rotation-row";
 import { seasonNoHitterLine, seasonNoHitterBids, combinedNoHitterForStart } from "@/lib/season-no-hitters";
 import Link from "next/link";
@@ -66,11 +67,13 @@ export function SeasonReviewAwards({ review, landing = false }: { review: Frozen
 
 export function ArmOfTheYear({ review, landing = false }: { review: FrozenSeasonReview; landing?: boolean }) {
   return <ReviewSection names={awardNames(review)} year={review.year} linked={landing} compact title="Arm of the Year" id="arm" intro={review.copy.arm.text}>
-      <ol className="grid gap-3 sm:grid-cols-3">{review.arms.map((arm, index) => <li className="archive-linked-panel rounded border border-white/10 p-4" key={arm.pitcherId}>
-        <Headshot playerId={arm.pitcherId} name={arm.name} size="hero" /><p className="mt-3 font-mono text-xs text-amber-300">#{index + 1}</p>
+      <ol className="award-podium grid gap-3 lg:grid-cols-3">{review.arms.map((arm, index) => <li className="archive-linked-panel rounded border border-white/10 p-4" key={arm.pitcherId}>
+        <AwardPersonLayout playerId={arm.pitcherId} name={arm.name}><div className="award-person-heading"><p className="mt-3 font-mono text-xs text-amber-300">#{index + 1}</p>
         <Link className="my-2 block font-serif text-2xl font-bold" href={pitcherHref({ pitcherId: arm.pitcherId, name: arm.name })}>{arm.name}</Link>
+        </div>
         <p className="font-mono text-xs leading-6">{arm.mean.toFixed(1)} mean GS+ · {arm.starts} starts</p>
         <p className="mt-2 font-mono text-xs text-zinc-400">Qualification: {arm.minStarts} starts</p>
+        </AwardPersonLayout>
       </li>)}</ol>
     </ReviewSection>;
 }
@@ -107,8 +110,9 @@ export function BiggestBlowup({ review, landing = false }: { review: FrozenSeaso
 
 export function HottestStreak({ review, landing = false }: { review: FrozenSeasonReview; landing?: boolean }) {
   return <ReviewSection names={awardNames(review)} year={review.year} linked={landing} compact title="Hottest Streak" id="streak" intro={review.copy.streak.text}>
-      <Headshot playerId={review.hottestStreak.pitcherId} name={review.hottestStreak.name} size="hero" /><p className="mt-3 font-mono text-xs text-zinc-400">{review.hottestStreak.from} through {review.hottestStreak.through}</p>
+      <AwardPersonLayout playerId={review.hottestStreak.pitcherId} name={review.hottestStreak.name}><p className="mt-3 font-mono text-xs text-zinc-400">{review.hottestStreak.from} through {review.hottestStreak.through}</p>
       <Link className="inline-flex min-h-11 items-center text-amber-300 underline" href={pitcherHref({ pitcherId: review.hottestStreak.pitcherId, name: review.hottestStreak.name })}>Explore the game log</Link>
+      </AwardPersonLayout>
     </ReviewSection>;
 }
 
