@@ -8,6 +8,8 @@ import type { FormHomeResponse } from "@/lib/types";
 export const REVIEW_GEM_MIN_GS_PLUS = 70;
 export const REVIEW_STREAK_STARTS = 5;
 export const REVIEW_TOP_STARTS = 25;
+// Full-season award eligibility is independent of the rolling Form leaderboard.
+export const REVIEW_ARM_MIN_STARTS = 25;
 
 export function computeSeasonReview(records: CanonicalStartRecord[], publishedAt: string) {
   if (!records.length || records.some((row) => row.status !== "final" || !row.frozen || row.source.line === "fixture")) throw new Error("Season review requires frozen, non-fixture final records");
@@ -17,9 +19,9 @@ export function computeSeasonReview(records: CanonicalStartRecord[], publishedAt
   const form = frozenSeasonForm(sorted);
   const byPitcher = new Map<number, CanonicalStartRecord[]>();
   for (const row of sorted) byPitcher.set(row.pitcherMlbId, [...(byPitcher.get(row.pitcherMlbId) ?? []), row]);
-  const arms = form.pitchers.filter((pitcher) => pitcher.seasonQualification.qualified).map((pitcher) => {
+  const arms = form.pitchers.filter((pitcher) => (byPitcher.get(Number(pitcher.pitcherId))?.length ?? 0) >= REVIEW_ARM_MIN_STARTS).map((pitcher) => {
     const starts = byPitcher.get(Number(pitcher.pitcherId))!;
-    return { pitcherId: pitcher.pitcherId, name: pitcher.name, team: pitcher.team, mean: starts.reduce((sum, row) => sum + row.gameScorePlus, 0) / starts.length, starts: starts.length, minStarts: pitcher.seasonQualification.minStarts, startIds: starts.map((row) => row.id) };
+    return { pitcherId: pitcher.pitcherId, name: pitcher.name, team: pitcher.team, mean: starts.reduce((sum, row) => sum + row.gameScorePlus, 0) / starts.length, starts: starts.length, minStarts: REVIEW_ARM_MIN_STARTS, startIds: starts.map((row) => row.id) };
   }).sort((a, b) => b.mean - a.mean || b.starts - a.starts || a.name.localeCompare(b.name));
   const gemLeaders = [...byPitcher.entries()].map(([pitcherId, starts]) => ({ pitcherId: String(pitcherId), name: starts.at(-1)!.pitcherName, count: starts.filter((row) => row.gameScorePlus >= REVIEW_GEM_MIN_GS_PLUS).length, startIds: starts.filter((row) => row.gameScorePlus >= REVIEW_GEM_MIN_GS_PLUS).map((row) => row.id) })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const streaks = [...byPitcher.entries()].flatMap(([pitcherId, starts]) => starts.slice(REVIEW_STREAK_STARTS - 1).map((_, index) => {

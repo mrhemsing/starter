@@ -11,7 +11,10 @@ const layout=readFileSync('src/components/award-person-layout.tsx','utf8');
 assert.equal((layout.match(/<Headshot /g)||[]).length,1);
 assert(!layout.includes('use client'));assert(!layout.includes('innerWidth'));
 const hashes={};
+// The authorized award-rule correction has its own field-level immutability check.
+await import('./check-arm-qualification.mjs');
 for(const path of execFileSync('git',['ls-files','src/data','data/season-reviews'],{encoding:'utf8'}).trim().split(/\r?\n/)){
+ if(['src/data/season-review-2026.json','data/season-reviews/2026-receipt.json'].includes(path))continue;
  const before=execFileSync('git',['show',`c5ce5ac:${path}`],{maxBuffer:80*1024*1024}),after=readFileSync(path);
  assert(before.equals(after),path);hashes[path]=createHash('sha256').update(after).digest('hex');
 }

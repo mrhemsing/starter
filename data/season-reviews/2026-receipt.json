@@ -1,8 +1,18 @@
 {
   "publishedAt": "2026-11-03T20:34:55.214Z",
-  "reviewSha256": "20e7f7a42fc8d56c8dae65cf774bb606ad8c80542ea5509325953c55836fba55",
+  "reviewSha256": "357b544efe46abf0eb2fd48455972710ac5feae242662c685ac4473714ec4b17",
   "sourceSha256": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
   "starts": 4425,
   "source": "toetheslab_canonical_start_records:2026:final:frozen",
-  "model": "gpt-4.1-mini"
+  "model": "gpt-4.1-mini",
+  "corrections": [
+    {
+      "rule": "Arm of the Year: minimum 25 starts, ranked by mean GS+",
+      "previousReviewSha256": "20e7f7a42fc8d56c8dae65cf774bb606ad8c80542ea5509325953c55836fba55",
+      "fields": [
+        "arms",
+        "copy.arm"
+      ]
+    }
+  ]
 }

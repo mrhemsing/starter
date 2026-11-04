@@ -48,5 +48,9 @@ assert(read('src/components/offseason-home.tsx').includes('<SeasonReviewAwards r
 assert(read('src/app/2026/page.tsx').includes('<SeasonReviewAwards review={review} />'));
 assert(read('src/app/2026/rotations/page.tsx').includes('import { SeasonRotationRow }'));
 const frozen=JSON.parse(read('data/season-reviews/2026-highlight-backfill-summary.json')).frozenFiles;
-for(const [path,hash] of Object.entries(frozen))assert.equal(createHash('sha256').update(readFileSync(path)).digest('hex'),hash,path);
+await import('./check-arm-qualification.mjs');
+for(const [path,hash] of Object.entries(frozen)) {
+ if(['src/data/season-review-2026.json','data/season-reviews/2026-receipt.json'].includes(path))continue;
+ assert.equal(createHash('sha256').update(readFileSync(path)).digest('hex'),hash,path);
+}
 console.log(`OFF-2 PASS: ${audit.checkedGames} game linescores queried, ${records.length} canonical starts, no individual no-hitter, ${audit.combined.length} combined, future-season degradation, six shared awards, 5+30 SSR rotations, links, isolated notable and frozen hashes.`);

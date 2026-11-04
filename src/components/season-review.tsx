@@ -45,8 +45,9 @@ export function SeasonReviewHero({ review, landing = false, showIntro = true }: 
 
 export function SeasonReviewTopStarts({ review, limit = 25 }: { review: FrozenSeasonReview; limit?: number }) {
   return <ReviewSection title={`Top ${limit === 25 ? 25 : "Starts"} ${limit === 25 ? "Starts " : ""}of ${review.year}`} id="top-starts" names={awardNames(review)} intro={review.copy.top.text}>
+    <p className="mb-4 font-mono text-xs text-zinc-400">#1 is featured above as Start of the Year. Continuing with #2.</p>
     <ol className="archive-start-grid" data-review-top-starts>
-      {review.topStarts.slice(0, limit).map((start, index) => <li key={start.id} className="archive-start-unit" data-review-start-id={start.id}>
+      {review.topStarts.slice(0, limit).map((start, index) => start.id === review.startOfYear.id ? null : <li key={start.id} className="archive-start-unit" data-review-start-id={start.id}>
         <TopStartRow start={{ ...start, rank: index + 1 }} href={startRecapPath(start)} highlight={index >= 5 ? media.highlights[start.id] : null} showDate />
         {index < 5 && media.highlights[start.id] ? <div className="mt-3" data-review-gem><FeaturedStartHighlightEmbed highlight={media.highlights[start.id]!} pitcherName={start.pitcher.name} /></div> : null}
       </li>)}
