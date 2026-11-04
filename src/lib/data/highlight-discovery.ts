@@ -3,7 +3,11 @@ import { selectMlbGameContentActionCandidate, selectMlbImageCut, isOfficialMlbPi
 
 // Reuse the existing exact-game MLB pitching asset selector, not a second finder.
 export function resolveMlbGameContentHighlight(start: StartSummary, content: Parameters<typeof selectMlbGameContentActionCandidate>[0]) {
-  const montage = selectMlbGameContentActionCandidate(content, start, item =>
+  const fullReel = selectMlbGameContentActionCandidate(content, start, item =>
+    Boolean(item.keywordsAll?.some(k => k.value === "highlight-reel-pitching" || k.value === "highlight-reel-starting-pitching")) &&
+    isOfficialMlbPitchingHighlight(item, start) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
+      /^https:\/\/mlb-cuts-diamond\.mlb\.com\/FORGE\/.+\.mp4$/.test(row.url ?? ""))))?.item;
+  const montage = fullReel ?? selectMlbGameContentActionCandidate(content, start, item =>
     isOfficialMlbPitchingHighlight(item, start) && Boolean(item.playbacks?.some(row => row.name === "mp4Avc" &&
       /^https:\/\/mlb-cuts-diamond\.mlb\.com\/FORGE\/.+\.mp4$/.test(row.url ?? ""))))?.item;
   const item = montage ?? selectMlbGameContentActionCandidate(content, start, item =>
@@ -58,7 +62,7 @@ export async function resolveYouTubeHighlight({
       ...candidate,
       durationSeconds: durations.get(candidate.videoId) ?? null,
     }))
-    .sort((a, b) => candidateScore(b) - candidateScore(a))[0] ?? null;
+    .sort((a, b) => Number((b.durationSeconds ?? 0) >= 60) - Number((a.durationSeconds ?? 0) >= 60) || candidateScore(b) - candidateScore(a))[0] ?? null;
 }
 
 async function searchHighlightCandidates({
@@ -177,7 +181,6 @@ function candidateScore(candidate: HighlightCandidate) {
   if (candidate.lastNameInTitle) score += 100;
   if (candidate.strikeoutInTitle) score += 35;
   if (candidate.teamInTitle) score += 10;
-  if (candidate.durationSeconds !== null && candidate.durationSeconds < 60) score += 15;
   score -= candidate.hoursFromStartDateNoon;
   return score;
 }

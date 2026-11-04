@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { HighlightCover } from "@/components/highlight-cover";
 import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { FeaturedStartHighlightEmbed } from "@/components/featured-start-highlight";
@@ -29,11 +29,12 @@ export function HeatHighlightModal({ highlight, pitcherName, date, label, eyebro
         type="button"
         className={compact ? "group relative inline-grid aspect-video w-20 shrink-0 place-items-center overflow-hidden rounded border border-amber-300/35 bg-black text-amber-200 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:w-28" : className}
         data-highlight-thumbnail={compact ? "true" : undefined}
+        data-highlight-frame={compact ? "true" : undefined}
         aria-label={compact ? `Watch highlight: ${pitcherName}${date ? `, ${date}` : ""}` : `Open ${pitcherName} MLB highlight`}
         title={`Highlight · ${attribution}`}
         onClick={() => setIsOpen(true)}
       >
-        {compact ? <Image src={highlight.thumbnailUrl.replace("maxresdefault.jpg", "hqdefault.jpg")} alt="" fill sizes="(min-width: 640px) 112px, 80px" className="object-cover opacity-80 transition group-hover:opacity-100" /> : null}
+        {compact ? <HighlightCover highlight={highlight} compact /> : null}
         <svg aria-hidden="true" viewBox="0 0 24 24" className={compact ? "relative z-10 h-7 w-7 rounded bg-black/70 p-1" : "h-4 w-4"} fill="currentColor">
           <path d="M8 5.8v12.4L18.2 12 8 5.8Z" />
         </svg>

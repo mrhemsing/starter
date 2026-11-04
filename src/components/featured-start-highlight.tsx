@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { HighlightCover } from "@/components/highlight-cover";
 import type { FeaturedStartHighlight } from "@/lib/types";
 
 type FeaturedStartHighlightEmbedProps = {
@@ -19,20 +19,20 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
   const shouldLoadPlayer = loadImmediately || isLoaded;
   const isMlbContent = highlight.source === "mlb-game-content";
   const attribution = isMlbContent ? "MLB" : "MLB on YouTube";
-  const aspectClass = highlight.isShort ? "mx-auto aspect-[9/16] w-full max-w-[280px] sm:max-w-[320px]" : "aspect-video";
+  const aspectClass = "aspect-video";
 
   return (
     <div className="rounded border border-white/10 bg-black/20 p-2" data-responsive-check="featured-start-highlight">
-      <div className={`relative overflow-hidden rounded bg-black ${aspectClass}`}>
+      <div data-highlight-frame className={`relative overflow-hidden rounded bg-black ${aspectClass}`}>
         {shouldLoadPlayer ? (
           isMlbContent ? <video
             src={highlight.embedUrl}
             title={`${pitcherName} highlight via MLB`}
-            className="absolute inset-0 h-full w-full"
+            className="absolute inset-0 h-full w-full object-cover"
             controls
             playsInline
             preload="metadata"
-            poster={highlight.thumbnailUrl}
+            poster={highlight.coverImage?.imageUrl ?? highlight.thumbnailUrl}
           /> : <iframe
             src={highlight.embedUrl}
             title={`${pitcherName} highlight via MLB on YouTube`}
@@ -48,14 +48,7 @@ export function FeaturedStartHighlightEmbed({ highlight, pitcherName, loadImmedi
             aria-label={`Play ${pitcherName} highlight via ${attribution}`}
             onClick={() => setIsLoaded(true)}
           >
-            <Image
-              src={highlight.thumbnailUrl.replace("maxresdefault.jpg", "hqdefault.jpg")}
-              alt=""
-              fill
-              sizes={highlight.isShort ? "(min-width: 640px) 320px, 280px" : "(min-width: 1024px) 44vw, 100vw"}
-              className="object-cover opacity-90 transition group-hover:opacity-100"
-              onError={() => setIsHidden(true)}
-            />
+            <HighlightCover highlight={highlight} onError={() => setIsHidden(true)} />
             <span className="absolute inset-0 bg-black/20" />
             <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-black/65 text-amber-200 shadow-lg transition group-hover:scale-105">
               <span className="ml-1 h-0 w-0 border-y-[9px] border-l-[14px] border-y-transparent border-l-current" />

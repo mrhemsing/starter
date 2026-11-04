@@ -1,0 +1,3305 @@
+{
+  "starts": 119,
+  "games": 78,
+  "photos": [
+    {
+      "startId": "2026-06-12-mil-phi-694819",
+      "gamePk": 823778,
+      "date": "2026-06-12",
+      "pitcher": "Jacob Misiorowski",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qx3qhrxpo9wdyltgcz4w.jpg",
+        "alt": "Jacob Misiorowski strikes out the side in the 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jacob-misiorowski-strikes-out-the-side-in-the-1st"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823778/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:25.338Z",
+        "responseFile": "outputs/off15/responses/3890481fc788b7ac0ef8f40ff64fdf54fb9701a44950b31c274abb959d9248f3.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-16-phi-pit-650911",
+      "gamePk": 823382,
+      "date": "2026-05-16",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/b1weg9auxcnubkcigapq.jpg",
+        "alt": "Cristopher Sánchez's 10th strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/nick-yorke-strikes-out-swinging-bauvr1"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823382/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:26.583Z",
+        "responseFile": "outputs/off15/responses/8f28a592653ab8ab4ce12599ead842042d7469df0d6b3c2b455107978d87317c.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-07-phi-atl-666200",
+      "gamePk": 823415,
+      "date": "2026-09-07",
+      "pitcher": "Jesús Luzardo",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ziqosovmhokj3fkn2lff.jpg",
+        "alt": "Jesús Luzardo's 10th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/lane-thomas-strikes-out-swinging-zbtikd"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823415/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:29.755Z",
+        "responseFile": "outputs/off15/responses/b8dfd5dc37353f904d4584a1c6ea189435a4dfa6317dfe6afd081e9c79bdd409.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-25-tor-bos-656302",
+      "gamePk": 824734,
+      "date": "2026-07-25",
+      "pitcher": "Dylan Cease",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/k6x4bfueim8rxlz3b7ct.jpg",
+        "alt": "Dylan Cease finishes off complete-game shutout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/red-sox-challenged-pitch-result-wilyer-abreu-called-out-on-strikes-captur-d0c852"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824734/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:31.384Z",
+        "responseFile": "outputs/off15/responses/652866440bb0591c4837fc002d1d74bb699161caf626c7bb10f80e70f1b640f1.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-27-atl-lad-519242",
+      "gamePk": 824879,
+      "date": "2026-08-27",
+      "pitcher": "Chris Sale",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ek2yddttttkzjp3o4hfb.jpg",
+        "alt": "Chris Sale finishes off complete game with a K ",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/alex-call-strikes-out-swinging-5c62e6"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824879/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:32.758Z",
+        "responseFile": "outputs/off15/responses/4e02f5f6d31814b91f133c096a9b83b3c36c2acb916267631a469e2939a86482.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-22-cle-phi-668909",
+      "gamePk": 823461,
+      "date": "2026-05-22",
+      "pitcher": "Gavin Williams",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/cqcexgotb4bssiq25awb.jpg",
+        "alt": "Gavin Williams' 11 strikeouts against the Phillies",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/gavin-williams-11-strikeouts-against-the-phillies"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823461/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:36.695Z",
+        "responseFile": "outputs/off15/responses/dc97477a083ff7821fb3ff3d3a35ae51f563f210534b7e87340c3a9998719afe.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-12-pit-col-694973",
+      "gamePk": 823385,
+      "date": "2026-05-12",
+      "pitcher": "Paul Skenes",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/s7occylvqdr5baxogfnf.jpg",
+        "alt": "Paul Skenes takes no-hitter into 7th",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jake-mccarthy-called-out-on-strikes-r6hwz5"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823385/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:39.718Z",
+        "responseFile": "outputs/off15/responses/acf894039e9f17250f59c9543c5f127b230166bf240b6f8c8677935d9db580b9.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-27-bos-tor-624133",
+      "gamePk": 822825,
+      "date": "2026-04-27",
+      "pitcher": "Ranger Suarez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/bejkc2xzkogdho3o3ip3.jpg",
+        "alt": "Ranger Suarez strikes out Vladimir Guerrero Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/vladimir-guerrero-jr-strikes-out-swinging-znvb4x"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/822825/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:42.629Z",
+        "responseFile": "outputs/off15/responses/f4867af40d139bc73a5b66c1116e4256954f8a99f7dc7dbb50cb51681e5e522b.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-24-laa-tex-672282",
+      "gamePk": 824028,
+      "date": "2026-05-24",
+      "pitcher": "Reid Detmers",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vmzgryk6vkl3eqahzr23.jpg",
+        "alt": "Reid Detmers fans Brandon Nimmo for first K of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/reid-detmers-swinging-strike-to-brandon-nimmo"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824028/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:45.830Z",
+        "responseFile": "outputs/off15/responses/a26f5f599254960edc7be5a73818d0bd3c155075cf9de478cb914f779efadf58.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-06-10-tb-bos-656876",
+      "gamePk": 822970,
+      "date": "2026-06-10",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pgdj2zrz39668zn1nqnv.jpg",
+        "alt": "Drew Rasmussen's career-high 13th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/masataka-yoshida-strikes-out-swinging-i2bhkc"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/822970/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:48.847Z",
+        "responseFile": "outputs/off15/responses/f5e805701ca73ec911aa97544424d93a1aefac2f1882a87cd8ad3d27a2476c79.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-12-min-mia-641927",
+      "gamePk": 823712,
+      "date": "2026-05-12",
+      "pitcher": "Bailey Ober",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/em9mwmgmfxiui8dulxrk.jpg",
+        "alt": "Bailey Ober throws first career shutout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/bailey-ober-throws-complete-shutout-game"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823712/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:50.842Z",
+        "responseFile": "outputs/off15/responses/1eaaa1e654ad641bcb67211075c8dcbc9df9ac85c573880c08b4bd777af23cc7.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-05-phi-ath-650911",
+      "gamePk": 823469,
+      "date": "2026-05-05",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jccbvhmqi4cs1huacbqf.jpg",
+        "alt": "Cristopher Sánchez strikes out Brent Rooker",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/brent-rooker-called-out-on-strikes-jyng6p"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823469/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:53.175Z",
+        "responseFile": "outputs/off15/responses/d84fa73fe639671b4b7a2292e4c582a7c0910596cdbed4cf38c7cb61826e2cfa.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-23-lad-sf-607192",
+      "gamePk": 823233,
+      "date": "2026-04-23",
+      "pitcher": "Tyler Glasnow",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/mdg42jubaua2iymyr7ub.jpg",
+        "alt": "Tyler Glasnow strikes out nine batters, faces minimum",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/tyler-glasnow-strikes-out-nine-batters-faces-minimum"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823233/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:56.244Z",
+        "responseFile": "outputs/off15/responses/001cd1f8ebb86b2da0cdcb9cac21ce2e4698320588bab46a0f1530d7fe206ca8.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-24-nyy-phi-693645",
+      "gamePk": 823434,
+      "date": "2026-07-24",
+      "pitcher": "Cam Schlittler",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/cdy7dx5q1jaoz0kgjp4y.jpg",
+        "alt": "Cam Schlittler fans Trea Turner to open his outing",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/trea-turner-strikes-out-swinging-mqx5gm"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823434/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:59.083Z",
+        "responseFile": "outputs/off15/responses/0e24ee04321ae9fdfdd01202729252cda7a463621acc9f2f6d6263a5c7310c82.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-10-kc-cws-663460",
+      "gamePk": 824128,
+      "date": "2026-04-10",
+      "pitcher": "Kris Bubic",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/zqpxcnkc9dz6s0cmlkwu.jpg",
+        "alt": "Kris Bubic strikes out Murakami in the 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/munetaka-murakami-called-out-on-strikes-dzbcj5"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824128/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:00.595Z",
+        "responseFile": "outputs/off15/responses/d760f6739b3674acc49007b83a09e11a065d359fdebaf88a1322867437dafdbc.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-20-mil-chc-690986",
+      "gamePk": 824678,
+      "date": "2026-05-20",
+      "pitcher": "Kyle Harrison",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/dypcfb58tdnbx3vbf4rm.jpg",
+        "alt": "Kyle Harrison's 10th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/pete-crow-armstrong-strikes-out-on-a-foul-tip-d1dwwj"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824678/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:03.801Z",
+        "responseFile": "outputs/off15/responses/a582f43c531e2b9a777f8b29e76ac1314084ff96f798e0620e3ff19a016ca47d.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-26-mil-pit-690986",
+      "gamePk": 823797,
+      "date": "2026-04-26",
+      "pitcher": "Kyle Harrison",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/dvkk2hhv9tx8z3ftf9fm.jpg",
+        "alt": "Kyle Harrison strikes out TWELVE in six innings",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/kyle-harrison-strikes-out-twelve-in-six-innings"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823797/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:06.708Z",
+        "responseFile": "outputs/off15/responses/64590613f7cb181cf56c7b842b70175fccfe96e60fd07712bccce4cdd61314a7.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-01-mia-cws-645261",
+      "gamePk": 823889,
+      "date": "2026-04-01",
+      "pitcher": "Sandy Alcantara",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j3d2hwqanzqi3cutawkz.jpg",
+        "alt": "Sandy Alcantara completes shutout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/sandy-alcantara-in-play-out-s-to-colson-montgomery"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823889/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:09.035Z",
+        "responseFile": "outputs/off15/responses/8f48416883c5ef533a3b9700621dfb2bbae444194a0f57d46aee1476d3d29d01.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-13-wsh-chc-676917",
+      "gamePk": 822696,
+      "date": "2026-08-13",
+      "pitcher": "Cade Cavalli",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/onqm0xvzqv6w86kouj1g.jpg",
+        "alt": "Cade Cavalli's 10th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/michael-conforto-called-out-on-strikes-qytc3l"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/822696/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:12.355Z",
+        "responseFile": "outputs/off15/responses/b95e46abedb4758652fd36431c6e4eaae5f5f3916519b2d5d29ca4fa2c292a79.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-10-cin-chc-668881",
+      "gamePk": 824493,
+      "date": "2026-07-10",
+      "pitcher": "Hunter Greene",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/avwpxspynbx5zw3pso1e.jpg",
+        "alt": "Hunter Greene fans Pete Crow-Armstrong",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/hunter-greene-swinging-strike-to-pete-crow-armstrong-ppr7ue"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824493/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:15.212Z",
+        "responseFile": "outputs/off15/responses/b9d876a007acb0495cfdafee1701f3d06e9274177dc57addae111dfcb93a3dd4.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-10-tex-chc-594798",
+      "gamePk": 822902,
+      "date": "2026-05-10",
+      "pitcher": "Jacob deGrom",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/gqewneu9gbnqyzwyuoti.jpg",
+        "alt": "Jacob deGrom's 1,900th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/seiya-suzuki-strikes-out-swinging-ncpszt"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/822902/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:18.889Z",
+        "responseFile": "outputs/off15/responses/27393f3c555b3c18a035d8d8032b695ab3beb2250cf9445eedd2eaa9cd91e647.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-06-05-tb-mia-656876",
+      "gamePk": 823860,
+      "date": "2026-06-05",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/b3o4xgww8gnir52oxqa6.jpg",
+        "alt": "Drew Rasmussen fans Otto Lopez",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/otto-lopez-strikes-out-swinging-casnzq"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823860/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:22.011Z",
+        "responseFile": "outputs/off15/responses/bd329be1a38a1f70dbfa27a96f4decd9997fe9b6907271bcf89659e428d802ca.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-tb-nyy-656876",
+      "gamePk": 849835,
+      "date": "2026-10-03",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/rf2uvrlmiqqlmtxjrj3o.jpg",
+        "alt": "Drew Rasmussen's 10th K of the night",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/spencer-jones-strikes-out-swinging-mgfvc6"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849835/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:24.414Z",
+        "responseFile": "outputs/off15/responses/271c8b0cacc9cd2fc31f37065c8e5975088d2726ac95d10993c752e6b5c0c968.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-01-cle-tor-668909",
+      "gamePk": 824391,
+      "date": "2026-09-01",
+      "pitcher": "Gavin Williams",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/xtxvb8bwb9jpss63o92f.jpg",
+        "alt": "Gavin Williams strikes out Brett Bateman",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/brett-bateman-strikes-out-swinging-dip6so"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824391/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:27.167Z",
+        "responseFile": "outputs/off15/responses/38c565dbe7bde650dfc9528091085d3b6151c88ebde1de5bc68754f4b8b84d41.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-04-14-min-bos-690953",
+      "gamePk": 823723,
+      "date": "2026-04-14",
+      "pitcher": "Mick Abel",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/bymhss08svxauyl19bqa.jpg",
+        "alt": "Mick Abel strikes out ten against Red Sox",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/mick-abel-strikes-out-ten-against-red-sox"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823723/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:31.055Z",
+        "responseFile": "outputs/off15/responses/1e1f8d991c970092a1bfba7d4f70fded356f4314a37d4dd592019b2d78068aa1.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-19-kc-sd-702070",
+      "gamePk": 824086,
+      "date": "2026-07-19",
+      "pitcher": "Noah Cameron",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/q4nwqbdvsnkmrx7rjicu.jpg",
+        "alt": "Noah Cameron strikes out Luis Rengifo",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/luis-rengifo-strikes-out-on-a-foul-tip-uvrfcr"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824086/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:05.298Z",
+        "responseFile": "outputs/off15/responses/b6ce22127c47daa8fb01dc4e0463dc78a4ce0643c5b4a3332fb79ab31f198916.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-10-phi-col-650911",
+      "gamePk": 823463,
+      "date": "2026-05-10",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/tw6df6onh2ah5usk8gs8.jpg",
+        "alt": "Cristopher Sánchez's seven strikeouts in quality start",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/cristopher-sanchez-s-seven-strike-outs-quality-start"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823463/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:07.402Z",
+        "responseFile": "outputs/off15/responses/7f8b4542ec438039b3f4eb6ce93616cfeebe07fd13a7510de0d0fb7aafcf4c18.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-22-phi-cle-650911",
+      "gamePk": 823461,
+      "date": "2026-05-22",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hatxbyqrs1qvhi72musg.jpg",
+        "alt": "Cristopher Sánchez's dominant outing",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/cristopher-sanchez-s-dominant-outing"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823461/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:36.695Z",
+        "responseFile": "outputs/off15/responses/dc97477a083ff7821fb3ff3d3a35ae51f563f210534b7e87340c3a9998719afe.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-05-27-phi-sd-650911",
+      "gamePk": 823295,
+      "date": "2026-05-27",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pymvwzyug5pcidyzkpsa.jpg",
+        "alt": "Cristopher Sánchez Ks Gavin Sheets",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/cristopher-sanchez-ks-gavin-sheets"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823295/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:11.098Z",
+        "responseFile": "outputs/off15/responses/2530ec84b397d2da00c1f3a2c2cf6689acfd5c69be31fccb08c8ae7ffb927b07.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-08-tor-sf-656302",
+      "gamePk": 823202,
+      "date": "2026-07-08",
+      "pitcher": "Dylan Cease",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/sgo346ozclokoxnpefx6.jpg",
+        "alt": "Dylan Cease K's Drew Cavanaugh to take no-no into 9th",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/drew-cavanaugh-called-out-on-strikes-uaft4y"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823202/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:14.261Z",
+        "responseFile": "outputs/off15/responses/4f3b6e6086d05f25643cfae1cf253dc783da3f7b8ff5fca3b4701daee580bdbe.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-16-kc-laa-702070",
+      "gamePk": 823991,
+      "date": "2026-08-16",
+      "pitcher": "Noah Cameron",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/yj2ewrf5arokgslsqj2d.jpg",
+        "alt": "Noah Cameron strikes out Travis d'Arnaud",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/travis-d-arnaud-strikes-out-swinging-dzxroz"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823991/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:17.217Z",
+        "responseFile": "outputs/off15/responses/07a0b838ab93af8c3fe065f88463b25b5a48853b7d3a3008f32aaca0dc268526.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-30-kc-min-702070",
+      "gamePk": 823674,
+      "date": "2026-07-30",
+      "pitcher": "Noah Cameron",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/dk250kivn6n1aancfbja.jpg",
+        "alt": "Noah Cameron K's Royce Lewis",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/royce-lewis-strikes-out-swinging-awxw8x"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823674/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:19.575Z",
+        "responseFile": "outputs/off15/responses/0049195c7532b100433a1fb60d3b680b43b0b02fe68c0056470f8b6bad1e2950.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-10-pit-cws-683003",
+      "gamePk": 824550,
+      "date": "2026-09-10",
+      "pitcher": "Jared Jones",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/fcejjvdoieknfxza27zo.jpg",
+        "alt": "Jared Jones K's Colson Montgomery",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/colson-montgomery-strikes-out-swinging-7trdrs"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824550/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:21.653Z",
+        "responseFile": "outputs/off15/responses/8a6d32a099d8baf9ca4085de5a5156cfedeb687f2d04aaab758656f922829d87.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-22-tb-nyy-656876",
+      "gamePk": 823494,
+      "date": "2026-09-22",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ahyymxftfuktskvfezio.jpg",
+        "alt": "Drew Rasmussen K's Ben Rice",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/ben-rice-strikes-out-swinging-eksw6o"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823494/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:24.071Z",
+        "responseFile": "outputs/off15/responses/65b72ce83820246a9c32ab9786c2bbff6fa5e16a3413eeec0f46e5617abb0de0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-sd-chc-650633",
+      "gamePk": 849843,
+      "date": "2026-09-29",
+      "pitcher": "Michael King",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/yxm3yhbigfwytsntp4m1.jpg",
+        "alt": "Michael King K's PCA to start the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/pete-crow-armstrong-strikes-out-on-a-foul-tip-568ckp"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849843/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:26.446Z",
+        "responseFile": "outputs/off15/responses/5a62ca68679b44ed2a1b21215c6a45db1f55c1e14f9bbfc98d326c58d12e2249.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-01-atl-wsh-527048",
+      "gamePk": 824890,
+      "date": "2026-08-01",
+      "pitcher": "Martín Pérez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/sykmucxeu4tu01po647m.jpg",
+        "alt": "Martín Pérez K's Brady House to get out of the jam",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/brady-house-strikes-out-swinging-yfotuu"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824890/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:29.530Z",
+        "responseFile": "outputs/off15/responses/8fecf2ee0cf1f3031bd140a42fe91610580244bca944612e5033baa6eb505a13.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-18-ath-wsh-669372",
+      "gamePk": 824979,
+      "date": "2026-07-18",
+      "pitcher": "J.T. Ginn",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/aqfnyx3k5stsnpfleliz.jpg",
+        "alt": "J.T. Ginn K's seven over 6 1/3 scoreless innings",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/j-t-ginn-ks-seven-over-6-1-3-scoreless-innings"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824979/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:31.745Z",
+        "responseFile": "outputs/off15/responses/82ef8e62922863d01b9c60eddbf3ec5cb16944447303be6d2d18e9772f94e411.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-22-tor-nyy-656302",
+      "gamePk": 823509,
+      "date": "2026-08-22",
+      "pitcher": "Dylan Cease",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/xvcubhidepc179zwcuod.jpg",
+        "alt": "Dylan Cease K's Heliot Ramos",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/heliot-ramos-strikes-out-swinging-yugo8u"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823509/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:34.792Z",
+        "responseFile": "outputs/off15/responses/0c714b406ce455f3f008c442356e922da54982f0c48f4fbbb717f08b03ac95ff.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-08-20-atl-cws-656550",
+      "gamePk": 824589,
+      "date": "2026-08-20",
+      "pitcher": "Grant Holmes",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/grpr0srryupidy88j3cq.jpg",
+        "alt": "Grant Holmes fans Murakami to preserve no-hitter",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/munetaka-murakami-strikes-out-swinging-knhecx"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824589/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:36.685Z",
+        "responseFile": "outputs/off15/responses/9f9e04a876478e9aadac826938ad2d05c80a7da5841f28711c430aa18d4ead9a.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-07-11-bal-kc-680694",
+      "gamePk": 824813,
+      "date": "2026-07-11",
+      "pitcher": "Kyle Bradish",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/fqqqlevfmcpbjep2fpol.jpg",
+        "alt": "Kyle Bradish records his first K of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/bobby-witt-jr-strikes-out-swinging-d7mnua"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824813/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:39.074Z",
+        "responseFile": "outputs/off15/responses/8d2f37d2cb0d81ae56902304c651083ee3d9a4962be27e1bbbb10e50e27b3316.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-14-tor-det-667755",
+      "gamePk": 822765,
+      "date": "2026-09-14",
+      "pitcher": "José Soriano",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/fq8odvq3rivinjvg2vyi.jpg",
+        "alt": "José Soriano strikes out Riley Greene",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/riley-greene-strikes-out-on-a-foul-tip-kigiat"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/822765/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:41.246Z",
+        "responseFile": "outputs/off15/responses/a80baec12d90139b645a1685c603a4f36a8d833d22940bb8c5e7904d336653d2.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-atl-phi-519242",
+      "gamePk": 849845,
+      "date": "2026-09-29",
+      "pitcher": "Chris Sale",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/acfdf8kqr0vdi8aeguya.jpg",
+        "alt": "Chris Sale's first K against the Phillies",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/trea-turner-strikes-out-swinging-5v4gql"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849845/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:31.358Z",
+        "responseFile": "outputs/off15/responses/3627c705a8d3d3eed2377c538de81b2f898edae0da757f6bd20bc132de960334.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-phi-atl-666200",
+      "gamePk": 849845,
+      "date": "2026-09-29",
+      "pitcher": "Jesús Luzardo",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ura3ylckjhuvnx6nxtn8.jpg",
+        "alt": "Jesús Luzardo strikes out Matt Olson",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/matt-olson-strikes-out-swinging-mxvhgf"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849845/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:31.358Z",
+        "responseFile": "outputs/off15/responses/3627c705a8d3d3eed2377c538de81b2f898edae0da757f6bd20bc132de960334.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-bos-nyy-801139",
+      "gamePk": 849851,
+      "date": "2026-09-29",
+      "pitcher": "Payton Tolle",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/oabfpkhi2ab3i1teczx4.jpg",
+        "alt": "Payton Tolle K's Heliot Ramos",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/heliot-ramos-strikes-out-swinging-kd42od"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849851/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:32.152Z",
+        "responseFile": "outputs/off15/responses/9c28afbd62e9b2addbb2a24b682623aaf871000c04fcd34a9b57fdb62029736f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-nyy-bos-693645",
+      "gamePk": 849851,
+      "date": "2026-09-29",
+      "pitcher": "Cam Schlittler",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/scjrvmrflyxgiz5fwwps.jpg",
+        "alt": "Cam Schlittler's first strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/cam-schlittler-swinging-strike-blocked-to-roman-anthony"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849851/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:32.152Z",
+        "responseFile": "outputs/off15/responses/9c28afbd62e9b2addbb2a24b682623aaf871000c04fcd34a9b57fdb62029736f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-chc-sd-571510",
+      "gamePk": 849843,
+      "date": "2026-09-29",
+      "pitcher": "Matthew Boyd",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/kj0bi2kqids9obhqmvgd.jpg",
+        "alt": "Matthew Boyd strikes out Jackson Merrill",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jackson-merrill-strikes-out-swinging-kybkju"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849843/content",
+        "status": 200,
+        "at": "2026-11-04T01:08:26.446Z",
+        "responseFile": "outputs/off15/responses/5a62ca68679b44ed2a1b21215c6a45db1f55c1e14f9bbfc98d326c58d12e2249.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-cws-hou-696146",
+      "gamePk": 849849,
+      "date": "2026-09-29",
+      "pitcher": "Hagen Smith",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ew8uews29cs5yvvwjqtp.jpg",
+        "alt": "Hagen Smith K's Lucas Spence",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/lucas-spence-strikes-out-swinging-0tzaw3"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849849/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:32.713Z",
+        "responseFile": "outputs/off15/responses/ac90f4001a336a341220a4cb584e64e5f8b9b6e1489951ed0d41f729fcfddcd6.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-29-hou-cws-805123",
+      "gamePk": 849849,
+      "date": "2026-09-29",
+      "pitcher": "AJ Blubaugh",
+      "imageOutcome": "no_action_photo_no_highlight",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849849/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:32.713Z",
+        "responseFile": "outputs/off15/responses/ac90f4001a336a341220a4cb584e64e5f8b9b6e1489951ed0d41f729fcfddcd6.json"
+      },
+      "diagnostic": {
+        "reason": "No matching pitching action candidate in exact-game content.",
+        "candidateTitle": null
+      },
+      "hasHighlight": false
+    },
+    {
+      "startId": "2026-09-30-atl-phi-641816",
+      "gamePk": 849841,
+      "date": "2026-09-30",
+      "pitcher": "Tyler Mahle",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ayjrbnskfjgsdbewa5gh.jpg",
+        "alt": "Tyler Mahle fans Brandon Marsh, limits damage in 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/brandon-marsh-strikes-out-swinging-7db5ad"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849841/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:35.198Z",
+        "responseFile": "outputs/off15/responses/1804de9a9feb886ff115789dfd8b8ccd81d1b37bd5e2f16572c177717378d74f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-phi-atl-650911",
+      "gamePk": 849841,
+      "date": "2026-09-30",
+      "pitcher": "Cristopher Sánchez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/z4lc3yf72oyyf7yhzykq.jpg",
+        "alt": "Cristopher Sánchez escapes jam",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/cristopher-sanchez-escapes-jam"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849841/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:35.198Z",
+        "responseFile": "outputs/off15/responses/1804de9a9feb886ff115789dfd8b8ccd81d1b37bd5e2f16572c177717378d74f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-bos-nyy-543243",
+      "gamePk": 849848,
+      "date": "2026-09-30",
+      "pitcher": "Sonny Gray",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hudd4qdnidmlokpyoldk.jpg",
+        "alt": "Sonny Gray K's Ben Rice",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/ben-rice-strikes-out-swinging-7zl4nb"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849848/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:35.968Z",
+        "responseFile": "outputs/off15/responses/996f0262c81827bd5d0d5d593f7f90700d4eeb8b22b326acbb3477dd869fc991.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-nyy-bos-608331",
+      "gamePk": 849848,
+      "date": "2026-09-30",
+      "pitcher": "Max Fried",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jcbflptffj7c6pfffodk.jpg",
+        "alt": "Max Fried's first strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/max-fried-s-first-strikeout-of-the-game"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849848/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:35.968Z",
+        "responseFile": "outputs/off15/responses/996f0262c81827bd5d0d5d593f7f90700d4eeb8b22b326acbb3477dd869fc991.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-chc-sd-592332",
+      "gamePk": 849842,
+      "date": "2026-09-30",
+      "pitcher": "Kevin Gausman",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pu6z0gchduyxurpwo2ry.jpg",
+        "alt": "Kevin Gausman strikes out Jackson Merrill",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jackson-merrill-strikes-out-swinging-ikaimi"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849842/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:36.671Z",
+        "responseFile": "outputs/off15/responses/466480c50d09181cbc1511c4c11417bb0a4a19194c32d5e3c7a020f495d4b90b.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-sd-chc-601713",
+      "gamePk": 849842,
+      "date": "2026-09-30",
+      "pitcher": "Nick Pivetta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vtkiuqwyee0jkdx29dqw.jpg",
+        "alt": "Nick Pivetta strikes out Seiya Suzuki",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/seiya-suzuki-called-out-on-strikes-hmgfla"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849842/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:36.671Z",
+        "responseFile": "outputs/off15/responses/466480c50d09181cbc1511c4c11417bb0a4a19194c32d5e3c7a020f495d4b90b.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-cws-hou-680732",
+      "gamePk": 849846,
+      "date": "2026-09-30",
+      "pitcher": "Sean Burke",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/tyai5jg8etjp2zbosi9r.jpg",
+        "alt": "Sean Burke fans Yordan Alvarez",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/yordan-alvarez-strikes-out-swinging-y8q56u"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849846/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:37.355Z",
+        "responseFile": "outputs/off15/responses/5500d35fc67521cbe79265a309b7fd308a9aa5668fd7d535b2cb70735aa80623.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-09-30-hou-cws-686613",
+      "gamePk": 849846,
+      "date": "2026-09-30",
+      "pitcher": "Hunter Brown",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qnocyolyvchgmqs8zooy.jpg",
+        "alt": "Hunter Brown K's Munetaka Murakami",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/munetaka-murakami-strikes-out-swinging-syrzbe"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849846/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:37.355Z",
+        "responseFile": "outputs/off15/responses/5500d35fc67521cbe79265a309b7fd308a9aa5668fd7d535b2cb70735aa80623.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-01-atl-phi-678061",
+      "gamePk": 849844,
+      "date": "2026-10-01",
+      "pitcher": "Ray Kerr",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/bwinx6ep85jug1ugnoor.jpg",
+        "alt": "Ray Kerr fans Bryce Harper",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/bryce-harper-strikes-out-swinging-eu4zen"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849844/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:38.148Z",
+        "responseFile": "outputs/off15/responses/4b927e4afbfc29ed2372d320f6708a5c92e51ab3ba5e9a75f233b3e87acc85ab.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-01-phi-atl-605400",
+      "gamePk": 849844,
+      "date": "2026-10-01",
+      "pitcher": "Aaron Nola",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/eyt9toxf2kf4vj4hl1ox.jpg",
+        "alt": "Aaron Nola gets Mauricio Dubón swinging",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/mauricio-dubon-strikes-out-swinging-dho7ic"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849844/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:38.148Z",
+        "responseFile": "outputs/off15/responses/4b927e4afbfc29ed2372d320f6708a5c92e51ab3ba5e9a75f233b3e87acc85ab.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-atl-lad-689266",
+      "gamePk": 849828,
+      "date": "2026-10-03",
+      "pitcher": "Dylan Dodd",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ul3xo2exzw9f7o6kco15.jpg",
+        "alt": "Dylan Dodd's first strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/mookie-betts-called-out-on-strikes-uaxggb"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849828/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:38.950Z",
+        "responseFile": "outputs/off15/responses/05903d4bb72cfb28d85b54eca211b72ee244f7051e6bbb39acb9b69cc83170aa.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-lad-atl-669373",
+      "gamePk": 849828,
+      "date": "2026-10-03",
+      "pitcher": "Tarik Skubal",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hqf4aehmoaulfs58owwo.jpg",
+        "alt": "Tarik Skubal fans seven in Game 1 of the NLDS ",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/tarik-skubal-fans-seven-in-game-1-of-the-nlds"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849828/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:38.950Z",
+        "responseFile": "outputs/off15/responses/05903d4bb72cfb28d85b54eca211b72ee244f7051e6bbb39acb9b69cc83170aa.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-cle-cws-800048",
+      "gamePk": 849829,
+      "date": "2026-10-03",
+      "pitcher": "Parker Messick",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vgoyooroeneruoyvcvnj.jpg",
+        "alt": "Parker Messick escapes early jam with strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/parker-messick-escapes-jam"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849829/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:39.832Z",
+        "responseFile": "outputs/off15/responses/49c9495e115bfde0f74e91c010b616c7257445b48e506d54fb1b0270384145b0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-cws-cle-696146",
+      "gamePk": 849829,
+      "date": "2026-10-03",
+      "pitcher": "Hagen Smith",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j2399qhx2riw81s4nbry.jpg",
+        "alt": "Hagen Smith strikes out Austin Hedges swinging",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/austin-hedges-strikes-out-on-a-foul-tip-adoeln"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849829/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:39.832Z",
+        "responseFile": "outputs/off15/responses/49c9495e115bfde0f74e91c010b616c7257445b48e506d54fb1b0270384145b0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-mil-sd-694819",
+      "gamePk": 849830,
+      "date": "2026-10-03",
+      "pitcher": "Jacob Misiorowski",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/vmnh7dx1lqjr8dt41jfv.jpg",
+        "alt": "Jacob Misiorowski strikes out Fernando Tatis Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/fernando-tatis-jr-strikes-out-swinging-vakloo"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849830/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:41.748Z",
+        "responseFile": "outputs/off15/responses/810380590548fdd0ba81d44a0d0ad53c3458eb94caedc877a4062cea70856ab9.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-sd-mil-592662",
+      "gamePk": 849830,
+      "date": "2026-10-03",
+      "pitcher": "Robbie Ray",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/lbtcv8n9rnjjxq0xszbe.jpg",
+        "alt": "Robbie Ray fans Cooper Pratt",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/robbie-ray-swinging-strike-to-cooper-pratt-e8o2ep"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849830/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:41.748Z",
+        "responseFile": "outputs/off15/responses/810380590548fdd0ba81d44a0d0ad53c3458eb94caedc877a4062cea70856ab9.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-03-nyy-tb-543037",
+      "gamePk": 849835,
+      "date": "2026-10-03",
+      "pitcher": "Gerrit Cole",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ubeurduledgjnyurrb8u.jpg",
+        "alt": "Gerrit Cole fans Victor Mesa Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/victor-mesa-jr-strikes-out-swinging-vjhh14"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849835/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:24.414Z",
+        "responseFile": "outputs/off15/responses/271c8b0cacc9cd2fc31f37065c8e5975088d2726ac95d10993c752e6b5c0c968.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-04-atl-lad-678061",
+      "gamePk": 849823,
+      "date": "2026-10-04",
+      "pitcher": "Ray Kerr",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nfxj7bvkdj0ha58dc5gd.jpg",
+        "alt": "Ray Kerr fans Shohei Ohtani",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/ray-kerr-swinging-strike-to-shohei-ohtani-upobmx"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849823/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:42.588Z",
+        "responseFile": "outputs/off15/responses/9b8a96b18be6ae360f65f170b4e4302ef389413ad43c9d772f5fb53d38634d88.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-04-lad-atl-605483",
+      "gamePk": 849823,
+      "date": "2026-10-04",
+      "pitcher": "Blake Snell",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j5rwhyezmx3im2kplqwc.jpg",
+        "alt": "Blake Snell fans Sean Murphy to end the 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/sean-murphy-strikes-out-swinging-zixt6s"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849823/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:42.588Z",
+        "responseFile": "outputs/off15/responses/9b8a96b18be6ae360f65f170b4e4302ef389413ad43c9d772f5fb53d38634d88.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-04-mil-sd-701656",
+      "gamePk": 849825,
+      "date": "2026-10-04",
+      "pitcher": "Logan Henderson",
+      "imageOutcome": "center_cropped_video_thumbnail_fallback",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849825/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:43.502Z",
+        "responseFile": "outputs/off15/responses/10d3bab2a9f0f1307ff3bd557a70cda58e2714e26056d82b45d707574919199b.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Logan Henderson strikes out four vs. Padres"
+      },
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-04-sd-mil-650633",
+      "gamePk": 849825,
+      "date": "2026-10-04",
+      "pitcher": "Michael King",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qpoz2muykzjit6jyrkzd.jpg",
+        "alt": "Michael King fans Christian Yelich to end inning",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/christian-yelich-strikes-out-swinging-6mlcs1"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849825/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:43.502Z",
+        "responseFile": "outputs/off15/responses/10d3bab2a9f0f1307ff3bd557a70cda58e2714e26056d82b45d707574919199b.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-05-cle-cws-668909",
+      "gamePk": 849834,
+      "date": "2026-10-05",
+      "pitcher": "Gavin Williams",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ruwvvxbjlngfnaofeuji.jpg",
+        "alt": "Gavin Williams K's Kyle Teel to strike out the side",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/kyle-teel-strikes-out-swinging-ed0zuv"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849834/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:44.168Z",
+        "responseFile": "outputs/off15/responses/7af56e4ddc8fc67f4452b4bf23700619afc447f67b8ba49d14ef65f943dde515.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-05-cws-cle-641743",
+      "gamePk": 849834,
+      "date": "2026-10-05",
+      "pitcher": "Anthony Kay",
+      "imageOutcome": "no_action_photo_no_highlight",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849834/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:44.168Z",
+        "responseFile": "outputs/off15/responses/7af56e4ddc8fc67f4452b4bf23700619afc447f67b8ba49d14ef65f943dde515.json"
+      },
+      "diagnostic": {
+        "reason": "No matching pitching action candidate in exact-game content.",
+        "candidateTitle": null
+      },
+      "hasHighlight": false
+    },
+    {
+      "startId": "2026-10-05-nyy-tb-693645",
+      "gamePk": 849839,
+      "date": "2026-10-05",
+      "pitcher": "Cam Schlittler",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/mnik9zvspcgd6qpslvfp.jpg",
+        "alt": "Cam Schlittler fans Taylor Walls",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/taylor-walls-strikes-out-swinging-in-alds"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849839/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:46.442Z",
+        "responseFile": "outputs/off15/responses/c465810227392e6da5b5ba128f0903ff5bdb41bc7bd8a678ff4671773b16388e.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-05-tb-nyy-642547",
+      "gamePk": 849839,
+      "date": "2026-10-05",
+      "pitcher": "Freddy Peralta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/zsabqnp5ojlzpzt5ptnf.jpg",
+        "alt": "Freddy Peralta strikes out Luis García Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/luis-garcia-jr-strikes-out-swinging-vj0del"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849839/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:46.442Z",
+        "responseFile": "outputs/off15/responses/c465810227392e6da5b5ba128f0903ff5bdb41bc7bd8a678ff4671773b16388e.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-06-atl-lad-519242",
+      "gamePk": 849819,
+      "date": "2026-10-06",
+      "pitcher": "Chris Sale",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/wkdqtm1z3siddjhpxiwg.jpg",
+        "alt": "Chris Sale's sixth strikeout through two innings",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/enrique-hernandez-strikes-out-swinging-lwhoi9"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849819/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:48.764Z",
+        "responseFile": "outputs/off15/responses/eee81286f456c00758230551deb4bf1a99609cd2569b7430b01c52b5de8bd74d.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-06-lad-atl-808967",
+      "gamePk": 849819,
+      "date": "2026-10-06",
+      "pitcher": "Yoshinobu Yamamoto",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ttflhceyqufae7n6nlw9.jpg",
+        "alt": "Yoshinobu Yamamoto's 10th strikeout vs. Braves",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/austin-riley-strikes-out-swinging-ecqj5l"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849819/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:48.764Z",
+        "responseFile": "outputs/off15/responses/eee81286f456c00758230551deb4bf1a99609cd2569b7430b01c52b5de8bd74d.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-06-mil-sd-669160",
+      "gamePk": 849826,
+      "date": "2026-10-06",
+      "pitcher": "Dustin May",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/z1mcazktkuvpctj5kcqs.jpg",
+        "alt": "Dustin May strikes out Jackson Merrill",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/dustin-may-strikes-out-jackson-merrill"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849826/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:49.543Z",
+        "responseFile": "outputs/off15/responses/5eed03570f7eb21c535f95a7c8965e8f39da20c59c63025239d35a51d5e9e1af.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-06-sd-mil-601713",
+      "gamePk": 849826,
+      "date": "2026-10-06",
+      "pitcher": "Nick Pivetta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/yzyqoukknzqftniioroc.jpg",
+        "alt": "Nick Pivetta strikes out Jake Bauers",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jake-bauers-called-out-on-strikes-esjaik"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849826/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:49.543Z",
+        "responseFile": "outputs/off15/responses/5eed03570f7eb21c535f95a7c8965e8f39da20c59c63025239d35a51d5e9e1af.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-atl-lad-641816",
+      "gamePk": 849822,
+      "date": "2026-10-07",
+      "pitcher": "Tyler Mahle",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pm1gkeylbwwhwqxdqxaj.jpg",
+        "alt": "Tyler Mahle fans Teoscar Hernández",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/teoscar-hernandez-strikes-out-swinging-2qb4xe"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849822/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:51.752Z",
+        "responseFile": "outputs/off15/responses/63ff069b533239d7b93363301531ff9f4a8633443a11b98403d23e46ba9ed8ba.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-lad-atl-607192",
+      "gamePk": 849822,
+      "date": "2026-10-07",
+      "pitcher": "Tyler Glasnow",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/apqhzfcapdub0n66ie2w.jpg",
+        "alt": "Tyler Glasnow strikes out Ronald Acuña Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/ronald-acuna-jr-called-out-on-strikes-42vknu"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849822/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:51.752Z",
+        "responseFile": "outputs/off15/responses/63ff069b533239d7b93363301531ff9f4a8633443a11b98403d23e46ba9ed8ba.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-cle-cws-682982",
+      "gamePk": 849833,
+      "date": "2026-10-07",
+      "pitcher": "Daniel Espino",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/s87v9x3dxgl63fanvatg.jpg",
+        "alt": "Daniel Espino K's Munetaka Murakami",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/daniel-espino-swinging-strike-to-munetaka-murakami-q0zwgf"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849833/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:52.470Z",
+        "responseFile": "outputs/off15/responses/41b58c7cada60e88f364cf3a333dbaab2d20c469612a640468c22ec874b996cf.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-cws-cle-656794",
+      "gamePk": 849833,
+      "date": "2026-10-07",
+      "pitcher": "Sean Newcomb",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/gaseflbnovxqwbue4kn1.jpg",
+        "alt": "Sean Newcomb K's Angel Martínez on a foul tip",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/angel-martinez-strikes-out-on-a-foul-tip-bfufyv"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849833/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:52.470Z",
+        "responseFile": "outputs/off15/responses/41b58c7cada60e88f364cf3a333dbaab2d20c469612a640468c22ec874b996cf.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-mil-sd-688107",
+      "gamePk": 849827,
+      "date": "2026-10-07",
+      "pitcher": "Robert Gasser",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/uvswuf2k3fr3bni9hnbi.jpg",
+        "alt": "Robert Gasser escapes bases-loaded jam",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/robert-gasser-escapes-bases-loaded-jam"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849827/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:57.011Z",
+        "responseFile": "outputs/off15/responses/0603ad01d6c94a9c29273153af9f78e4071227b4dcb1d605eff163f438d84a8f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-sd-mil-621111",
+      "gamePk": 849827,
+      "date": "2026-10-07",
+      "pitcher": "Walker Buehler",
+      "imageOutcome": "no_action_photo_no_highlight",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849827/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:57.011Z",
+        "responseFile": "outputs/off15/responses/0603ad01d6c94a9c29273153af9f78e4071227b4dcb1d605eff163f438d84a8f.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Garrett Mitchell's RBI single"
+      },
+      "hasHighlight": false
+    },
+    {
+      "startId": "2026-10-07-nyy-tb-608331",
+      "gamePk": 849838,
+      "date": "2026-10-07",
+      "pitcher": "Max Fried",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/kbj7hz7j2o7amembyiuo.jpg",
+        "alt": "Max Fried strikes out Junior Caminero",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/junior-caminero-strikes-out-swinging-6zafgf"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849838/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:59.303Z",
+        "responseFile": "outputs/off15/responses/1096fc1abd856eae3d7ff89c3bd384dd3b3146d6f423aa21b9a2de002a7a3f4c.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-07-tb-nyy-607259",
+      "gamePk": 849838,
+      "date": "2026-10-07",
+      "pitcher": "Nick Martinez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/dm2z3vwmjbrg2rtkt0px.jpg",
+        "alt": "Nick Martinez ends the 1st inning with a K",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/luis-garcia-jr-strikes-out-swinging-byrosq"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849838/content",
+        "status": 200,
+        "at": "2026-11-04T01:37:59.303Z",
+        "responseFile": "outputs/off15/responses/1096fc1abd856eae3d7ff89c3bd384dd3b3146d6f423aa21b9a2de002a7a3f4c.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-08-cle-cws-800048",
+      "gamePk": 849832,
+      "date": "2026-10-08",
+      "pitcher": "Parker Messick",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ubuechfafmjh9zyzv8tf.jpg",
+        "alt": "Parker Messick strikes out Braden Montgomery",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/braden-montgomery-strikes-out-swinging-x7x5pj"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849832/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:00.044Z",
+        "responseFile": "outputs/off15/responses/37e5698511fda821f651152aca2341b395993b2aa3140d56d68120a070435ecb.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-08-cws-cle-696146",
+      "gamePk": 849832,
+      "date": "2026-10-08",
+      "pitcher": "Hagen Smith",
+      "imageOutcome": "center_cropped_video_thumbnail_fallback",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849832/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:00.044Z",
+        "responseFile": "outputs/off15/responses/37e5698511fda821f651152aca2341b395993b2aa3140d56d68120a070435ecb.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Miguel Vargas' solo home run"
+      },
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-10-cle-cws-668909",
+      "gamePk": 849831,
+      "date": "2026-10-10",
+      "pitcher": "Gavin Williams",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/yclucizyn4bajwtcsxfa.jpg",
+        "alt": "Gavin Williams fans three in the 2nd inning",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/gavin-williams-fans-three-in-the-2nd-inning"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849831/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:05.322Z",
+        "responseFile": "outputs/off15/responses/dceec00c7a657cc96eeb120576d0dfa45684b51ca1ecf9668d2748a2b6d70bb6.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-10-cws-cle-680732",
+      "gamePk": 849831,
+      "date": "2026-10-10",
+      "pitcher": "Sean Burke",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/y3tksqyw2ttowd80furo.jpg",
+        "alt": "Sean Burke fans Travis Bazzana",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/travis-bazzana-strikes-out-swinging-f00dbz"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849831/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:05.322Z",
+        "responseFile": "outputs/off15/responses/dceec00c7a657cc96eeb120576d0dfa45684b51ca1ecf9668d2748a2b6d70bb6.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-11-lad-mil-669373",
+      "gamePk": 849809,
+      "date": "2026-10-11",
+      "pitcher": "Tarik Skubal",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/e70chwigy8sjfjp9vgqe.jpg",
+        "alt": "Tarik Skubal strikes out Jackson Chourio",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/tarik-skubal-swinging-strike-to-jackson-chourio-4yrtdc"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849809/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:06.033Z",
+        "responseFile": "outputs/off15/responses/af290515d33395c474170956fec880cf0ba4e6a869e68715941c7e84350fafc3.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-11-mil-lad-694819",
+      "gamePk": 849809,
+      "date": "2026-10-11",
+      "pitcher": "Jacob Misiorowski",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qktcif3xljdugtcysh74.jpg",
+        "alt": "Jacob Misiorowski strikes out Kyle Tucker",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/kyle-tucker-strikes-out-swinging-wridus"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849809/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:06.033Z",
+        "responseFile": "outputs/off15/responses/af290515d33395c474170956fec880cf0ba4e6a869e68715941c7e84350fafc3.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-12-cle-tb-656492",
+      "gamePk": 849820,
+      "date": "2026-10-12",
+      "pitcher": "Foster Griffin",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j1cdqy3i9guzhbyqbjkq.jpg",
+        "alt": "Foster Griffin K's Taylor Walls to escape the jam",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/taylor-walls-strikes-out-swinging-uvmzfu"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849820/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:06.779Z",
+        "responseFile": "outputs/off15/responses/27e95fdddcbb6bc7d38b3a73d10d497152d685c38e3eacd70015f14dd477d5a0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-12-tb-cle-656876",
+      "gamePk": 849820,
+      "date": "2026-10-12",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "center_cropped_video_thumbnail_fallback",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849820/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:06.779Z",
+        "responseFile": "outputs/off15/responses/27e95fdddcbb6bc7d38b3a73d10d497152d685c38e3eacd70015f14dd477d5a0.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Drew Rasmussen strikes out seven in ALCS Game 1"
+      },
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-12-lad-mil-808967",
+      "gamePk": 849812,
+      "date": "2026-10-12",
+      "pitcher": "Yoshinobu Yamamoto",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jn04htafwckfkj6h79dm.jpg",
+        "alt": "Yoshinobu Yamamoto fans Jackson Chourio ",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jackson-chourio-strikes-out-swinging-v1g7ee"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849812/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:07.530Z",
+        "responseFile": "outputs/off15/responses/ecd2b00df24874665dc8297faae612f4b996af53daea6037501e018b4f76c25f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-12-mil-lad-701656",
+      "gamePk": 849812,
+      "date": "2026-10-12",
+      "pitcher": "Logan Henderson",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/lesha516p6akpz6w0gcd.jpg",
+        "alt": "Logan Henderson K's Shohei Ohtani",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/logan-henderson-swinging-strike-to-shohei-ohtani-eh0kdn"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849812/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:07.530Z",
+        "responseFile": "outputs/off15/responses/ecd2b00df24874665dc8297faae612f4b996af53daea6037501e018b4f76c25f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-13-cle-tb-800048",
+      "gamePk": 849813,
+      "date": "2026-10-13",
+      "pitcher": "Parker Messick",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/qy5ub9oqqwu3awtjet5k.jpg",
+        "alt": "Parker Messick strikes out Victor Mesa Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/parker-messick-strikes-out-victor-mesa-jr"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849813/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:09.919Z",
+        "responseFile": "outputs/off15/responses/646c9e6a2663dea8104db3bd39591a102497dfcf19dc3bfe7d58bfb357588a0f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-13-tb-cle-642547",
+      "gamePk": 849813,
+      "date": "2026-10-13",
+      "pitcher": "Freddy Peralta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/a4eoqbyabbhgx0swtymv.jpg",
+        "alt": "Peralta strikes out Rocchio to escape jam",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/brayan-rocchio-strikes-out-swinging-w1p4wt"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849813/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:09.919Z",
+        "responseFile": "outputs/off15/responses/646c9e6a2663dea8104db3bd39591a102497dfcf19dc3bfe7d58bfb357588a0f.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-14-lad-mil-605483",
+      "gamePk": 849811,
+      "date": "2026-10-14",
+      "pitcher": "Blake Snell",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/uogwfwggj76hpk5fqhx9.jpg",
+        "alt": "Blake Snell escapes early jam with strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/joey-ortiz-strikes-out-swinging-q0ks6n"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849811/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:10.654Z",
+        "responseFile": "outputs/off15/responses/5c6ebd911ab7d84178ef495d6ddbcf4ca504f022fa97a656837f09ef1e02a917.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-14-mil-lad-688107",
+      "gamePk": 849811,
+      "date": "2026-10-14",
+      "pitcher": "Robert Gasser",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/sjgdixtsin4rdzsmqtfz.jpg",
+        "alt": "Robert Gasser strikes out Will Smith",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/robert-gasser-strikes-out-will-smith"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849811/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:10.654Z",
+        "responseFile": "outputs/off15/responses/5c6ebd911ab7d84178ef495d6ddbcf4ca504f022fa97a656837f09ef1e02a917.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-15-cle-tb-668909",
+      "gamePk": 849818,
+      "date": "2026-10-15",
+      "pitcher": "Gavin Williams",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/ensu8s13wewyi4dmgvf7.jpg",
+        "alt": "Gavin Williams K's Taylor Walls for his 9th strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/taylor-walls-strikes-out-swinging-twpvdd"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849818/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:11.288Z",
+        "responseFile": "outputs/off15/responses/f23ffc035bd3d5a3d024b5eb9445681ee2092ab8a4f19ff675e107c263e18ced.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-15-tb-cle-643377",
+      "gamePk": 849818,
+      "date": "2026-10-15",
+      "pitcher": "Griffin Jax",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/jkzylur7qdxl5rcfuzsq.jpg",
+        "alt": "Griffin Jax freezes Steven Kwan for the strikeout",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/steven-kwan-called-out-on-strikes-kfej5o"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849818/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:11.288Z",
+        "responseFile": "outputs/off15/responses/f23ffc035bd3d5a3d024b5eb9445681ee2092ab8a4f19ff675e107c263e18ced.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-15-lad-mil-607192",
+      "gamePk": 849810,
+      "date": "2026-10-15",
+      "pitcher": "Tyler Glasnow",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nrbyxwu2p2tv0wa2lyzh.jpg",
+        "alt": "Tyler Glasnow strikes out six in Game 4",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/tyler-glasnow-strikes-out-six-in-game-4"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849810/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:12.247Z",
+        "responseFile": "outputs/off15/responses/29494c072494cae031f08eefcb83fb0cd0321b1def50f3483e71e006d073ec86.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-15-mil-lad-675660",
+      "gamePk": 849810,
+      "date": "2026-10-15",
+      "pitcher": "Shane Drohan",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/faet6fcg1m5mqcp8xucf.jpg",
+        "alt": "Shane Drohan strikes out Shohei Ohtani",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/shohei-ohtani-strikes-out-swinging-xhulru"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849810/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:12.247Z",
+        "responseFile": "outputs/off15/responses/29494c072494cae031f08eefcb83fb0cd0321b1def50f3483e71e006d073ec86.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-17-cle-tb-542888",
+      "gamePk": 849816,
+      "date": "2026-10-17",
+      "pitcher": "Shawn Armstrong",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/o5diwf1mrabibbbxa4zq.jpg",
+        "alt": "Shawn Armstrong's first strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/yandy-diaz-called-out-on-strikes-4wneoj"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849816/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:12.833Z",
+        "responseFile": "outputs/off15/responses/0d9c9bade218c94f1410ce6e8d306402a2aaab24a34d316bbf9dc2ad0fdfddf1.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-17-tb-cle-607259",
+      "gamePk": 849816,
+      "date": "2026-10-17",
+      "pitcher": "Nick Martinez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/d11rypouraq2eftfmhal.jpg",
+        "alt": "Nick Martinez fans Travis Bazzana",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/nick-martinez-swinging-strike-to-travis-bazzana-fqpddn"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849816/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:12.833Z",
+        "responseFile": "outputs/off15/responses/0d9c9bade218c94f1410ce6e8d306402a2aaab24a34d316bbf9dc2ad0fdfddf1.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-18-cle-tb-800048",
+      "gamePk": 849817,
+      "date": "2026-10-18",
+      "pitcher": "Parker Messick",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/mxlryt4qtaqiyfv3c891.jpg",
+        "alt": "Parker Messick K's Junior Caminero in 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/parker-messick-swinging-strike-to-junior-caminero-ajmkly"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849817/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:13.444Z",
+        "responseFile": "outputs/off15/responses/90a076d385afde8c5ed749b0c33291abb9ff8801b490a16e46f226a6433df897.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-18-tb-cle-656876",
+      "gamePk": 849817,
+      "date": "2026-10-18",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/nk5gpztaynq4z3a27sqe.jpg",
+        "alt": "Drew Rasmussen strikes out Jo Adell to end 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jo-adell-strikes-out-swinging-qsa2op"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849817/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:13.444Z",
+        "responseFile": "outputs/off15/responses/90a076d385afde8c5ed749b0c33291abb9ff8801b490a16e46f226a6433df897.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-19-cle-tb-542888",
+      "gamePk": 849815,
+      "date": "2026-10-19",
+      "pitcher": "Shawn Armstrong",
+      "imageOutcome": "no_action_photo_no_highlight",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849815/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:15.942Z",
+        "responseFile": "outputs/off15/responses/c8668bcd235d72867d7868d68a5d8d37dfd444e78936fbf913531e3d6b304cf2.json"
+      },
+      "diagnostic": {
+        "reason": "No matching pitching action candidate in exact-game content.",
+        "candidateTitle": null
+      },
+      "hasHighlight": false
+    },
+    {
+      "startId": "2026-10-19-tb-cle-642547",
+      "gamePk": 849815,
+      "date": "2026-10-19",
+      "pitcher": "Freddy Peralta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/pfay8sjowjnbjuhagkpr.jpg",
+        "alt": "Freddy Peralta K's Nathaniel Lowe",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/freddy-peralta-k-s-nathaniel-lowe"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849815/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:15.942Z",
+        "responseFile": "outputs/off15/responses/c8668bcd235d72867d7868d68a5d8d37dfd444e78936fbf913531e3d6b304cf2.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-23-mil-tb-694819",
+      "gamePk": 849805,
+      "date": "2026-10-23",
+      "pitcher": "Jacob Misiorowski",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/c2wxhfskn7zkv2dwnltc.jpg",
+        "alt": "Jacob Misiorowski strikes out Victor Mesa Jr.",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/victor-mesa-jr-strikes-out-swinging-dg6y2i"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849805/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:16.622Z",
+        "responseFile": "outputs/off15/responses/a34371241563d1a2495d66840e2dbcfb349cb10d928e2dedccdfdbb03a5722ad.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-23-tb-mil-607259",
+      "gamePk": 849805,
+      "date": "2026-10-23",
+      "pitcher": "Nick Martinez",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/b5evm0kxikna5b2abpom.jpg",
+        "alt": "Nick Martinez fans Brice Turang",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/nick-martinez-swinging-strike-to-brice-turang-brmhdk"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849805/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:16.622Z",
+        "responseFile": "outputs/off15/responses/a34371241563d1a2495d66840e2dbcfb349cb10d928e2dedccdfdbb03a5722ad.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-24-mil-tb-701656",
+      "gamePk": 849802,
+      "date": "2026-10-24",
+      "pitcher": "Logan Henderson",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/hnsalhhpmjlupayirk3n.jpg",
+        "alt": "Logan Henderson fans Jonathan Aranda",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jonathan-aranda-strikes-out-swinging-e0j9qv"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849802/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:17.476Z",
+        "responseFile": "outputs/off15/responses/d976b16f223405cad7f3841353bdcbd58d695a6a58451d176e7cf320972013c8.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-24-tb-mil-656876",
+      "gamePk": 849802,
+      "date": "2026-10-24",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "center_cropped_video_thumbnail_fallback",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849802/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:17.476Z",
+        "responseFile": "outputs/off15/responses/d976b16f223405cad7f3841353bdcbd58d695a6a58451d176e7cf320972013c8.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Drew Rasmussen fans four in World Series Game 2"
+      },
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-26-mil-tb-688107",
+      "gamePk": 849804,
+      "date": "2026-10-26",
+      "pitcher": "Robert Gasser",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/wdd2wqaoo7w2ygwl4kmj.jpg",
+        "alt": "Robert Gasser fans Taylor Walls to end the 3rd",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/taylor-walls-strikes-out-on-a-foul-tip-k0knnn"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849804/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:18.202Z",
+        "responseFile": "outputs/off15/responses/5013496cf17226f4dd61efc70f081656f4c8762964e87f19c3330078c3bdca97.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-26-tb-mil-642547",
+      "gamePk": 849804,
+      "date": "2026-10-26",
+      "pitcher": "Freddy Peralta",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/eimjb0wyghoqpqqis1sc.jpg",
+        "alt": "Freddy Peralta strikes out Jake Bauers",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jake-bauers-strikes-out-on-a-foul-tip-6ibniv"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849804/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:18.202Z",
+        "responseFile": "outputs/off15/responses/5013496cf17226f4dd61efc70f081656f4c8762964e87f19c3330078c3bdca97.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-27-mil-tb-669160",
+      "gamePk": 849803,
+      "date": "2026-10-27",
+      "pitcher": "Dustin May",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/afkzdruvrgvwoa67kk35.jpg",
+        "alt": "Dustin May strikes out Junior Caminero to end the 1st",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/junior-caminero-called-out-on-strikes-8vowje"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849803/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:18.984Z",
+        "responseFile": "outputs/off15/responses/ff772575adbe4eeffdf501cc4395765b4ab0d6e84816ae7daf474e13cc47690a.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-27-tb-mil-643377",
+      "gamePk": 849803,
+      "date": "2026-10-27",
+      "pitcher": "Griffin Jax",
+      "imageOutcome": "center_cropped_video_thumbnail_fallback",
+      "image": null,
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849803/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:18.984Z",
+        "responseFile": "outputs/off15/responses/ff772575adbe4eeffdf501cc4395765b4ab0d6e84816ae7daf474e13cc47690a.json"
+      },
+      "diagnostic": {
+        "reason": "Matching content exists, but no image passed the shared action-photo policy (identity, action content, graphics exclusion).",
+        "candidateTitle": "Griffin Jax strikes out six during Game 4 start"
+      },
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-28-mil-tb-694819",
+      "gamePk": 849799,
+      "date": "2026-10-28",
+      "pitcher": "Jacob Misiorowski",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/xzn7n5o5xbkzkxvsjisc.jpg",
+        "alt": "Jacob Misiorowski fans Jonny DeLuca ",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jacob-misiorowski-fans-jonny-deluca"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849799/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:19.771Z",
+        "responseFile": "outputs/off15/responses/4690e913797e23835f3605599d4fa33c91686d0749d8daf407b00f68618e78c0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    },
+    {
+      "startId": "2026-10-28-tb-mil-656876",
+      "gamePk": 849799,
+      "date": "2026-10-28",
+      "pitcher": "Drew Rasmussen",
+      "imageOutcome": "action_photo",
+      "image": {
+        "source": "action",
+        "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/e5m3xu7kfi8b5lz5x3uu.jpg",
+        "alt": "Drew Rasmussen's first strikeout of the game",
+        "objectPosition": "50% 50%",
+        "mobileObjectPosition": "50% 50%",
+        "focalPoint": {
+          "x": 50,
+          "y": 50
+        },
+        "playUrl": "https://www.mlb.com/video/jackson-chourio-called-out-on-strikes-catcher-liam-hicks-to-first-baseman"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849799/content",
+        "status": 200,
+        "at": "2026-11-04T01:39:19.771Z",
+        "responseFile": "outputs/off15/responses/4690e913797e23835f3605599d4fa33c91686d0749d8daf407b00f68618e78c0.json"
+      },
+      "diagnostic": null,
+      "hasHighlight": true
+    }
+  ],
+  "relinks": [
+    {
+      "startId": "2026-08-27-atl-lad-519242",
+      "date": "2026-08-27",
+      "pitcher": "Chris Sale",
+      "gamePk": 824879,
+      "before": {
+        "videoId": "AW4BsST4Ldk",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/AW4BsST4Ldk?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/AW4BsST4Ldk/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=AW4BsST4Ldk"
+      },
+      "after": {
+        "videoId": "chris-sale-notches-11-k-s-in-shut-out-win",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/27/e1530147-2a8a6dde-d30150e2-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/mqb1zfgb6s5ajrk0flhy.jpg",
+        "watchUrl": "https://www.mlb.com/video/chris-sale-notches-11-k-s-in-shut-out-win"
+      },
+      "title": "Chris Sale notches 11 K's in complete-game shutout ",
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/824879/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:32.758Z",
+        "responseFile": "outputs/off15/responses/4e02f5f6d31814b91f133c096a9b83b3c36c2acb916267631a469e2939a86482.json"
+      },
+      "outcome": "standard_mlb_content_selected"
+    },
+    {
+      "startId": "2026-05-12-pit-col-694973",
+      "date": "2026-05-12",
+      "pitcher": "Paul Skenes",
+      "gamePk": 823385,
+      "before": {
+        "videoId": "QK3cuf7yzIg",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/QK3cuf7yzIg?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/QK3cuf7yzIg/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=QK3cuf7yzIg"
+      },
+      "after": {
+        "videoId": "paul-skenes-strikes-out-10-in-dominant-start",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/12/529b5ed1-ce7d23be-59d7b750-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/fwrdqshkyt38vsno1tud.jpg",
+        "watchUrl": "https://www.mlb.com/video/paul-skenes-strikes-out-10-in-dominant-start"
+      },
+      "title": "Paul Skenes strikes out 10 in DOMINANT start",
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/823385/content",
+        "status": 200,
+        "at": "2026-11-04T01:05:39.718Z",
+        "responseFile": "outputs/off15/responses/acf894039e9f17250f59c9543c5f127b230166bf240b6f8c8677935d9db580b9.json"
+      },
+      "outcome": "standard_mlb_content_selected"
+    },
+    {
+      "startId": "2026-10-03-tb-nyy-656876",
+      "date": "2026-10-03",
+      "pitcher": "Drew Rasmussen",
+      "gamePk": 849835,
+      "before": {
+        "videoId": "4YAZi_1UCfo",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/4YAZi_1UCfo?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/4YAZi_1UCfo/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=4YAZi_1UCfo"
+      },
+      "after": {
+        "videoId": "drew-rasmussen-fans-10-in-one-hit-gem",
+        "source": "mlb-game-content",
+        "isShort": false,
+        "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-10/03/c557b8b0-899b0ea0-d4bc16b2-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+        "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bjx1zc77wrfbinnxbhxt.jpg",
+        "watchUrl": "https://www.mlb.com/video/drew-rasmussen-fans-10-in-one-hit-gem"
+      },
+      "title": "Drew Rasmussen fans 10 in one-hit gem",
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849835/content",
+        "status": 200,
+        "at": "2026-11-04T01:06:24.414Z",
+        "responseFile": "outputs/off15/responses/271c8b0cacc9cd2fc31f37065c8e5975088d2726ac95d10993c752e6b5c0c968.json"
+      },
+      "outcome": "standard_mlb_content_selected"
+    },
+    {
+      "startId": "2026-10-08-cws-cle-696146",
+      "date": "2026-10-08",
+      "pitcher": "Hagen Smith",
+      "gamePk": 849832,
+      "before": {
+        "videoId": "jGuoOKlYcpc",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/jGuoOKlYcpc?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/jGuoOKlYcpc/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=jGuoOKlYcpc"
+      },
+      "after": {
+        "videoId": "jGuoOKlYcpc",
+        "source": "youtube-search",
+        "isShort": true,
+        "embedUrl": "https://www.youtube-nocookie.com/embed/jGuoOKlYcpc?rel=0",
+        "thumbnailUrl": "https://img.youtube.com/vi/jGuoOKlYcpc/maxresdefault.jpg",
+        "watchUrl": "https://www.youtube.com/watch?v=jGuoOKlYcpc"
+      },
+      "lookup": {
+        "url": "https://statsapi.mlb.com/api/v1/game/849832/content",
+        "status": 200,
+        "at": "2026-11-04T01:38:00.044Z",
+        "responseFile": "outputs/off15/responses/37e5698511fda821f651152aca2341b395993b2aa3140d56d68120a070435ecb.json"
+      },
+      "youtubeResult": {
+        "videoId": "jGuoOKlYcpc",
+        "title": "Hagen Smith got a little tripped up on his way to covering first base 😅",
+        "description": "Hagen Smith got a little tripped up on his way to covering first base Don't forget to subscribe! https://www.youtube.com/mlb ...",
+        "publishedAt": "2026-10-08T19:30:59Z",
+        "hoursFromStartDateNoon": 7.516388888888889,
+        "lastNameInTitle": true,
+        "strikeoutInTitle": false,
+        "teamInTitle": false,
+        "durationSeconds": 8
+      },
+      "youtubeLookups": [
+        {
+          "url": "https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=MLB",
+          "status": 200,
+          "at": "2026-11-04T01:05:24.222Z",
+          "responseFile": "outputs/off15/responses/4ae52c2caa5dc40902f2a06f1c21fa34889ae046478754a931f8ca7e3923b648.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Hagen+Smith+strikeouts&publishedAfter=2026-10-07T18%3A00%3A00.000Z&publishedBefore=2026-10-09T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:38:00.783Z",
+          "responseFile": "outputs/off15/responses/811cafa19c5c64875108302130517653fc21d586b212923035992702528f9b67.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=UCoLrcjPV5PbUrUyXq5mjc_A&q=Hagen+Smith+CWS+highlight&publishedAfter=2026-10-07T18%3A00%3A00.000Z&publishedBefore=2026-10-09T18%3A00%3A00.000Z&maxResults=5&order=relevance",
+          "status": 200,
+          "at": "2026-11-04T01:38:03.595Z",
+          "responseFile": "outputs/off15/responses/54a3e8e1d6a25ca19746f61add200abc574a7299d2d91a8992dbc5a2e65e16f6.json"
+        },
+        {
+          "url": "https://www.googleapis.com/youtube/v3/videos?part=contentDetails%2Csnippet%2Cstatus&id=jGuoOKlYcpc",
+          "status": 200,
+          "at": "2026-11-04T01:38:04.222Z",
+          "responseFile": "outputs/off15/responses/4afad3a16d79298eae51527ec75b5f35f66572a9979c4e6f375f20761eb867f9.json"
+        }
+      ],
+      "outcome": "short_only_in_shared_official_lookup"
+    }
+  ]
+}

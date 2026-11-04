@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Headshot } from "@/components/headshot";
 import { TopStartRow } from "@/components/ranked-starts-recap";
@@ -21,12 +22,15 @@ export function SeasonReviewHeader({ review }: { review: FrozenSeasonReview }) {
 export function SeasonReviewHero({ review, landing = false }: { review: FrozenSeasonReview; landing?: boolean }) {
   const start = review.startOfYear;
   return <section className="my-8" data-season-review-hero>
+    <div className={landing ? "relative min-h-28 pr-28 sm:min-h-40 sm:pr-64" : undefined} data-review-heading>
+    {landing ? <div className="absolute right-0 top-0 h-24 w-24 overflow-hidden sm:h-40 sm:w-56" data-review-baseball><Image src="/images/header-baseball-bg-desktop.jpg" alt="" fill priority sizes="(min-width: 640px) 224px, 96px" className="object-cover object-right" /></div> : null}
     <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-300">{review.year} season complete</p>
     <h1 className="mt-3 font-serif text-4xl font-black leading-tight sm:text-6xl">{landing ? <Link href={`/${review.year}`}>{`${review.year} Season in Review`}</Link> : `${review.year} Season in Review`}</h1>
+    </div>
     <p className="my-5 max-w-3xl text-base leading-7 text-zinc-300">{review.copy.intro.text}</p>
     <h2 className="mb-3 font-serif text-3xl font-bold">Start of the Year</h2>
     <p className="mb-5 max-w-3xl text-sm leading-6 text-zinc-400">{review.copy.start.text}</p>
-    <TopPerformerCard href={startRecapPath(start)} pitcherHref={pitcherHref(start.pitcher)} headingLabel={`Start of the Year / ${review.year}`} leagueAverage={Number(review.leagueMean.toFixed(1))} pitcherName={start.pitcher.name} team={start.pitcher.team} opponent={start.opponent} side={start.side} dateLabel={start.date} score={start.gameScorePlus} line={start.line} recap={review.frozenRecap.recap} rank={1} slateCount={review.count} image={media.image} fallbackPitcherId={start.pitcher.mlbId} priority highlight={review.highlight} status="archived" />
+    <TopPerformerCard href={startRecapPath(start)} pitcherHref={pitcherHref(start.pitcher)} headingLabel={`Start of the Year / ${review.year}`} leagueAverage={Number(review.leagueMean.toFixed(1))} pitcherName={start.pitcher.name} team={start.pitcher.team} opponent={start.opponent} side={start.side} dateLabel={start.date} score={start.gameScorePlus} line={start.line} recap={review.frozenRecap.recap} rank={1} slateCount={review.count} image={media.image} fallbackPitcherId={start.pitcher.mlbId} priority highlight={media.highlights[start.id] ?? review.highlight} status="archived" />
     <Link href={startRecapPath(start)} className="mt-4 inline-flex min-h-11 items-center text-amber-300 underline">Full start breakdown</Link>
     {start.narrativeNotables?.noHitDepth ? <p>{start.narrativeNotables.noHitDepth.innings} hitless innings.</p> : null}
     {landing ? <Link href={`/${review.year}`} className="ml-6 inline-flex min-h-11 items-center text-amber-300 underline">Explore all season awards</Link> : null}

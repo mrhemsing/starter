@@ -832,6 +832,7 @@ export type StartDetail = StartSummary & {
 };
 
 export type FeaturedStartHighlight = {
+  coverImage?: { imageUrl: string; objectPosition?: string; mobileObjectPosition?: string } | null;
   videoId: string;
   source: "manual" | "stored" | "youtube-search" | "mlb-game-content";
   isShort: boolean;

@@ -9,6 +9,7 @@ const media=await json('src/data/season-review-media-2026.json');
 const records=await json('data/season-reviews/2026-canonical.json');
 const log=await json('data/season-reviews/2026-highlight-backfill-log.json');
 const summary=await json('data/season-reviews/2026-highlight-backfill-summary.json');
+const coverLog=await json('data/season-reviews/2026-highlight-cover-log.json');
 const targets=featuredHighlightTargets(review,records);
 assertBackfillCoverage(targets,log.outcomes,review.topStarts);
 assert.throws(()=>assertBackfillCoverage(targets,log.outcomes.slice(1),review.topStarts),/Unqueried/);
@@ -23,7 +24,7 @@ const {highlights,...nonHighlight}=media;
 assert.equal(createHash('sha256').update(JSON.stringify(nonHighlight)).digest('hex'),'89cdb8a56193ae48f4b01ea8b28d254b3d8a594a4fd378e7c842c6d9c1debff8','Frozen hero/image metadata');
 for(const row of log.outcomes) {
  const asset=highlights[row.startId];assert(asset,'All discovered references published');
- assert.equal(asset.videoId,row.selected.videoId);
+ assert.equal(asset.videoId,(coverLog.relinks.find(r=>r.startId===row.startId)?.after??row.selected).videoId);
  if(asset.source==='mlb-game-content') {
   assert.match(asset.embedUrl,/^https:\/\/(mlb-cuts-diamond\.mlb\.com\/FORGE\/.+|bdata-producedclips\.mlb\.com\/[a-f0-9-]+)\.mp4$/);
   assert.equal(new URL(asset.thumbnailUrl).hostname,'img.mlbstatic.com');
@@ -33,7 +34,7 @@ for(const row of log.outcomes) {
 const {resolveFeaturedStartHighlight}=loadProjectTs('src/lib/data/featured-highlight-service.ts');
 const original=globalThis.fetch;
 globalThis.fetch=()=>{throw new Error('Published detail lookup must not rediscover');};
-try { for(const start of targets) assert.deepEqual(await resolveFeaturedStartHighlight(start),highlights[start.id]); } finally {globalThis.fetch=original;}
+try { for(const start of targets) { const {coverImage,...asset}=await resolveFeaturedStartHighlight(start); assert.deepEqual(asset,highlights[start.id]); } } finally {globalThis.fetch=original;}
 console.log(`PASS ${targets.length} queried featured starts; ${review.topStarts.filter(s=>highlights[s.id]).length}/25 highlights; reject unqueried, wrong game, HTTP failure and <20 coverage; frozen bytes/hero unchanged; detail resolver reuses all stored references without network`);
 
 const {resolveYouTubeHighlight,resolveMlbChannelId,resolveMlbGameContentHighlight}=loadProjectTs('src/lib/data/highlight-discovery.ts');

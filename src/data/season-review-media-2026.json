@@ -49,12 +49,12 @@
       "watchUrl": "https://www.youtube.com/watch?v=HZ3S7-D0zR8"
     },
     "2026-08-27-atl-lad-519242": {
-      "videoId": "AW4BsST4Ldk",
-      "source": "youtube-search",
-      "isShort": true,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/AW4BsST4Ldk?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/AW4BsST4Ldk/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=AW4BsST4Ldk"
+      "videoId": "chris-sale-notches-11-k-s-in-shut-out-win",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/27/e1530147-2a8a6dde-d30150e2-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/mqb1zfgb6s5ajrk0flhy.jpg",
+      "watchUrl": "https://www.mlb.com/video/chris-sale-notches-11-k-s-in-shut-out-win"
     },
     "2026-05-22-cle-phi-668909": {
       "videoId": "FnGWKhcfPGg",
@@ -65,12 +65,12 @@
       "watchUrl": "https://www.youtube.com/watch?v=FnGWKhcfPGg"
     },
     "2026-05-12-pit-col-694973": {
-      "videoId": "QK3cuf7yzIg",
-      "source": "youtube-search",
-      "isShort": true,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/QK3cuf7yzIg?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/QK3cuf7yzIg/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=QK3cuf7yzIg"
+      "videoId": "paul-skenes-strikes-out-10-in-dominant-start",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-05/12/529b5ed1-ce7d23be-59d7b750-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/fwrdqshkyt38vsno1tud.jpg",
+      "watchUrl": "https://www.mlb.com/video/paul-skenes-strikes-out-10-in-dominant-start"
     },
     "2026-04-27-bos-tor-624133": {
       "videoId": "t_aKT_C0VLk",
@@ -193,12 +193,12 @@
       "watchUrl": "https://www.mlb.com/video/drew-rasmussen-shines-over-seven-scoreless-innings"
     },
     "2026-10-03-tb-nyy-656876": {
-      "videoId": "4YAZi_1UCfo",
-      "source": "youtube-search",
-      "isShort": true,
-      "embedUrl": "https://www.youtube-nocookie.com/embed/4YAZi_1UCfo?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/4YAZi_1UCfo/maxresdefault.jpg",
-      "watchUrl": "https://www.youtube.com/watch?v=4YAZi_1UCfo"
+      "videoId": "drew-rasmussen-fans-10-in-one-hit-gem",
+      "source": "mlb-game-content",
+      "isShort": false,
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-10/03/c557b8b0-899b0ea0-d4bc16b2-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/bjx1zc77wrfbinnxbhxt.jpg",
+      "watchUrl": "https://www.mlb.com/video/drew-rasmussen-fans-10-in-one-hit-gem"
     },
     "2026-09-01-cle-tor-668909": {
       "videoId": "0ILI8wVlOxI",

@@ -5190,7 +5190,18 @@
   },
   "2026-04-01-mia-cws-645261": {
     "gamePk": 823889,
-    "image": null,
+    "image": {
+      "source": "action",
+      "imageUrl": "https://img.mlbstatic.com/mlb-images/image/upload/ar_16:9,g_auto,q_auto:best,w_2608,c_fill,f_jpg/mlb/j3d2hwqanzqi3cutawkz.jpg",
+      "alt": "Sandy Alcantara completes shutout",
+      "objectPosition": "50% 50%",
+      "mobileObjectPosition": "50% 50%",
+      "focalPoint": {
+        "x": 50,
+        "y": 50
+      },
+      "playUrl": "https://www.mlb.com/video/sandy-alcantara-in-play-out-s-to-colson-montgomery"
+    },
     "highlight": {
       "videoId": "sandy-alcantara-s-complete-game-shutout",
       "source": "mlb-game-content",
@@ -75570,12 +75581,12 @@
       "playUrl": "https://www.mlb.com/video/alex-call-strikes-out-swinging-5c62e6"
     },
     "highlight": {
-      "videoId": "alex-call-strikes-out-swinging-5c62e6",
+      "videoId": "chris-sale-notches-11-k-s-in-shut-out-win",
       "source": "mlb-game-content",
       "isShort": false,
-      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/27/0b6f167b-d21b4661-5487a544-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
-      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/ek2yddttttkzjp3o4hfb.jpg",
-      "watchUrl": "https://www.mlb.com/video/alex-call-strikes-out-swinging-5c62e6"
+      "embedUrl": "https://mlb-cuts-diamond.mlb.com/FORGE/2026/2026-08/27/e1530147-2a8a6dde-d30150e2-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+      "thumbnailUrl": "https://img.mlbstatic.com/mlb-images/image/upload/w_1920,h_1080,f_jpg,c_fill,g_auto/mlb/mqb1zfgb6s5ajrk0flhy.jpg",
+      "watchUrl": "https://www.mlb.com/video/chris-sale-notches-11-k-s-in-shut-out-win"
     }
   },
   "2026-08-27-lad-atl-808967": {
