@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {loadProjectTs} from './lib/load-project-ts.mjs';
+const hash=s=>createHash('sha256').update(s).digest('hex');
+const dir='outputs/p07/reconciliation';
+const full=JSON.parse(readFileSync(`${dir}/canonical-after.json`));
+const before=JSON.parse(readFileSync(`${dir}/canonical-before.json`));
+const oldIds=new Set(before.map(r=>r.id));
+const added=full.filter(r=>!oldIds.has(r.id));assert.equal(added.length,531);
+const sourcePath='data/season-reviews/2026-canonical.json',reviewPath='src/data/season-review-2026.json';
+const oldSourceBytes=readFileSync(sourcePath,'utf8'),oldReviewBytes=readFileSync(reviewPath,'utf8');
+const oldSource=JSON.parse(oldSourceBytes),oldReview=JSON.parse(oldReviewBytes);
+assert.equal(oldSource.length,4425,'One-time correction: source must be original snapshot');
+const compact=added.map(({audit,contextSnapshot,gameScorePlusBreakdown,...row})=>({...row,canonicalSha256:hash(JSON.stringify({...row,audit,contextSnapshot,gameScorePlusBreakdown}))}));
+const source=[...oldSource,...compact];
+const {computeSeasonReview}=loadProjectTs('src/lib/season-review-metrics.ts');
+const {selectCanonicalStarts}=loadProjectTs('src/lib/canonical-start-selection.ts');
+const {reviewCopyPackets}=loadProjectTs('src/lib/season-review-copy.ts');
+const nextMetrics=JSON.parse(JSON.stringify(computeSeasonReview(source,oldReview.publishedAt)));
+const review={...oldReview,...nextMetrics,copy:{...oldReview.copy}};
+const oldPackets=reviewCopyPackets(oldReview);
+for(const packet of reviewCopyPackets(review)){
+ const prior=oldPackets.find(p=>p.key===packet.key);
+ if(prior.fallback!==packet.fallback)review.copy[packet.key]={text:packet.fallback,source:'template',trace:packet.trace};
+ else if(JSON.stringify(prior.trace)!==JSON.stringify(packet.trace))review.copy[packet.key]={...review.copy[packet.key],trace:packet.trace};
+}
+assert.deepEqual(review.startOfYear,oldReview.startOfYear);assert.deepEqual(review.frozenRecap,oldReview.frozenRecap);assert.deepEqual(review.highlight,oldReview.highlight);assert.deepEqual(review.hottestStreak,oldReview.hottestStreak);
+const recapsPath='src/data/season-recap-corrections-2026.json';
+const recaps=JSON.parse(readFileSync(recapsPath));
+const {canonicalRecordToFormStart}=loadProjectTs('src/lib/canonical-start-summary.ts');
+const {generateStartRecap}=loadProjectTs('src/lib/start-recap-copy.ts');
+for(const record of added){assert(!recaps[record.id]);const input={...canonicalRecordToFormStart(record,0),gameScorePlusBreakdown:record.gameScorePlusBreakdown,pitchEvents:[]};recaps[record.id]={summary:generateStartRecap(input),generatedAt:new Date().toISOString(),generator:'generateStartRecap',generationCount:1,inputSha256:hash(JSON.stringify(input)),gamePk:record.gamePk,source:'P0-7 newly settled official start'};}
+const sourceBytes=JSON.stringify(source);review.sourceSha256=hash(sourceBytes);
+const reviewBytes=JSON.stringify(review,null,2)+'\n';
+const receiptPath='data/season-reviews/2026-receipt.json',receipt=JSON.parse(readFileSync(receiptPath));
+const correction={at:new Date().toISOString(),reason:'P0-7 authorized additive settled starts and official-date alias read projection',oldReviewSha256:hash(oldReviewBytes),oldSourceSha256:hash(oldSourceBytes),newReviewSha256:hash(reviewBytes),newSourceSha256:hash(sourceBytes),existingFrozenUnchanged:4425,newFrozenStarts:531,retainedAliasRecords:18,distinctStarts:review.count,changedFields:Object.keys(review).filter(k=>JSON.stringify(review[k])!==JSON.stringify(oldReview[k]))};
+writeFileSync(sourcePath,sourceBytes);writeFileSync(reviewPath,reviewBytes);writeFileSync(recapsPath,JSON.stringify(recaps,null,2)+'\n');
+writeFileSync(receiptPath,JSON.stringify({...receipt,reviewSha256:hash(reviewBytes),sourceSha256:hash(sourceBytes),starts:review.count,storedRecords:source.length,corrections:[...(receipt.corrections??[]),correction]},null,2)+'\n');
+writeFileSync('outputs/p07/derived-correction-receipt.json',JSON.stringify(correction,null,2));
+writeFileSync(`${dir}/canonical-effective.json`,JSON.stringify(selectCanonicalStarts(full)));
+console.log(correction);

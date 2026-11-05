@@ -1,7 +1,7 @@
 import { MLB_BOARD_GAME_TYPES, isMlbBoardGameType } from "@/lib/mlb-game-types";
 import { demoProbableStarts } from "@/lib/data/demo";
 import { readRuntimeStates, writeRuntimeStates } from "@/lib/data/runtime-state-store";
-import { inningsFromIP } from "@/lib/innings";
+import { inningsFromIP, outsFromIP } from "@/lib/innings";
 import type { ArsenalPitchSummary, MlbCompletedPitchingLine, MlbLivePitchingLine, MlbPitcherSeasonProfile, MlbPitcherSplitGroup, MlbProbablePitcher, MlbProbablePitcherGame, MlbSchedule, MlbScheduleGame, MlbStartPitchDetails, MlbTeamHandednessSplitContext, MlbTeamQualityContext, PitchEvent, PitchResultKey, PitchTypeKey, PitcherAvailability, StartLine, StartNarrativeNotables } from "@/lib/types";
 
 const MLB_STATS_API_BASE = "https://statsapi.mlb.com/api/v1";
@@ -741,6 +741,42 @@ export async function fetchMlbPitcherSeasonProfile(pitcherMlbId: number, season:
   } catch {
     return null;
   }
+}
+
+export async function fetchMlbSeasonStartingPitcherIds(season: string, options: MlbScheduleClientOptions = {}) {
+  if (!options.fetchLive) throw new Error("Official starter registry requires approved live client");
+  const ids = new Set<number>();
+  for (let offset=0; ;offset+=1000) {
+    const params=new URLSearchParams({stats:'season',group:'pitching',season,gameType:MLB_BOARD_GAME_TYPES,playerPool:'ALL',limit:'1000',offset:String(offset)});
+    const response=await fetch(`${MLB_STATS_API_BASE}/stats?${params}`,cachedRequestInit(options,MLB_PLAYER_PROFILE_REVALIDATE_SECONDS));
+    if(!response.ok)throw new Error(`Official starter registry HTTP ${response.status}`);
+    const payload=await response.json() as {stats?:Array<{splits?:Array<{player?:{id?:number};stat?:{gamesStarted?:number}}>} >};
+    const splits=payload.stats?.flatMap(group=>group.splits??[])??[];
+    for(const split of splits)if(split.player?.id && (split.stat?.gamesStarted??0)>0)ids.add(split.player.id);
+    if(splits.length<1000)break;
+  }
+  if(!ids.size)throw new Error('Official starter registry empty');
+  return [...ids].sort((a,b)=>a-b);
+}
+
+export async function fetchMlbPitcherSeasonStartLedger(pitcherMlbId:number,season:string,options:MlbScheduleClientOptions={}) {
+  if(!options.fetchLive)throw new Error('Official start ledger requires approved live client');
+  const params=new URLSearchParams({stats:'gameLog',group:'pitching',season,gameType:MLB_BOARD_GAME_TYPES});
+  const response=await fetch(`${MLB_STATS_API_BASE}/people/${pitcherMlbId}/stats?${params}`,cachedRequestInit(options,MLB_PLAYER_PROFILE_REVALIDATE_SECONDS));
+  if(!response.ok)throw new Error(`Official start ledger HTTP ${response.status}`);
+  const payload=await response.json() as MlbPersonStatsApiResponse;
+  const splits=readStatsSplits(payload);
+  const seen=new Set<number>();
+  const starts:Array<{gamePk:number;date:string;outs:number}>=[];
+  let reliefOuts=0;
+  for(const split of splits){
+    if(!split.date||!split.game?.gamePk||!split.stat?.inningsPitched)continue;
+    if(seen.has(split.game.gamePk))continue;seen.add(split.game.gamePk);
+    const outs=outsFromIP(split.stat.inningsPitched);
+    if(split.stat.gamesStarted===1)starts.push({gamePk:split.game.gamePk,date:split.date,outs});else reliefOuts+=outs;
+  }
+  starts.sort((a,b)=>a.date.localeCompare(b.date)||a.gamePk-b.gamePk);
+  return {pitcherId:String(pitcherMlbId),season,starts,reliefOuts,source:'mlb-stats-api' as const};
 }
 
 export async function fetchMlbPitcherStartCompleteness(pitcherMlbIds: number[], season: string, asOfDate: string, options: MlbScheduleClientOptions = {}): Promise<Map<string, MlbPitcherStartCompleteness>> {
@@ -1796,7 +1832,7 @@ function readPitchResult(code: string | undefined): PitchResultKey | undefined {
   return undefined;
 }
 
-function summarizePitchEvents(pitchEvents: PitchEvent[]): ArsenalPitchSummary[] {
+export function summarizePitchEvents(pitchEvents: PitchEvent[]): ArsenalPitchSummary[] {
   const pitchTypes = Array.from(new Set(pitchEvents.map((pitch) => pitch.type)));
 
   return pitchTypes.map((type) => {

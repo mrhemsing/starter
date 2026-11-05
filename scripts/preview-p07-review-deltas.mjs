@@ -1,0 +1,14 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {loadProjectTs} from './lib/load-project-ts.mjs';
+const old=JSON.parse(readFileSync('src/data/season-review-2026.json'));
+const before=JSON.parse(readFileSync('data/season-reviews/2026-canonical.json'));
+const added=JSON.parse(readFileSync('outputs/p07/reconciliation/new-records.json'));
+const combined=[...before,...added];
+const {computeSeasonReview}=loadProjectTs('src/lib/season-review-metrics.ts');
+const next=computeSeasonReview(combined,old.publishedAt);
+writeFileSync('outputs/p07/reconciliation/review-next-metrics.json',JSON.stringify(next));
+writeFileSync('outputs/p07/reconciliation/canonical-proposed.json',JSON.stringify(combined));
+const changed=Object.keys(next).filter(k=>JSON.stringify(old[k])!==JSON.stringify(next[k]));
+const summary={changed,count:[old.count,next.count],leagueMean:[old.leagueMean,next.leagueMean],arms:[old.arms.map(a=>({name:a.name,mean:a.mean,starts:a.starts})),next.arms.map(a=>({name:a.name,mean:a.mean,starts:a.starts}))],startOfYear:[old.startOfYear.id,next.startOfYear.id],newTopStarts:next.topStarts.filter(s=>!old.topStarts.some(p=>p.id===s.id)).map(s=>({id:s.id,score:s.gameScorePlus})),removedTopStarts:old.topStarts.filter(s=>!next.topStarts.some(p=>p.id===s.id)).map(s=>s.id),bids:[old.noHitBids.length,next.noHitBids.length],gems:[old.gemLeaders.map(s=>({name:s.name,count:s.count})),next.gemLeaders.map(s=>({name:s.name,count:s.count}))],streak:[old.hottestStreak,next.hottestStreak],rotation:[old.rotation,next.rotation]};
+writeFileSync('outputs/p07/review-deltas.json',JSON.stringify(summary,null,2));
+console.log(JSON.stringify({...summary,rotation:undefined,streak:summary.streak.map(s=>({name:s.name,mean:s.mean,from:s.from,through:s.through}))},null,2));

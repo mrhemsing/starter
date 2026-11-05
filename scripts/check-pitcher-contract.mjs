@@ -215,7 +215,7 @@ assert(typeof pitcher.seasonLine.inningsPitched === "number" && pitcher.seasonLi
 assert(typeof pitcher.seasonLine.era === "number" && pitcher.seasonLine.era >= 0, "pitcher seasonLine missing era");
 assert(Number.isInteger(pitcher.seasonLine.strikeouts) && pitcher.seasonLine.strikeouts >= 0, "pitcher seasonLine missing strikeouts");
 assert(Number.isInteger(pitcher.seasonLine.walks) && pitcher.seasonLine.walks >= 0, "pitcher seasonLine missing walks");
-assert(["archive-gamefeed-line", "live-people-stats-line"].includes(pitcher.skillProfile?.source), "pitcher skillProfile must use archived line data or the cached MLB season-profile fallback");
+assert(["canonical-line", "archive-gamefeed-line", "live-people-stats-line"].includes(pitcher.skillProfile?.source), "pitcher skillProfile must use archived line data or the cached MLB season-profile fallback");
 assert(["available", "partial", "pending"].includes(pitcher.skillProfile?.statcastStatus), "pitcher skillProfile must expose pitch-event skill availability");
 assertSkillSnapshot(pitcher.skillProfile?.season, "season");
 assertSkillSnapshot(pitcher.skillProfile?.trailing30, "trailing30");
@@ -312,9 +312,9 @@ assert(pitcher.seasonLogSummary.lastStart.id === pitcher.starts[0].id, "pitcher 
 const bestReturnedStart = pitcher.starts.reduce((best, start) => (start.gameScorePlus > best.gameScorePlus ? start : best), pitcher.starts[0]);
 assert(pitcher.seasonLogSummary.bestStart.id === bestReturnedStart.id, "pitcher seasonLogSummary bestStart must be the highest GS+ returned start");
 
-assert(["fixture", "live-people-stats"].includes(pitcher.source?.identity), "pitcher identity source missing");
-assert(["fixture", "archive-gamefeed", "live-people-stats"].includes(pitcher.source?.seasonLine), "pitcher seasonLine source missing");
-assert(["fixture", "archive-gamefeed", "live-people-stats"].includes(pitcher.source?.startHistory), "pitcher startHistory source missing");
+assert(["canonical", "fixture", "live-people-stats"].includes(pitcher.source?.identity), "pitcher identity source missing");
+assert(["canonical", "fixture", "archive-gamefeed", "live-people-stats"].includes(pitcher.source?.seasonLine), "pitcher seasonLine source missing");
+assert(["canonical", "fixture", "archive-gamefeed", "live-people-stats"].includes(pitcher.source?.startHistory), "pitcher startHistory source missing");
 assert(["fixture", "archive-gamefeed", "live-gamefeed"].includes(pitcher.source?.arsenal), "pitcher arsenal source missing");
 assert(pitcher.source.archiveArsenal === null || typeof pitcher.source.archiveArsenal === "object", "pitcher archiveArsenal source metadata must be null or object");
 assert(pitcher.source.archiveProfile === null || typeof pitcher.source.archiveProfile === "object", "pitcher archiveProfile source metadata must be null or object");

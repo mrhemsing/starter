@@ -1,4 +1,5 @@
 import { guardSeasonWrite } from "@/lib/season-state";
+import { selectCanonicalStarts } from "@/lib/canonical-start-selection";
 import { assertValidCanonicalSettledRecord, canonicalStartRecordFromSummary, diffCanonicalStartRecord, reconcileCanonicalStartRecord, startSummaryFromCanonicalRecord } from "@/lib/canonical-start-record";
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
 import type { StartDataSource, StartSummary } from "@/lib/types";
@@ -105,6 +106,39 @@ export async function readCanonicalizedStartSummaries(date: string, starts: Star
 
 export async function readCanonicalStartRecords(date: string): Promise<CanonicalStartRecord[]> {
   return (await readCanonicalStartStore(date)).records;
+}
+
+// Profile reads must cover the whole season, never a bounded archive-gap window.
+export async function readCanonicalPitcherSeasonRecords(pitcherId: string, season: string): Promise<CanonicalStartRecord[]> {
+  return selectCanonicalStarts(await readRawCanonicalPitcherSeasonRecords(pitcherId,season));
+}
+
+export async function readRawCanonicalPitcherSeasonRecords(pitcherId: string, season: string): Promise<CanonicalStartRecord[]> {
+  if (!/^\d+$/.test(pitcherId) || !/^\d{4}$/.test(season)) throw new Error("Invalid canonical pitcher season");
+  const baseUrl = canonicalStoreSupabaseUrl();
+  const serviceKey = canonicalStoreSupabaseServiceKey();
+  if (!baseUrl || !serviceKey) throw new Error("Canonical pitcher season unavailable");
+  const records: CanonicalStartRecord[] = [];
+  for (let offset = 0; ; offset += 100) {
+    const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
+    url.searchParams.set("select", "record");
+    url.searchParams.set("pitcher_mlb_id", `eq.${pitcherId}`);
+    url.searchParams.set("date", `gte.${season}-01-01`);
+    url.searchParams.append("date", `lte.${season}-12-31`);
+    url.searchParams.set("status", "eq.final");
+    url.searchParams.set("order", "date.asc,start_id.asc");
+    url.searchParams.set("offset", String(offset));
+    url.searchParams.set("limit", "100");
+    const response = await timedCanonicalStoreFetch("canonical-pitcher-season", url, {
+      headers: canonicalStoreSupabaseHeaders(serviceKey), cache: "no-store",
+    }, CANONICAL_STORE_READ_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Canonical pitcher season HTTP ${response.status}`);
+    const rows = await response.json() as Array<Pick<CanonicalStartRow, "record">>;
+    recordCanonicalStoreRead(rows.length);
+    records.push(...rows.map(row => row.record));
+    if (rows.length < 100) break;
+  }
+  return records.sort(compareCanonicalStartRecords);
 }
 
 // Read dates from actual settled records, not schedule game types or stale slate summaries.
@@ -503,6 +537,47 @@ function mergeCanonicalStartRecord(existing: CanonicalStartRecord | undefined, n
   return new Date(next.updatedAt).getTime() >= new Date(existing.updatedAt).getTime() ? next : existing;
 }
 
+/** Explicit offline repair only. Conflict-ignore is essential: existing frozen rows cannot be overwritten. */
+export async function settleMissingCanonicalProjection(existing: CanonicalStartRecord, start: StartSummary, reason:string) {
+  if(existing.frozen || existing.status==="final" || !reason.trim() || existing.id!==start.id)throw new Error("Repair may only settle an unfrozen projection of the same start");
+  const settled=upsertCanonicalStartRecord(existing,start,new Date());
+  if(!settled.frozen || settled.status!=="final")throw new Error("Official settle did not produce frozen final");
+  const url=new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`,canonicalStoreSupabaseUrl());
+  url.searchParams.set("date",`eq.${existing.date}`);
+  url.searchParams.set("start_id",`eq.${existing.id}`);
+  url.searchParams.set("frozen","eq.false");
+  url.searchParams.set("status","neq.final");
+  url.searchParams.set("updated_at",`eq.${existing.updatedAt}`);
+  const response=await retryCanonicalStoreWrite("canonical-start-records.settle-missing",url,{
+    method:"PATCH",headers:{...canonicalStoreSupabaseHeaders(canonicalStoreSupabaseServiceKey()),"content-type":"application/json",prefer:"return=representation"},
+    body:JSON.stringify(canonicalStartRecordToRow(settled)),
+  });
+  if(!response.ok)throw new Error(`Conditional settle HTTP ${response.status}`);
+  const rows=await response.json() as CanonicalStartRow[];
+  if(rows.length!==1)throw new Error(`Projection changed during repair: ${existing.id}`);
+  return rows[0].record;
+}
+
+export async function insertMissingSettledCanonicalRecords(records: CanonicalStartRecord[], authorization: {reason:string; allowedStartIds:string[]}) {
+  if (!authorization.reason.trim() || records.some(record=>!authorization.allowedStartIds.includes(record.id))) throw new Error("Missing additive repair authorization");
+  if (new Set(records.map(row=>row.id)).size!==records.length) throw new Error("Duplicate repair records");
+  for (const record of records) {
+    assertValidCanonicalSettledRecord(record);
+    if (!record.frozen || record.status!=="final" || record.source.line==="fixture") throw new Error("Repair requires settled official records");
+  }
+  const baseUrl=canonicalStoreSupabaseUrl(),serviceKey=canonicalStoreSupabaseServiceKey();
+  if(!baseUrl||!serviceKey)throw new Error("Missing durable store configuration");
+  const url=new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`,baseUrl);
+  url.searchParams.set("on_conflict","date,start_id");
+  const response=await retryCanonicalStoreWrite("canonical-start-records.insert-missing",url,{
+    method:"POST",headers:{...canonicalStoreSupabaseHeaders(serviceKey),"content-type":"application/json",prefer:"resolution=ignore-duplicates,return=representation"},
+    body:JSON.stringify(records.map(canonicalStartRecordToRow)),
+  });
+  if(!response.ok)throw new Error(`Additive insert failed HTTP ${response.status}: ${await response.text()}`);
+  const inserted=await response.json() as CanonicalStartRow[];
+  return inserted.map(row=>row.start_id);
+}
+
 async function upsertCanonicalStartRows(baseUrl: string, serviceKey: string, records: CanonicalStartRecord[]) {
   if (records.length === 0) return;
   records.forEach(assertValidCanonicalSettledRecord);
@@ -669,7 +744,7 @@ function canonicalStoreSupabaseHeaders(serviceKey: string) {
 
 // Weekly offseason job only: minimal projection across all stored seasons.
 // This is intentionally not a Form leaderboard read and never writes history.
-export async function readCanonicalPitcherRegistry(): Promise<Array<{ pitcherId: string; team: string }>> {
+export async function readCanonicalPitcherRegistry(season?: string): Promise<Array<{ pitcherId: string; team: string }>> {
   const baseUrl = canonicalStoreSupabaseUrl();
   const serviceKey = canonicalStoreSupabaseServiceKey();
   if (!baseUrl || !serviceKey) throw new Error("Pitcher registry requires durable canonical storage");
@@ -677,6 +752,12 @@ export async function readCanonicalPitcherRegistry(): Promise<Array<{ pitcherId:
   for (let offset = 0; ; offset += 1000) {
     const url = new URL(`/rest/v1/${CANONICAL_STARTS_TABLE}`, baseUrl);
     url.searchParams.set("select", "pitcher_mlb_id,date,team:record->>team");
+    if (season) {
+      if (!/^\d{4}$/.test(season)) throw new Error("Invalid canonical registry season");
+      url.searchParams.set("date", `gte.${season}-01-01`);
+      url.searchParams.append("date", `lte.${season}-12-31`);
+      url.searchParams.set("status", "eq.final");
+    }
     url.searchParams.set("order", "date.asc,game_pk.asc,pitcher_mlb_id.asc");
     url.searchParams.set("limit", "1000");
     url.searchParams.set("offset", String(offset));

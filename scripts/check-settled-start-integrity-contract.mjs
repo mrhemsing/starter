@@ -70,7 +70,8 @@ assert(
 );
 
 assert(
-  packageJson.includes('"check:settled-start-integrity": "node scripts/check-settled-start-integrity-contract.mjs"'),
+  JSON.parse(packageJson).scripts['check:settled-start-integrity'].includes('node scripts/check-settled-start-integrity-contract.mjs') &&
+    JSON.parse(packageJson).scripts['check:settled-start-integrity'].includes('node scripts/check-pitcher-rendered-integrity.mjs'),
   "package.json must expose check:settled-start-integrity",
 );
 

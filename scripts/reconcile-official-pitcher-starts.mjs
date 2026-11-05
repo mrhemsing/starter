@@ -1,0 +1,30 @@
+import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {loadProjectTs} from './lib/load-project-ts.mjs';
+process.loadEnvFile('../starter/.env.local');
+const out='outputs/p07/reconciliation';mkdirSync(`${out}/official`,{recursive:true});
+const client=loadProjectTs('src/lib/data/mlb-stats-client.ts'),store=loadProjectTs('src/lib/data/canonical-start-store.ts');
+const nativeFetch=globalThis.fetch;let nextTime=0;
+globalThis.fetch=async(url,options)=>{
+ if(!String(url).startsWith('https://statsapi.mlb.com/'))return nativeFetch(url,options);
+ const key=createHash('sha256').update(String(url)).digest('hex'),path=`${out}/official/${key}.json`;
+ if(existsSync(path))return new Response(readFileSync(path),{status:200});
+ const delay=Math.max(0,nextTime-Date.now());nextTime=Math.max(nextTime,Date.now())+250;await new Promise(r=>setTimeout(r,delay));
+ const response=await nativeFetch(url,{...options,signal:AbortSignal.timeout(30000)});
+ if(response.ok)writeFileSync(path,await response.clone().text());return response;
+};
+const ids=[...new Set([...(await client.fetchMlbSeasonStartingPitcherIds('2026',{fetchLive:true})).map(String),...(await store.readCanonicalPitcherRegistry('2026')).map(p=>p.pitcherId)])];
+const results=[],canonical=[],ledgers={};let cursor=0;
+async function worker(){while(cursor<ids.length){const id=ids[cursor++];
+ const [official,records]=await Promise.all([client.fetchMlbPitcherSeasonStartLedger(Number(id),'2026',{fetchLive:true}),store.readCanonicalPitcherSeasonRecords(id,'2026')]);
+ ledgers[id]=official;canonical.push(...records);
+ const known=new Set(records.map(r=>r.gamePk)),expected=new Set(official.starts.map(r=>r.gamePk));
+ const missing=official.starts.filter(s=>!known.has(s.gamePk));const extra=records.filter(r=>!expected.has(r.gamePk)).map(r=>({id:r.id,date:r.date,gamePk:r.gamePk}));
+ results.push({pitcherId:id,name:records.at(-1)?.pitcherName??null,canonical:records.length,official:official.starts.length,missing,extra,reliefOuts:official.reliefOuts});
+ writeFileSync(`${out}/list.json`,JSON.stringify(results,null,2));
+ writeFileSync(`${out}/progress.json`,JSON.stringify({checked:results.length,total:ids.length,missing:results.reduce((n,r)=>n+r.missing.length,0),extra:results.reduce((n,r)=>n+r.extra.length,0)}));
+ console.log(`${results.length}/${ids.length} ${id} canonical=${records.length} official=${official.starts.length} missing=${missing.length}`);
+}}
+await Promise.all([worker(),worker(),worker()]);
+writeFileSync(`${out}/canonical-before.json`,JSON.stringify(canonical.sort((a,b)=>a.id.localeCompare(b.id))));
+writeFileSync(`${out}/official-ledgers.json`,JSON.stringify(ledgers));

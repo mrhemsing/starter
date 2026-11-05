@@ -1,3 +1,6 @@
+import { canonicalPitcherProfile } from "@/lib/canonical-pitcher-profile";
+import { pitcherSeasonArsenal } from "@/lib/pitcher-season-arsenal";
+import { readCanonicalPitcherSeasonRecords } from "@/lib/data/canonical-start-store";
 import { withSeasonNoHitterNotable } from "@/lib/season-no-hitters";
 import { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
 import { getSeasonArchive } from "@/lib/data/season-archive-service";
@@ -8,7 +11,7 @@ import type { CanonicalReconciliationReport } from "@/lib/canonical-start-record
 import { canonicalizeStartSummariesWithStore, readCanonicalizedStartSummaries, readCanonicalSlateState, readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
 import type { CanonicalSlateStateSnapshot } from "@/lib/data/canonical-start-store";
 import { HEAT_CHECK_CACHE_TAG, RANKED_STARTS_CACHE_TAG, SLATE_CACHE_TAG, UPCOMING_CACHE_TAG } from "@/lib/data/cache-tags";
-import { demoPitcherDetail, demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
+import { demoSlateStarts, demoStartDetail } from "@/lib/data/demo";
 import { fetchSavantStartPitchDetails } from "@/lib/data/baseball-savant-client";
 import { calculateGameScoreV2 } from "@/lib/game-score-v2";
 import { formatMatchup } from "@/lib/format-matchup";
@@ -16,7 +19,7 @@ import { getVenueRunFactor as sharedVenueRunFactor } from "@/lib/data/run-enviro
 import { readArchivedCompletedPitchingLines, readArchivedCompletedStarts, readArchivedDateSummary, readArchivedPitcherRecentArsenal, readArchivedPitcherSeasonProfile, readArchivedSchedule, readArchivedSeasonCompletedStarts, readArchivedStartByRouteId, readArchivedStartLineSummary, readArchivedStartPitchDetails, readArchivedStartPitchDetailSummary } from "@/lib/data/mlb-archive";
 import type { ArchivedCompletedStartSummary } from "@/lib/data/mlb-archive";
 import { readSupabaseArchivedCompletedStarts, readSupabaseArchivedCompletedStartsRange, readSupabaseArchivedPitcherRecentArsenal } from "@/lib/data/supabase-archive";
-import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherRecentArsenal, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
+import { fetchMlbCompletedPitchingLines, fetchMlbCompletedScheduleDates, fetchMlbPitcherSeasonProfile, fetchMlbPitcherSplits, fetchMlbSchedule, fetchMlbStartPitchDetails, fetchMlbTeamQualityContexts } from "@/lib/data/mlb-stats-client";
 import { inningsFromIP } from "@/lib/innings";
 import { slatePath, startPath } from "@/lib/routes";
 import { getSlateProgressState, summarizeCanonicalStartBuckets, type SlateProgressState } from "@/lib/slate-state";
@@ -1011,82 +1014,21 @@ export async function getStartApiResponse(startId: string): Promise<StartApiResp
 }
 
 export async function getPitcherDetail(pitcherId: string) {
-  const pitcherMlbId = Number(pitcherId);
-  const season = getHomeSlateDate().slice(0, 4);
-  const [archivedArsenal, archivedSeasonProfile] = Number.isInteger(pitcherMlbId)
-    ? await Promise.all([
-        readSupabaseArchivedPitcherRecentArsenal(pitcherMlbId, season).then((arsenal) => arsenal ?? readArchivedPitcherRecentArsenal(pitcherMlbId, season)),
-        readArchivedPitcherSeasonProfile(pitcherMlbId, season),
-      ])
-    : [null, null];
-
-  if (Number.isInteger(pitcherMlbId) && (process.env.THE_BUMP_LIVE_MLB === "1" || !archivedSeasonProfile)) {
-    const liveProfile = await fetchMlbPitcherSeasonProfile(pitcherMlbId, season, { fetchLive: true });
-    if (liveProfile) {
-      const starts = archivedSeasonProfile?.starts ?? liveProfile.starts;
-      const recentGamePks = starts
-        .map((start) => start.gamePk)
-        .filter((gamePk): gamePk is number => typeof gamePk === "number")
-        .slice(0, 5);
-      const liveArsenal = archivedArsenal || process.env.THE_BUMP_LIVE_MLB !== "1" ? null : await fetchMlbPitcherRecentArsenal(pitcherMlbId, recentGamePks, { fetchLive: true });
-
-      return {
-        ...liveProfile,
-        seasonLine: archivedSeasonProfile?.seasonLine ?? liveProfile.seasonLine,
-        starts,
-        arsenal: archivedArsenal?.arsenal ?? liveArsenal?.arsenal ?? [],
-        arsenalSource: archivedArsenal?.source ?? liveArsenal?.source ?? "fixture",
-        seasonLineSource: archivedSeasonProfile?.source ?? liveProfile.source,
-        startHistorySource: archivedSeasonProfile?.source ?? liveProfile.source,
-        archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
-        archiveProfile: archivedSeasonProfile?.archiveProfile ?? null,
-      };
-    }
-  }
-
-  if (archivedSeasonProfile) {
-    return {
-      ...demoPitcherDetail,
-      id: String(archivedSeasonProfile.mlbId),
-      mlbId: archivedSeasonProfile.mlbId,
-      name: archivedSeasonProfile.name,
-      team: archivedSeasonProfile.team,
-      headshotUrl: `https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/${archivedSeasonProfile.mlbId}/headshot/67/current`,
-      seasonLine: archivedSeasonProfile.seasonLine,
-      starts: archivedSeasonProfile.starts,
-      arsenal: archivedArsenal?.arsenal ?? [],
-      arsenalSource: archivedArsenal?.source ?? "fixture",
-      seasonLineSource: archivedSeasonProfile.source,
-      startHistorySource: archivedSeasonProfile.source,
-      archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
-      archiveProfile: archivedSeasonProfile.archiveProfile,
-    };
-  }
-
-  if (pitcherId === demoPitcherDetail.id || pitcherId === String(demoPitcherDetail.mlbId)) {
-    return {
-      ...demoPitcherDetail,
-      arsenal: archivedArsenal?.arsenal ?? [],
-      arsenalSource: archivedArsenal?.source ?? "fixture",
-      archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
-    };
-  }
-  const matchedStart = demoSlateStarts.find((start) => start.pitcher.id === pitcherId || start.pitcher.mlbId === Number(pitcherId));
-  return matchedStart
-    ? {
-        ...demoPitcherDetail,
-        ...matchedStart.pitcher,
-        arsenal: archivedArsenal?.arsenal ?? [],
-        arsenalSource: archivedArsenal?.source ?? "fixture",
-        archiveArsenal: archivedArsenal?.archiveArsenal ?? null,
-        starts: demoPitcherDetail.starts.filter((start) => start.id === matchedStart.id),
-      }
-    : null;
+  const season = String((await getSeasonState()).year);
+  const profile = canonicalPitcherProfile(await readCanonicalPitcherSeasonRecords(pitcherId, season));
+  if (!profile) return null;
+  const seasonArsenal = pitcherSeasonArsenal(pitcherId, season);
+  if (seasonArsenal) return { ...profile, arsenal: seasonArsenal.arsenal, arsenalSource: "live-gamefeed" as const,
+    archiveArsenal: null, archiveProfile: null, seasonArsenalCoverage: seasonArsenal };
+  const arsenal = await readSupabaseArchivedPitcherRecentArsenal(Number(pitcherId), season)
+    ?? await readArchivedPitcherRecentArsenal(Number(pitcherId), season);
+  return { ...profile, arsenal: arsenal?.arsenal ?? [], arsenalSource: arsenal?.source ?? "fixture" as const,
+    archiveArsenal: arsenal?.archiveArsenal ?? null, archiveProfile: null, seasonArsenalCoverage: null };
 }
 
 const getCachedPitcherApiResponse = unstable_cache(
   async (pitcherId: string, sort: string | null, result: string | null) => buildPitcherApiResponse(pitcherId, { sort, result }),
-  ["pitcher-api-response", "v3"],
+  ["pitcher-api-response", "v6-canonical-season-pitches"],
   { revalidate: PITCHER_PROFILE_REVALIDATE_SECONDS },
 );
 
@@ -1097,10 +1039,9 @@ export async function getPitcherApiResponse(pitcherId: string, controls: { sort?
 async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: string | null; result?: string | null } = {}): Promise<PitcherApiResponse | null> {
   const pitcher = await getPitcherDetail(pitcherId);
   if (!pitcher) return null;
-  const isLiveProfile = "source" in pitcher && pitcher.source === "live-people-stats";
-  const arsenalSource = "arsenalSource" in pitcher && (pitcher.arsenalSource === "archive-gamefeed" || pitcher.arsenalSource === "live-gamefeed") ? pitcher.arsenalSource : "fixture";
-  const seasonLineSource = "seasonLineSource" in pitcher && pitcher.seasonLineSource === "archive-gamefeed" ? pitcher.seasonLineSource : isLiveProfile ? "live-people-stats" : "fixture";
-  const startHistorySource = "startHistorySource" in pitcher && pitcher.startHistorySource === "archive-gamefeed" ? pitcher.startHistorySource : isLiveProfile ? "live-people-stats" : "fixture";
+  const arsenalSource = pitcher.arsenalSource;
+  const seasonLineSource = "canonical" as const;
+  const startHistorySource = "canonical" as const;
   const archiveArsenal = "archiveArsenal" in pitcher && pitcher.archiveArsenal ? pitcher.archiveArsenal : null;
   const archiveProfile = "archiveProfile" in pitcher && pitcher.archiveProfile ? pitcher.archiveProfile : null;
   const liveSplits = await fetchMlbPitcherSplits(pitcher.mlbId, getHomeSlateDate().slice(0, 4), { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" });
@@ -1114,9 +1055,9 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
     ...start,
     startHref: startPath(start.id),
   }));
-  const skillProfile = buildPitcherSkillProfile(allStarts, seasonLineSource);
-  const velocityByStart = buildPitcherVelocityByStart(allStarts);
-  const pitchMixByStart = buildPitcherPitchMixByStart(allStarts);
+  const skillProfile = pitcher.seasonArsenalCoverage?.skillProfile ?? buildPitcherSkillProfile(allStarts, seasonLineSource);
+  const velocityByStart = pitcher.seasonArsenalCoverage?.velocityByStart ?? buildPitcherVelocityByStart(allStarts);
+  const pitchMixByStart = pitcher.seasonArsenalCoverage?.pitchMixByStart ?? buildPitcherPitchMixByStart(allStarts);
   const seasonLogControls = normalizePitcherSeasonLogControls(controls, allStarts);
   const starts = sortPitcherSeasonLog(
     seasonLogControls.result === "all" ? allStarts : allStarts.filter((start) => start.result === seasonLogControls.result),
@@ -1133,13 +1074,14 @@ async function buildPitcherApiResponse(pitcherId: string, controls: { sort?: str
     seasonLine: pitcher.seasonLine,
     skillProfile,
     arsenal: pitcher.arsenal,
+    seasonArsenalCoverage: pitcher.seasonArsenalCoverage,
     velocityByStart,
     pitchMixByStart,
     starts,
     seasonLogSummary: summarizePitcherSeasonLog(starts),
     seasonLogControls,
     source: {
-      identity: isLiveProfile ? "live-people-stats" : "fixture",
+      identity: "canonical",
       seasonLine: seasonLineSource,
       startHistory: startHistorySource,
       arsenal: arsenalSource,
@@ -1219,7 +1161,7 @@ function summarizePitcherStart(start: PitcherApiStartLogEntry) {
   };
 }
 
-function buildPitcherSkillProfile(
+export function buildPitcherSkillProfile(
   starts: PitcherApiStartLogEntry[],
   seasonLineSource: PitcherApiResponse["source"]["seasonLine"],
 ): PitcherSkillProfile {
@@ -1228,7 +1170,7 @@ function buildPitcherSkillProfile(
   const trailing30 = latestDate
     ? sorted.filter((start) => daysBetween(start.date, latestDate) <= 30)
     : [];
-  const source: PitcherSkillProfile["source"] = seasonLineSource === "archive-gamefeed"
+  const source: PitcherSkillProfile["source"] = seasonLineSource === "canonical" ? "canonical-line" : seasonLineSource === "archive-gamefeed"
     ? "archive-gamefeed-line"
     : seasonLineSource === "live-people-stats"
       ? "live-people-stats-line"
@@ -1395,6 +1337,21 @@ function buildPitcherSplitPlaceholders(): PitcherApiSplitGroup[] {
   ];
 }
 
+/** Offline additive repair: same scoring/settle builder, with official inputs only. Never persists. */
+export async function prepareOfficialSettledStarts(date: string, gamePks: number[]) {
+  const schedule = await fetchMlbSchedule(date, { fetchLive: true });
+  schedule.games = schedule.games.filter((game) => gamePks.includes(game.gamePk));
+  if (schedule.games.length !== new Set(gamePks).size) throw new Error(`Official schedule missing requested games on ${date}`);
+  const lines = new Map<string, CompletedPitchingLineEntry>();
+  for (const game of schedule.games) {
+    const entries = await fetchMlbCompletedPitchingLines(game.gamePk, { fetchLive: true });
+    for (const entry of entries) lines.set(startLineKey(entry.gamePk, entry.pitcherMlbId), { ...entry, source: "live-gamefeed" });
+  }
+  const contexts = await fetchMlbTeamQualityContexts(date, { fetchLive: true });
+  return rankStarts(await buildScheduledStarts(schedule, lines, contexts))
+    .filter((start) => start.source?.lineStatus === "final" && lines.has(startLineKey(start.gamePk!, start.pitcher.mlbId!)));
+}
+
 async function getCompletedPitchingLineMap(schedule: MlbSchedule) {
   const archivedLines = await readArchivedCompletedPitchingLines(schedule.date);
   const lines = new Map<string, CompletedPitchingLineEntry>(
@@ -1422,7 +1379,7 @@ async function getTeamQualityContextMap(date: string) {
   return fetchMlbTeamQualityContexts(date, { fetchLive: process.env.THE_BUMP_LIVE_MLB === "1" || shouldFetchLiveSchedule(date) });
 }
 
-function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["pitchMixByStart"] {
+export function buildPitcherPitchMixByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["pitchMixByStart"] {
   const rows = [...starts].sort((a, b) => a.date.localeCompare(b.date));
   const seenPitchTypes = new Set<PitchTypeKey>();
 
@@ -1514,7 +1471,7 @@ async function buildStartArsenalEventSummary(
   };
 }
 
-function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {
+export function buildPitcherVelocityByStart(starts: PitcherApiStartLogEntry[]): PitcherApiResponse["velocityByStart"] {
   const rows = starts
     .map((start) => {
       const velocities = (start.pitchEvents ?? [])

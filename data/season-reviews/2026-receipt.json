@@ -1,8 +1,8 @@
 {
   "publishedAt": "2026-11-03T20:34:55.214Z",
-  "reviewSha256": "357b544efe46abf0eb2fd48455972710ac5feae242662c685ac4473714ec4b17",
-  "sourceSha256": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
-  "starts": 4425,
+  "reviewSha256": "247483ca4afb923700cd2484fa97612af0e7e12d2ca32447cd140f066fdc1034",
+  "sourceSha256": "981e5bce7466a059839fe9a2647e57f2579df2bbd315c1396ec503e6a6995367",
+  "starts": 4938,
   "source": "toetheslab_canonical_start_records:2026:final:frozen",
   "model": "gpt-4.1-mini",
   "corrections": [
@@ -13,6 +13,33 @@
         "arms",
         "copy.arm"
       ]
+    },
+    {
+      "at": "2026-11-05T04:23:16.672Z",
+      "reason": "P0-7 authorized additive settled starts and official-date alias read projection",
+      "oldReviewSha256": "357b544efe46abf0eb2fd48455972710ac5feae242662c685ac4473714ec4b17",
+      "oldSourceSha256": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
+      "newReviewSha256": "247483ca4afb923700cd2484fa97612af0e7e12d2ca32447cd140f066fdc1034",
+      "newSourceSha256": "981e5bce7466a059839fe9a2647e57f2579df2bbd315c1396ec503e6a6995367",
+      "existingFrozenUnchanged": 4425,
+      "newFrozenStarts": 531,
+      "retainedAliasRecords": 18,
+      "distinctStarts": 4938,
+      "changedFields": [
+        "count",
+        "leagueMean",
+        "topStarts",
+        "arms",
+        "gemLeaders",
+        "biggestBlowup",
+        "noHitBids",
+        "rotation",
+        "home",
+        "distribution",
+        "copy",
+        "sourceSha256"
+      ]
     }
-  ]
+  ],
+  "storedRecords": 4956
 }

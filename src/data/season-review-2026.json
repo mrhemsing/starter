@@ -2,8 +2,8 @@
   "year": 2026,
   "publishedAt": "2026-11-03T20:34:55.214Z",
   "finalDate": "2026-10-28",
-  "count": 4425,
-  "leagueMean": 50.543502824858756,
+  "count": 4938,
+  "leagueMean": 50.44572701498583,
   "startOfYear": {
     "id": "2026-06-12-mil-phi-694819",
     "gamePk": 823778,
@@ -181,114 +181,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 80,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -2.4,
-            "description": "2 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -1.5,
-            "description": "1 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Citizens Bank Park at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2.2,
-            "description": "ATL live standings context: 85-58, +120 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.5,
-            "description": "Live offense context: 4.62 R/G, 0.722 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -21,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 80,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "impact": "positive",
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "impact": "positive",
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "impact": "positive",
-            "description": "+8.4 pct points above league baseline."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -350,114 +242,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 80,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.6000000000000005,
-            "description": "Fenway Park at 1.05 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.7,
-            "description": "BOS live standings context: 53-50, +41 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": -0.2,
-            "description": "Live offense context: 4.19 R/G, 0.707 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -16,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 80,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "impact": "positive",
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "impact": "positive",
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "impact": "negative",
-            "description": "3 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -513,114 +297,6 @@
         "strikeouts": {
           "doubleDigit": true
         }
-      },
-      "gameScorePlusBreakdown": {
-        "total": 80,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -6,
-            "description": "5 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": 0,
-            "description": "0 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Truist Park at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2.6,
-            "description": "LAD live standings context: 80-54, +148 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.5,
-            "description": "Live offense context: 4.93 R/G, 0.759 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -19,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 80,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "impact": "positive",
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "impact": "positive",
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -6,
-            "impact": "negative",
-            "description": "5 hits allowed."
-          }
-        ]
       },
       "plannedStarter": true,
       "teamColor": "#27272a",
@@ -834,10 +510,67 @@
       }
     },
     {
+      "id": "2026-06-30-wsh-bos-676917",
+      "gamePk": 824742,
+      "date": "2026-06-30",
+      "rank": 10,
+      "pitcher": {
+        "id": "676917",
+        "mlbId": 676917,
+        "name": "Cade Cavalli",
+        "team": "WSH",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/676917/headshot/67/current"
+      },
+      "opponent": "BOS",
+      "side": "away",
+      "result": "W",
+      "line": {
+        "hits": 1,
+        "walks": 0,
+        "pitches": 100,
+        "earnedRuns": 0,
+        "hitBatters": 0,
+        "strikeouts": 13,
+        "runsAllowed": 1,
+        "inningsPitched": 7,
+        "reachedOnError": 1,
+        "homeRunsAllowed": 0
+      },
+      "gameScorePlus": 80,
+      "gameScoreV2": 93,
+      "eventFlags": [],
+      "narrativeNotables": {
+        "strikeouts": {
+          "doubleDigit": true
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "WSH @ BOS",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "Fenway Park",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "BOS opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "BOS offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
       "id": "2026-06-10-tb-bos-656876",
       "gamePk": 822970,
       "date": "2026-06-10",
-      "rank": 10,
+      "rank": 11,
       "pitcher": {
         "id": "656876",
         "mlbId": 656876,
@@ -884,7 +617,7 @@
       "id": "2026-05-12-min-mia-641927",
       "gamePk": 823712,
       "date": "2026-05-12",
-      "rank": 11,
+      "rank": 12,
       "pitcher": {
         "id": "641927",
         "mlbId": 641927,
@@ -931,7 +664,7 @@
       "id": "2026-05-05-phi-ath-650911",
       "gamePk": 823469,
       "date": "2026-05-05",
-      "rank": 12,
+      "rank": 13,
       "pitcher": {
         "id": "650911",
         "mlbId": 650911,
@@ -978,7 +711,7 @@
       "id": "2026-04-23-lad-sf-607192",
       "gamePk": 823233,
       "date": "2026-04-23",
-      "rank": 13,
+      "rank": 14,
       "pitcher": {
         "id": "607192",
         "mlbId": 607192,
@@ -1025,7 +758,7 @@
       "id": "2026-07-24-nyy-phi-693645",
       "gamePk": 823434,
       "date": "2026-07-24",
-      "rank": 14,
+      "rank": 15,
       "pitcher": {
         "id": "693645",
         "mlbId": 693645,
@@ -1056,114 +789,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 79,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 22,
-            "description": "7.1 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -3.5999999999999996,
-            "description": "3 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": 0,
-            "description": "0 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Citizens Bank Park at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.2,
-            "description": "PHI live standings context: 56-47, -15 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": -0.2,
-            "description": "Live offense context: 4.31 R/G, 0.701 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -15,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 78.645,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "impact": "positive",
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 22,
-            "impact": "positive",
-            "description": "7.1 innings pitched."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -3.5999999999999996,
-            "impact": "negative",
-            "description": "3 hits allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -1189,7 +814,7 @@
       "id": "2026-04-10-kc-cws-663460",
       "gamePk": 824128,
       "date": "2026-04-10",
-      "rank": 15,
+      "rank": 16,
       "pitcher": {
         "id": "663460",
         "mlbId": 663460,
@@ -1236,7 +861,7 @@
       "id": "2026-05-20-mil-chc-690986",
       "gamePk": 824678,
       "date": "2026-05-20",
-      "rank": 16,
+      "rank": 17,
       "pitcher": {
         "id": "690986",
         "mlbId": 690986,
@@ -1283,7 +908,7 @@
       "id": "2026-04-26-mil-pit-690986",
       "gamePk": 823797,
       "date": "2026-04-26",
-      "rank": 17,
+      "rank": 18,
       "pitcher": {
         "id": "690986",
         "mlbId": 690986,
@@ -1327,10 +952,73 @@
       }
     },
     {
+      "id": "2026-06-15-stl-sd-669160",
+      "gamePk": 823046,
+      "date": "2026-06-15",
+      "rank": 19,
+      "pitcher": {
+        "id": "669160",
+        "mlbId": 669160,
+        "name": "Dustin May",
+        "team": "STL",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/669160/headshot/67/current"
+      },
+      "opponent": "SD",
+      "side": "home",
+      "result": "W",
+      "line": {
+        "hits": 1,
+        "walks": 1,
+        "pitches": 101,
+        "earnedRuns": 0,
+        "hitBatters": 0,
+        "strikeouts": 9,
+        "runsAllowed": 0,
+        "inningsPitched": 9,
+        "homeRunsAllowed": 0
+      },
+      "gameScorePlus": 78,
+      "gameScoreV2": 99,
+      "eventFlags": [],
+      "narrativeNotables": {
+        "noHitDepth": {
+          "innings": 6,
+          "firstHitInning": 7,
+          "hitlessStintComplete": false
+        },
+        "perfectDepth": {
+          "innings": 6,
+          "perfectStintComplete": false,
+          "firstBaserunnerInning": 7
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "STL vs SD",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "Busch Stadium",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "SD opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "SD offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
       "id": "2026-04-01-mia-cws-645261",
       "gamePk": 823889,
       "date": "2026-04-01",
-      "rank": 18,
+      "rank": 20,
       "pitcher": {
         "id": "645261",
         "mlbId": 645261,
@@ -1377,7 +1065,7 @@
       "id": "2026-08-13-wsh-chc-676917",
       "gamePk": 822696,
       "date": "2026-08-13",
-      "rank": 19,
+      "rank": 21,
       "pitcher": {
         "id": "676917",
         "mlbId": 676917,
@@ -1418,114 +1106,6 @@
           "firstBaserunnerInning": 6
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 78,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0,
-            "description": "Nationals Park at 1.00 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2.1,
-            "description": "CHC live standings context: 71-51, +108 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.8,
-            "description": "Live offense context: 5.20 R/G, 0.757 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -15,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 77.871,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "impact": "positive",
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -1551,7 +1131,7 @@
       "id": "2026-07-10-cin-chc-668881",
       "gamePk": 824493,
       "date": "2026-07-10",
-      "rank": 20,
+      "rank": 22,
       "pitcher": {
         "id": "668881",
         "mlbId": 668881,
@@ -1582,114 +1162,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 78,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -3.5999999999999996,
-            "description": "3 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -1.5,
-            "description": "1 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.9600000000000009,
-            "description": "Great American Ball Park at 1.08 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 1.4,
-            "description": "CHC live standings context: 52-41, +50 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.4,
-            "description": "Live offense context: 5.01 R/G, 0.746 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -15,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 78.13,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 26.400000000000002,
-            "impact": "positive",
-            "description": "12 strikeouts."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "impact": "positive",
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -3.5999999999999996,
-            "impact": "negative",
-            "description": "3 hits allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -1715,7 +1187,7 @@
       "id": "2026-05-10-tex-chc-594798",
       "gamePk": 822902,
       "date": "2026-05-10",
-      "rank": 21,
+      "rank": 23,
       "pitcher": {
         "id": "594798",
         "mlbId": 594798,
@@ -1762,7 +1234,7 @@
       "id": "2026-06-05-tb-mia-656876",
       "gamePk": 823860,
       "date": "2026-06-05",
-      "rank": 22,
+      "rank": 24,
       "pitcher": {
         "id": "656876",
         "mlbId": 656876,
@@ -1809,7 +1281,7 @@
       "id": "2026-10-03-tb-nyy-656876",
       "gamePk": 849835,
       "date": "2026-10-03",
-      "rank": 23,
+      "rank": 25,
       "pitcher": {
         "id": "656876",
         "mlbId": 656876,
@@ -1845,114 +1317,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 77,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 0.945,
-            "description": "+2.7 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": -0.17500000000000002,
-            "description": "-0.1 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0,
-            "description": "Tropicana Field at 1.00 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2,
-            "description": "NYY scheduled opponent quality from the MLB schedule matchup."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.7,
-            "description": "NYY scheduled offense quality from fixture lineup context."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -14,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 76.618,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "impact": "positive",
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -1973,217 +1337,6 @@
         "schedule": "live",
         "lineStatus": "final"
       }
-    },
-    {
-      "id": "2026-09-01-cle-tor-668909",
-      "gamePk": 824391,
-      "date": "2026-09-01",
-      "rank": 24,
-      "pitcher": {
-        "id": "668909",
-        "mlbId": 668909,
-        "name": "Gavin Williams",
-        "team": "CLE",
-        "throws": "R",
-        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/668909/headshot/67/current"
-      },
-      "opponent": "TOR",
-      "side": "home",
-      "result": "W",
-      "line": {
-        "hits": 2,
-        "walks": 1,
-        "pitches": 97,
-        "earnedRuns": 0,
-        "hitBatters": 1,
-        "strikeouts": 13,
-        "runsAllowed": 1,
-        "inningsPitched": 7,
-        "homeRunsAllowed": 0
-      },
-      "gameScorePlus": 77,
-      "gameScoreV2": 89,
-      "eventFlags": [],
-      "narrativeNotables": {
-        "strikeouts": {
-          "doubleDigit": true
-        }
-      },
-      "gameScorePlusBreakdown": {
-        "total": 77,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 28.6,
-            "description": "13 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -2.4,
-            "description": "2 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -1.5,
-            "description": "1 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": -0.1200000000000001,
-            "description": "Progressive Field at 0.99 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -0.7,
-            "description": "TOR live standings context: 68-71, -55 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": -0.9,
-            "description": "Live offense context: 3.95 R/G, 0.686 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -14,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 76.633,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 28.6,
-            "impact": "positive",
-            "description": "13 strikeouts."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "impact": "positive",
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -2.4,
-            "impact": "negative",
-            "description": "2 hits allowed."
-          }
-        ]
-      },
-      "plannedStarter": true,
-      "teamColor": "#27272a",
-      "accentColor": "#fbbf24",
-      "context": {
-        "label": "CLE vs TOR",
-        "whiffDeltaPct": 0,
-        "velocityDeltaMph": 0,
-        "parkRunFactor": 1,
-        "parkLabel": "Progressive Field",
-        "opponentQualityRunValue": 0,
-        "opponentQualityLabel": "TOR opponent quality pending archive refresh.",
-        "opponentOffenseRunValue": 0,
-        "opponentOffenseLabel": "TOR offense quality pending archive refresh."
-      },
-      "source": {
-        "line": "live-gamefeed",
-        "ranking": "schedule-derived-gamefeed-line",
-        "schedule": "live",
-        "lineStatus": "final"
-      }
-    },
-    {
-      "id": "2026-04-14-min-bos-690953",
-      "gamePk": 823723,
-      "date": "2026-04-14",
-      "rank": 25,
-      "pitcher": {
-        "id": "690953",
-        "mlbId": 690953,
-        "name": "Mick Abel",
-        "team": "MIN",
-        "throws": "R",
-        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/690953/headshot/67/current"
-      },
-      "opponent": "BOS",
-      "side": "home",
-      "result": "W",
-      "line": {
-        "hits": 4,
-        "walks": 0,
-        "pitches": 90,
-        "earnedRuns": 0,
-        "strikeouts": 10,
-        "inningsPitched": 7
-      },
-      "gameScorePlus": 77,
-      "gameScoreV2": 84,
-      "eventFlags": [],
-      "plannedStarter": true,
-      "teamColor": "#27272a",
-      "accentColor": "#fbbf24",
-      "context": {
-        "label": "MIN vs BOS",
-        "whiffDeltaPct": 0,
-        "velocityDeltaMph": 0,
-        "parkRunFactor": 1,
-        "parkLabel": "Target Field",
-        "opponentQualityRunValue": 0,
-        "opponentQualityLabel": "BOS opponent quality pending archive refresh.",
-        "opponentOffenseRunValue": 0,
-        "opponentOffenseLabel": "BOS offense quality pending archive refresh."
-      },
-      "source": {
-        "line": "archive-gamefeed",
-        "ranking": "schedule-derived-archive-line",
-        "schedule": "live"
-      }
     }
   ],
   "arms": [
@@ -2191,8 +1344,8 @@
       "pitcherId": "694819",
       "name": "Jacob Misiorowski",
       "team": "MIL",
-      "mean": 63.09375,
-      "starts": 32,
+      "mean": 63.029411764705884,
+      "starts": 34,
       "minStarts": 25,
       "startIds": [
         "2026-03-26-mil-cws-694819",
@@ -2209,6 +1362,8 @@
         "2026-05-31-mil-hou-694819",
         "2026-06-06-mil-col-694819",
         "2026-06-12-mil-phi-694819",
+        "2026-06-19-mil-atl-694819",
+        "2026-06-26-mil-chc-694819",
         "2026-07-02-mil-cin-694819",
         "2026-07-07-mil-stl-694819",
         "2026-07-20-mil-nym-694819",
@@ -2233,8 +1388,8 @@
       "pitcherId": "693645",
       "name": "Cam Schlittler",
       "team": "NYY",
-      "mean": 61.935483870967744,
-      "starts": 31,
+      "mean": 61.25714285714286,
+      "starts": 35,
       "minStarts": 25,
       "startIds": [
         "2026-03-27-nyy-sf-693645",
@@ -2251,6 +1406,10 @@
         "2026-05-26-nyy-kc-693645",
         "2026-06-02-nyy-cle-693645",
         "2026-06-07-nyy-bos-693645",
+        "2026-06-13-nyy-tor-693645",
+        "2026-06-19-nyy-cin-693645",
+        "2026-06-25-nyy-bos-693645",
+        "2026-06-30-nyy-det-693645",
         "2026-07-06-nyy-tb-693645",
         "2026-07-11-nyy-wsh-693645",
         "2026-07-19-nyy-lad-693645",
@@ -2274,8 +1433,8 @@
       "pitcherId": "519242",
       "name": "Chris Sale",
       "team": "ATL",
-      "mean": 60.666666666666664,
-      "starts": 27,
+      "mean": 60.89655172413793,
+      "starts": 29,
       "minStarts": 25,
       "startIds": [
         "2026-03-27-atl-kc-519242",
@@ -2291,6 +1450,8 @@
         "2026-05-28-atl-bos-519242",
         "2026-06-04-atl-tor-519242",
         "2026-06-10-atl-cws-519242",
+        "2026-06-20-atl-mil-519242",
+        "2026-06-28-atl-sf-519242",
         "2026-07-04-atl-nym-519242",
         "2026-07-10-atl-stl-519242",
         "2026-07-17-atl-tex-519242",
@@ -2312,13 +1473,14 @@
     {
       "pitcherId": "693645",
       "name": "Cam Schlittler",
-      "count": 9,
+      "count": 10,
       "startIds": [
         "2026-03-27-nyy-sf-693645",
         "2026-04-01-nyy-sea-693645",
         "2026-04-28-nyy-tex-693645",
         "2026-05-09-nyy-mil-693645",
         "2026-05-15-nyy-nym-693645",
+        "2026-06-19-nyy-cin-693645",
         "2026-07-24-nyy-phi-693645",
         "2026-08-09-nyy-atl-693645",
         "2026-09-02-nyy-laa-693645",
@@ -2342,6 +1504,21 @@
       ]
     },
     {
+      "pitcherId": "650911",
+      "name": "Cristopher Sánchez",
+      "count": 8,
+      "startIds": [
+        "2026-03-26-phi-tex-650911",
+        "2026-05-05-phi-ath-650911",
+        "2026-05-10-phi-col-650911",
+        "2026-05-16-phi-pit-650911",
+        "2026-05-22-phi-cle-650911",
+        "2026-05-27-phi-sd-650911",
+        "2026-06-30-phi-pit-650911",
+        "2026-08-01-phi-bal-650911"
+      ]
+    },
+    {
       "pitcherId": "694819",
       "name": "Jacob Misiorowski",
       "count": 8,
@@ -2354,20 +1531,6 @@
         "2026-05-31-mil-hou-694819",
         "2026-06-06-mil-col-694819",
         "2026-06-12-mil-phi-694819"
-      ]
-    },
-    {
-      "pitcherId": "650911",
-      "name": "Cristopher Sánchez",
-      "count": 7,
-      "startIds": [
-        "2026-03-26-phi-tex-650911",
-        "2026-05-05-phi-ath-650911",
-        "2026-05-10-phi-col-650911",
-        "2026-05-16-phi-pit-650911",
-        "2026-05-22-phi-cle-650911",
-        "2026-05-27-phi-sd-650911",
-        "2026-08-01-phi-bal-650911"
       ]
     },
     {
@@ -2387,11 +1550,12 @@
     {
       "pitcherId": "656302",
       "name": "Dylan Cease",
-      "count": 6,
+      "count": 7,
       "startIds": [
         "2026-03-28-tor-ath-656302",
         "2026-05-08-tor-laa-656302",
         "2026-06-09-tor-phi-656302",
+        "2026-07-03-tor-sea-656302",
         "2026-07-08-tor-sf-656302",
         "2026-07-25-tor-bos-656302",
         "2026-08-06-tor-chc-656302"
@@ -2400,12 +1564,13 @@
     {
       "pitcherId": "693433",
       "name": "Bryan Woo",
-      "count": 5,
+      "count": 6,
       "startIds": [
         "2026-04-03-sea-laa-693433",
         "2026-05-06-sea-atl-693433",
         "2026-05-18-sea-cws-693433",
         "2026-05-30-sea-az-693433",
+        "2026-06-18-sea-bal-693433",
         "2026-09-06-sea-ath-693433"
       ]
     },
@@ -2422,6 +1587,18 @@
       ]
     },
     {
+      "pitcherId": "666200",
+      "name": "Jesús Luzardo",
+      "count": 5,
+      "startIds": [
+        "2026-04-04-phi-col-666200",
+        "2026-04-28-phi-sf-666200",
+        "2026-06-23-phi-wsh-666200",
+        "2026-07-09-phi-cin-666200",
+        "2026-09-07-phi-atl-666200"
+      ]
+    },
+    {
       "pitcherId": "702070",
       "name": "Noah Cameron",
       "count": 5,
@@ -2431,18 +1608,6 @@
         "2026-07-30-kc-min-702070",
         "2026-08-05-kc-min-702070",
         "2026-08-16-kc-laa-702070"
-      ]
-    },
-    {
-      "pitcherId": "672282",
-      "name": "Reid Detmers",
-      "count": 5,
-      "startIds": [
-        "2026-04-14-laa-nyy-672282",
-        "2026-05-24-laa-tex-672282",
-        "2026-06-10-laa-hou-672282",
-        "2026-08-15-laa-kc-672282",
-        "2026-09-08-laa-bos-672282"
       ]
     }
   ],
@@ -2476,114 +1641,6 @@
     "gameScorePlus": 20,
     "gameScoreV2": 28,
     "eventFlags": [],
-    "gameScorePlusBreakdown": {
-      "total": 20,
-      "gradeBand": {
-        "label": "Poor",
-        "rangeLabel": "20-39",
-        "description": "Rough start on the displayed 20-80 Game Score+ scale.",
-        "percentileLabel": "Bottom band"
-      },
-      "components": [
-        {
-          "key": "baseline",
-          "label": "Baseline",
-          "value": 45,
-          "description": "Neutral starting point for every outing."
-        },
-        {
-          "key": "innings",
-          "label": "Length",
-          "value": 15,
-          "description": "5.0 innings pitched."
-        },
-        {
-          "key": "strikeouts",
-          "label": "Misses",
-          "value": 2.2,
-          "description": "1 strikeouts."
-        },
-        {
-          "key": "earnedRuns",
-          "label": "Runs",
-          "value": -35,
-          "description": "7 earned runs allowed."
-        },
-        {
-          "key": "hits",
-          "label": "Traffic",
-          "value": -10.799999999999999,
-          "description": "9 hits allowed."
-        },
-        {
-          "key": "walks",
-          "label": "Free passes",
-          "value": -3,
-          "description": "2 walks allowed."
-        },
-        {
-          "key": "whiffDelta",
-          "label": "Whiff context",
-          "value": 0.945,
-          "description": "+2.7 pct points above league baseline."
-        },
-        {
-          "key": "velocityDelta",
-          "label": "Velocity context",
-          "value": -0.17500000000000002,
-          "description": "-0.1 mph above league baseline."
-        },
-        {
-          "key": "parkContext",
-          "label": "Park context",
-          "value": 0,
-          "description": "Kauffman Stadium at 1.00 run factor."
-        },
-        {
-          "key": "opponentQuality",
-          "label": "Opponent quality",
-          "value": -0.9,
-          "description": "SD live standings context: 48-50, -49 run differential."
-        },
-        {
-          "key": "opponentOffense",
-          "label": "Opponent offense",
-          "value": -0.9,
-          "description": "Live offense context: 4.03 R/G, 0.678 OPS."
-        },
-        {
-          "key": "calibration",
-          "label": "Scale adjustment",
-          "value": 8,
-          "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-        }
-      ],
-      "preciseTotal": 20,
-      "formulaVersion": "context-v8",
-      "rankingReasons": [
-        {
-          "key": "earnedRuns",
-          "label": "Runs",
-          "value": -35,
-          "impact": "negative",
-          "description": "7 earned runs allowed."
-        },
-        {
-          "key": "innings",
-          "label": "Length",
-          "value": 15,
-          "impact": "positive",
-          "description": "5.0 innings pitched."
-        },
-        {
-          "key": "hits",
-          "label": "Traffic",
-          "value": -10.799999999999999,
-          "impact": "negative",
-          "description": "9 hits allowed."
-        }
-      ]
-    },
     "plannedStarter": true,
     "teamColor": "#27272a",
     "accentColor": "#fbbf24",
@@ -2660,114 +1717,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 72,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 0.945,
-            "description": "+2.7 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": -0.17500000000000002,
-            "description": "-0.1 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": -0.7200000000000006,
-            "description": "Oracle Park at 0.94 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -2.1,
-            "description": "SF live standings context: 38-54, -73 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0,
-            "description": "Live offense context: 4.10 R/G, 0.725 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -13,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 72.428,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "impact": "positive",
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "impact": "negative",
-            "description": "3 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -2790,10 +1739,74 @@
       }
     },
     {
+      "id": "2026-06-13-lad-cws-808967",
+      "gamePk": 824587,
+      "date": "2026-06-13",
+      "rank": 1,
+      "pitcher": {
+        "id": "808967",
+        "mlbId": 808967,
+        "name": "Yoshinobu Yamamoto",
+        "team": "LAD",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/808967/headshot/67/current"
+      },
+      "opponent": "CWS",
+      "side": "away",
+      "result": "W",
+      "line": {
+        "hits": 1,
+        "walks": 0,
+        "pitches": 109,
+        "earnedRuns": 1,
+        "hitBatters": 0,
+        "strikeouts": 7,
+        "runsAllowed": 1,
+        "inningsPitched": 8.1,
+        "reachedOnError": 1,
+        "homeRunsAllowed": 1
+      },
+      "gameScorePlus": 71,
+      "gameScoreV2": 92,
+      "eventFlags": [],
+      "narrativeNotables": {
+        "noHitDepth": {
+          "innings": 8,
+          "firstHitInning": 9,
+          "hitlessStintComplete": false
+        },
+        "perfectDepth": {
+          "innings": 7,
+          "perfectStintComplete": false,
+          "firstBaserunnerInning": 8
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "LAD @ CWS",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "Rate Field",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "CWS opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "CWS offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
       "id": "2026-10-03-tb-nyy-656876",
       "gamePk": 849835,
       "date": "2026-10-03",
-      "rank": 1,
+      "rank": 2,
       "pitcher": {
         "id": "656876",
         "mlbId": 656876,
@@ -2829,114 +1842,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 77,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 0.945,
-            "description": "+2.7 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": -0.17500000000000002,
-            "description": "-0.1 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0,
-            "description": "Tropicana Field at 1.00 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2,
-            "description": "NYY scheduled opponent quality from the MLB schedule matchup."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.7,
-            "description": "NYY scheduled offense quality from fixture lineup context."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -14,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 76.618,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "impact": "positive",
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -2959,10 +1864,133 @@
       }
     },
     {
+      "id": "2026-06-28-bos-nyy-543243",
+      "gamePk": 824744,
+      "date": "2026-06-28",
+      "rank": 3,
+      "pitcher": {
+        "id": "543243",
+        "mlbId": 543243,
+        "name": "Sonny Gray",
+        "team": "BOS",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/543243/headshot/67/current"
+      },
+      "opponent": "NYY",
+      "side": "home",
+      "result": "ND",
+      "line": {
+        "hits": 1,
+        "walks": 1,
+        "pitches": 97,
+        "earnedRuns": 0,
+        "hitBatters": 0,
+        "strikeouts": 9,
+        "runsAllowed": 0,
+        "inningsPitched": 7.1,
+        "homeRunsAllowed": 0
+      },
+      "gameScorePlus": 77,
+      "gameScoreV2": 89,
+      "eventFlags": [
+        "HARD_LUCK"
+      ],
+      "narrativeNotables": {
+        "noHitDepth": {
+          "innings": 7,
+          "firstHitInning": 8,
+          "hitlessStintComplete": false
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "BOS vs NYY",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "Fenway Park",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "NYY opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "NYY offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
+      "id": "2026-06-15-stl-sd-669160",
+      "gamePk": 823046,
+      "date": "2026-06-15",
+      "rank": 4,
+      "pitcher": {
+        "id": "669160",
+        "mlbId": 669160,
+        "name": "Dustin May",
+        "team": "STL",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/669160/headshot/67/current"
+      },
+      "opponent": "SD",
+      "side": "home",
+      "result": "W",
+      "line": {
+        "hits": 1,
+        "walks": 1,
+        "pitches": 101,
+        "earnedRuns": 0,
+        "hitBatters": 0,
+        "strikeouts": 9,
+        "runsAllowed": 0,
+        "inningsPitched": 9,
+        "homeRunsAllowed": 0
+      },
+      "gameScorePlus": 78,
+      "gameScoreV2": 99,
+      "eventFlags": [],
+      "narrativeNotables": {
+        "noHitDepth": {
+          "innings": 6,
+          "firstHitInning": 7,
+          "hitlessStintComplete": false
+        },
+        "perfectDepth": {
+          "innings": 6,
+          "perfectStintComplete": false,
+          "firstBaserunnerInning": 7
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "STL vs SD",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "Busch Stadium",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "SD opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "SD offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
       "id": "2026-08-13-wsh-chc-676917",
       "gamePk": 822696,
       "date": "2026-08-13",
-      "rank": 2,
+      "rank": 5,
       "pitcher": {
         "id": "676917",
         "mlbId": 676917,
@@ -3003,114 +2031,6 @@
           "firstBaserunnerInning": 6
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 78,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0,
-            "description": "Nationals Park at 1.00 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2.1,
-            "description": "CHC live standings context: 71-51, +108 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 1.8,
-            "description": "Live offense context: 5.20 R/G, 0.757 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -15,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 77.871,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 22,
-            "impact": "positive",
-            "description": "10 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3136,7 +2056,7 @@
       "id": "2026-08-16-kc-laa-702070",
       "gamePk": 823991,
       "date": "2026-08-16",
-      "rank": 3,
+      "rank": 6,
       "pitcher": {
         "id": "702070",
         "mlbId": 702070,
@@ -3174,114 +2094,6 @@
           "firstBaserunnerInning": 6
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 72,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -1.5,
-            "description": "1 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 0.945,
-            "description": "+2.7 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": -0.17500000000000002,
-            "description": "-0.1 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": -0.2400000000000002,
-            "description": "Angel Stadium at 0.98 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -2.1,
-            "description": "LAA live standings context: 49-76, -86 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": -0.8,
-            "description": "Live offense context: 4.06 R/G, 0.684 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -13,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 71.766,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 27,
-            "impact": "positive",
-            "description": "9.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "impact": "positive",
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -2.1,
-            "impact": "negative",
-            "description": "LAA live standings context: 49-76, -86 run differential."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3307,7 +2119,7 @@
       "id": "2026-07-30-kc-min-702070",
       "gamePk": 823674,
       "date": "2026-07-30",
-      "rank": 4,
+      "rank": 7,
       "pitcher": {
         "id": "702070",
         "mlbId": 702070,
@@ -3342,114 +2154,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 72,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 15.400000000000002,
-            "description": "7 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": -0.1200000000000001,
-            "description": "Target Field at 0.99 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -0.5,
-            "description": "MIN live standings context: 54-55, -30 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.6,
-            "description": "Live offense context: 4.67 R/G, 0.722 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -12,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 71.632,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 24,
-            "impact": "positive",
-            "description": "8.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 15.400000000000002,
-            "impact": "positive",
-            "description": "7 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3475,7 +2179,7 @@
       "id": "2026-09-10-pit-cws-683003",
       "gamePk": 824550,
       "date": "2026-09-10",
-      "rank": 5,
+      "rank": 8,
       "pitcher": {
         "id": "683003",
         "mlbId": 683003,
@@ -3508,114 +2212,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 72,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Rate Field at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.6,
-            "description": "CWS live standings context: 75-70, +41 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.6,
-            "description": "Live offense context: 4.69 R/G, 0.723 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -13,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 72.021,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "impact": "positive",
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "impact": "positive",
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3641,7 +2237,7 @@
       "id": "2026-09-22-tb-nyy-656876",
       "gamePk": 823494,
       "date": "2026-09-22",
-      "rank": 6,
+      "rank": 9,
       "pitcher": {
         "id": "656876",
         "mlbId": 656876,
@@ -3677,114 +2273,6 @@
           "doubleDigit": true
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 72,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -5,
-            "description": "1 earned run allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.3600000000000003,
-            "description": "Yankee Stadium at 1.03 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 2.1,
-            "description": "NYY live standings context: 90-66, +139 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.4,
-            "description": "Live offense context: 4.56 R/G, 0.718 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -14,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 72.482,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 24.200000000000003,
-            "impact": "positive",
-            "description": "11 strikeouts."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "impact": "positive",
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -5,
-            "impact": "negative",
-            "description": "1 earned run allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3810,7 +2298,7 @@
       "id": "2026-09-29-sd-chc-650633",
       "gamePk": 849843,
       "date": "2026-09-29",
-      "rank": 7,
+      "rank": 10,
       "pitcher": {
         "id": "650633",
         "mlbId": 650633,
@@ -3844,114 +2332,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 70,
-        "gradeBand": {
-          "label": "Elite",
-          "rangeLabel": "70-80",
-          "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
-          "percentileLabel": "Top 5%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": -0.6000000000000005,
-            "description": "Petco Park at 0.95 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 1.1,
-            "description": "CHC scheduled opponent quality from the MLB schedule matchup."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.8,
-            "description": "CHC scheduled offense quality from fixture lineup context."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -12,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 69.591,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "impact": "positive",
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "impact": "positive",
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "impact": "negative",
-            "description": "3 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -3977,7 +2357,7 @@
       "id": "2026-08-01-atl-wsh-527048",
       "gamePk": 824890,
       "date": "2026-08-01",
-      "rank": 8,
+      "rank": 11,
       "pitcher": {
         "id": "527048",
         "mlbId": 527048,
@@ -4011,114 +2391,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 67,
-        "gradeBand": {
-          "label": "Plus",
-          "rangeLabel": "60-69",
-          "description": "Clearly above-average start with ranking impact.",
-          "percentileLabel": "Top 20%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 13.200000000000001,
-            "description": "6 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 0.945,
-            "description": "+2.7 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": -0.17500000000000002,
-            "description": "-0.1 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Truist Park at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.3,
-            "description": "WSH live standings context: 55-56, +23 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 2.3,
-            "description": "Live offense context: 5.40 R/G, 0.772 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -11,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 67.417,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 21,
-            "impact": "positive",
-            "description": "7.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 13.200000000000001,
-            "impact": "positive",
-            "description": "6 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "impact": "negative",
-            "description": "2 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4144,7 +2416,7 @@
       "id": "2026-07-18-ath-wsh-669372",
       "gamePk": 824979,
       "date": "2026-07-18",
-      "rank": 9,
+      "rank": 12,
       "pitcher": {
         "id": "669372",
         "mlbId": 669372,
@@ -4177,114 +2449,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 67,
-        "gradeBand": {
-          "label": "Plus",
-          "rangeLabel": "60-69",
-          "description": "Clearly above-average start with ranking impact.",
-          "percentileLabel": "Top 20%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 19,
-            "description": "6.1 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 15.400000000000002,
-            "description": "7 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0,
-            "description": "Sutter Health Park at 1.00 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.1,
-            "description": "WSH live standings context: 49-50, +12 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 2.2,
-            "description": "Live offense context: 5.44 R/G, 0.763 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -11,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 67.287,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 19,
-            "impact": "positive",
-            "description": "6.1 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 15.400000000000002,
-            "impact": "positive",
-            "description": "7 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "impact": "negative",
-            "description": "3 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4310,7 +2474,7 @@
       "id": "2026-08-22-tor-nyy-656302",
       "gamePk": 823509,
       "date": "2026-08-22",
-      "rank": 10,
+      "rank": 13,
       "pitcher": {
         "id": "656302",
         "mlbId": 656302,
@@ -4343,114 +2507,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 64,
-        "gradeBand": {
-          "label": "Plus",
-          "rangeLabel": "60-69",
-          "description": "Clearly above-average start with ranking impact.",
-          "percentileLabel": "Top 20%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -5,
-            "description": "1 earned run allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -2.4,
-            "description": "2 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -7.5,
-            "description": "5 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.3600000000000003,
-            "description": "Yankee Stadium at 1.03 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 1.8,
-            "description": "NYY live standings context: 73-55, +96 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.2,
-            "description": "Live offense context: 4.43 R/G, 0.714 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -10,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 64.346,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "impact": "positive",
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 17.6,
-            "impact": "positive",
-            "description": "8 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -7.5,
-            "impact": "negative",
-            "description": "5 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4473,10 +2529,68 @@
       }
     },
     {
+      "id": "2026-06-19-bos-sea-624133",
+      "gamePk": 823124,
+      "date": "2026-06-19",
+      "rank": 14,
+      "pitcher": {
+        "id": "624133",
+        "mlbId": 624133,
+        "name": "Ranger Suarez",
+        "team": "BOS",
+        "throws": "R",
+        "headshotUrl": "https://img.mlbstatic.com/mlb-photos/image/upload/w_360,q_auto:best/v1/people/624133/headshot/67/current"
+      },
+      "opponent": "SEA",
+      "side": "away",
+      "result": "W",
+      "line": {
+        "hits": 1,
+        "walks": 3,
+        "pitches": 94,
+        "earnedRuns": 0,
+        "hitBatters": 0,
+        "strikeouts": 5,
+        "runsAllowed": 0,
+        "inningsPitched": 6.2,
+        "homeRunsAllowed": 0
+      },
+      "gameScorePlus": 61,
+      "gameScoreV2": 77,
+      "eventFlags": [],
+      "narrativeNotables": {
+        "noHitDepth": {
+          "innings": 6,
+          "firstHitInning": 7,
+          "hitlessStintComplete": false
+        }
+      },
+      "plannedStarter": true,
+      "teamColor": "#27272a",
+      "accentColor": "#fbbf24",
+      "context": {
+        "label": "BOS @ SEA",
+        "whiffDeltaPct": 0,
+        "velocityDeltaMph": 0,
+        "parkRunFactor": 1,
+        "parkLabel": "T-Mobile Park",
+        "opponentQualityRunValue": 0,
+        "opponentQualityLabel": "SEA opponent quality pending archive refresh.",
+        "opponentOffenseRunValue": 0,
+        "opponentOffenseLabel": "SEA offense quality pending archive refresh."
+      },
+      "source": {
+        "line": "live-gamefeed",
+        "ranking": "schedule-derived-gamefeed-line",
+        "schedule": "live",
+        "lineStatus": "final"
+      }
+    },
+    {
       "id": "2026-08-20-atl-cws-656550",
       "gamePk": 824589,
       "date": "2026-08-20",
-      "rank": 11,
+      "rank": 15,
       "pitcher": {
         "id": "656550",
         "mlbId": 656550,
@@ -4509,114 +2623,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 61,
-        "gradeBand": {
-          "label": "Plus",
-          "rangeLabel": "60-69",
-          "description": "Clearly above-average start with ranking impact.",
-          "percentileLabel": "Top 20%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 18,
-            "description": "6.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 6.6000000000000005,
-            "description": "3 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": 0,
-            "description": "0 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -1.2,
-            "description": "1 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "description": "3 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Rate Field at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.8,
-            "description": "CWS live standings context: 66-60, +47 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.7,
-            "description": "Live offense context: 4.76 R/G, 0.726 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -9,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 61.077,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 18,
-            "impact": "positive",
-            "description": "6.0 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 6.6000000000000005,
-            "impact": "positive",
-            "description": "3 strikeouts."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -4.5,
-            "impact": "negative",
-            "description": "3 walks allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4642,7 +2648,7 @@
       "id": "2026-07-11-bal-kc-680694",
       "gamePk": 824813,
       "date": "2026-07-11",
-      "rank": 12,
+      "rank": 16,
       "pitcher": {
         "id": "680694",
         "mlbId": 680694,
@@ -4676,114 +2682,6 @@
           "hitlessStintComplete": false
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 60,
-        "gradeBand": {
-          "label": "Plus",
-          "rangeLabel": "60-69",
-          "description": "Clearly above-average start with ranking impact.",
-          "percentileLabel": "Top 20%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 11,
-            "description": "5 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -5,
-            "description": "1 earned run allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -2.4,
-            "description": "2 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -3,
-            "description": "2 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 2.94,
-            "description": "+8.4 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 1.2249999999999999,
-            "description": "+0.7 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.1200000000000001,
-            "description": "Oriole Park at Camden Yards at 1.01 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": -2.3,
-            "description": "KC live standings context: 38-58, -82 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0,
-            "description": "Live offense context: 4.26 R/G, 0.713 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -8,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 59.565,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 20,
-            "impact": "positive",
-            "description": "6.2 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 11,
-            "impact": "positive",
-            "description": "5 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -5,
-            "impact": "negative",
-            "description": "1 earned run allowed."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4809,7 +2707,7 @@
       "id": "2026-09-14-tor-det-667755",
       "gamePk": 822765,
       "date": "2026-09-14",
-      "rank": 13,
+      "rank": 17,
       "pitcher": {
         "id": "667755",
         "mlbId": 667755,
@@ -4847,114 +2745,6 @@
           "firstBaserunnerInning": 6
         }
       },
-      "gameScorePlusBreakdown": {
-        "total": 47,
-        "gradeBand": {
-          "label": "Below average",
-          "rangeLabel": "40-49",
-          "description": "Below-average start after line and context adjustments.",
-          "percentileLabel": "Lower 35%"
-        },
-        "components": [
-          {
-            "key": "baseline",
-            "label": "Baseline",
-            "value": 45,
-            "description": "Neutral starting point for every outing."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 19,
-            "description": "6.1 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 11,
-            "description": "5 strikeouts."
-          },
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -20,
-            "description": "4 earned runs allowed."
-          },
-          {
-            "key": "hits",
-            "label": "Traffic",
-            "value": -6,
-            "description": "5 hits allowed."
-          },
-          {
-            "key": "walks",
-            "label": "Free passes",
-            "value": -1.5,
-            "description": "1 walks allowed."
-          },
-          {
-            "key": "whiffDelta",
-            "label": "Whiff context",
-            "value": 1.7849999999999997,
-            "description": "+5.1 pct points above league baseline."
-          },
-          {
-            "key": "velocityDelta",
-            "label": "Velocity context",
-            "value": 0.525,
-            "description": "+0.3 mph above league baseline."
-          },
-          {
-            "key": "parkContext",
-            "label": "Park context",
-            "value": 0.2400000000000002,
-            "description": "Rogers Centre at 1.02 run factor."
-          },
-          {
-            "key": "opponentQuality",
-            "label": "Opponent quality",
-            "value": 0.4,
-            "description": "DET live standings context: 71-79, +71 run differential."
-          },
-          {
-            "key": "opponentOffense",
-            "label": "Opponent offense",
-            "value": 0.2,
-            "description": "Live offense context: 4.48 R/G, 0.715 OPS."
-          },
-          {
-            "key": "calibration",
-            "label": "Scale adjustment",
-            "value": -4,
-            "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
-          }
-        ],
-        "preciseTotal": 47.372,
-        "formulaVersion": "context-v8",
-        "rankingReasons": [
-          {
-            "key": "earnedRuns",
-            "label": "Runs",
-            "value": -20,
-            "impact": "negative",
-            "description": "4 earned runs allowed."
-          },
-          {
-            "key": "innings",
-            "label": "Length",
-            "value": 19,
-            "impact": "positive",
-            "description": "6.1 innings pitched."
-          },
-          {
-            "key": "strikeouts",
-            "label": "Misses",
-            "value": 11,
-            "impact": "positive",
-            "description": "5 strikeouts."
-          }
-        ]
-      },
       "plannedStarter": true,
       "teamColor": "#27272a",
       "accentColor": "#fbbf24",
@@ -4981,7 +2771,7 @@
     {
       "rank": 1,
       "team": "NYY",
-      "staffMeanForm": 52.9,
+      "staffMeanForm": 52.7,
       "qualifiedCount": 8,
       "pitcherIds": [
         "607074",
@@ -4990,23 +2780,25 @@
         "608331",
         "701542",
         "543037",
-        "695684",
-        "661563"
+        "661563",
+        "695684"
       ]
     },
     {
       "rank": 2,
       "team": "LAD",
-      "staffMeanForm": 52.3,
-      "qualifiedCount": 9,
+      "staffMeanForm": 50.6,
+      "qualifiedCount": 11,
       "pitcherIds": [
-        "660271",
         "669373",
         "808967",
+        "660271",
         "607192",
-        "808963",
         "605483",
         "686218",
+        "694361",
+        "808963",
+        "676263",
         "641778",
         "680736"
       ]
@@ -5014,15 +2806,15 @@
     {
       "rank": 3,
       "team": "PHI",
-      "staffMeanForm": 50.8,
+      "staffMeanForm": 50.5,
       "qualifiedCount": 8,
       "pitcherIds": [
         "666200",
         "554430",
         "691725",
-        "641835",
         "650911",
         "605400",
+        "641835",
         "660604",
         "592836"
       ]
@@ -5030,7 +2822,7 @@
     {
       "rank": 4,
       "team": "CHC",
-      "staffMeanForm": 50.7,
+      "staffMeanForm": 50,
       "qualifiedCount": 9,
       "pitcherIds": [
         "676962",
@@ -5047,7 +2839,7 @@
     {
       "rank": 5,
       "team": "PIT",
-      "staffMeanForm": 50.4,
+      "staffMeanForm": 49.9,
       "qualifiedCount": 8,
       "pitcherIds": [
         "683003",
@@ -5055,31 +2847,13 @@
         "682254",
         "694973",
         "669199",
-        "669387",
         "696149",
-        "656605"
+        "656605",
+        "669387"
       ]
     },
     {
       "rank": 6,
-      "team": "MIN",
-      "staffMeanForm": 49.6,
-      "qualifiedCount": 10,
-      "pitcherIds": [
-        "690953",
-        "671737",
-        "696070",
-        "665152",
-        "805673",
-        "687570",
-        "641927",
-        "702193",
-        "657746",
-        "680573"
-      ]
-    },
-    {
-      "rank": 7,
       "team": "TB",
       "staffMeanForm": 49.6,
       "qualifiedCount": 10,
@@ -5090,22 +2864,22 @@
         "642547",
         "671212",
         "607259",
-        "668984",
         "663556",
+        "668984",
         "571927",
         "669438"
       ]
     },
     {
-      "rank": 8,
+      "rank": 7,
       "team": "DET",
-      "staffMeanForm": 49.3,
+      "staffMeanForm": 49.6,
       "qualifiedCount": 8,
       "pitcherIds": [
         "695549",
         "623454",
-        "664285",
         "656427",
+        "664285",
         "663947",
         "808825",
         "672456",
@@ -5113,14 +2887,14 @@
       ]
     },
     {
-      "rank": 9,
+      "rank": 8,
       "team": "MIL",
-      "staffMeanForm": 49.2,
+      "staffMeanForm": 49.4,
       "qualifiedCount": 10,
       "pitcherIds": [
         "688107",
-        "694819",
         "605540",
+        "694819",
         "694477",
         "701656",
         "689441",
@@ -5128,6 +2902,25 @@
         "669160",
         "675660",
         "690986"
+      ]
+    },
+    {
+      "rank": 9,
+      "team": "MIN",
+      "staffMeanForm": 49.1,
+      "qualifiedCount": 11,
+      "pitcherIds": [
+        "690953",
+        "671737",
+        "665152",
+        "696070",
+        "805673",
+        "687570",
+        "641927",
+        "702193",
+        "657746",
+        "702474",
+        "680573"
       ]
     },
     {
@@ -5150,17 +2943,21 @@
     },
     {
       "rank": 11,
-      "team": "BAL",
-      "staffMeanForm": 48.5,
-      "qualifiedCount": 7,
+      "team": "ATL",
+      "staffMeanForm": 48.2,
+      "qualifiedCount": 11,
       "pitcherIds": [
-        "669432",
-        "687064",
-        "694346",
-        "700249",
-        "605135",
-        "669358",
-        "680694"
+        "519242",
+        "641816",
+        "678061",
+        "608718",
+        "656550",
+        "527048",
+        "675911",
+        "702275",
+        "693821",
+        "625643",
+        "700363"
       ]
     },
     {
@@ -5179,27 +2976,8 @@
     },
     {
       "rank": 13,
-      "team": "ATL",
-      "staffMeanForm": 48.1,
-      "qualifiedCount": 11,
-      "pitcherIds": [
-        "519242",
-        "641816",
-        "678061",
-        "608718",
-        "656550",
-        "527048",
-        "675911",
-        "693821",
-        "702275",
-        "625643",
-        "700363"
-      ]
-    },
-    {
-      "rank": 14,
       "team": "LAA",
-      "staffMeanForm": 48.1,
+      "staffMeanForm": 47.6,
       "qualifiedCount": 8,
       "pitcherIds": [
         "672282",
@@ -5207,89 +2985,28 @@
         "696270",
         "691946",
         "579328",
-        "691951",
         "680570",
+        "691951",
         "686799"
       ]
     },
     {
-      "rank": 15,
-      "team": "WSH",
-      "staffMeanForm": 48,
-      "qualifiedCount": 13,
-      "pitcherIds": [
-        "676917",
-        "674841",
-        "813349",
-        "683000",
-        "676571",
-        "695418",
-        "663992",
-        "663623",
-        "800600",
-        "641793",
-        "687223",
-        "663362",
-        "571945"
-      ]
-    },
-    {
-      "rank": 16,
-      "team": "HOU",
-      "staffMeanForm": 47.9,
-      "qualifiedCount": 11,
-      "pitcherIds": [
-        "686613",
-        "664299",
-        "669713",
-        "678906",
-        "675989",
-        "663567",
-        "621121",
-        "669854",
-        "837227",
-        "814490",
-        "681347"
-      ]
-    },
-    {
-      "rank": 17,
-      "team": "NYM",
-      "staffMeanForm": 47.6,
-      "qualifiedCount": 8,
-      "pitcherIds": [
-        "804636",
-        "690997",
-        "681035",
-        "804267",
-        "623211",
-        "476594",
-        "640455",
-        "673540"
-      ]
-    },
-    {
-      "rank": 18,
-      "team": "SD",
+      "rank": 14,
+      "team": "BAL",
       "staffMeanForm": 47.5,
-      "qualifiedCount": 12,
+      "qualifiedCount": 7,
       "pitcherIds": [
-        "650633",
-        "601713",
-        "681190",
-        "699134",
-        "606996",
-        "676664",
-        "608337",
-        "621111",
-        "656288",
-        "608566",
-        "592662",
-        "663554"
+        "669432",
+        "687064",
+        "700249",
+        "605135",
+        "669358",
+        "694346",
+        "680694"
       ]
     },
     {
-      "rank": 19,
+      "rank": 15,
       "team": "STL",
       "staffMeanForm": 47.5,
       "qualifiedCount": 6,
@@ -5303,46 +3020,9 @@
       ]
     },
     {
-      "rank": 20,
-      "team": "TEX",
-      "staffMeanForm": 47.4,
-      "qualifiedCount": 8,
-      "pitcherIds": [
-        "615698",
-        "677958",
-        "594798",
-        "641302",
-        "543135",
-        "683004",
-        "669022",
-        "674003"
-      ]
-    },
-    {
-      "rank": 21,
-      "team": "CWS",
-      "staffMeanForm": 47.3,
-      "qualifiedCount": 13,
-      "pitcherIds": [
-        "691799",
-        "607200",
-        "696146",
-        "685126",
-        "656794",
-        "689818",
-        "663436",
-        "680732",
-        "641743",
-        "663542",
-        "681343",
-        "622491",
-        "702273"
-      ]
-    },
-    {
-      "rank": 22,
+      "rank": 16,
       "team": "MIA",
-      "staffMeanForm": 47.2,
+      "staffMeanForm": 47.4,
       "qualifiedCount": 6,
       "pitcherIds": [
         "676974",
@@ -5354,35 +3034,132 @@
       ]
     },
     {
-      "rank": 23,
-      "team": "TOR",
-      "staffMeanForm": 46.8,
-      "qualifiedCount": 11,
+      "rank": 17,
+      "team": "SD",
+      "staffMeanForm": 47.3,
+      "qualifiedCount": 13,
       "pitcherIds": [
-        "656302",
-        "702056",
-        "689254",
-        "669456",
-        "693686",
-        "680755",
-        "571578",
-        "453286",
-        "592791",
-        "667755",
-        "681293"
+        "650633",
+        "601713",
+        "681190",
+        "699134",
+        "606996",
+        "593974",
+        "608337",
+        "676664",
+        "621111",
+        "656288",
+        "608566",
+        "592662",
+        "663554"
       ]
     },
     {
-      "rank": 24,
-      "team": "KC",
+      "rank": 18,
+      "team": "WSH",
+      "staffMeanForm": 47.1,
+      "qualifiedCount": 13,
+      "pitcherIds": [
+        "676917",
+        "674841",
+        "683000",
+        "813349",
+        "676571",
+        "663992",
+        "695418",
+        "663623",
+        "800600",
+        "687223",
+        "663362",
+        "641793",
+        "571945"
+      ]
+    },
+    {
+      "rank": 19,
+      "team": "NYM",
+      "staffMeanForm": 47.1,
+      "qualifiedCount": 9,
+      "pitcherIds": [
+        "804636",
+        "690997",
+        "681035",
+        "804267",
+        "623211",
+        "476594",
+        "640455",
+        "668964",
+        "673540"
+      ]
+    },
+    {
+      "rank": 20,
+      "team": "TEX",
+      "staffMeanForm": 47,
+      "qualifiedCount": 8,
+      "pitcherIds": [
+        "615698",
+        "677958",
+        "641302",
+        "594798",
+        "543135",
+        "683004",
+        "669022",
+        "674003"
+      ]
+    },
+    {
+      "rank": 21,
+      "team": "HOU",
       "staffMeanForm": 46.8,
+      "qualifiedCount": 11,
+      "pitcherIds": [
+        "686613",
+        "664299",
+        "669713",
+        "675989",
+        "663567",
+        "837227",
+        "669854",
+        "621121",
+        "814490",
+        "678906",
+        "681347"
+      ]
+    },
+    {
+      "rank": 22,
+      "team": "CWS",
+      "staffMeanForm": 46.4,
+      "qualifiedCount": 14,
+      "pitcherIds": [
+        "691799",
+        "607200",
+        "696146",
+        "656794",
+        "663436",
+        "680732",
+        "689818",
+        "685126",
+        "663542",
+        "641743",
+        "681343",
+        "702273",
+        "622491",
+        "669684"
+      ]
+    },
+    {
+      "rank": 23,
+      "team": "KC",
+      "staffMeanForm": 46.1,
       "qualifiedCount": 9,
       "pitcherIds": [
         "666142",
-        "663568",
         "663460",
         "608379",
         "702070",
+        "663568",
         "679883",
         "677976",
         "663738",
@@ -5390,9 +3167,28 @@
       ]
     },
     {
+      "rank": 24,
+      "team": "TOR",
+      "staffMeanForm": 46,
+      "qualifiedCount": 11,
+      "pitcherIds": [
+        "656302",
+        "702056",
+        "689254",
+        "669456",
+        "693686",
+        "453286",
+        "680755",
+        "592791",
+        "667755",
+        "571578",
+        "681293"
+      ]
+    },
+    {
       "rank": 25,
       "team": "CLE",
-      "staffMeanForm": 45.7,
+      "staffMeanForm": 45.8,
       "qualifiedCount": 7,
       "pitcherIds": [
         "668909",
@@ -5406,91 +3202,92 @@
     },
     {
       "rank": 26,
-      "team": "AZ",
-      "staffMeanForm": 45.5,
-      "qualifiedCount": 10,
-      "pitcherIds": [
-        "518876",
-        "647336",
-        "694297",
-        "593958",
-        "683352",
-        "669194",
-        "684442",
-        "703615",
-        "669203",
-        "668678"
-      ]
-    },
-    {
-      "rank": 27,
       "team": "SF",
-      "staffMeanForm": 45.4,
+      "staffMeanForm": 45.6,
       "qualifiedCount": 10,
       "pitcherIds": [
         "605288",
         "683627",
         "694738",
         "683363",
+        "686790",
         "694918",
         "702885",
-        "686790",
         "805074",
         "657277",
         "687931"
       ]
     },
     {
+      "rank": 27,
+      "team": "AZ",
+      "staffMeanForm": 45.4,
+      "qualifiedCount": 10,
+      "pitcherIds": [
+        "518876",
+        "647336",
+        "694297",
+        "669194",
+        "593958",
+        "683352",
+        "703615",
+        "684442",
+        "669203",
+        "668678"
+      ]
+    },
+    {
       "rank": 28,
       "team": "COL",
-      "staffMeanForm": 44,
+      "staffMeanForm": 43.4,
       "qualifiedCount": 12,
       "pitcherIds": [
-        "801403",
         "688642",
+        "801403",
         "623474",
         "690279",
         "608372",
         "687312",
         "607536",
         "500779",
-        "807743",
         "663372",
+        "807743",
         "685299",
         "547179"
       ]
     },
     {
       "rank": 29,
+      "team": "CIN",
+      "staffMeanForm": 42.4,
+      "qualifiedCount": 9,
+      "pitcherIds": [
+        "695505",
+        "666157",
+        "668881",
+        "671096",
+        "695534",
+        "682227",
+        "695076",
+        "663978",
+        "663903"
+      ]
+    },
+    {
+      "rank": 30,
       "team": "ATH",
-      "staffMeanForm": 42.8,
+      "staffMeanForm": 42,
       "qualifiedCount": 9,
       "pitcherIds": [
         "622663",
         "678022",
         "669372",
         "605488",
-        "650644",
         "682052",
         "695611",
         "669620",
+        "650644",
         "686930"
-      ]
-    },
-    {
-      "rank": 30,
-      "team": "CIN",
-      "staffMeanForm": 42.4,
-      "qualifiedCount": 8,
-      "pitcherIds": [
-        "695505",
-        "666157",
-        "668881",
-        "671096",
-        "682227",
-        "695076",
-        "663978",
-        "663903"
       ]
     }
   ],
@@ -5500,14 +3297,14 @@
     "latestScoredStartDate": "2026-10-28",
     "stale": false,
     "window": 5,
-    "leagueMeanGS": 50.543502824858756,
-    "totalQualified": 309,
+    "leagueMeanGS": 50.44572701498583,
+    "totalQualified": 313,
     "bands": {
-      "onfire": 46,
-      "hot": 47,
-      "even": 36,
-      "cooling": 128,
-      "ice": 52
+      "onfire": 43,
+      "hot": 49,
+      "even": 29,
+      "cooling": 138,
+      "ice": 54
     },
     "hot": [
       {
@@ -5525,7 +3322,7 @@
         "trendDelta": -8,
         "tier": "onfire",
         "levelTier": "even",
-        "heatIndex": 37,
+        "heatIndex": 38,
         "spark": [
           24,
           78,
@@ -5614,8 +3411,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 145,
-          "minStarts": 10,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": false
         },
@@ -5630,7 +3427,7 @@
             "label": "K-rate ↑",
             "direction": "good",
             "delta": 2.3,
-            "score": 0.58
+            "score": 0.56
           }
         ],
         "workload": {
@@ -5744,8 +3541,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 144,
-          "minStarts": 9,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": false
         },
@@ -5760,7 +3557,7 @@
             "label": "Run prevention",
             "direction": "good",
             "delta": -3.1,
-            "score": -0.41
+            "score": -0.42
           }
         ],
         "workload": {
@@ -5782,8 +3579,8 @@
         "status": "ok",
         "rgs": 65.8,
         "windowCount": 5,
-        "seasonStartCount": 18,
-        "bgs": 55.4,
+        "seasonStartCount": 21,
+        "bgs": 53.7,
         "deltaForm": 18.2,
         "trend": "heating",
         "trendDelta": -5.3,
@@ -5826,89 +3623,89 @@
           "startHref": "/starts/2026-09-27-pit-det-683003"
         },
         "seasonStats": {
-          "inningsPitched": 90,
-          "era": 3.3,
-          "whip": 1.03,
-          "k9": 11.2,
+          "inningsPitched": 101.2,
+          "era": 3.72,
+          "whip": 1.08,
+          "k9": 10.9,
           "qualityStarts": 6
         },
         "seasonDepthStats": {
-          "gemRate": 22.2,
-          "dudRate": 5.6,
-          "consistency": 13.4,
+          "gemRate": 19,
+          "dudRate": 4.8,
+          "consistency": 13.5,
           "bestStart": 74,
           "worstStart": 20,
-          "medianGsPlus": 57,
+          "medianGsPlus": 55,
           "bandDistribution": [
             {
               "key": "onfire",
               "label": "Elite",
               "count": 3,
-              "share": 16.7,
+              "share": 14.3,
               "color": "#D85A30"
             },
             {
               "key": "hot",
               "label": "Plus",
               "count": 6,
-              "share": 33.3,
+              "share": 28.6,
               "color": "#EF9F27"
             },
             {
               "key": "even",
               "label": "Solid",
-              "count": 7,
-              "share": 38.9,
+              "count": 9,
+              "share": 42.9,
               "color": "#888780"
             },
             {
               "key": "cooling",
               "label": "Below",
-              "count": 1,
-              "share": 5.6,
+              "count": 2,
+              "share": 9.5,
               "color": "#85B7EB"
             },
             {
               "key": "ice",
               "label": "Poor",
               "count": 1,
-              "share": 5.6,
+              "share": 4.8,
               "color": "#378ADD"
             }
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 145,
-          "minStarts": 10,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": true
         },
         "seasonDecisionRecord": {
           "wins": 5,
-          "losses": 5,
-          "noDecisions": 8
+          "losses": 6,
+          "noDecisions": 10
         },
         "driverChips": [
           {
             "key": "depth",
             "label": "Going deeper",
             "direction": "good",
-            "delta": 1.1,
-            "score": 0.74
+            "delta": 1.3,
+            "score": 0.83
           },
           {
-            "key": "walks",
-            "label": "Walks ↓",
+            "key": "k-rate",
+            "label": "K-rate ↑",
             "direction": "good",
-            "delta": -2.2,
-            "score": -0.46
+            "delta": 2.1,
+            "score": 0.53
           },
           {
             "key": "run-prevention",
             "label": "Run prevention",
             "direction": "good",
-            "delta": -3.5,
-            "score": -0.46
+            "delta": -3.9,
+            "score": -0.52
           }
         ],
         "workload": {
@@ -5930,8 +3727,8 @@
         "status": "ok",
         "rgs": 63,
         "windowCount": 5,
-        "seasonStartCount": 23,
-        "bgs": 58.3,
+        "seasonStartCount": 28,
+        "bgs": 57.4,
         "deltaForm": 15.4,
         "trend": "heating",
         "trendDelta": -3.3,
@@ -5974,67 +3771,67 @@
           "startHref": "/starts/2026-09-27-phi-tb-554430"
         },
         "seasonStats": {
-          "inningsPitched": 133.1,
-          "era": 2.9,
-          "whip": 0.98,
-          "k9": 10.5,
-          "qualityStarts": 15
+          "inningsPitched": 162,
+          "era": 3,
+          "whip": 1.05,
+          "k9": 10.7,
+          "qualityStarts": 17
         },
         "seasonDepthStats": {
-          "gemRate": 30.4,
-          "dudRate": 4.3,
-          "consistency": 12.3,
+          "gemRate": 28.6,
+          "dudRate": 3.6,
+          "consistency": 12,
           "bestStart": 73,
           "worstStart": 20,
-          "medianGsPlus": 63,
+          "medianGsPlus": 60,
           "bandDistribution": [
             {
               "key": "onfire",
               "label": "Elite",
               "count": 4,
-              "share": 17.4,
+              "share": 14.3,
               "color": "#D85A30"
             },
             {
               "key": "hot",
               "label": "Plus",
-              "count": 10,
-              "share": 43.5,
+              "count": 12,
+              "share": 42.9,
               "color": "#EF9F27"
             },
             {
               "key": "even",
               "label": "Solid",
-              "count": 7,
-              "share": 30.4,
+              "count": 9,
+              "share": 32.1,
               "color": "#888780"
             },
             {
               "key": "cooling",
               "label": "Below",
-              "count": 1,
-              "share": 4.3,
+              "count": 2,
+              "share": 7.1,
               "color": "#85B7EB"
             },
             {
               "key": "ice",
               "label": "Poor",
               "count": 1,
-              "share": 4.3,
+              "share": 3.6,
               "color": "#378ADD"
             }
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 146,
-          "minStarts": 10,
+          "teamGamesPlayed": 165,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": true
         },
         "seasonDecisionRecord": {
-          "wins": 11,
-          "losses": 4,
-          "noDecisions": 8
+          "wins": 14,
+          "losses": 5,
+          "noDecisions": 9
         },
         "driverChips": [
           {
@@ -6042,7 +3839,14 @@
             "label": "Going deeper",
             "direction": "good",
             "delta": 0.7,
-            "score": 0.46
+            "score": 0.44
+          },
+          {
+            "key": "walks",
+            "label": "Walks ↓",
+            "direction": "good",
+            "delta": -1.1,
+            "score": -0.25
           },
           {
             "key": "run-prevention",
@@ -6167,8 +3971,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 146,
-          "minStarts": 10,
+          "teamGamesPlayed": 164,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": true
         },
@@ -6183,14 +3987,14 @@
             "label": "Going deeper",
             "direction": "good",
             "delta": 1.1,
-            "score": 0.75
+            "score": 0.74
           },
           {
             "key": "k-rate",
             "label": "K-rate ↑",
             "direction": "good",
             "delta": 2.4,
-            "score": 0.59
+            "score": 0.58
           },
           {
             "key": "run-prevention",
@@ -6311,8 +4115,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 146,
-          "minStarts": 10,
+          "teamGamesPlayed": 164,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": false
         },
@@ -6437,8 +4241,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 144,
-          "minStarts": 9,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": true
         },
@@ -6453,14 +4257,14 @@
             "label": "K-rate ↓",
             "direction": "bad",
             "delta": -2.8,
-            "score": -0.71
+            "score": -0.7
           },
           {
             "key": "run-prevention",
             "label": "Getting hit",
             "direction": "bad",
             "delta": 3.5,
-            "score": 0.45
+            "score": 0.46
           }
         ],
         "workload": {
@@ -6471,6 +4275,136 @@
         },
         "flags": {
           "limitedSample": false,
+          "rust": false
+        }
+      },
+      {
+        "pitcherId": "801403",
+        "name": "Chase Dollander",
+        "team": "COL",
+        "throws": "R",
+        "status": "ok",
+        "rgs": 52.3,
+        "windowCount": 3,
+        "seasonStartCount": 3,
+        "bgs": 52.3,
+        "deltaForm": -16.7,
+        "trend": "cooling",
+        "trendDelta": -25,
+        "tier": "ice",
+        "levelTier": "hot",
+        "heatIndex": 36,
+        "spark": [
+          69,
+          53,
+          35
+        ],
+        "formSpark": [
+          69,
+          61,
+          52.3
+        ],
+        "lastStart": {
+          "id": "2026-05-14-col-pit-801403",
+          "gameDate": "2026-05-14",
+          "gamePk": "823383",
+          "team": "COL",
+          "opp": "PIT",
+          "side": "away",
+          "park": "PNC Park",
+          "ip": 1,
+          "h": 5,
+          "er": 3,
+          "bb": 1,
+          "k": 0,
+          "gsPlus": 35,
+          "result": "L",
+          "tier": "cooling",
+          "rollingMean": 52.3,
+          "bandLow": 35.3,
+          "bandHigh": 69.3,
+          "startHref": "/starts/2026-05-14-col-pit-801403"
+        },
+        "seasonStats": {
+          "inningsPitched": 13.2,
+          "era": 3.29,
+          "whip": 1.54,
+          "k9": 7.9,
+          "qualityStarts": 1
+        },
+        "seasonDepthStats": {
+          "gemRate": 33.3,
+          "dudRate": 0,
+          "consistency": 17,
+          "bestStart": 69,
+          "worstStart": 35,
+          "medianGsPlus": 53,
+          "bandDistribution": [
+            {
+              "key": "onfire",
+              "label": "Elite",
+              "count": 1,
+              "share": 33.3,
+              "color": "#D85A30"
+            },
+            {
+              "key": "hot",
+              "label": "Plus",
+              "count": 0,
+              "share": 0,
+              "color": "#EF9F27"
+            },
+            {
+              "key": "even",
+              "label": "Solid",
+              "count": 1,
+              "share": 33.3,
+              "color": "#888780"
+            },
+            {
+              "key": "cooling",
+              "label": "Below",
+              "count": 1,
+              "share": 33.3,
+              "color": "#85B7EB"
+            },
+            {
+              "key": "ice",
+              "label": "Poor",
+              "count": 0,
+              "share": 0,
+              "color": "#378ADD"
+            }
+          ]
+        },
+        "seasonQualification": {
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
+          "divisor": 16,
+          "qualified": false
+        },
+        "seasonDecisionRecord": {
+          "wins": 1,
+          "losses": 1,
+          "noDecisions": 1
+        },
+        "driverChips": [
+          {
+            "key": "walks",
+            "label": "Walks ↑",
+            "direction": "bad",
+            "delta": 1.5,
+            "score": 0.34
+          }
+        ],
+        "workload": {
+          "lastStartDate": "2026-05-14",
+          "lastStartPitches": 28,
+          "avgPitchesLast5": 74,
+          "avgIpLast5": 4.2
+        },
+        "flags": {
+          "limitedSample": true,
           "rust": false
         }
       },
@@ -6489,7 +4423,7 @@
         "trendDelta": -1.5,
         "tier": "ice",
         "levelTier": "even",
-        "heatIndex": 40,
+        "heatIndex": 41,
         "spark": [
           61,
           31,
@@ -6576,8 +4510,8 @@
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 145,
-          "minStarts": 10,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": false
         },
@@ -6591,8 +4525,8 @@
             "key": "k-rate",
             "label": "K-rate ↓",
             "direction": "bad",
-            "delta": -4,
-            "score": -1
+            "delta": -4.1,
+            "score": -1.01
           }
         ],
         "workload": {
@@ -6614,8 +4548,8 @@
         "status": "ok",
         "rgs": 36.8,
         "windowCount": 5,
-        "seasonStartCount": 31,
-        "bgs": 49.6,
+        "seasonStartCount": 33,
+        "bgs": 49.8,
         "deltaForm": -15.2,
         "trend": "cooling",
         "trendDelta": -6.2,
@@ -6658,16 +4592,16 @@
           "startHref": "/starts/2026-09-20-mia-sd-645261"
         },
         "seasonStats": {
-          "inningsPitched": 198.1,
-          "era": 4.04,
-          "whip": 1.23,
-          "k9": 6.4,
-          "qualityStarts": 19
+          "inningsPitched": 211,
+          "era": 3.92,
+          "whip": 1.24,
+          "k9": 6.5,
+          "qualityStarts": 21
         },
         "seasonDepthStats": {
-          "gemRate": 16.1,
-          "dudRate": 16.1,
-          "consistency": 14.6,
+          "gemRate": 15.2,
+          "dudRate": 15.2,
+          "consistency": 14.1,
           "bestStart": 78,
           "worstStart": 20,
           "medianGsPlus": 53,
@@ -6676,47 +4610,47 @@
               "key": "onfire",
               "label": "Elite",
               "count": 1,
-              "share": 3.2,
+              "share": 3,
               "color": "#D85A30"
             },
             {
               "key": "hot",
               "label": "Plus",
               "count": 11,
-              "share": 35.5,
+              "share": 33.3,
               "color": "#EF9F27"
             },
             {
               "key": "even",
               "label": "Solid",
-              "count": 9,
-              "share": 29,
+              "count": 11,
+              "share": 33.3,
               "color": "#888780"
             },
             {
               "key": "cooling",
               "label": "Below",
               "count": 6,
-              "share": 19.4,
+              "share": 18.2,
               "color": "#85B7EB"
             },
             {
               "key": "ice",
               "label": "Poor",
               "count": 4,
-              "share": 12.9,
+              "share": 12.1,
               "color": "#378ADD"
             }
           ]
         },
         "seasonQualification": {
-          "teamGamesPlayed": 145,
-          "minStarts": 10,
+          "teamGamesPlayed": 162,
+          "minStarts": 11,
           "divisor": 16,
           "qualified": true
         },
         "seasonDecisionRecord": {
-          "wins": 11,
+          "wins": 13,
           "losses": 11,
           "noDecisions": 9
         },
@@ -6726,21 +4660,21 @@
             "label": "Short outings",
             "direction": "bad",
             "delta": -1.1,
-            "score": -0.74
+            "score": -0.72
           },
           {
             "key": "run-prevention",
             "label": "Getting hit",
             "direction": "bad",
-            "delta": 4.1,
-            "score": 0.54
+            "delta": 4.2,
+            "score": 0.56
           },
           {
             "key": "k-rate",
             "label": "K-rate ↓",
             "direction": "bad",
-            "delta": -1.7,
-            "score": -0.43
+            "delta": -1.8,
+            "score": -0.44
           }
         ],
         "workload": {
@@ -6753,132 +4687,6 @@
           "limitedSample": false,
           "rust": false
         }
-      },
-      {
-        "pitcherId": "689818",
-        "name": "David Sandlin",
-        "team": "CWS",
-        "throws": "R",
-        "status": "ok",
-        "rgs": 48.8,
-        "windowCount": 5,
-        "seasonStartCount": 5,
-        "bgs": 48.8,
-        "deltaForm": -15.2,
-        "trend": "cooling",
-        "trendDelta": 10.5,
-        "tier": "ice",
-        "levelTier": "even",
-        "heatIndex": 55,
-        "spark": [
-          64,
-          21,
-          64,
-          35,
-          60
-        ],
-        "formSpark": [
-          64,
-          42.5,
-          49.7,
-          46,
-          48.8
-        ],
-        "lastStart": {
-          "id": "2026-09-24-cws-kc-689818",
-          "gameDate": "2026-09-24",
-          "gamePk": "824059",
-          "team": "CWS",
-          "opp": "KC",
-          "side": "away",
-          "park": "Kauffman Stadium",
-          "ip": 6,
-          "h": 5,
-          "er": 1,
-          "bb": 0,
-          "k": 7,
-          "gsPlus": 60,
-          "result": "W",
-          "tier": "hot",
-          "rollingMean": 48.8,
-          "bandLow": 29.1,
-          "bandHigh": 68.5,
-          "startHref": "/starts/2026-09-24-cws-kc-689818"
-        },
-        "seasonStats": {
-          "inningsPitched": 25.2,
-          "era": 5.26,
-          "whip": 1.09,
-          "k9": 8.4,
-          "qualityStarts": 2
-        },
-        "seasonDepthStats": {
-          "gemRate": 0,
-          "dudRate": 20,
-          "consistency": 19.7,
-          "bestStart": 64,
-          "worstStart": 21,
-          "medianGsPlus": 60,
-          "bandDistribution": [
-            {
-              "key": "onfire",
-              "label": "Elite",
-              "count": 0,
-              "share": 0,
-              "color": "#D85A30"
-            },
-            {
-              "key": "hot",
-              "label": "Plus",
-              "count": 3,
-              "share": 60,
-              "color": "#EF9F27"
-            },
-            {
-              "key": "even",
-              "label": "Solid",
-              "count": 0,
-              "share": 0,
-              "color": "#888780"
-            },
-            {
-              "key": "cooling",
-              "label": "Below",
-              "count": 1,
-              "share": 20,
-              "color": "#85B7EB"
-            },
-            {
-              "key": "ice",
-              "label": "Poor",
-              "count": 1,
-              "share": 20,
-              "color": "#378ADD"
-            }
-          ]
-        },
-        "seasonQualification": {
-          "teamGamesPlayed": 152,
-          "minStarts": 10,
-          "divisor": 16,
-          "qualified": false
-        },
-        "seasonDecisionRecord": {
-          "wins": 2,
-          "losses": 2,
-          "noDecisions": 1
-        },
-        "driverChips": [],
-        "workload": {
-          "lastStartDate": "2026-09-24",
-          "lastStartPitches": 85,
-          "avgPitchesLast5": 74,
-          "avgIpLast5": 5
-        },
-        "flags": {
-          "limitedSample": false,
-          "rust": false
-        }
       }
     ]
   },
@@ -6886,44 +4694,44 @@
     {
       "low": 20,
       "high": 29,
-      "count": 255
+      "count": 294
     },
     {
       "low": 30,
       "high": 39,
-      "count": 564
+      "count": 619
     },
     {
       "low": 40,
       "high": 49,
-      "count": 1087
+      "count": 1226
     },
     {
       "low": 50,
       "high": 59,
-      "count": 1471
+      "count": 1649
     },
     {
       "low": 60,
       "high": 69,
-      "count": 844
+      "count": 928
     },
     {
       "low": 70,
       "high": 79,
-      "count": 194
+      "count": 211
     },
     {
       "low": 80,
       "high": 80,
-      "count": 10
+      "count": 11
     }
   ],
   "qualificationDivisor": 16,
   "copy": {
     "intro": {
-      "text": "The 2026 season is complete with 4425 final starts showcasing standout arms and defining performances.",
-      "source": "llm",
+      "text": "The 2026 season is complete. Revisit 4938 final starts, the standout arms, and the performances that defined the year.",
+      "source": "template",
       "trace": [
         "canonical:all"
       ]
@@ -6948,6 +4756,7 @@
         "2026-05-12-pit-col-694973",
         "2026-04-27-bos-tor-624133",
         "2026-05-24-laa-tex-672282",
+        "2026-06-30-wsh-bos-676917",
         "2026-06-10-tb-bos-656876",
         "2026-05-12-min-mia-641927",
         "2026-05-05-phi-ath-650911",
@@ -6956,18 +4765,17 @@
         "2026-04-10-kc-cws-663460",
         "2026-05-20-mil-chc-690986",
         "2026-04-26-mil-pit-690986",
+        "2026-06-15-stl-sd-669160",
         "2026-04-01-mia-cws-645261",
         "2026-08-13-wsh-chc-676917",
         "2026-07-10-cin-chc-668881",
         "2026-05-10-tex-chc-594798",
         "2026-06-05-tb-mia-656876",
-        "2026-10-03-tb-nyy-656876",
-        "2026-09-01-cle-tor-668909",
-        "2026-04-14-min-bos-690953"
+        "2026-10-03-tb-nyy-656876"
       ]
     },
     "arm": {
-      "text": "Jacob Misiorowski leads starters with at least 25 starts, averaging 63.1 GS+ across 32 starts.",
+      "text": "Jacob Misiorowski leads starters with at least 25 starts, averaging 63.0 GS+ across 34 starts.",
       "source": "template",
       "trace": [
         "2026-03-26-mil-cws-694819",
@@ -6984,6 +4792,8 @@
         "2026-05-31-mil-hou-694819",
         "2026-06-06-mil-col-694819",
         "2026-06-12-mil-phi-694819",
+        "2026-06-19-mil-atl-694819",
+        "2026-06-26-mil-chc-694819",
         "2026-07-02-mil-cin-694819",
         "2026-07-07-mil-stl-694819",
         "2026-07-20-mil-nym-694819",
@@ -7005,8 +4815,8 @@
       ]
     },
     "rotation": {
-      "text": "NYY finishes first on the final rotation board with 52.9 Form across 8 qualified arms.",
-      "source": "llm",
+      "text": "NYY finishes first on the final rotation board with 52.7 Form across 8 qualified arms.",
+      "source": "template",
       "trace": [
         "pitcher:607074",
         "pitcher:693645",
@@ -7014,16 +4824,19 @@
         "pitcher:608331",
         "pitcher:701542",
         "pitcher:543037",
-        "pitcher:695684",
-        "pitcher:661563"
+        "pitcher:661563",
+        "pitcher:695684"
       ]
     },
     "bids": {
-      "text": "14 starts have a recorded no-hitter bid of at least six innings.",
-      "source": "llm",
+      "text": "18 starts have a recorded no-hitter bid of at least six innings. The deepest bids lead this list.",
+      "source": "template",
       "trace": [
         "2026-07-08-tor-sf-656302",
+        "2026-06-13-lad-cws-808967",
         "2026-10-03-tb-nyy-656876",
+        "2026-06-28-bos-nyy-543243",
+        "2026-06-15-stl-sd-669160",
         "2026-08-13-wsh-chc-676917",
         "2026-08-16-kc-laa-702070",
         "2026-07-30-kc-min-702070",
@@ -7033,20 +4846,22 @@
         "2026-08-01-atl-wsh-527048",
         "2026-07-18-ath-wsh-669372",
         "2026-08-22-tor-nyy-656302",
+        "2026-06-19-bos-sea-624133",
         "2026-08-20-atl-cws-656550",
         "2026-07-11-bal-kc-680694",
         "2026-09-14-tor-det-667755"
       ]
     },
     "gems": {
-      "text": "Cam Schlittler recorded 9 starts at 70-plus GS+, leading this season's gem count.",
-      "source": "llm",
+      "text": "Cam Schlittler recorded 10 starts at 70-plus GS+, leading this season's gem count.",
+      "source": "template",
       "trace": [
         "2026-03-27-nyy-sf-693645",
         "2026-04-01-nyy-sea-693645",
         "2026-04-28-nyy-tex-693645",
         "2026-05-09-nyy-mil-693645",
         "2026-05-15-nyy-nym-693645",
+        "2026-06-19-nyy-cin-693645",
         "2026-07-24-nyy-phi-693645",
         "2026-08-09-nyy-atl-693645",
         "2026-09-02-nyy-laa-693645",
@@ -7072,8 +4887,8 @@
       ]
     },
     "league": {
-      "text": "The final league average is 50.5 GS+ across 4425 starts. The distribution shows the full season, not only its highlights.",
-      "source": "llm",
+      "text": "The final league average is 50.4 GS+ across 4938 starts. The distribution shows the full season, not only its highlights.",
+      "source": "template",
       "trace": [
         "canonical:all"
       ]
@@ -7092,7 +4907,7 @@
     "thumbnailUrl": "https://img.youtube.com/vi/MaAOy8pY36c/maxresdefault.jpg",
     "watchUrl": "https://www.youtube.com/watch?v=MaAOy8pY36c"
   },
-  "sourceSha256": "9a7a97f0b6b0722604388c744eb68f745838ad43c11a98abf93d56ccd07784a5",
+  "sourceSha256": "981e5bce7466a059839fe9a2647e57f2579df2bbd315c1396ec503e6a6995367",
   "model": "gpt-4.1-mini",
   "metricsVersion": "OFF-1-v1"
 }

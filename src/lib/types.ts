@@ -899,7 +899,7 @@ export type PitcherSkillSnapshot = {
 };
 
 export type PitcherSkillProfile = {
-  source: "archive-gamefeed-line" | "live-people-stats-line" | "fixture-line";
+  source: "canonical-line" | "archive-gamefeed-line" | "live-people-stats-line" | "fixture-line";
   note: string;
   season: PitcherSkillSnapshot;
   trailing30: PitcherSkillSnapshot;
@@ -969,6 +969,7 @@ export type PitcherApiSplitGroup = {
 };
 
 export type PitcherApiResponse = Pick<PitcherSummary, "id" | "mlbId" | "name" | "team" | "throws" | "headshotUrl"> & {
+  seasonArsenalCoverage?: { expected: number; covered: number; pitches: number; firstDate: string; lastDate: string } | null;
   seasonLine: PitcherDetail["seasonLine"];
   skillProfile: PitcherSkillProfile;
   arsenal: ArsenalPitchSummary[];
@@ -978,9 +979,9 @@ export type PitcherApiResponse = Pick<PitcherSummary, "id" | "mlbId" | "name" | 
   seasonLogSummary: PitcherApiSeasonLogSummary;
   seasonLogControls: PitcherApiSeasonLogControls;
   source: {
-    identity: "fixture" | "live-people-stats";
-    seasonLine: "fixture" | "archive-gamefeed" | "live-people-stats";
-    startHistory: "fixture" | "archive-gamefeed" | "live-people-stats";
+    identity: "canonical" | "fixture" | "live-people-stats";
+    seasonLine: "canonical" | "fixture" | "archive-gamefeed" | "live-people-stats";
+    startHistory: "canonical" | "fixture" | "archive-gamefeed" | "live-people-stats";
     arsenal: "fixture" | "archive-gamefeed" | "live-gamefeed" | "statcast-savant";
     splits: "live-people-stat-splits" | "pending-live-source";
     archiveArsenal: {

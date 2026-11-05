@@ -129,7 +129,8 @@ function compareArchivedStartOfDay(a, b) {
 // The tracked frozen canonical fixture makes these checks portable to a clean clone.
 async function readCanonicalStartOfDayLeaders() {
   const records = JSON.parse(await readFile("data/season-reviews/2026-canonical.json", "utf8"));
-  assert(records.length === 4425, "canonical season fixture must remain complete");
+  const receipt = JSON.parse(await readFile("data/season-reviews/2026-receipt.json", "utf8"));
+  assert(records.length === (receipt.storedRecords ?? receipt.starts), "canonical season fixture must match the authorized frozen receipt");
   const byDate = new Map();
   for (const record of records) {
     assert(record.status === "final" && record.frozen, "season fixture must contain settled canonical records");

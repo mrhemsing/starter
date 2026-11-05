@@ -18,6 +18,7 @@ import { PitcherFormWindowPanel } from "@/components/pitcher-form-window-panel";
 import { WireEventCard } from "@/components/wire-event-card";
 import { resolveFeaturedStartHighlight } from "@/lib/data/featured-highlight-service";
 import { getPitcherForm, parseFormWindow } from "@/lib/data/form-service";
+import { pitcherOfficialCoverage } from "@/lib/pitcher-official-coverage";
 import { readPitcherStrikeoutLineResults } from "@/lib/data/odds-snapshot-service";
 import { getHomeSlateDate, getPitcherApiResponse, getStartDetail, getTodayProbables } from "@/lib/data/start-service";
 import { readOrFetchPitcherHeadlineEvents } from "@/lib/data/watchlist-headlines-service";
@@ -94,6 +95,8 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
   if (!form) notFound();
 
   const { summary, series } = form;
+  const officialCoverage = pitcherOfficialCoverage(summary.pitcherId, series.at(-1)?.gameDate.slice(0, 4) ?? "");
+  const reliefOuts = officialCoverage?.reliefOuts ?? 0;
   const currentPitcher = withCurrentTeam(summary, await readCurrentTeams());
   const recentStartIds = series.slice(-3).reverse().map((start) => start.id);
   const pitcherPromise = getPitcherApiResponse(id);
@@ -150,9 +153,10 @@ export default async function PitcherFormPage({ params, initialForm, searchParam
                     <p className={`font-serif text-6xl font-bold leading-none ${tierTextClass(summary.tier)}`}>{Math.round(summary.rgs)}</p>
                     <p className="pb-1 font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">{tierLabel(summary.tier)} form / {summary.windowCount} of {window}</p>
                   </div>
-                  <p className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
-                    ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · IP {summary.seasonStats.inningsPitched.toFixed(1)} · W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)}
+                  <p data-pitcher-season-stats className="mt-2 max-w-full font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-zinc-500 [overflow-wrap:anywhere]">
+                    {summary.seasonStartCount} starts · {summary.seasonStats.inningsPitched.toFixed(1)} IP as starter · ERA {formatNullable(summary.seasonStats.era, 2)} · WHIP {formatNullable(summary.seasonStats.whip, 2)} · K/9 {formatNullable(summary.seasonStats.k9, 1)} · W-L {formatSeasonDecisionRecord(summary.seasonDecisionRecord)}
                   </p>
+                  {reliefOuts > 0 ? <p data-relief-coverage className="mt-1 text-xs text-zinc-500">{(Math.floor(reliefOuts / 3) + (reliefOuts % 3) / 10).toFixed(1)} IP in relief not included</p> : null}
                   {summary.venueSplit ? <HomeRoadSplitBadge split={summary.venueSplit} /> : null}
                 </div>
                 <TrendChip summary={summary} />
@@ -468,7 +472,7 @@ async function getProfileNextStart(pitcherId: string, formScore: number): Promis
 
 function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
   const pitches = [...pitcher.arsenal].sort((a, b) => b.usagePct - a.usagePct).slice(0, 6);
-  if (pitches.length === 0) return null;
+  if (pitches.length === 0) return <section className="rounded border border-white/10 bg-[#101014] p-4" data-responsive-check="pitcher-arsenal-table"><h2 className="font-serif text-3xl font-bold">How he gets outs</h2><p className="mt-3 text-sm text-zinc-400" data-pitch-mix-coverage>No pitch-level data is available for this sample. {formatArsenalSourceTitle(pitcher)}</p></section>;
 
   const outPitch = pitches.reduce<ArsenalPitchSummary | null>((winner, pitch) => {
     if (!winner) return pitch;
@@ -487,6 +491,7 @@ function ArsenalTable({ pitcher }: { pitcher: PitcherApiResponse }) {
         </p>
       </div>
 
+      <p className="mb-4 text-xs leading-5 text-zinc-400" data-pitch-mix-coverage>{formatArsenalSourceTitle(pitcher)}</p>
       <div className="max-w-full overflow-x-auto">
         <table className="min-w-[680px] w-full border-collapse font-mono text-sm">
           <thead className="text-left text-[10px] uppercase tracking-[0.16em] text-zinc-500">
@@ -540,15 +545,18 @@ function ArsenalTableRow({ pitch, outPitch }: { pitch: ArsenalPitchSummary; outP
 }
 
 function formatArsenalSourceLabel(pitcher: PitcherApiResponse) {
+  if (pitcher.seasonArsenalCoverage) return `2026 starts through ${pitcher.seasonArsenalCoverage.lastDate}`;
   if (pitcher.source.archiveArsenal) return `Archive through ${pitcher.source.archiveArsenal.lastStartDate}`;
   if (pitcher.source.arsenal === "fixture") return "More data after next archive run";
   return pitcher.source.arsenal.replace(/-/g, " ");
 }
 
 function formatArsenalSourceTitle(pitcher: PitcherApiResponse) {
+  const coverage = pitcher.seasonArsenalCoverage;
+  if (coverage) return `MLB pitch data covers ${coverage.covered} of ${coverage.expected} stored starts (${coverage.pitches} pitches), from ${coverage.firstDate} through ${coverage.lastDate}.`;
   const archive = pitcher.source.archiveArsenal;
   if (!archive) return "Pitch mix expands after the next archive run.";
-  return `${archive.starts} starts, ${archive.pitchEvents} pitches archived from ${archive.firstStartDate} through ${archive.lastStartDate}. Last updated ${archive.archivedAt}.`;
+  return `Only ${archive.starts} archived starts through ${archive.lastStartDate} have pitch detail here; later starts are included in the game log, not this pitch mix.`;
 }
 
 function VelocityByStartPanel({ starts }: { starts: PitcherVelocityStart[] }) {

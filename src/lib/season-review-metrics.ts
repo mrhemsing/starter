@@ -1,4 +1,5 @@
 import type { CanonicalStartRecord } from "@/lib/canonical-start-record";
+import { selectCanonicalStarts } from "@/lib/canonical-start-selection";
 import { canonicalRecordToFormStart, frozenSeasonForm, frozenRotationLeaderboard } from "@/lib/data/form-service";
 import { FORM_CONFIG, HEAT_BANDS, HOME_CONFIG } from "@/lib/form-tokens";
 import { compareRankedStarts } from "@/lib/start-ranking";
@@ -12,6 +13,7 @@ export const REVIEW_TOP_STARTS = 25;
 export const REVIEW_ARM_MIN_STARTS = 25;
 
 export function computeSeasonReview(records: CanonicalStartRecord[], publishedAt: string) {
+  records = selectCanonicalStarts(records);
   if (!records.length || records.some((row) => row.status !== "final" || !row.frozen || row.source.line === "fixture")) throw new Error("Season review requires frozen, non-fixture final records");
   if (new Set(records.map((row) => row.id)).size !== records.length) throw new Error("Duplicate canonical start");
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.gamePk - b.gamePk || a.id.localeCompare(b.id));

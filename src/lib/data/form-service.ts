@@ -3,7 +3,7 @@ export { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
 import { getSeasonState, skipSeasonJob } from "@/lib/season-state";
 import { unstable_cache } from "next/cache";
 import { HEAT_CHECK_CACHE_TAG, SLATE_CACHE_TAG } from "@/lib/data/cache-tags";
-import { readCanonicalStartRecords } from "@/lib/data/canonical-start-store";
+import { readCanonicalStartRecords, readCanonicalPitcherSeasonRecords } from "@/lib/data/canonical-start-store";
 import { readArchivedPitcherSeasonProfile } from "@/lib/data/mlb-archive";
 import { getArchivedSeasonStartSummaries, getHomeSlateDate, getTodayProbables } from "@/lib/data/start-service";
 import { fetchMlbPitcherAvailabilityStatuses, fetchMlbPitcherSeasonProfile } from "@/lib/data/mlb-stats-client";
@@ -125,7 +125,7 @@ const getCachedRotationLeaderboard = unstable_cache(
 
 const getCachedPitcherForm = unstable_cache(
   async (pitcherId: string, season: string, window: FormWindow) => buildPitcherForm(pitcherId, { season, window }),
-  ["pitcher-form", FORM_CACHE_VERSION],
+  ["pitcher-form", FORM_CACHE_VERSION, "full-canonical-season-v2-settled"],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG] },
 );
 
@@ -321,15 +321,23 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     getQualifiedFormStarts(season),
     getStableVenueSplitStarts(season),
   ]);
-  const starts = await getPitcherFormStartsWithFallback(pitcherId, season, window, startSet.starts);
+  const records = await readCanonicalPitcherSeasonRecords(pitcherId, season);
+  if (!records.length) return null;
+  const starts = [...startSet.starts.filter(start => String(start.pitcher.mlbId) !== pitcherId), ...records.map(canonicalRecordToFormStart)];
   const leagueMeanGS = mean(starts.map((start) => start.gameScorePlus));
   const leagueContext = buildLeagueContext(starts);
   const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
   if (!bucket) return null;
 
   const venueSplitStarts = venueSplitStartSet.starts.filter((start) => String(start.pitcher.mlbId) === pitcherId);
+  const qualifiedPitcherStarts = filterQualifiedStarts(bucket.starts);
   const summary = {
-    ...summarizePitcherBucket(bucket, window, leagueMeanGS, leagueContext),
+    ...summarizePitcherBucket({ ...bucket, starts: qualifiedPitcherStarts.length ? qualifiedPitcherStarts : bucket.starts }, window, leagueMeanGS, leagueContext),
+    ...(!qualifiedPitcherStarts.length ? { status: "insufficient" as const, windowCount: 0 } : {}),
+    seasonStartCount: bucket.starts.length,
+    seasonStats: buildSeasonStats(bucket.starts),
+    seasonDecisionRecord: buildSeasonDecisionRecord(bucket.starts),
+    seasonDepthStats: buildSeasonDepthStats(bucket.starts),
     venueSplit: buildVenueSplitLabel(venueSplitStarts),
   };
   const summaryWithFreshness = attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds);
@@ -358,16 +366,6 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     series,
     summary: summaryWithAvailability,
     };
-}
-
-async function getPitcherFormStartsWithFallback(pitcherId: string, season: string, window: FormWindow, starts: StartSummary[]) {
-  const bucket = buildPitcherBuckets(starts).find((candidate) => candidate.pitcherId === pitcherId);
-  if (bucket && bucket.starts.length >= window) return starts;
-
-  const fallbackStarts = await getCachedPitcherSeasonFallbackStarts(pitcherId, season);
-  if (fallbackStarts.length === 0) return starts;
-
-  return mergeScoredStarts(starts, fallbackStarts);
 }
 
 async function buildPitcherSeasonFallbackStarts(pitcherId: string, season: string): Promise<StartSummary[]> {

@@ -23,7 +23,8 @@ assert.equal((await season.getSeasonState()).status, "season_complete");
 const deps = { "@/lib/season-state": season, "next/server": { NextResponse: { json: (body, options) => ({ body, ...options }) } } };
 // Real cron route bodies must exit before invoking any of their job dependencies.
 for (const name of readdirSync("src/app/api/cron")) {
-  if (["watchlist-headlines", "offseason-teams"].includes(name)) continue;
+  // Rendered integrity is read-only and must run all winter; exercised by its route test.
+  if (["watchlist-headlines", "offseason-teams", "pitcher-integrity"].includes(name)) continue;
   const route = load(`src/app/api/cron/${name}/route.ts`, deps);
   const result = await route.GET(new Request(`https://example.test/api/cron/${name}`));
   assert.equal(result.body.skipped, "season complete", name);

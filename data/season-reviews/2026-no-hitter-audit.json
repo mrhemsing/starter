@@ -1,9 +1,9 @@
 {
   "year": 2026,
-  "verifiedAt": "2026-11-04T05:09:19.592Z",
-  "canonicalStarts": 4425,
-  "expectedGames": 2205,
-  "checkedGames": 2205,
+  "verifiedAt": "2026-11-05T04:23:57.019107+00:00",
+  "canonicalStarts": 4938,
+  "expectedGames": 2469,
+  "checkedGames": 2469,
   "individual": [],
   "shortened": [],
   "combined": [
@@ -17834,6 +17834,2118 @@
       "source": "https://statsapi.mlb.com/api/v1/game/849851/linescore",
       "homeHits": 12,
       "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 822699,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822699/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822717,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822717/feed/live",
+      "homeHits": 8,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 822718,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822718/feed/live",
+      "homeHits": 8,
+      "awayHits": 17,
+      "checked": true
+    },
+    {
+      "gamePk": 822719,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822719/feed/live",
+      "homeHits": 6,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 822720,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822720/feed/live",
+      "homeHits": 12,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822721,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822721/feed/live",
+      "homeHits": 6,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 822722,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822722/feed/live",
+      "homeHits": 14,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822723,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822723/feed/live",
+      "homeHits": 10,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 822724,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822724/feed/live",
+      "homeHits": 8,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 822725,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822725/feed/live",
+      "homeHits": 10,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 822791,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822791/feed/live",
+      "homeHits": 12,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822793,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822793/feed/live",
+      "homeHits": 6,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822794,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822794/feed/live",
+      "homeHits": 10,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 822795,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822795/feed/live",
+      "homeHits": 6,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822796,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822796/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 822797,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822797/feed/live",
+      "homeHits": 6,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 822798,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822798/feed/live",
+      "homeHits": 4,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 822799,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822799/feed/live",
+      "homeHits": 13,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 822800,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822800/feed/live",
+      "homeHits": 11,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822801,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822801/feed/live",
+      "homeHits": 11,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 822802,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822802/feed/live",
+      "homeHits": 6,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822863,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822863/feed/live",
+      "homeHits": 3,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822883,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822883/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 822885,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822885/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 822886,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822886/feed/live",
+      "homeHits": 13,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 822887,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822887/feed/live",
+      "homeHits": 5,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 822888,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822888/feed/live",
+      "homeHits": 8,
+      "awayHits": 17,
+      "checked": true
+    },
+    {
+      "gamePk": 822889,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822889/feed/live",
+      "homeHits": 11,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 822959,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822959/feed/live",
+      "homeHits": 10,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 822960,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822960/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822961,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822961/feed/live",
+      "homeHits": 15,
+      "awayHits": 1,
+      "checked": true
+    },
+    {
+      "gamePk": 822962,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822962/feed/live",
+      "homeHits": 6,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 822963,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822963/feed/live",
+      "homeHits": 9,
+      "awayHits": 14,
+      "checked": true
+    },
+    {
+      "gamePk": 822964,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822964/feed/live",
+      "homeHits": 6,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 822965,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822965/feed/live",
+      "homeHits": 10,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 822966,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822966/feed/live",
+      "homeHits": 10,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 822967,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822967/feed/live",
+      "homeHits": 10,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 822968,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/822968/feed/live",
+      "homeHits": 10,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823024,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823024/feed/live",
+      "homeHits": 5,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823037,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823037/feed/live",
+      "homeHits": 6,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823038,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823038/feed/live",
+      "homeHits": 7,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 823039,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823039/feed/live",
+      "homeHits": 3,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823040,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823040/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823041,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823041/feed/live",
+      "homeHits": 8,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 823043,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823043/feed/live",
+      "homeHits": 7,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823044,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823044/feed/live",
+      "homeHits": 6,
+      "awayHits": 14,
+      "checked": true
+    },
+    {
+      "gamePk": 823045,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823045/feed/live",
+      "homeHits": 8,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823046,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823046/feed/live",
+      "homeHits": 8,
+      "awayHits": 1,
+      "checked": true
+    },
+    {
+      "gamePk": 823103,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823103/feed/live",
+      "homeHits": 4,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823122,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823122/feed/live",
+      "homeHits": 13,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823123,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823123/feed/live",
+      "homeHits": 6,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 823124,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823124/feed/live",
+      "homeHits": 2,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823125,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823125/feed/live",
+      "homeHits": 5,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823126,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823126/feed/live",
+      "homeHits": 2,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823127,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823127/feed/live",
+      "homeHits": 7,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823128,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823128/feed/live",
+      "homeHits": 6,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823191,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823191/feed/live",
+      "homeHits": 5,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823204,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823204/feed/live",
+      "homeHits": 10,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823206,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823206/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823207,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823207/feed/live",
+      "homeHits": 6,
+      "awayHits": 1,
+      "checked": true
+    },
+    {
+      "gamePk": 823208,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823208/feed/live",
+      "homeHits": 6,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823209,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823209/feed/live",
+      "homeHits": 5,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 823210,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823210/feed/live",
+      "homeHits": 9,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823212,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823212/feed/live",
+      "homeHits": 9,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823213,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823213/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823266,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823266/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823281,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823281/feed/live",
+      "homeHits": 6,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 823283,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823283/feed/live",
+      "homeHits": 9,
+      "awayHits": 17,
+      "checked": true
+    },
+    {
+      "gamePk": 823284,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823284/feed/live",
+      "homeHits": 7,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823285,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823285/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823286,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823286/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823288,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823288/feed/live",
+      "homeHits": 4,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823349,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823349/feed/live",
+      "homeHits": 12,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823362,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823362/feed/live",
+      "homeHits": 11,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823363,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823363/feed/live",
+      "homeHits": 9,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823364,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823364/feed/live",
+      "homeHits": 11,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823365,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823365/feed/live",
+      "homeHits": 10,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823366,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823366/feed/live",
+      "homeHits": 8,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823367,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823367/feed/live",
+      "homeHits": 15,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823368,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823368/feed/live",
+      "homeHits": 8,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823369,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823369/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823428,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823428/feed/live",
+      "homeHits": 5,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823445,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823445/feed/live",
+      "homeHits": 12,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 823446,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823446/feed/live",
+      "homeHits": 11,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 823447,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823447/feed/live",
+      "homeHits": 17,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823448,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823448/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823449,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823449/feed/live",
+      "homeHits": 9,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823450,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823450/feed/live",
+      "homeHits": 10,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 823451,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823451/feed/live",
+      "homeHits": 6,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823452,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823452/feed/live",
+      "homeHits": 10,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 823515,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823515/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823528,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823528/feed/live",
+      "homeHits": 4,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823530,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823530/feed/live",
+      "homeHits": 7,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823531,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823531/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823532,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823532/feed/live",
+      "homeHits": 8,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 823533,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823533/feed/live",
+      "homeHits": 6,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823534,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823534/feed/live",
+      "homeHits": 8,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823535,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823535/feed/live",
+      "homeHits": 16,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823536,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823536/feed/live",
+      "homeHits": 13,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823608,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823608/feed/live",
+      "homeHits": 9,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823609,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823609/feed/live",
+      "homeHits": 8,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 823610,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823610/feed/live",
+      "homeHits": 5,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823611,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823611/feed/live",
+      "homeHits": 8,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 823612,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823612/feed/live",
+      "homeHits": 9,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823613,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823613/feed/live",
+      "homeHits": 7,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823614,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823614/feed/live",
+      "homeHits": 6,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823615,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823615/feed/live",
+      "homeHits": 13,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823616,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823616/feed/live",
+      "homeHits": 6,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823669,
+      "date": "2026-08-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823669/feed/live",
+      "homeHits": 8,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 823686,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823686/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823688,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823688/feed/live",
+      "homeHits": 14,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823689,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823689/feed/live",
+      "homeHits": 10,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 823690,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823690/feed/live",
+      "homeHits": 7,
+      "awayHits": 17,
+      "checked": true
+    },
+    {
+      "gamePk": 823691,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823691/feed/live",
+      "homeHits": 8,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823692,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823692/feed/live",
+      "homeHits": 3,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823693,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823693/feed/live",
+      "homeHits": 13,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823694,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823694/feed/live",
+      "homeHits": 7,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 823745,
+      "date": "2026-08-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823745/feed/live",
+      "homeHits": 11,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 823750,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823750/feed/live",
+      "homeHits": 9,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 823767,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823767/feed/live",
+      "homeHits": 8,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823768,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823768/feed/live",
+      "homeHits": 14,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823769,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823769/feed/live",
+      "homeHits": 10,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823770,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823770/feed/live",
+      "homeHits": 5,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823772,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823772/feed/live",
+      "homeHits": 5,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823773,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823773/feed/live",
+      "homeHits": 11,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823774,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823774/feed/live",
+      "homeHits": 11,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823775,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823775/feed/live",
+      "homeHits": 4,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823776,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823776/feed/live",
+      "homeHits": 12,
+      "awayHits": 17,
+      "checked": true
+    },
+    {
+      "gamePk": 823777,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823777/feed/live",
+      "homeHits": 10,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823836,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823836/feed/live",
+      "homeHits": 12,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823849,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823849/feed/live",
+      "homeHits": 12,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823850,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823850/feed/live",
+      "homeHits": 6,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 823851,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823851/feed/live",
+      "homeHits": 7,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823852,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823852/feed/live",
+      "homeHits": 5,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 823853,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823853/feed/live",
+      "homeHits": 10,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 823854,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823854/feed/live",
+      "homeHits": 6,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823915,
+      "date": "2026-08-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823915/feed/live",
+      "homeHits": 4,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 823934,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823934/feed/live",
+      "homeHits": 5,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 823936,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823936/feed/live",
+      "homeHits": 12,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823937,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823937/feed/live",
+      "homeHits": 4,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 823938,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823938/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823939,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823939/feed/live",
+      "homeHits": 6,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 823940,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823940/feed/live",
+      "homeHits": 9,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 823941,
+      "date": "2026-06-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823941/feed/live",
+      "homeHits": 11,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 823995,
+      "date": "2026-08-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/823995/feed/live",
+      "homeHits": 15,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824011,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824011/feed/live",
+      "homeHits": 6,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824014,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824014/feed/live",
+      "homeHits": 9,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824015,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824015/feed/live",
+      "homeHits": 9,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824016,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824016/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824017,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824017/feed/live",
+      "homeHits": 8,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824018,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824018/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824019,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824019/feed/live",
+      "homeHits": 15,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824021,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824021/feed/live",
+      "homeHits": 5,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824081,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824081/feed/live",
+      "homeHits": 7,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824094,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824094/feed/live",
+      "homeHits": 6,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824095,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824095/feed/live",
+      "homeHits": 12,
+      "awayHits": 16,
+      "checked": true
+    },
+    {
+      "gamePk": 824096,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824096/feed/live",
+      "homeHits": 6,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824097,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824097/feed/live",
+      "homeHits": 9,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824098,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824098/feed/live",
+      "homeHits": 17,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824099,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824099/feed/live",
+      "homeHits": 10,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824100,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824100/feed/live",
+      "homeHits": 11,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824174,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824174/feed/live",
+      "homeHits": 8,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824175,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824175/feed/live",
+      "homeHits": 7,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824177,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824177/feed/live",
+      "homeHits": 7,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824178,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824178/feed/live",
+      "homeHits": 9,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824179,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824179/feed/live",
+      "homeHits": 12,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824180,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824180/feed/live",
+      "homeHits": 5,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824181,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824181/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824182,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824182/feed/live",
+      "homeHits": 9,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824255,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824255/feed/live",
+      "homeHits": 6,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824256,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824256/feed/live",
+      "homeHits": 9,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824257,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824257/feed/live",
+      "homeHits": 11,
+      "awayHits": 16,
+      "checked": true
+    },
+    {
+      "gamePk": 824258,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824258/feed/live",
+      "homeHits": 5,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824259,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824259/feed/live",
+      "homeHits": 8,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824260,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824260/feed/live",
+      "homeHits": 13,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824261,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824261/feed/live",
+      "homeHits": 9,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824262,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824262/feed/live",
+      "homeHits": 8,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824263,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824263/feed/live",
+      "homeHits": 7,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824264,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824264/feed/live",
+      "homeHits": 8,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824337,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824337/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824338,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824338/feed/live",
+      "homeHits": 5,
+      "awayHits": 21,
+      "checked": true
+    },
+    {
+      "gamePk": 824340,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824340/feed/live",
+      "homeHits": 8,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824341,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824341/feed/live",
+      "homeHits": 14,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824342,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824342/feed/live",
+      "homeHits": 5,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824343,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824343/feed/live",
+      "homeHits": 8,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824344,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824344/feed/live",
+      "homeHits": 12,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824345,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824345/feed/live",
+      "homeHits": 9,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824418,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824418/feed/live",
+      "homeHits": 5,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824419,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824419/feed/live",
+      "homeHits": 11,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824421,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824421/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824422,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824422/feed/live",
+      "homeHits": 12,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824423,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824423/feed/live",
+      "homeHits": 4,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824426,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824426/feed/live",
+      "homeHits": 8,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824500,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824500/feed/live",
+      "homeHits": 11,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824501,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824501/feed/live",
+      "homeHits": 2,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824502,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824502/feed/live",
+      "homeHits": 2,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824503,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824503/feed/live",
+      "homeHits": 5,
+      "awayHits": 15,
+      "checked": true
+    },
+    {
+      "gamePk": 824504,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824504/feed/live",
+      "homeHits": 6,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824505,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824505/feed/live",
+      "homeHits": 9,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824506,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824506/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824508,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824508/feed/live",
+      "homeHits": 3,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824566,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824566/feed/live",
+      "homeHits": 8,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824580,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824580/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824581,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824581/feed/live",
+      "homeHits": 10,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824582,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824582/feed/live",
+      "homeHits": 23,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824583,
+      "date": "2026-06-24",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824583/feed/live",
+      "homeHits": 10,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824584,
+      "date": "2026-06-23",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824584/feed/live",
+      "homeHits": 3,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824585,
+      "date": "2026-06-22",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824585/feed/live",
+      "homeHits": 10,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824586,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824586/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824587,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824587/feed/live",
+      "homeHits": 1,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824660,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824660/feed/live",
+      "homeHits": 17,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824661,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824661/feed/live",
+      "homeHits": 13,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824663,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824663/feed/live",
+      "homeHits": 18,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824665,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824665/feed/live",
+      "homeHits": 9,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824666,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824666/feed/live",
+      "homeHits": 10,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824667,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824667/feed/live",
+      "homeHits": 7,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824668,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824668/feed/live",
+      "homeHits": 12,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824670,
+      "date": "2026-06-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824670/feed/live",
+      "homeHits": 7,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824727,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824727/feed/live",
+      "homeHits": 15,
+      "awayHits": 2,
+      "checked": true
+    },
+    {
+      "gamePk": 824740,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824740/feed/live",
+      "homeHits": 9,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824742,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824742/feed/live",
+      "homeHits": 4,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 824743,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824743/feed/live",
+      "homeHits": 9,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824744,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824744/feed/live",
+      "homeHits": 6,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824745,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824745/feed/live",
+      "homeHits": 7,
+      "awayHits": 3,
+      "checked": true
+    },
+    {
+      "gamePk": 824746,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824746/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824747,
+      "date": "2026-06-25",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824747/feed/live",
+      "homeHits": 7,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824748,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824748/feed/live",
+      "homeHits": 5,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824749,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824749/feed/live",
+      "homeHits": 11,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824750,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824750/feed/live",
+      "homeHits": 8,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824751,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824751/feed/live",
+      "homeHits": 9,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824818,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824818/feed/live",
+      "homeHits": 7,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824819,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824819/feed/live",
+      "homeHits": 9,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824821,
+      "date": "2026-06-28",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824821/feed/live",
+      "homeHits": 5,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 824823,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824823/feed/live",
+      "homeHits": 10,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824824,
+      "date": "2026-06-26",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824824/feed/live",
+      "homeHits": 8,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824825,
+      "date": "2026-06-27",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824825/feed/live",
+      "homeHits": 7,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824828,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824828/feed/live",
+      "homeHits": 10,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824905,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824905/feed/live",
+      "homeHits": 7,
+      "awayHits": 2,
+      "checked": true
+    },
+    {
+      "gamePk": 824907,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824907/feed/live",
+      "homeHits": 6,
+      "awayHits": 6,
+      "checked": true
+    },
+    {
+      "gamePk": 824908,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824908/feed/live",
+      "homeHits": 7,
+      "awayHits": 13,
+      "checked": true
+    },
+    {
+      "gamePk": 824909,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824909/feed/live",
+      "homeHits": 6,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824910,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824910/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824912,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824912/feed/live",
+      "homeHits": 7,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824913,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824913/feed/live",
+      "homeHits": 12,
+      "awayHits": 9,
+      "checked": true
+    },
+    {
+      "gamePk": 824984,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824984/feed/live",
+      "homeHits": 7,
+      "awayHits": 14,
+      "checked": true
+    },
+    {
+      "gamePk": 824985,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824985/feed/live",
+      "homeHits": 12,
+      "awayHits": 5,
+      "checked": true
+    },
+    {
+      "gamePk": 824987,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824987/feed/live",
+      "homeHits": 7,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 824988,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824988/feed/live",
+      "homeHits": 5,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 824989,
+      "date": "2026-06-18",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824989/feed/live",
+      "homeHits": 8,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 824990,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824990/feed/live",
+      "homeHits": 12,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 824991,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824991/feed/live",
+      "homeHits": 7,
+      "awayHits": 12,
+      "checked": true
+    },
+    {
+      "gamePk": 824992,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824992/feed/live",
+      "homeHits": 6,
+      "awayHits": 16,
+      "checked": true
+    },
+    {
+      "gamePk": 824993,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824993/feed/live",
+      "homeHits": 14,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 824994,
+      "date": "2026-06-14",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824994/feed/live",
+      "homeHits": 14,
+      "awayHits": 24,
+      "checked": true
+    },
+    {
+      "gamePk": 824995,
+      "date": "2026-06-13",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/824995/feed/live",
+      "homeHits": 11,
+      "awayHits": 8,
+      "checked": true
+    },
+    {
+      "gamePk": 825051,
+      "date": "2026-08-07",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825051/feed/live",
+      "homeHits": 7,
+      "awayHits": 7,
+      "checked": true
+    },
+    {
+      "gamePk": 825064,
+      "date": "2026-07-01",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825064/feed/live",
+      "homeHits": 7,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 825066,
+      "date": "2026-06-30",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825066/feed/live",
+      "homeHits": 10,
+      "awayHits": 4,
+      "checked": true
+    },
+    {
+      "gamePk": 825067,
+      "date": "2026-06-21",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825067/feed/live",
+      "homeHits": 6,
+      "awayHits": 11,
+      "checked": true
+    },
+    {
+      "gamePk": 825068,
+      "date": "2026-06-20",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825068/feed/live",
+      "homeHits": 8,
+      "awayHits": 20,
+      "checked": true
+    },
+    {
+      "gamePk": 825069,
+      "date": "2026-06-19",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825069/feed/live",
+      "homeHits": 13,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 825070,
+      "date": "2026-06-16",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825070/feed/live",
+      "homeHits": 5,
+      "awayHits": 14,
+      "checked": true
+    },
+    {
+      "gamePk": 825071,
+      "date": "2026-06-15",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825071/feed/live",
+      "homeHits": 8,
+      "awayHits": 10,
+      "checked": true
+    },
+    {
+      "gamePk": 825072,
+      "date": "2026-06-17",
+      "source": "https://statsapi.mlb.com/api/v1.1/game/825072/feed/live",
+      "homeHits": 11,
+      "awayHits": 6,
       "checked": true
     }
   ]

@@ -1,0 +1,131 @@
+{
+  "reason": "Same pitcher/game recorded under scheduled and actual dates; official gameLog selects actual date. Immutable records retained.",
+  "aliases": [
+    {
+      "aliasId": "2026-04-02-cws-tor-691799",
+      "canonicalId": "2026-04-03-cws-tor-691799",
+      "gamePk": 824621,
+      "pitcherMlbId": 691799,
+      "officialDate": "2026-04-03"
+    },
+    {
+      "aliasId": "2026-04-02-tor-cws-656302",
+      "canonicalId": "2026-04-03-tor-cws-656302",
+      "gamePk": 824621,
+      "pitcherMlbId": 656302,
+      "officialDate": "2026-04-03"
+    },
+    {
+      "aliasId": "2026-04-03-kc-mil-607625",
+      "canonicalId": "2026-04-04-kc-mil-607625",
+      "gamePk": 824134,
+      "pitcherMlbId": 607625,
+      "officialDate": "2026-04-04"
+    },
+    {
+      "aliasId": "2026-04-03-mil-kc-701656",
+      "canonicalId": "2026-04-04-mil-kc-701656",
+      "gamePk": 824134,
+      "pitcherMlbId": 701656,
+      "officialDate": "2026-04-04"
+    },
+    {
+      "aliasId": "2026-04-04-chc-cle-684007",
+      "canonicalId": "2026-04-05-chc-cle-684007",
+      "gamePk": 824460,
+      "pitcherMlbId": 684007,
+      "officialDate": "2026-04-05"
+    },
+    {
+      "aliasId": "2026-04-04-cle-chc-800048",
+      "canonicalId": "2026-04-05-cle-chc-800048",
+      "gamePk": 824460,
+      "pitcherMlbId": 800048,
+      "officialDate": "2026-04-05"
+    },
+    {
+      "aliasId": "2026-04-25-col-nym-801403",
+      "canonicalId": "2026-04-26-col-nym-801403",
+      "gamePk": 823637,
+      "pitcherMlbId": 801403,
+      "officialDate": "2026-04-26"
+    },
+    {
+      "aliasId": "2026-04-25-nym-col-673540",
+      "canonicalId": "2026-04-26-nym-col-673540",
+      "gamePk": 823637,
+      "pitcherMlbId": 673540,
+      "officialDate": "2026-04-26"
+    },
+    {
+      "aliasId": "2026-04-29-bal-hou-687064",
+      "canonicalId": "2026-04-30-bal-hou-687064",
+      "gamePk": 824850,
+      "pitcherMlbId": 687064,
+      "officialDate": "2026-04-30"
+    },
+    {
+      "aliasId": "2026-04-29-hou-bal-621121",
+      "canonicalId": "2026-04-30-hou-bal-621121",
+      "gamePk": 824850,
+      "pitcherMlbId": 621121,
+      "officialDate": "2026-04-30"
+    },
+    {
+      "aliasId": "2026-04-29-phi-sf-641835",
+      "canonicalId": "2026-04-30-phi-sf-641835",
+      "gamePk": 823471,
+      "pitcherMlbId": 641835,
+      "officialDate": "2026-04-30"
+    },
+    {
+      "aliasId": "2026-04-29-sf-phi-605288",
+      "canonicalId": "2026-04-30-sf-phi-605288",
+      "gamePk": 823471,
+      "pitcherMlbId": 605288,
+      "officialDate": "2026-04-30"
+    },
+    {
+      "aliasId": "2026-05-05-col-nym-500779",
+      "canonicalId": "2026-05-07-col-nym-500779",
+      "gamePk": 824362,
+      "pitcherMlbId": 500779,
+      "officialDate": "2026-05-07"
+    },
+    {
+      "aliasId": "2026-05-05-nym-col-681035",
+      "canonicalId": "2026-05-07-nym-col-681035",
+      "gamePk": 824362,
+      "pitcherMlbId": 681035,
+      "officialDate": "2026-05-07"
+    },
+    {
+      "aliasId": "2026-05-22-cin-stl-663978",
+      "canonicalId": "2026-05-23-cin-stl-663978",
+      "gamePk": 824518,
+      "pitcherMlbId": 663978,
+      "officialDate": "2026-05-23"
+    },
+    {
+      "aliasId": "2026-05-22-stl-cin-669467",
+      "canonicalId": "2026-05-23-stl-cin-669467",
+      "gamePk": 824518,
+      "pitcherMlbId": 669467,
+      "officialDate": "2026-05-23"
+    },
+    {
+      "aliasId": "2026-05-23-bal-det-669432",
+      "canonicalId": "2026-05-24-bal-det-669432",
+      "gamePk": 824840,
+      "pitcherMlbId": 669432,
+      "officialDate": "2026-05-24"
+    },
+    {
+      "aliasId": "2026-05-23-det-bal-675512",
+      "canonicalId": "2026-05-24-det-bal-675512",
+      "gamePk": 824840,
+      "pitcherMlbId": 675512,
+      "officialDate": "2026-05-24"
+    }
+  ]
+}

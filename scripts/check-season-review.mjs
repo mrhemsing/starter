@@ -7,7 +7,8 @@ const bytes = await readFile("src/data/season-review-2026.json", "utf8");
 const sourceBytes = await readFile("data/season-reviews/2026-canonical.json", "utf8");
 const receipt = JSON.parse(await readFile("data/season-reviews/2026-receipt.json", "utf8"));
 const review = JSON.parse(bytes);
-const records = JSON.parse(sourceBytes);
+const {selectCanonicalStarts}=loadProjectTs('src/lib/canonical-start-selection.ts');
+const records = selectCanonicalStarts(JSON.parse(sourceBytes));
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 assert.equal(sha(bytes), receipt.reviewSha256, "published review bytes frozen");
 assert.equal(sha(sourceBytes), receipt.sourceSha256, "canonical snapshot bytes frozen");
@@ -74,6 +75,6 @@ const html = renderToStaticMarkup(React.createElement(React.Fragment, null,
 ));
 const visibleText = html.replace(/<[^>]*>/g, "");
 for (const packet of reviewCopyPackets(review).filter(packet => packet.key !== "bids")) assert(visibleText.includes(packet.fallback.replaceAll("&", "&amp;").replaceAll("'", "&#x27;")), `forced failure renders ${packet.key}`);
-console.log(`Season review PASS: ${records.length} source records, 25 start traces, 14 exact bids, 30 rotations, award recomputation, frozen hashes, 10 forced fallbacks and negative copy controls.`);
+console.log(`Season review PASS: ${records.length} source records, 25 start traces, ${review.noHitBids.length} exact bids, 30 rotations, award recomputation, frozen hashes, 10 forced fallbacks and negative copy controls.`);
 
 assert(visibleText.includes(`${loadProjectTs("src/lib/season-no-hitters.ts").seasonNoHitterBids(review).length} starts have a recorded no-hitter bid`), "computed bid count includes verified additive corrections");
