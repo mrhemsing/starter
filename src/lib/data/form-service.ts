@@ -1,4 +1,6 @@
 import { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
+import { pitcherOfficialCoverage } from "@/lib/pitcher-official-coverage";
+import { outsFromIP } from "@/lib/innings";
 export { canonicalRecordToFormStart } from "@/lib/canonical-start-summary";
 import { getSeasonState, skipSeasonJob } from "@/lib/season-state";
 import { unstable_cache } from "next/cache";
@@ -125,7 +127,7 @@ const getCachedRotationLeaderboard = unstable_cache(
 
 const getCachedPitcherForm = unstable_cache(
   async (pitcherId: string, season: string, window: FormWindow) => buildPitcherForm(pitcherId, { season, window }),
-  ["pitcher-form", FORM_CACHE_VERSION, "full-canonical-season-v2-settled"],
+  ["pitcher-form", FORM_CACHE_VERSION, "full-canonical-season-v3-coverage"],
   { revalidate: FORM_DATA_REVALIDATE_SECONDS, tags: [HEAT_CHECK_CACHE_TAG] },
 );
 
@@ -340,7 +342,12 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     seasonDepthStats: buildSeasonDepthStats(bucket.starts),
     venueSplit: buildVenueSplitLabel(venueSplitStarts),
   };
-  const summaryWithFreshness = attachTodayStartFreshnessFlag(summary, startSet.stalePitcherIds);
+  const officialCoverage = pitcherOfficialCoverage(pitcherId, season);
+  // An unrelated archive-backed league warning must not label a complete profile as updating.
+  const pitcherStale = officialCoverage
+    ? records.length !== officialCoverage.starts || outsFromIP(summary.seasonStats.inningsPitched) !== officialCoverage.starterOuts
+    : startSet.stalePitcherIds.has(pitcherId);
+  const summaryWithFreshness = attachTodayStartFreshnessFlag(summary, pitcherStale ? new Set([pitcherId]) : new Set());
   const availabilityStatuses = isRequestTimeEnrichmentEnabled()
     ? await fetchMlbPitcherAvailabilityStatuses([Number(summary.pitcherId)], { fetchLive: true })
     : new Map();
@@ -360,7 +367,7 @@ async function buildPitcherForm(pitcherId: string, options: FormBuildOptions = {
     },
     formThroughDate: startSet.formThroughDate,
     latestScoredStartDate: startSet.latestScoredStartDate,
-    stale: startSet.stale,
+    stale: pitcherStale,
     window,
     leagueMeanGS: round1(leagueMeanGS),
     series,

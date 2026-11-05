@@ -9,6 +9,7 @@ try{for(const width of [1440,390]){
  const response=await page.goto(base+'/pitchers/michael-soroka-647336',{waitUntil:'networkidle',timeout:120000});assert.equal(response.status(),200);
  await page.locator('[data-pitch-mix-coverage]').waitFor({timeout:120000});await page.evaluate(()=>document.fonts.ready);
  const stats=await page.locator('[data-pitcher-season-stats]').innerText();assert.match(stats,/21 starts · 112\.0 IP as starter/i);
+ assert(!/updating from/i.test(await page.locator('[data-responsive-check="pitcher-form-hero"]').innerText()),'Complete official-matched profile must not inherit an unrelated league freshness warning');
  const relief=await page.locator('[data-relief-coverage]').innerText();assert.equal(relief,'4.0 IP in relief not included');
  const log=page.locator('[data-responsive-check="pitcher-game-log-row"]');assert.equal(await log.count(),21);
  const dates=await log.locator('summary a').allTextContents();assert(dates.includes('2026-09-27'));assert(dates.includes('2026-06-13'));assert(dates.includes('2026-06-19'));
@@ -16,6 +17,12 @@ try{for(const width of [1440,390]){
  const titles=await chart.locator('circle title').allTextContents();assert.equal(titles.length,21);assert(titles.some(t=>t.startsWith('2026-09-27')));
  const mix=await page.locator('[data-pitch-mix-coverage]').innerText();assert.match(mix,/21 of 21/);assert.match(mix,/2026-09-27/);assert(!mix.includes('ARCHIVE THROUGH'));
  const api=await (await page.request.get(base+'/api/pitchers/647336')).json();assert.equal(api.velocityByStart.length,21);assert.equal(api.pitchMixByStart.length,21);
+ const scores=api.starts.map(row=>row.gameScorePlus);
+ assert.match(await page.getByText('Best start',{exact:true}).locator('..').innerText(),new RegExp(`GS\\+ ${Math.max(...scores)}`));
+ assert.match(await page.getByText('Worst start',{exact:true}).locator('..').innerText(),new RegExp(`GS\\+ ${Math.min(...scores)}`));
+ const ordered=[...api.starts].sort((a,b)=>b.date.localeCompare(a.date));
+ const firstBelow=ordered.findIndex(row=>row.gameScorePlus<55);const streak=firstBelow<0?ordered.length:firstBelow;
+ assert.match(await page.getByText('Current streak',{exact:true}).locator('..').innerText(),new RegExp(`\\n${streak}\\n`));
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No document overflow');
  await page.screenshot({path:`${out}/soroka-${width}-full.png`,fullPage:true});
  await page.locator('[data-responsive-check="pitcher-form-hero"]').screenshot({path:`${out}/soroka-${width}-header.png`});
