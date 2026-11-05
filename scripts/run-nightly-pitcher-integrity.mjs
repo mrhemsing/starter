@@ -2,12 +2,14 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {loadProjectTs} from './lib/load-project-ts.mjs';
 if(process.env.P07_ENV_FILE)process.loadEnvFile(process.env.P07_ENV_FILE);
 const base=process.env.THE_BUMP_BASE_URL??'https://www.toetheslab.com';
-const {getSeasonState}=loadProjectTs('src/lib/season-state.ts');
+const {resolveSeasonState}=loadProjectTs('src/lib/season-state.ts');
+const {readRuntimeState}=loadProjectTs('src/lib/data/runtime-state-store.ts');
 const {readCanonicalPitcherRegistry,readCanonicalPitcherSeasonRecords}=loadProjectTs('src/lib/data/canonical-start-store.ts');
 const {fetchMlbSeasonStartingPitcherIds,fetchMlbPitcherSeasonStartLedger}=loadProjectTs('src/lib/data/mlb-stats-client.ts');
 const {compareCanonicalOfficial,checkRenderedPitchers}=loadProjectTs('src/lib/pitcher-rendered-integrity.ts');
 const {pitcherHref}=loadProjectTs('src/lib/routes.ts');
-const state=await getSeasonState(),year=String(state.year);
+// CLI jobs have no Next incremental cache. Use the same resolver with the uncached store reader.
+const state=resolveSeasonState(await readRuntimeState('season-state',true)),year=String(state.year);
 const officialIds=await fetchMlbSeasonStartingPitcherIds(year,{fetchLive:true,signal:AbortSignal.timeout(30000)});
 const canonicalIds=await readCanonicalPitcherRegistry(year);
 const ids=[...new Set([...officialIds.map(String),...canonicalIds.map(p=>p.pitcherId)])];

@@ -23,7 +23,7 @@ try{for(const width of [1440,390]){
  await chart.locator('..').evaluate(el=>{el.scrollLeft=el.scrollWidth;});await chart.locator('..').screenshot({path:`${out}/soroka-${width}-trend-end.png`});
  results.push({width,stats,relief,startCount:21,lastStart:'2026-09-27',chartPoints:titles.length,mix});await page.close();
 }
- const page=await browser.newPage();await page.goto(base+'/2026',{waitUntil:'networkidle',timeout:120000});const text=await page.locator('main').innerText();assert(/4,?938/.test(text));assert(text.includes('Jacob Misiorowski'));writeFileSync(`${out}/2026-text.txt`,text);
+ const page=await browser.newPage({viewport:{width:1440,height:900}});await page.goto(base+'/2026',{waitUntil:'networkidle',timeout:120000});const text=await page.locator('main').innerText();assert(/4,?938/.test(text));assert(text.includes('Jacob Misiorowski'));writeFileSync(`${out}/2026-text.txt`,text);
  await page.goto(base+'/heat-check',{waitUntil:'networkidle',timeout:120000});const heat=await page.locator('main').innerText();writeFileSync(`${out}/heat-check-text.txt`,heat);
  if(base.startsWith('https'))assert.equal(heat,readFileSync('outputs/p07/baseline-heat-check.txt','utf8'),'Heat Check unchanged');
 }finally{await browser.close();}
