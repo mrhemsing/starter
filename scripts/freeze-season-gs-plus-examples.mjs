@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {loadProjectTs} from './lib/load-project-ts.mjs';
+const {canonicalRecordToFormStart}=loadProjectTs('src/lib/canonical-start-summary.ts');
+const {selectCanonicalStarts}=loadProjectTs('src/lib/canonical-start-selection.ts');
+const {summarizeGameScorePlus}=loadProjectTs('src/lib/data/start-service.ts');
+const {proofStart,stuffProof}=loadProjectTs('src/lib/data/home-gs-plus-proof-service.ts');
+const {inningsFromIP}=loadProjectTs('src/lib/innings.ts');
+const input=process.argv[2]??'outputs/p07/reconciliation/canonical-after.json';
+const bytes=fs.readFileSync(input); const records=selectCanonicalStarts(JSON.parse(bytes)).sort((a,b)=>a.id.localeCompare(b.id));
+assert.equal(records.length,4938);assert(records.every(r=>r.frozen&&r.status==='final'&&r.date.startsWith('2026')));
+const starts=records.map((r,i)=>({...canonicalRecordToFormStart(r,i+1),gameScorePlusBreakdown:r.gameScorePlusBreakdown??summarizeGameScorePlus(r.line,r.gameScorePlus,r.contextSnapshot)}));
+const value=(s,keys)=>s.gameScorePlusBreakdown.components.filter(c=>keys.includes(c.key)).reduce((v,c)=>v+c.value,0);
+const context=s=>value(s,['parkContext','opponentQuality','opponentOffense']);const stuff=s=>value(s,['whiffDelta','velocityDelta']);
+let candidates=[];
+for(let i=0;i<starts.length;i++)for(let j=i+1;j<starts.length;j++) {
+ const a=starts[i],b=starts[j];if(a.line.inningsPitched<5||b.line.inningsPitched<5)continue;
+ const distance=Math.abs(inningsFromIP(a.line.inningsPitched)-inningsFromIP(b.line.inningsPitched))*4+Math.abs(a.line.earnedRuns-b.line.earnedRuns)*3+Math.abs(a.line.hits-b.line.hits)+Math.abs(a.line.walks-b.line.walks)+Math.abs(a.line.strikeouts-b.line.strikeouts)*.7;
+ if(distance>4)continue;
+ const gap=a.gameScorePlus-b.gameScorePlus,contextDelta=context(a)-context(b),stuffDelta=stuff(a)-stuff(b);
+ if(gap*contextDelta<=0||Math.abs(stuffDelta)>1||Math.abs(contextDelta)*.72<Math.abs(gap)*.6)continue;
+ candidates.push({a,b,distance,gap:Math.abs(gap),contextDelta:Math.abs(contextDelta),stuffDelta:Math.abs(stuffDelta)});
+}
+candidates.sort((a,b)=>b.gap-a.gap||a.distance-b.distance||b.contextDelta-a.contextDelta||a.a.id.localeCompare(b.a.id)||a.b.id.localeCompare(b.b.id));
+const winner=candidates[0];assert(winner);
+const pair=[winner.a,winner.b].sort((a,b)=>b.gameScorePlus-a.gameScorePlus);
+const stuffStart=[...starts].filter(s=>s.gameScorePlus>20&&s.gameScorePlus<80&&stuff(s)>0).sort((a,b)=>stuff(b)-stuff(a)||b.gameScorePlus-a.gameScorePlus||a.id.localeCompare(b.id))[0];
+const proof={version:1,generatedAt:'2026-11-05T05:56:10.000Z',source:'fallback',contextPair:pair.map(proofStart),stuff:stuffProof(stuffStart),breakdown:proofStart(stuffStart),selectionNote:'Full settled 2026 canonical season, including P0-7 backfill. Deterministic maximum GS+ gap among similar lines dominated by park/opponent context. See docs/OFF-2.3.md.',provenance:{sourceCommit:'4b23a50',recoveredCommit:'20af591',sourceSha256:crypto.createHash('sha256').update(bytes).digest('hex'),distinctStarts:records.length,candidatePairs:candidates.length,selection:{lineDistance:winner.distance,gsGap:winner.gap,contextDelta:winner.contextDelta,stuffDelta:winner.stuffDelta},records:[...new Set([...pair.map(s=>s.id),stuffStart.id])].map(id=>records.find(r=>r.id===id))}};
+const output=JSON.stringify(proof,null,2)+'\n';const path='src/data/gs-plus-examples-2026.json';
+if(process.argv.includes('--check'))assert.equal(fs.readFileSync(path,'utf8'),output);else fs.writeFileSync(path,output);
+console.log(JSON.stringify({passed:true,starts:records.length,candidates:candidates.length,context:proof.contextPair,stuff:proof.stuff,selection:proof.provenance.selection},null,2));

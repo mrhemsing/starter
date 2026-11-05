@@ -120,7 +120,7 @@ function selectStuffProofStart(starts: StartSummary[]) {
     .sort((a, b) => stuffComponentValue(b) - stuffComponentValue(a) || b.gameScorePlus - a.gameScorePlus)[0] ?? null;
 }
 
-function proofStart(start: StartSummary): HomeGsPlusProofStart {
+export function proofStart(start: StartSummary): HomeGsPlusProofStart {
   const parkValue = componentValue(start, "parkContext");
   const opponentValue = componentValue(start, "opponentQuality") + componentValue(start, "opponentOffense");
   return {
@@ -139,7 +139,7 @@ function proofStart(start: StartSummary): HomeGsPlusProofStart {
   };
 }
 
-function stuffProof(start: StartSummary): HomeGsPlusStuffProof {
+export function stuffProof(start: StartSummary): HomeGsPlusStuffProof {
   const whiff = component(start, "whiffDelta");
   const velocity = component(start, "velocityDelta");
   return {

@@ -1,3 +1,4 @@
+import { FrozenSeasonGsPlus } from "@/components/frozen-season-gs-plus";
 import { HomeBaseballBackground } from "@/components/home-baseball-background";
 import Link from "next/link";
 import { getSeasonArchive } from "@/lib/data/season-archive-service";
@@ -16,6 +17,6 @@ export async function OffseasonHome({ state }: { state: SeasonState }) {
         <SeasonReviewIntro review={review} landing />
       </div>
     </section>
-    <div className="px-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><SeasonReviewHero review={review} landing showIntro={false} /><SeasonReviewTopStarts review={review} limit={5} /><SeasonReviewAwards review={review} landing /><SeasonReviewFinalForm review={review} /></div></div>
+    <div className="px-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><SeasonReviewHero review={review} landing showIntro={false} /><SeasonReviewTopStarts review={review} limit={5} /><FrozenSeasonGsPlus /><SeasonReviewAwards review={review} landing /><SeasonReviewFinalForm review={review} /></div></div>
   </main>;
 }

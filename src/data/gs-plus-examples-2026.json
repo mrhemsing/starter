@@ -1,0 +1,812 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-05T05:56:10.000Z",
+  "source": "fallback",
+  "contextPair": [
+    {
+      "id": "2026-07-05-sd-lad-676664",
+      "pitcherName": "JP Sears",
+      "team": "SD",
+      "opponent": "LAD",
+      "side": "away",
+      "date": "2026-07-05",
+      "line": "5 IP, 0 ER, 1 H, 2 BB, 5 K",
+      "gsPlus": 64,
+      "href": "/starts/2026-07-05-sd-lad-676664",
+      "parkValue": 0,
+      "opponentValue": 6.5,
+      "contextValue": 6.5
+    },
+    {
+      "id": "2026-08-21-hou-ath-669713",
+      "pitcherName": "Hayden Wesneski",
+      "team": "HOU",
+      "opponent": "ATH",
+      "side": "home",
+      "date": "2026-08-21",
+      "line": "5 IP, 0 ER, 1 H, 3 BB, 4 K",
+      "gsPlus": 54,
+      "href": "/starts/2026-08-21-hou-ath-669713",
+      "parkValue": -0.1200000000000001,
+      "opponentValue": -3.3,
+      "contextValue": -3.42
+    }
+  ],
+  "stuff": {
+    "start": {
+      "id": "2026-07-24-nyy-phi-693645",
+      "pitcherName": "Cam Schlittler",
+      "team": "NYY",
+      "opponent": "PHI",
+      "side": "away",
+      "date": "2026-07-24",
+      "line": "7.1 IP, 0 ER, 3 H, 0 BB, 12 K",
+      "gsPlus": 79,
+      "href": "/starts/2026-07-24-nyy-phi-693645",
+      "parkValue": 0.1200000000000001,
+      "opponentValue": 0,
+      "contextValue": 0.1200000000000001
+    },
+    "whiffValue": 2.94,
+    "velocityValue": 1.2249999999999999,
+    "totalStuffValue": 4.165,
+    "whiffDescription": "+8.4 pct points above league baseline.",
+    "velocityDescription": "+0.7 mph above league baseline."
+  },
+  "breakdown": {
+    "id": "2026-07-24-nyy-phi-693645",
+    "pitcherName": "Cam Schlittler",
+    "team": "NYY",
+    "opponent": "PHI",
+    "side": "away",
+    "date": "2026-07-24",
+    "line": "7.1 IP, 0 ER, 3 H, 0 BB, 12 K",
+    "gsPlus": 79,
+    "href": "/starts/2026-07-24-nyy-phi-693645",
+    "parkValue": 0.1200000000000001,
+    "opponentValue": 0,
+    "contextValue": 0.1200000000000001
+  },
+  "selectionNote": "Full settled 2026 canonical season, including P0-7 backfill. Deterministic maximum GS+ gap among similar lines dominated by park/opponent context. See docs/OFF-2.3.md.",
+  "provenance": {
+    "sourceCommit": "4b23a50",
+    "recoveredCommit": "20af591",
+    "sourceSha256": "1d4d1eb39e2b21d0b02326c3f991ebdd4dc2e310878e293f6593894f83639148",
+    "distinctStarts": 4938,
+    "candidatePairs": 5193,
+    "selection": {
+      "lineDistance": 1.7,
+      "gsGap": 10,
+      "contextDelta": 9.92,
+      "stuffDelta": 0
+    },
+    "records": [
+      {
+        "id": "2026-07-05-sd-lad-676664",
+        "date": "2026-07-05",
+        "line": {
+          "hits": 1,
+          "walks": 2,
+          "pitches": 76,
+          "earnedRuns": 0,
+          "strikeouts": 5,
+          "runsAllowed": 0,
+          "inningsPitched": 5,
+          "homeRunsAllowed": 0
+        },
+        "side": "away",
+        "team": "SD",
+        "audit": [
+          {
+            "at": "2026-07-05T18:01:23.232Z",
+            "note": "Canonical record reflects a scheduled starter projection.",
+            "event": "created",
+            "source": "fixture"
+          },
+          {
+            "at": "2026-07-06T01:16:02.826Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": 5,
+                "field": "inningsPitched",
+                "before": 7
+              },
+              {
+                "after": 1,
+                "field": "hits",
+                "before": 5
+              },
+              {
+                "after": 0,
+                "field": "earnedRuns",
+                "before": 2
+              },
+              {
+                "after": 0,
+                "field": "runsAllowed"
+              },
+              {
+                "after": 0,
+                "field": "homeRunsAllowed"
+              },
+              {
+                "after": 2,
+                "field": "walks",
+                "before": 0
+              },
+              {
+                "after": 5,
+                "field": "strikeouts",
+                "before": 8
+              },
+              {
+                "after": 76,
+                "field": "pitches",
+                "before": 98
+              },
+              {
+                "after": 64,
+                "field": "gameScorePlus",
+                "before": 69
+              },
+              {
+                "after": 69,
+                "field": "gameScoreV2",
+                "before": 74
+              }
+            ],
+            "event": "final-reconciled",
+            "source": "live-gamefeed"
+          },
+          {
+            "at": "2026-07-06T02:37:48.220Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": "W",
+                "field": "result",
+                "before": "ND"
+              }
+            ],
+            "event": "final-correction",
+            "source": "live-gamefeed"
+          },
+          {
+            "at": "2026-07-18T14:41:29.322Z",
+            "note": "Backfilled side metadata from MLB schedule home/away fields: away. Scoring fields unchanged.",
+            "event": "final-correction",
+            "source": "live-gamefeed"
+          }
+        ],
+        "venue": "UNIQLO Field at Dodger Stadium",
+        "frozen": true,
+        "gamePk": 823931,
+        "result": "W",
+        "source": {
+          "line": "live-gamefeed",
+          "ranking": "schedule-derived-gamefeed-line",
+          "schedule": "live",
+          "lineStatus": "final"
+        },
+        "status": "final",
+        "opponent": "LAD",
+        "createdAt": "2026-07-05T18:01:23.232Z",
+        "updatedAt": "2026-07-18T14:41:29.322Z",
+        "eventFlags": [],
+        "finalizedAt": "2026-07-06T01:16:02.826Z",
+        "gameScoreV2": 69,
+        "pitcherName": "JP Sears",
+        "pitcherMlbId": 676664,
+        "gameScorePlus": 64,
+        "contextSnapshot": {
+          "label": "No walks against a top-order test / SD @ LAD, UNIQLO Field at Dodger Stadium",
+          "parkLabel": "UNIQLO Field at Dodger Stadium",
+          "parkRunFactor": 1,
+          "whiffDeltaPct": 2.7,
+          "velocityDeltaMph": -0.1,
+          "opponentOffenseLabel": "Live offense context: 5.31 R/G, 0.788 OPS.",
+          "opponentQualityLabel": "LAD live standings context: 59-31, +166 run differential.",
+          "opponentOffenseRunValue": 2.5,
+          "opponentQualityRunValue": 4
+        },
+        "gameScorePlusBreakdown": {
+          "total": 64,
+          "gradeBand": {
+            "label": "Plus",
+            "rangeLabel": "60-69",
+            "description": "Clearly above-average start with ranking impact.",
+            "percentileLabel": "Top 20%"
+          },
+          "components": [
+            {
+              "key": "baseline",
+              "label": "Baseline",
+              "value": 45,
+              "description": "Neutral starting point for every outing."
+            },
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 15,
+              "description": "5.0 innings pitched."
+            },
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 11,
+              "description": "5 strikeouts."
+            },
+            {
+              "key": "earnedRuns",
+              "label": "Runs",
+              "value": 0,
+              "description": "0 earned runs allowed."
+            },
+            {
+              "key": "hits",
+              "label": "Traffic",
+              "value": -1.2,
+              "description": "1 hits allowed."
+            },
+            {
+              "key": "walks",
+              "label": "Free passes",
+              "value": -3,
+              "description": "2 walks allowed."
+            },
+            {
+              "key": "whiffDelta",
+              "label": "Whiff context",
+              "value": 0.945,
+              "description": "+2.7 pct points vs expected whiff rate."
+            },
+            {
+              "key": "velocityDelta",
+              "label": "Velocity context",
+              "value": -0.17500000000000002,
+              "description": "-0.1 mph vs recent baseline."
+            },
+            {
+              "key": "parkContext",
+              "label": "Park context",
+              "value": 0,
+              "description": "UNIQLO Field at Dodger Stadium at 1.00 run factor."
+            },
+            {
+              "key": "opponentQuality",
+              "label": "Opponent quality",
+              "value": 4,
+              "description": "LAD live standings context: 59-31, +166 run differential."
+            },
+            {
+              "key": "opponentOffense",
+              "label": "Opponent offense",
+              "value": 2.5,
+              "description": "Live offense context: 5.31 R/G, 0.788 OPS."
+            },
+            {
+              "key": "calibration",
+              "label": "Scale adjustment",
+              "value": -10,
+              "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
+            }
+          ],
+          "preciseTotal": 64.234,
+          "formulaVersion": "context-v8",
+          "rankingReasons": [
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 15,
+              "impact": "positive",
+              "description": "5.0 innings pitched."
+            },
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 11,
+              "impact": "positive",
+              "description": "5 strikeouts."
+            },
+            {
+              "key": "opponentQuality",
+              "label": "Opponent quality",
+              "value": 4,
+              "impact": "positive",
+              "description": "LAD live standings context: 59-31, +166 run differential."
+            }
+          ]
+        }
+      },
+      {
+        "id": "2026-08-21-hou-ath-669713",
+        "date": "2026-08-21",
+        "line": {
+          "hits": 1,
+          "walks": 3,
+          "pitches": 91,
+          "earnedRuns": 0,
+          "hitBatters": 0,
+          "strikeouts": 4,
+          "runsAllowed": 0,
+          "inningsPitched": 5,
+          "homeRunsAllowed": 0
+        },
+        "side": "home",
+        "team": "HOU",
+        "audit": [
+          {
+            "at": "2026-08-21T21:50:21.587Z",
+            "note": "Canonical record reflects a scheduled starter projection.",
+            "event": "created",
+            "source": "fixture"
+          },
+          {
+            "at": "2026-08-22T01:54:22.083Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": 5,
+                "field": "inningsPitched",
+                "before": 7
+              },
+              {
+                "after": 1,
+                "field": "hits",
+                "before": 5
+              },
+              {
+                "after": 0,
+                "field": "earnedRuns",
+                "before": 2
+              },
+              {
+                "after": 0,
+                "field": "runsAllowed"
+              },
+              {
+                "after": 0,
+                "field": "homeRunsAllowed"
+              },
+              {
+                "after": 3,
+                "field": "walks",
+                "before": 0
+              },
+              {
+                "after": 4,
+                "field": "strikeouts",
+                "before": 8
+              },
+              {
+                "after": 91,
+                "field": "pitches",
+                "before": 98
+              },
+              {
+                "after": 55,
+                "field": "gameScorePlus",
+                "before": 69
+              },
+              {
+                "after": 66,
+                "field": "gameScoreV2",
+                "before": 74
+              }
+            ],
+            "event": "final-reconciled",
+            "source": "live-gamefeed"
+          },
+          {
+            "at": "2026-08-22T03:07:22.132Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": "W",
+                "field": "result",
+                "before": "ND"
+              }
+            ],
+            "event": "final-correction",
+            "source": "live-gamefeed"
+          },
+          {
+            "at": "2026-08-22T03:11:25.462Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": 54,
+                "field": "gameScorePlus",
+                "before": 55
+              }
+            ],
+            "event": "final-correction",
+            "source": "live-gamefeed"
+          }
+        ],
+        "venue": "Daikin Park",
+        "frozen": true,
+        "gamePk": 824152,
+        "result": "W",
+        "source": {
+          "line": "live-gamefeed",
+          "ranking": "schedule-derived-gamefeed-line",
+          "schedule": "live",
+          "lineStatus": "final"
+        },
+        "status": "final",
+        "opponent": "ATH",
+        "createdAt": "2026-08-21T21:50:21.587Z",
+        "updatedAt": "2026-08-22T03:11:25.462Z",
+        "eventFlags": [],
+        "finalizedAt": "2026-08-22T01:54:22.083Z",
+        "gameScoreV2": 66,
+        "pitcherName": "Hayden Wesneski",
+        "pitcherMlbId": 669713,
+        "gameScorePlus": 54,
+        "contextSnapshot": {
+          "label": "No walks against a top-order test / ATH @ HOU, Daikin Park",
+          "parkLabel": "Daikin Park",
+          "parkRunFactor": 0.99,
+          "whiffDeltaPct": 2.7,
+          "velocityDeltaMph": -0.1,
+          "opponentOffenseLabel": "Live offense context: 4.32 R/G, 0.716 OPS.",
+          "opponentQualityLabel": "ATH live standings context: 49-80, -189 run differential.",
+          "opponentOffenseRunValue": 0.1,
+          "opponentQualityRunValue": -3.4
+        },
+        "gameScorePlusBreakdown": {
+          "total": 54,
+          "gradeBand": {
+            "label": "Average",
+            "rangeLabel": "50-59",
+            "description": "Solid start near the midpoint of the 20-80 display scale.",
+            "percentileLabel": "Middle band"
+          },
+          "components": [
+            {
+              "key": "baseline",
+              "label": "Baseline",
+              "value": 45,
+              "description": "Neutral starting point for every outing."
+            },
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 15,
+              "description": "5.0 innings pitched."
+            },
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 8.8,
+              "description": "4 strikeouts."
+            },
+            {
+              "key": "earnedRuns",
+              "label": "Runs",
+              "value": 0,
+              "description": "0 earned runs allowed."
+            },
+            {
+              "key": "hits",
+              "label": "Traffic",
+              "value": -1.2,
+              "description": "1 hits allowed."
+            },
+            {
+              "key": "walks",
+              "label": "Free passes",
+              "value": -4.5,
+              "description": "3 walks allowed."
+            },
+            {
+              "key": "whiffDelta",
+              "label": "Whiff context",
+              "value": 0.945,
+              "description": "+2.7 pct points above league baseline."
+            },
+            {
+              "key": "velocityDelta",
+              "label": "Velocity context",
+              "value": -0.17500000000000002,
+              "description": "-0.1 mph above league baseline."
+            },
+            {
+              "key": "parkContext",
+              "label": "Park context",
+              "value": -0.1200000000000001,
+              "description": "Daikin Park at 0.99 run factor."
+            },
+            {
+              "key": "opponentQuality",
+              "label": "Opponent quality",
+              "value": -3.4,
+              "description": "ATH live standings context: 49-80, -189 run differential."
+            },
+            {
+              "key": "opponentOffense",
+              "label": "Opponent offense",
+              "value": 0.1,
+              "description": "Live offense context: 4.32 R/G, 0.716 OPS."
+            },
+            {
+              "key": "calibration",
+              "label": "Scale adjustment",
+              "value": -6,
+              "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
+            }
+          ],
+          "preciseTotal": 54.428,
+          "formulaVersion": "context-v8",
+          "rankingReasons": [
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 15,
+              "impact": "positive",
+              "description": "5.0 innings pitched."
+            },
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 8.8,
+              "impact": "positive",
+              "description": "4 strikeouts."
+            },
+            {
+              "key": "walks",
+              "label": "Free passes",
+              "value": -4.5,
+              "impact": "negative",
+              "description": "3 walks allowed."
+            }
+          ]
+        }
+      },
+      {
+        "id": "2026-07-24-nyy-phi-693645",
+        "date": "2026-07-24",
+        "line": {
+          "hits": 3,
+          "walks": 0,
+          "pitches": 99,
+          "earnedRuns": 0,
+          "hitBatters": 1,
+          "strikeouts": 12,
+          "runsAllowed": 0,
+          "inningsPitched": 7.1,
+          "homeRunsAllowed": 0
+        },
+        "side": "away",
+        "team": "NYY",
+        "audit": [
+          {
+            "at": "2026-07-24T21:54:36.794Z",
+            "note": "Canonical record reflects a scheduled starter projection.",
+            "event": "created",
+            "source": "fixture"
+          },
+          {
+            "at": "2026-07-25T00:57:21.886Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": 7.1,
+                "field": "inningsPitched",
+                "before": 7
+              },
+              {
+                "after": 0,
+                "field": "earnedRuns",
+                "before": 1
+              },
+              {
+                "after": 0,
+                "field": "runsAllowed"
+              },
+              {
+                "after": 0,
+                "field": "homeRunsAllowed"
+              },
+              {
+                "after": 0,
+                "field": "walks",
+                "before": 1
+              },
+              {
+                "after": 12,
+                "field": "strikeouts",
+                "before": 11
+              },
+              {
+                "after": 99,
+                "field": "pitches",
+                "before": 95
+              },
+              {
+                "after": 79,
+                "field": "gameScorePlus",
+                "before": 74
+              },
+              {
+                "after": 90,
+                "field": "gameScoreV2",
+                "before": 82
+              },
+              {
+                "after": "ND",
+                "field": "result",
+                "before": "W"
+              },
+              {
+                "after": "{\"strikeouts\":{\"doubleDigit\":true}}",
+                "field": "narrativeNotables"
+              }
+            ],
+            "event": "final-reconciled",
+            "source": "live-gamefeed"
+          },
+          {
+            "at": "2026-07-25T01:24:23.408Z",
+            "note": "Canonical final record reconciled with an explicit line or score diff.",
+            "diffs": [
+              {
+                "after": "W",
+                "field": "result",
+                "before": "ND"
+              }
+            ],
+            "event": "final-correction",
+            "source": "live-gamefeed"
+          }
+        ],
+        "venue": "Citizens Bank Park",
+        "frozen": true,
+        "gamePk": 823434,
+        "result": "W",
+        "source": {
+          "line": "live-gamefeed",
+          "ranking": "schedule-derived-gamefeed-line",
+          "schedule": "live",
+          "lineStatus": "final"
+        },
+        "status": "final",
+        "opponent": "PHI",
+        "createdAt": "2026-07-24T21:54:36.794Z",
+        "updatedAt": "2026-07-25T01:24:23.408Z",
+        "eventFlags": [],
+        "finalizedAt": "2026-07-25T00:57:21.886Z",
+        "gameScoreV2": 90,
+        "pitcherName": "Cam Schlittler",
+        "pitcherMlbId": 693645,
+        "gameScorePlus": 79,
+        "contextSnapshot": {
+          "label": "11 K, 0 extra-base hits allowed / NYY @ PHI, Citizens Bank Park",
+          "parkLabel": "Citizens Bank Park",
+          "parkRunFactor": 1.01,
+          "whiffDeltaPct": 8.4,
+          "velocityDeltaMph": 0.7,
+          "opponentOffenseLabel": "Live offense context: 4.31 R/G, 0.701 OPS.",
+          "opponentQualityLabel": "PHI live standings context: 56-47, -15 run differential.",
+          "opponentOffenseRunValue": -0.2,
+          "opponentQualityRunValue": 0.2
+        },
+        "narrativeNotables": {
+          "strikeouts": {
+            "doubleDigit": true
+          }
+        },
+        "gameScorePlusBreakdown": {
+          "total": 79,
+          "gradeBand": {
+            "label": "Elite",
+            "rangeLabel": "70-80",
+            "description": "Ace-level outing on the displayed 20-80 Game Score+ scale.",
+            "percentileLabel": "Top 5%"
+          },
+          "components": [
+            {
+              "key": "baseline",
+              "label": "Baseline",
+              "value": 45,
+              "description": "Neutral starting point for every outing."
+            },
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 22,
+              "description": "7.1 innings pitched."
+            },
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 26.400000000000002,
+              "description": "12 strikeouts."
+            },
+            {
+              "key": "earnedRuns",
+              "label": "Runs",
+              "value": 0,
+              "description": "0 earned runs allowed."
+            },
+            {
+              "key": "hits",
+              "label": "Traffic",
+              "value": -3.5999999999999996,
+              "description": "3 hits allowed."
+            },
+            {
+              "key": "walks",
+              "label": "Free passes",
+              "value": 0,
+              "description": "0 walks allowed."
+            },
+            {
+              "key": "whiffDelta",
+              "label": "Whiff context",
+              "value": 2.94,
+              "description": "+8.4 pct points above league baseline."
+            },
+            {
+              "key": "velocityDelta",
+              "label": "Velocity context",
+              "value": 1.2249999999999999,
+              "description": "+0.7 mph above league baseline."
+            },
+            {
+              "key": "parkContext",
+              "label": "Park context",
+              "value": 0.1200000000000001,
+              "description": "Citizens Bank Park at 1.01 run factor."
+            },
+            {
+              "key": "opponentQuality",
+              "label": "Opponent quality",
+              "value": 0.2,
+              "description": "PHI live standings context: 56-47, -15 run differential."
+            },
+            {
+              "key": "opponentOffense",
+              "label": "Opponent offense",
+              "value": -0.2,
+              "description": "Live offense context: 4.31 R/G, 0.701 OPS."
+            },
+            {
+              "key": "calibration",
+              "label": "Scale adjustment",
+              "value": -15,
+              "description": "Recalibrates the raw component total onto the slightly lifted 20-80 displayed ranking scale."
+            }
+          ],
+          "preciseTotal": 78.645,
+          "formulaVersion": "context-v8",
+          "rankingReasons": [
+            {
+              "key": "strikeouts",
+              "label": "Misses",
+              "value": 26.400000000000002,
+              "impact": "positive",
+              "description": "12 strikeouts."
+            },
+            {
+              "key": "innings",
+              "label": "Length",
+              "value": 22,
+              "impact": "positive",
+              "description": "7.1 innings pitched."
+            },
+            {
+              "key": "hits",
+              "label": "Traffic",
+              "value": -3.5999999999999996,
+              "impact": "negative",
+              "description": "3 hits allowed."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import { FrozenSeasonGsPlus } from "@/components/frozen-season-gs-plus";
 import type { Metadata } from "next";
 import { SeasonReviewHeader, SeasonReviewHero, SeasonReviewTopStarts, SeasonReviewAwards } from "@/components/season-review";
 import { seasonReview2026 as review } from "@/lib/season-review-data";
@@ -21,7 +22,7 @@ export default function SeasonReviewPage() {
   return <main className="min-h-screen bg-[#08080a] px-4 py-6 text-zinc-100 sm:px-6 lg:px-8" data-season-review="2026" data-source-sha256={review.sourceSha256}>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
     <div className="mx-auto max-w-7xl">
-      <SeasonReviewHeader review={review} /><SeasonReviewHero review={review} /><SeasonReviewTopStarts review={review} /><SeasonReviewAwards review={review} />
+      <SeasonReviewHeader review={review} /><SeasonReviewHero review={review} /><SeasonReviewTopStarts review={review} /><FrozenSeasonGsPlus /><SeasonReviewAwards review={review} />
       <section className="my-8 text-sm leading-6 text-zinc-400" aria-label="Award methodology">
         <h2 className="font-serif text-2xl text-zinc-100">How the awards work</h2>
         <p>Starts use the site's GS+ ranking and line-based tiebreakers, with a two-inning minimum. Arm of the Year uses the highest unrounded mean GS+ among qualified starters. The shared qualification rule requires one start per {review.qualificationDivisor} team games, rounded up.</p>

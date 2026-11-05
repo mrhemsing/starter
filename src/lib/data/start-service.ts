@@ -1700,7 +1700,7 @@ const GAME_SCORE_PLUS_EXPLANATION: SlateApiScoreScale["explanation"] = [
   },
 ];
 
-function summarizeGameScorePlus(line: StartLine, total?: number, context?: StartContext): StartApiGameScorePlusBreakdown {
+export function summarizeGameScorePlus(line: StartLine, total?: number, context?: StartContext): StartApiGameScorePlusBreakdown {
   const computedInnings = inningsFromIP(line.inningsPitched);
   const baseComponents = [
     { key: "baseline" as const, label: "Baseline", value: 45, description: "Neutral starting point for every outing." },
